@@ -103,6 +103,22 @@
       "reason": "Typed Kernel externs for direct Ruby interop."
     },
     {
+      "id": "std.ruby.native_hash",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/NativeHash.hx",
+      "surface": "ruby.NativeHash",
+      "reason": "Target-local Ruby Hash operations used by Haxe map overrides."
+    },
+    {
+      "id": "std.ruby.native_iterator",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/NativeIterator.hx",
+      "surface": "ruby.NativeIterator",
+      "reason": "Target-local iterator wrapper for Ruby arrays returned by std collection helpers."
+    },
+    {
       "id": "std.rails.active_record",
       "owner": "std",
       "status": "implemented",

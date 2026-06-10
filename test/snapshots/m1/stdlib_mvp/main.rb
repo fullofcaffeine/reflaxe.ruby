@@ -16,6 +16,21 @@ class Main
     puts(HXRuby.stringify(ENV["HXRUBY_STDLIB_MVP"]))
     puts(HXRuby.stringify((Dir.pwd.length > 0)))
     puts(HXRuby.stringify((ARGV.length >= 0)))
+    names = Haxe::Ds::StringMap.new()
+    names.set("ruby", 3)
+    puts(HXRuby.stringify(names.get("ruby")))
+    puts(HXRuby.stringify(names.exists("ruby")))
+    puts(HXRuby.stringify(names.remove("ruby")))
+    puts(HXRuby.stringify(names.exists("ruby")))
+    ids = Haxe::Ds::IntMap.new()
+    ids.set(7, "seven")
+    puts(HXRuby.stringify(ids.get(7)))
+    key = {"name" => "coffee"}
+    objects = Haxe::Ds::ObjectMap.new()
+    objects.set(key, "bean")
+    puts(HXRuby.stringify(objects.get(key)))
+    objects.clear()
+    puts(HXRuby.stringify(objects.exists(key)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

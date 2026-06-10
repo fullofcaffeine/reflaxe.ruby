@@ -1,33 +1,36 @@
 package haxe.ds;
 
+import ruby.NativeHash;
+import ruby.NativeIterator;
+
 class ObjectMap<K:{}, V> implements haxe.Constraints.IMap<K, V> {
-	final data:Map<K, V> = new Map();
+	final data:Dynamic;
 
-	public function new() {}
+	public function new() {
+		data = NativeHash.create();
+	}
 
-	public function set(key:K, value:V):Void data.set(key, value);
+	public function set(key:K, value:V):Void NativeHash.set(data, key, value);
 
-	public function get(key:K):Null<V> return data.get(key);
+	public function get(key:K):Null<V> return NativeHash.get(data, key);
 
-	public function exists(key:K):Bool return data.exists(key);
+	public function exists(key:K):Bool return NativeHash.exists(data, key);
 
-	public function remove(key:K):Bool return data.remove(key);
+	public function remove(key:K):Bool return NativeHash.remove(data, key);
 
-	public function keys():Iterator<K> return data.keys();
+	public function keys():Iterator<K> return new NativeIterator<K>(NativeHash.keys(data));
 
-	public function iterator():Iterator<V> return data.iterator();
+	public function iterator():Iterator<V> return new NativeIterator<V>(NativeHash.values(data));
 
-	public function keyValueIterator():KeyValueIterator<K, V> return data.keyValueIterator();
+	public function keyValueIterator():KeyValueIterator<K, V> return cast new NativeIterator<Dynamic>(NativeHash.entries(data));
 
 	public function copy():ObjectMap<K, V> {
 		var out = new ObjectMap<K, V>();
-		for (key in keys()) {
-			out.set(key, get(key));
-		}
+		NativeHash.copyInto(out.data, data);
 		return out;
 	}
 
-	public function toString():String return data.toString();
+	public function toString():String return NativeHash.toString(data);
 
-	public function clear():Void data.clear();
+	public function clear():Void NativeHash.clear(data);
 }
