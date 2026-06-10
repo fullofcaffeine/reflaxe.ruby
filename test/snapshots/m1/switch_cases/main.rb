@@ -5,8 +5,8 @@ class Main
     "Main"
   end
   def self.main()
-    number__hx16635 = 2
-    case number__hx16635
+    number__hx16679 = 2
+    case number__hx16679
     when 1
       puts(HXRuby.stringify("one"))
     when 2
@@ -14,8 +14,8 @@ class Main
     else
       puts(HXRuby.stringify("other"))
     end
-    color__hx16708 = Color.green()
-    case color__hx16708.__hx_index
+    color__hx16752 = Color.green()
+    case color__hx16752.__hx_index
     when 0
       puts(HXRuby.stringify("red"))
     when 1

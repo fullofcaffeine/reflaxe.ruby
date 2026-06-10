@@ -3,8 +3,8 @@
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
     "total": 31,
-    "implemented": 25,
-    "missing": 6,
+    "implemented": 26,
+    "missing": 5,
     "planned": 0,
     "deferred": 0,
     "byOwner": {
@@ -17,8 +17,8 @@
       },
       "std": {
         "total": 21,
-        "implemented": 18,
-        "missing": 3,
+        "implemented": 19,
+        "missing": 2,
         "planned": 0,
         "deferred": 0
       },
@@ -47,14 +47,6 @@
       "path": "std/_std/haxe/Json.cross.hx",
       "surface": "haxe.Json",
       "reason": "Use Ruby JSON runtime while preserving Haxe API."
-    },
-    {
-      "id": "std.math",
-      "owner": "std",
-      "status": "missing",
-      "path": "std/Math.cross.hx",
-      "surface": "Math",
-      "reason": "Map Haxe Math API to Ruby Math and numeric behavior."
     },
     {
       "id": "std.reflect",

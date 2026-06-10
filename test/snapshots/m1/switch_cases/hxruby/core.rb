@@ -4,6 +4,21 @@ require "cgi"
 require "uri"
 
 module HXRuby
+  RUBY_MATH_UNARY = {
+    sin: ::Math.method(:sin),
+    cos: ::Math.method(:cos),
+    tan: ::Math.method(:tan),
+    asin: ::Math.method(:asin),
+    acos: ::Math.method(:acos),
+    atan: ::Math.method(:atan),
+    exp: ::Math.method(:exp),
+    log: ::Math.method(:log),
+    sqrt: ::Math.method(:sqrt)
+  }.freeze
+  RUBY_MATH_BINARY = {
+    atan2: ::Math.method(:atan2)
+  }.freeze
+
   module_function
 
   def stringify(value)
@@ -55,6 +70,53 @@ module HXRuby
 
   def url_decode(value)
     CGI.unescape(value.to_s)
+  end
+
+  def math_abs(value)
+    value.abs
+  end
+
+  def math_min(left, right)
+    return Float::NAN if math_nan?(left) || math_nan?(right)
+
+    left < right ? left : right
+  end
+
+  def math_max(left, right)
+    return Float::NAN if math_nan?(left) || math_nan?(right)
+
+    left > right ? left : right
+  end
+
+  def math_unary(method, value)
+    RUBY_MATH_UNARY.fetch(method).call(value)
+  rescue Math::DomainError
+    Float::NAN
+  end
+
+  def math_binary(method, left, right)
+    RUBY_MATH_BINARY.fetch(method).call(left, right)
+  rescue Math::DomainError
+    Float::NAN
+  end
+
+  def math_pow(value, exponent)
+    result = value**exponent
+    result.is_a?(Complex) ? Float::NAN : result
+  rescue Math::DomainError
+    Float::NAN
+  end
+
+  def math_round(value)
+    (value + 0.5).floor
+  end
+
+  def math_finite?(value)
+    value.respond_to?(:finite?) && value.finite?
+  end
+
+  def math_nan?(value)
+    value.respond_to?(:nan?) && value.nan?
   end
 
   def is_of_type(value, type)

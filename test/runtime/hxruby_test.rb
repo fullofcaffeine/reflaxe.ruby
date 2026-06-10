@@ -61,4 +61,13 @@ class HXRubyRuntimeTest < Minitest::Test
     assert HXRuby.is_of_type(TestEnumForTypeCheck::Happy.new("Happy", 0), TestEnumForTypeCheck)
     refute HXRuby.is_of_type(nil, Dynamic)
   end
+
+  def test_math_helpers_preserve_haxe_shapes
+    assert_equal 0, HXRuby.math_round(-0.5)
+    assert_equal 1, HXRuby.math_round(0.5)
+    assert_equal 3.0, HXRuby.math_unary(:sqrt, 9)
+    assert HXRuby.math_nan?(HXRuby.math_unary(:sqrt, -1))
+    assert HXRuby.math_finite?(3.5)
+    refute HXRuby.math_finite?(Float::INFINITY)
+  end
 end

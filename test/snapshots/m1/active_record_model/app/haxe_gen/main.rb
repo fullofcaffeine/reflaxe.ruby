@@ -5,10 +5,10 @@ class Main
     "Main"
   end
   def self.main()
-    found__hx16680 = Models::Todo.where(title: "ship")
-    made__hx16681 = Models::Todo.create(title: "ship")
-    puts(HXRuby.stringify((found__hx16680 == nil)))
-    puts(HXRuby.stringify((made__hx16681 == nil)))
+    found__hx16724 = Models::Todo.where(title: "ship")
+    made__hx16725 = Models::Todo.create(title: "ship")
+    puts(HXRuby.stringify((found__hx16724 == nil)))
+    puts(HXRuby.stringify((made__hx16725 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

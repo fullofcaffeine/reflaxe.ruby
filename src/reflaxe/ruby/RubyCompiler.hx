@@ -119,7 +119,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var classBody:Array<RubyStatement> = [];
 		classBody.push(typeNameMetadata(fullTypeName(classType.pack, classType.name)));
 		for (field in varFields) {
-			classBody.push(compileVarField(field));
+			var mathConstant = mathConstantValue(classType.pack, classType.name, field.field.name);
+			classBody.push(mathConstant == null ? compileVarField(field) : compileMathConstantField(field.field.name, mathConstant));
 		}
 		for (field in funcFields) {
 			if (field.expr == null) {
@@ -139,7 +140,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			RubyComment("Generated type shell for Ruby output.")
 		];
 		statements = statements.concat(requirePreludeStatements(moduleRequires));
-		statements.push(wrapInModules(classType.pack, RubyClassDecl(RubyNaming.toConstantName(classType.name), classBody)));
+		statements.push(wrapInModules(classType.pack, rubyClassDeclaration(classType, classBody)));
 
 		if (classType.pack.length == 0 && classType.name == "Main" && hasStaticMain(funcFields)) {
 			didEmitMain = true;
@@ -197,6 +198,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			modulePath: pack == null ? [] : pack.copy(),
 			statements: statements
 		};
+	}
+
+	static function rubyClassDeclaration(classType:ClassType, body:Array<RubyStatement>):RubyStatement {
+		var constant = RubyNaming.toConstantName(classType.name);
+		if (fullTypeName(classType.pack, classType.name) == "Math") {
+			return RubyModuleDecl(constant, body);
+		}
+		return RubyClassDecl(constant, body);
 	}
 
 	function collectModuleRequires(meta:Null<haxe.macro.Type.MetaAccess>):RequireRegistry {
@@ -266,6 +275,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var initExpr = init == null ? compileUntypedConst(field.getDefaultUntypedExpr()) : compileExpr(init);
 		return RubyRawStatement("class << self\n  attr_accessor :" + name + "\nend\n@" + name + " = "
 			+ reflaxe.ruby.ast.RubyASTPrinter.printExpr(initExpr));
+	}
+
+	static function compileMathConstantField(name:String, value:String):RubyStatement {
+		return RubyRawStatement("def self." + RubyNaming.toMethodName(name) + "()\n  " + value + "\nend");
+	}
+
+	static function mathConstantValue(pack:Array<String>, typeName:String, fieldName:String):Null<String> {
+		if (fullTypeName(pack, typeName) != "Math") {
+			return null;
+		}
+		return switch (fieldName) {
+			case "PI": "::Math::PI";
+			case "NEGATIVE_INFINITY": "-Float::INFINITY";
+			case "POSITIVE_INFINITY": "Float::INFINITY";
+			case "NaN": "Float::NAN";
+			case _: null;
+		}
 	}
 
 	static function typeNameMetadata(name:String):RubyStatement {
@@ -539,6 +565,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(compileExpr(callee), "call", [for (param in params) compileExpr(param)]);
 			case TField(_, FEnum(enumRef, field)):
 				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name), []);
+			case TField(_, FStatic(classRef, fieldRef)):
+				var classType = classRef.get();
+				var constant = mathConstantValue(classType.pack, classType.name, fieldRef.get().name);
+				constant == null
+					? RubyRawExpr((rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name)) + "." + rubyFieldName(fieldRef.get().name, fieldRef.get().meta))
+					: RubyRawExpr(constant);
 			case TField(target, access):
 				RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case TTypeExpr(moduleType):

@@ -177,7 +177,7 @@
     {
       "id": "std.math",
       "owner": "std",
-      "status": "missing",
+      "status": "implemented",
       "path": "std/Math.cross.hx",
       "surface": "Math",
       "reason": "Map Haxe Math API to Ruby Math and numeric behavior."
