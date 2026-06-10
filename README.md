@@ -106,7 +106,7 @@ Build the release zip locally with:
 npm run release:haxelib-package
 ```
 
-Validate the package contents and compile the extracted `examples/hello_world` fixture with:
+Validate the package contents, compile the extracted `examples/hello_world` fixture, and smoke-test an installed `-lib reflaxe.ruby` consumer with:
 
 ```bash
 npm run test:haxelib-package

@@ -26,26 +26,32 @@ function ensureSemver(version) {
 
 function updateHxmlLibraryVersion(path, version) {
   const original = readUtf8(path)
-  const next = original.replace(
-    /^-D\s+reflaxe\.ruby=[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?\s*$/gm,
-    `-D reflaxe.ruby=${version}`
-  )
-  if (next === original) {
+  const pattern = /^-D\s+reflaxe\.ruby=[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?\s*$/gm
+  if (!pattern.test(original)) {
     throw new Error(`No reflaxe.ruby version define found to update in ${path}`)
   }
-  writeUtf8(path, next)
+  const next = original.replace(pattern, `-D reflaxe.ruby=${version}`)
+  if (next !== original) writeUtf8(path, next)
 }
 
 function updateRubyVersionConstant(path, version) {
   const original = readUtf8(path)
-  const next = original.replace(
-    /^\s*VERSION\s*=\s*"[^"]+"\s*$/m,
-    `  VERSION = "${version}"`
-  )
-  if (next === original) {
+  const pattern = /^\s*VERSION\s*=\s*"[^"]+"\s*$/m
+  if (!pattern.test(original)) {
     throw new Error(`No HXRuby::VERSION constant found to update in ${path}`)
   }
-  writeUtf8(path, next)
+  const next = original.replace(pattern, `  VERSION = "${version}"`)
+  if (next !== original) writeUtf8(path, next)
+}
+
+function updateReadmeCurrentVersion(path, version) {
+  const original = readUtf8(path)
+  const pattern = /The current `[^`]+` baseline supports/
+  if (!pattern.test(original)) {
+    throw new Error(`No current version baseline found to update in ${path}`)
+  }
+  const next = original.replace(pattern, `The current \`${version}\` baseline supports`)
+  if (next !== original) writeUtf8(path, next)
 }
 
 function main() {
@@ -76,6 +82,7 @@ function main() {
 
   updateHxmlLibraryVersion('haxe_libraries/reflaxe.ruby.hxml', version)
   updateRubyVersionConstant('lib/hxruby/version.rb', version)
+  updateReadmeCurrentVersion('README.md', version)
 }
 
 main()

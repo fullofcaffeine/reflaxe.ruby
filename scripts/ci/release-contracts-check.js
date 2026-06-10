@@ -31,6 +31,7 @@ const releaseWorkflow = readFileSync(".github/workflows/release.yml", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const haxelibPackageBuilder = readFileSync("scripts/release/build-haxelib-package.js", "utf8");
 const haxelibPackageCheck = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
+const versionSyncCheck = readFileSync("scripts/ci/version-sync-check.js", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const hxrubyGemspec = readFileSync("hxruby.gemspec", "utf8");
@@ -74,6 +75,7 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   expectIncludes(prepareCmd, "sync-versions.js ${nextRelease.version}", "@semantic-release/exec prepareCmd");
   expectIncludes(prepareCmd, "build-haxelib-package.js", "@semantic-release/exec prepareCmd");
   expectIncludes(prepareCmd, "build-gem-package.js", "@semantic-release/exec prepareCmd");
+  expectIncludes(readFileSync("scripts/release/sync-versions.js", "utf8"), "updateReadmeCurrentVersion", "sync-versions script");
 
   const gitPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/git");
   const assets = gitPlugin?.[1]?.assets ?? [];
@@ -124,6 +126,7 @@ expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-packa
 expectIncludes(packageJson.scripts["test:gem-package"] ?? "", "gem-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-package.js", "package.json scripts");
+expectIncludes(versionSyncCheck, "README current baseline", "version sync check");
 expectIncludes(haxelibPackageBuilder, `"zip", ["-X", "-q", "-@", outPath]`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
@@ -139,6 +142,7 @@ expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");
 expectIncludes(hxrubyTasks, 'require "rake"', "hxruby tasks");
 expectIncludes(readme, "npm run release:haxelib-package", "README Haxelib package docs");
 expectIncludes(readme, "npm run test:haxelib-package", "README Haxelib package docs");
+expectIncludes(readme, "-lib reflaxe.ruby", "README Haxelib package docs");
 expectIncludes(readme, "npm run release:gem-package", "README Ruby gem package docs");
 expectIncludes(readme, "npm run test:gem-package", "README Ruby gem package docs");
 expectIncludes(readme, "dist/reflaxe.ruby-*.zip", "README Haxelib package docs");
