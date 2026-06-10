@@ -17,6 +17,12 @@ function expectIncludes(haystack, needle, label) {
   }
 }
 
+function expectExcludes(haystack, needle, label) {
+  if (haystack.includes(needle)) {
+    fail(`${label} must not include ${needle}`);
+  }
+}
+
 const packageJson = readJson("package.json");
 const haxelibJson = readJson("haxelib.json");
 const haxerc = readJson(".haxerc");
@@ -82,10 +88,14 @@ for (const rubyVersion of ['"3.2"', '"3.3"', '"4.0"']) {
 }
 expectIncludes(ciWorkflow, "npx lix download haxe", "CI Haxe setup");
 expectIncludes(ciWorkflow, "npm test", "CI test step");
-expectIncludes(ciWorkflow, 'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"', "CI workflow");
+expectIncludes(ciWorkflow, "actions/checkout@v6", "CI workflow");
+expectIncludes(ciWorkflow, "actions/setup-node@v6", "CI workflow");
+expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 expectIncludes(releaseWorkflow, "npx semantic-release", "Release workflow");
 expectIncludes(releaseWorkflow, "fetch-depth: 0", "Release workflow");
-expectIncludes(releaseWorkflow, 'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"', "Release workflow");
+expectIncludes(releaseWorkflow, "actions/checkout@v6", "Release workflow");
+expectIncludes(releaseWorkflow, "actions/setup-node@v6", "Release workflow");
+expectExcludes(releaseWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "Release workflow");
 
 if (process.exitCode) {
   process.exit(process.exitCode);
