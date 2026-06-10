@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.2.2...v1.3.0) (2026-06-10)
+
+
+### Features
+
+* add Type reflection support ([de99e5e](https://github.com/fullofcaffeine/reflaxe.ruby/commit/de99e5eeacded324f0649b9a1516414f24f956c3))
+
 ## [1.2.2](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.2.1...v1.2.2) (2026-06-10)
 
 
