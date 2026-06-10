@@ -193,7 +193,7 @@
     {
       "id": "std.type",
       "owner": "std",
-      "status": "missing",
+      "status": "implemented",
       "path": "std/Type.cross.hx",
       "surface": "Type",
       "reason": "Runtime class and enum reflection for generated Ruby values."

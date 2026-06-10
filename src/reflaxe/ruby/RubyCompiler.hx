@@ -117,6 +117,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return compileRailsControllerImpl(classType, varFields, funcFields, moduleRequires);
 		}
 		var classBody:Array<RubyStatement> = [];
+		classBody.push(typeNameMetadata(fullTypeName(classType.pack, classType.name)));
 		for (field in varFields) {
 			classBody.push(compileVarField(field));
 		}
@@ -160,7 +161,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			RubyComment("Enum constructors use hxruby/data_define.rb for Data.define compatibility.")
 		];
 		statements = statements.concat(requirePreludeStatements(moduleRequires));
-		statements.push(wrapInModules(enumType.pack, RubyModuleDecl(RubyNaming.toConstantName(enumType.name), compileEnumBody(options))));
+		statements.push(wrapInModules(enumType.pack, RubyModuleDecl(RubyNaming.toConstantName(enumType.name), compileEnumBody(enumType, options))));
 		return {
 			modulePath: enumType.pack == null ? [] : enumType.pack.copy(),
 			statements: statements
@@ -267,19 +268,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			+ reflaxe.ruby.ast.RubyASTPrinter.printExpr(initExpr));
 	}
 
-	static function compileEnumBody(options:Array<EnumOptionData>):Array<RubyStatement> {
-		var out:Array<RubyStatement> = [];
+	static function typeNameMetadata(name:String):RubyStatement {
+		return RubyRawStatement("def self.__hx_name()\n  " + quoteRubyStringForCode(name) + "\nend");
+	}
+
+	static function compileEnumBody(enumType:EnumType, options:Array<EnumOptionData>):Array<RubyStatement> {
+		var out:Array<RubyStatement> = [typeNameMetadata(fullTypeName(enumType.pack, enumType.name))];
 		var index = 0;
+		var metadata:Array<String> = [];
 		for (option in options) {
 			var ctorName = RubyNaming.toConstantName(option.name);
 			var methodName = RubyNaming.toMethodName(option.name);
 			var argNames = [for (arg in option.args) RubyNaming.toLocalName(arg.name)];
+			metadata.push("{name: " + quoteRubyStringForCode(option.name) + ", index: " + Std.string(index) + ", method: " + rubySymbolLiteral(methodName)
+				+ ", arity: " + Std.string(argNames.length) + "}");
 			var dataFields = argNames.concat(["__hx_tag", "__hx_index"]);
 			out.push(RubyRawStatement(ctorName + " = Data.define(" + [for (name in dataFields) ":" + name].join(", ") + ")"));
 			var ctorArgs = argNames.concat([quoteRubyStringForCode(option.name), Std.string(index)]);
 			out.push(RubyRawStatement("def self." + methodName + "(" + argNames.join(", ") + ")\n  " + ctorName + ".new(" + ctorArgs.join(", ") + ")\nend"));
 			index++;
 		}
+		out.insert(1, RubyRawStatement("def self.__hx_constructs()\n  [" + metadata.join(", ") + "]\nend"));
 		if (out.length == 0) {
 			out.push(RubyComment("empty enum"));
 		}
@@ -493,6 +502,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TConst(TThis): RubyLocal("self");
 			case TConst(TSuper): RubyLocal("super");
 			case TLocal(v): RubyLocal(localName(v));
+			case TArray(target, index): RubyRawExpr(printInlineExpr(target) + "[" + printInlineExpr(index) + "]");
 			case TArrayDecl(values): RubyArray([for (value in values) compileExpr(value)]);
 			case TObjectDecl(fields): RubyHash([for (field in fields) {key: field.name, value: compileExpr(field.expr)}]);
 			case TBinop(op, lhs, rhs): RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
@@ -541,6 +551,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function compileAssignable(expr:TypedExpr):RubyExpr {
 		return switch (expr.expr) {
 			case TLocal(v): RubyLocal(localName(v));
+			case TArray(target, index): RubyRawExpr(printInlineExpr(target) + "[" + printInlineExpr(index) + "]");
 			case TField(target, access): RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case _: RubyRawExpr(printInlineExpr(expr));
 		}

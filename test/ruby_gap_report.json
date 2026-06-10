@@ -3,8 +3,8 @@
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
     "total": 31,
-    "implemented": 24,
-    "missing": 7,
+    "implemented": 25,
+    "missing": 6,
     "planned": 0,
     "deferred": 0,
     "byOwner": {
@@ -17,8 +17,8 @@
       },
       "std": {
         "total": 21,
-        "implemented": 17,
-        "missing": 4,
+        "implemented": 18,
+        "missing": 3,
         "planned": 0,
         "deferred": 0
       },
@@ -79,14 +79,6 @@
       "path": "std/_std/sys/FileSystem.hx",
       "surface": "sys.FileSystem",
       "reason": "Filesystem primitives backed by Ruby File, Dir, and FileUtils."
-    },
-    {
-      "id": "std.type",
-      "owner": "std",
-      "status": "missing",
-      "path": "std/Type.cross.hx",
-      "surface": "Type",
-      "reason": "Runtime class and enum reflection for generated Ruby values."
     }
   ]
 }

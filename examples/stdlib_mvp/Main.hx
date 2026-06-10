@@ -28,6 +28,27 @@ class Main {
 		var box:Dynamic = new StdTypeBox();
 		Sys.println(Std.isOfType(box, StdTypeBox));
 		Sys.println(Std.isOfType("ruby", StdTypeBox));
+		var boxClass = Type.getClass(box);
+		Sys.println(Type.getClassName(boxClass));
+		Sys.println(Type.getClassName(Type.resolveClass("StdTypeBox")));
+		var createdBox = Type.createInstance(cast boxClass, []);
+		Sys.println(Std.isOfType(createdBox, StdTypeBox));
+		var colorEnum = Type.getEnum(StdTypeColor.Red);
+		Sys.println(Type.getEnumName(colorEnum));
+		Sys.println(Type.getEnumConstructs(colorEnum).join("|"));
+		var rgb = Type.createEnum(colorEnum, "Rgb", [1, 2, 3]);
+		Sys.println(Type.enumConstructor(rgb));
+		Sys.println(Type.enumIndex(rgb));
+		var rgbParams = Type.enumParameters(rgb);
+		Sys.println(Std.string(rgbParams.length) + ":" + Std.string(rgbParams[0]) + ":" + Std.string(rgbParams[1]) + ":" + Std.string(rgbParams[2]));
+		Sys.println(Type.enumEq(rgb, StdTypeColor.Rgb(1, 2, 3)));
+		Sys.println(Type.enumEq(rgb, StdTypeColor.Rgb(1, 2, 4)));
+		Sys.println(Type.enumConstructor(Type.allEnums(colorEnum)[0]));
+		Sys.println(Type.enumConstructor(Type.typeof(null)));
+		Sys.println(Type.enumConstructor(Type.typeof(1)));
+		Sys.println(Type.enumConstructor(Type.typeof(1.5)));
+		Sys.println(Type.enumConstructor(Type.typeof(true)));
+		Sys.println(Type.enumConstructor(Type.typeof(StdTypeColor.Red)));
 
 		var names = new haxe.ds.StringMap<Int>();
 		names.set("ruby", 3);
@@ -65,4 +86,9 @@ class Main {
 
 class StdTypeBox {
 	public function new() {}
+}
+
+enum StdTypeColor {
+	Red;
+	Rgb(r:Int, g:Int, b:Int);
 }

@@ -6,6 +6,9 @@ require "set"
 require_relative "./support/native_date"
 require_relative "./support/native_time"
 class Main
+  def self.__hx_name()
+    "Main"
+  end
   def self.main()
     NativeJson.parse("{}")
     NativeDate.today()

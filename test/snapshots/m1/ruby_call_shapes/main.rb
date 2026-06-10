@@ -2,14 +2,17 @@
 # Generated type shell for Ruby output.
 require_relative "./support/native_interop"
 class Main
+  def self.__hx_name()
+    "Main"
+  end
   def self.main()
-    count__hx16592 = 2
+    count__hx16637 = 2
     puts(HXRuby.stringify(NativeInterop.describe(name: "ruby", count: 2)))
-    puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count__hx16592)))
-    NativeInterop.each([1, 2]) { |value__hx16665| puts(HXRuby.stringify(value__hx16665)) }
-    NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count__hx16592) do |value__hx16666|
+    puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count__hx16637)))
+    NativeInterop.each([1, 2]) { |value__hx16710| puts(HXRuby.stringify(value__hx16710)) }
+    NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count__hx16637) do |value__hx16711|
       Kernel.print("item=")
-      puts(HXRuby.stringify(value__hx16666))
+      puts(HXRuby.stringify(value__hx16711))
     end
     puts(HXRuby.stringify(NativeInterop.accept_symbol(:ready)))
     Kernel.puts("kernel")

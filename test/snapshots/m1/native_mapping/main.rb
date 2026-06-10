@@ -2,6 +2,9 @@
 # Generated type shell for Ruby output.
 require "json"
 class Main
+  def self.__hx_name()
+    "Main"
+  end
   def self.main()
     puts(HXRuby.stringify(JSON.generate({"name" => "ruby", "count" => 2})))
     puts(HXRuby.stringify(File.basename("/tmp/reflaxe.rb")))

@@ -2,6 +2,9 @@
 # Generated type shell for Ruby output.
 module Admin
   class TodoItem
+    def self.__hx_name()
+      "admin.TodoItem"
+    end
     attr_accessor :title
   end
 end
