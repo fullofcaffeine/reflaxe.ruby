@@ -18,6 +18,7 @@ function fail(message) {
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
+    env: options.env ?? process.env,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -27,6 +28,12 @@ function run(command, args, options = {}) {
     process.exit(result.status ?? 1);
   }
   return result;
+}
+
+function rubySupportsGemInstallCheck() {
+  const version = run("ruby", ["-e", "print RUBY_VERSION"]).stdout.trim();
+  const [major, minor] = version.split(".").map((part) => Number(part));
+  return major > 3 || (major === 3 && minor >= 2);
 }
 
 run("node", ["scripts/release/build-gem-package.js"]);
@@ -70,6 +77,31 @@ try {
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
   ].join("; ");
   run("ruby", ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
+
+  if (rubySupportsGemInstallCheck()) {
+    const gemHome = join(tempRoot, "gems");
+    const gemBin = join(tempRoot, "bin");
+    run("gem", ["install", "--local", gemPath, "--install-dir", gemHome, "--bindir", gemBin, "--no-document", "--force"]);
+
+    const installCheck = [
+      "require 'rubygems'",
+      `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
+      "require 'hxruby'",
+      `abort 'installed version mismatch' unless HXRuby::VERSION == ${JSON.stringify(packageJson.version)}`,
+      "abort 'installed stringify mismatch' unless HXRuby.stringify({ 'a' => 1 }) == '{\"a\"=>1}'",
+    ].join("; ");
+    const gemPathEnv = [gemHome, process.env.GEM_PATH].filter(Boolean).join(":");
+    run("ruby", ["-e", installCheck], {
+      env: {
+        ...process.env,
+        GEM_HOME: gemHome,
+        GEM_PATH: gemPathEnv,
+        PATH: `${gemBin}:${process.env.PATH}`,
+      },
+    });
+  } else {
+    process.stdout.write("[gem-package] Skipped gem install smoke on local Ruby < 3.2\n");
+  }
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });
 }

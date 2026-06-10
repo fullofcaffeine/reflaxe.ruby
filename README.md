@@ -122,7 +122,7 @@ Build the `hxruby` runtime gem locally with:
 npm run release:gem-package
 ```
 
-Validate the gem contents, runtime require path, and rake task registration with:
+Validate the gem contents, runtime require path, rake task registration, and local gem install behavior with:
 
 ```bash
 npm run test:gem-package
