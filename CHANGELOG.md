@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.0.0...v1.1.0) (2026-06-10)
+
+
+### Features
+
+* package hxruby runtime as gem ([e15de7b](https://github.com/fullofcaffeine/reflaxe.ruby/commit/e15de7b095e7c9a9575b2055d54683ba5892a794))
+
 # 1.0.0 (2026-06-10)
 
 
