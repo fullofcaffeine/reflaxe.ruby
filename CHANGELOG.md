@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.3.0...v1.4.0) (2026-06-10)
+
+
+### Features
+
+* add Math std support ([8ef41de](https://github.com/fullofcaffeine/reflaxe.ruby/commit/8ef41de479a9a8abac80eb8ca21a0f736fcc52cf))
+
 # [1.3.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.2.2...v1.3.0) (2026-06-10)
 
 
