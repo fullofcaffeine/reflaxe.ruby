@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { mkdtempSync, readFileSync, rmSync } = require("node:fs");
+const { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
@@ -79,6 +79,35 @@ try {
     "-main",
     "Main",
   ]);
+
+  const consumerRoot = join(tempRoot, "consumer");
+  const consumerSrc = join(consumerRoot, "src");
+  const consumerOutputDir = join(consumerRoot, "out");
+  mkdirSync(consumerSrc, { recursive: true });
+  writeFileSync(
+    join(consumerSrc, "Main.hx"),
+    'class Main { static function main():Void { Sys.println("Hello from installed reflaxe.ruby"); } }\n',
+  );
+
+  run("haxelib", ["newrepo"], { cwd: consumerRoot });
+  run("haxelib", ["install", archivePath, "--skip-dependencies", "--quiet"], { cwd: consumerRoot });
+  run("haxe", [
+    "-D",
+    `ruby_output=${consumerOutputDir}`,
+    "-D",
+    "reflaxe_runtime",
+    "-cp",
+    "src",
+    "-lib",
+    "reflaxe.ruby",
+    "-main",
+    "Main",
+  ], { cwd: consumerRoot });
+
+  const installedStdout = run("ruby", [join(consumerOutputDir, "main.rb")], { cwd: consumerRoot }).stdout;
+  if (installedStdout !== "Hello from installed reflaxe.ruby\n") {
+    fail(`installed haxelib stdout mismatch: ${JSON.stringify(installedStdout)}`);
+  }
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });
 }

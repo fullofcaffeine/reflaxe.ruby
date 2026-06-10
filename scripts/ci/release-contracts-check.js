@@ -30,6 +30,7 @@ const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const releaseWorkflow = readFileSync(".github/workflows/release.yml", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const haxelibPackageBuilder = readFileSync("scripts/release/build-haxelib-package.js", "utf8");
+const haxelibPackageCheck = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const hxrubyGemspec = readFileSync("hxruby.gemspec", "utf8");
@@ -126,6 +127,9 @@ expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-pack
 expectIncludes(haxelibPackageBuilder, `"zip", ["-X", "-q", "-@", outPath]`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
+expectIncludes(haxelibPackageCheck, "haxelib\", [\"newrepo\"]", "Haxelib package check");
+expectIncludes(haxelibPackageCheck, "\"-lib\"", "Haxelib package check");
+expectIncludes(haxelibPackageCheck, "Hello from installed reflaxe.ruby", "Haxelib package check");
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");
