@@ -16,6 +16,7 @@ concurrency:
 
 env:
   NODE_VERSION: "20"
+  RUBY_VERSION: "3.3"
 
 jobs:
   release:
@@ -42,6 +43,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
 
       - name: Install npm dependencies
         run: npm install --ignore-scripts --no-audit --no-fund

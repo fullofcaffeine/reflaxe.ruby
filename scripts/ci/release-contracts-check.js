@@ -135,6 +135,8 @@ expectIncludes(releaseWorkflow, "npx semantic-release", "Release workflow");
 expectIncludes(releaseWorkflow, "fetch-depth: 0", "Release workflow");
 expectIncludes(releaseWorkflow, "actions/checkout@v6", "Release workflow");
 expectIncludes(releaseWorkflow, "actions/setup-node@v6", "Release workflow");
+expectIncludes(releaseWorkflow, "ruby/setup-ruby@v1", "Release workflow");
+expectIncludes(releaseWorkflow, 'RUBY_VERSION: "3.3"', "Release workflow");
 expectExcludes(releaseWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "Release workflow");
 
 if (process.exitCode) {
