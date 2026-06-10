@@ -5,6 +5,6 @@ class HxException < StandardError
 
   def initialize(value)
     @value = value
-    super(value.to_s)
+    super(defined?(HXRuby) ? HXRuby.stringify(value) : value.to_s)
   end
 end
