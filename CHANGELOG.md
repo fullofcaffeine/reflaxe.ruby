@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.1.0...v1.2.0) (2026-06-10)
+
+
+### Features
+
+* back haxe maps with ruby hashes ([6cff778](https://github.com/fullofcaffeine/reflaxe.ruby/commit/6cff778a03d901c7ff6fd274174b50e41274f42d))
+
 # [1.1.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.0.0...v1.1.0) (2026-06-10)
 
 
