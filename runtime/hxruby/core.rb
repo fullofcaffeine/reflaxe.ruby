@@ -14,8 +14,21 @@ module HXRuby
       "true"
     when false
       "false"
+    when Array, Hash
+      stable_inspect(value)
     else
       value.to_s
+    end
+  end
+
+  def stable_inspect(value)
+    case value
+    when Array
+      "[" + value.map { |entry| stable_inspect(entry) }.join(", ") + "]"
+    when Hash
+      "{" + value.map { |key, entry| "#{stable_inspect(key)}=>#{stable_inspect(entry)}" }.join(", ") + "}"
+    else
+      value.inspect
     end
   end
 
