@@ -2,8 +2,8 @@
 # Generated type shell for Ruby output.
 class Main
   def self.main()
-    number__hx16571 = 2
-    case number__hx16571
+    number__hx16590 = 2
+    case number__hx16590
     when 1
       puts(HXRuby.stringify("one"))
     when 2
@@ -11,8 +11,8 @@ class Main
     else
       puts(HXRuby.stringify("other"))
     end
-    color__hx16644 = Color.green()
-    case color__hx16644.__hx_index
+    color__hx16663 = Color.green()
+    case color__hx16663.__hx_index
     when 0
       puts(HXRuby.stringify("red"))
     when 1

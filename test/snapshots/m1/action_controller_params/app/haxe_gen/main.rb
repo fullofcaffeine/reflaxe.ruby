@@ -2,8 +2,8 @@
 # Generated type shell for Ruby output.
 class Main
   def self.main()
-    controller__hx16704 = nil
-    puts(HXRuby.stringify((controller__hx16704 == nil)))
+    controller__hx16723 = nil
+    puts(HXRuby.stringify((controller__hx16723 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

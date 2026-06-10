@@ -2,8 +2,8 @@
 # Generated type shell for Ruby output.
 class Main
   def self.main()
-    value__hx16571 = MaybeInt.some(41)
-    empty__hx16572 = MaybeInt.none()
+    value__hx16590 = MaybeInt.some(41)
+    empty__hx16591 = MaybeInt.none()
     puts(HXRuby.stringify("constructed"))
   end
 end

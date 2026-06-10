@@ -2,8 +2,8 @@
 # Generated type shell for Ruby output.
 class Main
   def self.main()
-    add_one__hx16572 = ->(x__hx16571) { (x__hx16571 + 1) }
-    puts(HXRuby.stringify(add_one__hx16572.call(2)))
+    add_one__hx16591 = ->(x__hx16590) { (x__hx16590 + 1) }
+    puts(HXRuby.stringify(add_one__hx16591.call(2)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

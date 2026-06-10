@@ -57,6 +57,19 @@ module HXRuby
     CGI.unescape(value.to_s)
   end
 
+  def is_of_type(value, type)
+    return !value.nil? if haxe_type?(type, :Dynamic)
+    return value.is_a?(Integer) if haxe_type?(type, :Int)
+    return value.is_a?(Numeric) if haxe_type?(type, :Float_)
+    return value == true || value == false if haxe_type?(type, :Bool)
+    return value.is_a?(String) if type.equal?(String)
+    return value.is_a?(Array) if type.equal?(Array)
+    return value.is_a?(type) if type.is_a?(Class)
+    return enum_value_of?(value, type) if type.is_a?(Module)
+
+    false
+  end
+
   def type_name(value)
     value.class.name || value.class.to_s
   end
@@ -67,5 +80,16 @@ module HXRuby
 
   def enum_index(value)
     value.respond_to?(:__hx_index) ? value.__hx_index : nil
+  end
+
+  def haxe_type?(type, name)
+    Object.const_defined?(name, false) && type.equal?(Object.const_get(name, false))
+  end
+
+  def enum_value_of?(value, type)
+    return false if value.nil? || type.name.nil? || !value.respond_to?(:__hx_tag)
+
+    class_name = value.class.name
+    !class_name.nil? && class_name.start_with?("#{type.name}::")
   end
 end

@@ -2,10 +2,10 @@
 # Generated type shell for Ruby output.
 class Main
   def self.main()
-    found__hx16616 = Models::Todo.where(title: "ship")
-    made__hx16617 = Models::Todo.create(title: "ship")
-    puts(HXRuby.stringify((found__hx16616 == nil)))
-    puts(HXRuby.stringify((made__hx16617 == nil)))
+    found__hx16635 = Models::Todo.where(title: "ship")
+    made__hx16636 = Models::Todo.create(title: "ship")
+    puts(HXRuby.stringify((found__hx16635 == nil)))
+    puts(HXRuby.stringify((made__hx16636 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

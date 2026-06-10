@@ -5,6 +5,16 @@ require_relative "../../runtime/hxruby/core"
 require_relative "../../runtime/hxruby/data_define"
 require_relative "../../runtime/hxruby/hx_exception"
 
+module Int; end unless defined?(Int)
+module Float_; end unless defined?(Float_)
+module Bool; end unless defined?(Bool)
+module Dynamic; end unless defined?(Dynamic)
+module TestEnumForTypeCheck
+  Happy = Data.define(:__hx_tag, :__hx_index)
+end
+
+class TestClassForTypeCheck; end
+
 class HXRubyRuntimeTest < Minitest::Test
   def test_stringify_matches_haxe_basics
     assert_equal "null", HXRuby.stringify(nil)
@@ -38,5 +48,17 @@ class HXRubyRuntimeTest < Minitest::Test
 
     assert_equal({ "message" => "boom" }, error.value)
     assert_equal "{\"message\"=>\"boom\"}", error.message
+  end
+
+  def test_is_of_type_matches_core_haxe_shapes
+    assert HXRuby.is_of_type(1, Int)
+    assert HXRuby.is_of_type(1, Float_)
+    refute HXRuby.is_of_type(1.5, Int)
+    assert HXRuby.is_of_type("ruby", String)
+    assert HXRuby.is_of_type(true, Bool)
+    assert HXRuby.is_of_type([1, 2], Array)
+    assert HXRuby.is_of_type(TestClassForTypeCheck.new, TestClassForTypeCheck)
+    assert HXRuby.is_of_type(TestEnumForTypeCheck::Happy.new("Happy", 0), TestEnumForTypeCheck)
+    refute HXRuby.is_of_type(nil, Dynamic)
   end
 end

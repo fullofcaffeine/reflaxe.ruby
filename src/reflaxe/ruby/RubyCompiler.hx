@@ -585,6 +585,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (injected != null) {
 			return injected;
 		}
+		if (isIdentifierCallee(callee, "__is__")) {
+			return RubyCall(RubyLocal("HXRuby"), "is_of_type", [compileParam(params, 0), compileParam(params, 1)]);
+		}
 		var info = staticCallInfo(callee);
 		if (info == null) {
 			return null;
@@ -595,6 +598,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch [info.owner, info.name] {
 			case ["Std", "string"]:
 				RubyCall(RubyLocal("HXRuby"), "stringify", [compileParam(params, 0)]);
+			case ["Std", "is"] | ["Std", "isOfType"]:
+				compileStdIsOfType(params);
 			case ["Std", "parseInt"]:
 				RubyCall(RubyLocal("HXRuby"), "parse_int", [compileParam(params, 0)]);
 			case ["Std", "parseFloat"]:
@@ -641,6 +646,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(RubyLocal("HXRuby"), "url_decode", [compileParam(params, 0)]);
 			case _:
 				null;
+		}
+	}
+
+	static function compileStdIsOfType(params:Array<TypedExpr>):RubyExpr {
+		return RubyCall(RubyLocal("HXRuby"), "is_of_type", [compileParam(params, 0), compileTypeCheckParam(params, 1)]);
+	}
+
+	static function compileTypeCheckParam(params:Array<TypedExpr>, index:Int):RubyExpr {
+		if (index >= params.length) {
+			return RubyNil;
+		}
+		return switch (params[index].expr) {
+			case TTypeExpr(moduleType):
+				RubyLocal(moduleTypeName(moduleType));
+			case _:
+				compileExpr(params[index]);
 		}
 	}
 
@@ -704,11 +725,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function isRubyInjectionCallee(callee:TypedExpr):Bool {
+		return isIdentifierCallee(callee, "__ruby__");
+	}
+
+	static function isIdentifierCallee(callee:TypedExpr, name:String):Bool {
 		return switch (callee.expr) {
-			case TIdent("__ruby__"): true;
-			case TLocal(variable) if (variable.name == "__ruby__"): true;
+			case TIdent(value) if (value == name): true;
+			case TLocal(variable) if (variable.name == name): true;
 			case TField(_, access):
-				fieldAccessName(access) == "__ruby__";
+				fieldAccessName(access) == name;
 			case _:
 				false;
 		}
@@ -953,7 +978,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (moduleType) {
 			case TClassDecl(classRef):
 				var classType = classRef.get();
-				rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name);
+				coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name);
 			case TEnumDecl(enumRef):
 				var enumType = enumRef.get();
 				rubyNativeName(enumType.meta) ?? rubyConstantPath(enumType.pack, enumType.name);
@@ -963,6 +988,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TAbstract(abstractRef):
 				var abstractType = abstractRef.get();
 				rubyNativeName(abstractType.meta) ?? rubyConstantPath(abstractType.pack, abstractType.name);
+		}
+	}
+
+	static function coreRubyTypeName(pack:Array<String>, name:String):Null<String> {
+		return switch (fullTypeName(pack, name)) {
+			case "String": "String";
+			case "Array": "Array";
+			case _: null;
 		}
 	}
 

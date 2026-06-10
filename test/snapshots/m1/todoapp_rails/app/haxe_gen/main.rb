@@ -2,10 +2,10 @@
 # Generated type shell for Ruby output.
 class Main
   def self.main()
-    todo__hx16753 = nil
-    controller__hx16754 = nil
-    puts(HXRuby.stringify((todo__hx16753 == nil)))
-    puts(HXRuby.stringify((controller__hx16754 == nil)))
+    todo__hx16772 = nil
+    controller__hx16773 = nil
+    puts(HXRuby.stringify((todo__hx16772 == nil)))
+    puts(HXRuby.stringify((controller__hx16773 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

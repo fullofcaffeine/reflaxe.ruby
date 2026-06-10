@@ -14,6 +14,20 @@ class Main {
 		Sys.println(Sys.getEnv("HXRUBY_STDLIB_MVP"));
 		Sys.println(Sys.getCwd().length > 0);
 		Sys.println(Sys.args().length >= 0);
+		Sys.println(Std.isOfType("ruby", String));
+		Sys.println(Std.isOfType(7, Int));
+		Sys.println(Std.isOfType(7, Float));
+		Sys.println(Std.isOfType(7.5, Int));
+		Sys.println(Std.is(true, Bool));
+		Sys.println(Std.isOfType([1, 2], Array));
+		Sys.println(Std.isOfType(null, Dynamic));
+		var stringType:Dynamic = String;
+		Sys.println(Std.isOfType("dynamic", stringType));
+		var arrayType:Dynamic = Array;
+		Sys.println(Std.isOfType([3, 4], arrayType));
+		var box:Dynamic = new StdTypeBox();
+		Sys.println(Std.isOfType(box, StdTypeBox));
+		Sys.println(Std.isOfType("ruby", StdTypeBox));
 
 		var names = new haxe.ds.StringMap<Int>();
 		names.set("ruby", 3);
@@ -47,4 +61,8 @@ class Main {
 		objects.clear();
 		Sys.println(objects.exists(key));
 	}
+}
+
+class StdTypeBox {
+	public function new() {}
 }

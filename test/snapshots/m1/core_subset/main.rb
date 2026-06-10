@@ -2,16 +2,16 @@
 # Generated type shell for Ruby output.
 class Main
   def self.main()
-    total__hx16571 = 7
-    if (total__hx16571 > 5)
+    total__hx16590 = 7
+    if (total__hx16590 > 5)
       puts(HXRuby.stringify("big"))
     else
       puts(HXRuby.stringify("small"))
     end
-    i__hx16644 = 0
-    while (i__hx16644 < 2)
+    i__hx16663 = 0
+    while (i__hx16663 < 2)
       puts(HXRuby.stringify("loop"))
-      i__hx16644 = (i__hx16644 + 1)
+      i__hx16663 = (i__hx16663 + 1)
     end
     puts(HXRuby.stringify([1, 2, 3]))
     puts(HXRuby.stringify({"name" => "ruby", "count" => 3}))
