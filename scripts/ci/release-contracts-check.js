@@ -60,6 +60,11 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
     }
   }
 
+  const execPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/exec");
+  const prepareCmd = execPlugin?.[1]?.prepareCmd ?? "";
+  expectIncludes(prepareCmd, "sync-versions.js ${nextRelease.version}", "@semantic-release/exec prepareCmd");
+  expectIncludes(prepareCmd, "build-haxelib-package.js", "@semantic-release/exec prepareCmd");
+
   const gitPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/git");
   const assets = gitPlugin?.[1]?.assets ?? [];
   const releaseMessage = gitPlugin?.[1]?.message ?? "";
@@ -78,6 +83,15 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
     if (!assets.includes(requiredAsset)) {
       fail(`release git assets missing required file: ${requiredAsset}`);
     }
+  }
+
+  const githubPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/github");
+  const githubAssets = githubPlugin?.[1]?.assets ?? [];
+  if (!githubAssets.some((asset) => asset?.path === "dist/reflaxe.ruby-*.zip")) {
+    fail("@semantic-release/github assets must include the Haxelib package zip");
+  }
+  if (!githubAssets.some((asset) => asset?.label?.includes("${nextRelease.version}"))) {
+    fail("@semantic-release/github asset label must include the release version");
   }
 }
 

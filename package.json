@@ -72,7 +72,7 @@
       [
         "@semantic-release/exec",
         {
-          "prepareCmd": "node scripts/release/sync-versions.js ${nextRelease.version}"
+          "prepareCmd": "node scripts/release/sync-versions.js ${nextRelease.version} && node scripts/release/build-haxelib-package.js"
         }
       ],
       [
@@ -88,7 +88,17 @@
           "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
         }
       ],
-      "@semantic-release/github"
+      [
+        "@semantic-release/github",
+        {
+          "assets": [
+            {
+              "path": "dist/reflaxe.ruby-*.zip",
+              "label": "reflaxe.ruby ${nextRelease.version} haxelib package"
+            }
+          ]
+        }
+      ]
     ]
   }
 }
