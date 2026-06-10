@@ -133,6 +133,7 @@ expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package build
 expectIncludes(haxelibPackageCheck, "haxelib\", [\"newrepo\"]", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "\"-lib\"", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "Hello from installed reflaxe.ruby", "Haxelib package check");
+expectIncludes(haxelibPackageCheck, "TODO: lower", "Haxelib package check");
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");

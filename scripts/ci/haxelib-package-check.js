@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
@@ -27,6 +27,29 @@ function run(command, args, options = {}) {
     process.exit(result.status ?? 1);
   }
   return result;
+}
+
+function assertNoTodoLowerRubyFiles(dir) {
+  for (const path of rubyFilesUnder(dir)) {
+    const content = readFileSync(path, "utf8");
+    if (content.includes("TODO: lower")) {
+      fail(`generated Ruby contains internal TODO-lower marker: ${path}`);
+    }
+  }
+}
+
+function rubyFilesUnder(dir) {
+  const out = [];
+  for (const entry of readdirSync(dir)) {
+    const path = join(dir, entry);
+    const stat = statSync(path);
+    if (stat.isDirectory()) {
+      out.push(...rubyFilesUnder(path));
+    } else if (path.endsWith(".rb")) {
+      out.push(path);
+    }
+  }
+  return out;
 }
 
 run("node", ["scripts/release/build-haxelib-package.js"]);
@@ -79,6 +102,7 @@ try {
     "-main",
     "Main",
   ]);
+  assertNoTodoLowerRubyFiles(outputDir);
 
   const consumerRoot = join(tempRoot, "consumer");
   const consumerSrc = join(consumerRoot, "src");
@@ -103,6 +127,7 @@ try {
     "-main",
     "Main",
   ], { cwd: consumerRoot });
+  assertNoTodoLowerRubyFiles(consumerOutputDir);
 
   const installedStdout = run("ruby", [join(consumerOutputDir, "main.rb")], { cwd: consumerRoot }).stdout;
   if (installedStdout !== "Hello from installed reflaxe.ruby\n") {

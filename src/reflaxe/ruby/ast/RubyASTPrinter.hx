@@ -82,7 +82,7 @@ class RubyASTPrinter {
 
 	static function writeBody(lines:Array<String>, body:Array<RubyStatement>, indentLevel:Int):Void {
 		if (body == null || body.length == 0) {
-			lines.push(indentation(indentLevel) + "# TODO: lower Haxe members");
+			lines.push(indentation(indentLevel) + "# No Ruby members emitted.");
 			return;
 		}
 		for (statement in body) {
