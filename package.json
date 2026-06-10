@@ -6,7 +6,7 @@
   "description": "Reflaxe-based Ruby target for Haxe.",
   "scripts": {
     "postinstall": "lix download",
-    "test": "npm run ci:version-sync && npm run ci:release-contracts && npm run test:haxe-build-context && npm run test:haxe-compiler-shell && npm run test:ruby-naming && npm run test:hello-world && npm run test:core-subset && npm run test:class-members && npm run test:lambda-values && npm run test:enum-adt && npm run test:switch-cases && npm run test:exception-flow && npm run test:runtime-core && npm run test:runtime-minitest && npm run test:stdlib-mvp && npm run test:require-registry && npm run test:native-mapping && npm run test:ruby-call-shapes && npm run test:ruby-interop && npm run test:rails-autoload && npm run test:active-record-model && npm run test:action-controller-params && npm run test:todoapp-rails && npm run test:rails-integration && npm run test:routes-generator && npm run test:scaffold-cli && npm run test:strict-boundaries && npm run test:snapshots && npm run test:stdlib-inventory && npm run test:gap-report && npm run test:haxelib-package",
+    "test": "npm run ci:version-sync && npm run ci:release-contracts && npm run test:haxe-build-context && npm run test:haxe-compiler-shell && npm run test:ruby-naming && npm run test:hello-world && npm run test:core-subset && npm run test:class-members && npm run test:lambda-values && npm run test:enum-adt && npm run test:switch-cases && npm run test:exception-flow && npm run test:runtime-core && npm run test:runtime-minitest && npm run test:stdlib-mvp && npm run test:require-registry && npm run test:native-mapping && npm run test:ruby-call-shapes && npm run test:ruby-interop && npm run test:rails-autoload && npm run test:active-record-model && npm run test:action-controller-params && npm run test:todoapp-rails && npm run test:rails-integration && npm run test:routes-generator && npm run test:scaffold-cli && npm run test:strict-boundaries && npm run test:snapshots && npm run test:stdlib-inventory && npm run test:gap-report && npm run test:haxelib-package && npm run test:gem-package",
     "ci:version-sync": "node scripts/ci/version-sync-check.js",
     "ci:release-contracts": "node scripts/ci/release-contracts-check.js",
     "test:haxe-build-context": "haxe test/build_context_compile.hxml",
@@ -42,8 +42,10 @@
     "test:stdlib-inventory": "node scripts/ci/stdlib-inventory-check.js",
     "test:gap-report": "node scripts/ci/gap-report-check.js",
     "test:haxelib-package": "node scripts/ci/haxelib-package-check.js",
+    "test:gem-package": "node scripts/ci/gem-package-check.js",
     "release:sync-versions": "node scripts/release/sync-versions.js",
     "release:haxelib-package": "node scripts/release/build-haxelib-package.js",
+    "release:gem-package": "node scripts/release/build-gem-package.js",
     "release": "semantic-release",
     "release:dry-run": "semantic-release --dry-run"
   },
@@ -72,7 +74,7 @@
       [
         "@semantic-release/exec",
         {
-          "prepareCmd": "node scripts/release/sync-versions.js ${nextRelease.version} && node scripts/release/build-haxelib-package.js"
+          "prepareCmd": "node scripts/release/sync-versions.js ${nextRelease.version} && node scripts/release/build-haxelib-package.js && node scripts/release/build-gem-package.js"
         }
       ],
       [
@@ -81,7 +83,9 @@
           "assets": [
             "package.json",
             "haxelib.json",
+            "hxruby.gemspec",
             "haxe_libraries/reflaxe.ruby.hxml",
+            "lib/hxruby/version.rb",
             "README.md",
             "CHANGELOG.md"
           ],
@@ -95,6 +99,10 @@
             {
               "path": "dist/reflaxe.ruby-*.zip",
               "label": "reflaxe.ruby ${nextRelease.version} haxelib package"
+            },
+            {
+              "path": "dist/hxruby-*.gem",
+              "label": "hxruby ${nextRelease.version} Ruby gem"
             }
           ]
         }

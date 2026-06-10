@@ -93,6 +93,7 @@ npm run test:snapshots
 npm run test:strict-boundaries
 npm run ci:version-sync
 npm run ci:release-contracts
+npm run test:gem-package
 ```
 
 Snapshot tests compile with `reflaxe_ruby_strict_examples`, compare committed Ruby output, reject CRLF/trailing-newline/path leaks, and compile each snapshot case twice to catch non-deterministic output.
@@ -112,6 +113,31 @@ npm run test:haxelib-package
 ```
 
 Semantic-release runs the same package builder during release preparation and attaches `dist/reflaxe.ruby-*.zip` to the GitHub release.
+
+## Ruby Gem Package
+
+Build the `hxruby` runtime gem locally with:
+
+```bash
+npm run release:gem-package
+```
+
+Validate the gem contents, runtime require path, and rake task registration with:
+
+```bash
+npm run test:gem-package
+```
+
+The gem exposes `require "hxruby"` for runtime helpers and `require "hxruby/tasks"` for Rails-oriented rake tasks:
+
+```bash
+rake hxruby:compile
+rake hxruby:watch
+rake hxruby:gen:routes
+rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
+```
+
+Semantic-release builds the gem during release preparation and attaches `dist/hxruby-*.gem` to the GitHub release.
 
 ## Gap Report
 

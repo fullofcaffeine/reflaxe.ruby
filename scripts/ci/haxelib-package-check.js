@@ -36,7 +36,10 @@ const entrySet = new Set(entries);
 
 for (const required of [
   "haxelib.json",
+  "hxruby.gemspec",
   "extraParams.hxml",
+  "lib/hxruby.rb",
+  "lib/hxruby/version.rb",
   "src/reflaxe/ruby/RubyCompiler.hx",
   "src/reflaxe/ruby/CompilerBootstrap.hx",
   "std/Std.cross.hx",

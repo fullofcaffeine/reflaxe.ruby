@@ -30,6 +30,8 @@ const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const releaseWorkflow = readFileSync(".github/workflows/release.yml", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const haxelibPackageBuilder = readFileSync("scripts/release/build-haxelib-package.js", "utf8");
+const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
+const hxrubyGemspec = readFileSync("hxruby.gemspec", "utf8");
 const rubyHxml = readFileSync("haxe_libraries/reflaxe.ruby.hxml", "utf8");
 
 if (packageJson.name !== "reflaxe-ruby") {
@@ -66,6 +68,7 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   const prepareCmd = execPlugin?.[1]?.prepareCmd ?? "";
   expectIncludes(prepareCmd, "sync-versions.js ${nextRelease.version}", "@semantic-release/exec prepareCmd");
   expectIncludes(prepareCmd, "build-haxelib-package.js", "@semantic-release/exec prepareCmd");
+  expectIncludes(prepareCmd, "build-gem-package.js", "@semantic-release/exec prepareCmd");
 
   const gitPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/git");
   const assets = gitPlugin?.[1]?.assets ?? [];
@@ -81,7 +84,7 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
       fail(`release asset does not exist: ${asset}`);
     }
   }
-  for (const requiredAsset of ["package.json", "haxelib.json", "haxe_libraries/reflaxe.ruby.hxml", "README.md", "CHANGELOG.md"]) {
+  for (const requiredAsset of ["package.json", "haxelib.json", "hxruby.gemspec", "haxe_libraries/reflaxe.ruby.hxml", "lib/hxruby/version.rb", "README.md", "CHANGELOG.md"]) {
     if (!assets.includes(requiredAsset)) {
       fail(`release git assets missing required file: ${requiredAsset}`);
     }
@@ -91,6 +94,9 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   const githubAssets = githubPlugin?.[1]?.assets ?? [];
   if (!githubAssets.some((asset) => asset?.path === "dist/reflaxe.ruby-*.zip")) {
     fail("@semantic-release/github assets must include the Haxelib package zip");
+  }
+  if (!githubAssets.some((asset) => asset?.path === "dist/hxruby-*.gem")) {
+    fail("@semantic-release/github assets must include the hxruby gem");
   }
   if (!githubAssets.some((asset) => asset?.label?.includes("${nextRelease.version}"))) {
     fail("@semantic-release/github asset label must include the release version");
@@ -108,12 +114,23 @@ expectIncludes(ciWorkflow, "actions/checkout@v6", "CI workflow");
 expectIncludes(ciWorkflow, "actions/setup-node@v6", "CI workflow");
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 expectIncludes(packageJson.scripts.test, "test:haxelib-package", "npm test");
+expectIncludes(packageJson.scripts.test, "test:gem-package", "npm test");
 expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-package-check.js", "package.json scripts");
+expectIncludes(packageJson.scripts["test:gem-package"] ?? "", "gem-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
+expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-package.js", "package.json scripts");
 expectIncludes(haxelibPackageBuilder, `"zip", ["-X", "-q", "-@", outPath]`, "Haxelib package builder");
+expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");
+expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
+expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
+expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
+expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.2"', "hxruby.gemspec");
 expectIncludes(readme, "npm run release:haxelib-package", "README Haxelib package docs");
 expectIncludes(readme, "npm run test:haxelib-package", "README Haxelib package docs");
+expectIncludes(readme, "npm run release:gem-package", "README Ruby gem package docs");
+expectIncludes(readme, "npm run test:gem-package", "README Ruby gem package docs");
 expectIncludes(readme, "dist/reflaxe.ruby-*.zip", "README Haxelib package docs");
+expectIncludes(readme, "dist/hxruby-*.gem", "README Ruby gem package docs");
 expectIncludes(releaseWorkflow, "npx semantic-release", "Release workflow");
 expectIncludes(releaseWorkflow, "fetch-depth: 0", "Release workflow");
 expectIncludes(releaseWorkflow, "actions/checkout@v6", "Release workflow");

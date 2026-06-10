@@ -8,33 +8,13 @@ const root = resolve(__dirname, "..", "..");
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 const haxelibJson = JSON.parse(readFileSync(join(root, "haxelib.json"), "utf8"));
 const version = haxelibJson.version;
-const outPath = join(root, "dist", `reflaxe.ruby-${version}.zip`);
+const outPath = join(root, "dist", `hxruby-${version}.gem`);
 
-const includePrefixes = [
-  "src/",
-  "std/",
-  "runtime/",
-  "lib/",
-  "vendor/reflaxe/",
-  "docs/",
-  "examples/",
-  "haxe_libraries/",
-];
-const includeFiles = new Set([
-  "haxelib.json",
-  "hxruby.gemspec",
-  "extraParams.hxml",
-  "README.md",
-  "CHANGELOG.md",
-  "LICENSE",
-]);
-
-function run(command, args, options = {}) {
+function run(command, args) {
   const result = spawnSync(command, args, {
     cwd: root,
     encoding: "utf8",
-    input: options.input,
-    stdio: options.input == null ? ["ignore", "pipe", "pipe"] : ["pipe", "pipe", "pipe"],
+    stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
@@ -49,15 +29,8 @@ if (packageJson.version !== haxelibJson.version) {
   process.exit(1);
 }
 
-const files = run("git", ["ls-files"]).stdout
-  .trim()
-  .split("\n")
-  .filter(Boolean)
-  .filter((path) => includeFiles.has(path) || includePrefixes.some((prefix) => path.startsWith(prefix)))
-  .sort();
-
 mkdirSync(dirname(outPath), { recursive: true });
 rmSync(outPath, { force: true });
-run("zip", ["-X", "-q", "-@", outPath], { input: `${files.join("\n")}\n` });
+run("gem", ["build", "hxruby.gemspec", "--output", outPath]);
 
 console.log(outPath);

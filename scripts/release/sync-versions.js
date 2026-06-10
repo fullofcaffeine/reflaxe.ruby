@@ -36,6 +36,18 @@ function updateHxmlLibraryVersion(path, version) {
   writeUtf8(path, next)
 }
 
+function updateRubyVersionConstant(path, version) {
+  const original = readUtf8(path)
+  const next = original.replace(
+    /^\s*VERSION\s*=\s*"[^"]+"\s*$/m,
+    `  VERSION = "${version}"`
+  )
+  if (next === original) {
+    throw new Error(`No HXRuby::VERSION constant found to update in ${path}`)
+  }
+  writeUtf8(path, next)
+}
+
 function main() {
   const version = process.argv[2]
   if (!version) {
@@ -63,7 +75,7 @@ function main() {
   })
 
   updateHxmlLibraryVersion('haxe_libraries/reflaxe.ruby.hxml', version)
+  updateRubyVersionConstant('lib/hxruby/version.rb', version)
 }
 
 main()
-
