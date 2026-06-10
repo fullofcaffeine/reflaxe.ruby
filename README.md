@@ -97,6 +97,22 @@ npm run ci:release-contracts
 
 Snapshot tests compile with `reflaxe_ruby_strict_examples`, compare committed Ruby output, reject CRLF/trailing-newline/path leaks, and compile each snapshot case twice to catch non-deterministic output.
 
+## Haxelib Package
+
+Build the release zip locally with:
+
+```bash
+npm run release:haxelib-package
+```
+
+Validate the package contents and compile the extracted `examples/hello_world` fixture with:
+
+```bash
+npm run test:haxelib-package
+```
+
+Semantic-release runs the same package builder during release preparation and attaches `dist/reflaxe.ruby-*.zip` to the GitHub release.
+
 ## Gap Report
 
 The std/runtime gap report is generated from `docs/stdlib-inventory.json`.

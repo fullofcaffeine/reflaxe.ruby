@@ -56,6 +56,6 @@ const files = run("git", ["ls-files"]).stdout
 
 mkdirSync(dirname(outPath), { recursive: true });
 rmSync(outPath, { force: true });
-run("zip", ["-q", "-@", outPath], { input: `${files.join("\n")}\n` });
+run("zip", ["-X", "-q", "-@", outPath], { input: `${files.join("\n")}\n` });
 
 console.log(outPath);

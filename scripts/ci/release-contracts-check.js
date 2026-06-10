@@ -28,6 +28,8 @@ const haxelibJson = readJson("haxelib.json");
 const haxerc = readJson(".haxerc");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const releaseWorkflow = readFileSync(".github/workflows/release.yml", "utf8");
+const readme = readFileSync("README.md", "utf8");
+const haxelibPackageBuilder = readFileSync("scripts/release/build-haxelib-package.js", "utf8");
 const rubyHxml = readFileSync("haxe_libraries/reflaxe.ruby.hxml", "utf8");
 
 if (packageJson.name !== "reflaxe-ruby") {
@@ -108,6 +110,10 @@ expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 expectIncludes(packageJson.scripts.test, "test:haxelib-package", "npm test");
 expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
+expectIncludes(haxelibPackageBuilder, `"zip", ["-X", "-q", "-@", outPath]`, "Haxelib package builder");
+expectIncludes(readme, "npm run release:haxelib-package", "README Haxelib package docs");
+expectIncludes(readme, "npm run test:haxelib-package", "README Haxelib package docs");
+expectIncludes(readme, "dist/reflaxe.ruby-*.zip", "README Haxelib package docs");
 expectIncludes(releaseWorkflow, "npx semantic-release", "Release workflow");
 expectIncludes(releaseWorkflow, "fetch-depth: 0", "Release workflow");
 expectIncludes(releaseWorkflow, "actions/checkout@v6", "Release workflow");
