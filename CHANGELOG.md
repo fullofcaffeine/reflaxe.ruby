@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.2.0...v1.2.1) (2026-06-10)
+
+
+### Bug Fixes
+
+* avoid ruby local shadowing in generated loops ([8a99e69](https://github.com/fullofcaffeine/reflaxe.ruby/commit/8a99e69147ec9fec977026091dd48c1590f783a7))
+
 # [1.2.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.1.0...v1.2.0) (2026-06-10)
 
 
