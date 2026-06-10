@@ -1,0 +1,28 @@
+.DS_Store
+
+# Node / lix
+node_modules/
+npm-debug.log*
+
+# Haxe / generated output
+*.n
+*.hl
+out/
+**/out/
+dump/
+**/dump/
+test/.generated/
+
+# Ruby / Rails local state
+.bundle/
+vendor/bundle/
+coverage/
+tmp/
+log/
+
+# Release artifacts
+dist/
+
+# Local analysis artifacts
+repomix-output*.xml
+repomix-output*.zip

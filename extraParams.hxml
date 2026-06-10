@@ -1,0 +1,11 @@
+# reflaxe.ruby (haxelib extra params)
+#
+# This file is consumed automatically when a project uses:
+#   -lib reflaxe.ruby
+#
+# Keep this file cwd-agnostic. Do not add relative classpaths here; they would
+# resolve relative to the consumer project.
+
+--macro reflaxe.ruby.CompilerBootstrap.Start()
+--macro reflaxe.ruby.CompilerInit.Start()
+

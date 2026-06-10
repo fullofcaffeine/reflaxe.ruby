@@ -1,0 +1,55 @@
+package reflaxe.ruby;
+
+#if macro
+import haxe.macro.Compiler as MacroCompiler;
+import reflaxe.BaseCompiler.BaseCompilerFileOutputType;
+import reflaxe.ReflectCompiler;
+import reflaxe.ruby.compiler.RubyBuildContextResolver;
+import reflaxe.ruby.macros.BoundaryEnforcer;
+import reflaxe.ruby.macros.StrictModeEnforcer;
+#end
+
+class CompilerInit {
+	#if macro
+	static var initialized = false;
+
+	public static function Start():Void {
+		if (!BuildDetection.isRubyBuild()) {
+			return;
+		}
+
+		if (initialized) {
+			return;
+		}
+		initialized = true;
+
+		CompilerBootstrap.Start();
+
+		var buildContext = RubyBuildContextResolver.resolve();
+		BoundaryEnforcer.init();
+		if (buildContext.isPortable()) {
+			MacroCompiler.define("ruby_portable");
+		} else {
+			MacroCompiler.define("ruby_idiomatic");
+		}
+		if (buildContext.strictUserBoundaries) {
+			MacroCompiler.define(RubyBuildContextResolver.STRICT_DEFINE);
+		}
+		StrictModeEnforcer.init();
+
+		ReflectCompiler.Start();
+		ReflectCompiler.AddCompiler(new RubyCompiler(), {
+			fileOutputExtension: ".rb",
+			outputDirDefineName: buildContext.outputDirDefineName,
+			fileOutputType: FilePerModule,
+			targetCodeInjectionName: buildContext.targetCodeInjectionName,
+			expressionPreprocessors: [],
+			ignoreBodilessFunctions: false,
+			ignoreExterns: true,
+			trackUsedTypes: true
+		});
+	}
+	#else
+	public static function Start():Void {}
+	#end
+}

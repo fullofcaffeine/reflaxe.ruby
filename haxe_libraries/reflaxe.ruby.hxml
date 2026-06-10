@@ -1,0 +1,14 @@
+# Reflaxe.Ruby Library Configuration
+#
+# Self-referential config so examples and tests can use `-lib reflaxe.ruby`
+# inside this repo without requiring `haxelib dev`.
+
+-cp ${SCOPE_DIR}/src/
+-cp ${SCOPE_DIR}/std/
+
+-lib reflaxe
+
+-D reflaxe.ruby=0.1.0
+--macro reflaxe.ruby.CompilerBootstrap.Start()
+--macro reflaxe.ruby.CompilerInit.Start()
+

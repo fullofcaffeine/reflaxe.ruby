@@ -1,0 +1,6 @@
+big
+loop
+loop
+[1, 2, 3]
+{"name"=>"ruby", "count"=>3}
+done

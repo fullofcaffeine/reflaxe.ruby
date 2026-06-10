@@ -1,0 +1,29 @@
+{
+  "name": "reflaxe.ruby",
+  "url": "https://github.com/fullofcaffeine/reflaxe.ruby",
+  "license": "GPL-3.0-only",
+  "tags": [
+    "haxe",
+    "reflaxe",
+    "ruby",
+    "rails",
+    "backend",
+    "macro"
+  ],
+  "description": "A Reflaxe-based Haxe target for idiomatic Ruby output with Rails-first typed APIs.",
+  "version": "0.1.0",
+  "releasenote": "v0.1.0: Initial scaffold",
+  "contributors": [
+    "fullofcaffeine"
+  ],
+  "classPath": "src",
+  "dependencies": {},
+  "reflaxe": {
+    "name": "Ruby",
+    "abbv": "rb",
+    "stdPaths": [
+      "std"
+    ]
+  }
+}
+

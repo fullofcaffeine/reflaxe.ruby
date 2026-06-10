@@ -1,0 +1,92 @@
+{
+  "name": "reflaxe-ruby",
+  "private": true,
+  "version": "0.1.0",
+  "license": "GPL-3.0-only",
+  "description": "Reflaxe-based Ruby target for Haxe.",
+  "scripts": {
+    "postinstall": "lix download",
+    "test": "npm run ci:version-sync && npm run ci:release-contracts && npm run test:haxe-build-context && npm run test:haxe-compiler-shell && npm run test:ruby-naming && npm run test:hello-world && npm run test:core-subset && npm run test:class-members && npm run test:lambda-values && npm run test:enum-adt && npm run test:switch-cases && npm run test:exception-flow && npm run test:runtime-core && npm run test:runtime-minitest && npm run test:stdlib-mvp && npm run test:require-registry && npm run test:native-mapping && npm run test:ruby-call-shapes && npm run test:ruby-interop && npm run test:rails-autoload && npm run test:active-record-model && npm run test:action-controller-params && npm run test:todoapp-rails && npm run test:rails-integration && npm run test:routes-generator && npm run test:scaffold-cli && npm run test:strict-boundaries && npm run test:snapshots && npm run test:stdlib-inventory && npm run test:gap-report",
+    "ci:version-sync": "node scripts/ci/version-sync-check.js",
+    "ci:release-contracts": "node scripts/ci/release-contracts-check.js",
+    "test:haxe-build-context": "haxe test/build_context_compile.hxml",
+    "test:haxe-compiler-shell": "node scripts/ci/compiler-shell-check.js",
+    "test:ruby-naming": "haxe -cp src -cp test -main RubyNamingTestMain --interp",
+    "test:hello-world": "node scripts/ci/hello-world-smoke.js",
+    "test:core-subset": "node scripts/ci/core-subset-smoke.js",
+    "test:class-members": "node scripts/ci/class-members-smoke.js",
+    "test:lambda-values": "node scripts/ci/lambda-values-smoke.js",
+    "test:m1": "npm run test:core-subset && npm run test:class-members && npm run test:lambda-values",
+    "test:enum-adt": "node scripts/ci/enum-adt-smoke.js",
+    "test:switch-cases": "node scripts/ci/switch-cases-smoke.js",
+    "test:exception-flow": "node scripts/ci/exception-flow-smoke.js",
+    "test:runtime-core": "node scripts/ci/runtime-core-smoke.js",
+    "test:runtime-minitest": "node scripts/ci/runtime-minitest.js",
+    "test:stdlib-mvp": "node scripts/ci/stdlib-mvp-smoke.js",
+    "test:require-registry": "node scripts/ci/require-registry-smoke.js",
+    "test:native-mapping": "node scripts/ci/native-mapping-smoke.js",
+    "test:ruby-call-shapes": "node scripts/ci/ruby-call-shapes-smoke.js",
+    "test:ruby-interop": "node scripts/ci/ruby-interop-smoke.js",
+    "test:rails-autoload": "node scripts/ci/rails-autoload-smoke.js",
+    "test:active-record-model": "node scripts/ci/active-record-model-smoke.js",
+    "test:action-controller-params": "node scripts/ci/action-controller-params-smoke.js",
+    "test:todoapp-rails": "node scripts/ci/todoapp-rails-smoke.js",
+    "test:rails-integration": "node scripts/ci/rails-integration.js",
+    "test:routes-generator": "node scripts/ci/routes-generator-smoke.js",
+    "test:scaffold-cli": "node scripts/ci/scaffold-cli-smoke.js",
+    "test:strict-boundaries": "node scripts/ci/strict-boundaries-smoke.js",
+    "rails:generate-routes": "node scripts/rails/generate-routes.js",
+    "rails:scaffold": "node scripts/rails/scaffold.js",
+    "test:m2": "npm run test:enum-adt && npm run test:switch-cases && npm run test:exception-flow && npm run test:snapshots",
+    "test:snapshots": "node scripts/ci/snapshot-harness.js",
+    "test:stdlib-inventory": "node scripts/ci/stdlib-inventory-check.js",
+    "test:gap-report": "node scripts/ci/gap-report-check.js",
+    "release:sync-versions": "node scripts/release/sync-versions.js",
+    "release": "semantic-release",
+    "release:dry-run": "semantic-release --dry-run"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.3",
+    "@semantic-release/release-notes-generator": "^14.0.3",
+    "lix": "^15.12.4",
+    "semantic-release": "^24.2.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fullofcaffeine/reflaxe.ruby.git"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "node scripts/release/sync-versions.js ${nextRelease.version}"
+        }
+      ],
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "package.json",
+            "haxelib.json",
+            "haxe_libraries/reflaxe.ruby.hxml",
+            "README.md",
+            "CHANGELOG.md"
+          ],
+          "message": "chore(release): ${nextRelease.version}\\n\\n${nextRelease.notes}"
+        }
+      ],
+      "@semantic-release/github"
+    ]
+  }
+}

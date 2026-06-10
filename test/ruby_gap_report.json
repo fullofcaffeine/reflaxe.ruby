@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "docs/stdlib-inventory.json",
+  "summary": {
+    "total": 29,
+    "implemented": 22,
+    "missing": 7,
+    "planned": 0,
+    "deferred": 0,
+    "byOwner": {
+      "runtime/hxruby": {
+        "total": 3,
+        "implemented": 3,
+        "missing": 0,
+        "planned": 0,
+        "deferred": 0
+      },
+      "std": {
+        "total": 19,
+        "implemented": 15,
+        "missing": 4,
+        "planned": 0,
+        "deferred": 0
+      },
+      "std/_std": {
+        "total": 7,
+        "implemented": 4,
+        "missing": 3,
+        "planned": 0,
+        "deferred": 0
+      }
+    }
+  },
+  "gaps": [
+    {
+      "id": "std.array",
+      "owner": "std",
+      "status": "missing",
+      "path": "std/Array.cross.hx",
+      "surface": "Array",
+      "reason": "Ruby array methods and Haxe Array API parity."
+    },
+    {
+      "id": "std.json",
+      "owner": "std/_std",
+      "status": "missing",
+      "path": "std/_std/haxe/Json.cross.hx",
+      "surface": "haxe.Json",
+      "reason": "Use Ruby JSON runtime while preserving Haxe API."
+    },
+    {
+      "id": "std.math",
+      "owner": "std",
+      "status": "missing",
+      "path": "std/Math.cross.hx",
+      "surface": "Math",
+      "reason": "Map Haxe Math API to Ruby Math and numeric behavior."
+    },
+    {
+      "id": "std.reflect",
+      "owner": "std",
+      "status": "missing",
+      "path": "std/Reflect.cross.hx",
+      "surface": "Reflect",
+      "reason": "Dynamic field access and method calls for Ruby objects."
+    },
+    {
+      "id": "std.sys.file",
+      "owner": "std/_std",
+      "status": "missing",
+      "path": "std/_std/sys/io/File.hx",
+      "surface": "sys.io.File",
+      "reason": "File read/write APIs backed by Ruby IO."
+    },
+    {
+      "id": "std.sys.filesystem",
+      "owner": "std/_std",
+      "status": "missing",
+      "path": "std/_std/sys/FileSystem.hx",
+      "surface": "sys.FileSystem",
+      "reason": "Filesystem primitives backed by Ruby File, Dir, and FileUtils."
+    },
+    {
+      "id": "std.type",
+      "owner": "std",
+      "status": "missing",
+      "path": "std/Type.cross.hx",
+      "surface": "Type",
+      "reason": "Runtime class and enum reflection for generated Ruby values."
+    }
+  ]
+}

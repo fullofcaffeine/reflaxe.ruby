@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 1,
+  "ownership": {
+    "std": "Additive Ruby target Haxe APIs, externs, facades, and cross-owned surfaces that do not replace upstream std modules.",
+    "std/_std": "Upstream Haxe std overrides that must take classpath precedence for Ruby builds.",
+    "runtime/hxruby": "Ruby runtime files copied or required by generated output."
+  },
+  "entries": [
+    {
+      "id": "runtime.core",
+      "owner": "runtime/hxruby",
+      "status": "implemented",
+      "path": "runtime/hxruby/core.rb",
+      "surface": "HXRuby",
+      "reason": "Shared core helpers required by generated Ruby output."
+    },
+    {
+      "id": "runtime.hx_exception",
+      "owner": "runtime/hxruby",
+      "status": "implemented",
+      "path": "runtime/hxruby/hx_exception.rb",
+      "surface": "HxException",
+      "reason": "Move the compiler-emitted HxException wrapper into the shared runtime."
+    },
+    {
+      "id": "runtime.data_define",
+      "owner": "runtime/hxruby",
+      "status": "implemented",
+      "path": "runtime/hxruby/data_define.rb",
+      "surface": "Data.define compatibility",
+      "reason": "Move enum ADT compatibility shim out of per-enum generated files."
+    },
+    {
+      "id": "std.std",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/Std.cross.hx",
+      "surface": "Std",
+      "reason": "Basic conversions, stringification, and target helpers."
+    },
+    {
+      "id": "std.sys",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/Sys.cross.hx",
+      "surface": "Sys",
+      "reason": "print/println, args, environment, cwd, command, and process exit behavior."
+    },
+    {
+      "id": "std.string_tools",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/StringTools.cross.hx",
+      "surface": "StringTools",
+      "reason": "Ruby-backed string operations needed by common Haxe code."
+    },
+    {
+      "id": "std.array",
+      "owner": "std",
+      "status": "missing",
+      "path": "std/Array.cross.hx",
+      "surface": "Array",
+      "reason": "Ruby array methods and Haxe Array API parity."
+    },
+    {
+      "id": "std.lambda",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/Lambda.cross.hx",
+      "surface": "Lambda",
+      "reason": "Iterator and collection helpers for source-level Haxe code."
+    },
+    {
+      "id": "std.date",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/Date.cross.hx",
+      "surface": "Date",
+      "reason": "Typed Date surface for Ruby time/date lowering."
+    },
+    {
+      "id": "std.ereg",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/EReg.cross.hx",
+      "surface": "EReg",
+      "reason": "Typed regular expression surface for Ruby Regexp lowering."
+    },
+    {
+      "id": "std.ruby.symbol",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Symbol.hx",
+      "surface": "ruby.Symbol",
+      "reason": "Typed Ruby symbol surface for native interop calls."
+    },
+    {
+      "id": "std.ruby.kernel",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Kernel.hx",
+      "surface": "ruby.Kernel",
+      "reason": "Typed Kernel externs for direct Ruby interop."
+    },
+    {
+      "id": "std.rails.active_record",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/ActiveRecord.hx",
+      "surface": "rails.ActiveRecord",
+      "reason": "Top-level ActiveRecord marker module plus typed association and validation marker surfaces."
+    },
+    {
+      "id": "std.rails.active_record_base",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Base.hx",
+      "surface": "rails.active_record.Base",
+      "reason": "Typed ActiveRecord base surface for Rails model classes."
+    },
+    {
+      "id": "std.rails.model_macro",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/ModelMacro.hx",
+      "surface": "rails.macros.ModelMacro",
+      "reason": "Build macro for railsModel metadata and typed where/create stubs."
+    },
+    {
+      "id": "std.rails.action_controller",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/ActionController.hx",
+      "surface": "rails.ActionController",
+      "reason": "Top-level ActionController marker module for Rails interop."
+    },
+    {
+      "id": "std.rails.action_controller_base",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/Base.hx",
+      "surface": "rails.action_controller.Base",
+      "reason": "Typed ActionController base, render, redirect, and params access helpers."
+    },
+    {
+      "id": "std.rails.action_controller_params",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/Params.hx",
+      "surface": "rails.action_controller.Params",
+      "reason": "Typed Rails params wrapper for require/permit flows."
+    },
+    {
+      "id": "std.rails.params_macro",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/ParamsMacro.hx",
+      "surface": "rails.macros.ParamsMacro",
+      "reason": "Macro expansion for require/permit params with snake_case Ruby keys."
+    },
+    {
+      "id": "std.math",
+      "owner": "std",
+      "status": "missing",
+      "path": "std/Math.cross.hx",
+      "surface": "Math",
+      "reason": "Map Haxe Math API to Ruby Math and numeric behavior."
+    },
+    {
+      "id": "std.reflect",
+      "owner": "std",
+      "status": "missing",
+      "path": "std/Reflect.cross.hx",
+      "surface": "Reflect",
+      "reason": "Dynamic field access and method calls for Ruby objects."
+    },
+    {
+      "id": "std.type",
+      "owner": "std",
+      "status": "missing",
+      "path": "std/Type.cross.hx",
+      "surface": "Type",
+      "reason": "Runtime class and enum reflection for generated Ruby values."
+    },
+    {
+      "id": "std.json",
+      "owner": "std/_std",
+      "status": "missing",
+      "path": "std/_std/haxe/Json.cross.hx",
+      "surface": "haxe.Json",
+      "reason": "Use Ruby JSON runtime while preserving Haxe API."
+    },
+    {
+      "id": "std.ds.string_map",
+      "owner": "std/_std",
+      "status": "implemented",
+      "path": "std/_std/haxe/ds/StringMap.cross.hx",
+      "surface": "haxe.ds.StringMap",
+      "reason": "Ruby Hash-backed map with Haxe StringMap behavior."
+    },
+    {
+      "id": "std.ds.int_map",
+      "owner": "std/_std",
+      "status": "implemented",
+      "path": "std/_std/haxe/ds/IntMap.cross.hx",
+      "surface": "haxe.ds.IntMap",
+      "reason": "Ruby Hash-backed map with integer key behavior."
+    },
+    {
+      "id": "std.ds.object_map",
+      "owner": "std/_std",
+      "status": "implemented",
+      "path": "std/_std/haxe/ds/ObjectMap.cross.hx",
+      "surface": "haxe.ds.ObjectMap",
+      "reason": "Object identity map semantics for Ruby."
+    },
+    {
+      "id": "std.io.bytes",
+      "owner": "std/_std",
+      "status": "implemented",
+      "path": "std/_std/haxe/io/Bytes.hx",
+      "surface": "haxe.io.Bytes",
+      "reason": "Byte storage and encoding behavior backed by Ruby strings or byte arrays."
+    },
+    {
+      "id": "std.sys.filesystem",
+      "owner": "std/_std",
+      "status": "missing",
+      "path": "std/_std/sys/FileSystem.hx",
+      "surface": "sys.FileSystem",
+      "reason": "Filesystem primitives backed by Ruby File, Dir, and FileUtils."
+    },
+    {
+      "id": "std.sys.file",
+      "owner": "std/_std",
+      "status": "missing",
+      "path": "std/_std/sys/io/File.hx",
+      "surface": "sys.io.File",
+      "reason": "File read/write APIs backed by Ruby IO."
+    }
+  ]
+}

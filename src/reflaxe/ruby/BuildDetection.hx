@@ -1,0 +1,241 @@
+package reflaxe.ruby;
+
+#if macro
+import haxe.io.Path;
+import haxe.macro.Compiler;
+import haxe.macro.Context;
+import sys.FileSystem;
+import sys.io.File;
+#end
+
+class BuildDetection {
+	#if macro
+	public static function isRubyBuild():Bool {
+		if (Context.defined("reflaxe_ruby_rails")) {
+			return true;
+		}
+		return isTargetBuild("ruby_output", "ruby");
+	}
+
+	public static function isTargetBuild(outputDefine:String, targetName:String):Bool {
+		var outputValue = Context.definedValue(outputDefine);
+		if (outputValue != null && outputValue != "") {
+			return true;
+		}
+		if (Context.defined(outputDefine) || Context.defined(targetName)) {
+			return true;
+		}
+
+		if (Context.definedValue("target.name") == targetName) {
+			return true;
+		}
+
+		var config = Compiler.getConfiguration();
+		if (config != null) {
+			switch (config.platform) {
+				#if (haxe >= version("5.0.0"))
+				case CustomTarget(name) if (name == targetName):
+					return true;
+				#end
+				case _:
+			}
+		}
+
+		return hasDefineInCompilerArgs(outputDefine);
+	}
+
+	static function hasDefineInCompilerArgs(defineName:String):Bool {
+		var config = Compiler.getConfiguration();
+		if (config == null || config.args == null) {
+			return false;
+		}
+
+		var args = config.args;
+		if (argsContainDefine(args, defineName)) {
+			return true;
+		}
+
+		var seen = new Map<String, Bool>();
+		var cwd = normalizeDir(Sys.getCwd());
+		for (arg in args) {
+			if (StringTools.endsWith(arg, ".hxml")) {
+				if (hxmlContainsDefineAny(resolveIncludeCandidates(cwd, cwd, arg), defineName, seen)) {
+					return true;
+				}
+				continue;
+			}
+			if (StringTools.startsWith(arg, "@")) {
+				var includePath = arg.substr(1);
+				if (hxmlContainsDefineAny(resolveIncludeCandidates(cwd, cwd, includePath), defineName, seen)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	static function argsContainDefine(args:Array<String>, defineName:String):Bool {
+		var i = 0;
+		while (i < args.length) {
+			var arg = args[i];
+			if (arg == "-D" || arg == "--define") {
+				if (i + 1 < args.length && defineArgMatches(args[i + 1], defineName)) {
+					return true;
+				}
+				i += 2;
+				continue;
+			}
+
+			if (StringTools.startsWith(arg, "-D") && defineArgMatches(arg.substr(2), defineName)) {
+				return true;
+			}
+
+			if (StringTools.startsWith(arg, "--define=") && defineArgMatches(arg.substr("--define=".length), defineName)) {
+				return true;
+			}
+
+			i += 1;
+		}
+
+		return false;
+	}
+
+	static function defineArgMatches(raw:String, defineName:String):Bool {
+		if (raw == null || raw == "") {
+			return false;
+		}
+		return raw == defineName || StringTools.startsWith(raw, defineName + "=");
+	}
+
+	static function hxmlContainsDefineAny(paths:Array<String>, defineName:String, seen:Map<String, Bool>):Bool {
+		for (path in paths) {
+			if (hxmlContainsDefine(path, defineName, seen)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static function hxmlContainsDefine(hxmlPath:String, defineName:String, seen:Map<String, Bool>):Bool {
+		var normalizedPath = Path.normalize(hxmlPath);
+		if (seen.exists(normalizedPath)) {
+			return false;
+		}
+		seen.set(normalizedPath, true);
+
+		if (!FileSystem.exists(normalizedPath)) {
+			return false;
+		}
+
+		var tokens = parseHxmlTokens(normalizedPath);
+		if (argsContainDefine(tokens, defineName)) {
+			return true;
+		}
+
+		var parentDir = normalizeDir(Path.directory(normalizedPath));
+		for (token in tokens) {
+			var nestedInclude = nestedIncludePath(token);
+			if (nestedInclude == null) {
+				continue;
+			}
+			var nestedCandidates = resolveIncludeCandidates(parentDir, normalizeDir(Sys.getCwd()), nestedInclude);
+			if (hxmlContainsDefineAny(nestedCandidates, defineName, seen)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	static function parseHxmlTokens(hxmlPath:String):Array<String> {
+		var content = File.getContent(hxmlPath);
+		var tokens = new Array<String>();
+		for (line in content.split("\n")) {
+			var raw = StringTools.trim(line);
+			if (raw.length == 0 || StringTools.startsWith(raw, "#")) {
+				continue;
+			}
+
+			var commentIndex = raw.indexOf("#");
+			if (commentIndex >= 0) {
+				raw = StringTools.trim(raw.substr(0, commentIndex));
+			}
+			if (raw.length == 0) {
+				continue;
+			}
+
+			for (token in tokenizeLine(raw)) {
+				if (token.length > 0) {
+					tokens.push(token);
+				}
+			}
+		}
+		return tokens;
+	}
+
+	static function tokenizeLine(line:String):Array<String> {
+		var tokens = new Array<String>();
+		var token = "";
+		var inQuotes = false;
+		var i = 0;
+		while (i < line.length) {
+			var ch = line.charAt(i);
+			if (ch == "\"") {
+				inQuotes = !inQuotes;
+				i += 1;
+				continue;
+			}
+			if (!inQuotes && isWhitespaceChar(ch)) {
+				if (token.length > 0) {
+					tokens.push(token);
+					token = "";
+				}
+				i += 1;
+				continue;
+			}
+			token += ch;
+			i += 1;
+		}
+		if (token.length > 0) {
+			tokens.push(token);
+		}
+		return tokens;
+	}
+
+	static function nestedIncludePath(token:String):Null<String> {
+		if (StringTools.startsWith(token, "@")) {
+			return token.substr(1);
+		}
+		return StringTools.endsWith(token, ".hxml") ? token : null;
+	}
+
+	static function resolveIncludeCandidates(baseDir:String, rootDir:String, includePath:String):Array<String> {
+		if (includePath == null || includePath == "") {
+			return [];
+		}
+		if (Path.isAbsolute(includePath)) {
+			return [Path.normalize(includePath)];
+		}
+		var fromBase = Path.normalize(Path.join([baseDir, includePath]));
+		var fromRoot = Path.normalize(Path.join([rootDir, includePath]));
+		return fromBase == fromRoot ? [fromBase] : [fromBase, fromRoot];
+	}
+
+	static function normalizeDir(path:String):String {
+		return Path.normalize(path).split("\\").join("/");
+	}
+
+	static function isWhitespaceChar(ch:String):Bool {
+		return ch == " " || ch == "\t" || ch == "\r";
+	}
+	#else
+	public static function isRubyBuild():Bool {
+		return false;
+	}
+
+	public static function isTargetBuild(outputDefine:String, targetName:String):Bool {
+		return false;
+	}
+	#end
+}
