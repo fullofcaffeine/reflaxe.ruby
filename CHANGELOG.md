@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.2.1...v1.2.2) (2026-06-10)
+
+
+### Bug Fixes
+
+* support Std.is type predicates ([0ac55e4](https://github.com/fullofcaffeine/reflaxe.ruby/commit/0ac55e4327061c6a2d1d1c6074693b45c97376cc))
+
 ## [1.2.1](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.2.0...v1.2.1) (2026-06-10)
 
 
