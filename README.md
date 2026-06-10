@@ -137,6 +137,8 @@ rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
 ```
 
+Plain `require "hxruby"` has no gem runtime dependencies. The task entrypoint requires `rake`, which is available in the supported CI Rubies and normal Rails applications.
+
 Semantic-release builds the gem during release preparation and attaches `dist/hxruby-*.gem` to the GitHub release.
 
 ## Gap Report

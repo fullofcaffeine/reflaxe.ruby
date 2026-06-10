@@ -36,10 +36,6 @@ function rubySupportsGemInstallCheck() {
   return major > 3 || (major === 3 && minor >= 2);
 }
 
-function rubyGemPath() {
-  return run("ruby", ["-rrubygems", "-e", "print Gem.path.join(File::PATH_SEPARATOR)"]).stdout.trim();
-}
-
 run("node", ["scripts/release/build-gem-package.js"]);
 
 const tempRoot = mkdtempSync(join(tmpdir(), "hxruby-gem."));
@@ -94,12 +90,11 @@ try {
       `abort 'installed version mismatch' unless HXRuby::VERSION == ${JSON.stringify(packageJson.version)}`,
       "abort 'installed stringify mismatch' unless HXRuby.stringify({ 'a' => 1 }) == '{\"a\"=>1}'",
     ].join("; ");
-    const gemPathEnv = [gemHome, rubyGemPath()].filter(Boolean).join(":");
     run("ruby", ["-e", installCheck], {
       env: {
         ...process.env,
         GEM_HOME: gemHome,
-        GEM_PATH: gemPathEnv,
+        GEM_PATH: gemHome,
         PATH: `${gemBin}:${process.env.PATH}`,
       },
     });

@@ -22,6 +22,4 @@ Gem::Specification.new do |spec|
     *Dir["scripts/rails/*.js"],
   ].sort
   spec.require_paths = ["lib"]
-
-  spec.add_runtime_dependency "rake", ">= 12.0"
 end

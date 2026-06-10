@@ -32,6 +32,7 @@ const readme = readFileSync("README.md", "utf8");
 const haxelibPackageBuilder = readFileSync("scripts/release/build-haxelib-package.js", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const hxrubyGemspec = readFileSync("hxruby.gemspec", "utf8");
+const hxrubyTasks = readFileSync("lib/hxruby/tasks.rb", "utf8");
 const rubyHxml = readFileSync("haxe_libraries/reflaxe.ruby.hxml", "utf8");
 
 if (packageJson.name !== "reflaxe-ruby") {
@@ -127,12 +128,15 @@ expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package build
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.2"', "hxruby.gemspec");
+expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");
+expectIncludes(hxrubyTasks, 'require "rake"', "hxruby tasks");
 expectIncludes(readme, "npm run release:haxelib-package", "README Haxelib package docs");
 expectIncludes(readme, "npm run test:haxelib-package", "README Haxelib package docs");
 expectIncludes(readme, "npm run release:gem-package", "README Ruby gem package docs");
 expectIncludes(readme, "npm run test:gem-package", "README Ruby gem package docs");
 expectIncludes(readme, "dist/reflaxe.ruby-*.zip", "README Haxelib package docs");
 expectIncludes(readme, "dist/hxruby-*.gem", "README Ruby gem package docs");
+expectIncludes(readme, 'Plain `require "hxruby"` has no gem runtime dependencies.', "README Ruby gem package docs");
 expectIncludes(releaseWorkflow, "npx semantic-release", "Release workflow");
 expectIncludes(releaseWorkflow, "fetch-depth: 0", "Release workflow");
 expectIncludes(releaseWorkflow, "actions/checkout@v6", "Release workflow");
