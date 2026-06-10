@@ -46,6 +46,8 @@ if (haxelibJson.classPath !== "src") {
 if (!rubyHxml.includes("-cp ${SCOPE_DIR}/std/")) {
   fail("haxe_libraries/reflaxe.ruby.hxml must include std/ classpath");
 }
+expectExcludes(readme, "pre-1.0", "README release status");
+expectIncludes(readme, `current \`${packageJson.version}\` baseline`, "README release status");
 
 const releaseConfig = packageJson.release;
 if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
