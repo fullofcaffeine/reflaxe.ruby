@@ -56,6 +56,13 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
 
   const gitPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/git");
   const assets = gitPlugin?.[1]?.assets ?? [];
+  const releaseMessage = gitPlugin?.[1]?.message ?? "";
+  if (releaseMessage.includes("\\n")) {
+    fail("@semantic-release/git message must use newline escapes, not literal backslash-n text");
+  }
+  if (!releaseMessage.includes("\n\n")) {
+    fail("@semantic-release/git message must separate subject and notes with a blank line");
+  }
   for (const asset of assets) {
     if (!existsSync(asset)) {
       fail(`release asset does not exist: ${asset}`);
@@ -75,8 +82,10 @@ for (const rubyVersion of ['"3.2"', '"3.3"', '"4.0"']) {
 }
 expectIncludes(ciWorkflow, "npx lix download haxe", "CI Haxe setup");
 expectIncludes(ciWorkflow, "npm test", "CI test step");
+expectIncludes(ciWorkflow, 'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"', "CI workflow");
 expectIncludes(releaseWorkflow, "npx semantic-release", "Release workflow");
 expectIncludes(releaseWorkflow, "fetch-depth: 0", "Release workflow");
+expectIncludes(releaseWorkflow, 'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"', "Release workflow");
 
 if (process.exitCode) {
   process.exit(process.exitCode);
