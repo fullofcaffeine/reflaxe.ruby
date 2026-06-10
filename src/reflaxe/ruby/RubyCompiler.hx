@@ -252,7 +252,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (field.isStatic) {
 			name = "self." + name;
 		}
-		var args = [for (arg in field.args) RubyNaming.toLocalName(arg.getName())];
+		var args = [for (arg in field.args) arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)];
 		return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
 	}
 
@@ -459,6 +459,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				return RubyIfStmt(compileExpr(cond), compileFunctionBody(eThen), eElse == null ? null : compileFunctionBody(eElse));
 			case TWhile(cond, body, _):
 				return RubyWhileStmt(compileExpr(cond), compileFunctionBody(body));
+			case TFor(v, iterable, body):
+				return RubyRawStatement(renderFor(v, iterable, body));
 			case TSwitch(switchExpr, cases, edef):
 				return RubyRawStatement(renderSwitch(switchExpr, cases, edef));
 			case TTry(tryExpr, catches):
@@ -497,7 +499,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TUnop(op, _, inner): RubyUnary(unopToRuby(op), compileExpr(inner));
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): compileExpr(inner);
 			case TFunction(fn):
-				RubyLambda([for (arg in fn.args) RubyNaming.toLocalName(arg.v.name)], lambdaBody(fn.expr));
+				RubyLambda([for (arg in fn.args) localName(arg.v)], lambdaBody(fn.expr));
 			case TNew(classRef, _, params):
 				var classType = classRef.get();
 				RubyCall(RubyLocal(rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name)), "new", [for (param in params) compileExpr(param)]);
@@ -724,7 +726,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function renderRubyBlock(expr:TypedExpr):String {
 		return switch (expr.expr) {
 			case TFunction(fn):
-				var args = [for (arg in fn.args) RubyNaming.toLocalName(arg.v.name)].join(", ");
+				var args = [for (arg in fn.args) localName(arg.v)].join(", ");
 				var body = renderStatements(compileFunctionBody(fn.expr));
 				if (canRenderInlineBlock(body)) {
 					var prefix = args == "" ? "" : "|" + args + "| ";
@@ -809,9 +811,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (catches.length > 0) {
 			var first = catches[0];
 			lines.push("rescue HxException => __hx_ex");
-			lines.push("  " + RubyNaming.toLocalName(first.v.name) + " = __hx_ex.value");
+			lines.push("  " + localName(first.v) + " = __hx_ex.value");
 			appendIndentedLines(lines, renderStatements(compileFunctionBody(first.expr)), 1);
 		}
+		lines.push("end");
+		return lines.join("\n");
+	}
+
+	static function renderFor(v:TVar, iterable:TypedExpr, body:TypedExpr):String {
+		var iteratorName = loopIteratorName(v, iterable);
+		var lines = [
+			iteratorName + " = " + printInlineExpr(iterable),
+			"while " + iteratorName + ".has_next()",
+			"  " + localName(v) + " = " + iteratorName + ".next_()"
+		];
+		appendIndentedLines(lines, renderStatements(compileFunctionBody(body)), 1);
 		lines.push("end");
 		return lines.join("\n");
 	}
@@ -1114,7 +1128,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function localName(v:TVar):String {
-		return RubyNaming.toLocalName(v.name);
+		return RubyNaming.toLocalName(v.name) + "__hx" + v.id;
+	}
+
+	static function loopIteratorName(v:TVar, iterable:TypedExpr):String {
+		var pos = Context.getPosInfos(iterable.pos);
+		return "__hx_iter_" + localName(v) + "_" + pos.min;
 	}
 
 	static function binopToRuby(op:haxe.macro.Expr.Binop):String {
@@ -1179,6 +1198,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case RubyExprStatement(expr): reflaxe.ruby.ast.RubyASTPrinter.printExpr(expr);
 			case RubyAssign(target, value): reflaxe.ruby.ast.RubyASTPrinter.printExpr(target) + " = " + reflaxe.ruby.ast.RubyASTPrinter.printExpr(value);
 			case RubyReturn(value): value == null ? "return" : "return " + reflaxe.ruby.ast.RubyASTPrinter.printExpr(value);
+			case RubyIfStmt(cond, thenBody, elseBody):
+				var lines = ["if " + reflaxe.ruby.ast.RubyASTPrinter.printExpr(cond)];
+				appendIndentedLines(lines, renderStatements(thenBody), 1);
+				if (elseBody != null && elseBody.length > 0) {
+					lines.push("else");
+					appendIndentedLines(lines, renderStatements(elseBody), 1);
+				}
+				lines.push("end");
+				lines.join("\n");
+			case RubyWhileStmt(cond, body):
+				var lines = ["while " + reflaxe.ruby.ast.RubyASTPrinter.printExpr(cond)];
+				appendIndentedLines(lines, renderStatements(body), 1);
+				lines.push("end");
+				lines.join("\n");
 			case RubyRawStatement(code): code;
 			case RubyComment(text): "# " + text;
 			case _: "# TODO: inline statement";

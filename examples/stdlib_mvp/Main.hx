@@ -21,6 +21,20 @@ class Main {
 		Sys.println(names.exists("ruby"));
 		Sys.println(names.remove("ruby"));
 		Sys.println(names.exists("ruby"));
+		names.set("ruby", 3);
+		names.set("haxe", 4);
+		var total = 0;
+		for (value in names.iterator()) {
+			total += value;
+		}
+		Sys.println(total);
+		var keyChars = 0;
+		for (key in names.keys()) {
+			keyChars += key.length;
+		}
+		Sys.println(keyChars);
+		var namesCopy = names.copy();
+		Sys.println(namesCopy.get("haxe"));
 
 		var ids = new haxe.ds.IntMap<String>();
 		ids.set(7, "seven");

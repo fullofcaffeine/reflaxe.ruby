@@ -2,8 +2,8 @@
 # Generated type shell for Ruby output.
 class Main
   def self.main()
-    todo = nil
-    puts(HXRuby.stringify((todo == nil)))
+    todo__hx16571 = nil
+    puts(HXRuby.stringify((todo__hx16571 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

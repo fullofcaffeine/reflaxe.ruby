@@ -7,8 +7,8 @@ module Controllers
       super()
     end
     def create()
-      attrs = self.params().require("todo").permit([:title, :is_completed])
-      self.render(json: attrs)
+      attrs__hx16701 = self.params().require("todo").permit([:title, :is_completed])
+      self.render(json: attrs__hx16701)
       self.redirect_to(action: "index")
     end
   end

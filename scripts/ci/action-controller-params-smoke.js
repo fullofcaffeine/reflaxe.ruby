@@ -49,14 +49,14 @@ for (const file of [
 
 const controllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "todos_controller.rb"), "utf8");
 for (const expected of [
-  'require "action_controller/railtie"',
-  "module Controllers",
-  "class TodosController < ActionController::Base",
-  'attrs = self.params().require("todo").permit([:title, :is_completed])',
-  "self.render(json: attrs)",
-  'self.redirect_to(action: "index")',
+  /require "action_controller\/railtie"/,
+  /module Controllers/,
+  /class TodosController < ActionController::Base/,
+  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed\]\)/,
+  /self\.render\(json: attrs__hx\d+\)/,
+  /self\.redirect_to\(action: "index"\)/,
 ]) {
-  if (!controllerRuby.includes(expected)) {
+  if (!expected.test(controllerRuby)) {
     console.error(`ActionController output missing expected line: ${expected}`);
     process.exit(1);
   }

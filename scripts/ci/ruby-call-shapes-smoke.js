@@ -71,15 +71,15 @@ writeFileSync(join(supportDir, "native_interop.rb"), [
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 for (const expected of [
-  'NativeInterop.describe(name: "ruby", count: 2)',
-  'NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count)',
-  'NativeInterop.each([1, 2]) { |value| puts(HXRuby.stringify(value)) }',
-  'NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count) do |value|',
-  'Kernel.print("item=")',
-  "NativeInterop.accept_symbol(:ready)",
-  'Kernel.puts("kernel")',
+  /NativeInterop\.describe\(name: "ruby", count: 2\)/,
+  /NativeInterop\.describe_details\(name: "ruby", tags: \[:fast, :typed\], count: count__hx\d+\)/,
+  /NativeInterop\.each\(\[1, 2\]\) \{ \|value__hx\d+\| puts\(HXRuby\.stringify\(value__hx\d+\)\) \}/,
+  /NativeInterop\.with_options\(\[3, 4\], prefix: "item", tags: \[:safe\], count: count__hx\d+\) do \|value__hx\d+\|/,
+  /Kernel\.print\("item="\)/,
+  /NativeInterop\.accept_symbol\(:ready\)/,
+  /Kernel\.puts\("kernel"\)/,
 ]) {
-  if (!mainRuby.includes(expected)) {
+  if (!expected.test(mainRuby)) {
     console.error(`Expected call shape missing from main.rb: ${expected}`);
     process.exit(1);
   }

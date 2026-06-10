@@ -79,17 +79,17 @@ assertOrdered(runRuby, [
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 for (const expected of [
-  "JSON.generate",
-  "File.basename",
-  'RubyInterop.describe(name: "interop", count: 3)',
-  'RubyInterop.describe_details(name: "interop", tags: [:safe, :typed], count: count)',
-  "RubyInterop.each([4, 5]) { |value| puts(HXRuby.stringify(value)) }",
-  'RubyInterop.with_options([6, 7], prefix: "interop", tags: [:block], count: count) do |value|',
-  'Kernel.print("interop=")',
-  "RubyInterop.accept_symbol(:ready)",
-  'Kernel.puts("kernel")',
+  /JSON\.generate/,
+  /File\.basename/,
+  /RubyInterop\.describe\(name: "interop", count: 3\)/,
+  /RubyInterop\.describe_details\(name: "interop", tags: \[:safe, :typed\], count: count__hx\d+\)/,
+  /RubyInterop\.each\(\[4, 5\]\) \{ \|value__hx\d+\| puts\(HXRuby\.stringify\(value__hx\d+\)\) \}/,
+  /RubyInterop\.with_options\(\[6, 7\], prefix: "interop", tags: \[:block\], count: count__hx\d+\) do \|value__hx\d+\|/,
+  /Kernel\.print\("interop="\)/,
+  /RubyInterop\.accept_symbol\(:ready\)/,
+  /Kernel\.puts\("kernel"\)/,
 ]) {
-  if (!mainRuby.includes(expected)) {
+  if (!expected.test(mainRuby)) {
     console.error(`Expected interop shape missing from main.rb: ${expected}`);
     process.exit(1);
   }

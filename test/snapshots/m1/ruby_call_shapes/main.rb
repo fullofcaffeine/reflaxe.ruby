@@ -3,13 +3,13 @@
 require_relative "./support/native_interop"
 class Main
   def self.main()
-    count = 2
+    count__hx16573 = 2
     puts(HXRuby.stringify(NativeInterop.describe(name: "ruby", count: 2)))
-    puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count)))
-    NativeInterop.each([1, 2]) { |value| puts(HXRuby.stringify(value)) }
-    NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count) do |value|
+    puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count__hx16573)))
+    NativeInterop.each([1, 2]) { |value__hx16646| puts(HXRuby.stringify(value__hx16646)) }
+    NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count__hx16573) do |value__hx16647|
       Kernel.print("item=")
-      puts(HXRuby.stringify(value))
+      puts(HXRuby.stringify(value__hx16647))
     end
     puts(HXRuby.stringify(NativeInterop.accept_symbol(:ready)))
     Kernel.puts("kernel")
