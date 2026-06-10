@@ -31,6 +31,7 @@ const releaseWorkflow = readFileSync(".github/workflows/release.yml", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const haxelibPackageBuilder = readFileSync("scripts/release/build-haxelib-package.js", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
+const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const hxrubyGemspec = readFileSync("hxruby.gemspec", "utf8");
 const hxrubyTasks = readFileSync("lib/hxruby/tasks.rb", "utf8");
 const rubyHxml = readFileSync("haxe_libraries/reflaxe.ruby.hxml", "utf8");
@@ -126,6 +127,7 @@ expectIncludes(haxelibPackageBuilder, `"zip", ["-X", "-q", "-@", outPath]`, "Hax
 expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
+expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.2"', "hxruby.gemspec");
 expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");

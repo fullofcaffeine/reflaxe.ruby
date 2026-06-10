@@ -90,13 +90,27 @@ try {
       `abort 'installed version mismatch' unless HXRuby::VERSION == ${JSON.stringify(packageJson.version)}`,
       "abort 'installed stringify mismatch' unless HXRuby.stringify({ 'a' => 1 }) == '{\"a\"=>1}'",
     ].join("; ");
+    const installEnv = {
+      ...process.env,
+      GEM_HOME: gemHome,
+      GEM_PATH: gemHome,
+      PATH: `${gemBin}:${process.env.PATH}`,
+    };
     run("ruby", ["-e", installCheck], {
-      env: {
-        ...process.env,
-        GEM_HOME: gemHome,
-        GEM_PATH: gemHome,
-        PATH: `${gemBin}:${process.env.PATH}`,
-      },
+      env: installEnv,
+    });
+
+    const installedTasksCheck = [
+      "require 'rubygems'",
+      `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
+      "require 'hxruby/tasks'",
+      "expected = %w[hxruby:compile hxruby:watch hxruby:gen:model hxruby:gen:routes]",
+      "names = Rake::Task.tasks.map(&:name)",
+      "missing = expected - names",
+      "abort \"installed gem missing tasks: #{missing.join(', ')}\" unless missing.empty?",
+    ].join("; ");
+    run("ruby", ["-e", installedTasksCheck], {
+      env: installEnv,
     });
   } else {
     process.stdout.write("[gem-package] Skipped gem install smoke on local Ruby < 3.2\n");
