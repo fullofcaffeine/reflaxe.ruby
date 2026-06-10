@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { existsSync, mkdtempSync, readFileSync, rmSync } = require("node:fs");
-const { join, resolve } = require("node:path");
+const { delimiter, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
 
@@ -100,6 +100,11 @@ try {
       env: installEnv,
     });
 
+    const rubyDefaultGemPath = run("ruby", ["-rrubygems", "-e", "print Gem.path.join(File::PATH_SEPARATOR)"]).stdout.trim();
+    const installedTasksEnv = {
+      ...installEnv,
+      GEM_PATH: [gemHome, rubyDefaultGemPath].filter(Boolean).join(delimiter),
+    };
     const installedTasksCheck = [
       "require 'rubygems'",
       `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
@@ -110,7 +115,7 @@ try {
       "abort \"installed gem missing tasks: #{missing.join(', ')}\" unless missing.empty?",
     ].join("; ");
     run("ruby", ["-e", installedTasksCheck], {
-      env: installEnv,
+      env: installedTasksEnv,
     });
   } else {
     process.stdout.write("[gem-package] Skipped gem install smoke on local Ruby < 3.2\n");
