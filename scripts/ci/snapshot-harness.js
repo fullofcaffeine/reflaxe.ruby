@@ -66,6 +66,8 @@ const cases = [
       "app/haxe_gen/models/user.rb",
       "app/haxe_gen/controllers/todo_index_locals.rb",
       "app/haxe_gen/controllers/todos_controller.rb",
+      "app/haxe_gen/views/todo_index_view.rb",
+      "app/views/controllers/todos/index.html.erb",
       "app/haxe_gen/main.rb",
       "config/initializers/hxruby_autoload.rb",
       "run.rb",

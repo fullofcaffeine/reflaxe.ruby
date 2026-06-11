@@ -9,7 +9,7 @@ The repo currently has a Rails MVP:
 - Rails output roots and autoload affordances via `-D reflaxe_ruby_rails`.
 - Minimal ActiveRecord model surface through `rails.active_record.Base<T>` and `rails.macros.ModelMacro`.
 - Minimal ActionController/strong params surface through `rails.action_controller.Base`, `Params`, and `ParamsMacro`.
-- First typed ActionView render seam through `rails.action_view.Template<TLocals>` and `ViewMacro.renderTemplate(...)`.
+- First typed ActionView render seam through `rails.action_view.Template<TLocals>`, `ViewMacro.renderTemplate(...)`, and `@:railsTemplate(...)` artifact generation.
 - Route helper and scaffold scripts under `scripts/rails`.
 - A Rails todoapp example and optional Rails integration smoke coverage.
 

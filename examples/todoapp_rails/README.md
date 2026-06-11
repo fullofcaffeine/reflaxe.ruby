@@ -7,7 +7,7 @@ This is the end-to-end RailsHx sample for `reflaxe.ruby`. It shows typed Haxe au
 - Haxe-authored ActiveRecord models with `@:railsModel`, typed `@:railsColumn(...)` metadata, associations, validations, and timestamps.
 - Generated Rails model Ruby with `self.__hx_rails_schema` metadata for later query/migration tooling.
 - Haxe-authored ActionController logic with typed model calls, `ParamsMacro.requirePermit(...)` strong-params generation, and `ViewMacro.renderTemplate(...)` typed locals for Rails rendering.
-- A polished Rails-owned Action View page for the current runnable sample.
+- Haxe-owned ActionView artifact generation through `@:railsTemplate(...)`, which materializes the Rails-native ERB file under `app/views`.
 - Generated route helper externs under `src_haxe/routes/Routes.hx`.
 - A Rails migration template matching the Haxe model metadata.
 - CI smoke coverage that compiles the Haxe app, checks generated Rails Ruby, and runs Rails runtime tests when local Rails gems are available.
@@ -16,7 +16,8 @@ This is the end-to-end RailsHx sample for `reflaxe.ruby`. It shows typed Haxe au
 
 - `models/Todo.hx` and `models/User.hx` are RailsHx ActiveRecord models.
 - `controllers/TodosController.hx` is a RailsHx controller using typed params and route helpers.
-- `app/views/controllers/todos/index.html.erb` is the current Rails-owned presentation layer.
+- `views/TodoIndexView.hx` declares the typed Rails template artifact.
+- `app/views/controllers/todos/index.html.erb` is the ERB source materialized by the compiler into generated Rails output.
 - `src_haxe/routes/Routes.hx` is generated from Rails route output.
 - `db/migrate/20260101000000_create_todos.rb` is the Rails migration template for the sample app.
 
@@ -50,4 +51,4 @@ npm run test:rails-integration
 
 RailsHx does not yet generate migrations from `@:railsColumn` metadata. This sample keeps the migration as Rails-owned Ruby for now, but the model schema metadata is shaped so the future migration DSL/generator can consume it.
 
-RailsHx has the first typed ActionView seam: controllers render through `ViewMacro.renderTemplate(this, (Template.named("...") : Template<TLocals>), locals)`, which type-checks locals in Haxe and lowers to a normal Rails `render(template:, locals:)` call. The visual page is still Rails-native ERB for now. The destination is a fuller typed Rails template layer inspired by `../haxe.elixir.codex`'s HXX/HEEx architecture; that work is tracked by bead `haxe.ruby-wpi.12`.
+RailsHx has the first typed ActionView seam: controllers render through `ViewMacro.renderTemplate(this, (Template.named("...") : Template<TLocals>), locals)`, which type-checks locals in Haxe and lowers to a normal Rails `render(template:, locals:)` call. `@:railsTemplate(...)` classes now materialize Rails-native ERB artifacts into generated output. The visual page still uses ERB syntax for now; the destination is a fuller typed Rails template layer inspired by `../haxe.elixir.codex`'s HXX/HEEx architecture.

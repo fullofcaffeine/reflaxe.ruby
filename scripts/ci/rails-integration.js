@@ -22,6 +22,7 @@ materializeRailsApp();
 syntaxCheck([
   "app/models/application_record.rb",
   "app/haxe_gen/controllers/todo_index_locals.rb",
+  "app/haxe_gen/views/todo_index_view.rb",
   "app/haxe_gen/models/todo.rb",
   "app/haxe_gen/models/user.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
@@ -69,7 +70,6 @@ run("bundle", ["exec", "rails", "test"], {
 function materializeRailsApp() {
   rmSync(appDir, { force: true, recursive: true });
   copyTree(join(compiledDir, "app"), join(appDir, "app"));
-  copyTree(join(root, "examples", "todoapp_rails", "app", "views"), join(appDir, "app", "views"));
   copyTree(join(compiledDir, "config"), join(appDir, "config"));
   mkdirSync(join(appDir, "db", "migrate"), { recursive: true });
   copyFileSync(

@@ -124,6 +124,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	public function compileClassImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Null<RubyFile> {
 		setRubyOutputPath(classType.pack, classType.name);
 		var moduleRequires = collectModuleRequires(classType.meta);
+		if (hasMeta(classType.meta, ":railsTemplate")) {
+			return compileRailsTemplateImpl(classType, varFields, moduleRequires);
+		}
 		if (hasMeta(classType.meta, ":railsModel")) {
 			requireRegistry.addRequire("active_record");
 			moduleRequires.addRequire("active_record");
@@ -203,6 +206,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return typeShell(abstractType.pack, abstractType.name, RubyModuleDecl(RubyNaming.toConstantName(abstractType.name), [
 			RubyComment("Haxe abstract " + fullTypeName(abstractType.pack, abstractType.name) + " has no Ruby runtime body.")
 		]), collectModuleRequires(abstractType.meta));
+	}
+
+	function compileRailsTemplateImpl(classType:ClassType, varFields:Array<ClassVarData>, moduleRequires:RequireRegistry):RubyFile {
+		emitRailsTemplateArtifact(classType, varFields);
+		return typeShell(classType.pack, classType.name, RubyClassDecl(RubyNaming.toConstantName(classType.name), [
+			RubyComment("Rails ActionView template marker. The ERB artifact is generated under app/views.")
+		]), moduleRequires);
 	}
 
 	static function typeShell(pack:Array<String>, name:String, declaration:RubyStatement, ?moduleRequires:RequireRegistry):RubyFile {
@@ -1084,6 +1094,71 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		setExtraFile(OutputPath.fromStr("config/initializers/hxruby_autoload.rb"), lines.join("\n"));
 	}
 
+	function emitRailsTemplateArtifact(classType:ClassType, varFields:Array<ClassVarData>):Void {
+		if (!buildContext.railsMode) {
+			Context.error("@:railsTemplate requires -D reflaxe_ruby_rails.", classType.pos);
+			return;
+		}
+		var templatePath = metaStringParam(classType.meta, ":railsTemplate", 0);
+		if (templatePath == null) {
+			Context.error("@:railsTemplate expects a Rails template path string.", classType.pos);
+			return;
+		}
+		var body = railsTemplateSourceBody(classType, varFields);
+		if (body == null) {
+			Context.error("@:railsTemplate expects a source path argument or a static string field named body/erb/template.", classType.pos);
+			return;
+		}
+		setExtraFile(OutputPath.fromStr(railsTemplateOutputPath(templatePath)), normalizeGeneratedText(body));
+	}
+
+	function railsTemplateSourceBody(classType:ClassType, varFields:Array<ClassVarData>):Null<String> {
+		var source = metaStringParam(classType.meta, ":railsTemplate", 1);
+		if (source != null) {
+			var path = Path.normalize(Path.join([Path.directory(Context.getPosInfos(classType.pos).file), source]));
+			if (!FileSystem.exists(path)) {
+				Context.error("@:railsTemplate source file not found: " + path, classType.pos);
+				return null;
+			}
+			return File.getContent(path);
+		}
+		for (field in varFields) {
+			if (!field.isStatic || ["body", "erb", "template"].indexOf(field.field.name) == -1) {
+				continue;
+			}
+			var expr = field.getDefaultUntypedExpr();
+			if (expr == null) {
+				continue;
+			}
+			return switch (expr.expr) {
+				case EConst(CString(value, _)): value;
+				case _:
+					Context.error("@:railsTemplate static body/erb/template field must be a string literal.", expr.pos);
+					null;
+			}
+		}
+		return null;
+	}
+
+	static function railsTemplateOutputPath(path:String):String {
+		var normalized = StringTools.replace(path, "\\", "/");
+		while (StringTools.startsWith(normalized, "/")) {
+			normalized = normalized.substr(1);
+		}
+		if (normalized == "" || normalized.indexOf("..") != -1) {
+			return "app/views/invalid_template_path.html.erb";
+		}
+		if (!StringTools.endsWith(normalized, ".erb")) {
+			normalized += ".html.erb";
+		}
+		return "app/views/" + normalized;
+	}
+
+	static function normalizeGeneratedText(value:String):String {
+		var normalized = StringTools.replace(value == null ? "" : value, "\r\n", "\n").split("\r").join("\n");
+		return StringTools.endsWith(normalized, "\n") ? normalized : normalized + "\n";
+	}
+
 	function outputRelativeDir(dir:Null<String>, appOwned:Bool):Null<String> {
 		var normalized = dir == null ? "" : dir;
 		if (buildContext.railsMode && appOwned) {
@@ -1230,14 +1305,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function metaStringValue(meta:Null<haxe.macro.Type.MetaAccess>, name:String):Null<String> {
+		return metaStringParam(meta, name, 0);
+	}
+
+	static function metaStringParam(meta:Null<haxe.macro.Type.MetaAccess>, name:String, index:Int):Null<String> {
 		if (meta == null || meta.extract == null) {
 			return null;
 		}
 		var entries = meta.extract(name);
-		if (entries.length == 0 || entries[0].params == null || entries[0].params.length == 0) {
+		if (entries.length == 0 || entries[0].params == null || entries[0].params.length <= index) {
 			return null;
 		}
-		return switch (entries[0].params[0].expr) {
+		return switch (entries[0].params[index].expr) {
 			case EConst(CString(value, _)) if (value.length > 0): value;
 			case _: null;
 		}

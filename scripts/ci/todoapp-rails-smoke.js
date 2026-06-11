@@ -44,6 +44,8 @@ for (const file of [
   "app/haxe_gen/models/user.rb",
   "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
+  "app/haxe_gen/views/todo_index_view.rb",
+  "app/views/controllers/todos/index.html.erb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
   "run.rb",
@@ -152,7 +154,7 @@ for (const expected of [
   }
 }
 
-const view = readFileSync(join(exampleDir, "app", "views", "controllers", "todos", "index.html.erb"), "utf8");
+const view = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "index.html.erb"), "utf8");
 for (const expected of [
   "Typed Rails, polished Ruby.",
   "RailsHx sample",

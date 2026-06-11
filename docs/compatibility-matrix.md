@@ -38,6 +38,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | ActionController surface | `rails.action_controller.Base` | Implemented |
 | Strong params macro | `ParamsMacro.requirePermit(...)` | Implemented |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |
+| Rails template artifact generation | `@:railsTemplate(...)` | Implemented |
 | Route helper generator | `npm run rails:generate-routes` | Implemented |
 | Scaffold generator | `npm run rails:scaffold` | Implemented |
 
