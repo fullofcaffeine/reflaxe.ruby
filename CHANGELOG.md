@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.11.0...v1.12.0) (2026-06-11)
+
+
+### Features
+
+* require explicit raw ERB templates ([5d96b69](https://github.com/fullofcaffeine/reflaxe.ruby/commit/5d96b69c8f54cd7b07180d8860bbc97c3fc3c19b))
+
 # [1.11.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.10.0...v1.11.0) (2026-06-11)
 
 
