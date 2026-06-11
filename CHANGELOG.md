@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.29.0...v1.29.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* smooth RailsHx todo Turbo interactions ([d4006fe](https://github.com/fullofcaffeine/reflaxe.ruby/commit/d4006fe1545fd882555842c656de3df019f1cbeb))
+
 # [1.29.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.28.0...v1.29.0) (2026-06-11)
 
 
