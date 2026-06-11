@@ -167,12 +167,28 @@
       "reason": "Typed Rails params wrapper for require/permit flows."
     },
     {
+      "id": "std.rails.action_view_template",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_view/Template.hx",
+      "surface": "rails.action_view.Template",
+      "reason": "Typed ActionView template marker used to bind Rails template paths to Haxe locals types."
+    },
+    {
       "id": "std.rails.params_macro",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/macros/ParamsMacro.hx",
       "surface": "rails.macros.ParamsMacro",
       "reason": "Macro expansion for require/permit params with snake_case Ruby keys."
+    },
+    {
+      "id": "std.rails.view_macro",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/ViewMacro.hx",
+      "surface": "rails.macros.ViewMacro",
+      "reason": "Macro expansion for typed ActionView template locals into Rails-native render options."
     },
     {
       "id": "std.math",

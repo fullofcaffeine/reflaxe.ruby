@@ -21,6 +21,7 @@ run(process.execPath, [join(root, "scripts", "ci", "todoapp-rails-smoke.js")]);
 materializeRailsApp();
 syntaxCheck([
   "app/models/application_record.rb",
+  "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/models/todo.rb",
   "app/haxe_gen/models/user.rb",
   "app/haxe_gen/controllers/todos_controller.rb",

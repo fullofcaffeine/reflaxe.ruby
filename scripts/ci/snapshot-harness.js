@@ -64,6 +64,7 @@ const cases = [
     files: [
       "app/haxe_gen/models/todo.rb",
       "app/haxe_gen/models/user.rb",
+      "app/haxe_gen/controllers/todo_index_locals.rb",
       "app/haxe_gen/controllers/todos_controller.rb",
       "app/haxe_gen/main.rb",
       "config/initializers/hxruby_autoload.rb",

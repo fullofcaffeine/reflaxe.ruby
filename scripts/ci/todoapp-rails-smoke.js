@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
-const { existsSync, readFileSync, rmSync } = require("node:fs");
+const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "todoapp_rails");
 const exampleDir = join(root, "examples", "todoapp_rails");
+const invalidSourceDir = join(root, "test", ".generated", "todoapp_rails_invalid_src");
+const invalidOutputDir = join(root, "test", ".generated", "todoapp_rails_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -29,6 +31,8 @@ function run(command, args, options = {}) {
 }
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(invalidSourceDir, { force: true, recursive: true });
+rmSync(invalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -38,6 +42,7 @@ if (!compileWithFirstAvailableReflaxe()) {
 for (const file of [
   "app/haxe_gen/models/todo.rb",
   "app/haxe_gen/models/user.rb",
+  "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
@@ -138,6 +143,7 @@ for (const expected of [
   "RailsHx Todo App",
   "self.__hx_rails_schema",
   "ParamsMacro.requirePermit",
+  "ViewMacro.renderTemplate",
   "Rails migration template",
 ]) {
   if (!readme.includes(expected)) {
@@ -159,6 +165,8 @@ for (const expected of [
     process.exit(1);
   }
 }
+
+expectInvalidTemplateLocalsFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -192,4 +200,89 @@ function compileWithFirstAvailableReflaxe() {
     }
   }
   return null;
+}
+
+function expectInvalidTemplateLocalsFailure() {
+  mkdirSync(join(invalidSourceDir, "controllers"), { recursive: true });
+  writeFileSync(join(invalidSourceDir, "InvalidMain.hx"), [
+    "import controllers.BadTodosController;",
+    "",
+    "class InvalidMain {",
+    "\tstatic function main() {",
+    "\t\tvar controller:BadTodosController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "controllers", "BadTodosController.hx"), [
+    "package controllers;",
+    "",
+    "import models.Todo;",
+    "import rails.action_view.Template;",
+    "import rails.macros.ViewMacro;",
+    "",
+    "typedef TodoIndexLocals = {",
+    "\tvar todos:Array<Todo>;",
+    "}",
+    "",
+    "@:railsController",
+    "class BadTodosController extends rails.action_controller.Base {",
+    "\tpublic function index() {",
+    "\t\tvar todos = Todo.incomplete();",
+    "\t\tViewMacro.renderTemplate(this, (Template.named(\"controllers/todos/index\") : Template<TodoIndexLocals>), {items: todos});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${invalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      join(exampleDir, "src_haxe"),
+      "-cp",
+      invalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Invalid ViewMacro.renderTemplate locals compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("ViewMacro.renderTemplate locals do not match the Template<TLocals> contract.")
+      && !output.includes("TodoIndexLocals")
+      && !output.includes("has no field todos")) {
+      console.error("Invalid ViewMacro.renderTemplate locals failed, but not with the expected typed locals error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid ViewMacro.renderTemplate locals check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
 }
