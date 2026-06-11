@@ -40,6 +40,7 @@ const cases = [
     name: "active_record_model",
     defines: ["reflaxe_ruby_rails"],
     files: [
+      "app/haxe_gen/models/audit_log.rb",
       "app/haxe_gen/models/todo.rb",
       "app/haxe_gen/main.rb",
       "config/initializers/hxruby_autoload.rb",

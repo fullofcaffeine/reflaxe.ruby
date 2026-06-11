@@ -33,6 +33,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Rails output root | `-D reflaxe_ruby_rails` | Implemented |
 | Custom Rails output root | `-D reflaxe_ruby_rails_output_root=<path>` | Implemented |
 | ActiveRecord model surface | `rails.active_record.Base<T>` | Implemented |
+| ActiveRecord schema registry | `Todo.__hx_rails_schema` | Implemented |
 | Associations/validations metadata | `@:belongsTo`, `@:hasMany`, `@:hasOne`, `@:validates` | Implemented |
 | ActionController surface | `rails.action_controller.Base` | Implemented |
 | Strong params macro | `ParamsMacro.requirePermit(...)` | Implemented |

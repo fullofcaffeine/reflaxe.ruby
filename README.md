@@ -60,6 +60,7 @@ Rails mode is enabled with `-D reflaxe_ruby_rails`. It emits Haxe-owned app file
 - `config/initializers/hxruby_autoload.rb`
 - Rails-friendly constant/file paths for Zeitwerk
 - typed `rails.active_record.Base<T>` model classes
+- generated ActiveRecord schema metadata via `Model.__hx_rails_schema`
 - typed `rails.action_controller.Base` controller classes
 - `ParamsMacro.requirePermit(...)` for strong params
 - model metadata for `@:belongsTo`, `@:hasMany`, `@:hasOne`, and `@:validates`

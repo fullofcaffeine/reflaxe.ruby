@@ -4,8 +4,24 @@ require "active_record"
 module Models
   class Todo < ActiveRecord::Base
     self.table_name = "todos"
+    def self.__hx_rails_schema()
+      {
+        table_name: "todos",
+        timestamps: true,
+        columns: [
+          {name: :id, haxe_name: "id", ruby_name: "id", haxe_type: "Int", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint},
+          {name: :title, haxe_name: "title", ruby_name: "title", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil},
+          {name: :completed, haxe_name: "completed", ruby_name: "completed", haxe_type: "Bool", rails_type: :boolean, nullable: false, default: false, primary_key: false, index: false, unique: false, db_type: nil},
+          {name: :notes, haxe_name: "notes", ruby_name: "notes", haxe_type: "String", rails_type: :text, nullable: true, default: nil, primary_key: false, index: false, unique: false, db_type: :text},
+          {name: :external_id, haxe_name: "externalId", ruby_name: "external_id", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: false, unique: true, db_type: nil}
+        ]
+      }
+    end
+    # haxe column id: Int
     # haxe column title: String
     # haxe column completed: Bool
+    # haxe column notes: Null
+    # haxe column external_id: String
     def initialize()
       super()
     end

@@ -4,6 +4,17 @@ require "active_record"
 module Models
   class Todo < ActiveRecord::Base
     self.table_name = "todos"
+    def self.__hx_rails_schema()
+      {
+        table_name: "todos",
+        timestamps: false,
+        columns: [
+          {name: :title, haxe_name: "title", ruby_name: "title", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: false, unique: false, db_type: nil},
+          {name: :is_completed, haxe_name: "isCompleted", ruby_name: "is_completed", haxe_type: "Bool", rails_type: :boolean, nullable: false, default: nil, primary_key: false, index: false, unique: false, db_type: nil},
+          {name: :user_id, haxe_name: "userId", ruby_name: "user_id", haxe_type: "Int", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: false, unique: false, db_type: nil}
+        ]
+      }
+    end
     belongs_to :user
     # haxe column title: String
     # haxe column is_completed: Bool

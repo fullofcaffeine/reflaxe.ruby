@@ -124,7 +124,7 @@
       "status": "implemented",
       "path": "std/rails/ActiveRecord.hx",
       "surface": "rails.ActiveRecord",
-      "reason": "Top-level ActiveRecord marker module plus typed association and validation marker surfaces."
+      "reason": "Top-level ActiveRecord marker module plus typed column options, association, and validation marker surfaces."
     },
     {
       "id": "std.rails.active_record_base",
@@ -140,7 +140,7 @@
       "status": "implemented",
       "path": "std/rails/macros/ModelMacro.hx",
       "surface": "rails.macros.ModelMacro",
-      "reason": "Build macro for railsModel metadata and typed where/create stubs."
+      "reason": "Build macro for railsModel/railsColumn metadata validation and typed where/create stubs."
     },
     {
       "id": "std.rails.action_controller",

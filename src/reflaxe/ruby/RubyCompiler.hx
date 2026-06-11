@@ -27,6 +27,24 @@ import reflaxe.ruby.RequireRegistry;
 import sys.FileSystem;
 import sys.io.File;
 
+typedef RailsColumnInfo = {
+	haxeName:String,
+	rubyName:String,
+	haxeType:String,
+	railsType:String,
+	nullable:Bool,
+	defaultValue:Null<String>,
+	primaryKey:Bool,
+	index:Bool,
+	unique:Bool,
+	dbType:Null<String>
+}
+
+typedef RubyMetadataField = {
+	field:String,
+	expr:haxe.macro.Expr
+}
+
 class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFile, RubyFile> {
 	public var currentCompilationContext:Null<CompilationContext>;
 	var emittedRubyPaths:Array<String> = [];
@@ -380,6 +398,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (tableName != null) {
 			body.push("self.table_name = " + quoteRubyStringForCode(tableName));
 		}
+		body = body.concat(railsSchemaRegistryLines(tableName, varFields, classType));
 		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":belongsTo")) {
 				body.push("belongs_to :" + RubyNaming.toMethodName(field.field.name));
@@ -429,6 +448,59 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			modulePath: classType.pack == null ? [] : classType.pack.copy(),
 			statements: statements
 		};
+	}
+
+	static function railsSchemaRegistryLines(tableName:Null<String>, varFields:Array<ClassVarData>, classType:ClassType):Array<String> {
+		var columns = [for (field in varFields) if (hasMeta(field.field.meta, ":railsColumn")) railsColumnInfo(field)];
+		var lines = [
+			"def self.__hx_rails_schema()",
+			"  {",
+			"    table_name: " + quoteRubyStringForCode(tableName == null ? railsModelTableName(classType) : tableName) + ",",
+			"    timestamps: " + (hasMeta(classType.meta, ":railsTimestamps") ? "true" : "false") + ",",
+			"    columns: ["
+		];
+		for (index in 0...columns.length) {
+			var suffix = index == columns.length - 1 ? "" : ",";
+			lines.push("      " + railsColumnInfoCode(columns[index]) + suffix);
+		}
+		lines.push("    ]");
+		lines.push("  }");
+		lines.push("end");
+		return lines;
+	}
+
+	static function railsColumnInfo(field:ClassVarData):RailsColumnInfo {
+		var haxeType = railsColumnTypeLabel(field.field.type);
+		var explicitDbType = railsColumnStringOption(field.field.meta, "dbType");
+		return {
+			haxeName: field.field.name,
+			rubyName: RubyNaming.toMethodName(field.field.name),
+			haxeType: haxeType,
+			railsType: explicitDbType != null ? explicitDbType : railsTypeName(haxeType),
+			nullable: railsColumnBoolOption(field.field.meta, "nullable", isNullableType(field.field.type)),
+			defaultValue: railsColumnValueOption(field.field.meta, "defaultValue"),
+			primaryKey: railsColumnBoolOption(field.field.meta, "primaryKey", false),
+			index: railsColumnBoolOption(field.field.meta, "index", false),
+			unique: railsColumnBoolOption(field.field.meta, "unique", false),
+			dbType: explicitDbType
+		};
+	}
+
+	static function railsColumnInfoCode(info:RailsColumnInfo):String {
+		var parts = [
+			"name: " + rubySymbolLiteral(info.rubyName),
+			"haxe_name: " + quoteRubyStringForCode(info.haxeName),
+			"ruby_name: " + quoteRubyStringForCode(info.rubyName),
+			"haxe_type: " + quoteRubyStringForCode(info.haxeType),
+			"rails_type: " + rubySymbolLiteral(info.railsType),
+			"nullable: " + (info.nullable ? "true" : "false"),
+			"default: " + (info.defaultValue == null ? "nil" : info.defaultValue),
+			"primary_key: " + (info.primaryKey ? "true" : "false"),
+			"index: " + (info.index ? "true" : "false"),
+			"unique: " + (info.unique ? "true" : "false"),
+			"db_type: " + (info.dbType == null ? "nil" : rubySymbolLiteral(info.dbType))
+		];
+		return "{" + parts.join(", ") + "}";
 	}
 
 	static function isStdRubyType(pack:Array<String>, typeName:String):Bool {
@@ -1221,6 +1293,91 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case EArrayDecl(values): "[" + [for (value in values) metadataValueCode(value)].join(", ") + "]";
 			case EObjectDecl(fields): "{" + [for (field in fields) RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr)].join(", ") + "}";
 			case _: "nil";
+		}
+	}
+
+	static function railsColumnBoolOption(meta:Null<haxe.macro.Type.MetaAccess>, name:String, fallback:Bool):Bool {
+		var expr = railsColumnOption(meta, name);
+		if (expr == null) {
+			return fallback;
+		}
+		return switch (expr.expr) {
+			case EConst(CIdent("true")): true;
+			case EConst(CIdent("false")): false;
+			case _: fallback;
+		}
+	}
+
+	static function railsColumnStringOption(meta:Null<haxe.macro.Type.MetaAccess>, name:String):Null<String> {
+		var expr = railsColumnOption(meta, name);
+		if (expr == null) {
+			return null;
+		}
+		return switch (expr.expr) {
+			case EConst(CString(value, _)) if (value.length > 0): RubyNaming.toMethodName(value);
+			case _: null;
+		}
+	}
+
+	static function railsColumnValueOption(meta:Null<haxe.macro.Type.MetaAccess>, name:String):Null<String> {
+		var expr = railsColumnOption(meta, name);
+		return expr == null ? null : metadataValueCode(expr);
+	}
+
+	static function railsColumnOption(meta:Null<haxe.macro.Type.MetaAccess>, name:String):Null<haxe.macro.Expr> {
+		if (meta == null || meta.extract == null) {
+			return null;
+		}
+		var entries = meta.extract(":railsColumn");
+		if (entries.length == 0 || entries[0].params == null || entries[0].params.length == 0) {
+			return null;
+		}
+		return switch (entries[0].params[0].expr) {
+			case EObjectDecl(fields):
+				var found:Null<haxe.macro.Expr> = null;
+				for (field in (fields : Array<RubyMetadataField>)) {
+					if (field.field == name) {
+						found = field.expr;
+						break;
+					}
+				}
+				found;
+			case _:
+				null;
+		}
+	}
+
+	static function railsColumnTypeLabel(type:haxe.macro.Type):String {
+		return switch (type) {
+			case TType(ref, params) if (ref.get().name == "Null" && params.length == 1):
+				railsColumnTypeLabel(params[0]);
+			case TAbstract(ref, params) if (ref.get().name == "Null" && params.length == 1):
+				railsColumnTypeLabel(params[0]);
+			case TLazy(lazy):
+				railsColumnTypeLabel(lazy());
+			case _:
+				typeLabel(type);
+		}
+	}
+
+	static function isNullableType(type:haxe.macro.Type):Bool {
+		return switch (type) {
+			case TType(ref, _) if (ref.get().name == "Null"): true;
+			case TAbstract(ref, _) if (ref.get().name == "Null"): true;
+			case TLazy(lazy): isNullableType(lazy());
+			case _: false;
+		}
+	}
+
+	static function railsTypeName(haxeType:String):String {
+		return switch (haxeType) {
+			case "String": "string";
+			case "Bool": "boolean";
+			case "Int": "integer";
+			case "Float": "float";
+			case "Date": "date";
+			case "Dynamic": "json";
+			case _: RubyNaming.toMethodName(haxeType);
 		}
 	}
 

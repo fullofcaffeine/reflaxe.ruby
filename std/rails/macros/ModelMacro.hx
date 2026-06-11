@@ -25,6 +25,11 @@ class ModelMacro {
 			}
 			for (meta in field.meta) {
 				switch (meta.name) {
+					case ":railsColumn":
+						if (!isVarField(field)) {
+							throw "@:railsColumn can only be used on model fields.";
+						}
+						validateColumnOptions(field, meta);
 					case ":belongsTo" | ":hasMany" | ":hasOne":
 						if (!isVarField(field)) {
 							throw meta.name + " can only be used on model fields.";
@@ -39,6 +44,85 @@ class ModelMacro {
 					case _:
 				}
 			}
+		}
+	}
+
+	static function validateColumnOptions(field:Field, meta:MetadataEntry):Void {
+		var params = meta.params;
+		if (params == null || params.length == 0) {
+			return;
+		}
+		if (params.length > 1) {
+			throw "@:railsColumn expects zero arguments or one options object.";
+		}
+		switch (params[0].expr) {
+			case EObjectDecl(options):
+				for (option in options) {
+					switch (option.field) {
+						case "nullable" | "primaryKey" | "index" | "unique":
+							if (!isBoolExpr(option.expr)) {
+								throw '@:railsColumn option ${option.field} must be a Bool literal.';
+							}
+						case "defaultValue":
+							validateDefaultValue(field, option.expr);
+						case "dbType":
+							if (!isStringExpr(option.expr)) {
+								throw "@:railsColumn option dbType must be a String literal.";
+							}
+						case _:
+							throw '@:railsColumn unknown option ${option.field}.';
+					}
+				}
+			case _:
+				throw "@:railsColumn expects an options object.";
+		}
+	}
+
+	static function validateDefaultValue(field:Field, expr:Expr):Void {
+		var fieldType = fieldTypeName(field);
+		switch (fieldType) {
+			case "String":
+				if (!isStringExpr(expr)) {
+					throw "@:railsColumn defaultValue for String fields must be a String literal.";
+				}
+			case "Bool":
+				if (!isBoolExpr(expr)) {
+					throw "@:railsColumn defaultValue for Bool fields must be a Bool literal.";
+				}
+			case "Int":
+				if (!isIntExpr(expr)) {
+					throw "@:railsColumn defaultValue for Int fields must be an Int literal.";
+				}
+			case "Float":
+				if (!isIntExpr(expr) && !isFloatExpr(expr)) {
+					throw "@:railsColumn defaultValue for Float fields must be a numeric literal.";
+				}
+			case _:
+		}
+	}
+
+	static function fieldTypeName(field:Field):String {
+		return switch (field.kind) {
+			case FVar(t, _) | FProp(_, _, t, _):
+				complexTypeName(t);
+			case _:
+				"";
+		}
+	}
+
+	static function complexTypeName(type:Null<ComplexType>):String {
+		return switch (type) {
+			case TPath(path):
+				if (path.name == "Null" && path.params != null && path.params.length == 1) {
+					switch (path.params[0]) {
+						case TPType(inner): complexTypeName(inner);
+						case _: path.name;
+					}
+				} else {
+					path.name;
+				}
+			case _:
+				"";
 		}
 	}
 
@@ -69,6 +153,27 @@ class ModelMacro {
 	static function isStringExpr(expr:Expr):Bool {
 		return switch (expr.expr) {
 			case EConst(CString(_, _)): true;
+			case _: false;
+		}
+	}
+
+	static function isBoolExpr(expr:Expr):Bool {
+		return switch (expr.expr) {
+			case EConst(CIdent("true" | "false")): true;
+			case _: false;
+		}
+	}
+
+	static function isIntExpr(expr:Expr):Bool {
+		return switch (expr.expr) {
+			case EConst(CInt(_, _)): true;
+			case _: false;
+		}
+	}
+
+	static function isFloatExpr(expr:Expr):Bool {
+		return switch (expr.expr) {
+			case EConst(CFloat(_, _)): true;
 			case _: false;
 		}
 	}

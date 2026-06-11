@@ -4,6 +4,15 @@ require "active_record"
 module Models
   class User < ActiveRecord::Base
     self.table_name = "users"
+    def self.__hx_rails_schema()
+      {
+        table_name: "users",
+        timestamps: false,
+        columns: [
+          {name: :name, haxe_name: "name", ruby_name: "name", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: false, unique: false, db_type: nil}
+        ]
+      }
+    end
     has_many :todos
     # haxe column name: String
     validates :name, presence: true
