@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.16.0...v1.17.0) (2026-06-11)
+
+
+### Features
+
+* add Rails HHX inline templates ([4fab523](https://github.com/fullofcaffeine/reflaxe.ruby/commit/4fab5232d0aa25c3292d1647f0c92d3fb4de67aa))
+
 # [1.16.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.15.0...v1.16.0) (2026-06-11)
 
 
