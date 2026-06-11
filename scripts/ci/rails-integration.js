@@ -77,11 +77,7 @@ function materializeRailsApp() {
   rmSync(appDir, { force: true, recursive: true });
   copyTree(join(compiledDir, "app"), join(appDir, "app"));
   copyTree(join(compiledDir, "config"), join(appDir, "config"));
-  mkdirSync(join(appDir, "db", "migrate"), { recursive: true });
-  copyFileSync(
-    join(root, "examples", "todoapp_rails", "db", "migrate", "20260101000000_create_todos.rb"),
-    join(appDir, "db", "migrate", "20260101000000_create_todos.rb")
-  );
+  copyTree(join(compiledDir, "db", "migrate"), join(appDir, "db", "migrate"));
 
   writeFile("Gemfile", `source "https://rubygems.org"
 

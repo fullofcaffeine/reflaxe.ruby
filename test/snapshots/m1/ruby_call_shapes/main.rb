@@ -6,13 +6,13 @@ class Main
     "Main"
   end
   def self.main()
-    count__hx18384 = 2
+    count__hx18536 = 2
     puts(HXRuby.stringify(NativeInterop.describe(name: "ruby", count: 2)))
-    puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count__hx18384)))
-    NativeInterop.each([1, 2]) { |value__hx18457| puts(HXRuby.stringify(value__hx18457)) }
-    NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count__hx18384) do |value__hx18458|
+    puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count__hx18536)))
+    NativeInterop.each([1, 2]) { |value__hx18609| puts(HXRuby.stringify(value__hx18609)) }
+    NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count__hx18536) do |value__hx18610|
       Kernel.print("item=")
-      puts(HXRuby.stringify(value__hx18458))
+      puts(HXRuby.stringify(value__hx18610))
     end
     puts(HXRuby.stringify(NativeInterop.accept_symbol(:ready)))
     Kernel.puts("kernel")

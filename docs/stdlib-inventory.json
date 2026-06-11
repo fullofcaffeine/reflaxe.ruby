@@ -215,6 +215,14 @@
       "reason": "Typed Haxe facade over Turbo lifecycle events and Turbo.visit for RailsHx client-side JavaScript."
     },
     {
+      "id": "std.rails.migration",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/migration/Migration.hx",
+      "surface": "rails.migration.Migration",
+      "reason": "Marker base for Haxe-authored Rails migration classes lowered into ActiveRecord migration files."
+    },
+    {
       "id": "std.rails.params_macro",
       "owner": "std",
       "status": "implemented",

@@ -41,6 +41,18 @@ typedef RailsColumnInfo = {
 	dbType:Null<String>
 }
 
+typedef RailsBelongsToInfo = {
+	rubyName:String,
+	columnName:String,
+	referencedTable:String
+}
+
+typedef RailsMigrationConfig = {
+	timestamp:String,
+	className:String,
+	models:Array<ClassType>
+}
+
 typedef RubyMetadataField = {
 	field:String,
 	expr:haxe.macro.Expr
@@ -131,6 +143,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	public function compileClassImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Null<RubyFile> {
 		setRubyOutputPath(classType.pack, classType.name);
 		var moduleRequires = collectModuleRequires(classType.meta);
+		if (hasMeta(classType.meta, ":railsMigration")) {
+			emitRailsMigrationArtifact(classType);
+		}
 		if (hasMeta(classType.meta, ":railsTemplate")) {
 			return compileRailsTemplateImpl(classType, varFields, funcFields, moduleRequires);
 		}
@@ -498,18 +513,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsColumnInfo(field:ClassVarData):RailsColumnInfo {
-		var haxeType = railsColumnTypeLabel(field.field.type);
-		var explicitDbType = railsColumnStringOption(field.field.meta, "dbType");
+		return railsColumnInfoFromField(field.field);
+	}
+
+	static function railsColumnInfoFromField(field:haxe.macro.Type.ClassField):RailsColumnInfo {
+		var haxeType = railsColumnTypeLabel(field.type);
+		var explicitDbType = railsColumnStringOption(field.meta, "dbType");
 		return {
-			haxeName: field.field.name,
-			rubyName: RubyNaming.toMethodName(field.field.name),
+			haxeName: field.name,
+			rubyName: RubyNaming.toMethodName(field.name),
 			haxeType: haxeType,
 			railsType: explicitDbType != null ? explicitDbType : railsTypeName(haxeType),
-			nullable: railsColumnBoolOption(field.field.meta, "nullable", isNullableType(field.field.type)),
-			defaultValue: railsColumnValueOption(field.field.meta, "defaultValue"),
-			primaryKey: railsColumnBoolOption(field.field.meta, "primaryKey", false),
-			index: railsColumnBoolOption(field.field.meta, "index", false),
-			unique: railsColumnBoolOption(field.field.meta, "unique", false),
+			nullable: railsColumnBoolOption(field.meta, "nullable", isNullableType(field.type)),
+			defaultValue: railsColumnValueOption(field.meta, "defaultValue"),
+			primaryKey: railsColumnBoolOption(field.meta, "primaryKey", false),
+			index: railsColumnBoolOption(field.meta, "index", false),
+			unique: railsColumnBoolOption(field.meta, "unique", false),
 			dbType: explicitDbType
 		};
 	}
@@ -1129,6 +1148,211 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			""
 		];
 		setExtraFile(OutputPath.fromStr("config/initializers/hxruby_autoload.rb"), lines.join("\n"));
+	}
+
+	function emitRailsMigrationArtifact(classType:ClassType):Void {
+		if (!buildContext.railsMode) {
+			Context.error("@:railsMigration requires -D reflaxe_ruby_rails.", classType.pos);
+			return;
+		}
+		var config = railsMigrationConfig(classType);
+		if (config == null) {
+			return;
+		}
+		var body = railsMigrationBody(config);
+		var fileName = config.timestamp + "_" + RubyNaming.fileName(config.className) + ".rb";
+		setExtraFile(OutputPath.fromStr("db/migrate/" + fileName), normalizeGeneratedText(body));
+	}
+
+	static function railsMigrationConfig(classType:ClassType):Null<RailsMigrationConfig> {
+		var entries = classType.meta.extract(":railsMigration");
+		if (entries.length == 0 || entries[0].params == null || entries[0].params.length == 0) {
+			Context.error("@:railsMigration expects an options object with timestamp, className, and models.", classType.pos);
+			return null;
+		}
+		var timestamp:Null<String> = null;
+		var className:Null<String> = null;
+		var modelPaths:Array<String> = [];
+		switch (entries[0].params[0].expr) {
+			case EObjectDecl(fields):
+				for (field in (fields : Array<RubyMetadataField>)) {
+					switch (field.field) {
+						case "timestamp":
+							timestamp = metadataStringLiteral(field.expr);
+						case "className" | "name":
+							className = metadataStringLiteral(field.expr);
+						case "models":
+							modelPaths = metadataStringArray(field.expr);
+						case other:
+							Context.error('@:railsMigration unknown option $other.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration expects an options object.", entries[0].params[0].pos);
+		}
+		if (timestamp == null || !~/^[0-9]{14}$/.match(timestamp)) {
+			Context.error("@:railsMigration timestamp must be a 14-digit string.", classType.pos);
+			return null;
+		}
+		if (className == null || className == "") {
+			Context.error("@:railsMigration className must be a non-empty string.", classType.pos);
+			return null;
+		}
+		if (modelPaths.length == 0) {
+			Context.error("@:railsMigration models must include at least one model path.", classType.pos);
+			return null;
+		}
+		var models:Array<ClassType> = [];
+		for (path in modelPaths) {
+			switch (Context.getType(path)) {
+				case TInst(ref, _):
+					var model = ref.get();
+					if (!hasMeta(model.meta, ":railsModel")) {
+						Context.error('@:railsMigration model "$path" must be annotated with @:railsModel.', classType.pos);
+					}
+					models.push(model);
+				case _:
+					Context.error('@:railsMigration model "$path" must resolve to a class.', classType.pos);
+			}
+		}
+		return {timestamp: timestamp, className: className, models: models};
+	}
+
+	static function railsMigrationBody(config:RailsMigrationConfig):String {
+		var lines = [
+			"# Generated by RailsHx from @:railsMigration.",
+			"class " + RubyNaming.toConstantName(config.className) + " < ActiveRecord::Migration[7.1]",
+			"  def change"
+		];
+		for (index in 0...config.models.length) {
+			if (index > 0) {
+				lines.push("");
+			}
+			appendRailsCreateTableMigration(lines, config.models[index]);
+		}
+		lines.push("  end");
+		lines.push("end");
+		return lines.join("\n");
+	}
+
+	static function appendRailsCreateTableMigration(lines:Array<String>, model:ClassType):Void {
+		var tableName = railsModelTableName(model);
+		var belongsTo = railsBelongsToInfo(model);
+		lines.push("    create_table :" + tableName + " do |t|");
+		for (field in model.fields.get()) {
+			if (!hasMeta(field.meta, ":railsColumn")) {
+				continue;
+			}
+			var info = railsColumnInfoFromField(field);
+			if (info.primaryKey && info.rubyName == "id") {
+				continue;
+			}
+			var assoc = belongsTo.get(info.rubyName);
+			if (assoc != null) {
+				var options = railsMigrationColumnOptions(info);
+				options.push("foreign_key: true");
+				lines.push("      t.references :" + assoc.rubyName + railsMigrationOptionSuffix(options));
+			} else {
+				lines.push("      t." + info.railsType + " :" + info.rubyName + railsMigrationOptionSuffix(railsMigrationColumnOptions(info)));
+			}
+		}
+		if (hasMeta(model.meta, ":railsTimestamps")) {
+			lines.push("");
+			lines.push("      t.timestamps");
+		}
+		var indexed = railsMigrationIndexes(model, belongsTo);
+		if (indexed.length > 0) {
+			lines.push("");
+			for (indexLine in indexed) {
+				lines.push("      " + indexLine);
+			}
+		}
+		lines.push("    end");
+	}
+
+	static function railsMigrationColumnOptions(info:RailsColumnInfo):Array<String> {
+		var options:Array<String> = [];
+		if (!info.nullable) {
+			options.push("null: false");
+		}
+		if (info.defaultValue != null) {
+			options.push("default: " + info.defaultValue);
+		}
+		return options;
+	}
+
+	static function railsMigrationOptionSuffix(options:Array<String>):String {
+		return options.length == 0 ? "" : ", " + options.join(", ");
+	}
+
+	static function railsMigrationIndexes(model:ClassType, belongsTo:Map<String, RailsBelongsToInfo>):Array<String> {
+		var lines:Array<String> = [];
+		for (field in model.fields.get()) {
+			if (!hasMeta(field.meta, ":railsColumn")) {
+				continue;
+			}
+			var info = railsColumnInfoFromField(field);
+			if (info.primaryKey || !info.index || belongsTo.exists(info.rubyName)) {
+				continue;
+			}
+			lines.push("t.index :" + info.rubyName + (info.unique ? ", unique: true" : ""));
+		}
+		return lines;
+	}
+
+	static function railsBelongsToInfo(model:ClassType):Map<String, RailsBelongsToInfo> {
+		var out:Map<String, RailsBelongsToInfo> = [];
+		for (field in model.fields.get()) {
+			if (!hasMeta(field.meta, ":belongsTo")) {
+				continue;
+			}
+			var rubyName = RubyNaming.toMethodName(field.name);
+			out.set(RubyNaming.toMethodName(field.name + "Id"), {
+				rubyName: rubyName,
+				columnName: RubyNaming.toMethodName(field.name + "Id"),
+				referencedTable: railsBelongsToReferencedTable(field.type, rubyName + "s")
+			});
+		}
+		return out;
+	}
+
+	static function railsBelongsToReferencedTable(type:haxe.macro.Type, fallback:String):String {
+		return switch (type) {
+			case TInst(ref, [TInst(modelRef, _)]):
+				railsModelTableName(modelRef.get());
+			case TType(_, [inner]) | TAbstract(_, [inner]):
+				railsBelongsToReferencedTable(inner, fallback);
+			case TLazy(lazy):
+				railsBelongsToReferencedTable(lazy(), fallback);
+			case _:
+				fallback;
+		}
+	}
+
+	static function metadataStringLiteral(expr:haxe.macro.Expr):Null<String> {
+		return switch (expr.expr) {
+			case EConst(CString(value, _)) if (value.length > 0): value;
+			case _: null;
+		}
+	}
+
+	static function metadataStringArray(expr:haxe.macro.Expr):Array<String> {
+		return switch (expr.expr) {
+			case EArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					var parsed = metadataStringLiteral(value);
+					if (parsed == null) {
+						Context.error("@:railsMigration models must be an array of string paths.", value.pos);
+					} else {
+						out.push(parsed);
+					}
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration models must be an array of string paths.", expr.pos);
+				[];
+		}
 	}
 
 	function emitRailsTemplateArtifact(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Void {

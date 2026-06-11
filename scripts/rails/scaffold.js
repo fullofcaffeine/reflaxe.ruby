@@ -12,13 +12,14 @@ const withController = args.includes("--controller");
 
 const tableName = pluralize(fileName(modelName));
 const controllerName = pluralize(modelName) + "Controller";
+const migrationName = "Create" + pluralize(modelName);
 const resourceName = fileName(modelName);
 const controllerFile = fileName(controllerName);
 
 write("src_haxe/models/" + modelName + ".hx", renderModel());
+write("src_haxe/migrations/" + migrationName + ".hx", renderMigration());
 write("src_haxe/routes/Routes.hx", renderRoutes());
 write("src_haxe/Main.hx", renderMain());
-write("db/migrate/20260101000000_create_" + tableName + ".rb", renderMigration());
 write("build.hxml", renderBuild());
 if (withController) {
   write("src_haxe/controllers/" + controllerName + ".hx", renderController());
@@ -121,7 +122,9 @@ function renderRoutes() {
 }
 
 function renderMain() {
-  const imports = withController ? ["import controllers." + controllerName + ";", "import models." + modelName + ";"] : ["import models." + modelName + ";"];
+  const imports = withController
+    ? ["import controllers." + controllerName + ";", "import migrations." + migrationName + ";", "import models." + modelName + ";"]
+    : ["import migrations." + migrationName + ";", "import models." + modelName + ";"];
   const controllerLine = withController ? "\t\tvar controller:" + controllerName + " = null;\n\t\tSys.println(controller == null);" : "";
   return [
     ...imports,
@@ -129,7 +132,9 @@ function renderMain() {
     "class Main {",
     "\tstatic function main() {",
     "\t\tvar model:" + modelName + " = null;",
+    "\t\tvar migration:Class<" + migrationName + "> = " + migrationName + ";",
     "\t\tSys.println(model == null);",
+    "\t\tSys.println(migration != null);",
     controllerLine,
     "\t}",
     "}",
@@ -139,19 +144,21 @@ function renderMain() {
 
 function renderMigration() {
   const lines = [
-    "class Create" + pluralize(modelName) + " < ActiveRecord::Migration[7.1]",
-    "  def change",
-    "    create_table :" + tableName + " do |t|",
+    "package migrations;",
+    "",
+    "import models." + modelName + ";",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    '\ttimestamp: "20260101000000",',
+    '\tclassName: "' + migrationName + '",',
+    '\tmodels: ["models.' + modelName + '"]',
+    "})",
+    "class " + migrationName + " extends Migration {",
+    "\tstatic final model:Class<" + modelName + "> = " + modelName + ";",
+    "}",
+    "",
   ];
-  for (const field of fields) {
-    lines.push("      t." + migrationType(field.type) + " :" + fileName(field.name));
-  }
-  lines.push("");
-  lines.push("      t.timestamps");
-  lines.push("    end");
-  lines.push("  end");
-  lines.push("end");
-  lines.push("");
   return lines.join("\n");
 }
 
@@ -163,16 +170,6 @@ function renderBuild() {
     "-main Main",
     "",
   ].join("\n");
-}
-
-function migrationType(type) {
-  switch (type) {
-    case "String": return "string";
-    case "Bool": return "boolean";
-    case "Int": return "integer";
-    case "Float": return "float";
-    default: return "string";
-  }
 }
 
 function write(relativePath, content) {

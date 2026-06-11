@@ -11,6 +11,7 @@ The repo currently has a Rails MVP:
 - Minimal ActionController/strong params surface through `rails.action_controller.Base`, `Params`, and `ParamsMacro`.
 - First typed ActionView render seam through `rails.action_view.Template<TLocals>`, `ViewMacro.renderTemplate(...)`, and `@:railsTemplate(...)` artifact generation.
 - First typed ActionView AST seam through Rails HHX inline markup, `rails.action_view.H`, `HtmlNode`, `HtmlAttr`, and `@:railsTemplateAst(...)`, currently proven by the todoapp's generated index shell, generated partials, typed partial composition, typed route-helper links, and initial typed form helpers.
+- First typed migration artifact seam through Haxe-authored `@:railsMigration(...)` classes, which emit standard timestamped `db/migrate/*.rb` create-table migrations from referenced ActiveRecord model metadata.
 - Route helper and scaffold scripts under `scripts/rails`.
 - A Rails todoapp example and optional Rails integration smoke coverage.
 
@@ -56,7 +57,7 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 - `haxe.ruby-wpi.2`: implement ActiveRecord schema registry and typed column metadata.
 - `haxe.ruby-wpi.3`: implement typed `Relation<T>` and ActiveRecord query DSL.
 - `haxe.ruby-wpi.4`: implement typed associations, validations, enums, and callbacks.
-- `haxe.ruby-wpi.5`: implement typed migration DSL and Rails migration generator.
+- `haxe.ruby-wpi.5`: implement typed migration DSL and Rails migration generator. The initial create-table artifact lane exists; richer alter/drop/reversible DSL validation remains in progress.
 - `haxe.ruby-wpi.6`: implement typed controllers, params, and action results.
 - `haxe.ruby-wpi.7`: harden route helper sync, then design Haxe-first routing.
 - `haxe.ruby-wpi.8`: implement RailsHx generators, rake tasks, and adoption tooling.

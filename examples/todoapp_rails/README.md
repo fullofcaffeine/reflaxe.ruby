@@ -31,13 +31,14 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - Haxe-authored typed ActionView partials through `@:railsTemplateAst(...)`, Rails HHX inline markup, `H`, `HtmlNode`, and `HtmlAttr`; the compiler type-checks embedded expressions such as `todo.title`, typed conditionals/loops, typed partial locals, route helper calls, and typed form locals before emitting ERB.
 - HHX-first ActionView authoring: the index page and all extracted view pieces are authored as typed HHX, while Rails-native ERB is compiler output.
 - Haxe-authored JavaScript compiled into the Rails importmap/Turbo flow, so progressive behavior can stay in typed Haxe while Rails serves standard `app/javascript/**` assets.
+- Haxe-authored Rails migrations through `@:railsMigration(...)`; the compiler emits standard timestamped `db/migrate/*.rb` ActiveRecord migration files from typed model metadata.
 - Generated route helper externs under `src_haxe/routes/Routes.hx`.
-- A Rails migration template matching the Haxe model metadata.
 - CI smoke coverage that compiles the Haxe app, checks generated Rails Ruby, and runs Rails runtime tests when local Rails gems are available.
 
 ## Source Layout
 
 - `models/Todo.hx` and `models/User.hx` are RailsHx ActiveRecord models.
+- `migrations/CreateTodos.hx` is the Haxe-authored Rails migration source; generated Ruby lands at `db/migrate/20260101000000_create_todos.rb`.
 - `controllers/TodosController.hx` is a RailsHx controller using typed params and route helpers.
 - `views/ApplicationLayoutView.hx` owns the Rails layout as typed HHX, including the doctype, Rails CSRF/CSP helper tags, stylesheet/importmap tags, and `<rails_yield />`; generated ERB lands at `app/views/layouts/application.html.erb`.
 - `views/TodoIndexView.hx` declares the typed Rails template artifact and owns the full page shell as HHX; scalar locals project from Haxe names such as `todoCount` to Rails locals such as `todo_count`.
@@ -51,7 +52,7 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - `assets/stylesheets/application.css` is copied into Rails' asset path; HHX owns structure, CSS owns presentation.
 - Generated `app/views/controllers/todos/index.html.erb` is materialized from that Haxe template marker.
 - `src_haxe/routes/Routes.hx` is generated from Rails route output.
-- `db/migrate/20260101000000_create_todos.rb` is the Rails migration template for the sample app.
+- `db/migrate/20260101000000_create_todos.rb` is generated Rails migration output from `migrations/CreateTodos.hx`.
 
 ## Command Guide
 
@@ -131,7 +132,7 @@ haxe -D ruby_output=test/.generated/todoapp_rails \
   -main Main
 ```
 
-Generated app-owned Ruby lands under `app/haxe_gen/**`, with Rails autoload setup in `config/initializers/hxruby_autoload.rb`.
+Generated app-owned Ruby lands under `app/haxe_gen/**`, generated migrations land under `db/migrate/**`, and Rails autoload setup lands in `config/initializers/hxruby_autoload.rb`.
 
 The Haxe-authored client lane compiles through `examples/todoapp_rails/build-client.hxml`, which adds `-cp std` so `rails.turbo.Turbo` is available while emitting JavaScript for Rails importmap assets.
 
@@ -147,7 +148,7 @@ npm run todoapp:test
 
 ## Current Boundary
 
-RailsHx does not yet generate migrations from `@:railsColumn` metadata. This sample keeps the migration as Rails-owned Ruby for now, but the model schema metadata is shaped so the future migration DSL/generator can consume it.
+RailsHx now has an initial Haxe-authored migration lane: `@:railsMigration(...)` classes can emit create-table ActiveRecord migrations from referenced `@:railsModel` and `@:railsColumn` metadata, including timestamps, simple indexes, defaults, nullability, and `belongs_to` references. The broader migration DSL is still future work: alter/drop table operations, reversible custom operations, richer validation, and ordering checks remain tracked in the RailsHx migration bead.
 
 RailsHx has the first typed ActionView seams: controllers render through `ViewMacro.renderTemplate(this, (Template.named("...") : Template<TLocals>), locals)`, which type-checks locals in Haxe and lowers to a normal Rails `render(template:, locals:)` call. `@:railsTemplate(...)` classes materialize Rails-native ERB artifacts into generated output from Haxe-owned template bodies. `@:railsTemplateAst("render")` is the default HXX-style typed template path: a static method returns `HtmlNode` authored as Rails HHX inline markup such as `return <div>${todo.title}</div>`. `RailsInlineMarkup` rewrites that markup into the same typed `HtmlNode`/`HtmlAttr` AST that `H` can build manually, Haxe validates embedded expressions/branch conditions/loop binders/partial locals/route helpers/form locals, and the compiler emits ERB. Current HHX tags include normal HTML, `${...}` text/attribute splices, `<if>`, `<for>`, `<link_to>`, `<partial>`, `<component>`, and the initial form-builder tags, including `<text_field>`, `<text_area>`, and `<check_box>`; helper labels can be static text or `${...}` expression children, and `<link_to>` supports nested HHX via Rails block-form links. `<component template=... slot="body" locals=${{body: Slot.content(), ...}}>...</component>` captures typed HHX children and passes the captured ActionView buffer through a typed partial local. Raw ERB requires explicit `@:railsAllowRawErb` and is an escape hatch, not the canonical authoring path; the destination is a fuller typed Rails template layer inspired by `../haxe.elixir.codex`'s HXX/HEEx architecture.
 Rails layout helper tags are typed HHX too: `<doctype_html />`, `<csrf_meta_tags />`, `<csp_meta_tag />`, `<stylesheet_link_tag />`, `<javascript_importmap_tags />`, `<rails_yield />`, `<yield_content name="..." />`, and `<content_for name="...">...</content_for>` lower to Rails-native ERB helpers. Layouts and named slots must follow the same rule as partials: author in HHX, generate ERB.

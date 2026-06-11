@@ -61,6 +61,7 @@ Rails mode is enabled with `-D reflaxe_ruby_rails`. It emits Haxe-owned app file
 - Rails-friendly constant/file paths for Zeitwerk
 - typed `rails.active_record.Base<T>` model classes
 - generated ActiveRecord schema metadata via `Model.__hx_rails_schema`
+- generated Rails migrations from Haxe-authored `@:railsMigration(...)` classes
 - typed `rails.action_controller.Base` controller classes
 - `ParamsMacro.requirePermit(...)` for strong params
 - model metadata for `@:belongsTo`, `@:hasMany`, `@:hasOne`, and `@:validates`
@@ -92,7 +93,7 @@ bundle exec rake hxruby:watch # in another terminal, or use bin/railshx-dev with
 bundle exec rake hxruby:watch:client # if not using bin/railshx-dev
 ```
 
-For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
+For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, generated `db/migrate/**` files, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
 
 ```bash
 RAILS_ENV=production bundle exec rake hxruby:compile
