@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.23.0...v1.24.0) (2026-06-11)
+
+
+### Features
+
+* compose Rails todo form through HHX ([ce5a38c](https://github.com/fullofcaffeine/reflaxe.ruby/commit/ce5a38cf7fe320d7945e2ebc9b0622d3d99059c6))
+
 # [1.23.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.22.0...v1.23.0) (2026-06-11)
 
 
