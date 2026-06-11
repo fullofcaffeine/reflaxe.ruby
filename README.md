@@ -67,6 +67,37 @@ Rails mode is enabled with `-D reflaxe_ruby_rails`. It emits Haxe-owned app file
 
 The canonical RailsHx end-to-end example is `examples/todoapp_rails`.
 
+Run the generated Rails todo app locally:
+
+```bash
+npm run todoapp:prepare
+npm run todoapp:server
+```
+
+Then open `http://127.0.0.1:3000/`. For the RailsHx development loop, keep Rails running and start `npm run todoapp:watch` in another terminal; Haxe/HHX changes refresh the generated Rails files while Rails continues serving the app.
+
+For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, and dev process files:
+
+```bash
+npm run rails:app -- --output path/to/rails-app --name MyApp
+```
+
+Inside a generated/adopted RailsHx app, the recommended development flow is:
+
+```bash
+bundle exec rake hxruby:compile
+bundle exec rails server
+bundle exec rake hxruby:watch # in another terminal, or use bin/railshx-dev with foreman/overmind
+```
+
+For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
+
+```bash
+RAILS_ENV=production bundle exec rake hxruby:compile
+RAILS_ENV=production bundle exec rails zeitwerk:check
+RAILS_ENV=production bundle exec rails assets:precompile
+```
+
 The current Rails surface is an MVP. The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`.
 
 Useful tooling:
@@ -74,6 +105,7 @@ Useful tooling:
 ```bash
 npm run rails:generate-routes -- --input routes.txt --output src_haxe/routes/Routes.hx
 npm run rails:scaffold -- --model Todo --fields title:String,isCompleted:Bool --validate title --controller --output tmp/todo
+npm run rails:app -- --output tmp/rails_app --name TodoApp
 ```
 
 `npm run test:rails-integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed; set `REQUIRE_RAILS=1` in CI environments where Rails runtime execution must be mandatory.
@@ -160,6 +192,7 @@ The gem exposes `require "hxruby"` for runtime helpers and `require "hxruby/task
 ```bash
 rake hxruby:compile
 rake hxruby:watch
+rake hxruby:gen:app
 rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
 ```

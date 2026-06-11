@@ -51,6 +51,7 @@ try {
     "runtime/hxruby/core.rb",
     "runtime/hxruby/data_define.rb",
     "runtime/hxruby/hx_exception.rb",
+    "scripts/rails/app.js",
     "scripts/rails/generate-routes.js",
     "scripts/rails/scaffold.js",
   ]) {
@@ -71,7 +72,7 @@ try {
   const tasksCheck = [
     "require 'rake'",
     "require 'hxruby/tasks'",
-    "expected = %w[hxruby:compile hxruby:watch hxruby:gen:model hxruby:gen:routes]",
+    "expected = %w[hxruby:compile hxruby:watch hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
     "names = Rake::Task.tasks.map(&:name)",
     "missing = expected - names",
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
@@ -109,7 +110,7 @@ try {
       "require 'rubygems'",
       `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
       "require 'hxruby/tasks'",
-      "expected = %w[hxruby:compile hxruby:watch hxruby:gen:model hxruby:gen:routes]",
+      "expected = %w[hxruby:compile hxruby:watch hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
       "names = Rake::Task.tasks.map(&:name)",
       "missing = expected - names",
       "abort \"installed gem missing tasks: #{missing.join(', ')}\" unless missing.empty?",

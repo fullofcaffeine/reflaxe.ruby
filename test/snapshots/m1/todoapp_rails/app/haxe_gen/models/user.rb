@@ -21,8 +21,9 @@ module Models
     # haxe column id: Int
     # haxe column name: String
     validates :name, presence: true
-    def initialize()
-      super()
+    def initialize(*args, **kwargs)
+      args = args + [kwargs] unless kwargs.empty?
+      super(*args)
     end
   end
 end

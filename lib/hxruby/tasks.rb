@@ -30,6 +30,17 @@ module HXRuby
         end
 
         namespace :gen do
+          desc "Generate RailsHx app/adoption files in a Rails app"
+          task :app do
+            args = []
+            args += ["--name", ENV["NAME"]] if ENV["NAME"]
+            args += ["--source", ENV["SOURCE"]] if ENV["SOURCE"]
+            args += ["--main", ENV["MAIN"]] if ENV["MAIN"]
+            args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
+            args << "--force" if truthy?(ENV["FORCE"])
+            sh("#{node_script("app.js")} #{args.map(&:shellescape).join(" ")}")
+          end
+
           desc "Generate Haxe route externs from Rails routes"
           task :routes do
             output = ENV.fetch("OUTPUT", "src_haxe/routes/Routes.hx")

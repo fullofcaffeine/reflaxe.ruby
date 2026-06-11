@@ -17,8 +17,9 @@ module Models
       __hx_rails_schema()[:columns].length
     end
     # haxe column event_count: Int
-    def initialize()
-      super()
+    def initialize(*args, **kwargs)
+      args = args + [kwargs] unless kwargs.empty?
+      super(*args)
     end
   end
 end

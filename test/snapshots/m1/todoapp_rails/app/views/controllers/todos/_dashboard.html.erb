@@ -4,5 +4,5 @@
 				<span><%= (if todos.length > 0 then "Back to todos" else "Back to empty todo route" end) %></span>
 				<span class="typed-route-count"><%= todos.length %></span>
 			<% end %>
-			<%= render partial: "controllers/todos/summary", locals: {"todos" => todos} %>
+			<%= render partial: "controllers/todos/summary", locals: {todos: todos} %>
 		</section>

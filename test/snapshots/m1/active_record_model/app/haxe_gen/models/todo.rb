@@ -25,8 +25,9 @@ module Models
     # haxe column completed: Bool
     # haxe column notes: Null
     # haxe column external_id: String
-    def initialize()
-      super()
+    def initialize(*args, **kwargs)
+      args = args + [kwargs] unless kwargs.empty?
+      super(*args)
     end
   end
 end

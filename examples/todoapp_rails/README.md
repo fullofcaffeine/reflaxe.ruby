@@ -2,6 +2,26 @@
 
 This is the end-to-end RailsHx sample for `reflaxe.ruby`. It shows typed Haxe authoring for Rails code while keeping the generated Ruby recognizable to a Rails app.
 
+## Quick Start
+
+From the repository root:
+
+```bash
+eval "$(rbenv init - zsh)" # if your shell has not initialized rbenv yet
+npm run todoapp:prepare
+npm run todoapp:server
+```
+
+Open [http://127.0.0.1:3000/](http://127.0.0.1:3000/). The generated Rails app is materialized under `test/.generated/rails_integration`; treat it as disposable output. The source of truth is the Haxe/HHX code in `examples/todoapp_rails/**` plus compiler/std code in `src/**` and `std/**`.
+
+For the RailsHx edit loop, keep Rails running and start the Haxe watcher in another terminal:
+
+```bash
+npm run todoapp:watch
+```
+
+The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources change. Rails serves those files through normal ActionController/ActionView, so a browser refresh is enough for most template/controller changes.
+
 ## What The Sample Proves
 
 - Haxe-authored ActiveRecord models with `@:railsModel`, typed `@:railsColumn(...)` metadata, associations, validations, and timestamps.
@@ -28,7 +48,69 @@ This is the end-to-end RailsHx sample for `reflaxe.ruby`. It shows typed Haxe au
 - `src_haxe/routes/Routes.hx` is generated from Rails route output.
 - `db/migrate/20260101000000_create_todos.rb` is the Rails migration template for the sample app.
 
-## Compile
+## Command Guide
+
+```bash
+npm run todoapp:compile
+```
+
+Compiles the RailsHx sample and refreshes generated Rails files in `test/.generated/rails_integration` without touching bundle state or the SQLite DB.
+
+```bash
+npm run todoapp:prepare
+```
+
+Compiles Haxe/HHX, materializes the Rails app, runs `bundle check || bundle install`, prepares the development database, and seeds demo data. Run this once before using the app, and rerun it after dependency or migration changes.
+
+```bash
+npm run todoapp:server
+```
+
+Starts Rails through the generated app-local `bin/rails` entrypoint with `127.0.0.1:3000` defaults. Override with normal environment variables:
+
+```bash
+PORT=3001 BIND=0.0.0.0 npm run todoapp:server
+```
+
+```bash
+npm run todoapp:watch
+```
+
+Runs a lightweight Haxe watcher for `src/**`, `std/**`, and `examples/todoapp_rails/**`. The recommended RailsHx dev workflow is Rails server in one terminal, Haxe compiler watcher in another, with Rails serving refreshed generated files.
+
+```bash
+npm run todoapp:test
+```
+
+Compiles, materializes, prepares the test DB, and runs the generated Rails test suite.
+
+## Production Build Shape
+
+For a real RailsHx app, Haxe/HHX compilation is a build step before the normal Rails production bundle is finalized:
+
+```bash
+RAILS_ENV=production bundle exec rake hxruby:compile
+RAILS_ENV=production bundle exec rails zeitwerk:check
+RAILS_ENV=production bundle exec rails assets:precompile
+```
+
+The production artifact must include generated `app/haxe_gen/**`, generated ActionView templates under `app/views/**`, and `config/initializers/hxruby_autoload.rb`. The canonical source remains Haxe/HHX; generated Rails files are build output.
+
+## App Generator
+
+RailsHx app/adoption files can be generated into a Rails app with:
+
+```bash
+npm run rails:app -- --output path/to/rails-app --name MyApp
+```
+
+That writes `build.hxml`, `src_haxe/**`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, and `bin/railshx-dev`. In an installed app, the same generator is exposed as:
+
+```bash
+bundle exec rake hxruby:gen:app NAME=MyApp
+```
+
+## Manual Compile
 
 ```bash
 haxe -D ruby_output=test/.generated/todoapp_rails \
@@ -50,6 +132,7 @@ Generated app-owned Ruby lands under `app/haxe_gen/**`, with Rails autoload setu
 ```bash
 npm run test:todoapp-rails
 npm run test:rails-integration
+npm run todoapp:test
 ```
 
 `test:rails-integration` always syntax-checks generated Ruby. It runs `rails db:migrate` and `rails test` when Rails gems are installed; set `REQUIRE_RAILS=1` in CI to make that runtime lane mandatory.

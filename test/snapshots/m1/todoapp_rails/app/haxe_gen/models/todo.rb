@@ -27,8 +27,9 @@ module Models
     # haxe column is_completed: Bool
     # haxe column user_id: Int
     validates :title, presence: true
-    def initialize()
-      super()
+    def initialize(*args, **kwargs)
+      args = args + [kwargs] unless kwargs.empty?
+      super(*args)
     end
     def self.incomplete()
       return Models::Todo.where(is_completed: false)

@@ -234,14 +234,14 @@
 			<section class="workspace">
 				<div class="card">
 					<h2>Add a task</h2>
-					<%= render partial: "controllers/todos/composer", locals: {"sample_user" => sample_user} %>
+					<%= render partial: "controllers/todos/composer", locals: {sample_user: sample_user} %>
 				</div>
 
 				<div class="card">
 					<h2>Open work</h2>
-					<%= render partial: "controllers/todos/list", locals: {"todos" => todos} %>
+					<%= render partial: "controllers/todos/list", locals: {todos: todos} %>
 				</div>
 			</section>
 
-			<%= render partial: "controllers/todos/dashboard", locals: {"todos" => todos, "todo_count" => todo_count, "typed_column_count" => typed_column_count, "sample_user" => sample_user} %>
+			<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user} %>
 		</main>

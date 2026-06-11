@@ -147,7 +147,7 @@ for (const expected of [
   /module Controllers/,
   /class TodosController < ActionController::Base/,
   /todos__hx\d+ = Models::Todo\.incomplete\(\)/,
-  /self\.render\(template: "controllers\/todos\/index", locals: \{"todos" => todos__hx\d+, "todo_count" => todos__hx\d+\.length, "typed_column_count" => Models::Todo\.typed_column_count\(\), "sample_user" => Models::User\.first\(\)\}\)/,
+  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: Models::User\.first\(\)\}\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :is_completed, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
   /self\.redirect_to\(self\.todos_path\(\)\)/,
@@ -224,10 +224,10 @@ for (const expected of [
   "Typed Rails, polished Ruby.",
   "<%= todo_count %>",
   "<%= typed_column_count %>",
-  '<%= render partial: "controllers/todos/composer", locals: {"sample_user" => sample_user} %>',
-  '<%= render partial: "controllers/todos/list", locals: {"todos" => todos} %>',
+  '<%= render partial: "controllers/todos/composer", locals: {sample_user: sample_user} %>',
+  '<%= render partial: "controllers/todos/list", locals: {todos: todos} %>',
   "todo-shell",
-  '<%= render partial: "controllers/todos/dashboard", locals: {"todos" => todos, "todo_count" => todo_count, "typed_column_count" => typed_column_count, "sample_user" => sample_user} %>',
+  '<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user} %>',
 ]) {
   if (!view.includes(expected)) {
     console.error(`todoapp_rails view missing expected content: ${expected}`);
@@ -267,7 +267,7 @@ for (const expected of [
   '<span><%= (if todos.length > 0 then "Back to todos" else "Back to empty todo route" end) %></span>',
   '<span class="typed-route-count"><%= todos.length %></span>',
   '<% end %>',
-  '<%= render partial: "controllers/todos/summary", locals: {"todos" => todos} %>',
+  '<%= render partial: "controllers/todos/summary", locals: {todos: todos} %>',
 ]) {
   if (!typedDashboard.includes(expected)) {
     console.error(`todoapp_rails typed dashboard partial missing expected content: ${expected}`);
@@ -278,7 +278,7 @@ for (const expected of [
 const typedComposer = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_composer.html.erb"), "utf8");
 for (const expected of [
   "<% if sample_user != nil %>",
-  '<%= render partial: "controllers/todos/typed_form", locals: {"sample_user_id" => sample_user.id} %>',
+  '<%= render partial: "controllers/todos/typed_form", locals: {sample_user_id: sample_user.id} %>',
   "<% else %>",
   "Create a user first; the integration fixture seeds one before exercising this page.",
 ]) {
