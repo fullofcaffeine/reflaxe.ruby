@@ -67,9 +67,11 @@ for (const file of [
   "app/haxe_gen/views/todo_dashboard_view.rb",
   "app/haxe_gen/views/todo_form_view.rb",
   "app/haxe_gen/views/todo_index_view.rb",
+  "app/haxe_gen/views/todo_list_view.rb",
   "app/haxe_gen/views/todo_summary_view.rb",
   "app/views/controllers/todos/index.html.erb",
   "app/views/controllers/todos/_dashboard.html.erb",
+  "app/views/controllers/todos/_list.html.erb",
   "app/views/controllers/todos/_summary.html.erb",
   "app/views/controllers/todos/_typed_form.html.erb",
   "app/haxe_gen/main.rb",
@@ -185,6 +187,7 @@ for (const expected of [
   "Typed Rails, polished Ruby.",
   "RailsHx sample",
   'render partial: "controllers/todos/typed_form", locals: {sample_user_id: sample_user.id}',
+  'render partial: "controllers/todos/list", locals: {todos: todos}',
   "todo-shell",
   "Models::Todo.__hx_rails_schema",
   'render partial: "controllers/todos/dashboard", locals: {todos: todos}',
@@ -224,6 +227,22 @@ for (const expected of [
 ]) {
   if (!typedDashboard.includes(expected)) {
     console.error(`todoapp_rails typed dashboard partial missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const typedList = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_list.html.erb"), "utf8");
+for (const expected of [
+  "<% if todos.length > 0 %>",
+  '<ul class="todo-list">',
+  "<% todos.each do |todo| %>",
+  '<li class="todo-item">',
+  "<%= todo.title %>",
+  "<% else %>",
+  "No open tasks. Serene, but suspicious.",
+]) {
+  if (!typedList.includes(expected)) {
+    console.error(`todoapp_rails typed list partial missing expected content: ${expected}`);
     process.exit(1);
   }
 }

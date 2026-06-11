@@ -1,0 +1,14 @@
+<% if todos.length > 0 %>
+			<ul class="todo-list">
+				<% todos.each do |todo| %>
+					<li class="todo-item">
+						<span class="todo-dot" aria-hidden="true"></span>
+						<span><%= todo.title %></span>
+					</li>
+				<% end %>
+			</ul>
+		<% else %>
+			<div class="empty-state">
+				No open tasks. Serene, but suspicious.
+			</div>
+		<% end %>

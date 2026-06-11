@@ -226,20 +226,7 @@
 
     <div class="card">
       <h2>Open work</h2>
-      <% if todos.any? %>
-        <ul class="todo-list">
-          <% todos.each do |todo| %>
-            <li class="todo-item">
-              <span class="todo-dot" aria-hidden="true"></span>
-              <span><%= todo.title %></span>
-            </li>
-          <% end %>
-        </ul>
-      <% else %>
-        <div class="empty-state">
-          No open tasks. Serene, but suspicious.
-        </div>
-      <% end %>
+      <%= render partial: "controllers/todos/list", locals: {todos: todos} %>
     </div>
   </section>
 

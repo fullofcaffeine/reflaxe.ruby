@@ -9,7 +9,7 @@ This is the end-to-end RailsHx sample for `reflaxe.ruby`. It shows typed Haxe au
 - Haxe-authored ActionController logic with typed model calls, `ParamsMacro.requirePermit(...)` strong-params generation, and `ViewMacro.renderTemplate(...)` typed locals for Rails rendering.
 - Haxe-owned ActionView artifact generation through `@:railsTemplate(...)`, which materializes the Rails-native ERB file under `app/views`.
 - Haxe-authored typed ActionView partials through `@:railsTemplateAst(...)`, Rails HHX inline markup, `H`, `HtmlNode`, and `HtmlAttr`; the compiler type-checks embedded expressions such as `todo.title`, typed conditionals/loops, typed partial locals, route helper calls, and typed form locals before emitting ERB.
-- Incremental raw ERB migration: the index template still owns the full page shell, but delegates the typed dashboard and typed form islands to generated HHX partials.
+- Incremental raw ERB migration: the index template still owns the full page shell, but delegates the typed dashboard, list, and form islands to generated HHX partials.
 - Generated route helper externs under `src_haxe/routes/Routes.hx`.
 - A Rails migration template matching the Haxe model metadata.
 - CI smoke coverage that compiles the Haxe app, checks generated Rails Ruby, and runs Rails runtime tests when local Rails gems are available.
@@ -21,6 +21,7 @@ This is the end-to-end RailsHx sample for `reflaxe.ruby`. It shows typed Haxe au
 - `views/TodoIndexView.hx` declares the typed Rails template artifact and owns the inline ERB body.
 - `views/TodoSummaryView.hx` declares a typed HHX partial with `<if>` empty-state branching and `<for ${todo in todos}>` loop syntax, then generates `app/views/controllers/todos/_summary.html.erb`.
 - `views/TodoDashboardView.hx` composes the summary partial through typed `<partial>` locals, emits a typed `<link_to>` route helper with nested HHX block content, and generates `app/views/controllers/todos/_dashboard.html.erb`, which the index renders with normal Rails locals.
+- `views/TodoListView.hx` is the index's typed open-work list island: HHX validates the `todos` local, `<if>` branch, `<for>` loop binder, and `todo.title` expression before generating `app/views/controllers/todos/_list.html.erb`.
 - `views/TodoFormView.hx` uses HHX inline markup (`<form_with>`, `<hidden_field>`, `<field_label>`, `<text_field>`, `<submit>`) for a typed Rails form partial and generates `app/views/controllers/todos/_typed_form.html.erb`, which the index renders with `sample_user_id`.
 - Generated `app/views/controllers/todos/index.html.erb` is materialized from that Haxe template marker.
 - `src_haxe/routes/Routes.hx` is generated from Rails route output.
