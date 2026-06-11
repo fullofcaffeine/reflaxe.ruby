@@ -39,7 +39,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Strong params macro | `ParamsMacro.requirePermit(...)` | Implemented |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |
 | Rails template artifact generation | `@:railsTemplate(...)` | Implemented |
-| Rails HHX inline templates | `@:railsTemplateAst(...)` + `return <div>...</div>` | Initial template/helper slice |
+| Rails HHX inline templates | `@:railsTemplateAst(...)` + `return <div>...</div>` | Initial page/partial helper slice |
 | Typed Rails partial locals object | `render(locals:TLocals)` + `locals.foo` projection | Initial locals slice |
 | Typed ActionView template AST | `@:railsTemplateAst(...)` + `H`/`HtmlNode`/`HtmlAttr` | Initial lower-level AST slice |
 | Typed ActionView partial composition | `H.partial(...)` + `Template<TLocals>` | Initial partial/component slice |
@@ -48,7 +48,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed HHX control/helper tags | `<if>`, `<for>`, `<link_to>`, `<partial>` | Initial template/helper slice |
 | Typed HHX helper label children | static text or `${...}` expression children | Initial helper slice |
 | Typed HHX nested helper slots | `<link_to>...</link_to>` block-form content | Initial slot slice |
-| Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented |
+| Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented for migration/interop only |
 | Route helper generator | `npm run rails:generate-routes` | Implemented |
 | Scaffold generator | `npm run rails:scaffold` | Implemented |
 

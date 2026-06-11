@@ -10,7 +10,7 @@ The repo currently has a Rails MVP:
 - Minimal ActiveRecord model surface through `rails.active_record.Base<T>` and `rails.macros.ModelMacro`.
 - Minimal ActionController/strong params surface through `rails.action_controller.Base`, `Params`, and `ParamsMacro`.
 - First typed ActionView render seam through `rails.action_view.Template<TLocals>`, `ViewMacro.renderTemplate(...)`, and `@:railsTemplate(...)` artifact generation.
-- First typed ActionView AST seam through Rails HHX inline markup, `rails.action_view.H`, `HtmlNode`, `HtmlAttr`, and `@:railsTemplateAst(...)`, currently proven by generated todoapp partials, typed partial composition, typed route-helper links, and initial typed form helpers.
+- First typed ActionView AST seam through Rails HHX inline markup, `rails.action_view.H`, `HtmlNode`, `HtmlAttr`, and `@:railsTemplateAst(...)`, currently proven by the todoapp's generated index shell, generated partials, typed partial composition, typed route-helper links, and initial typed form helpers.
 - Route helper and scaffold scripts under `scripts/rails`.
 - A Rails todoapp example and optional Rails integration smoke coverage.
 
@@ -67,7 +67,7 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 
 The first implementation slice should prove the complete CRUD path: typed model, typed migration, typed params/controller, typed route helpers, generated Rails Ruby, `rails db:migrate`, and `rails test`.
 
-Typed Rails templates are part of the RailsHx destination. `haxe.ruby-wpi.12` now has an initial typed partial/component path through Rails HHX plus `H`/`HtmlNode`/`HtmlAttr`, including typed locals-object projection, conditionals, loops, partial composition, route-helper links, `link_to` block slots, form helper lowering, and helper-tag static/expression child text. The remaining work is fuller typed field projection, broader component ergonomics, more helper slots, and migration of larger raw ERB strings without losing Rails-native output.
+Typed Rails templates are part of the RailsHx destination. `haxe.ruby-wpi.12` now has an initial HHX-first ActionView path through Rails HHX plus `H`/`HtmlNode`/`HtmlAttr`, including the todoapp index shell, typed locals-object projection, conditionals, loops, partial composition, route-helper links, `link_to` block slots, form helper lowering, and helper-tag static/expression child text. Raw ERB is retained only as an explicit migration/interop escape hatch. The remaining work is fuller typed field projection, broader component ergonomics, more helper slots, stricter typed assigns/components, and continued expansion of HHX coverage while preserving Rails-native output.
 
 ## Acceptance Bar
 

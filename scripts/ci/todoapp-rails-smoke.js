@@ -186,6 +186,33 @@ for (const expected of [
   }
 }
 
+const indexSource = readFileSync(join(exampleDir, "views", "TodoIndexView.hx"), "utf8");
+for (const expected of [
+  '@:railsTemplateAst("render")',
+  "return <main class=\"todo-shell\">",
+  '<partial template=${(Template.named("controllers/todos/composer")',
+  '<partial template=${(Template.named("controllers/todos/list")',
+  '<partial template=${(Template.named("controllers/todos/dashboard")',
+]) {
+  if (!indexSource.includes(expected)) {
+    console.error(`todoapp_rails index source is missing expected HHX content: ${expected}`);
+    process.exit(1);
+  }
+}
+for (const forbidden of [
+  "@:railsAllowRawErb",
+  "public static var body",
+  "public static var erb",
+  "public static var template",
+  "<%",
+  "<%=",
+]) {
+  if (indexSource.includes(forbidden)) {
+    console.error(`todoapp_rails index source must stay HHX-first and cannot contain: ${forbidden}`);
+    process.exit(1);
+  }
+}
+
 const view = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "index.html.erb"), "utf8");
 for (const expected of [
   "RailsHx sample",
