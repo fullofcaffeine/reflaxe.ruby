@@ -490,6 +490,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				return RubyAssign(compileAssignable(lhs), compileExpr(rhs));
 			case TBinop(OpAssignOp(op), lhs, rhs):
 				return RubyAssign(compileAssignable(lhs), RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs)));
+			case TUnop(OpIncrement, _, inner):
+				return RubyAssign(compileAssignable(inner), RubyBinary("+", compileExpr(inner), RubyInt("1")));
+			case TUnop(OpDecrement, _, inner):
+				return RubyAssign(compileAssignable(inner), RubyBinary("-", compileExpr(inner), RubyInt("1")));
 			case TIf(cond, eThen, eElse):
 				return RubyIfStmt(compileExpr(cond), compileFunctionBody(eThen), eElse == null ? null : compileFunctionBody(eElse));
 			case TWhile(cond, body, _):
@@ -631,6 +635,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (isIdentifierCallee(callee, "__is__")) {
 			return RubyCall(RubyLocal("HXRuby"), "is_of_type", [compileParam(params, 0), compileParam(params, 1)]);
 		}
+		var arrayCall = compileArrayCall(callee, params);
+		if (arrayCall != null) {
+			return arrayCall;
+		}
 		var info = staticCallInfo(callee);
 		if (info == null) {
 			return null;
@@ -687,6 +695,53 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(RubyLocal("HXRuby"), "url_encode", [compileParam(params, 0)]);
 			case ["StringTools", "urlDecode"]:
 				RubyCall(RubyLocal("HXRuby"), "url_decode", [compileParam(params, 0)]);
+			case _:
+				null;
+		}
+	}
+
+	static function compileArrayCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (callee.expr) {
+			case TField(target, access) if (isArrayFieldAccess(access)):
+				var receiver = compileExpr(target);
+				switch (fieldAccessRawName(access)) {
+					case "concat":
+						RubyCall(RubyLocal("HXRuby"), "array_concat", [receiver, compileParam(params, 0)]);
+					case "join":
+						RubyCall(RubyLocal("HXRuby"), "array_join", [receiver, compileParam(params, 0)]);
+					case "push":
+						RubyCall(RubyLocal("HXRuby"), "array_push", [receiver, compileParam(params, 0)]);
+					case "reverse":
+						RubyCall(RubyLocal("HXRuby"), "array_reverse", [receiver]);
+					case "slice":
+						RubyCall(RubyLocal("HXRuby"), "array_slice", [receiver, compileParam(params, 0), params.length > 1 ? compileExpr(params[1]) : RubyNil]);
+					case "sort":
+						RubyCall(RubyLocal("HXRuby"), "array_sort", [receiver, compileParam(params, 0)]);
+					case "splice":
+						RubyCall(RubyLocal("HXRuby"), "array_splice", [receiver, compileParam(params, 0), compileParam(params, 1)]);
+					case "toString":
+						RubyCall(RubyLocal("HXRuby"), "stringify", [receiver]);
+					case "insert":
+						RubyCall(RubyLocal("HXRuby"), "array_insert", [receiver, compileParam(params, 0), compileParam(params, 1)]);
+					case "remove":
+						RubyCall(RubyLocal("HXRuby"), "array_remove", [receiver, compileParam(params, 0)]);
+					case "contains":
+						RubyCall(RubyLocal("HXRuby"), "array_contains", [receiver, compileParam(params, 0)]);
+					case "indexOf":
+						RubyCall(RubyLocal("HXRuby"), "array_index_of", [receiver, compileParam(params, 0), params.length > 1 ? compileExpr(params[1]) : RubyNil]);
+					case "lastIndexOf":
+						RubyCall(RubyLocal("HXRuby"), "array_last_index_of", [receiver, compileParam(params, 0), params.length > 1 ? compileExpr(params[1]) : RubyNil]);
+					case "copy":
+						RubyCall(RubyLocal("HXRuby"), "array_copy", [receiver]);
+					case "map":
+						RubyCall(RubyLocal("HXRuby"), "array_map", [receiver, compileParam(params, 0)]);
+					case "filter":
+						RubyCall(RubyLocal("HXRuby"), "array_filter", [receiver, compileParam(params, 0)]);
+					case "resize":
+						RubyCall(RubyLocal("HXRuby"), "array_resize", [receiver, compileParam(params, 0)]);
+					case _:
+						null;
+				}
 			case _:
 				null;
 		}
@@ -1004,6 +1059,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case FAnon(fieldRef) | FClosure(_, fieldRef): rubyFieldName(fieldRef.get().name, fieldRef.get().meta);
 			case FDynamic(name): RubyNaming.toMethodName(name);
 			case FEnum(_, field): rubyFieldName(field.name, field.meta);
+		}
+	}
+
+	static function fieldAccessRawName(access:haxe.macro.Type.FieldAccess):String {
+		return switch (access) {
+			case FInstance(_, _, field) | FStatic(_, field): field.get().name;
+			case FAnon(fieldRef) | FClosure(_, fieldRef): fieldRef.get().name;
+			case FDynamic(name): name;
+			case FEnum(_, field): field.name;
+		}
+	}
+
+	static function isArrayFieldAccess(access:haxe.macro.Type.FieldAccess):Bool {
+		return switch (access) {
+			case FInstance(classRef, _, _):
+				var classType = classRef.get();
+				fullTypeName(classType.pack, classType.name) == "Array";
+			case _:
+				false;
 		}
 	}
 

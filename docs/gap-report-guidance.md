@@ -46,12 +46,11 @@ Use `std/` for additive Ruby/Rails APIs and `std/_std/` for upstream Haxe std ov
 As of the current report:
 
 - Total tracked surfaces: `31`
-- Implemented: `26`
-- Missing: `5`
+- Implemented: `27`
+- Missing: `4`
 
 Remaining gaps are concentrated in general stdlib parity:
 
-- `Array`
 - `haxe.Json`
 - `Reflect`
 - `sys.FileSystem`

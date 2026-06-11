@@ -72,6 +72,137 @@ module HXRuby
     CGI.unescape(value.to_s)
   end
 
+  def array_concat(array, other)
+    array + other
+  end
+
+  def array_join(array, separator)
+    array.map { |entry| stringify(entry) }.join(separator.to_s)
+  end
+
+  def array_push(array, value)
+    array << value
+    array.length
+  end
+
+  def array_reverse(array)
+    array.reverse!
+    nil
+  end
+
+  def array_slice(array, position, end_position = nil)
+    length = array.length
+    start = normalize_array_boundary(position, length)
+    finish = end_position.nil? ? length : normalize_array_boundary(end_position, length)
+    return [] if start > length || finish <= start
+
+    array[start...finish] || []
+  end
+
+  def array_sort(array, comparator)
+    array.sort! { |left, right| comparator.call(left, right) }
+    nil
+  end
+
+  def array_splice(array, position, remove_length)
+    count = remove_length.to_i
+    return [] if count.negative?
+
+    length = array.length
+    start = normalize_array_boundary(position, length)
+    return [] if start > length || count.zero?
+
+    count = [count, length - start].min
+    removed = array[start, count] || []
+    array.slice!(start, count)
+    removed
+  end
+
+  def array_insert(array, position, value)
+    length = array.length
+    index = position.to_i
+    index = length + index if index.negative?
+    index = 0 if index.negative?
+    index = length if index > length
+    array.insert(index, value)
+    nil
+  end
+
+  def array_remove(array, value)
+    index = array.index(value)
+    return false if index.nil?
+
+    array.delete_at(index)
+    true
+  end
+
+  def array_contains(array, value)
+    array.include?(value)
+  end
+
+  def array_index_of(array, value, from_index = nil)
+    length = array.length
+    start = from_index.nil? ? 0 : from_index.to_i
+    start = length + start if start.negative?
+    start = 0 if start.negative?
+    return -1 if start >= length
+
+    index = start
+    while index < length
+      return index if array[index] == value
+
+      index += 1
+    end
+    -1
+  end
+
+  def array_last_index_of(array, value, from_index = nil)
+    length = array.length
+    start = if from_index.nil?
+      length - 1
+    else
+      raw = from_index.to_i
+      raw.negative? ? length + raw : [raw, length - 1].min
+    end
+    return -1 if start.negative?
+
+    index = start
+    while index >= 0
+      return index if array[index] == value
+
+      index -= 1
+    end
+    -1
+  end
+
+  def array_copy(array)
+    array.dup
+  end
+
+  def array_map(array, mapper)
+    array.map { |entry| mapper.call(entry) }
+  end
+
+  def array_filter(array, predicate)
+    array.select { |entry| predicate.call(entry) }
+  end
+
+  def array_resize(array, size)
+    target = size.to_i
+    if target < array.length
+      array.slice!(target, array.length - target)
+    else
+      array << nil while array.length < target
+    end
+    nil
+  end
+
+  def normalize_array_boundary(position, length)
+    index = position.to_i
+    index = length + index if index.negative?
+    index.negative? ? 0 : index
+  end
+
   def math_abs(value)
     value.abs
   end

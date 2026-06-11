@@ -3,8 +3,8 @@
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
     "total": 31,
-    "implemented": 26,
-    "missing": 5,
+    "implemented": 27,
+    "missing": 4,
     "planned": 0,
     "deferred": 0,
     "byOwner": {
@@ -17,8 +17,8 @@
       },
       "std": {
         "total": 21,
-        "implemented": 19,
-        "missing": 2,
+        "implemented": 20,
+        "missing": 1,
         "planned": 0,
         "deferred": 0
       },
@@ -32,14 +32,6 @@
     }
   },
   "gaps": [
-    {
-      "id": "std.array",
-      "owner": "std",
-      "status": "missing",
-      "path": "std/Array.cross.hx",
-      "surface": "Array",
-      "reason": "Ruby array methods and Haxe Array API parity."
-    },
     {
       "id": "std.json",
       "owner": "std/_std",

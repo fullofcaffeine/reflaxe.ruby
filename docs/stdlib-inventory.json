@@ -57,7 +57,7 @@
     {
       "id": "std.array",
       "owner": "std",
-      "status": "missing",
+      "status": "implemented",
       "path": "std/Array.cross.hx",
       "surface": "Array",
       "reason": "Ruby array methods and Haxe Array API parity."
