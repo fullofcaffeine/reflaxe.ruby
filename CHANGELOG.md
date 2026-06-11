@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.22.0...v1.23.0) (2026-06-11)
+
+
+### Features
+
+* extract Rails todo list HHX partial ([9532853](https://github.com/fullofcaffeine/reflaxe.ruby/commit/9532853aa6db12b6d1c6083eacf3061a3284fada))
+
 # [1.22.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.21.0...v1.22.0) (2026-06-11)
 
 
