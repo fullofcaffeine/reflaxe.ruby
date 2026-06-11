@@ -31,14 +31,14 @@ ruby out/ruby/run.rb
 
 - `ruby_output=<dir>`: output directory used by Reflaxe.
 - `reflaxe_runtime`: emits/copies shared `hxruby` runtime helpers.
-- `reflaxe_ruby_profile=idiomatic|portable`: selects the Ruby output profile; default is idiomatic.
+- `reflaxe_ruby_profile=ruby_first|portable`: declares the Ruby profile contract; default is `ruby_first`. The legacy `idiomatic` value remains accepted.
 - `reflaxe_ruby_rails`: writes app-owned code under `app/haxe_gen` and emits a Rails autoload initializer.
 - `reflaxe_ruby_rails_output_root=<path>`: overrides the Rails output root; default is `app/haxe_gen`.
 - `reflaxe_ruby_strict_examples`: rejects raw `__ruby__` injection in repo examples/snapshots.
 - `reflaxe_ruby_strict`: rejects raw `__ruby__` injection in user/project sources.
 - `reflaxe_ruby_strict_policy=auto|on|off`: policy hook for strict user boundaries.
 
-See [Ruby Profiles](docs/profiles.md) for the profile contract: both profiles should emit idiomatic Ruby where safe, `portable` preserves Haxe semantics first, and `idiomatic` is the Ruby-first default.
+See [Ruby Profiles](docs/profiles.md) for the profile contract: both profiles should emit idiomatic Ruby where safe, `portable` preserves Haxe semantics first, and `ruby_first` is the Ruby-first default. Profiles are semantic guardrails in one compiler pipeline, not separate backends.
 
 ## Ruby Interop
 

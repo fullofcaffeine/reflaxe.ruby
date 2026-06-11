@@ -6,6 +6,7 @@ import haxe.macro.Context;
 
 class ProfileResolver {
 	public static inline final DEFINE_NAME = "reflaxe_ruby_profile";
+	public static inline final RUBY_FIRST_DEFINE = "ruby_first";
 	public static inline final IDIOMATIC_DEFINE = "ruby_idiomatic";
 	public static inline final PORTABLE_DEFINE = "ruby_portable";
 
@@ -15,7 +16,8 @@ class ProfileResolver {
 		var selected = new Array<{source:String, profile:RubyProfile}>();
 
 		if (raw != null && raw == "") {
-			Context.fatalError('`-D ' + DEFINE_NAME + '` requires a value: idiomatic|portable', Context.currentPos());
+			Context.fatalError('`-D ' + DEFINE_NAME + '` requires a value: ruby_first|portable (legacy alias: idiomatic)',
+				Context.currentPos());
 		}
 
 		if (raw != null && raw != "") {
@@ -25,6 +27,9 @@ class ProfileResolver {
 			});
 		}
 
+		if (Context.defined(RUBY_FIRST_DEFINE)) {
+			selected.push({source: "-D " + RUBY_FIRST_DEFINE, profile: RubyProfile.Idiomatic});
+		}
 		if (Context.defined(IDIOMATIC_DEFINE)) {
 			selected.push({source: "-D " + IDIOMATIC_DEFINE, profile: RubyProfile.Idiomatic});
 		}
@@ -49,11 +54,13 @@ class ProfileResolver {
 	}
 
 	static function parseProfile(raw:String):RubyProfile {
-		return switch (raw) {
-			case "idiomatic": RubyProfile.Idiomatic;
+		var normalized = StringTools.trim(raw).toLowerCase();
+		return switch (normalized) {
+			case "ruby_first", "idiomatic": RubyProfile.Idiomatic;
 			case "portable": RubyProfile.Portable;
 			case _:
-				Context.fatalError('Invalid profile "' + raw + '" for -D ' + DEFINE_NAME + ' (expected idiomatic|portable)', Context.currentPos());
+				Context.fatalError('Invalid profile "' + raw + '" for -D ' + DEFINE_NAME
+					+ ' (expected ruby_first|portable; legacy alias: idiomatic)', Context.currentPos());
 				RubyProfile.Idiomatic;
 		}
 	}
@@ -63,4 +70,3 @@ class ProfileResolver {
 	}
 	#end
 }
-

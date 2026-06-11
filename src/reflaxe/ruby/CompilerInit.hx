@@ -30,6 +30,7 @@ class CompilerInit {
 		if (buildContext.isPortable()) {
 			MacroCompiler.define("ruby_portable");
 		} else {
+			MacroCompiler.define("ruby_first");
 			MacroCompiler.define("ruby_idiomatic");
 		}
 		if (buildContext.strictUserBoundaries) {

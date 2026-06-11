@@ -5,10 +5,10 @@ class Main
     "Main"
   end
   def self.main()
-    todo__hx16861 = nil
-    controller__hx16862 = nil
-    puts(HXRuby.stringify((todo__hx16861 == nil)))
-    puts(HXRuby.stringify((controller__hx16862 == nil)))
+    todo__hx16862 = nil
+    controller__hx16863 = nil
+    puts(HXRuby.stringify((todo__hx16862 == nil)))
+    puts(HXRuby.stringify((controller__hx16863 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

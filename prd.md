@@ -187,7 +187,7 @@ Recommendation
 
 Implement two public profile contracts and make them feel optional and non-annoying:
 
-Default: idiomatic
+Default: ruby_first
 Ruby-first contract
 Ruby-native types
 snake_case output
@@ -208,8 +208,10 @@ Do not add a public `metal` profile for Ruby by analogy with `haxe.rust` or `hax
 
 Config
 
--D reflaxe_ruby_profile=idiomatic|portable
+-D reflaxe_ruby_profile=ruby_first|portable
 fallback define aliases:
+-D reflaxe_ruby_profile=idiomatic (legacy alias for ruby_first)
+-D ruby_first
 -D ruby_portable
 -D ruby_idiomatic
 6) Compiler architecture
