@@ -15,6 +15,8 @@ const typedTemplateInvalidSourceDir = join(root, "test", ".generated", "todoapp_
 const typedTemplateInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_template_invalid_out");
 const typedPartialInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_src");
 const typedPartialInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_out");
+const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
+const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -45,6 +47,8 @@ rmSync(typedTemplateInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedTemplateInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedPartialInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedPartialInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
+rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -203,6 +207,7 @@ for (const expected of [
 const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_dashboard.html.erb"), "utf8");
 for (const expected of [
   "Composed typed partial",
+  '<%= link_to "Back to todo route", todos_path(), class: "typed-route-link" %>',
   '<%= render partial: "controllers/todos/summary", locals: {"todos" => locals.todos} %>',
 ]) {
   if (!typedDashboard.includes(expected)) {
@@ -215,6 +220,7 @@ expectInvalidTemplateLocalsFailure();
 expectRawErbRequiresOptInFailure();
 expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
+expectTypedRouteHelperFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -557,6 +563,85 @@ function expectTypedPartialLocalsFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid H.partial locals check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectTypedRouteHelperFailure() {
+  mkdirSync(join(typedRouteInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(typedRouteInvalidSourceDir, "InvalidTypedRouteMain.hx"), [
+    "import views.BadTypedRouteView;",
+    "",
+    "class InvalidTypedRouteMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTypedRouteView> = BadTypedRouteView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedRouteInvalidSourceDir, "views", "BadTypedRouteView.hx"), [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "import routes.Routes;",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad_route\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTypedRouteView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.linkTo(\"Broken\", Routes.missingPath(), []);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedRouteInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      join(exampleDir, "src_haxe"),
+      "-cp",
+      typedRouteInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTypedRouteMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Invalid typed route helper compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("missingPath") && !output.includes("has no field")) {
+      console.error("Invalid typed route helper failed, but not with the expected typed route error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid typed route helper check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

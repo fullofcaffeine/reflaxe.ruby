@@ -1,1 +1,1 @@
-<section class="typed-dashboard"><h2>Composed typed partial</h2><%= render partial: "controllers/todos/summary", locals: {"todos" => locals.todos} %></section>
+<section class="typed-dashboard"><h2>Composed typed partial</h2><%= link_to "Back to todo route", todos_path(), class: "typed-route-link" %><%= render partial: "controllers/todos/summary", locals: {"todos" => locals.todos} %></section>

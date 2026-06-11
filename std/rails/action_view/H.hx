@@ -40,6 +40,10 @@ class H {
 		return macro rails.action_view.HtmlNode.Partial($template, $locals);
 	}
 
+	public static macro function linkTo(label:Expr, url:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.LinkTo($label, $url, $attrs);
+	}
+
 	public static macro function attr(name:Expr, value:Expr):Expr {
 		return macro rails.action_view.HtmlAttr.Static($name, $value);
 	}

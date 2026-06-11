@@ -1269,6 +1269,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplatePartial(params[0], params[1], scope);
 						}
+					case "LinkTo":
+						if (params.length != 3) {
+							Context.error("HtmlNode.LinkTo expects label, url, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateLinkTo(params[0], params[1], params[2], scope);
+						}
 					case other:
 						Context.error('Unsupported HtmlNode constructor "$other" in @:railsTemplateAst.', node.pos);
 						"";
@@ -1376,6 +1383,52 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function lowerTemplateLinkTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(label, scope), printTemplateExpr(url, scope)];
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		if (kwargs.length > 0) {
+			args = args.concat(kwargs);
+		}
+		return "<%= link_to " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateHelperAttrs(attrs:TypedExpr, scope:RailsTemplateScope):Array<String> {
+		var out:Array<String> = [];
+		for (attr in expectTemplateArray(attrs, "HtmlNode.LinkTo attrs must be an array literal.")) {
+			var unwrapped = unwrapTemplateExpr(attr);
+			switch (unwrapped.expr) {
+				case TCall(fn, params):
+					switch (templateCtorName(fn, "HtmlAttr")) {
+						case "Static":
+							if (params.length != 2) {
+								Context.error("HtmlAttr.Static expects name and value arguments.", unwrapped.pos);
+							} else {
+								out.push(helperKwargName(expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal."))
+									+ ": " + quoteRubyStringForCode(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal.")));
+							}
+						case "Bool":
+							if (params.length != 1) {
+								Context.error("HtmlAttr.Bool expects one name argument.", unwrapped.pos);
+							} else {
+								out.push(helperKwargName(expectTemplateString(params[0], "HtmlAttr.Bool name must be a string literal.")) + ": true");
+							}
+						case "Expr":
+							if (params.length != 2) {
+								Context.error("HtmlAttr.Expr expects name and value arguments.", unwrapped.pos);
+							} else {
+								out.push(helperKwargName(expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal."))
+									+ ": " + printTemplateExpr(params[1], scope));
+							}
+						case other:
+							Context.error('Unsupported HtmlAttr constructor "$other" for HtmlNode.LinkTo.', unwrapped.pos);
+					}
+				case _:
+					Context.error("HtmlNode.LinkTo attrs must contain HtmlAttr constructor expressions.", unwrapped.pos);
+			}
+		}
+		return out;
+	}
+
 	static function lowerTemplatePartial(template:TypedExpr, locals:TypedExpr, scope:RailsTemplateScope):String {
 		var path = extractTypedTemplatePath(template);
 		if (path == null) {
@@ -1476,6 +1529,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TBinop(op, lhs, rhs): printTemplateExpr(lhs, scope) + " " + binopToRuby(op) + " " + printTemplateExpr(rhs, scope);
 			case TUnop(op, _, inner): unopToRuby(op) + printTemplateExpr(inner, scope);
 			case TField(target, access): printTemplateExpr(target, scope) + "." + fieldAccessName(access);
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params):
+				var classType = classRef.get();
+				var receiver = rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name);
+				var method = rubyFieldName(fieldRef.get().name, fieldRef.get().meta);
+				var args = [for (param in params) printTemplateExpr(param, scope)].join(", ");
+				(receiver == "self" ? method : receiver + "." + method) + "(" + args + ")";
 			case TCall({expr: TField(target, access)}, params):
 				printTemplateExpr(target, scope) + "." + fieldAccessName(access) + "(" + [for (param in params) printTemplateExpr(param, scope)].join(", ") + ")";
 			case TCall(callee, params):
@@ -1490,6 +1549,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function quoteHtmlAttr(value:String):String {
 		return quoteRubyStringForCode(value);
+	}
+
+	static function helperKwargName(value:String):String {
+		return ~/[^A-Za-z0-9_]/g.replace(value, "_");
 	}
 
 	static function isVoidHtmlElement(name:String):Bool {
