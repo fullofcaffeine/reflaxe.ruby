@@ -5,12 +5,12 @@ class Main
     "Main"
   end
   def self.main()
-    found__hx17463 = Models::Todo.where(title: "ship")
-    made__hx17464 = Models::Todo.create(title: "ship")
-    logs__hx17465 = Models::AuditLog.where(event_count: 1)
-    puts(HXRuby.stringify((found__hx17463 == nil)))
-    puts(HXRuby.stringify((made__hx17464 == nil)))
-    puts(HXRuby.stringify((logs__hx17465 == nil)))
+    found__hx18065 = Models::Todo.where(title: "ship")
+    made__hx18066 = Models::Todo.create(title: "ship")
+    logs__hx18067 = Models::AuditLog.where(event_count: 1)
+    puts(HXRuby.stringify((found__hx18065 == nil)))
+    puts(HXRuby.stringify((made__hx18066 == nil)))
+    puts(HXRuby.stringify((logs__hx18067 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

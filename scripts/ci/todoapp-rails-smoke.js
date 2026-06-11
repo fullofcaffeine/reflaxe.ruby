@@ -17,6 +17,8 @@ const typedPartialInvalidSourceDir = join(root, "test", ".generated", "todoapp_r
 const typedPartialInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
+const typedFormInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_src");
+const typedFormInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -49,6 +51,8 @@ rmSync(typedPartialInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedPartialInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedFormInvalidSourceDir, { force: true, recursive: true });
+rmSync(typedFormInvalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -61,11 +65,13 @@ for (const file of [
   "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
   "app/haxe_gen/views/todo_dashboard_view.rb",
+  "app/haxe_gen/views/todo_form_view.rb",
   "app/haxe_gen/views/todo_index_view.rb",
   "app/haxe_gen/views/todo_summary_view.rb",
   "app/views/controllers/todos/index.html.erb",
   "app/views/controllers/todos/_dashboard.html.erb",
   "app/views/controllers/todos/_summary.html.erb",
+  "app/views/controllers/todos/_typed_form.html.erb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
   "run.rb",
@@ -216,11 +222,27 @@ for (const expected of [
   }
 }
 
+const typedForm = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_typed_form.html.erb"), "utf8");
+for (const expected of [
+  '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>',
+  '<%= form.hidden_field :user_id, value: locals.sample_user_id %>',
+  '<%= form.hidden_field :is_completed, value: false %>',
+  '<%= form.label :title, "What should ship next?" %>',
+  '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',
+  '<%= form.submit "Add task", type: "submit" %>',
+]) {
+  if (!typedForm.includes(expected)) {
+    console.error(`todoapp_rails typed form partial missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
 expectInvalidTemplateLocalsFailure();
 expectRawErbRequiresOptInFailure();
 expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
 expectTypedRouteHelperFailure();
+expectTypedFormFieldRequiresFormFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -642,6 +664,79 @@ function expectTypedRouteHelperFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid typed route helper check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectTypedFormFieldRequiresFormFailure() {
+  mkdirSync(join(typedFormInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(typedFormInvalidSourceDir, "InvalidTypedFormMain.hx"), [
+    "import views.BadTypedFormView;",
+    "",
+    "class InvalidTypedFormMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTypedFormView> = BadTypedFormView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedFormInvalidSourceDir, "views", "BadTypedFormView.hx"), [
+    "package views;",
+    "",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad_form\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTypedFormView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <text_field name=\"title\" />;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedFormInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      typedFormInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTypedFormMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Invalid typed form field outside <form_with> compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("Rails form field helpers must be used inside <form_with>")) {
+      console.error("Invalid typed form field failed, but not with the expected form context error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid typed form field check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

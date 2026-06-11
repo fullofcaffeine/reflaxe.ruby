@@ -44,6 +44,26 @@ class H {
 		return macro rails.action_view.HtmlNode.LinkTo($label, $url, $attrs);
 	}
 
+	public static macro function formWith(url:Expr, scope:Expr, attrs:Expr, children:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormWith($url, $scope, $attrs, $children);
+	}
+
+	public static macro function hiddenField(name:Expr, value:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormHiddenField($name, $value);
+	}
+
+	public static macro function label(name:Expr, text:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormLabel($name, $text);
+	}
+
+	public static macro function textField(name:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormTextField($name, $attrs);
+	}
+
+	public static macro function submit(text:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormSubmit($text, $attrs);
+	}
+
 	public static macro function attr(name:Expr, value:Expr):Expr {
 		return macro rails.action_view.HtmlAttr.Static($name, $value);
 	}

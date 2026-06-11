@@ -6,6 +6,7 @@ import reflaxe.BaseCompiler.BaseCompilerFileOutputType;
 import reflaxe.ReflectCompiler;
 import reflaxe.ruby.compiler.RubyBuildContextResolver;
 import reflaxe.ruby.macros.BoundaryEnforcer;
+import reflaxe.ruby.macros.RailsInlineMarkup;
 import reflaxe.ruby.macros.StrictModeEnforcer;
 #end
 
@@ -24,6 +25,7 @@ class CompilerInit {
 		initialized = true;
 
 		CompilerBootstrap.Start();
+		RailsInlineMarkup.enable();
 
 		var buildContext = RubyBuildContextResolver.resolve();
 		BoundaryEnforcer.init();

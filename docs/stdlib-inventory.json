@@ -188,7 +188,7 @@
       "status": "implemented",
       "path": "std/rails/action_view/H.hx",
       "surface": "rails.action_view.H",
-      "reason": "Macro helper facade that expands ergonomic typed template calls, loops, attrs, typed partial renders, and route-helper links into HtmlNode/HtmlAttr AST constructors."
+      "reason": "Lower-level macro helper facade that expands explicit typed template calls, loops, attrs, typed partial renders, route-helper links, and form helpers into HtmlNode/HtmlAttr AST constructors."
     },
     {
       "id": "std.rails.action_view_html_node",
@@ -196,7 +196,7 @@
       "status": "implemented",
       "path": "std/rails/action_view/HtmlNode.hx",
       "surface": "rails.action_view.HtmlNode",
-      "reason": "Compile-time ActionView node AST for typed Haxe template expressions, loops, partial composition, and helper links lowered into Rails ERB."
+      "reason": "Compile-time ActionView node AST for typed Haxe template expressions, loops, partial composition, helper links, and form builders lowered into Rails ERB."
     },
     {
       "id": "std.rails.params_macro",

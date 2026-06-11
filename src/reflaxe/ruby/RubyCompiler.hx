@@ -47,7 +47,8 @@ typedef RubyMetadataField = {
 }
 
 typedef RailsTemplateScope = {
-	localNames:Map<Int, String>
+	localNames:Map<Int, String>,
+	?formBuilderName:String
 }
 
 class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFile, RubyFile> {
@@ -1276,6 +1277,41 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateLinkTo(params[0], params[1], params[2], scope);
 						}
+					case "FormWith":
+						if (params.length != 4) {
+							Context.error("HtmlNode.FormWith expects url, scope, attrs, and children arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormWith(params[0], params[1], params[2], params[3], scope);
+						}
+					case "FormHiddenField":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormHiddenField expects name and value arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormHiddenField(params[0], params[1], scope);
+						}
+					case "FormLabel":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormLabel expects name and text arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormLabel(params[0], params[1], scope);
+						}
+					case "FormTextField":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormTextField expects name and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormTextField(params[0], params[1], scope);
+						}
+					case "FormSubmit":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormSubmit expects text and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormSubmit(params[0], params[1], scope);
+						}
 					case other:
 						Context.error('Unsupported HtmlNode constructor "$other" in @:railsTemplateAst.', node.pos);
 						"";
@@ -1383,6 +1419,51 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function lowerTemplateFormWith(url:TypedExpr, scopeExpr:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
+		var formVar = "form";
+		var helperArgs = ["url: " + printTemplateExpr(url, scope), "scope: " + rubySymbolLiteral(expectTemplateString(scopeExpr, "HtmlNode.FormWith scope must be a string literal."))];
+		helperArgs = helperArgs.concat(lowerTemplateHelperAttrs(attrs, scope));
+		var formScope = cloneTemplateScope(scope);
+		formScope.formBuilderName = formVar;
+		var out = "<%= form_with " + helperArgs.join(", ") + " do |" + formVar + "| %>";
+		for (child in expectTemplateArray(childrenExpr, "HtmlNode.FormWith children must be an array literal.")) {
+			out += lowerTemplateNode(child, formScope);
+		}
+		return out + "<% end %>";
+	}
+
+	static function lowerTemplateFormHiddenField(name:TypedExpr, value:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		return "<%= " + form + ".hidden_field " + rubySymbolLiteral(expectTemplateString(name, "H.hiddenField name must be a string literal."))
+			+ ", value: " + printTemplateExpr(value, scope) + " %>";
+	}
+
+	static function lowerTemplateFormLabel(name:TypedExpr, text:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		return "<%= " + form + ".label " + rubySymbolLiteral(expectTemplateString(name, "H.label name must be a string literal."))
+			+ ", " + quoteRubyStringForCode(expectTemplateString(text, "H.label text must be a string literal.")) + " %>";
+	}
+
+	static function lowerTemplateFormTextField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		var args = [rubySymbolLiteral(expectTemplateString(name, "H.textField name must be a string literal."))].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= " + form + ".text_field " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFormSubmit(text:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, text);
+		var args = [quoteRubyStringForCode(expectTemplateString(text, "H.submit text must be a string literal."))].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= " + form + ".submit " + args.join(", ") + " %>";
+	}
+
+	static function requireFormBuilder(scope:RailsTemplateScope, expr:TypedExpr):String {
+		if (scope.formBuilderName == null) {
+			Context.error("Rails form field helpers must be used inside <form_with> or H.formWith(...).", expr.pos);
+			return "form";
+		}
+		return scope.formBuilderName;
+	}
+
 	static function lowerTemplateLinkTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(label, scope), printTemplateExpr(url, scope)];
 		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
@@ -1478,7 +1559,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		for (key in scope.localNames.keys()) {
 			localNames.set(key, scope.localNames.get(key));
 		}
-		return {localNames: localNames};
+		return {localNames: localNames, formBuilderName: scope.formBuilderName};
 	}
 
 	static function templateCtorName(fn:TypedExpr, enumName:String):Null<String> {

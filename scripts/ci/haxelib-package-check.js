@@ -65,6 +65,7 @@ for (const required of [
   "lib/hxruby/version.rb",
   "src/reflaxe/ruby/RubyCompiler.hx",
   "src/reflaxe/ruby/CompilerBootstrap.hx",
+  "src/reflaxe/ruby/macros/RailsInlineMarkup.hx",
   "std/Std.cross.hx",
   "std/rails/ActiveRecord.hx",
   "std/rails/action_view/H.hx",

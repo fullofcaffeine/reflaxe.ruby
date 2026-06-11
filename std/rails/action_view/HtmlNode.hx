@@ -17,4 +17,9 @@ enum HtmlNode {
 	For<T>(items:Iterable<T>, render:T->HtmlNode);
 	Partial<TLocals>(template:Template<TLocals>, locals:TLocals);
 	LinkTo<TLabel, TUrl>(label:TLabel, url:TUrl, attrs:Array<HtmlAttr>);
+	FormWith<TUrl>(url:TUrl, scope:String, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
+	FormHiddenField<TValue>(name:String, value:TValue);
+	FormLabel(name:String, text:String);
+	FormTextField(name:String, attrs:Array<HtmlAttr>);
+	FormSubmit(text:String, attrs:Array<HtmlAttr>);
 }
