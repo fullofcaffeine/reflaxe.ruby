@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.17.0...v1.18.0) (2026-06-11)
+
+
+### Features
+
+* expand Rails HHX helper tags ([01faa72](https://github.com/fullofcaffeine/reflaxe.ruby/commit/01faa72b2ceb61c25f77909cc381a1fd5185dee0))
+
 # [1.17.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.16.0...v1.17.0) (2026-06-11)
 
 
