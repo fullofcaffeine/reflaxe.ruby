@@ -40,6 +40,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |
 | Rails template artifact generation | `@:railsTemplate(...)` | Implemented |
 | Rails HHX inline templates | `@:railsTemplateAst(...)` + `return <div>...</div>` | Initial template/helper slice |
+| Typed Rails partial locals object | `render(locals:TLocals)` + `locals.foo` projection | Initial locals slice |
 | Typed ActionView template AST | `@:railsTemplateAst(...)` + `H`/`HtmlNode`/`HtmlAttr` | Initial lower-level AST slice |
 | Typed ActionView partial composition | `H.partial(...)` + `Template<TLocals>` | Initial partial/component slice |
 | Typed ActionView route/helper calls | `H.linkTo(...)` + route externs | Initial helper slice |

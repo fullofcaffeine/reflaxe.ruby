@@ -5,8 +5,8 @@ class Main
     "Main"
   end
   def self.main()
-    value__hx18153 = MaybeInt.some(41)
-    empty__hx18154 = MaybeInt.none()
+    value__hx18201 = MaybeInt.some(41)
+    empty__hx18202 = MaybeInt.none()
     puts(HXRuby.stringify("constructed"))
   end
 end

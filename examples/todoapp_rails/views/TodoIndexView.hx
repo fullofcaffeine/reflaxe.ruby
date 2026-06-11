@@ -224,15 +224,7 @@ class TodoIndexView {
     <div class="card">
       <h2>Add a task</h2>
       <% if sample_user %>
-        <%= form_with url: todos_path, scope: :todo, local: true, class: "todo-form" do |form| %>
-          <%= form.hidden_field :user_id, value: sample_user.id %>
-          <%= form.hidden_field :is_completed, value: false %>
-          <div>
-            <%= form.label :title, "What should ship next?" %>
-            <%= form.text_field :title, placeholder: "Write the migration DSL", required: true %>
-          </div>
-          <%= form.submit "Add task", type: "submit" %>
-        <% end %>
+        <%= render partial: "controllers/todos/typed_form", locals: {sample_user_id: sample_user.id} %>
       <% else %>
         <div class="empty-state">
           Create a user first; the integration fixture seeds one before exercising this page.
@@ -259,6 +251,6 @@ class TodoIndexView {
     </div>
   </section>
 
-  <%= render partial: "controllers/todos/summary", locals: {todos: todos} %>
+  <%= render partial: "controllers/todos/dashboard", locals: {todos: todos} %>
 </main>';
 }

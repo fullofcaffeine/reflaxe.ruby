@@ -48,6 +48,7 @@ typedef RubyMetadataField = {
 
 typedef RailsTemplateScope = {
 	localNames:Map<Int, String>,
+	localObjectNames:Map<Int, String>,
 	?formBuilderName:String
 }
 
@@ -1180,12 +1181,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function templateScopeFor(field:ClassFuncData):RailsTemplateScope {
 		var localNames:Map<Int, String> = [];
+		var localObjectNames:Map<Int, String> = [];
 		for (arg in field.args) {
 			if (arg.tvar != null) {
-				localNames.set(arg.tvar.id, RubyNaming.toLocalName(arg.getName()));
+				var argName = arg.getName();
+				localNames.set(arg.tvar.id, RubyNaming.toLocalName(argName));
+				if (argName == "locals") {
+					localObjectNames.set(arg.tvar.id, argName);
+				}
 			}
 		}
-		return {localNames: localNames};
+		return {localNames: localNames, localObjectNames: localObjectNames};
 	}
 
 	static function extractTemplateAstReturn(expr:TypedExpr):Null<TypedExpr> {
@@ -1575,7 +1581,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		for (key in scope.localNames.keys()) {
 			localNames.set(key, scope.localNames.get(key));
 		}
-		return {localNames: localNames, formBuilderName: scope.formBuilderName};
+		var localObjectNames:Map<Int, String> = [];
+		for (key in scope.localObjectNames.keys()) {
+			localObjectNames.set(key, scope.localObjectNames.get(key));
+		}
+		return {localNames: localNames, localObjectNames: localObjectNames, formBuilderName: scope.formBuilderName};
 	}
 
 	static function templateCtorName(fn:TypedExpr, enumName:String):Null<String> {
@@ -1625,6 +1635,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TArrayDecl(values): "[" + [for (value in values) printTemplateExpr(value, scope)].join(", ") + "]";
 			case TBinop(op, lhs, rhs): printTemplateExpr(lhs, scope) + " " + binopToRuby(op) + " " + printTemplateExpr(rhs, scope);
 			case TUnop(op, _, inner): unopToRuby(op) + printTemplateExpr(inner, scope);
+			case TField({expr: TLocal(v)}, access) if (scope.localObjectNames.exists(v.id)):
+				fieldAccessName(access);
 			case TField(target, access): printTemplateExpr(target, scope) + "." + fieldAccessName(access);
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params):
 				var classType = classRef.get();

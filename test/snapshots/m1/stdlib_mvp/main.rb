@@ -39,129 +39,129 @@ class Main
     puts(HXRuby.stringify(HXRuby.is_of_type(true, Bool)))
     puts(HXRuby.stringify(HXRuby.is_of_type([1, 2], Array)))
     puts(HXRuby.stringify(HXRuby.is_of_type(nil, Dynamic)))
-    string_type__hx18251 = String
-    puts(HXRuby.stringify(HXRuby.is_of_type("dynamic", string_type__hx18251)))
-    array_type__hx18252 = Array
-    puts(HXRuby.stringify(HXRuby.is_of_type([3, 4], array_type__hx18252)))
-    box__hx18253 = StdTypeBox.new()
-    puts(HXRuby.stringify(HXRuby.is_of_type(box__hx18253, StdTypeBox)))
+    string_type__hx18299 = String
+    puts(HXRuby.stringify(HXRuby.is_of_type("dynamic", string_type__hx18299)))
+    array_type__hx18300 = Array
+    puts(HXRuby.stringify(HXRuby.is_of_type([3, 4], array_type__hx18300)))
+    box__hx18301 = StdTypeBox.new()
+    puts(HXRuby.stringify(HXRuby.is_of_type(box__hx18301, StdTypeBox)))
     puts(HXRuby.stringify(HXRuby.is_of_type("ruby", StdTypeBox)))
-    box_class__hx18254 = Type.get_class(box__hx18253)
-    puts(HXRuby.stringify(Type.get_class_name(box_class__hx18254)))
+    box_class__hx18302 = Type.get_class(box__hx18301)
+    puts(HXRuby.stringify(Type.get_class_name(box_class__hx18302)))
     puts(HXRuby.stringify(Type.get_class_name(Type.resolve_class("StdTypeBox"))))
-    created_box__hx18255 = Type.create_instance(box_class__hx18254, [])
-    puts(HXRuby.stringify(HXRuby.is_of_type(created_box__hx18255, StdTypeBox)))
-    color_enum__hx18256 = Type.get_enum(StdTypeColor.red())
-    puts(HXRuby.stringify(Type.get_enum_name(color_enum__hx18256)))
-    puts(HXRuby.stringify(HXRuby.array_join(Type.get_enum_constructs(color_enum__hx18256), "|")))
-    rgb__hx18257 = Type.create_enum(color_enum__hx18256, "Rgb", [1, 2, 3])
-    puts(HXRuby.stringify(Type.enum_constructor(rgb__hx18257)))
-    puts(HXRuby.stringify(Type.enum_index(rgb__hx18257)))
-    rgb_params__hx18258 = Type.enum_parameters(rgb__hx18257)
-    puts(HXRuby.stringify(((((((HXRuby.stringify(rgb_params__hx18258.length) + ":") + HXRuby.stringify(rgb_params__hx18258[0])) + ":") + HXRuby.stringify(rgb_params__hx18258[1])) + ":") + HXRuby.stringify(rgb_params__hx18258[2]))))
-    puts(HXRuby.stringify(Type.enum_eq(rgb__hx18257, StdTypeColor.rgb(1, 2, 3))))
-    puts(HXRuby.stringify(Type.enum_eq(rgb__hx18257, StdTypeColor.rgb(1, 2, 4))))
-    puts(HXRuby.stringify(Type.enum_constructor(Type.all_enums(color_enum__hx18256)[0])))
+    created_box__hx18303 = Type.create_instance(box_class__hx18302, [])
+    puts(HXRuby.stringify(HXRuby.is_of_type(created_box__hx18303, StdTypeBox)))
+    color_enum__hx18304 = Type.get_enum(StdTypeColor.red())
+    puts(HXRuby.stringify(Type.get_enum_name(color_enum__hx18304)))
+    puts(HXRuby.stringify(HXRuby.array_join(Type.get_enum_constructs(color_enum__hx18304), "|")))
+    rgb__hx18305 = Type.create_enum(color_enum__hx18304, "Rgb", [1, 2, 3])
+    puts(HXRuby.stringify(Type.enum_constructor(rgb__hx18305)))
+    puts(HXRuby.stringify(Type.enum_index(rgb__hx18305)))
+    rgb_params__hx18306 = Type.enum_parameters(rgb__hx18305)
+    puts(HXRuby.stringify(((((((HXRuby.stringify(rgb_params__hx18306.length) + ":") + HXRuby.stringify(rgb_params__hx18306[0])) + ":") + HXRuby.stringify(rgb_params__hx18306[1])) + ":") + HXRuby.stringify(rgb_params__hx18306[2]))))
+    puts(HXRuby.stringify(Type.enum_eq(rgb__hx18305, StdTypeColor.rgb(1, 2, 3))))
+    puts(HXRuby.stringify(Type.enum_eq(rgb__hx18305, StdTypeColor.rgb(1, 2, 4))))
+    puts(HXRuby.stringify(Type.enum_constructor(Type.all_enums(color_enum__hx18304)[0])))
     puts(HXRuby.stringify(Type.enum_constructor(Type.typeof(nil))))
     puts(HXRuby.stringify(Type.enum_constructor(Type.typeof(1))))
     puts(HXRuby.stringify(Type.enum_constructor(Type.typeof(1.5))))
     puts(HXRuby.stringify(Type.enum_constructor(Type.typeof(true))))
     puts(HXRuby.stringify(Type.enum_constructor(Type.typeof(StdTypeColor.red()))))
-    numbers__hx18259 = [1, 2, 3]
-    puts(HXRuby.stringify(HXRuby.array_push(numbers__hx18259, 4)))
-    puts(HXRuby.stringify(HXRuby.array_join(numbers__hx18259, ":")))
-    puts(HXRuby.stringify(numbers__hx18259.pop()))
-    puts(HXRuby.stringify(numbers__hx18259.shift()))
-    numbers__hx18259.unshift(0)
-    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18259)))
-    puts(HXRuby.stringify(HXRuby.stringify(HXRuby.array_concat(numbers__hx18259, [4, 5]))))
-    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18259)))
-    HXRuby.array_insert(numbers__hx18259, -99, -1)
-    HXRuby.array_insert(numbers__hx18259, 99, 4)
-    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18259)))
-    puts(HXRuby.stringify(HXRuby.stringify(HXRuby.array_slice(numbers__hx18259, -3, 99))))
-    puts(HXRuby.stringify(HXRuby.stringify(HXRuby.array_slice(numbers__hx18259, 99, nil))))
-    removed_numbers__hx18260 = HXRuby.array_splice(numbers__hx18259, -3, 2)
-    puts(HXRuby.stringify(HXRuby.stringify(removed_numbers__hx18260)))
-    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18259)))
-    puts(HXRuby.stringify(HXRuby.array_remove(numbers__hx18259, 0)))
-    puts(HXRuby.stringify(HXRuby.array_remove(numbers__hx18259, 8)))
-    puts(HXRuby.stringify(HXRuby.array_contains(numbers__hx18259, 4)))
-    puts(HXRuby.stringify(HXRuby.array_index_of(numbers__hx18259, 4, nil)))
-    puts(HXRuby.stringify(HXRuby.array_index_of(numbers__hx18259, -1, -99)))
-    puts(HXRuby.stringify(HXRuby.array_last_index_of(numbers__hx18259, 4, 99)))
-    copied_numbers__hx18261 = HXRuby.array_copy(numbers__hx18259)
-    HXRuby.array_push(copied_numbers__hx18261, 9)
-    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18259)))
-    puts(HXRuby.stringify(HXRuby.stringify(copied_numbers__hx18261)))
+    numbers__hx18307 = [1, 2, 3]
+    puts(HXRuby.stringify(HXRuby.array_push(numbers__hx18307, 4)))
+    puts(HXRuby.stringify(HXRuby.array_join(numbers__hx18307, ":")))
+    puts(HXRuby.stringify(numbers__hx18307.pop()))
+    puts(HXRuby.stringify(numbers__hx18307.shift()))
+    numbers__hx18307.unshift(0)
+    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18307)))
+    puts(HXRuby.stringify(HXRuby.stringify(HXRuby.array_concat(numbers__hx18307, [4, 5]))))
+    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18307)))
+    HXRuby.array_insert(numbers__hx18307, -99, -1)
+    HXRuby.array_insert(numbers__hx18307, 99, 4)
+    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18307)))
+    puts(HXRuby.stringify(HXRuby.stringify(HXRuby.array_slice(numbers__hx18307, -3, 99))))
+    puts(HXRuby.stringify(HXRuby.stringify(HXRuby.array_slice(numbers__hx18307, 99, nil))))
+    removed_numbers__hx18308 = HXRuby.array_splice(numbers__hx18307, -3, 2)
+    puts(HXRuby.stringify(HXRuby.stringify(removed_numbers__hx18308)))
+    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18307)))
+    puts(HXRuby.stringify(HXRuby.array_remove(numbers__hx18307, 0)))
+    puts(HXRuby.stringify(HXRuby.array_remove(numbers__hx18307, 8)))
+    puts(HXRuby.stringify(HXRuby.array_contains(numbers__hx18307, 4)))
+    puts(HXRuby.stringify(HXRuby.array_index_of(numbers__hx18307, 4, nil)))
+    puts(HXRuby.stringify(HXRuby.array_index_of(numbers__hx18307, -1, -99)))
+    puts(HXRuby.stringify(HXRuby.array_last_index_of(numbers__hx18307, 4, 99)))
+    copied_numbers__hx18309 = HXRuby.array_copy(numbers__hx18307)
+    HXRuby.array_push(copied_numbers__hx18309, 9)
+    puts(HXRuby.stringify(HXRuby.stringify(numbers__hx18307)))
+    puts(HXRuby.stringify(HXRuby.stringify(copied_numbers__hx18309)))
     puts(HXRuby.stringify(HXRuby.stringify(begin
-      g__hx18266 = []
-      g1__hx18267 = 0
-    g2__hx18268 = numbers__hx18259
-    while (g1__hx18267 < g2__hx18268.length)
-      v__hx18269 = g2__hx18268[g1__hx18267]
-      g1__hx18267 = (g1__hx18267 + 1)
-      HXRuby.array_push(g__hx18266, (v__hx18269 * 2))
+      g__hx18314 = []
+      g1__hx18315 = 0
+    g2__hx18316 = numbers__hx18307
+    while (g1__hx18315 < g2__hx18316.length)
+      v__hx18317 = g2__hx18316[g1__hx18315]
+      g1__hx18315 = (g1__hx18315 + 1)
+      HXRuby.array_push(g__hx18314, (v__hx18317 * 2))
     end
-      g__hx18266
+      g__hx18314
     end)))
     puts(HXRuby.stringify(HXRuby.stringify(begin
-      g__hx18275 = []
-      g1__hx18276 = 0
-    g2__hx18277 = numbers__hx18259
-    while (g1__hx18276 < g2__hx18277.length)
-      v__hx18278 = g2__hx18277[g1__hx18276]
-      g1__hx18276 = (g1__hx18276 + 1)
-      if (v__hx18278 > 0)
-        HXRuby.array_push(g__hx18275, v__hx18278)
+      g__hx18323 = []
+      g1__hx18324 = 0
+    g2__hx18325 = numbers__hx18307
+    while (g1__hx18324 < g2__hx18325.length)
+      v__hx18326 = g2__hx18325[g1__hx18324]
+      g1__hx18324 = (g1__hx18324 + 1)
+      if (v__hx18326 > 0)
+        HXRuby.array_push(g__hx18323, v__hx18326)
       end
     end
-      g__hx18275
+      g__hx18323
     end)))
-    nullable_numbers__hx18280 = [1, 2]
-    HXRuby.array_resize(nullable_numbers__hx18280, 4)
-    puts(HXRuby.stringify(nullable_numbers__hx18280.length))
-    puts(HXRuby.stringify((nullable_numbers__hx18280[2] == nil)))
-    HXRuby.array_resize(nullable_numbers__hx18280, 1)
-    puts(HXRuby.stringify(HXRuby.stringify(nullable_numbers__hx18280)))
-    sorted__hx18281 = [3, 1, 2]
-    HXRuby.array_sort(sorted__hx18281, ->(left__hx18282, right__hx18283) { (left__hx18282 - right__hx18283) })
-    puts(HXRuby.stringify(HXRuby.stringify(sorted__hx18281)))
-    HXRuby.array_reverse(sorted__hx18281)
-    puts(HXRuby.stringify(HXRuby.stringify(sorted__hx18281)))
-    names__hx18284 = Haxe::Ds::StringMap.new()
-    names__hx18284.set("ruby", 3)
-    puts(HXRuby.stringify(names__hx18284.get("ruby")))
-    puts(HXRuby.stringify(names__hx18284.exists("ruby")))
-    puts(HXRuby.stringify(names__hx18284.remove("ruby")))
-    puts(HXRuby.stringify(names__hx18284.exists("ruby")))
-    names__hx18284.set("ruby", 3)
-    names__hx18284.set("haxe", 4)
-    total__hx18299 = 0
-    value__hx18400 = names__hx18284.iterator()
-    while value__hx18400.has_next()
-      value__hx18303 = value__hx18400.next_()
-      total__hx18299 = (total__hx18299 + value__hx18303)
+    nullable_numbers__hx18328 = [1, 2]
+    HXRuby.array_resize(nullable_numbers__hx18328, 4)
+    puts(HXRuby.stringify(nullable_numbers__hx18328.length))
+    puts(HXRuby.stringify((nullable_numbers__hx18328[2] == nil)))
+    HXRuby.array_resize(nullable_numbers__hx18328, 1)
+    puts(HXRuby.stringify(HXRuby.stringify(nullable_numbers__hx18328)))
+    sorted__hx18329 = [3, 1, 2]
+    HXRuby.array_sort(sorted__hx18329, ->(left__hx18330, right__hx18331) { (left__hx18330 - right__hx18331) })
+    puts(HXRuby.stringify(HXRuby.stringify(sorted__hx18329)))
+    HXRuby.array_reverse(sorted__hx18329)
+    puts(HXRuby.stringify(HXRuby.stringify(sorted__hx18329)))
+    names__hx18332 = Haxe::Ds::StringMap.new()
+    names__hx18332.set("ruby", 3)
+    puts(HXRuby.stringify(names__hx18332.get("ruby")))
+    puts(HXRuby.stringify(names__hx18332.exists("ruby")))
+    puts(HXRuby.stringify(names__hx18332.remove("ruby")))
+    puts(HXRuby.stringify(names__hx18332.exists("ruby")))
+    names__hx18332.set("ruby", 3)
+    names__hx18332.set("haxe", 4)
+    total__hx18347 = 0
+    value__hx18448 = names__hx18332.iterator()
+    while value__hx18448.has_next()
+      value__hx18351 = value__hx18448.next_()
+      total__hx18347 = (total__hx18347 + value__hx18351)
     end
-    puts(HXRuby.stringify(total__hx18299))
-    key_chars__hx18304 = 0
-    key__hx18401 = names__hx18284.keys()
-    while key__hx18401.has_next()
-      key__hx18306 = key__hx18401.next_()
-      key_chars__hx18304 = (key_chars__hx18304 + key__hx18306.length)
+    puts(HXRuby.stringify(total__hx18347))
+    key_chars__hx18352 = 0
+    key__hx18449 = names__hx18332.keys()
+    while key__hx18449.has_next()
+      key__hx18354 = key__hx18449.next_()
+      key_chars__hx18352 = (key_chars__hx18352 + key__hx18354.length)
     end
-    puts(HXRuby.stringify(key_chars__hx18304))
-    names_copy__hx18310 = names__hx18284.copy()
-    puts(HXRuby.stringify(names_copy__hx18310.get("haxe")))
-    ids__hx18311 = Haxe::Ds::IntMap.new()
-    ids__hx18311.set(7, "seven")
-    puts(HXRuby.stringify(ids__hx18311.get(7)))
-    key__hx18315 = {"name" => "coffee"}
-    objects__hx18316 = Haxe::Ds::ObjectMap.new()
-    objects__hx18316.set(key__hx18315, "bean")
-    puts(HXRuby.stringify(objects__hx18316.get(key__hx18315)))
-    objects__hx18316.clear()
-    puts(HXRuby.stringify(objects__hx18316.exists(key__hx18315)))
+    puts(HXRuby.stringify(key_chars__hx18352))
+    names_copy__hx18358 = names__hx18332.copy()
+    puts(HXRuby.stringify(names_copy__hx18358.get("haxe")))
+    ids__hx18359 = Haxe::Ds::IntMap.new()
+    ids__hx18359.set(7, "seven")
+    puts(HXRuby.stringify(ids__hx18359.get(7)))
+    key__hx18363 = {"name" => "coffee"}
+    objects__hx18364 = Haxe::Ds::ObjectMap.new()
+    objects__hx18364.set(key__hx18363, "bean")
+    puts(HXRuby.stringify(objects__hx18364.get(key__hx18363)))
+    objects__hx18364.clear()
+    puts(HXRuby.stringify(objects__hx18364.exists(key__hx18363)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

@@ -37,7 +37,8 @@ syntaxCheck([
 viewContentCheck("app/views/controllers/todos/index.html.erb", [
   "Typed Rails, polished Ruby.",
   "RailsHx sample",
-  "form_with",
+  'render partial: "controllers/todos/typed_form"',
+  'render partial: "controllers/todos/dashboard"',
   "Models::Todo.__hx_rails_schema",
 ]);
 

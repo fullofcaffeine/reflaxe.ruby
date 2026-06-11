@@ -184,10 +184,10 @@ const view = readFileSync(join(outputDir, "app", "views", "controllers", "todos"
 for (const expected of [
   "Typed Rails, polished Ruby.",
   "RailsHx sample",
-  "form_with",
+  'render partial: "controllers/todos/typed_form", locals: {sample_user_id: sample_user.id}',
   "todo-shell",
   "Models::Todo.__hx_rails_schema",
-  'render partial: "controllers/todos/summary", locals: {todos: todos}',
+  'render partial: "controllers/todos/dashboard", locals: {todos: todos}',
 ]) {
   if (!view.includes(expected)) {
     console.error(`todoapp_rails view missing expected content: ${expected}`);
@@ -217,10 +217,10 @@ const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers
 for (const expected of [
   "Composed typed partial",
   '<%= link_to todos_path(), class: "typed-route-link" do %>',
-  '<span><%= (if locals.todos.length > 0 then "Back to todos" else "Back to empty todo route" end) %></span>',
-  '<span class="typed-route-count"><%= locals.todos.length %></span>',
+  '<span><%= (if todos.length > 0 then "Back to todos" else "Back to empty todo route" end) %></span>',
+  '<span class="typed-route-count"><%= todos.length %></span>',
   '<% end %>',
-  '<%= render partial: "controllers/todos/summary", locals: {"todos" => locals.todos} %>',
+  '<%= render partial: "controllers/todos/summary", locals: {"todos" => todos} %>',
 ]) {
   if (!typedDashboard.includes(expected)) {
     console.error(`todoapp_rails typed dashboard partial missing expected content: ${expected}`);
@@ -231,7 +231,7 @@ for (const expected of [
 const typedForm = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_typed_form.html.erb"), "utf8");
 for (const expected of [
   '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>',
-  '<%= form.hidden_field :user_id, value: locals.sample_user_id %>',
+  '<%= form.hidden_field :user_id, value: sample_user_id %>',
   '<%= form.hidden_field :is_completed, value: false %>',
   '<%= form.label :title, "What should ship next?" %>',
   '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',

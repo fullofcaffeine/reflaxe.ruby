@@ -1,5 +1,5 @@
 <%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>
-			<%= form.hidden_field :user_id, value: locals.sample_user_id %>
+			<%= form.hidden_field :user_id, value: sample_user_id %>
 			<%= form.hidden_field :is_completed, value: false %>
 			<div>
 				<%= form.label :title, "What should ship next?" %>

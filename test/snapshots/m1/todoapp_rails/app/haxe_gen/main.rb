@@ -5,18 +5,18 @@ class Main
     "Main"
   end
   def self.main()
-    todo__hx18492 = nil
-    controller__hx18493 = nil
-    dashboard_view__hx18494 = Views::TodoDashboardView
-    form_view__hx18495 = Views::TodoFormView
-    view__hx18496 = Views::TodoIndexView
-    summary_view__hx18497 = Views::TodoSummaryView
-    puts(HXRuby.stringify((todo__hx18492 == nil)))
-    puts(HXRuby.stringify((controller__hx18493 == nil)))
-    puts(HXRuby.stringify((dashboard_view__hx18494 != nil)))
-    puts(HXRuby.stringify((form_view__hx18495 != nil)))
-    puts(HXRuby.stringify((view__hx18496 != nil)))
-    puts(HXRuby.stringify((summary_view__hx18497 != nil)))
+    todo__hx18540 = nil
+    controller__hx18541 = nil
+    dashboard_view__hx18542 = Views::TodoDashboardView
+    form_view__hx18543 = Views::TodoFormView
+    view__hx18544 = Views::TodoIndexView
+    summary_view__hx18545 = Views::TodoSummaryView
+    puts(HXRuby.stringify((todo__hx18540 == nil)))
+    puts(HXRuby.stringify((controller__hx18541 == nil)))
+    puts(HXRuby.stringify((dashboard_view__hx18542 != nil)))
+    puts(HXRuby.stringify((form_view__hx18543 != nil)))
+    puts(HXRuby.stringify((view__hx18544 != nil)))
+    puts(HXRuby.stringify((summary_view__hx18545 != nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME
