@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.5.0...v1.6.0) (2026-06-11)
+
+
+### Features
+
+* add Array std support ([49ce452](https://github.com/fullofcaffeine/reflaxe.ruby/commit/49ce4527a8c161274286ee2d968af08ac1709e6b))
+
 # [1.5.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.4.0...v1.5.0) (2026-06-11)
 
 
