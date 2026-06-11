@@ -1,7 +1,6 @@
 package views;
 
 import models.Todo;
-import rails.action_view.H;
 import rails.action_view.HtmlNode;
 
 typedef TodoSummaryLocals = {
@@ -12,26 +11,21 @@ typedef TodoSummaryLocals = {
 @:railsTemplateAst("render")
 class TodoSummaryView {
 	public static function render(todos:Array<Todo>):HtmlNode {
-		return H.el("aside", [
-			H.className("card typed-template-card"),
-			H.attr("aria-label", "Typed RailsHx template summary")
-		], [
-			H.el("span", [H.className("eyebrow")], [H.text("Typed template partial")]),
-			H.el("p", [H.className("hero-copy")], [
-				H.text("This block is authored with typed Haxe template helpers and emitted as Rails ERB.")
-			]),
-			H.el("div", [H.className("stat")], [
-				H.el("strong", [], [H.expr(todos.length)]),
-				H.el("span", [], [H.text("todos seen by typed helpers")])
-			]),
-			H.el("ul", [H.className("todo-list typed-template-list")], [
-				H.each(todos, function(todo) {
-					return H.el("li", [H.className("todo-item")], [
-						H.el("span", [H.className("todo-dot"), H.attr("aria-hidden", "true")], []),
-						H.el("span", [], [H.expr(todo.title)])
-					]);
-				})
-			])
-		]);
+		return <aside class="card typed-template-card" aria-label="Typed RailsHx template summary">
+			<span class="eyebrow">Typed template partial</span>
+			<p class="hero-copy">This block is authored with typed Rails HHX and emitted as Rails ERB.</p>
+			<div class="stat">
+				<strong>${todos.length}</strong>
+				<span>todos seen by typed HHX</span>
+			</div>
+			<ul class="todo-list typed-template-list">
+				<for ${todo in todos}>
+					<li class="todo-item">
+						<span class="todo-dot" aria-hidden="true"></span>
+						<span>${todo.title}</span>
+					</li>
+				</for>
+			</ul>
+		</aside>;
 	}
 }

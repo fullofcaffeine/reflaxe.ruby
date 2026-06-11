@@ -7,12 +7,12 @@ module Controllers
       super()
     end
     def index()
-      todos__hx18272 = Models::Todo.incomplete()
-      self.render(template: "controllers/todos/index", locals: {"todos" => todos__hx18272})
+      todos__hx18398 = Models::Todo.incomplete()
+      self.render(template: "controllers/todos/index", locals: {"todos" => todos__hx18398})
     end
     def create()
-      attrs__hx18274 = self.params().require("todo").permit([:title, :is_completed, :user_id])
-      todo__hx18275 = Models::Todo.create(attrs__hx18274)
+      attrs__hx18400 = self.params().require("todo").permit([:title, :is_completed, :user_id])
+      todo__hx18401 = Models::Todo.create(attrs__hx18400)
       self.redirect_to(self.todos_path())
     end
   end

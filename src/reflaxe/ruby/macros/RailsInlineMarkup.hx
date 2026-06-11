@@ -378,6 +378,22 @@ private class RailsMarkupParser {
 		return Context.parseInlineString(text, makeSubPos(balanced.start, balanced.end));
 	}
 
+	function parseForHead():{binder:String, items:Expr, pos:Position} {
+		var headStart = i;
+		var head = parseExprInBraces();
+		return switch (head.expr) {
+			case EBinop(OpIn, left, right):
+				switch (left.expr) {
+					case EConst(CIdent(name)):
+						{binder: name, items: right, pos: makeSubPos(headStart, i)};
+					default:
+						Context.error("Rails HHX <for>: binder must be an identifier, for example <for ${todo in todos}>", left.pos);
+				}
+			default:
+				Context.error("Rails HHX <for>: expected `binder in iterable`, for example <for ${todo in todos}>", head.pos);
+		}
+	}
+
 	function mkArray(exprs:Array<Expr>, pos:Position):Expr {
 		return {expr: EArrayDecl(exprs), pos: pos};
 	}
@@ -396,6 +412,23 @@ private class RailsMarkupParser {
 
 	function mkElement(name:String, attrs:Array<Expr>, children:Array<Expr>, pos:Position):Expr {
 		return macro @:pos(pos) rails.action_view.HtmlNode.Element($v{name}, ${mkArray(attrs, pos)}, ${mkArray(children, pos)});
+	}
+
+	function mkFor(items:Expr, binderName:String, body:Expr, pos:Position):Expr {
+		var arg:FunctionArg = {
+			name: binderName,
+			type: null,
+			opt: false,
+			value: null,
+			meta: null
+		};
+		var fn:Function = {
+			args: [arg],
+			ret: null,
+			expr: {expr: EReturn(body), pos: pos},
+			params: []
+		};
+		return macro @:pos(pos) rails.action_view.HtmlNode.For($items, ${{expr: EFunction(FArrow, fn), pos: pos}});
 	}
 
 	function mkAttr(attr:RailsParsedAttr):Expr {
@@ -484,6 +517,15 @@ private class RailsMarkupParser {
 		var tagStart = i;
 		expect("<", "Expected '<' to start a tag");
 		var name = readName();
+		if (name == "for") {
+			skipWs();
+			var head = parseForHead();
+			skipWs();
+			expect(">", "Expected '>' after <for ${...}>");
+			var bodyNodes = parseNodesUntil("for");
+			var body = bodyNodes.length == 1 ? bodyNodes[0] : mkFragment(bodyNodes, makeSubPos(tagStart, i));
+			return mkFor(head.items, head.binder, body, makeSubPos(tagStart, i));
+		}
 		var attrs:Array<RailsParsedAttr> = [];
 		var selfClosing = false;
 		while (!eof()) {
@@ -553,16 +595,25 @@ private class RailsMarkupParser {
 				macro @:pos(pos) rails.action_view.HtmlNode.FormHiddenField($fieldName, $value);
 			case "field_label":
 				var labelName = requireAttrValue(attrs, "name", pos);
-				var text = requireAttrValue(attrs, "text", pos);
+				var text = attrValueOrTextChildren(attrs, children, "field_label", pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.FormLabel($labelName, $text);
 			case "text_field":
 				var textFieldName = requireAttrValue(attrs, "name", pos);
 				var textFieldAttrs = attrsExcept(attrs, ["name"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.FormTextField($textFieldName, ${mkArray(textFieldAttrs.map(mkAttr), pos)});
 			case "submit":
-				var submitText = requireAttrValue(attrs, "text", pos);
+				var submitText = attrValueOrTextChildren(attrs, children, "submit", pos);
 				var submitAttrs = attrsExcept(attrs, ["text"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.FormSubmit($submitText, ${mkArray(submitAttrs.map(mkAttr), pos)});
+			case "link_to":
+				var label = attrValueOrTextChildren(attrs, children, "link_to", pos);
+				var url = requireAttrValue(attrs, "url", pos);
+				var linkAttrs = attrsExcept(attrs, ["text", "url"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.LinkTo($label, $url, ${mkArray(linkAttrs.map(mkAttr), pos)});
+			case "partial":
+				var template = requireAttrValue(attrs, "template", pos);
+				var locals = requireAttrValue(attrs, "locals", pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.Partial($template, $locals);
 			default:
 				mkElement(name, attrs.map(mkAttr), children, pos);
 		}
@@ -591,6 +642,64 @@ private class RailsMarkupParser {
 		}
 		Context.error('Rails HHX <' + name + '> attribute is required here.', pos);
 		return macro null;
+	}
+
+	function attrValueOrTextChildren(attrs:Array<RailsParsedAttr>, children:Array<Expr>, tagName:String, pos:Position):Expr {
+		for (attr in attrs) {
+			if (attr.name == "text") {
+				return attrValueExpr(attr);
+			}
+		}
+		var text = staticTextChildren(children);
+		if (text != null) {
+			return macro @:pos(pos) $v{text};
+		}
+		Context.error('Rails HHX <' + tagName + '> expects a text="..." attribute or static text children.', pos);
+		return macro null;
+	}
+
+	function attrValueExpr(attr:RailsParsedAttr):Expr {
+		return switch (attr.kind) {
+			case Static(value):
+				macro @:pos(attr.pos) $v{value};
+			case Bool:
+				macro @:pos(attr.pos) true;
+			case ExprValue(value):
+				value;
+		}
+	}
+
+	function staticTextChildren(children:Array<Expr>):Null<String> {
+		var out = "";
+		for (child in children) {
+			switch (child.expr) {
+				case ECall(fn, params):
+					if (!isHtmlNodeCtor(fn, "Text") || params.length != 1) {
+						return null;
+					}
+					switch (params[0].expr) {
+						case EConst(CString(value, _)):
+							out += value;
+						default:
+							return null;
+					}
+				default:
+					return null;
+			}
+		}
+		var trimmed = StringTools.trim(out);
+		return trimmed.length == 0 ? null : trimmed;
+	}
+
+	function isHtmlNodeCtor(expr:Expr, name:String):Bool {
+		return switch (expr.expr) {
+			case EField(_, fieldName):
+				fieldName == name;
+			case EMeta(_, inner) | EParenthesis(inner):
+				isHtmlNodeCtor(inner, name);
+			default:
+				false;
+		}
 	}
 }
 #end

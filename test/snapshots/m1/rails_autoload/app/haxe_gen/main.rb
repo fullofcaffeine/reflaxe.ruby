@@ -5,8 +5,8 @@ class Main
     "Main"
   end
   def self.main()
-    todo__hx17942 = nil
-    puts(HXRuby.stringify((todo__hx17942 == nil)))
+    todo__hx18068 = nil
+    puts(HXRuby.stringify((todo__hx18068 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

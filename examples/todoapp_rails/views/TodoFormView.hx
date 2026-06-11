@@ -15,10 +15,10 @@ class TodoFormView {
 			<hidden_field name="user_id" value=${locals.sampleUserId} />
 			<hidden_field name="is_completed" value=${false} />
 			<div>
-				<field_label name="title" text="What should ship next?" />
+				<field_label name="title">What should ship next?</field_label>
 				<text_field name="title" placeholder="Write the HHX form DSL" required />
 			</div>
-			<submit text="Add task" type="submit" />
+			<submit type="submit">Add task</submit>
 		</form_with>;
 	}
 }
