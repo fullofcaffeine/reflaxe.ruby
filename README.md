@@ -77,6 +77,14 @@ npm run todoapp:server
 
 Then open `http://127.0.0.1:3000/`. For the RailsHx development loop, keep Rails running and start `npm run todoapp:watch` in another terminal; Haxe/HHX and Haxe-authored JS changes refresh the generated Rails files while Rails continues serving the app.
 
+For a real-browser RailsHx smoke, run the Playwright sentinel lane:
+
+```bash
+npm run test:todoapp-playwright
+```
+
+That prepares the generated Rails app, boots Rails on a dedicated port, runs `examples/todoapp_rails/e2e/*.spec.ts`, and tears the server down.
+
 For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, and dev process files:
 
 ```bash

@@ -20,6 +20,10 @@ coverage/
 tmp/
 log/
 
+# Browser test artifacts
+test-results/
+playwright-report/
+
 # Release artifacts
 dist/
 

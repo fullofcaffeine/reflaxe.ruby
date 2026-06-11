@@ -32,6 +32,7 @@
     "test:active-record-model": "node scripts/ci/active-record-model-smoke.js",
     "test:action-controller-params": "node scripts/ci/action-controller-params-smoke.js",
     "test:todoapp-rails": "node scripts/ci/todoapp-rails-smoke.js",
+    "test:todoapp-playwright": "node scripts/ci/todoapp-playwright.js",
     "test:rails-integration": "node scripts/ci/rails-integration.js",
     "test:routes-generator": "node scripts/ci/routes-generator-smoke.js",
     "test:scaffold-cli": "node scripts/ci/scaffold-cli-smoke.js",
@@ -58,6 +59,7 @@
     "release:dry-run": "semantic-release --dry-run"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^6.0.3",

@@ -90,6 +90,16 @@ npm run todoapp:test
 
 Compiles, materializes, prepares the test DB, and runs the generated Rails test suite.
 
+```bash
+npm run test:todoapp-playwright
+```
+
+Runs the RailsHx browser sentinel: compile/materialize the generated app, prepare and seed the SQLite DB, boot Rails on a dedicated port, run Playwright specs from `examples/todoapp_rails/e2e/*.spec.ts`, and shut Rails down. Override the port or spec when debugging:
+
+```bash
+RAILSHX_PLAYWRIGHT_PORT=3101 RAILSHX_PLAYWRIGHT_SPEC=examples/todoapp_rails/e2e/todoapp.spec.ts npm run test:todoapp-playwright
+```
+
 ## Production Build Shape
 
 For a real RailsHx app, Haxe/HHX compilation is a build step before the normal Rails production bundle is finalized:
@@ -142,9 +152,12 @@ The Haxe-authored client lane compiles through `examples/todoapp_rails/build-cli
 npm run test:todoapp-rails
 npm run test:rails-integration
 npm run todoapp:test
+npm run test:todoapp-playwright
 ```
 
 `test:rails-integration` always syntax-checks generated Ruby. It runs `rails db:migrate` and `rails test` when Rails gems are installed; set `REQUIRE_RAILS=1` in CI to make that runtime lane mandatory.
+
+`test:todoapp-playwright` is the real-browser layer, modeled after the PhoenixHx sentinel approach but Rails-native: Playwright validates browser-rendered ActionView, importmap/Turbo/Haxe-client behavior, form submission, and same-page link enhancement against a running generated Rails app.
 
 ## Current Boundary
 
