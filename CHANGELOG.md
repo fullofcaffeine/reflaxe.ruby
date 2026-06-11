@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.14.0...v1.15.0) (2026-06-11)
+
+
+### Features
+
+* add typed Rails partial composition ([1476e06](https://github.com/fullofcaffeine/reflaxe.ruby/commit/1476e06e204d70b8fae9cc167e8f6dd0d8c47b26))
+
 # [1.14.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.13.0...v1.14.0) (2026-06-11)
 
 
