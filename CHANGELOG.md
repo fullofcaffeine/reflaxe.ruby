@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.28.0...v1.29.0) (2026-06-11)
+
+
+### Features
+
+* add typed RailsHx layout and client flow ([83ea1e9](https://github.com/fullofcaffeine/reflaxe.ruby/commit/83ea1e9d66194b9409d0575d05a4de7b32b6870c))
+
 # [1.28.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.27.0...v1.28.0) (2026-06-11)
 
 
