@@ -2,7 +2,7 @@
 # Rails model output; Zeitwerk path should match the Ruby constant.
 require "active_record"
 module Models
-  class User < ActiveRecord::Base
+  class User < ::ApplicationRecord
     self.table_name = "users"
     def self.__hx_rails_schema()
       {

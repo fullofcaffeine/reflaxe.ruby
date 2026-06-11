@@ -54,7 +54,7 @@ const todoRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "todo
 for (const expected of [
   'require "active_record"',
   "module Models",
-  "class Todo < ActiveRecord::Base",
+  "class Todo < ::ApplicationRecord",
   'self.table_name = "todos"',
   "def self.__hx_rails_schema()",
   'table_name: "todos"',
@@ -82,7 +82,7 @@ const userRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "user
 for (const expected of [
   'require "active_record"',
   "module Models",
-  "class User < ActiveRecord::Base",
+  "class User < ::ApplicationRecord",
   'self.table_name = "users"',
   "def self.__hx_rails_schema()",
   'table_name: "users"',

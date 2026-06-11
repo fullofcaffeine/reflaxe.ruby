@@ -2,7 +2,7 @@
 # Rails model output; Zeitwerk path should match the Ruby constant.
 require "active_record"
 module Models
-  class AuditLog < ActiveRecord::Base
+  class AuditLog < ::ApplicationRecord
     self.table_name = "audit_logs"
     def self.__hx_rails_schema()
       {

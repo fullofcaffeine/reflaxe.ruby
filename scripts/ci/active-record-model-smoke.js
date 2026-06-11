@@ -56,7 +56,7 @@ const todoRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "todo
 for (const expected of [
   'require "active_record"',
   "module Models",
-  "class Todo < ActiveRecord::Base",
+  "class Todo < ::ApplicationRecord",
   'self.table_name = "todos"',
   "def self.__hx_rails_schema()",
   'table_name: "todos"',
@@ -87,7 +87,7 @@ for (const unexpected of ["def self.where", "def self.create"]) {
 
 const auditLogRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "audit_log.rb"), "utf8");
 for (const expected of [
-  "class AuditLog < ActiveRecord::Base",
+  "class AuditLog < ::ApplicationRecord",
   'self.table_name = "audit_logs"',
   "def self.__hx_rails_schema()",
   'table_name: "audit_logs"',

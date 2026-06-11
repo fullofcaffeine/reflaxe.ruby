@@ -2,7 +2,7 @@
 # Rails model output; Zeitwerk path should match the Ruby constant.
 require "active_record"
 module Models
-  class Todo < ActiveRecord::Base
+  class Todo < ::ApplicationRecord
     self.table_name = "todos"
     def self.__hx_rails_schema()
       {

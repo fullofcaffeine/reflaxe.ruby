@@ -29,6 +29,14 @@ The goal is not to make Rails look like Phoenix. The goal is to reuse the same s
 
 Official Rails behavior remains the output contract. RailsHx should follow Rails' Active Record query, association, validation, migration, routing, controller, generator, and testing conventions rather than inventing a parallel framework.
 
+## Typed DSL Rule
+
+RailsHx should use macros and typed std stubs when Rails APIs need a DSL. The `../haxe.elixir.codex` HXX/HEEx layer is the model: Haxe source should type-check template/DSL expressions, the compiler should intercept or rewrite those typed forms at compile time, and generated output should be plain framework-native artifacts. For Rails this means typed model, query, migration, params, route-helper, and template DSLs should lower into normal Rails Ruby, ERB/Action View artifacts, migrations, routes, and tests.
+
+Do not build a parallel runtime DSL engine by default. Compile-time-only helpers are preferred when they can disappear after lowering. Runtime helpers are acceptable only when Rails itself needs a callable boundary or when tests prove that a small helper gives a clearer Rails-native contract.
+
+For typed ActionView templates, follow the HXX lesson closely: provide typed entrypoints for locals/assigns/components, parse embedded Haxe expressions through macro typing, validate field/helper references before Ruby runs, and emit Rails-native renderable templates/components. Raw ERB should be a narrow escape hatch, not the default app-authoring surface.
+
 ## Design Contract
 
 - Keep one Ruby compiler pipeline. RailsHx is not a second backend.

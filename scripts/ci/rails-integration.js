@@ -20,6 +20,7 @@ const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE
 run(process.execPath, [join(root, "scripts", "ci", "todoapp-rails-smoke.js")]);
 materializeRailsApp();
 syntaxCheck([
+  "app/models/application_record.rb",
   "app/haxe_gen/models/todo.rb",
   "app/haxe_gen/models/user.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
@@ -102,6 +103,11 @@ Rails.application.initialize!
   writeFile("config/database.yml", `test:
   adapter: sqlite3
   database: db/test.sqlite3
+`);
+
+  writeFile("app/models/application_record.rb", `class ApplicationRecord < ActiveRecord::Base
+  self.abstract_class = true
+end
 `);
 
   writeFile("config/routes.rb", `Rails.application.routes.draw do
