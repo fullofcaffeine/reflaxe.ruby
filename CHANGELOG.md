@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.13.0...v1.14.0) (2026-06-11)
+
+
+### Features
+
+* add Rails template helper facade ([7c5ce74](https://github.com/fullofcaffeine/reflaxe.ruby/commit/7c5ce74875db79efbb36c6d2b842fa0400c2382c))
+
 # [1.13.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.12.0...v1.13.0) (2026-06-11)
 
 
