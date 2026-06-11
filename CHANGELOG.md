@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.27.0...v1.28.0) (2026-06-11)
+
+
+### Features
+
+* add RailsHx app dev workflow ([0bc4c8f](https://github.com/fullofcaffeine/reflaxe.ruby/commit/0bc4c8fc9328bd44c3159d1ab3928328d83e2bf7))
+
 # [1.27.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.26.0...v1.27.0) (2026-06-11)
 
 
