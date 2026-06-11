@@ -1,17 +1,26 @@
 #!/usr/bin/env node
 
-const { existsSync } = require("node:fs");
+const { existsSync, readdirSync } = require("node:fs");
+const net = require("node:net");
 const { join, resolve } = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const appDir = join(root, "test", ".generated", "rails_integration");
-const port = process.env.PORT ?? process.env.RAILSHX_PLAYWRIGHT_PORT ?? "3100";
+const requestedPort = process.env.RAILSHX_PLAYWRIGHT_PORT ?? process.env.PORT;
+const defaultPort = "3100";
 const bind = process.env.BIND ?? "127.0.0.1";
-const baseUrl = process.env.BASE_URL ?? `http://${bind}:${port}`;
 const spec = process.env.RAILSHX_PLAYWRIGHT_SPEC ?? "examples/todoapp_rails/e2e";
 
 let server = null;
+let serverLog = "";
+
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.on(signal, () => {
+    cleanup();
+    process.exit(signal === "SIGINT" ? 130 : 143);
+  });
+}
 
 main().catch((error) => {
   console.error(error.stack ?? error.message ?? String(error));
@@ -20,6 +29,9 @@ main().catch((error) => {
 });
 
 async function main() {
+  const port = await resolvePort();
+  const baseUrl = process.env.BASE_URL ?? `http://${bind}:${port}`;
+
   run(process.execPath, [join(root, "scripts", "rails", "todoapp.js"), "prepare"], {
     env: { ...process.env, PORT: port, BIND: bind },
   });
@@ -32,7 +44,6 @@ async function main() {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  let serverLog = "";
   server.stdout.on("data", (chunk) => {
     serverLog += chunk.toString();
   });
@@ -57,18 +68,56 @@ async function main() {
 
   cleanup();
   if (result.status !== 0) {
+    printServerLog();
     process.exit(result.status ?? 1);
   }
+}
+
+async function resolvePort() {
+  if (requestedPort != null) {
+    if (!(await isPortAvailable(Number(requestedPort)))) {
+      throw new Error(`Requested RailsHx Playwright port ${requestedPort} is already in use.`);
+    }
+    return requestedPort;
+  }
+
+  var candidate = Number(defaultPort);
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (await isPortAvailable(candidate)) {
+      return String(candidate);
+    }
+    candidate += 1;
+  }
+  throw new Error(`Could not find a free RailsHx Playwright port starting at ${defaultPort}.`);
+}
+
+function isPortAvailable(port) {
+  return new Promise((resolvePortCheck) => {
+    const probe = net.createServer();
+    probe.once("error", () => resolvePortCheck(false));
+    probe.once("listening", () => {
+      probe.close(() => resolvePortCheck(true));
+    });
+    probe.listen(port, bind);
+  });
 }
 
 function ensurePlaywrightBrowser() {
   if (process.env.PLAYWRIGHT_SKIP_BROWSER_INSTALL === "1") {
     return;
   }
-  if (existsSync(join(process.env.HOME ?? "", ".cache", "ms-playwright"))) {
+  if (hasChromiumBrowser()) {
     return;
   }
   run("npx", ["playwright", "install", "chromium"]);
+}
+
+function hasChromiumBrowser() {
+  const cacheDir = join(process.env.HOME ?? "", ".cache", "ms-playwright");
+  if (!existsSync(cacheDir)) {
+    return false;
+  }
+  return readdirSync(cacheDir).some((entry) => entry.startsWith("chromium-") || entry.startsWith("chromium_headless_shell-"));
 }
 
 async function waitForReady(url, deadlineMs) {
@@ -94,6 +143,13 @@ function cleanup() {
     return;
   }
   server.kill("SIGTERM");
+}
+
+function printServerLog() {
+  if (serverLog.trim() !== "") {
+    console.error("[todoapp-playwright] Rails server log:");
+    console.error(serverLog.trim());
+  }
 }
 
 function sleep(ms) {

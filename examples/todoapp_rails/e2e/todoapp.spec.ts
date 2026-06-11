@@ -1,7 +1,22 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+
+async function gotoTodos(page: Page) {
+  let lastError: unknown = null
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto('/todos', { waitUntil: 'domcontentloaded', timeout: 15_000 })
+      await expect(page.locator('.todo-shell')).toBeVisible()
+      return
+    } catch (error) {
+      lastError = error
+      await page.waitForTimeout(400)
+    }
+  }
+  throw lastError
+}
 
 test('renders the typed RailsHx todo page through real browser assets', async ({ page }) => {
-  await page.goto('/todos')
+  await gotoTodos(page)
 
   await expect(page).toHaveTitle(/RailsHx Todoapp/)
   await expect(page.getByText('Typed Rails, polished Ruby.')).toBeVisible()
@@ -13,10 +28,41 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
   expect(bodyText).toMatch(/RailsHx sample/i)
   expect(bodyText).toContain('Ship typed Rails templates')
   expect(bodyText).not.toMatch(/<%=?|%>|<\/?(div|span|form|input|textarea|section|article)(\s|>)/i)
+
+  await expect(page.getByText(/Back to todos/i)).toHaveCount(0)
+
+  const links = page.locator('a')
+  const linkCount = await links.count()
+  for (let index = 0; index < linkCount; index += 1) {
+    const link = links.nth(index)
+    await expect(link).toBeVisible()
+    const href = await link.getAttribute('href')
+    expect(href).toBeTruthy()
+    expect(href).not.toMatch(/undefined|null|javascript:/i)
+  }
+
+  const items = page.locator('.todo-item')
+  const dots = page.locator('.todo-item .todo-dot')
+  const dotCount = await dots.count()
+  expect(dotCount).toBeGreaterThan(0)
+  await expect(dots).toHaveCount(await items.count())
+
+  for (let index = 0; index < dotCount; index += 1) {
+    const dotBox = await dots.nth(index).boundingBox()
+    const itemBox = await items.nth(index).boundingBox()
+    expect(dotBox).not.toBeNull()
+    expect(itemBox).not.toBeNull()
+    expect(dotBox!.width).toBeGreaterThanOrEqual(13)
+    expect(dotBox!.height).toBeGreaterThanOrEqual(13)
+    expect(dotBox!.x).toBeGreaterThanOrEqual(itemBox!.x)
+    expect(dotBox!.y).toBeGreaterThanOrEqual(itemBox!.y)
+    expect(dotBox!.x + dotBox!.width).toBeLessThanOrEqual(itemBox!.x + itemBox!.width)
+    expect(dotBox!.y + dotBox!.height).toBeLessThanOrEqual(itemBox!.y + itemBox!.height)
+  }
 })
 
 test('creates a task through Turbo/importmap-backed Rails form flow', async ({ page }) => {
-  await page.goto('/todos')
+  await gotoTodos(page)
 
   const beforeCount = await page.locator('.todo-list .todo-item').count()
   const title = `Playwright task ${Date.now()}`
@@ -33,7 +79,7 @@ test('creates a task through Turbo/importmap-backed Rails form flow', async ({ p
 })
 
 test('uses typed Haxe client behavior for same-page Rails links', async ({ page }) => {
-  await page.goto('/todos')
+  await gotoTodos(page)
 
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.locator('[data-railshx-scroll]').first().click()

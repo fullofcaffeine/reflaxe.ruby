@@ -117,11 +117,15 @@ for (const rubyVersion of ['"3.2"', '"3.3"', '"4.0"']) {
 }
 expectIncludes(ciWorkflow, "npx lix download haxe", "CI Haxe setup");
 expectIncludes(ciWorkflow, "npm test", "CI test step");
+expectIncludes(ciWorkflow, "RailsHx browser sentinel", "CI workflow");
+expectIncludes(ciWorkflow, "npx playwright install --with-deps chromium", "CI workflow");
+expectIncludes(ciWorkflow, "npm run test:todoapp-playwright", "CI workflow");
 expectIncludes(ciWorkflow, "actions/checkout@v6", "CI workflow");
 expectIncludes(ciWorkflow, "actions/setup-node@v6", "CI workflow");
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 expectIncludes(packageJson.scripts.test, "test:haxelib-package", "npm test");
 expectIncludes(packageJson.scripts.test, "test:gem-package", "npm test");
+expectIncludes(packageJson.scripts["test:todoapp-playwright"] ?? "", "todoapp-playwright.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:gem-package"] ?? "", "gem-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
