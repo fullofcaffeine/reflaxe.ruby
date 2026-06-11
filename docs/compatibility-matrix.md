@@ -13,9 +13,13 @@ This document records the supported tool/runtime contract for `reflaxe.ruby`.
 
 ## Local Development Notes
 
+The repo pins local Ruby with `.ruby-version`; `rbenv install` from the repo root installs the currently recommended local lane. Use Ruby `3.3.x` for day-to-day development because it matches the middle CI lane while keeping Rails and gem-package checks on the supported baseline.
+
 Some lightweight Ruby smoke tests can pass on older system Rubies, including Ruby `2.6`, but that is a convenience only. Rails-first output assumes modern Ruby and Rails baselines from the PRD.
 
 The runtime file `runtime/hxruby/data_define.rb` includes compatibility behavior for older Rubies that do not provide `Data.define`; this is why Ruby `2.6` may emit `Data` deprecation warnings in local minitest output. Those warnings are expected locally and are not part of the supported Rails baseline.
+
+Install Rails `7.2.x` and sqlite3 `1.7.x` into the active Ruby to run the generated Rails app locally. Set `REQUIRE_RAILS=1` when you want `npm run test:rails-integration` to fail instead of skip if those gems are missing.
 
 ## Profiles
 

@@ -90,6 +90,28 @@ The CI contract targets:
 
 Local Ruby `2.6` can still run some non-Rails smoke tests, but it is not the supported runtime baseline for Rails-oriented work.
 
+### Local Ruby Setup
+
+Use `rbenv` for local Rails/compiler work. The repo pins Ruby with `.ruby-version`; install that version and initialize rbenv in your shell:
+
+```bash
+brew install rbenv ruby-build
+rbenv install
+eval "$(rbenv init - zsh)"
+ruby -v
+```
+
+For the Rails runtime integration lane, install the Rails gems into the active rbenv Ruby:
+
+```bash
+gem install rails -v 7.2.3.1 --no-document
+gem install sqlite3 -v 1.7.3 --no-document
+rbenv rehash
+REQUIRE_RAILS=1 npm run test:rails-integration
+```
+
+`npm test` will run the Rails integration app when these gems are available. `REQUIRE_RAILS=1` makes missing Rails gems a hard failure instead of a local-prerequisite skip.
+
 ## Quality Gates
 
 ```bash
