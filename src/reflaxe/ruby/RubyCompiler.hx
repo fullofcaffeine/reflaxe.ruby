@@ -1109,6 +1109,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsTemplate expects a source path argument or a static string field named body/erb/template.", classType.pos);
 			return;
 		}
+		if (containsRawErb(body) && !hasMeta(classType.meta, ":railsAllowRawErb")) {
+			Context.error("@:railsTemplate raw ERB blocks require @:railsAllowRawErb. Prefer typed RailsHx template helpers when available.", classType.pos);
+			return;
+		}
 		setExtraFile(OutputPath.fromStr(railsTemplateOutputPath(templatePath)), normalizeGeneratedText(body));
 	}
 
@@ -1157,6 +1161,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function normalizeGeneratedText(value:String):String {
 		var normalized = StringTools.replace(value == null ? "" : value, "\r\n", "\n").split("\r").join("\n");
 		return StringTools.endsWith(normalized, "\n") ? normalized : normalized + "\n";
+	}
+
+	static function containsRawErb(value:String):Bool {
+		return value != null && value.indexOf("<%") != -1;
 	}
 
 	function outputRelativeDir(dir:Null<String>, appOwned:Bool):Null<String> {

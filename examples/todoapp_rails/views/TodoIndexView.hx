@@ -3,6 +3,7 @@ package views;
 import controllers.TodosController.TodoIndexLocals;
 
 @:railsTemplate("controllers/todos/index")
+@:railsAllowRawErb
 class TodoIndexView {
 	public static var locals:TodoIndexLocals;
 	public static var body:String = '<% todos ||= [] %>

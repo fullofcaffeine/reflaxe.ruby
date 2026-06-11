@@ -9,6 +9,8 @@ const outputDir = join(root, "test", ".generated", "todoapp_rails");
 const exampleDir = join(root, "examples", "todoapp_rails");
 const invalidSourceDir = join(root, "test", ".generated", "todoapp_rails_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "todoapp_rails_invalid_out");
+const rawErbInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_raw_erb_invalid_src");
+const rawErbInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_raw_erb_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -33,6 +35,8 @@ function run(command, args, options = {}) {
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
+rmSync(rawErbInvalidSourceDir, { force: true, recursive: true });
+rmSync(rawErbInvalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -169,6 +173,7 @@ for (const expected of [
 }
 
 expectInvalidTemplateLocalsFailure();
+expectRawErbRequiresOptInFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -285,6 +290,74 @@ function expectInvalidTemplateLocalsFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid ViewMacro.renderTemplate locals check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectRawErbRequiresOptInFailure() {
+  mkdirSync(join(rawErbInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(rawErbInvalidSourceDir, "InvalidRawErbMain.hx"), [
+    "import views.BadRawErbView;",
+    "",
+    "class InvalidRawErbMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadRawErbView> = BadRawErbView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(rawErbInvalidSourceDir, "views", "BadRawErbView.hx"), [
+    "package views;",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad\")",
+    "class BadRawErbView {",
+    "\tpublic static var body:String = \"<%= dangerous %>\";",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${rawErbInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      rawErbInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidRawErbMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Raw ERB template without @:railsAllowRawErb compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("@:railsTemplate raw ERB blocks require @:railsAllowRawErb")) {
+      console.error("Raw ERB template failed, but not with the expected escape-hatch error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run raw ERB escape-hatch check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

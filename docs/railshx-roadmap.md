@@ -36,7 +36,7 @@ RailsHx should use macros and typed std stubs when Rails APIs need a DSL. The `.
 
 Do not build a parallel runtime DSL engine by default. Compile-time-only helpers are preferred when they can disappear after lowering. Runtime helpers are acceptable only when Rails itself needs a callable boundary or when tests prove that a small helper gives a clearer Rails-native contract.
 
-For typed ActionView templates, follow the HXX lesson closely: provide typed entrypoints for locals/assigns/components, parse embedded Haxe expressions through macro typing, validate field/helper references before Ruby runs, and emit Rails-native renderable templates/components. Raw ERB should be a narrow escape hatch, not the default app-authoring surface.
+For typed ActionView templates, follow the HXX lesson closely: provide typed entrypoints for locals/assigns/components, parse embedded Haxe expressions through macro typing, validate field/helper references before Ruby runs, and emit Rails-native renderable templates/components. Raw ERB is a narrow escape hatch and must be explicit with `@:railsAllowRawErb`; it is not the default app-authoring destination.
 
 ## Design Contract
 
