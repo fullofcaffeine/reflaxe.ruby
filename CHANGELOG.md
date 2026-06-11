@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.25.0...v1.26.0) (2026-06-11)
+
+
+### Features
+
+* add typed Rails HHX text area ([de8456b](https://github.com/fullofcaffeine/reflaxe.ruby/commit/de8456b9417bb928193c919d690a49b889f9be62))
+
 # [1.25.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.24.0...v1.25.0) (2026-06-11)
 
 
