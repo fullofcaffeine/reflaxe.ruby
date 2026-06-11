@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.7.0...v1.8.0) (2026-06-11)
+
+
+### Features
+
+* emit RailsHx models from ApplicationRecord ([d644d41](https://github.com/fullofcaffeine/reflaxe.ruby/commit/d644d41ce8b3f165a3ba356b4612b6896db75181))
+
 # [1.7.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.6.0...v1.7.0) (2026-06-11)
 
 
