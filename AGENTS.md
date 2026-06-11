@@ -69,6 +69,7 @@ Rails work should follow `docs/railshx-roadmap.md`.
 
 **CRITICAL RULES:**
 - Work is NOT complete until `git push` succeeds
+- Commit and push frequently after each coherent task slice; do not accumulate multiple completed tasks locally before landing them.
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
