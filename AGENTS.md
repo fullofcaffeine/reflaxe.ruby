@@ -30,6 +30,7 @@ See `docs/profiles.md` before changing profile behavior.
 Rails work should follow `docs/railshx-roadmap.md`.
 
 - Treat RailsHx as the Rails-first layer on the existing Ruby compiler pipeline, not a separate backend.
+- RailsHx/rubyhx should provide a better typed Haxe authoring UX over vanilla Rails, not just one-to-one Rails wrappers. Prefer Haxe-native abstractions, typed facades, macros, and small DSLs when they make app code safer or clearer, while still emitting idiomatic Rails/Ruby artifacts.
 - Use `../haxe.elixir.codex`'s Phoenix/Ecto implementation as the local architectural inspiration before designing new RailsHx surfaces.
 - Map the Elixir compiler pattern to Rails concepts: Ecto schemas become ActiveRecord model registries, Ecto typed queries become typed `ActiveRecord::Relation` APIs, Ecto migrations become Rails migration builders/generators, Phoenix controllers/params become typed ActionController/strong-params surfaces, and Phoenix router tooling informs Rails route helper sync.
 - When a Rails surface wants DSL ergonomics, prefer typed Haxe std stubs plus macros/compiler lowering, following the HXX/HEEx pattern: type-check in Haxe, erase compile-time helpers when possible, and emit Rails-native Ruby/templates instead of a parallel runtime DSL.

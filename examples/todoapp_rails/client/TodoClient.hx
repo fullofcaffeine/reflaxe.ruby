@@ -1,17 +1,22 @@
 package client;
 
+import client.railshx.Turbo;
 import js.Browser;
 import js.html.Element;
 import js.html.Event;
 
 class TodoClient {
 	static inline var submitStorageKey = "railshx.todo.just_added";
+	static inline var submitScrollStorageKey = "railshx.todo.submit_scroll_y";
 	static inline var boundAttr = "data-railshx-bound";
 
 	public static function main():Void {
 		boot();
-		Browser.document.addEventListener("turbo:load", function(_:Event):Void {
+		Turbo.onLoad(function(_:Event):Void {
 			boot();
+		});
+		Turbo.onSubmitStart(function(event):Void {
+			captureTodoSubmit(event.target);
 		});
 	}
 
@@ -27,11 +32,20 @@ class TodoClient {
 			return;
 		}
 		form.setAttribute(boundAttr, "true");
-		form.addEventListener("submit", function(_:Event):Void {
-			try {
-				Browser.window.sessionStorage.setItem(submitStorageKey, "1");
-			} catch (_:Dynamic) {}
+		form.addEventListener("submit", function(event:Event):Void {
+			captureTodoSubmit(event.target);
 		});
+	}
+
+	static function captureTodoSubmit(target:Dynamic):Void {
+		var form:Element = cast target;
+		if (form == null || !form.classList.contains("todo-form")) {
+			return;
+		}
+		try {
+			Browser.window.sessionStorage.setItem(submitStorageKey, "1");
+			Browser.window.sessionStorage.setItem(submitScrollStorageKey, Std.string(currentScrollY()));
+		} catch (_:Dynamic) {}
 	}
 
 	static function bindScrollLinks():Void {
@@ -59,19 +73,19 @@ class TodoClient {
 
 	static function announceCompletedCreate():Void {
 		var shouldAnnounce = false;
+		var savedScrollY:Null<Float> = null;
 		try {
 			shouldAnnounce = Browser.window.sessionStorage.getItem(submitStorageKey) == "1";
+			savedScrollY = Std.parseFloat(Browser.window.sessionStorage.getItem(submitScrollStorageKey));
 			Browser.window.sessionStorage.removeItem(submitStorageKey);
+			Browser.window.sessionStorage.removeItem(submitScrollStorageKey);
 		} catch (_:Dynamic) {}
 		if (!shouldAnnounce) {
 			return;
 		}
 
-		var openWork = Browser.document.getElementById("open-work");
-		if (openWork != null) {
-			Browser.window.setTimeout(function():Void {
-				focusAndScroll(openWork);
-			}, 80);
+		if (savedScrollY != null && !Math.isNaN(savedScrollY)) {
+			restoreScroll(savedScrollY);
 		}
 
 		var flash = Browser.document.querySelector("[data-railshx-flash]");
@@ -89,5 +103,13 @@ class TodoClient {
 			target.focus();
 		} catch (_:Dynamic) {}
 		js.Syntax.code("{0}.scrollIntoView({ behavior: 'smooth', block: 'start' })", target);
+	}
+
+	static function currentScrollY():Float {
+		return js.Syntax.code("window.scrollY || window.pageYOffset || 0");
+	}
+
+	static function restoreScroll(scrollY:Float):Void {
+		js.Syntax.code("window.scrollTo(0, {0})", scrollY);
 	}
 }

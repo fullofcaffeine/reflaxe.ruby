@@ -13,7 +13,7 @@ class TodoDashboardView {
 		return <section class="card typed-dashboard">
 			<div class="typed-dashboard-header">
 				<span class="eyebrow">Composed typed partial</span>
-				<h2>HHX rendered twice, Rails served once.</h2>
+				<h2>One typed partial, reused by Rails.</h2>
 			</div>
 			<link_to url="#open-work" class="typed-route-link" data-railshx-scroll>
 				<span>${locals.todos.length > 0 ? "Jump to open work" : "Jump to the empty state"}</span>

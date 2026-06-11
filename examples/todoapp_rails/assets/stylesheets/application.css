@@ -160,7 +160,7 @@ h2 {
 .todo-item {
 	display: flex;
 	gap: 14px;
-	align-items: center;
+	align-items: flex-start;
 	padding: 18px;
 	border-radius: 22px;
 	background: rgba(255, 255, 255, 0.68);
@@ -169,8 +169,10 @@ h2 {
 }
 
 .todo-dot {
+	flex: 0 0 14px;
 	width: 14px;
 	height: 14px;
+	margin-top: 0.45em;
 	border-radius: 999px;
 	background: var(--ember);
 	box-shadow: 0 0 0 6px rgba(255, 107, 53, 0.14);
