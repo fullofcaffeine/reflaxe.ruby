@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.9.0...v1.10.0) (2026-06-11)
+
+
+### Features
+
+* generate RailsHx view artifacts ([c86944d](https://github.com/fullofcaffeine/reflaxe.ruby/commit/c86944d59f56591af5b3fd22d5611b11ff807904))
+
 # [1.9.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.8.0...v1.9.0) (2026-06-11)
 
 
