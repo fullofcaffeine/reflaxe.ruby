@@ -13,6 +13,8 @@ const rawErbInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_r
 const rawErbInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_raw_erb_invalid_out");
 const typedTemplateInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_template_invalid_src");
 const typedTemplateInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_template_invalid_out");
+const typedPartialInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_src");
+const typedPartialInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -41,6 +43,8 @@ rmSync(rawErbInvalidSourceDir, { force: true, recursive: true });
 rmSync(rawErbInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedTemplateInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedTemplateInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedPartialInvalidSourceDir, { force: true, recursive: true });
+rmSync(typedPartialInvalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -52,9 +56,11 @@ for (const file of [
   "app/haxe_gen/models/user.rb",
   "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
+  "app/haxe_gen/views/todo_dashboard_view.rb",
   "app/haxe_gen/views/todo_index_view.rb",
   "app/haxe_gen/views/todo_summary_view.rb",
   "app/views/controllers/todos/index.html.erb",
+  "app/views/controllers/todos/_dashboard.html.erb",
   "app/views/controllers/todos/_summary.html.erb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
@@ -194,9 +200,21 @@ for (const expected of [
   }
 }
 
+const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_dashboard.html.erb"), "utf8");
+for (const expected of [
+  "Composed typed partial",
+  '<%= render partial: "controllers/todos/summary", locals: {"todos" => locals.todos} %>',
+]) {
+  if (!typedDashboard.includes(expected)) {
+    console.error(`todoapp_rails typed dashboard partial missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
 expectInvalidTemplateLocalsFailure();
 expectRawErbRequiresOptInFailure();
 expectTypedTemplateAstFieldFailure();
+expectTypedPartialLocalsFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -460,6 +478,85 @@ function expectTypedTemplateAstFieldFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid @:railsTemplateAst field check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectTypedPartialLocalsFailure() {
+  mkdirSync(join(typedPartialInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(typedPartialInvalidSourceDir, "InvalidTypedPartialMain.hx"), [
+    "import views.BadTypedPartialView;",
+    "",
+    "class InvalidTypedPartialMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTypedPartialView> = BadTypedPartialView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedPartialInvalidSourceDir, "views", "BadTypedPartialView.hx"), [
+    "package views;",
+    "",
+    "import models.Todo;",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "import rails.action_view.Template;",
+    "import views.TodoSummaryView.TodoSummaryLocals;",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad_partial\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTypedPartialView {",
+    "\tpublic static function render(todos:Array<Todo>):HtmlNode {",
+    "\t\treturn H.partial((Template.named(\"controllers/todos/summary\") : Template<TodoSummaryLocals>), {items: todos});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedPartialInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      typedPartialInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTypedPartialMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Invalid H.partial locals compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("TodoSummaryLocals") && !output.includes("has no field todos") && !output.includes("Object requires field todos")) {
+      console.error("Invalid H.partial locals failed, but not with the expected typed locals error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid H.partial locals check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

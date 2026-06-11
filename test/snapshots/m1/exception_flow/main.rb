@@ -9,8 +9,8 @@ class Main
       Main.fail()
       puts(HXRuby.stringify("unreachable"))
     rescue HxException => __hx_ex
-      message__hx17312 = __hx_ex.value
-      puts(HXRuby.stringify(message__hx17312))
+      message__hx17354 = __hx_ex.value
+      puts(HXRuby.stringify(message__hx17354))
     end
   end
   def self.fail()

@@ -36,6 +36,10 @@ class H {
 		return macro rails.action_view.HtmlNode.For($items, $render);
 	}
 
+	public static macro function partial(template:Expr, locals:Expr):Expr {
+		return macro rails.action_view.HtmlNode.Partial($template, $locals);
+	}
+
 	public static macro function attr(name:Expr, value:Expr):Expr {
 		return macro rails.action_view.HtmlAttr.Static($name, $value);
 	}

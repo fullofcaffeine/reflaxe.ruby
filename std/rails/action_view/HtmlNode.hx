@@ -15,4 +15,5 @@ enum HtmlNode {
 
 	If(cond:Bool, thenBranch:HtmlNode, elseBranch:Null<HtmlNode>);
 	For<T>(items:Iterable<T>, render:T->HtmlNode);
+	Partial<TLocals>(template:Template<TLocals>, locals:TLocals);
 }

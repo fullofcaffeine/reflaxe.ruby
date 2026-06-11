@@ -4,6 +4,10 @@ import models.Todo;
 import rails.action_view.H;
 import rails.action_view.HtmlNode;
 
+typedef TodoSummaryLocals = {
+	var todos:Array<Todo>;
+}
+
 @:railsTemplate("controllers/todos/_summary")
 @:railsTemplateAst("render")
 class TodoSummaryView {

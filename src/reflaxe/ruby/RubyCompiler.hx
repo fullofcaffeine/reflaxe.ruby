@@ -1262,6 +1262,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFor(params[0], params[1], scope);
 						}
+					case "Partial":
+						if (params.length != 2) {
+							Context.error("HtmlNode.Partial expects template and locals arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplatePartial(params[0], params[1], scope);
+						}
 					case other:
 						Context.error('Unsupported HtmlNode constructor "$other" in @:railsTemplateAst.', node.pos);
 						"";
@@ -1366,6 +1373,50 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error("HtmlNode.For render argument must be an inline function.", fn.pos);
 				"";
+		}
+	}
+
+	static function lowerTemplatePartial(template:TypedExpr, locals:TypedExpr, scope:RailsTemplateScope):String {
+		var path = extractTypedTemplatePath(template);
+		if (path == null) {
+			Context.error("HtmlNode.Partial expects Template.named(\"path\") as the template argument.", template.pos);
+			return "";
+		}
+		var localsHash = lowerTemplateLocalsHash(locals, scope);
+		return "<%= render partial: " + quoteRubyStringForCode(path) + ", locals: " + localsHash + " %>";
+	}
+
+	static function lowerTemplateLocalsHash(locals:TypedExpr, scope:RailsTemplateScope):String {
+		return switch (unwrapTemplateExpr(locals).expr) {
+			case TObjectDecl(fields):
+				if (fields.length == 0) {
+					Context.error("HtmlNode.Partial locals must include at least one named local.", locals.pos);
+					"{}";
+				} else {
+					"{" + [for (field in fields) quoteRubyStringForCode(field.name) + " => " + printTemplateExpr(field.expr, scope)].join(", ") + "}";
+				}
+			case _:
+				Context.error("HtmlNode.Partial locals must be an object literal so Rails local names are explicit.", locals.pos);
+				"{}";
+		}
+	}
+
+	static function extractTypedTemplatePath(template:TypedExpr):Null<String> {
+		var unwrapped = unwrapTemplateExpr(template);
+		return switch (unwrapped.expr) {
+			case TCall(callee, [path]) if (isTemplateNamedCall(callee)):
+				expectTemplateString(path, "Template.named expects a string literal path.");
+			case _:
+				null;
+		}
+	}
+
+	static function isTemplateNamedCall(callee:TypedExpr):Bool {
+		return switch (unwrapTemplateExpr(callee).expr) {
+			case TField(_, access):
+				fieldAccessName(access) == "named";
+			case _:
+				false;
 		}
 	}
 
