@@ -22,5 +22,6 @@ enum HtmlNode {
 	FormHiddenField<TValue>(name:String, value:TValue);
 	FormLabel<TText>(name:String, text:TText);
 	FormTextField(name:String, attrs:Array<HtmlAttr>);
+	FormTextArea(name:String, attrs:Array<HtmlAttr>);
 	FormSubmit<TText>(text:TText, attrs:Array<HtmlAttr>);
 }

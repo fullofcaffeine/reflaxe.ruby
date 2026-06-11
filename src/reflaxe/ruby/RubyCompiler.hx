@@ -1321,6 +1321,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFormTextField(params[0], params[1], scope);
 						}
+					case "FormTextArea":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormTextArea expects name and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormTextArea(params[0], params[1], scope);
+						}
 					case "FormSubmit":
 						if (params.length != 2) {
 							Context.error("HtmlNode.FormSubmit expects text and attrs arguments.", node.pos);
@@ -1464,6 +1471,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var form = requireFormBuilder(scope, name);
 		var args = [rubySymbolLiteral(expectTemplateString(name, "H.textField name must be a string literal."))].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".text_field " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFormTextArea(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		var args = [rubySymbolLiteral(expectTemplateString(name, "H.textArea name must be a string literal."))].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= " + form + ".text_area " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormSubmit(text:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

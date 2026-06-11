@@ -18,6 +18,10 @@ class TodoFormView {
 				<field_label name="title">What should ship next?</field_label>
 				<text_field name="title" placeholder="Write the HHX form DSL" required />
 			</div>
+			<div>
+				<field_label name="notes">Why does it matter?</field_label>
+				<text_area name="notes" placeholder="Add a short implementation note" rows=${3} />
+			</div>
 			<submit type="submit">Add task</submit>
 		</form_with>;
 	}

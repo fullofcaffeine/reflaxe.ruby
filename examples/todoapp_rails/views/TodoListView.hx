@@ -16,7 +16,12 @@ class TodoListView {
 				<for ${todo in locals.todos}>
 					<li class="todo-item">
 						<span class="todo-dot" aria-hidden="true"></span>
-						<span>${todo.title}</span>
+						<div>
+							<span>${todo.title}</span>
+							<if ${todo.notes != ""}>
+								<p class="todo-notes">${todo.notes}</p>
+							</if>
+						</div>
 					</li>
 				</for>
 			</ul>

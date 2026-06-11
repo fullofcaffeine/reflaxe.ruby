@@ -11,6 +11,9 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:railsColumn({index: true})
 	public var title:String;
 
+	@:railsColumn({dbType: "text", defaultValue: ""})
+	public var notes:String;
+
 	@:railsColumn({defaultValue: false})
 	public var isCompleted:Bool;
 

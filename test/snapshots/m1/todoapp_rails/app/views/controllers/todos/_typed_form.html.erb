@@ -5,5 +5,9 @@
 				<%= form.label :title, "What should ship next?" %>
 				<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>
 			</div>
+			<div>
+				<%= form.label :notes, "Why does it matter?" %>
+				<%= form.text_area :notes, placeholder: "Add a short implementation note", rows: 3 %>
+			</div>
 			<%= form.submit "Add task", type: "submit" %>
 		<% end %>

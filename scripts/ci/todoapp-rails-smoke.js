@@ -98,6 +98,7 @@ for (const expected of [
   "timestamps: true",
   "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
   "{name: :title, haxe_name: \"title\", ruby_name: \"title\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
+  "{name: :notes, haxe_name: \"notes\", ruby_name: \"notes\", haxe_type: \"String\", rails_type: :text, nullable: false, default: \"\", primary_key: false, index: false, unique: false, db_type: :text}",
   "{name: :is_completed, haxe_name: \"isCompleted\", ruby_name: \"is_completed\", haxe_type: \"Bool\", rails_type: :boolean, nullable: false, default: false, primary_key: false, index: false, unique: false, db_type: nil}",
   "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   "def self.typed_column_count()",
@@ -105,6 +106,7 @@ for (const expected of [
   "belongs_to :user",
   "# haxe column id: Int",
   "# haxe column title: String",
+  "# haxe column notes: String",
   "# haxe column is_completed: Bool",
   "# haxe column user_id: Int",
   "validates :title, presence: true",
@@ -146,7 +148,7 @@ for (const expected of [
   /class TodosController < ActionController::Base/,
   /todos__hx\d+ = Models::Todo\.incomplete\(\)/,
   /self\.render\(template: "controllers\/todos\/index", locals: \{"todos" => todos__hx\d+, "todo_count" => todos__hx\d+\.length, "typed_column_count" => Models::Todo\.typed_column_count\(\), "sample_user" => Models::User\.first\(\)\}\)/,
-  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, :user_id\]\)/,
+  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :is_completed, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
   /self\.redirect_to\(self\.todos_path\(\)\)/,
 ]) {
@@ -163,6 +165,7 @@ for (const expected of [
   "t.string :name, null: false",
   "create_table :todos do |t|",
   "t.string :title, null: false",
+  't.text :notes, null: false, default: ""',
   "t.boolean :is_completed, null: false, default: false",
   "t.references :user, null: false, foreign_key: true",
 ]) {
@@ -179,6 +182,7 @@ for (const expected of [
   "ParamsMacro.requirePermit",
   "ViewMacro.renderTemplate",
   "Rails migration template",
+  "<text_area>",
 ]) {
   if (!readme.includes(expected)) {
     console.error(`todoapp_rails README missing expected line: ${expected}`);
@@ -246,6 +250,7 @@ for (const expected of [
   "<% else %>",
   "<% todos.each do |todo| %>",
   "<%= todo.title %>",
+  "<%= todo.notes %>",
   "typed-template-card",
 ]) {
   if (!typedPartial.includes(expected)) {
@@ -289,6 +294,7 @@ for (const expected of [
   "<% todos.each do |todo| %>",
   '<li class="todo-item">',
   "<%= todo.title %>",
+  "<%= todo.notes %>",
   "<% else %>",
   "No open tasks. Serene, but suspicious.",
 ]) {
@@ -305,6 +311,8 @@ for (const expected of [
   '<%= form.hidden_field :is_completed, value: false %>',
   '<%= form.label :title, "What should ship next?" %>',
   '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',
+  '<%= form.label :notes, "Why does it matter?" %>',
+  '<%= form.text_area :notes, placeholder: "Add a short implementation note", rows: 3 %>',
   '<%= form.submit "Add task", type: "submit" %>',
 ]) {
   if (!typedForm.includes(expected)) {
