@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.18.0...v1.19.0) (2026-06-11)
+
+
+### Features
+
+* add Rails HHX conditionals ([a181ff4](https://github.com/fullofcaffeine/reflaxe.ruby/commit/a181ff473c78eb945070bd31d9191779275a917b))
+
 # [1.18.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.17.0...v1.18.0) (2026-06-11)
 
 
