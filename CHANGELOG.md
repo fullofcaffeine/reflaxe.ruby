@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.24.0...v1.25.0) (2026-06-11)
+
+
+### Features
+
+* make Rails todo index HHX-first ([a2a712a](https://github.com/fullofcaffeine/reflaxe.ruby/commit/a2a712a6dbb5c21634348ab2b1d52e2643d11d38))
+
 # [1.24.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.23.0...v1.24.0) (2026-06-11)
 
 
