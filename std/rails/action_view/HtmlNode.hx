@@ -19,7 +19,7 @@ enum HtmlNode {
 	LinkTo<TLabel, TUrl>(label:TLabel, url:TUrl, attrs:Array<HtmlAttr>);
 	FormWith<TUrl>(url:TUrl, scope:String, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	FormHiddenField<TValue>(name:String, value:TValue);
-	FormLabel(name:String, text:String);
+	FormLabel<TText>(name:String, text:TText);
 	FormTextField(name:String, attrs:Array<HtmlAttr>);
-	FormSubmit(text:String, attrs:Array<HtmlAttr>);
+	FormSubmit<TText>(text:TText, attrs:Array<HtmlAttr>);
 }

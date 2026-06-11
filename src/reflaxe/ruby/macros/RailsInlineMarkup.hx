@@ -697,11 +697,11 @@ private class RailsMarkupParser {
 				return attrValueExpr(attr);
 			}
 		}
-		var text = staticTextChildren(children);
-		if (text != null) {
-			return macro @:pos(pos) $v{text};
+		var childValue = textChildExpr(children, pos);
+		if (childValue != null) {
+			return childValue;
 		}
-		Context.error('Rails HHX <' + tagName + '> expects a text="..." attribute or static text children.', pos);
+		Context.error('Rails HHX <' + tagName + '> expects a text="..." attribute or text/expression children.', pos);
 		return macro null;
 	}
 
@@ -716,26 +716,50 @@ private class RailsMarkupParser {
 		}
 	}
 
-	function staticTextChildren(children:Array<Expr>):Null<String> {
-		var out = "";
+	function textChildExpr(children:Array<Expr>, pos:Position):Null<Expr> {
+		var parts:Array<Expr> = [];
+		var staticOnly = true;
 		for (child in children) {
 			switch (child.expr) {
 				case ECall(fn, params):
-					if (!isHtmlNodeCtor(fn, "Text") || params.length != 1) {
+					if (isHtmlNodeCtor(fn, "Text") && params.length == 1) {
+						switch (params[0].expr) {
+							case EConst(CString(value, _)):
+								if (StringTools.trim(value).length > 0) {
+									parts.push({expr: EConst(CString(value, null)), pos: params[0].pos});
+								}
+							default:
+								return null;
+						}
+					} else if (isHtmlNodeCtor(fn, "ExprText") && params.length == 1) {
+						staticOnly = false;
+						parts.push(params[0]);
+					} else {
 						return null;
-					}
-					switch (params[0].expr) {
-						case EConst(CString(value, _)):
-							out += value;
-						default:
-							return null;
 					}
 				default:
 					return null;
 			}
 		}
-		var trimmed = StringTools.trim(out);
-		return trimmed.length == 0 ? null : trimmed;
+		if (parts.length == 0) {
+			return null;
+		}
+		if (staticOnly) {
+			var out = "";
+			for (part in parts) {
+				switch (part.expr) {
+					case EConst(CString(value, _)):
+						out += value;
+					default:
+				}
+			}
+			return macro @:pos(pos) $v{StringTools.trim(out)};
+		}
+		var acc:Expr = null;
+		for (part in parts) {
+			acc = acc == null ? part : {expr: EBinop(OpAdd, acc, part), pos: pos};
+		}
+		return acc;
 	}
 
 	function isHtmlNodeCtor(expr:Expr, name:String):Bool {

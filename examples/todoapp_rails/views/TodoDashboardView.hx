@@ -12,7 +12,7 @@ class TodoDashboardView {
 	public static function render(locals:TodoIndexLocals):HtmlNode {
 		return <section class="typed-dashboard">
 			<h2>Composed typed partial</h2>
-			<link_to url=${Routes.todosPath()} class="typed-route-link">Back to todo route</link_to>
+			<link_to url=${Routes.todosPath()} class="typed-route-link">${locals.todos.length > 0 ? "Back to todos" : "Back to empty todo route"}</link_to>
 			<partial template=${(Template.named("controllers/todos/summary") : Template<TodoSummaryLocals>)} locals=${{todos: locals.todos}} />
 		</section>;
 	}

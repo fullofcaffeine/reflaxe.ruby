@@ -1441,7 +1441,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateFormLabel(name:TypedExpr, text:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
 		return "<%= " + form + ".label " + rubySymbolLiteral(expectTemplateString(name, "H.label name must be a string literal."))
-			+ ", " + quoteRubyStringForCode(expectTemplateString(text, "H.label text must be a string literal.")) + " %>";
+			+ ", " + printTemplateExpr(text, scope) + " %>";
 	}
 
 	static function lowerTemplateFormTextField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
@@ -1452,7 +1452,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function lowerTemplateFormSubmit(text:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, text);
-		var args = [quoteRubyStringForCode(expectTemplateString(text, "H.submit text must be a string literal."))].concat(lowerTemplateHelperAttrs(attrs, scope));
+		var args = [printTemplateExpr(text, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".submit " + args.join(", ") + " %>";
 	}
 
