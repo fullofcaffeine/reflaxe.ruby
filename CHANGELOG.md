@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.32.0...v1.33.0) (2026-06-11)
+
+
+### Features
+
+* add RailsHx migration artifact generation ([d5c53f9](https://github.com/fullofcaffeine/reflaxe.ruby/commit/d5c53f9b76ceffcd7295b24b874df46a8ffb382d))
+
 # [1.32.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.31.0...v1.32.0) (2026-06-11)
 
 
