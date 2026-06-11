@@ -1,6 +1,5 @@
 <%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>
 			<%= form.hidden_field :user_id, value: sample_user_id %>
-			<%= form.hidden_field :is_completed, value: false %>
 			<div>
 				<%= form.label :title, "What should ship next?" %>
 				<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>
@@ -8,6 +7,10 @@
 			<div>
 				<%= form.label :notes, "Why does it matter?" %>
 				<%= form.text_area :notes, placeholder: "Add a short implementation note", rows: 3 %>
+			</div>
+			<div class="form-check">
+				<%= form.check_box :is_completed %>
+				<%= form.label :is_completed, "Already done?" %>
 			</div>
 			<%= form.submit "Add task", type: "submit" %>
 		<% end %>

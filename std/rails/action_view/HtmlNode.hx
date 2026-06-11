@@ -23,5 +23,6 @@ enum HtmlNode {
 	FormLabel<TText>(name:String, text:TText);
 	FormTextField(name:String, attrs:Array<HtmlAttr>);
 	FormTextArea(name:String, attrs:Array<HtmlAttr>);
+	FormCheckBox(name:String, attrs:Array<HtmlAttr>);
 	FormSubmit<TText>(text:TText, attrs:Array<HtmlAttr>);
 }

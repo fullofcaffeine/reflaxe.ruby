@@ -183,6 +183,7 @@ for (const expected of [
   "ViewMacro.renderTemplate",
   "Rails migration template",
   "<text_area>",
+  "<check_box>",
 ]) {
   if (!readme.includes(expected)) {
     console.error(`todoapp_rails README missing expected line: ${expected}`);
@@ -308,11 +309,12 @@ const typedForm = readFileSync(join(outputDir, "app", "views", "controllers", "t
 for (const expected of [
   '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>',
   '<%= form.hidden_field :user_id, value: sample_user_id %>',
-  '<%= form.hidden_field :is_completed, value: false %>',
   '<%= form.label :title, "What should ship next?" %>',
   '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',
   '<%= form.label :notes, "Why does it matter?" %>',
   '<%= form.text_area :notes, placeholder: "Add a short implementation note", rows: 3 %>',
+  '<%= form.check_box :is_completed %>',
+  '<%= form.label :is_completed, "Already done?" %>',
   '<%= form.submit "Add task", type: "submit" %>',
 ]) {
   if (!typedForm.includes(expected)) {

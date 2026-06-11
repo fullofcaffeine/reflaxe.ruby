@@ -68,6 +68,10 @@ class H {
 		return macro rails.action_view.HtmlNode.FormTextArea($name, $attrs);
 	}
 
+	public static macro function checkBox(name:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormCheckBox($name, $attrs);
+	}
+
 	public static macro function submit(text:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.FormSubmit($text, $attrs);
 	}

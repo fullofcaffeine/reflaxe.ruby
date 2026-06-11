@@ -44,7 +44,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed ActionView template AST | `@:railsTemplateAst(...)` + `H`/`HtmlNode`/`HtmlAttr` | Initial lower-level AST slice |
 | Typed ActionView partial composition | `H.partial(...)` + `Template<TLocals>` | Initial partial/component slice |
 | Typed ActionView route/helper calls | `H.linkTo(...)` + route externs | Initial helper slice |
-| Typed ActionView form helpers | `<form_with>`, `<hidden_field>`, `<field_label>`, `<text_field>`, `<text_area>`, `<submit>` | Initial form slice |
+| Typed ActionView form helpers | `<form_with>`, `<hidden_field>`, `<field_label>`, `<text_field>`, `<text_area>`, `<check_box>`, `<submit>` | Initial form slice |
 | Typed HHX control/helper tags | `<if>`, `<for>`, `<link_to>`, `<partial>` | Initial template/helper slice |
 | Typed HHX helper label children | static text or `${...}` expression children | Initial helper slice |
 | Typed HHX nested helper slots | `<link_to>...</link_to>` block-form content | Initial slot slice |

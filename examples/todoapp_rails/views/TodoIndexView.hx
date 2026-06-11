@@ -112,7 +112,8 @@ class TodoIndexView {
 					gap: 14px;
 				}
 
-				.todo-form input {
+				.todo-form input:not([type="checkbox"]),
+				.todo-form textarea {
 					width: 100%;
 					border: 1px solid var(--line);
 					border-radius: 18px;
@@ -121,6 +122,22 @@ class TodoIndexView {
 					background: rgba(255, 255, 255, 0.78);
 					font: 1rem/1.2 "Avenir Next", "Trebuchet MS", sans-serif;
 					outline: none;
+				}
+
+				.todo-form textarea {
+					min-height: 96px;
+					resize: vertical;
+				}
+
+				.form-check {
+					display: flex;
+					align-items: center;
+					gap: 10px;
+					padding: 10px 2px;
+				}
+
+				.form-check input {
+					accent-color: var(--ember);
 				}
 
 				.todo-form button {
