@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.12.0...v1.13.0) (2026-06-11)
+
+
+### Features
+
+* add typed Rails template AST partials ([46404a5](https://github.com/fullofcaffeine/reflaxe.ruby/commit/46404a56994e9ebb05283eea80288f6089f4dd12))
+
 # [1.12.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.11.0...v1.12.0) (2026-06-11)
 
 
