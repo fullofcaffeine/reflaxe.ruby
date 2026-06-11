@@ -46,7 +46,7 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - `views/TodoDashboardView.hx` composes the summary partial through typed `<partial>` locals, emits a typed `<link_to>` route helper with nested HHX block content, and generates `app/views/controllers/todos/_dashboard.html.erb`, which the index renders with normal Rails locals.
 - `views/TodoListView.hx` is the index's typed open-work list island: HHX validates the `todos` local, `<if>` branch, `<for>` loop binder, and `todo.title`/`todo.notes` expressions before generating `app/views/controllers/todos/_list.html.erb`.
 - `views/TodoFormView.hx` uses HHX inline markup (`<form_with>`, `<hidden_field>`, `<field_label>`, `<text_field>`, `<text_area>`, `<submit>`) for a typed Rails form partial and generates `app/views/controllers/todos/_typed_form.html.erb`, which the index renders with `sample_user_id`.
-- `client/railshx/Turbo.hx` is a small typed Haxe facade over Turbo lifecycle events and `Turbo.visit`, so client code uses Rails-native Turbo semantics without stringly-typed app logic.
+- `std/rails/turbo/Turbo.hx` provides a small typed Haxe facade over Turbo lifecycle events and `Turbo.visit`, so client code uses Rails-native Turbo semantics without stringly-typed app logic.
 - `client/TodoClient.hx` compiles to `app/javascript/railshx/todo_client.js` and owns progressive enhancement: typed Turbo submit handling, smooth same-page navigation, scroll-position preservation after create, and a transient typed-status flash.
 - `assets/stylesheets/application.css` is copied into Rails' asset path; HHX owns structure, CSS owns presentation.
 - Generated `app/views/controllers/todos/index.html.erb` is materialized from that Haxe template marker.
@@ -132,6 +132,8 @@ haxe -D ruby_output=test/.generated/todoapp_rails \
 ```
 
 Generated app-owned Ruby lands under `app/haxe_gen/**`, with Rails autoload setup in `config/initializers/hxruby_autoload.rb`.
+
+The Haxe-authored client lane compiles through `examples/todoapp_rails/build-client.hxml`, which adds `-cp std` so `rails.turbo.Turbo` is available while emitting JavaScript for Rails importmap assets.
 
 ## Test
 

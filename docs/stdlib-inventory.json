@@ -199,6 +199,14 @@
       "reason": "Compile-time ActionView node AST for typed Haxe template expressions, loops, partial composition, helper links, and form builders lowered into Rails ERB."
     },
     {
+      "id": "std.rails.turbo",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/Turbo.hx",
+      "surface": "rails.turbo.Turbo",
+      "reason": "Typed Haxe facade over Turbo lifecycle events and Turbo.visit for RailsHx client-side JavaScript."
+    },
+    {
       "id": "std.rails.params_macro",
       "owner": "std",
       "status": "implemented",

@@ -72,6 +72,7 @@ for (const required of [
   "std/rails/action_view/HtmlAttr.hx",
   "std/rails/action_view/HtmlNode.hx",
   "std/rails/action_view/Template.hx",
+  "std/rails/turbo/Turbo.hx",
   "std/rails/macros/ViewMacro.hx",
   "runtime/hxruby/core.rb",
   "vendor/reflaxe/src/reflaxe/ReflectCompiler.hx",
@@ -109,6 +110,33 @@ try {
     "Main",
   ]);
   assertNoTodoLowerRubyFiles(outputDir);
+
+  const clientSrc = join(tempRoot, "client_src");
+  const clientOut = join(tempRoot, "client.js");
+  mkdirSync(clientSrc, { recursive: true });
+  writeFileSync(
+    join(clientSrc, "ClientMain.hx"),
+    [
+      "import rails.turbo.Turbo;",
+      "class ClientMain {",
+      "\tstatic function main():Void {",
+      "\t\tTurbo.onLoad(function(_) {});",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  run("haxe", [
+    "-cp",
+    join(tempRoot, "std"),
+    "-cp",
+    clientSrc,
+    "-main",
+    "ClientMain",
+    "-js",
+    clientOut,
+    "--dce=full",
+  ]);
 
   const consumerRoot = join(tempRoot, "consumer");
   const consumerSrc = join(consumerRoot, "src");

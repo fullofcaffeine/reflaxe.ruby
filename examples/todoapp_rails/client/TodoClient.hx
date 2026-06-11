@@ -1,9 +1,9 @@
 package client;
 
-import client.railshx.Turbo;
 import js.Browser;
 import js.html.Element;
 import js.html.Event;
+import rails.turbo.Turbo;
 
 class TodoClient {
 	static inline var submitStorageKey = "railshx.todo.just_added";

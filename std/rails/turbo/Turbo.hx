@@ -1,4 +1,4 @@
-package client.railshx;
+package rails.turbo;
 
 import js.Browser;
 import js.html.Document;

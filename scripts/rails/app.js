@@ -53,6 +53,7 @@ function renderBuild() {
 function renderClientBuild() {
   return [
     "-cp " + sourceDir,
+    "# Use `-cp path/to/reflaxe.ruby/std` when consuming RailsHx client std from an installed package.",
     "-main client.Boot",
     "-js app/javascript/railshx/app.js",
     "-D source-map",

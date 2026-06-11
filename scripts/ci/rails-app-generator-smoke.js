@@ -33,6 +33,7 @@ try {
     "TypedTasks RailsHx compile",
   ]);
   expectFile("build-client.hxml", [
+    "path/to/reflaxe.ruby/std",
     "-main client.Boot",
     "-js app/javascript/railshx/app.js",
   ]);
