@@ -1274,6 +1274,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 							out;
 						}
+					case "DoctypeHtml":
+						if (params.length != 0) {
+							Context.error("HtmlNode.DoctypeHtml expects no arguments.", node.pos);
+							"";
+						} else {
+							"<!DOCTYPE html>";
+						}
 					case "Element":
 						if (params.length != 3) {
 							Context.error("HtmlNode.Element expects name, attrs, and children arguments.", node.pos);
@@ -1318,6 +1325,41 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							"";
 						} else {
 							lowerTemplateLinkToBlock(params[0], params[1], params[2], scope);
+						}
+					case "CsrfMetaTags":
+						if (params.length != 0) {
+							Context.error("HtmlNode.CsrfMetaTags expects no arguments.", node.pos);
+							"";
+						} else {
+							"<%= csrf_meta_tags %>";
+						}
+					case "CspMetaTag":
+						if (params.length != 0) {
+							Context.error("HtmlNode.CspMetaTag expects no arguments.", node.pos);
+							"";
+						} else {
+							"<%= csp_meta_tag %>";
+						}
+					case "StylesheetLinkTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.StylesheetLinkTag expects name and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateStylesheetLinkTag(params[0], params[1], scope);
+						}
+					case "JavascriptImportmapTags":
+						if (params.length != 0) {
+							Context.error("HtmlNode.JavascriptImportmapTags expects no arguments.", node.pos);
+							"";
+						} else {
+							"<%= javascript_importmap_tags %>";
+						}
+					case "Yield":
+						if (params.length != 0) {
+							Context.error("HtmlNode.Yield expects no arguments.", node.pos);
+							"";
+						} else {
+							"<%= yield %>";
 						}
 					case "FormWith":
 						if (params.length != 4) {
@@ -1370,6 +1412,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						}
 					case other:
 						Context.error('Unsupported HtmlNode constructor "$other" in @:railsTemplateAst.', node.pos);
+						"";
+				}
+			case TField(_, FEnum(_, _)):
+				switch (templateCtorName(node, "HtmlNode")) {
+					case "DoctypeHtml":
+						"<!DOCTYPE html>";
+					case "CsrfMetaTags":
+						"<%= csrf_meta_tags %>";
+					case "CspMetaTag":
+						"<%= csp_meta_tag %>";
+					case "JavascriptImportmapTags":
+						"<%= javascript_importmap_tags %>";
+					case "Yield":
+						"<%= yield %>";
+					case other:
+						Context.error('Unsupported zero-argument HtmlNode constructor "$other" in @:railsTemplateAst.', node.pos);
 						"";
 				}
 			case TBlock(exprs):
@@ -1550,6 +1608,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return out + "<% end %>";
 	}
 
+	static function lowerTemplateStylesheetLinkTag(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [quoteRubyStringForCode(expectTemplateString(name, "HtmlNode.StylesheetLinkTag name must be a string literal."))]
+			.concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= stylesheet_link_tag " + args.join(", ") + " %>";
+	}
+
 	static function lowerTemplateHelperAttrs(attrs:TypedExpr, scope:RailsTemplateScope):Array<String> {
 		var out:Array<String> = [];
 		for (attr in expectTemplateArray(attrs, "HtmlNode.LinkTo attrs must be an array literal.")) {
@@ -1716,7 +1780,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function helperKwargName(value:String):String {
-		return ~/[^A-Za-z0-9_]/g.replace(value, "_");
+		return ~/^[A-Za-z_][A-Za-z0-9_]*$/.match(value) ? value : quoteRubyStringForCode(value);
 	}
 
 	static function isVoidHtmlElement(name:String):Bool {

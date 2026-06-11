@@ -18,16 +18,16 @@ typedef TodoIndexLocals = {
 class TodosController extends rails.action_controller.Base {
 	public function index() {
 		var todos = Todo.incomplete();
-		ViewMacro.renderTemplate(this, (Template.named("controllers/todos/index") : Template<TodoIndexLocals>), {
+		ViewMacro.renderTemplateWithLayout(this, (Template.named("controllers/todos/index") : Template<TodoIndexLocals>), {
 			todos: todos,
 			todoCount: todos.length,
 			typedColumnCount: Todo.typedColumnCount(),
 			sampleUser: User.first()
-		});
+		}, "application");
 	}
 
 	public function create() {
-		var attrs = ParamsMacro.requirePermit(this.params(), "todo", ["title", "notes", "isCompleted", "userId"]);
+		var attrs = ParamsMacro.requirePermit(this.params(), "todo", ["title", "notes", "userId"]);
 		var todo = Todo.create(attrs);
 		redirectTo(Routes.todosPath());
 	}

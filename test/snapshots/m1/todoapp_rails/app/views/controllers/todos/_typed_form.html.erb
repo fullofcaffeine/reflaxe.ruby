@@ -8,9 +8,5 @@
 				<%= form.label :notes, "Why does it matter?" %>
 				<%= form.text_area :notes, placeholder: "Add a short implementation note", rows: 3 %>
 			</div>
-			<div class="form-check">
-				<%= form.check_box :is_completed %>
-				<%= form.label :is_completed, "Already done?" %>
-			</div>
 			<%= form.submit "Add task", type: "submit" %>
 		<% end %>

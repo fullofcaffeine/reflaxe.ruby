@@ -32,6 +32,25 @@ try {
     "class Boot",
     "TypedTasks RailsHx compile",
   ]);
+  expectFile("build-client.hxml", [
+    "-main client.Boot",
+    "-js app/javascript/railshx/app.js",
+  ]);
+  expectFile("app_haxe/client/Boot.hx", [
+    "package client;",
+    "TypedTasks RailsHx client boot",
+  ]);
+  expectFile("app/javascript/application.js", [
+    'import "@hotwired/turbo-rails"',
+    'import "railshx/app"',
+  ]);
+  expectFile("app/assets/stylesheets/application.css", [
+    "RailsHx app stylesheet",
+  ]);
+  expectFile("config/importmap.rb", [
+    'pin "@hotwired/turbo-rails", to: "turbo.min.js"',
+    'pin "railshx/app", to: "railshx/app.js"',
+  ]);
   expectFile("app_haxe/routes/Routes.hx", [
     "package routes;",
     "extern class Routes",
@@ -42,10 +61,12 @@ try {
   expectFile("Procfile.railshx.dev", [
     "rails: bundle exec rails server",
     "haxe: bundle exec rake hxruby:watch",
+    "haxe_client: bundle exec rake hxruby:watch:client",
   ]);
   expectFile("bin/railshx-dev", [
     "foreman start -f Procfile.railshx.dev",
     "bundle exec rake hxruby:watch",
+    "bundle exec rake hxruby:watch:client",
   ]);
 
   const overwrite = spawnSync("node", [

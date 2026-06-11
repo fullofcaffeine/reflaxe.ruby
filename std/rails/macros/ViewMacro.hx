@@ -22,6 +22,20 @@ class ViewMacro {
 		#end
 	}
 
+	public static macro function renderTemplateWithLayout<TLocals>(controller:Expr, template:ExprOf<rails.action_view.Template<TLocals>>, locals:ExprOf<TLocals>,
+			layout:ExprOf<String>):Expr {
+		#if macro
+		var templatePath = extractTemplatePath(template);
+		var layoutPath = extractString(layout, "ViewMacro.renderTemplateWithLayout layout expects a string literal path.");
+		validateLocalsObject(locals);
+		validateLocalsType(template, locals);
+		var railsLocals = railsLocalsObject(locals);
+		return macro $controller.render({template: $v{templatePath}, locals: $railsLocals, layout: $v{layoutPath}});
+		#else
+		return macro null;
+		#end
+	}
+
 	#if macro
 	static function extractTemplatePath(template:Expr):String {
 		return switch (unwrapTypedMarker(template).expr) {

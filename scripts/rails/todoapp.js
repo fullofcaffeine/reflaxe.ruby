@@ -15,6 +15,7 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const compiledDir = join(root, "test", ".generated", "todoapp_rails");
+const compiledClientDir = join(root, "test", ".generated", "todoapp_rails_client");
 const appDir = join(root, "test", ".generated", "rails_integration");
 const exampleDir = join(root, "examples", "todoapp_rails");
 const port = process.env.PORT ?? "3000";
@@ -65,6 +66,7 @@ switch (command) {
 
 function compileAndMaterialize() {
   compileHaxe();
+  compileClientHaxe();
   materializeRailsApp();
   console.log(`[todoapp] Rails app materialized at ${relative(root, appDir)}`);
 }
@@ -112,9 +114,18 @@ function compileHaxe() {
   process.exit(1);
 }
 
+function compileClientHaxe() {
+  rmSync(compiledClientDir, { force: true, recursive: true });
+  mkdirSync(compiledClientDir, { recursive: true });
+  run("haxe", [join(exampleDir, "build-client.hxml")]);
+  console.log("[todoapp] Haxe client JS compiled.");
+}
+
 function materializeRailsApp() {
   for (const path of [
     join(appDir, "app", "haxe_gen"),
+    join(appDir, "app", "assets", "stylesheets"),
+    join(appDir, "app", "javascript"),
     join(appDir, "app", "views", "controllers", "todos"),
     join(appDir, "config", "initializers", "hxruby_autoload.rb"),
   ]) {
@@ -135,6 +146,9 @@ function materializeRailsApp() {
 gem "rails", ">= 7.0", "< 8.0"
 gem "sqlite3", "~> 1.4"
 gem "puma", ">= 5.0"
+gem "propshaft", ">= 0.9"
+gem "importmap-rails", ">= 2.0"
+gem "turbo-rails", ">= 2.0"
 `);
 
   writeFile("config.ru", `require_relative "config/environment"
@@ -155,8 +169,12 @@ require "bundler/setup"
 
   writeFile("config/application.rb", `require "rails"
 require "active_record/railtie"
+require "action_dispatch/railtie"
 require "action_controller/railtie"
 require "action_view/railtie"
+require "propshaft"
+require "importmap-rails"
+require "turbo-rails"
 
 module HXRubyTodoapp
   class Application < Rails::Application
@@ -164,6 +182,7 @@ module HXRubyTodoapp
     config.eager_load = false
     config.root = File.expand_path("..", __dir__)
     config.paths.add "app/haxe_gen", eager_load: true
+    config.assets.paths << Rails.root.join("app/javascript")
     config.action_controller.allow_forgery_protection = false
   end
 end
@@ -199,6 +218,29 @@ test:
   resources :todos, controller: "controllers/todos", only: [:index, :create]
 end
 `);
+
+  writeFile("config/importmap.rb", `pin "application"
+pin "@hotwired/turbo-rails", to: "turbo.min.js"
+pin "railshx/todo_client", to: "railshx/todo_client.js"
+`);
+
+  copyFileSync(
+    join(exampleDir, "assets", "stylesheets", "application.css"),
+    writeTargetPath("app/assets/stylesheets/application.css")
+  );
+  writeFile("app/javascript/application.js", `import "@hotwired/turbo-rails"
+import "railshx/todo_client"
+`);
+  copyFileSync(
+    join(compiledClientDir, "_todo_client_tmp.js"),
+    writeTargetPath("app/javascript/railshx/todo_client.js")
+  );
+  if (existsSync(join(compiledClientDir, "_todo_client_tmp.js.map"))) {
+    copyFileSync(
+      join(compiledClientDir, "_todo_client_tmp.js.map"),
+      writeTargetPath("app/javascript/railshx/todo_client.js.map")
+    );
+  }
 
   writeFile("db/seeds.rb", `owner = Models::User.find_or_create_by!(name: "RailsHx Owner")
 
@@ -343,7 +385,7 @@ function collectSnapshot(path, entries) {
     }
     return;
   }
-  if (!/\.(hx|hxml|rb|json|md)$/.test(path)) {
+  if (!/\.(css|hx|hxml|rb|json|md)$/.test(path)) {
     return;
   }
   entries.push(`${relative(root, path)}:${stat.mtimeMs}:${stat.size}`);
@@ -364,9 +406,14 @@ function copyTree(source, target) {
 }
 
 function writeFile(relativePath, content) {
+  const fullPath = writeTargetPath(relativePath);
+  writeFileSync(fullPath, content);
+}
+
+function writeTargetPath(relativePath) {
   const fullPath = join(appDir, relativePath);
   mkdirSync(dirname(fullPath), { recursive: true });
-  writeFileSync(fullPath, content);
+  return fullPath;
 }
 
 function run(commandName, args, options = {}) {

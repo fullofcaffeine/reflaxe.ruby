@@ -20,6 +20,10 @@ class H {
 		return macro rails.action_view.HtmlNode.ExprText($value);
 	}
 
+	public static macro function doctypeHtml():Expr {
+		return macro rails.action_view.HtmlNode.DoctypeHtml;
+	}
+
 	public static macro function fragment(children:Expr):Expr {
 		return macro rails.action_view.HtmlNode.Fragment($children);
 	}
@@ -46,6 +50,26 @@ class H {
 
 	public static macro function linkBlock(url:Expr, attrs:Expr, children:Expr):Expr {
 		return macro rails.action_view.HtmlNode.LinkToBlock($url, $attrs, $children);
+	}
+
+	public static macro function csrfMetaTags():Expr {
+		return macro rails.action_view.HtmlNode.CsrfMetaTags;
+	}
+
+	public static macro function cspMetaTag():Expr {
+		return macro rails.action_view.HtmlNode.CspMetaTag;
+	}
+
+	public static macro function stylesheetLinkTag(name:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.StylesheetLinkTag($name, $attrs);
+	}
+
+	public static macro function javascriptImportmapTags():Expr {
+		return macro rails.action_view.HtmlNode.JavascriptImportmapTags;
+	}
+
+	public static macro function yieldContent():Expr {
+		return macro rails.action_view.HtmlNode.Yield;
 	}
 
 	public static macro function formWith(url:Expr, scope:Expr, attrs:Expr, children:Expr):Expr {

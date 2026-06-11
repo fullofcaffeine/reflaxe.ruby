@@ -15,17 +15,25 @@ module HXRuby
       namespace :hxruby do
         desc "Compile Haxe sources with HXRUBY_HXML or build.hxml"
         task :compile do
-          hxml = ENV.fetch("HXRUBY_HXML", "build.hxml")
-          sh(["haxe", hxml].map(&:shellescape).join(" "))
+          compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+        end
+
+        namespace :compile do
+          desc "Compile Haxe-authored JavaScript with HXRUBY_CLIENT_HXML or build-client.hxml"
+          task :client do
+            compile_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+          end
         end
 
         desc "Repeatedly run hxruby:compile every HXRUBY_WATCH_INTERVAL seconds"
         task :watch do
-          interval = ENV.fetch("HXRUBY_WATCH_INTERVAL", "1").to_f
-          loop do
-            Rake::Task["hxruby:compile"].reenable
-            Rake::Task["hxruby:compile"].invoke
-            sleep interval
+          watch_task("hxruby:compile")
+        end
+
+        namespace :watch do
+          desc "Repeatedly run hxruby:compile:client every HXRUBY_WATCH_INTERVAL seconds"
+          task :client do
+            watch_task("hxruby:compile:client")
           end
         end
 
@@ -79,6 +87,19 @@ module HXRuby
 
     def node_script(name)
       [node_command, File.join(gem_root, "scripts", "rails", name)].map(&:shellescape).join(" ")
+    end
+
+    def compile_haxe(hxml)
+      sh(["haxe", hxml].map(&:shellescape).join(" "))
+    end
+
+    def watch_task(task_name)
+      interval = ENV.fetch("HXRUBY_WATCH_INTERVAL", "1").to_f
+      loop do
+        Rake::Task[task_name].reenable
+        Rake::Task[task_name].invoke
+        sleep interval
+      end
     end
 
     def truthy?(value)

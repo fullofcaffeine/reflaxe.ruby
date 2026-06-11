@@ -1,0 +1,7 @@
+# Haxe->JavaScript client behavior for the RailsHx todoapp.
+# The Rails materializer compiles this into app/javascript/railshx/todo_client.js.
+-cp examples/todoapp_rails
+-main client.TodoClient
+-js test/.generated/todoapp_rails_client/_todo_client_tmp.js
+-D source-map
+--dce=full

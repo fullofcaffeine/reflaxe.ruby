@@ -544,9 +544,45 @@ private class RailsMarkupParser {
 		return nodes;
 	}
 
+	function parseNodesUntilFragmentClose(start:Int):Array<Expr> {
+		var nodes:Array<Expr> = [];
+		while (!eof()) {
+			if (startsWith("</>")) {
+				i += 3;
+				return nodes;
+			}
+			if (startsWith("<!--")) {
+				var commentStart = i;
+				var end = src.indexOf("-->", i + 4);
+				if (end == -1) {
+					Context.error("Unclosed HTML comment", makeSubPos(commentStart, src.length));
+				}
+				i = end + 3;
+				continue;
+			}
+			if (startsWith("</")) {
+				failHere("Unexpected closing tag");
+			}
+			if (startsWith("<")) {
+				nodes.push(parseTagNode());
+				continue;
+			}
+			var textNodes = parseTextNodesUntilTag();
+			for (node in textNodes) {
+				nodes.push(node);
+			}
+		}
+		Context.error("Unclosed <> fragment", makeSubPos(start, i));
+		return nodes;
+	}
+
 	function parseTagNode():Expr {
 		var tagStart = i;
 		expect("<", "Expected '<' to start a tag");
+		if (startsWith(">")) {
+			i++;
+			return mkFragment(parseNodesUntilFragmentClose(tagStart), makeSubPos(tagStart, i));
+		}
 		var name = readName();
 		if (name == "if") {
 			skipWs();
@@ -631,6 +667,10 @@ private class RailsMarkupParser {
 
 	function lowerTag(name:String, attrs:Array<RailsParsedAttr>, children:Array<Expr>, pos:Position):Expr {
 		return switch (name) {
+			case "doctype_html":
+				rejectChildren(name, children, pos);
+				rejectAttrs(name, attrs, pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.DoctypeHtml;
 			case "form_with":
 				var url = requireAttrValue(attrs, "url", pos);
 				var scope = requireAttrValue(attrs, "scope", pos);
@@ -681,8 +721,41 @@ private class RailsMarkupParser {
 				var template = requireAttrValue(attrs, "template", pos);
 				var locals = requireAttrValue(attrs, "locals", pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Partial($template, $locals);
+			case "csrf_meta_tags":
+				rejectChildren(name, children, pos);
+				rejectAttrs(name, attrs, pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.CsrfMetaTags;
+			case "csp_meta_tag":
+				rejectChildren(name, children, pos);
+				rejectAttrs(name, attrs, pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.CspMetaTag;
+			case "stylesheet_link_tag":
+				rejectChildren(name, children, pos);
+				var stylesheet = requireAttrValue(attrs, "name", pos);
+				var stylesheetAttrs = attrsExcept(attrs, ["name"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.StylesheetLinkTag($stylesheet, ${mkArray(stylesheetAttrs.map(mkAttr), pos)});
+			case "javascript_importmap_tags":
+				rejectChildren(name, children, pos);
+				rejectAttrs(name, attrs, pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.JavascriptImportmapTags;
+			case "rails_yield":
+				rejectChildren(name, children, pos);
+				rejectAttrs(name, attrs, pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.Yield;
 			default:
 				mkElement(name, attrs.map(mkAttr), children, pos);
+		}
+	}
+
+	function rejectAttrs(tagName:String, attrs:Array<RailsParsedAttr>, pos:Position):Void {
+		if (attrs.length > 0) {
+			Context.error('Rails HHX <' + tagName + '> does not accept attributes yet.', pos);
+		}
+	}
+
+	function rejectChildren(tagName:String, children:Array<Expr>, pos:Position):Void {
+		if (children.length > 0) {
+			Context.error('Rails HHX <' + tagName + '> must be self-closing.', pos);
 		}
 	}
 

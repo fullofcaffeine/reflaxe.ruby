@@ -10,10 +10,13 @@ import views.TodoSummaryView.TodoSummaryLocals;
 @:railsTemplateAst("render")
 class TodoDashboardView {
 	public static function render(locals:TodoIndexLocals):HtmlNode {
-		return <section class="typed-dashboard">
-			<h2>Composed typed partial</h2>
-			<link_to url=${Routes.todosPath()} class="typed-route-link">
-				<span>${locals.todos.length > 0 ? "Back to todos" : "Back to empty todo route"}</span>
+		return <section class="card typed-dashboard">
+			<div class="typed-dashboard-header">
+				<span class="eyebrow">Composed typed partial</span>
+				<h2>HHX rendered twice, Rails served once.</h2>
+			</div>
+			<link_to url="#open-work" class="typed-route-link" data-railshx-scroll>
+				<span>${locals.todos.length > 0 ? "Jump to open work" : "Jump to the empty state"}</span>
 				<span class="typed-route-count">${locals.todos.length}</span>
 			</link_to>
 			<partial template=${(Template.named("controllers/todos/summary") : Template<TodoSummaryLocals>)} locals=${{todos: locals.todos}} />

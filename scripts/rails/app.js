@@ -11,8 +11,13 @@ const mainClass = valueAfter("--main") ?? "Main";
 const force = args.includes("--force");
 
 write("build.hxml", renderBuild());
+write("build-client.hxml", renderClientBuild());
 write(join(sourceDir, mainClass + ".hx"), renderMain());
+write(join(sourceDir, "client", "Boot.hx"), renderClientBoot());
 write(join(sourceDir, "routes", "Routes.hx"), renderRoutes());
+write("app/javascript/application.js", renderApplicationJs());
+write("app/assets/stylesheets/application.css", renderApplicationCss());
+write("config/importmap.rb", renderImportmap());
 write("lib/tasks/hxruby.rake", renderRakeTask());
 write("Procfile.railshx.dev", renderProcfile());
 write("bin/railshx-dev", renderDevRunner(), { executable: true });
@@ -20,6 +25,7 @@ write("bin/railshx-dev", renderDevRunner(), { executable: true });
 console.log(`[rails:app] Generated RailsHx app files in ${outputDir}`);
 console.log("[rails:app] Next:");
 console.log("  bundle exec rake hxruby:compile");
+console.log("  bundle exec rake hxruby:compile:client");
 console.log("  bin/railshx-dev");
 
 function valueAfter(name) {
@@ -44,11 +50,37 @@ function renderBuild() {
   ].join("\n");
 }
 
+function renderClientBuild() {
+  return [
+    "-cp " + sourceDir,
+    "-main client.Boot",
+    "-js app/javascript/railshx/app.js",
+    "-D source-map",
+    "--dce=full",
+    "",
+  ].join("\n");
+}
+
 function renderMain() {
   return [
     "class " + mainClass + " {",
     "\tstatic function main() {",
     "\t\tSys.println(" + JSON.stringify(appName + " RailsHx compile") + ");",
+    "\t}",
+    "}",
+    "",
+  ].join("\n");
+}
+
+function renderClientBoot() {
+  return [
+    "package client;",
+    "",
+    "import js.Browser;",
+    "",
+    "class Boot {",
+    "\tpublic static function main():Void {",
+    "\t\tBrowser.console.log(" + JSON.stringify(appName + " RailsHx client boot") + ");",
     "\t}",
     "}",
     "",
@@ -80,10 +112,38 @@ function renderRakeTask() {
   ].join("\n");
 }
 
+function renderApplicationJs() {
+  return [
+    'import "@hotwired/turbo-rails"',
+    'import "railshx/app"',
+    "",
+  ].join("\n");
+}
+
+function renderApplicationCss() {
+  return [
+    "/* RailsHx app stylesheet. Keep app-facing CSS here; generated HHX should emit structure. */",
+    "body {",
+    "  margin: 0;",
+    "}",
+    "",
+  ].join("\n");
+}
+
+function renderImportmap() {
+  return [
+    'pin "application"',
+    'pin "@hotwired/turbo-rails", to: "turbo.min.js"',
+    'pin "railshx/app", to: "railshx/app.js"',
+    "",
+  ].join("\n");
+}
+
 function renderProcfile() {
   return [
     "rails: bundle exec rails server",
     "haxe: bundle exec rake hxruby:watch",
+    "haxe_client: bundle exec rake hxruby:watch:client",
     "",
   ].join("\n");
 }
@@ -105,6 +165,7 @@ function renderDevRunner() {
     "echo \"Run these in separate terminals:\"",
     "echo \"  bundle exec rails server\"",
     "echo \"  bundle exec rake hxruby:watch\"",
+    "echo \"  bundle exec rake hxruby:watch:client\"",
     "",
   ].join("\n");
 }

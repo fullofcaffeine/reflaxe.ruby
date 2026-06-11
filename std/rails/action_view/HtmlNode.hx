@@ -10,6 +10,7 @@ enum HtmlNode {
 	Text(value:String);
 	ExprText<T>(value:T);
 
+	DoctypeHtml;
 	Fragment(children:Array<HtmlNode>);
 	Element(name:String, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 
@@ -18,6 +19,11 @@ enum HtmlNode {
 	Partial<TLocals>(template:Template<TLocals>, locals:TLocals);
 	LinkTo<TLabel, TUrl>(label:TLabel, url:TUrl, attrs:Array<HtmlAttr>);
 	LinkToBlock<TUrl>(url:TUrl, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
+	CsrfMetaTags;
+	CspMetaTag;
+	StylesheetLinkTag(name:String, attrs:Array<HtmlAttr>);
+	JavascriptImportmapTags;
+	Yield;
 	FormWith<TUrl>(url:TUrl, scope:String, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	FormHiddenField<TValue>(name:String, value:TValue);
 	FormLabel<TText>(name:String, text:TText);

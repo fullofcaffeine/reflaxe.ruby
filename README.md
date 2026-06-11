@@ -74,7 +74,7 @@ npm run todoapp:prepare
 npm run todoapp:server
 ```
 
-Then open `http://127.0.0.1:3000/`. For the RailsHx development loop, keep Rails running and start `npm run todoapp:watch` in another terminal; Haxe/HHX changes refresh the generated Rails files while Rails continues serving the app.
+Then open `http://127.0.0.1:3000/`. For the RailsHx development loop, keep Rails running and start `npm run todoapp:watch` in another terminal; Haxe/HHX and Haxe-authored JS changes refresh the generated Rails files while Rails continues serving the app.
 
 For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, and dev process files:
 
@@ -86,14 +86,17 @@ Inside a generated/adopted RailsHx app, the recommended development flow is:
 
 ```bash
 bundle exec rake hxruby:compile
+bundle exec rake hxruby:compile:client
 bundle exec rails server
 bundle exec rake hxruby:watch # in another terminal, or use bin/railshx-dev with foreman/overmind
+bundle exec rake hxruby:watch:client # if not using bin/railshx-dev
 ```
 
 For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
 
 ```bash
 RAILS_ENV=production bundle exec rake hxruby:compile
+RAILS_ENV=production bundle exec rake hxruby:compile:client
 RAILS_ENV=production bundle exec rails zeitwerk:check
 RAILS_ENV=production bundle exec rails assets:precompile
 ```
@@ -191,7 +194,9 @@ The gem exposes `require "hxruby"` for runtime helpers and `require "hxruby/task
 
 ```bash
 rake hxruby:compile
+rake hxruby:compile:client
 rake hxruby:watch
+rake hxruby:watch:client
 rake hxruby:gen:app
 rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1

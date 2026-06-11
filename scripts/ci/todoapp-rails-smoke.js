@@ -64,6 +64,7 @@ for (const file of [
   "app/haxe_gen/models/user.rb",
   "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
+  "app/haxe_gen/views/application_layout_view.rb",
   "app/haxe_gen/views/todo_composer_view.rb",
   "app/haxe_gen/views/todo_dashboard_view.rb",
   "app/haxe_gen/views/todo_form_view.rb",
@@ -76,6 +77,7 @@ for (const file of [
   "app/views/controllers/todos/_list.html.erb",
   "app/views/controllers/todos/_summary.html.erb",
   "app/views/controllers/todos/_typed_form.html.erb",
+  "app/views/layouts/application.html.erb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
   "run.rb",
@@ -147,8 +149,8 @@ for (const expected of [
   /module Controllers/,
   /class TodosController < ActionController::Base/,
   /todos__hx\d+ = Models::Todo\.incomplete\(\)/,
-  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: Models::User\.first\(\)\}\)/,
-  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :is_completed, :user_id\]\)/,
+  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: Models::User\.first\(\)\}, layout: "application"\)/,
+  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
   /self\.redirect_to\(self\.todos_path\(\)\)/,
 ]) {
@@ -183,10 +185,32 @@ for (const expected of [
   "ViewMacro.renderTemplate",
   "Rails migration template",
   "<text_area>",
-  "<check_box>",
+  "Haxe-authored JavaScript",
 ]) {
   if (!readme.includes(expected)) {
     console.error(`todoapp_rails README missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const layoutSource = readFileSync(join(exampleDir, "views", "ApplicationLayoutView.hx"), "utf8");
+for (const expected of [
+  '@:railsTemplate("layouts/application")',
+  '@:railsTemplateAst("render")',
+  "<doctype_html />",
+  "<csrf_meta_tags />",
+  '<stylesheet_link_tag name="application" data-turbo-track="reload" />',
+  "<javascript_importmap_tags />",
+  "<rails_yield />",
+]) {
+  if (!layoutSource.includes(expected)) {
+    console.error(`todoapp_rails layout source is missing expected HHX content: ${expected}`);
+    process.exit(1);
+  }
+}
+for (const forbidden of ["public static var body", "public static var erb", "public static var template", "<%"]) {
+  if (layoutSource.includes(forbidden)) {
+    console.error(`todoapp_rails layout source must stay HHX-first and cannot contain: ${forbidden}`);
     process.exit(1);
   }
 }
@@ -234,6 +258,22 @@ for (const expected of [
     process.exit(1);
   }
 }
+
+const layoutView = readFileSync(join(outputDir, "app", "views", "layouts", "application.html.erb"), "utf8");
+for (const expected of [
+  "<!DOCTYPE html>",
+  "<title>RailsHx Todoapp</title>",
+  '<%= csrf_meta_tags %>',
+  '<%= csp_meta_tag %>',
+  '<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>',
+  '<%= javascript_importmap_tags %>',
+  '<%= yield %>',
+]) {
+  if (!layoutView.includes(expected)) {
+    console.error(`todoapp_rails layout output missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
 for (const forbidden of ["<% todos ||= [] %>", "<% sample_user = Models::User.order(:id).first %>", "controllers/todos/hero"]) {
   if (view.includes(forbidden)) {
     console.error(`todoapp_rails HHX index should not contain raw shell content: ${forbidden}`);
@@ -263,8 +303,8 @@ for (const expected of [
 const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_dashboard.html.erb"), "utf8");
 for (const expected of [
   "Composed typed partial",
-  '<%= link_to todos_path(), class: "typed-route-link" do %>',
-  '<span><%= (if todos.length > 0 then "Back to todos" else "Back to empty todo route" end) %></span>',
+  '<%= link_to "#open-work", class: "typed-route-link", "data-railshx-scroll": true do %>',
+  '<span><%= (if todos.length > 0 then "Jump to open work" else "Jump to the empty state" end) %></span>',
   '<span class="typed-route-count"><%= todos.length %></span>',
   '<% end %>',
   '<%= render partial: "controllers/todos/summary", locals: {todos: todos} %>',
@@ -313,8 +353,6 @@ for (const expected of [
   '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',
   '<%= form.label :notes, "Why does it matter?" %>',
   '<%= form.text_area :notes, placeholder: "Add a short implementation note", rows: 3 %>',
-  '<%= form.check_box :is_completed %>',
-  '<%= form.label :is_completed, "Already done?" %>',
   '<%= form.submit "Add task", type: "submit" %>',
 ]) {
   if (!typedForm.includes(expected)) {

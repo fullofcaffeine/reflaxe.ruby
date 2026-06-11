@@ -5,8 +5,8 @@ class Main
     "Main"
   end
   def self.main()
-    controller__hx18393 = nil
-    puts(HXRuby.stringify((controller__hx18393 == nil)))
+    controller__hx18459 = nil
+    puts(HXRuby.stringify((controller__hx18459 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

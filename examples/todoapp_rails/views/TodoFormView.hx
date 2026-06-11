@@ -21,10 +21,6 @@ class TodoFormView {
 				<field_label name="notes">Why does it matter?</field_label>
 				<text_area name="notes" placeholder="Add a short implementation note" rows=${3} />
 			</div>
-			<div class="form-check">
-				<check_box name="is_completed" />
-				<field_label name="is_completed">Already done?</field_label>
-			</div>
 			<submit type="submit">Add task</submit>
 		</form_with>;
 	}

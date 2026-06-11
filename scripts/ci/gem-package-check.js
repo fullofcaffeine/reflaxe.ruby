@@ -72,7 +72,7 @@ try {
   const tasksCheck = [
     "require 'rake'",
     "require 'hxruby/tasks'",
-    "expected = %w[hxruby:compile hxruby:watch hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+    "expected = %w[hxruby:compile hxruby:compile:client hxruby:watch hxruby:watch:client hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
     "names = Rake::Task.tasks.map(&:name)",
     "missing = expected - names",
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
@@ -110,7 +110,7 @@ try {
       "require 'rubygems'",
       `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
       "require 'hxruby/tasks'",
-      "expected = %w[hxruby:compile hxruby:watch hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+      "expected = %w[hxruby:compile hxruby:compile:client hxruby:watch hxruby:watch:client hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
       "names = Rake::Task.tasks.map(&:name)",
       "missing = expected - names",
       "abort \"installed gem missing tasks: #{missing.join(', ')}\" unless missing.empty?",
