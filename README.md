@@ -65,7 +65,7 @@ Rails mode is enabled with `-D reflaxe_ruby_rails`. It emits Haxe-owned app file
 - `ParamsMacro.requirePermit(...)` for strong params
 - model metadata for `@:belongsTo`, `@:hasMany`, `@:hasOne`, and `@:validates`
 
-The canonical Rails example is `examples/todoapp_rails`.
+The canonical RailsHx end-to-end example is `examples/todoapp_rails`.
 
 The current Rails surface is an MVP. The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`.
 

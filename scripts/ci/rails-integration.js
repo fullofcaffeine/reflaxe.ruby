@@ -31,6 +31,12 @@ syntaxCheck([
   "test/models/todo_test.rb",
   "test/controllers/todos_controller_test.rb",
 ]);
+viewContentCheck("app/views/controllers/todos/index.html.erb", [
+  "Typed Rails, polished Ruby.",
+  "RailsHx sample",
+  "form_with",
+  "Models::Todo.__hx_rails_schema",
+]);
 
 const railsProbe = run("bundle", ["exec", "ruby", "-e", "require 'rails'; puts Rails.version"], {
   cwd: appDir,
@@ -61,6 +67,7 @@ run("bundle", ["exec", "rails", "test"], {
 function materializeRailsApp() {
   rmSync(appDir, { force: true, recursive: true });
   copyTree(join(compiledDir, "app"), join(appDir, "app"));
+  copyTree(join(root, "examples", "todoapp_rails", "app", "views"), join(appDir, "app", "views"));
   copyTree(join(compiledDir, "config"), join(appDir, "config"));
   mkdirSync(join(appDir, "db", "migrate"), { recursive: true });
   copyFileSync(
@@ -125,14 +132,17 @@ end
   writeFile("test/controllers/todos_controller_test.rb", `require "test_helper"
 
 class TodosControllerTest < ActionDispatch::IntegrationTest
-  test "index renders incomplete todos as json" do
+  test "index renders the polished RailsHx todo page" do
     user = Models::User.create!(name: "owner")
     Models::Todo.create!(title: "ship rails", is_completed: false, user: user)
 
     get "/todos"
 
     assert_response :success
+    assert_includes @response.body, "Typed Rails, polished Ruby."
+    assert_includes @response.body, "RailsHx sample"
     assert_includes @response.body, "ship rails"
+    assert_includes @response.body, "typed columns"
   end
 
   test "create permits haxe-authored params and redirects through route helper" do
@@ -150,6 +160,21 @@ end
 function syntaxCheck(relativeFiles) {
   for (const relativeFile of relativeFiles) {
     run("ruby", ["-c", join(appDir, relativeFile)]);
+  }
+}
+
+function viewContentCheck(relativeFile, expectedLines) {
+  const path = join(appDir, relativeFile);
+  if (!existsSync(path)) {
+    console.error(`Expected Rails view file missing: ${path}`);
+    process.exit(1);
+  }
+  const content = readFileSync(path, "utf8");
+  for (const expected of expectedLines) {
+    if (!content.includes(expected)) {
+      console.error(`Rails view file missing expected content: ${expected}`);
+      process.exit(1);
+    }
   }
 }
 

@@ -56,7 +56,15 @@ for (const expected of [
   "module Models",
   "class Todo < ActiveRecord::Base",
   'self.table_name = "todos"',
+  "def self.__hx_rails_schema()",
+  'table_name: "todos"',
+  "timestamps: true",
+  "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
+  "{name: :title, haxe_name: \"title\", ruby_name: \"title\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
+  "{name: :is_completed, haxe_name: \"isCompleted\", ruby_name: \"is_completed\", haxe_type: \"Bool\", rails_type: :boolean, nullable: false, default: false, primary_key: false, index: false, unique: false, db_type: nil}",
+  "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   "belongs_to :user",
+  "# haxe column id: Int",
   "# haxe column title: String",
   "# haxe column is_completed: Bool",
   "# haxe column user_id: Int",
@@ -76,7 +84,13 @@ for (const expected of [
   "module Models",
   "class User < ActiveRecord::Base",
   'self.table_name = "users"',
+  "def self.__hx_rails_schema()",
+  'table_name: "users"',
+  "timestamps: true",
+  "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
+  "{name: :name, haxe_name: \"name\", ruby_name: \"name\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   "has_many :todos",
+  "# haxe column id: Int",
   "# haxe column name: String",
   "validates :name, presence: true",
 ]) {
@@ -92,7 +106,7 @@ for (const expected of [
   /module Controllers/,
   /class TodosController < ActionController::Base/,
   /todos__hx\d+ = Models::Todo\.incomplete\(\)/,
-  /self\.render\(json: todos__hx\d+\)/,
+  /self\.render\(template: "controllers\/todos\/index", locals: \{"todos" => todos__hx\d+\}\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
   /self\.redirect_to\(self\.todos_path\(\)\)/,
@@ -115,6 +129,33 @@ for (const expected of [
 ]) {
   if (!migrationRuby.includes(expected)) {
     console.error(`todoapp_rails migration template missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const readme = readFileSync(join(exampleDir, "README.md"), "utf8");
+for (const expected of [
+  "RailsHx Todo App",
+  "self.__hx_rails_schema",
+  "ParamsMacro.requirePermit",
+  "Rails migration template",
+]) {
+  if (!readme.includes(expected)) {
+    console.error(`todoapp_rails README missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const view = readFileSync(join(exampleDir, "app", "views", "controllers", "todos", "index.html.erb"), "utf8");
+for (const expected of [
+  "Typed Rails, polished Ruby.",
+  "RailsHx sample",
+  "form_with",
+  "todo-shell",
+  "Models::Todo.__hx_rails_schema",
+]) {
+  if (!view.includes(expected)) {
+    console.error(`todoapp_rails view missing expected content: ${expected}`);
     process.exit(1);
   }
 }

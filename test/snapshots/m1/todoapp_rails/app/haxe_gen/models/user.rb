@@ -7,13 +7,15 @@ module Models
     def self.__hx_rails_schema()
       {
         table_name: "users",
-        timestamps: false,
+        timestamps: true,
         columns: [
-          {name: :name, haxe_name: "name", ruby_name: "name", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: false, unique: false, db_type: nil}
+          {name: :id, haxe_name: "id", ruby_name: "id", haxe_type: "Int", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint},
+          {name: :name, haxe_name: "name", ruby_name: "name", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}
         ]
       }
     end
     has_many :todos
+    # haxe column id: Int
     # haxe column name: String
     validates :name, presence: true
     def initialize()

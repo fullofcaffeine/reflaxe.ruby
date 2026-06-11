@@ -53,8 +53,11 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 - `haxe.ruby-wpi.9`: add end-to-end Rails integration app and CI gate.
 - `haxe.ruby-wpi.10`: write RailsHx guides and API references.
 - `haxe.ruby-wpi.11`: plan post-core Rails surfaces such as ActionMailer, ActiveJob, ActionCable, ActiveStorage, ActionView/Hotwire, and ActiveSupport.
+- `haxe.ruby-wpi.12`: implement typed Rails ActionView templates inspired by haxe.elixir.codex HXX/HEEx.
 
 The first implementation slice should prove the complete CRUD path: typed model, typed migration, typed params/controller, typed route helpers, generated Rails Ruby, `rails db:migrate`, and `rails test`.
+
+Typed Rails templates are part of the RailsHx destination. Until `haxe.ruby-wpi.12` lands, examples may keep Rails-owned ERB views as runnable artifacts, but app logic should avoid hiding type-sensitive Rails behavior inside those ERB islands.
 
 ## Acceptance Bar
 

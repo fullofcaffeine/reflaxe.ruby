@@ -8,7 +8,7 @@ import routes.Routes;
 class TodosController extends rails.action_controller.Base {
 	public function index() {
 		var todos = Todo.incomplete();
-		render({json: todos});
+		render({template: "controllers/todos/index", locals: {todos: todos}});
 	}
 
 	public function create() {

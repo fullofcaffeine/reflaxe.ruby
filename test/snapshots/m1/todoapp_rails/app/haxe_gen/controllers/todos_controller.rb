@@ -8,7 +8,7 @@ module Controllers
     end
     def index()
       todos__hx17104 = Models::Todo.incomplete()
-      self.render(json: todos__hx17104)
+      self.render(template: "controllers/todos/index", locals: {"todos" => todos__hx17104})
     end
     def create()
       attrs__hx17106 = self.params().require("todo").permit([:title, :is_completed, :user_id])

@@ -3,10 +3,20 @@ package models;
 import models.User;
 
 @:railsModel("todos")
+@:railsTimestamps
 class Todo extends rails.active_record.Base<Todo> {
-	@:railsColumn public var title:String;
-	@:railsColumn public var isCompleted:Bool;
-	@:railsColumn public var userId:Int;
+	@:railsColumn({primaryKey: true, dbType: "bigint"})
+	public var id:Int;
+
+	@:railsColumn({index: true})
+	public var title:String;
+
+	@:railsColumn({defaultValue: false})
+	public var isCompleted:Bool;
+
+	@:railsColumn({index: true})
+	public var userId:Int;
+
 	@:belongsTo public var user:rails.ActiveRecord.BelongsTo<User>;
 
 	@:validates({presence: true})
