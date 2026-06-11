@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.20.0...v1.21.0) (2026-06-11)
+
+
+### Features
+
+* add HHX link block slots ([b421bb3](https://github.com/fullofcaffeine/reflaxe.ruby/commit/b421bb32f5b0f2e5b9b2dedff54bed753eaa8c55))
+
 # [1.20.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.19.0...v1.20.0) (2026-06-11)
 
 
