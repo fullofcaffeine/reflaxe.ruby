@@ -11,6 +11,8 @@ const invalidSourceDir = join(root, "test", ".generated", "todoapp_rails_invalid
 const invalidOutputDir = join(root, "test", ".generated", "todoapp_rails_invalid_out");
 const rawErbInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_raw_erb_invalid_src");
 const rawErbInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_raw_erb_invalid_out");
+const typedTemplateInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_template_invalid_src");
+const typedTemplateInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_template_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -37,6 +39,8 @@ rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 rmSync(rawErbInvalidSourceDir, { force: true, recursive: true });
 rmSync(rawErbInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedTemplateInvalidSourceDir, { force: true, recursive: true });
+rmSync(typedTemplateInvalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -49,7 +53,9 @@ for (const file of [
   "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
   "app/haxe_gen/views/todo_index_view.rb",
+  "app/haxe_gen/views/todo_summary_view.rb",
   "app/views/controllers/todos/index.html.erb",
+  "app/views/controllers/todos/_summary.html.erb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
   "run.rb",
@@ -165,6 +171,7 @@ for (const expected of [
   "form_with",
   "todo-shell",
   "Models::Todo.__hx_rails_schema",
+  'render partial: "controllers/todos/summary", locals: {todos: todos}',
 ]) {
   if (!view.includes(expected)) {
     console.error(`todoapp_rails view missing expected content: ${expected}`);
@@ -172,8 +179,23 @@ for (const expected of [
   }
 }
 
+const typedPartial = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_summary.html.erb"), "utf8");
+for (const expected of [
+  "Typed template partial",
+  "<%= todos.length %>",
+  "<% todos.each do |todo| %>",
+  "<%= todo.title %>",
+  "typed-template-card",
+]) {
+  if (!typedPartial.includes(expected)) {
+    console.error(`todoapp_rails typed template partial missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
 expectInvalidTemplateLocalsFailure();
 expectRawErbRequiresOptInFailure();
+expectTypedTemplateAstFieldFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -358,6 +380,85 @@ function expectRawErbRequiresOptInFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run raw ERB escape-hatch check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectTypedTemplateAstFieldFailure() {
+  mkdirSync(join(typedTemplateInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(typedTemplateInvalidSourceDir, "InvalidTypedTemplateMain.hx"), [
+    "import views.BadTypedTemplateView;",
+    "",
+    "class InvalidTypedTemplateMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTypedTemplateView> = BadTypedTemplateView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedTemplateInvalidSourceDir, "views", "BadTypedTemplateView.hx"), [
+    "package views;",
+    "",
+    "import models.Todo;",
+    "import rails.action_view.HtmlAttr;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad_typed\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTypedTemplateView {",
+    "\tpublic static function render(todos:Array<Todo>):HtmlNode {",
+    "\t\treturn HtmlNode.Element(\"div\", [HtmlAttr.Static(\"class\", \"bad\")], [",
+    "\t\t\tHtmlNode.ExprText(todos[0].missingTitle)",
+    "\t\t]);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedTemplateInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      typedTemplateInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTypedTemplateMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Invalid @:railsTemplateAst field access compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("missingTitle") && !output.includes("has no field")) {
+      console.error("Invalid @:railsTemplateAst field access failed, but not with the expected typed field error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid @:railsTemplateAst field check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

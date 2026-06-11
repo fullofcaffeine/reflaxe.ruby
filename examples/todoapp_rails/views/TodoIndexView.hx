@@ -167,6 +167,28 @@ class TodoIndexView {
     background: rgba(255, 255, 255, 0.48);
   }
 
+  .typed-template-card {
+    grid-column: 1 / -1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .typed-template-card::after {
+    content: "";
+    position: absolute;
+    inset: auto 28px 28px auto;
+    width: 132px;
+    height: 132px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.22), rgba(185, 244, 211, 0.38));
+    filter: blur(4px);
+    pointer-events: none;
+  }
+
+  .typed-template-list {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
   @media (max-width: 820px) {
     .hero,
     .workspace {
@@ -236,5 +258,7 @@ class TodoIndexView {
       <% end %>
     </div>
   </section>
+
+  <%= render partial: "controllers/todos/summary", locals: {todos: todos} %>
 </main>';
 }

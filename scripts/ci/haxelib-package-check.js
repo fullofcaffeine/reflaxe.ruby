@@ -67,6 +67,8 @@ for (const required of [
   "src/reflaxe/ruby/CompilerBootstrap.hx",
   "std/Std.cross.hx",
   "std/rails/ActiveRecord.hx",
+  "std/rails/action_view/HtmlAttr.hx",
+  "std/rails/action_view/HtmlNode.hx",
   "std/rails/action_view/Template.hx",
   "std/rails/macros/ViewMacro.hx",
   "runtime/hxruby/core.rb",

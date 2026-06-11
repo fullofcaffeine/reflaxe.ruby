@@ -175,6 +175,22 @@
       "reason": "Typed ActionView template marker used to bind Rails template paths to Haxe locals types."
     },
     {
+      "id": "std.rails.action_view_html_attr",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_view/HtmlAttr.hx",
+      "surface": "rails.action_view.HtmlAttr",
+      "reason": "Compile-time ActionView attribute AST lowered by @:railsTemplateAst into Rails ERB."
+    },
+    {
+      "id": "std.rails.action_view_html_node",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_view/HtmlNode.hx",
+      "surface": "rails.action_view.HtmlNode",
+      "reason": "Compile-time ActionView node AST for typed Haxe template expressions lowered into Rails ERB."
+    },
+    {
       "id": "std.rails.params_macro",
       "owner": "std",
       "status": "implemented",

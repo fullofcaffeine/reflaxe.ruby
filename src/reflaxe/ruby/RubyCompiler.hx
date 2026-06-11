@@ -7,6 +7,7 @@ import haxe.macro.Type.AbstractType;
 import haxe.macro.Type.ClassType;
 import haxe.macro.Type.DefType;
 import haxe.macro.Type.EnumType;
+import haxe.macro.Type.FieldAccess;
 import haxe.macro.Type.ModuleType;
 import haxe.macro.Type.TypedExpr;
 import haxe.macro.Type.TVar;
@@ -43,6 +44,10 @@ typedef RailsColumnInfo = {
 typedef RubyMetadataField = {
 	field:String,
 	expr:haxe.macro.Expr
+}
+
+typedef RailsTemplateScope = {
+	localNames:Map<Int, String>
 }
 
 class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFile, RubyFile> {
@@ -125,7 +130,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		setRubyOutputPath(classType.pack, classType.name);
 		var moduleRequires = collectModuleRequires(classType.meta);
 		if (hasMeta(classType.meta, ":railsTemplate")) {
-			return compileRailsTemplateImpl(classType, varFields, moduleRequires);
+			return compileRailsTemplateImpl(classType, varFields, funcFields, moduleRequires);
 		}
 		if (hasMeta(classType.meta, ":railsModel")) {
 			requireRegistry.addRequire("active_record");
@@ -208,8 +213,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		]), collectModuleRequires(abstractType.meta));
 	}
 
-	function compileRailsTemplateImpl(classType:ClassType, varFields:Array<ClassVarData>, moduleRequires:RequireRegistry):RubyFile {
-		emitRailsTemplateArtifact(classType, varFields);
+	function compileRailsTemplateImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
+			moduleRequires:RequireRegistry):RubyFile {
+		emitRailsTemplateArtifact(classType, varFields, funcFields);
 		return typeShell(classType.pack, classType.name, RubyClassDecl(RubyNaming.toConstantName(classType.name), [
 			RubyComment("Rails ActionView template marker. The ERB artifact is generated under app/views.")
 		]), moduleRequires);
@@ -1094,7 +1100,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		setExtraFile(OutputPath.fromStr("config/initializers/hxruby_autoload.rb"), lines.join("\n"));
 	}
 
-	function emitRailsTemplateArtifact(classType:ClassType, varFields:Array<ClassVarData>):Void {
+	function emitRailsTemplateArtifact(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Void {
 		if (!buildContext.railsMode) {
 			Context.error("@:railsTemplate requires -D reflaxe_ruby_rails.", classType.pos);
 			return;
@@ -1104,19 +1110,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsTemplate expects a Rails template path string.", classType.pos);
 			return;
 		}
-		var body = railsTemplateSourceBody(classType, varFields);
+		var usesTypedTemplateAst = metaStringParam(classType.meta, ":railsTemplateAst", 0) != null;
+		var body = railsTemplateSourceBody(classType, varFields, funcFields);
 		if (body == null) {
-			Context.error("@:railsTemplate expects a source path argument or a static string field named body/erb/template.", classType.pos);
+			Context.error("@:railsTemplate expects a source path argument, @:railsTemplateAst method, or static string field named body/erb/template.",
+				classType.pos);
 			return;
 		}
-		if (containsRawErb(body) && !hasMeta(classType.meta, ":railsAllowRawErb")) {
+		if (!usesTypedTemplateAst && containsRawErb(body) && !hasMeta(classType.meta, ":railsAllowRawErb")) {
 			Context.error("@:railsTemplate raw ERB blocks require @:railsAllowRawErb. Prefer typed RailsHx template helpers when available.", classType.pos);
 			return;
 		}
 		setExtraFile(OutputPath.fromStr(railsTemplateOutputPath(templatePath)), normalizeGeneratedText(body));
 	}
 
-	function railsTemplateSourceBody(classType:ClassType, varFields:Array<ClassVarData>):Null<String> {
+	function railsTemplateSourceBody(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Null<String> {
 		var source = metaStringParam(classType.meta, ":railsTemplate", 1);
 		if (source != null) {
 			var path = Path.normalize(Path.join([Path.directory(Context.getPosInfos(classType.pos).file), source]));
@@ -1125,6 +1133,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				return null;
 			}
 			return File.getContent(path);
+		}
+		var astMethod = metaStringParam(classType.meta, ":railsTemplateAst", 0);
+		if (astMethod != null) {
+			return railsTemplateAstBody(classType, funcFields, astMethod);
 		}
 		for (field in varFields) {
 			if (!field.isStatic || ["body", "erb", "template"].indexOf(field.field.name) == -1) {
@@ -1142,6 +1154,295 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 		}
 		return null;
+	}
+
+	function railsTemplateAstBody(classType:ClassType, funcFields:Array<ClassFuncData>, methodName:String):Null<String> {
+		for (field in funcFields) {
+			if (!field.isStatic || field.field.name != methodName) {
+				continue;
+			}
+			if (field.expr == null) {
+				Context.error("@:railsTemplateAst method must have a body.", field.field.pos);
+				return null;
+			}
+			var scope = templateScopeFor(field);
+			var node = extractTemplateAstReturn(field.expr);
+			if (node == null) {
+				Context.error("@:railsTemplateAst method must return a rails.action_view.HtmlNode expression.", field.field.pos);
+				return null;
+			}
+			return lowerTemplateNode(node, scope);
+		}
+		Context.error('@:railsTemplateAst could not find static method "$methodName".', classType.pos);
+		return null;
+	}
+
+	static function templateScopeFor(field:ClassFuncData):RailsTemplateScope {
+		var localNames:Map<Int, String> = [];
+		for (arg in field.args) {
+			if (arg.tvar != null) {
+				localNames.set(arg.tvar.id, RubyNaming.toLocalName(arg.getName()));
+			}
+		}
+		return {localNames: localNames};
+	}
+
+	static function extractTemplateAstReturn(expr:TypedExpr):Null<TypedExpr> {
+		var unwrapped = unwrapTemplateExpr(expr);
+		return switch (unwrapped.expr) {
+			case TReturn(value): value == null ? null : unwrapTemplateExpr(value);
+			case TBlock(exprs):
+				if (exprs == null || exprs.length == 0) {
+					null;
+				} else {
+					extractTemplateAstReturn(exprs[exprs.length - 1]);
+				}
+			case _: unwrapped;
+		}
+	}
+
+	static function unwrapTemplateExpr(expr:TypedExpr):TypedExpr {
+		return switch (expr.expr) {
+			case TMeta(_, inner) | TParenthesis(inner) | TCast(inner, _): unwrapTemplateExpr(inner);
+			case _: expr;
+		}
+	}
+
+	static function lowerTemplateNode(expr:TypedExpr, scope:RailsTemplateScope):String {
+		var node = unwrapTemplateExpr(expr);
+		return switch (node.expr) {
+			case TCall(fn, params):
+				switch (templateCtorName(fn, "HtmlNode")) {
+					case "Text":
+						if (params.length != 1) {
+							Context.error("HtmlNode.Text expects one argument.", node.pos);
+							"";
+						} else {
+							expectTemplateString(params[0], "HtmlNode.Text expects a string literal.");
+						}
+					case "ExprText":
+						if (params.length != 1) {
+							Context.error("HtmlNode.ExprText expects one argument.", node.pos);
+							"";
+						} else {
+							"<%= " + printTemplateExpr(params[0], scope) + " %>";
+						}
+					case "Fragment":
+						if (params.length != 1) {
+							Context.error("HtmlNode.Fragment expects one children array.", node.pos);
+							"";
+						} else {
+							var out = "";
+							for (child in expectTemplateArray(params[0], "HtmlNode.Fragment expects an array literal.")) {
+								out += lowerTemplateNode(child, scope);
+							}
+							out;
+						}
+					case "Element":
+						if (params.length != 3) {
+							Context.error("HtmlNode.Element expects name, attrs, and children arguments.", node.pos);
+							"";
+						} else {
+							var name = expectTemplateString(params[0], "HtmlNode.Element name must be a string literal.");
+							var attrs = expectTemplateArray(params[1], "HtmlNode.Element attrs must be an array literal.");
+							var children = expectTemplateArray(params[2], "HtmlNode.Element children must be an array literal.");
+							lowerTemplateElement(name, attrs, children, scope);
+						}
+					case "If":
+						if (params.length != 3) {
+							Context.error("HtmlNode.If expects cond, thenBranch, and elseBranch arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateIf(params[0], params[1], params[2], scope);
+						}
+					case "For":
+						if (params.length != 2) {
+							Context.error("HtmlNode.For expects items and render arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFor(params[0], params[1], scope);
+						}
+					case other:
+						Context.error('Unsupported HtmlNode constructor "$other" in @:railsTemplateAst.', node.pos);
+						"";
+				}
+			case TBlock(exprs):
+				if (exprs == null || exprs.length == 0) {
+					Context.error("@:railsTemplateAst node block is empty.", node.pos);
+					"";
+				} else {
+					lowerTemplateNode(exprs[exprs.length - 1], scope);
+				}
+			case _:
+				Context.error("@:railsTemplateAst expected a rails.action_view.HtmlNode constructor expression.", node.pos);
+				"";
+		}
+	}
+
+	static function lowerTemplateElement(name:String, attrs:Array<TypedExpr>, children:Array<TypedExpr>, scope:RailsTemplateScope):String {
+		var out = "<" + name;
+		for (attr in attrs) {
+			out += lowerTemplateAttr(attr, scope);
+		}
+		if (children.length == 0 && isVoidHtmlElement(name)) {
+			return out + ">";
+		}
+		out += ">";
+		for (child in children) {
+			out += lowerTemplateNode(child, scope);
+		}
+		return out + "</" + name + ">";
+	}
+
+	static function lowerTemplateAttr(expr:TypedExpr, scope:RailsTemplateScope):String {
+		var attr = unwrapTemplateExpr(expr);
+		return switch (attr.expr) {
+			case TCall(fn, params):
+				switch (templateCtorName(fn, "HtmlAttr")) {
+					case "Static":
+						if (params.length != 2) {
+							Context.error("HtmlAttr.Static expects name and value arguments.", attr.pos);
+							"";
+						} else {
+							" " + expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal.") + "="
+								+ quoteHtmlAttr(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal."));
+						}
+					case "Bool":
+						if (params.length != 1) {
+							Context.error("HtmlAttr.Bool expects one name argument.", attr.pos);
+							"";
+						} else {
+							" " + expectTemplateString(params[0], "HtmlAttr.Bool name must be a string literal.");
+						}
+					case "Expr":
+						if (params.length != 2) {
+							Context.error("HtmlAttr.Expr expects name and value arguments.", attr.pos);
+							"";
+						} else {
+							" " + expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal.") + "=\"<%= "
+								+ printTemplateExpr(params[1], scope) + " %>\"";
+						}
+					case other:
+						Context.error('Unsupported HtmlAttr constructor "$other" in @:railsTemplateAst.', attr.pos);
+						"";
+				}
+			case _:
+				Context.error("@:railsTemplateAst expected a rails.action_view.HtmlAttr constructor expression.", attr.pos);
+				"";
+		}
+	}
+
+	static function lowerTemplateIf(cond:TypedExpr, thenBranch:TypedExpr, elseBranch:TypedExpr, scope:RailsTemplateScope):String {
+		var out = "<% if " + printTemplateExpr(cond, scope) + " %>" + lowerTemplateNode(thenBranch, scope);
+		var unwrappedElse = unwrapTemplateExpr(elseBranch);
+		switch (unwrappedElse.expr) {
+			case TConst(TNull):
+			case _:
+				out += "<% else %>" + lowerTemplateNode(unwrappedElse, scope);
+		}
+		return out + "<% end %>";
+	}
+
+	static function lowerTemplateFor(items:TypedExpr, render:TypedExpr, scope:RailsTemplateScope):String {
+		var fn = unwrapTemplateExpr(render);
+		return switch (fn.expr) {
+			case TFunction(func):
+				if (func.args.length != 1) {
+					Context.error("HtmlNode.For render function must take exactly one argument.", fn.pos);
+					"";
+				} else {
+					var binder = func.args[0].v;
+					var nextScope = cloneTemplateScope(scope);
+					nextScope.localNames.set(binder.id, RubyNaming.toLocalName(binder.name));
+					var body = extractTemplateAstReturn(func.expr);
+					if (body == null) {
+						Context.error("HtmlNode.For render function must return a HtmlNode.", fn.pos);
+						"";
+					} else {
+						"<% " + printTemplateExpr(items, scope) + ".each do |" + RubyNaming.toLocalName(binder.name) + "| %>"
+							+ lowerTemplateNode(body, nextScope) + "<% end %>";
+					}
+				}
+			case _:
+				Context.error("HtmlNode.For render argument must be an inline function.", fn.pos);
+				"";
+		}
+	}
+
+	static function cloneTemplateScope(scope:RailsTemplateScope):RailsTemplateScope {
+		var localNames:Map<Int, String> = [];
+		for (key in scope.localNames.keys()) {
+			localNames.set(key, scope.localNames.get(key));
+		}
+		return {localNames: localNames};
+	}
+
+	static function templateCtorName(fn:TypedExpr, enumName:String):Null<String> {
+		var unwrapped = unwrapTemplateExpr(fn);
+		return switch (unwrapped.expr) {
+			case TField(_, FEnum(enumRef, fieldRef)):
+				var enumType = enumRef.get();
+				if (enumType.name == enumName && enumType.pack.join(".") == "rails.action_view") {
+					fieldRef.name;
+				} else {
+					null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function expectTemplateArray(expr:TypedExpr, message:String):Array<TypedExpr> {
+		return switch (unwrapTemplateExpr(expr).expr) {
+			case TArrayDecl(values): values;
+			case _:
+				Context.error(message, expr.pos);
+				[];
+		}
+	}
+
+	static function expectTemplateString(expr:TypedExpr, message:String):String {
+		return switch (unwrapTemplateExpr(expr).expr) {
+			case TConst(TString(value)): value;
+			case _:
+				Context.error(message, expr.pos);
+				"";
+		}
+	}
+
+	static function printTemplateExpr(expr:TypedExpr, scope:RailsTemplateScope):String {
+		var unwrapped = unwrapTemplateExpr(expr);
+		return switch (unwrapped.expr) {
+			case TLocal(v) if (scope.localNames.exists(v.id)):
+				scope.localNames.get(v.id);
+			case TConst(TNull): "nil";
+			case TConst(TBool(value)): value ? "true" : "false";
+			case TConst(TInt(value)): Std.string(value);
+			case TConst(TFloat(value)): value;
+			case TConst(TString(value)): quoteRubyStringForCode(value);
+			case TArray(target, index): printTemplateExpr(target, scope) + "[" + printTemplateExpr(index, scope) + "]";
+			case TArrayDecl(values): "[" + [for (value in values) printTemplateExpr(value, scope)].join(", ") + "]";
+			case TBinop(op, lhs, rhs): printTemplateExpr(lhs, scope) + " " + binopToRuby(op) + " " + printTemplateExpr(rhs, scope);
+			case TUnop(op, _, inner): unopToRuby(op) + printTemplateExpr(inner, scope);
+			case TField(target, access): printTemplateExpr(target, scope) + "." + fieldAccessName(access);
+			case TCall({expr: TField(target, access)}, params):
+				printTemplateExpr(target, scope) + "." + fieldAccessName(access) + "(" + [for (param in params) printTemplateExpr(param, scope)].join(", ") + ")";
+			case TCall(callee, params):
+				printTemplateExpr(callee, scope) + ".call(" + [for (param in params) printTemplateExpr(param, scope)].join(", ") + ")";
+			case TIf(cond, eThen, eElse):
+				"(if " + printTemplateExpr(cond, scope) + " then " + printTemplateExpr(eThen, scope) + " else "
+					+ (eElse == null ? "nil" : printTemplateExpr(eElse, scope)) + " end)";
+			case _:
+				reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped));
+		}
+	}
+
+	static function quoteHtmlAttr(value:String):String {
+		return quoteRubyStringForCode(value);
+	}
+
+	static function isVoidHtmlElement(name:String):Bool {
+		return ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].indexOf(name) != -1;
 	}
 
 	static function railsTemplateOutputPath(path:String):String {
