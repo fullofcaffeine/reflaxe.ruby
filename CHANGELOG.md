@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.15.0...v1.16.0) (2026-06-11)
+
+
+### Features
+
+* add typed Rails link helper templates ([e9b90ce](https://github.com/fullofcaffeine/reflaxe.ruby/commit/e9b90ce91f9e99ea90fb1fd6231ceafd89c9c241))
+
 # [1.15.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.14.0...v1.15.0) (2026-06-11)
 
 
