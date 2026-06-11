@@ -1,7 +1,7 @@
 {
   "name": "reflaxe-ruby",
   "private": true,
-  "version": "1.30.0",
+  "version": "1.31.0",
   "license": "GPL-3.0-only",
   "description": "Reflaxe-based Ruby target for Haxe.",
   "scripts": {

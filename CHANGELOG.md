@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.30.0...v1.31.0) (2026-06-11)
+
+
+### Features
+
+* add typed RailsHx layout slots ([4b55674](https://github.com/fullofcaffeine/reflaxe.ruby/commit/4b5567420656b8f048e52b36107e1554a6a7ad8a))
+
 # [1.30.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.29.1...v1.30.0) (2026-06-11)
 
 
