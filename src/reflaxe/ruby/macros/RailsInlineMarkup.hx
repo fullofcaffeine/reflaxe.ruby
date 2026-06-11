@@ -431,6 +431,10 @@ private class RailsMarkupParser {
 		return macro @:pos(pos) rails.action_view.HtmlNode.For($items, ${{expr: EFunction(FArrow, fn), pos: pos}});
 	}
 
+	function mkIf(cond:Expr, thenNode:Expr, elseNode:Null<Expr>, pos:Position):Expr {
+		return macro @:pos(pos) rails.action_view.HtmlNode.If($cond, $thenNode, ${elseNode == null ? (macro null) : elseNode});
+	}
+
 	function mkAttr(attr:RailsParsedAttr):Expr {
 		return switch (attr.kind) {
 			case Static(value):
@@ -513,10 +517,53 @@ private class RailsMarkupParser {
 		return nodes;
 	}
 
+	function parseNodesUntilStop(shouldStop:() -> Bool):Array<Expr> {
+		var nodes:Array<Expr> = [];
+		while (!eof() && !shouldStop()) {
+			if (startsWith("<!--")) {
+				var commentStart = i;
+				var end = src.indexOf("-->", i + 4);
+				if (end == -1) {
+					Context.error("Unclosed HTML comment", makeSubPos(commentStart, src.length));
+				}
+				i = end + 3;
+				continue;
+			}
+			if (startsWith("</")) {
+				break;
+			}
+			if (startsWith("<")) {
+				nodes.push(parseTagNode());
+				continue;
+			}
+			var textNodes = parseTextNodesUntilTag();
+			for (node in textNodes) {
+				nodes.push(node);
+			}
+		}
+		return nodes;
+	}
+
 	function parseTagNode():Expr {
 		var tagStart = i;
 		expect("<", "Expected '<' to start a tag");
 		var name = readName();
+		if (name == "if") {
+			skipWs();
+			var cond = parseExprInBraces();
+			skipWs();
+			expect(">", "Expected '>' after <if ${...}>");
+			var thenNodes = parseNodesUntilStop(() -> startsWith("<else>") || startsWith("</if>"));
+			var elseNodes:Null<Array<Expr>> = null;
+			if (startsWith("<else>")) {
+				i += "<else>".length;
+				elseNodes = parseNodesUntilStop(() -> startsWith("</if>"));
+			}
+			expect("</if>", "Expected </if> to close <if>");
+			var thenNode = thenNodes.length == 1 ? thenNodes[0] : mkFragment(thenNodes, makeSubPos(tagStart, i));
+			var elseNode = elseNodes == null ? null : (elseNodes.length == 1 ? elseNodes[0] : mkFragment(elseNodes, makeSubPos(tagStart, i)));
+			return mkIf(cond, thenNode, elseNode, makeSubPos(tagStart, i));
+		}
 		if (name == "for") {
 			skipWs();
 			var head = parseForHead();
