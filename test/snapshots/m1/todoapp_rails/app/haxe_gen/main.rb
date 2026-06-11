@@ -5,24 +5,24 @@ class Main
     "Main"
   end
   def self.main()
-    todo__hx18697 = nil
-    controller__hx18698 = nil
-    layout_view__hx18699 = Views::ApplicationLayoutView
-    composer_view__hx18700 = Views::TodoComposerView
-    dashboard_view__hx18701 = Views::TodoDashboardView
-    form_view__hx18702 = Views::TodoFormView
-    list_view__hx18703 = Views::TodoListView
-    view__hx18704 = Views::TodoIndexView
-    summary_view__hx18705 = Views::TodoSummaryView
-    puts(HXRuby.stringify((todo__hx18697 == nil)))
-    puts(HXRuby.stringify((controller__hx18698 == nil)))
-    puts(HXRuby.stringify((layout_view__hx18699 != nil)))
-    puts(HXRuby.stringify((composer_view__hx18700 != nil)))
-    puts(HXRuby.stringify((dashboard_view__hx18701 != nil)))
-    puts(HXRuby.stringify((form_view__hx18702 != nil)))
-    puts(HXRuby.stringify((list_view__hx18703 != nil)))
-    puts(HXRuby.stringify((view__hx18704 != nil)))
-    puts(HXRuby.stringify((summary_view__hx18705 != nil)))
+    todo__hx18709 = nil
+    controller__hx18710 = nil
+    layout_view__hx18711 = Views::ApplicationLayoutView
+    composer_view__hx18712 = Views::TodoComposerView
+    dashboard_view__hx18713 = Views::TodoDashboardView
+    form_view__hx18714 = Views::TodoFormView
+    list_view__hx18715 = Views::TodoListView
+    view__hx18716 = Views::TodoIndexView
+    summary_view__hx18717 = Views::TodoSummaryView
+    puts(HXRuby.stringify((todo__hx18709 == nil)))
+    puts(HXRuby.stringify((controller__hx18710 == nil)))
+    puts(HXRuby.stringify((layout_view__hx18711 != nil)))
+    puts(HXRuby.stringify((composer_view__hx18712 != nil)))
+    puts(HXRuby.stringify((dashboard_view__hx18713 != nil)))
+    puts(HXRuby.stringify((form_view__hx18714 != nil)))
+    puts(HXRuby.stringify((list_view__hx18715 != nil)))
+    puts(HXRuby.stringify((view__hx18716 != nil)))
+    puts(HXRuby.stringify((summary_view__hx18717 != nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

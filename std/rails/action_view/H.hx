@@ -72,6 +72,14 @@ class H {
 		return macro rails.action_view.HtmlNode.Yield;
 	}
 
+	public static macro function contentFor(name:Expr, children:Expr):Expr {
+		return macro rails.action_view.HtmlNode.ContentFor($name, $children);
+	}
+
+	public static macro function yieldContentNamed(name:Expr):Expr {
+		return macro rails.action_view.HtmlNode.YieldContent($name);
+	}
+
 	public static macro function formWith(url:Expr, scope:Expr, attrs:Expr, children:Expr):Expr {
 		return macro rails.action_view.HtmlNode.FormWith($url, $scope, $attrs, $children);
 	}

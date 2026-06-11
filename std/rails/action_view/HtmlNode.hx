@@ -31,4 +31,6 @@ enum HtmlNode {
 	FormTextArea(name:String, attrs:Array<HtmlAttr>);
 	FormCheckBox(name:String, attrs:Array<HtmlAttr>);
 	FormSubmit<TText>(text:TText, attrs:Array<HtmlAttr>);
+	ContentFor(name:String, children:Array<HtmlNode>);
+	YieldContent(name:String);
 }

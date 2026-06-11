@@ -742,6 +742,15 @@ private class RailsMarkupParser {
 				rejectChildren(name, children, pos);
 				rejectAttrs(name, attrs, pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Yield;
+			case "content_for":
+				var slotName = requireAttrValue(attrs, "name", pos);
+				rejectAttrs(name, attrsExcept(attrs, ["name"]), pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.ContentFor($slotName, ${mkArray(children, pos)});
+			case "yield_content":
+				rejectChildren(name, children, pos);
+				var slotName = requireAttrValue(attrs, "name", pos);
+				rejectAttrs(name, attrsExcept(attrs, ["name"]), pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.YieldContent($slotName);
 			default:
 				mkElement(name, attrs.map(mkAttr), children, pos);
 		}

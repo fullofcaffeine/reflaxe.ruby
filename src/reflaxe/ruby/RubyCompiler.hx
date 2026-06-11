@@ -1361,6 +1361,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							"<%= yield %>";
 						}
+					case "ContentFor":
+						if (params.length != 2) {
+							Context.error("HtmlNode.ContentFor expects name and children arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateContentFor(params[0], params[1], scope);
+						}
+					case "YieldContent":
+						if (params.length != 1) {
+							Context.error("HtmlNode.YieldContent expects one name argument.", node.pos);
+							"";
+						} else {
+							"<%= yield " + rubySymbolLiteral(expectTemplateString(params[0], "HtmlNode.YieldContent name must be a string literal.")) + " %>";
+						}
 					case "FormWith":
 						if (params.length != 4) {
 							Context.error("HtmlNode.FormWith expects url, scope, attrs, and children arguments.", node.pos);
@@ -1603,6 +1617,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var args = [printTemplateExpr(url, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		var out = "<%= link_to " + args.join(", ") + " do %>";
 		for (child in expectTemplateArray(childrenExpr, "HtmlNode.LinkToBlock children must be an array literal.")) {
+			out += lowerTemplateNode(child, scope);
+		}
+		return out + "<% end %>";
+	}
+
+	static function lowerTemplateContentFor(nameExpr:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
+		var name = rubySymbolLiteral(expectTemplateString(nameExpr, "HtmlNode.ContentFor name must be a string literal."));
+		var out = "<% content_for " + name + " do %>";
+		for (child in expectTemplateArray(childrenExpr, "HtmlNode.ContentFor children must be an array literal.")) {
 			out += lowerTemplateNode(child, scope);
 		}
 		return out + "<% end %>";

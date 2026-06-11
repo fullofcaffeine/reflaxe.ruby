@@ -199,6 +199,7 @@ for (const expected of [
   '@:railsTemplateAst("render")',
   "<doctype_html />",
   "<csrf_meta_tags />",
+  '<yield_content name="head" />',
   '<stylesheet_link_tag name="application" data-turbo-track="reload" />',
   "<javascript_importmap_tags />",
   "<rails_yield />",
@@ -218,7 +219,8 @@ for (const forbidden of ["public static var body", "public static var erb", "pub
 const indexSource = readFileSync(join(exampleDir, "views", "TodoIndexView.hx"), "utf8");
 for (const expected of [
   '@:railsTemplateAst("render")',
-  "return <main class=\"todo-shell\">",
+  "return <>",
+  '<content_for name="head">',
   '<partial template=${(Template.named("controllers/todos/composer")',
   '<partial template=${(Template.named("controllers/todos/list")',
   '<partial template=${(Template.named("controllers/todos/dashboard")',
@@ -246,6 +248,8 @@ const view = readFileSync(join(outputDir, "app", "views", "controllers", "todos"
 for (const expected of [
   "RailsHx sample",
   "Typed Rails, polished Ruby.",
+  "<% content_for :head do %>",
+  '<meta name="railshx-template" content="todo-index">',
   "<%= todo_count %>",
   "<%= typed_column_count %>",
   '<%= render partial: "controllers/todos/composer", locals: {sample_user: sample_user} %>',
@@ -265,6 +269,7 @@ for (const expected of [
   "<title>RailsHx Todoapp</title>",
   '<%= csrf_meta_tags %>',
   '<%= csp_meta_tag %>',
+  '<%= yield :head %>',
   '<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>',
   '<%= javascript_importmap_tags %>',
   '<%= yield %>',
