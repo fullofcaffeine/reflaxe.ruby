@@ -39,7 +39,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Strong params macro | `ParamsMacro.requirePermit(...)` | Implemented |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |
 | Rails template artifact generation | `@:railsTemplate(...)` | Implemented |
-| Typed ActionView template AST | `@:railsTemplateAst(...)` + `HtmlNode`/`HtmlAttr` | Initial partial/component slice |
+| Typed ActionView template AST | `@:railsTemplateAst(...)` + `H`/`HtmlNode`/`HtmlAttr` | Initial partial/component slice |
 | Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented |
 | Route helper generator | `npm run rails:generate-routes` | Implemented |
 | Scaffold generator | `npm run rails:scaffold` | Implemented |

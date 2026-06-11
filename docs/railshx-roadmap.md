@@ -10,7 +10,7 @@ The repo currently has a Rails MVP:
 - Minimal ActiveRecord model surface through `rails.active_record.Base<T>` and `rails.macros.ModelMacro`.
 - Minimal ActionController/strong params surface through `rails.action_controller.Base`, `Params`, and `ParamsMacro`.
 - First typed ActionView render seam through `rails.action_view.Template<TLocals>`, `ViewMacro.renderTemplate(...)`, and `@:railsTemplate(...)` artifact generation.
-- First typed ActionView AST seam through `rails.action_view.HtmlNode`, `rails.action_view.HtmlAttr`, and `@:railsTemplateAst(...)`, currently proven by a generated todoapp partial.
+- First typed ActionView AST seam through `rails.action_view.H`, `HtmlNode`, `HtmlAttr`, and `@:railsTemplateAst(...)`, currently proven by a generated todoapp partial.
 - Route helper and scaffold scripts under `scripts/rails`.
 - A Rails todoapp example and optional Rails integration smoke coverage.
 
@@ -37,7 +37,7 @@ RailsHx should use macros and typed std stubs when Rails APIs need a DSL. The `.
 
 Do not build a parallel runtime DSL engine by default. Compile-time-only helpers are preferred when they can disappear after lowering. Runtime helpers are acceptable only when Rails itself needs a callable boundary or when tests prove that a small helper gives a clearer Rails-native contract.
 
-For typed ActionView templates, follow the HXX lesson closely: provide typed entrypoints for locals/assigns/components, parse embedded Haxe expressions through macro typing, validate field/helper references before Ruby runs, and emit Rails-native renderable templates/components. `@:railsTemplateAst("render")` is the first implementation slice: a static Haxe method returns a typed `HtmlNode` tree, embedded expressions such as `todo.title` are type-checked by Haxe, and the compiler lowers the tree into normal `.html.erb`. Raw ERB is a narrow escape hatch and must be explicit with `@:railsAllowRawErb`; it is not the default app-authoring destination.
+For typed ActionView templates, follow the HXX lesson closely: provide typed entrypoints for locals/assigns/components, parse embedded Haxe expressions through macro typing, validate field/helper references before Ruby runs, and emit Rails-native renderable templates/components. `@:railsTemplateAst("render")` is the first implementation slice: a static Haxe method returns a typed `HtmlNode` tree, typically built through the macro-only `rails.action_view.H` helper facade, embedded expressions such as `todo.title` are type-checked by Haxe, and the compiler lowers the tree into normal `.html.erb`. Raw ERB is a narrow escape hatch and must be explicit with `@:railsAllowRawErb`; it is not the default app-authoring destination.
 
 ## Design Contract
 
@@ -67,7 +67,7 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 
 The first implementation slice should prove the complete CRUD path: typed model, typed migration, typed params/controller, typed route helpers, generated Rails Ruby, `rails db:migrate`, and `rails test`.
 
-Typed Rails templates are part of the RailsHx destination. `haxe.ruby-wpi.12` now has an initial typed partial/component path through `HtmlNode`/`HtmlAttr`; the remaining work is a fuller ergonomic markup/helper/component DSL so examples can migrate away from large raw ERB strings without losing Rails-native output.
+Typed Rails templates are part of the RailsHx destination. `haxe.ruby-wpi.12` now has an initial typed partial/component path through `H` plus `HtmlNode`/`HtmlAttr`; the remaining work is a fuller markup/helper/component DSL so examples can migrate away from large raw ERB strings without losing Rails-native output.
 
 ## Acceptance Bar
 

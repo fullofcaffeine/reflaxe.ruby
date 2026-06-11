@@ -183,6 +183,14 @@
       "reason": "Compile-time ActionView attribute AST lowered by @:railsTemplateAst into Rails ERB."
     },
     {
+      "id": "std.rails.action_view_h",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_view/H.hx",
+      "surface": "rails.action_view.H",
+      "reason": "Macro helper facade that expands ergonomic typed template calls into HtmlNode/HtmlAttr AST constructors."
+    },
+    {
       "id": "std.rails.action_view_html_node",
       "owner": "std",
       "status": "implemented",

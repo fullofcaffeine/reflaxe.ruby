@@ -182,6 +182,7 @@ for (const expected of [
 const typedPartial = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_summary.html.erb"), "utf8");
 for (const expected of [
   "Typed template partial",
+  "typed Haxe template helpers",
   "<%= todos.length %>",
   "<% todos.each do |todo| %>",
   "<%= todo.title %>",
