@@ -39,6 +39,8 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Route helper generator | `npm run rails:generate-routes` | Implemented |
 | Scaffold generator | `npm run rails:scaffold` | Implemented |
 
+The rows above describe the current Rails MVP. The deeper typed Rails compiler layer is tracked as RailsHx; see `docs/railshx-roadmap.md` and the `haxe.ruby-wpi` bead epic.
+
 ## Strict Boundary Policy
 
 | Define | Status | Behavior |
