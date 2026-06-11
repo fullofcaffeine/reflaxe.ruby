@@ -37,9 +37,14 @@ syntaxCheck([
 viewContentCheck("app/views/controllers/todos/index.html.erb", [
   "Typed Rails, polished Ruby.",
   "RailsHx sample",
-  'render partial: "controllers/todos/typed_form"',
+  'render partial: "controllers/todos/composer"',
   'render partial: "controllers/todos/dashboard"',
   "Models::Todo.__hx_rails_schema",
+]);
+viewContentCheck("app/views/controllers/todos/_composer.html.erb", [
+  "if sample_user != nil",
+  'render partial: "controllers/todos/typed_form"',
+  "sample_user_id",
 ]);
 
 const railsProbe = run("bundle", ["exec", "ruby", "-e", "require 'rails'; puts Rails.version"], {

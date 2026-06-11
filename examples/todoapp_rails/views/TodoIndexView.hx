@@ -223,13 +223,7 @@ class TodoIndexView {
   <section class="workspace">
     <div class="card">
       <h2>Add a task</h2>
-      <% if sample_user %>
-        <%= render partial: "controllers/todos/typed_form", locals: {sample_user_id: sample_user.id} %>
-      <% else %>
-        <div class="empty-state">
-          Create a user first; the integration fixture seeds one before exercising this page.
-        </div>
-      <% end %>
+      <%= render partial: "controllers/todos/composer", locals: {sample_user: sample_user} %>
     </div>
 
     <div class="card">

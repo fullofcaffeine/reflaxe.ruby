@@ -1549,7 +1549,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					Context.error("HtmlNode.Partial locals must include at least one named local.", locals.pos);
 					"{}";
 				} else {
-					"{" + [for (field in fields) quoteRubyStringForCode(field.name) + " => " + printTemplateExpr(field.expr, scope)].join(", ") + "}";
+					"{" + [for (field in fields) quoteRubyStringForCode(RubyNaming.toLocalName(field.name)) + " => " + printTemplateExpr(field.expr, scope)].join(", ") + "}";
 				}
 			case _:
 				Context.error("HtmlNode.Partial locals must be an object literal so Rails local names are explicit.", locals.pos);
