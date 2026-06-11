@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.10.0...v1.11.0) (2026-06-11)
+
+
+### Features
+
+* inline RailsHx todo template body ([ac3ad22](https://github.com/fullofcaffeine/reflaxe.ruby/commit/ac3ad226d8605cd68e3f9a15d2b42194c5033c2e))
+
 # [1.10.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.9.0...v1.10.0) (2026-06-11)
 
 
