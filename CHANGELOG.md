@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.29.1...v1.30.0) (2026-06-11)
+
+
+### Features
+
+* promote RailsHx Turbo facade to std ([7485ee4](https://github.com/fullofcaffeine/reflaxe.ruby/commit/7485ee4e6badaccb03910dcc6dad918a80b03798))
+
 ## [1.29.1](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.29.0...v1.29.1) (2026-06-11)
 
 
