@@ -46,6 +46,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed ActionView form helpers | `<form_with>` HHX tags + form field helpers | Initial form slice |
 | Typed HHX control/helper tags | `<if>`, `<for>`, `<link_to>`, `<partial>` | Initial template/helper slice |
 | Typed HHX helper label children | static text or `${...}` expression children | Initial helper slice |
+| Typed HHX nested helper slots | `<link_to>...</link_to>` block-form content | Initial slot slice |
 | Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented |
 | Route helper generator | `npm run rails:generate-routes` | Implemented |
 | Scaffold generator | `npm run rails:scaffold` | Implemented |

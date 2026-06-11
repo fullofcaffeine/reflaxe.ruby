@@ -653,10 +653,22 @@ private class RailsMarkupParser {
 				var submitAttrs = attrsExcept(attrs, ["text"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.FormSubmit($submitText, ${mkArray(submitAttrs.map(mkAttr), pos)});
 			case "link_to":
-				var label = attrValueOrTextChildren(attrs, children, "link_to", pos);
 				var url = requireAttrValue(attrs, "url", pos);
 				var linkAttrs = attrsExcept(attrs, ["text", "url"]);
-				macro @:pos(pos) rails.action_view.HtmlNode.LinkTo($label, $url, ${mkArray(linkAttrs.map(mkAttr), pos)});
+				var explicitText = attrValue(attrs, "text");
+				if (explicitText != null) {
+					macro @:pos(pos) rails.action_view.HtmlNode.LinkTo($explicitText, $url, ${mkArray(linkAttrs.map(mkAttr), pos)});
+				} else {
+					var label = textChildExpr(children, pos);
+					if (label != null) {
+						macro @:pos(pos) rails.action_view.HtmlNode.LinkTo($label, $url, ${mkArray(linkAttrs.map(mkAttr), pos)});
+					} else if (children.length > 0) {
+						macro @:pos(pos) rails.action_view.HtmlNode.LinkToBlock($url, ${mkArray(linkAttrs.map(mkAttr), pos)}, ${mkArray(children, pos)});
+					} else {
+						Context.error('Rails HHX <link_to> expects text/expression children, text="...", or nested markup children.', pos);
+						macro null;
+					}
+				}
 			case "partial":
 				var template = requireAttrValue(attrs, "template", pos);
 				var locals = requireAttrValue(attrs, "locals", pos);
@@ -675,20 +687,21 @@ private class RailsMarkupParser {
 	}
 
 	function requireAttrValue(attrs:Array<RailsParsedAttr>, name:String, pos:Position):Expr {
-		for (attr in attrs) {
-			if (attr.name == name) {
-				return switch (attr.kind) {
-					case Static(value):
-						macro @:pos(attr.pos) $v{value};
-					case Bool:
-						macro @:pos(attr.pos) true;
-					case ExprValue(value):
-						value;
-				}
-			}
+		var found = attrValue(attrs, name);
+		if (found != null) {
+			return found;
 		}
 		Context.error('Rails HHX <' + name + '> attribute is required here.', pos);
 		return macro null;
+	}
+
+	function attrValue(attrs:Array<RailsParsedAttr>, name:String):Null<Expr> {
+		for (attr in attrs) {
+			if (attr.name == name) {
+				return attrValueExpr(attr);
+			}
+		}
+		return null;
 	}
 
 	function attrValueOrTextChildren(attrs:Array<RailsParsedAttr>, children:Array<Expr>, tagName:String, pos:Position):Expr {

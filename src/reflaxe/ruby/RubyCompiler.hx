@@ -1277,6 +1277,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateLinkTo(params[0], params[1], params[2], scope);
 						}
+					case "LinkToBlock":
+						if (params.length != 3) {
+							Context.error("HtmlNode.LinkToBlock expects url, attrs, and children arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateLinkToBlock(params[0], params[1], params[2], scope);
+						}
 					case "FormWith":
 						if (params.length != 4) {
 							Context.error("HtmlNode.FormWith expects url, scope, attrs, and children arguments.", node.pos);
@@ -1471,6 +1478,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args = args.concat(kwargs);
 		}
 		return "<%= link_to " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateLinkToBlock(url:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(url, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		var out = "<%= link_to " + args.join(", ") + " do %>";
+		for (child in expectTemplateArray(childrenExpr, "HtmlNode.LinkToBlock children must be an array literal.")) {
+			out += lowerTemplateNode(child, scope);
+		}
+		return out + "<% end %>";
 	}
 
 	static function lowerTemplateHelperAttrs(attrs:TypedExpr, scope:RailsTemplateScope):Array<String> {

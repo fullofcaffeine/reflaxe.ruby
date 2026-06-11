@@ -216,7 +216,10 @@ for (const expected of [
 const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_dashboard.html.erb"), "utf8");
 for (const expected of [
   "Composed typed partial",
-  '<%= link_to (if locals.todos.length > 0 then "Back to todos" else "Back to empty todo route" end), todos_path(), class: "typed-route-link" %>',
+  '<%= link_to todos_path(), class: "typed-route-link" do %>',
+  '<span><%= (if locals.todos.length > 0 then "Back to todos" else "Back to empty todo route" end) %></span>',
+  '<span class="typed-route-count"><%= locals.todos.length %></span>',
+  '<% end %>',
   '<%= render partial: "controllers/todos/summary", locals: {"todos" => locals.todos} %>',
 ]) {
   if (!typedDashboard.includes(expected)) {

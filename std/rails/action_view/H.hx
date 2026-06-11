@@ -44,6 +44,10 @@ class H {
 		return macro rails.action_view.HtmlNode.LinkTo($label, $url, $attrs);
 	}
 
+	public static macro function linkBlock(url:Expr, attrs:Expr, children:Expr):Expr {
+		return macro rails.action_view.HtmlNode.LinkToBlock($url, $attrs, $children);
+	}
+
 	public static macro function formWith(url:Expr, scope:Expr, attrs:Expr, children:Expr):Expr {
 		return macro rails.action_view.HtmlNode.FormWith($url, $scope, $attrs, $children);
 	}
