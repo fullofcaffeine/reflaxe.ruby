@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.26.0...v1.27.0) (2026-06-11)
+
+
+### Features
+
+* add typed Rails HHX checkbox ([7dd2a7d](https://github.com/fullofcaffeine/reflaxe.ruby/commit/7dd2a7dfb43cf39dd1cfaf0e7012299765e30d14))
+
 # [1.26.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.25.0...v1.26.0) (2026-06-11)
 
 
