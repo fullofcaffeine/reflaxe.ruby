@@ -5,8 +5,8 @@ class Main
     "Main"
   end
   def self.main()
-    add_one__hx18339 = ->(x__hx18338) { (x__hx18338 + 1) }
-    puts(HXRuby.stringify(add_one__hx18339.call(2)))
+    add_one__hx18383 = ->(x__hx18382) { (x__hx18382 + 1) }
+    puts(HXRuby.stringify(add_one__hx18383.call(2)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

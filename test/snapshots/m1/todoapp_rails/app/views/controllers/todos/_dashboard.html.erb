@@ -1,11 +1,7 @@
-<section class="card typed-dashboard">
-			<div class="typed-dashboard-header">
-				<span class="eyebrow">Composed typed partial</span>
-				<h2>One typed partial, reused by Rails.</h2>
-			</div>
+<% railshx_component_body = capture do %>
 			<%= link_to "#open-work", class: "typed-route-link", "data-railshx-scroll": true do %>
 				<span><%= (if todos.length > 0 then "Jump to open work" else "Jump to the empty state" end) %></span>
 				<span class="typed-route-count"><%= todos.length %></span>
 			<% end %>
 			<%= render partial: "controllers/todos/summary", locals: {todos: todos} %>
-		</section>
+		<% end %><%= render partial: "controllers/todos/card", locals: {eyebrow: "Composed typed component", title: "One typed component, reused by Rails.", body: railshx_component_body} %>

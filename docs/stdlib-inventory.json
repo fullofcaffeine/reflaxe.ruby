@@ -199,6 +199,14 @@
       "reason": "Compile-time ActionView node AST for typed Haxe template expressions, loops, partial composition, helper links, and form builders lowered into Rails ERB."
     },
     {
+      "id": "std.rails.action_view_slot",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_view/Slot.hx",
+      "surface": "rails.action_view.Slot",
+      "reason": "Typed RailsHx component slot marker for captured ActionView buffers passed as typed partial locals."
+    },
+    {
       "id": "std.rails.turbo",
       "owner": "std",
       "status": "implemented",

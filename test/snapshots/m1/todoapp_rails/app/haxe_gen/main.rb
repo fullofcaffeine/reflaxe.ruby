@@ -5,24 +5,26 @@ class Main
     "Main"
   end
   def self.main()
-    todo__hx18709 = nil
-    controller__hx18710 = nil
-    layout_view__hx18711 = Views::ApplicationLayoutView
-    composer_view__hx18712 = Views::TodoComposerView
-    dashboard_view__hx18713 = Views::TodoDashboardView
-    form_view__hx18714 = Views::TodoFormView
-    list_view__hx18715 = Views::TodoListView
-    view__hx18716 = Views::TodoIndexView
-    summary_view__hx18717 = Views::TodoSummaryView
-    puts(HXRuby.stringify((todo__hx18709 == nil)))
-    puts(HXRuby.stringify((controller__hx18710 == nil)))
-    puts(HXRuby.stringify((layout_view__hx18711 != nil)))
-    puts(HXRuby.stringify((composer_view__hx18712 != nil)))
-    puts(HXRuby.stringify((dashboard_view__hx18713 != nil)))
-    puts(HXRuby.stringify((form_view__hx18714 != nil)))
-    puts(HXRuby.stringify((list_view__hx18715 != nil)))
-    puts(HXRuby.stringify((view__hx18716 != nil)))
-    puts(HXRuby.stringify((summary_view__hx18717 != nil)))
+    todo__hx18754 = nil
+    controller__hx18755 = nil
+    layout_view__hx18756 = Views::ApplicationLayoutView
+    card_view__hx18757 = Views::TodoCardView
+    composer_view__hx18758 = Views::TodoComposerView
+    dashboard_view__hx18759 = Views::TodoDashboardView
+    form_view__hx18760 = Views::TodoFormView
+    list_view__hx18761 = Views::TodoListView
+    view__hx18762 = Views::TodoIndexView
+    summary_view__hx18763 = Views::TodoSummaryView
+    puts(HXRuby.stringify((todo__hx18754 == nil)))
+    puts(HXRuby.stringify((controller__hx18755 == nil)))
+    puts(HXRuby.stringify((layout_view__hx18756 != nil)))
+    puts(HXRuby.stringify((card_view__hx18757 != nil)))
+    puts(HXRuby.stringify((composer_view__hx18758 != nil)))
+    puts(HXRuby.stringify((dashboard_view__hx18759 != nil)))
+    puts(HXRuby.stringify((form_view__hx18760 != nil)))
+    puts(HXRuby.stringify((list_view__hx18761 != nil)))
+    puts(HXRuby.stringify((view__hx18762 != nil)))
+    puts(HXRuby.stringify((summary_view__hx18763 != nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

@@ -19,6 +19,8 @@ const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rai
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedFormInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_src");
 const typedFormInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_out");
+const typedSlotInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_slot_invalid_src");
+const typedSlotInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_slot_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -53,6 +55,8 @@ rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedFormInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedFormInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedSlotInvalidSourceDir, { force: true, recursive: true });
+rmSync(typedSlotInvalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -65,6 +69,7 @@ for (const file of [
   "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
   "app/haxe_gen/views/application_layout_view.rb",
+  "app/haxe_gen/views/todo_card_view.rb",
   "app/haxe_gen/views/todo_composer_view.rb",
   "app/haxe_gen/views/todo_dashboard_view.rb",
   "app/haxe_gen/views/todo_form_view.rb",
@@ -72,6 +77,7 @@ for (const file of [
   "app/haxe_gen/views/todo_list_view.rb",
   "app/haxe_gen/views/todo_summary_view.rb",
   "app/views/controllers/todos/index.html.erb",
+  "app/views/controllers/todos/_card.html.erb",
   "app/views/controllers/todos/_composer.html.erb",
   "app/views/controllers/todos/_dashboard.html.erb",
   "app/views/controllers/todos/_list.html.erb",
@@ -305,14 +311,28 @@ for (const expected of [
   }
 }
 
+const typedCard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_card.html.erb"), "utf8");
+for (const expected of [
+  '<span class="eyebrow"><%= eyebrow %></span>',
+  "<h2><%= title %></h2>",
+  "<%= body %>",
+  "typed-dashboard",
+]) {
+  if (!typedCard.includes(expected)) {
+    console.error(`todoapp_rails typed card component missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
 const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_dashboard.html.erb"), "utf8");
 for (const expected of [
-  "Composed typed partial",
+  "<% railshx_component_body = capture do %>",
   '<%= link_to "#open-work", class: "typed-route-link", "data-railshx-scroll": true do %>',
   '<span><%= (if todos.length > 0 then "Jump to open work" else "Jump to the empty state" end) %></span>',
   '<span class="typed-route-count"><%= todos.length %></span>',
   '<% end %>',
   '<%= render partial: "controllers/todos/summary", locals: {todos: todos} %>',
+  '<%= render partial: "controllers/todos/card", locals: {eyebrow: "Composed typed component", title: "One typed component, reused by Rails.", body: railshx_component_body} %>',
 ]) {
   if (!typedDashboard.includes(expected)) {
     console.error(`todoapp_rails typed dashboard partial missing expected content: ${expected}`);
@@ -372,6 +392,7 @@ expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
 expectTypedRouteHelperFailure();
 expectTypedFormFieldRequiresFormFailure();
+expectTypedSlotContentRequiresComponentFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -866,6 +887,82 @@ function expectTypedFormFieldRequiresFormFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid typed form field check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectTypedSlotContentRequiresComponentFailure() {
+  mkdirSync(join(typedSlotInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(typedSlotInvalidSourceDir, "InvalidTypedSlotMain.hx"), [
+    "import views.BadTypedSlotView;",
+    "",
+    "class InvalidTypedSlotMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTypedSlotView> = BadTypedSlotView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedSlotInvalidSourceDir, "views", "BadTypedSlotView.hx"), [
+    "package views;",
+    "",
+    "import rails.action_view.HtmlNode;",
+    "import rails.action_view.Slot;",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad_slot\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTypedSlotView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <div>${Slot.content()}</div>;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedSlotInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      typedSlotInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTypedSlotMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Slot.content() outside HtmlNode.Component compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("Slot.content() may only be used as the matching slot local for HtmlNode.Component")) {
+      console.error("Invalid Slot.content() usage failed, but not with the expected typed slot error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid typed slot check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

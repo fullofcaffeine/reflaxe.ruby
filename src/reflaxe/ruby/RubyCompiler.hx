@@ -1312,6 +1312,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplatePartial(params[0], params[1], scope);
 						}
+					case "Component":
+						if (params.length != 4) {
+							Context.error("HtmlNode.Component expects template, locals, slotName, and children arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateComponent(params[0], params[1], params[2], params[3], scope);
+						}
 					case "LinkTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.LinkTo expects label, url, and attrs arguments.", node.pos);
@@ -1680,18 +1687,48 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("HtmlNode.Partial expects Template.named(\"path\") as the template argument.", template.pos);
 			return "";
 		}
-		var localsHash = lowerTemplateLocalsHash(locals, scope);
+		var localsHash = lowerTemplateLocalsHash(locals, scope, null, null);
 		return "<%= render partial: " + quoteRubyStringForCode(path) + ", locals: " + localsHash + " %>";
 	}
 
-	static function lowerTemplateLocalsHash(locals:TypedExpr, scope:RailsTemplateScope):String {
+	static function lowerTemplateComponent(template:TypedExpr, locals:TypedExpr, slotNameExpr:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
+		var path = extractTypedTemplatePath(template);
+		if (path == null) {
+			Context.error("HtmlNode.Component expects Template.named(\"path\") as the template argument.", template.pos);
+			return "";
+		}
+		var slotName = expectTemplateString(slotNameExpr, "HtmlNode.Component slotName must be a string literal.");
+		var slotLocalName = "railshx_component_" + RubyNaming.toLocalName(slotName);
+		var out = "<% " + slotLocalName + " = capture do %>";
+		for (child in expectTemplateArray(childrenExpr, "HtmlNode.Component children must be an array literal.")) {
+			out += lowerTemplateNode(child, scope);
+		}
+		out += "<% end %>";
+		var localsHash = lowerTemplateLocalsHash(locals, scope, slotName, slotLocalName);
+		return out + "<%= render partial: " + quoteRubyStringForCode(path) + ", locals: " + localsHash + " %>";
+	}
+
+	static function lowerTemplateLocalsHash(locals:TypedExpr, scope:RailsTemplateScope, slotName:Null<String>, slotBuffer:Null<String>):String {
 		return switch (unwrapTemplateExpr(locals).expr) {
 			case TObjectDecl(fields):
 				if (fields.length == 0) {
 					Context.error("HtmlNode.Partial locals must include at least one named local.", locals.pos);
 					"{}";
 				} else {
-					"{" + [for (field in fields) RubyNaming.toLocalName(field.name) + ": " + printTemplateExpr(field.expr, scope)].join(", ") + "}";
+					var foundSlot = slotName == null;
+					var out = [for (field in fields) {
+						var value = if (slotName != null && field.name == slotName) {
+							foundSlot = true;
+							slotBuffer == null ? "nil" : slotBuffer;
+						} else {
+							printTemplateExpr(field.expr, scope);
+						}
+						RubyNaming.toLocalName(field.name) + ": " + value;
+					}];
+					if (!foundSlot) {
+						Context.error('HtmlNode.Component locals must include a "$slotName" slot local.', locals.pos);
+					}
+					"{" + out.join(", ") + "}";
 				}
 			case _:
 				Context.error("HtmlNode.Partial locals must be an object literal so Rails local names are explicit.", locals.pos);
@@ -1768,6 +1805,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (unwrapped.expr) {
 			case TLocal(v) if (scope.localNames.exists(v.id)):
 				scope.localNames.get(v.id);
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (isSlotContentCall(classRef.get(), fieldRef.get())):
+				Context.error("Slot.content() may only be used as the matching slot local for HtmlNode.Component.", unwrapped.pos);
+				"nil";
 			case TConst(TNull): "nil";
 			case TConst(TBool(value)): value ? "true" : "false";
 			case TConst(TInt(value)): Std.string(value);
@@ -1796,6 +1836,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped));
 		}
+	}
+
+	static function isSlotContentCall(classType:ClassType, field:haxe.macro.Type.ClassField):Bool {
+		return field.name == "content" && ((classType.pack.join(".") == "rails.action_view" && classType.name == "Slot")
+			|| (classType.pack.join(".") == "rails.action_view._Slot" && classType.name == "Slot_Impl_"));
 	}
 
 	static function quoteHtmlAttr(value:String):String {

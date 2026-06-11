@@ -71,6 +71,7 @@ for (const required of [
   "std/rails/action_view/H.hx",
   "std/rails/action_view/HtmlAttr.hx",
   "std/rails/action_view/HtmlNode.hx",
+  "std/rails/action_view/Slot.hx",
   "std/rails/action_view/Template.hx",
   "std/rails/turbo/Turbo.hx",
   "std/rails/macros/ViewMacro.hx",
