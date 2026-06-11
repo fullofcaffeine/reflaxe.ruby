@@ -38,6 +38,8 @@ ruby out/ruby/run.rb
 - `reflaxe_ruby_strict`: rejects raw `__ruby__` injection in user/project sources.
 - `reflaxe_ruby_strict_policy=auto|on|off`: policy hook for strict user boundaries.
 
+See [Ruby Profiles](docs/profiles.md) for the profile contract: both profiles should emit idiomatic Ruby where safe, `portable` preserves Haxe semantics first, and `idiomatic` is the Ruby-first default.
+
 ## Ruby Interop
 
 Interop is typed through metadata and small std surfaces:

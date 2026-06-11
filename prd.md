@@ -182,27 +182,31 @@ Examples:
 examples/hello_world
 examples/ruby_interop (extern + require + block/kwargs)
 examples/todoapp_rails (full Rails app)
-5) Profiles / modes (answering “do we need two modes?”)
+5) Profiles / modes
 Recommendation
 
-Implement profiles, but make them feel optional and non-annoying:
+Implement two public profile contracts and make them feel optional and non-annoying:
 
 Default: idiomatic
+Ruby-first contract
 Ruby-native types
 snake_case output
 blocks/kwargs
 minimal runtime
+Ruby/Rails conventions win when they conflict with cross-target portability
+
 Optional: portable
+Haxe-semantics-first contract
 closer to Haxe semantics
 more runtime helpers (e.g., to emulate certain std behaviors)
-fewer Ruby idioms if they risk semantic drift
+Ruby idioms are still preferred when behavior is preserved
+Haxe behavior wins when Ruby/Rails conventions would drift semantics
 
-This matches the reality that:
+Both profiles should generate idiomatic Ruby whenever possible. `portable` is not an "unidiomatic Ruby" mode; it is the contract that refuses to sacrifice Haxe portability merely to look more native.
 
-Rails code wants Ruby-ish output,
-but cross-target Haxe libs sometimes want Haxe-ish semantics.
+Do not add a public `metal` profile for Ruby by analogy with `haxe.rust` or `haxe.go`. Ruby performance should be handled through explicit optimizer/runtime defines until a third profile has a real, tested, documented contract.
 
-Config proposal
+Config
 
 -D reflaxe_ruby_profile=idiomatic|portable
 fallback define aliases:
@@ -244,7 +248,7 @@ Ruby file path must align with constants for autoloaders (especially Rails Zeitw
 Module/class Foo::BarBaz → foo/bar_baz.rb
 For non-Rails apps:
 emit a main.rb (or app.rb) entrypoint requiring generated files and calling main.
-7) Code generation rules (idiomatic profile)
+7) Code generation rules (Ruby-first/default profile)
 
 This is the “compiler contract” the implementation must follow.
 

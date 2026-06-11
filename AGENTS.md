@@ -12,6 +12,17 @@ bd close <id>         # Complete work
 bd sync               # Sync with git
 ```
 
+## Ruby Profile Contract
+
+The compiler has two public profile contracts: `idiomatic` and `portable`.
+
+- `idiomatic` is the default Ruby-first contract: Ruby/Rails conventions win when they conflict with cross-target portability.
+- `portable` is the Haxe-semantics-first contract: Haxe behavior wins when Ruby/Rails conventions would drift semantics.
+- Both profiles should emit idiomatic Ruby whenever it is behavior-preserving.
+- Do not introduce a public `metal` profile by analogy with `haxe.rust` or `haxe.go`; Ruby performance policy belongs in explicit optimizer/runtime defines unless a future profile has a real, tested, documented contract.
+
+See `docs/profiles.md` before changing profile behavior.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
@@ -37,4 +48,3 @@ bd sync               # Sync with git
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
-

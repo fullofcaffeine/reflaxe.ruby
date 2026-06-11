@@ -21,8 +21,10 @@ The runtime file `runtime/hxruby/data_define.rb` includes compatibility behavior
 
 | Profile | Define | Status | Purpose |
 | --- | --- | --- | --- |
-| Idiomatic | `-D reflaxe_ruby_profile=idiomatic` | Default | Prefer Ruby naming, kwargs, blocks, and minimal runtime helpers. |
-| Portable | `-D reflaxe_ruby_profile=portable` | Available | Reserved for closer Haxe semantics where Ruby idioms would drift behavior. |
+| Idiomatic | `-D reflaxe_ruby_profile=idiomatic` | Default | Ruby-first contract. Prefer Ruby/Rails shapes when they conflict with cross-target portability. |
+| Portable | `-D reflaxe_ruby_profile=portable` | Available | Haxe-semantics-first contract. Still emit idiomatic Ruby where behavior is preserved. |
+
+See [Ruby Profiles](profiles.md) for the full profile contract. `metal` is intentionally not a public Ruby profile; performance policy should use explicit optimizer/runtime defines instead.
 
 ## Rails Mode
 
