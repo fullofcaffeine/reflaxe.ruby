@@ -10,11 +10,14 @@ class ModelMacro {
 		var cls = Context.getLocalClass().get();
 		var pos = Context.currentPos();
 		var selfType:ComplexType = TPath({pack: cls.pack, name: cls.name});
+		var nullableSelf:ComplexType = TPath({pack: [], name: "Null", params: [TPType(selfType)]});
 		var arraySelf:ComplexType = TPath({pack: [], name: "Array", params: [TPType(selfType)]});
 
 		validateModelMetadata(fields);
 		addStub(fields, "where", macro : Dynamic, arraySelf, pos);
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
+		addNoArgStub(fields, "first", nullableSelf, pos);
+		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
 		return fields;
 	}
 
@@ -195,6 +198,27 @@ class ModelMacro {
 			meta: [
 				{name: ":native", params: [macro $v{name}], pos: pos},
 				{name: ":rubyKwargs", params: [], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addNoArgStub(fields:Array<Field>, name:String, ret:ComplexType, pos:Position):Void {
+		for (field in fields) {
+			if (field.name == name) {
+				return;
+			}
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				args: [],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos

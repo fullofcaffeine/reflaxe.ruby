@@ -16,6 +16,9 @@ module Models
         ]
       }
     end
+    def self.typed_column_count()
+      __hx_rails_schema()[:columns].length
+    end
     belongs_to :user
     # haxe column id: Int
     # haxe column title: String

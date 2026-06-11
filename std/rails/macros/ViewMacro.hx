@@ -4,6 +4,7 @@ package rails.macros;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
+import reflaxe.ruby.naming.RubyNaming;
 #else
 import haxe.macro.Expr;
 #end
@@ -14,7 +15,8 @@ class ViewMacro {
 		var templatePath = extractTemplatePath(template);
 		validateLocalsObject(locals);
 		validateLocalsType(template, locals);
-		return macro $controller.render({template: $v{templatePath}, locals: $locals});
+		var railsLocals = railsLocalsObject(locals);
+		return macro $controller.render({template: $v{templatePath}, locals: $railsLocals});
 		#else
 		return macro null;
 		#end
@@ -70,6 +72,24 @@ class ViewMacro {
 		var actual = Context.typeof(locals);
 		if (!Context.unify(actual, expected)) {
 			Context.error("ViewMacro.renderTemplate locals do not match the Template<TLocals> contract.", locals.pos);
+		}
+	}
+
+	static function railsLocalsObject(locals:Expr):Expr {
+		return switch (locals.expr) {
+			case EObjectDecl(fields):
+				{
+					expr: EObjectDecl([
+						for (field in fields) {
+							field: RubyNaming.toLocalName(field.field),
+							expr: field.expr,
+							quotes: field.quotes
+						}
+					]),
+					pos: locals.pos
+				};
+			case _:
+				locals;
 		}
 	}
 

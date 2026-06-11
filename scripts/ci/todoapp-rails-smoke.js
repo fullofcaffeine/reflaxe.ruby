@@ -100,6 +100,8 @@ for (const expected of [
   "{name: :title, haxe_name: \"title\", ruby_name: \"title\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   "{name: :is_completed, haxe_name: \"isCompleted\", ruby_name: \"is_completed\", haxe_type: \"Bool\", rails_type: :boolean, nullable: false, default: false, primary_key: false, index: false, unique: false, db_type: nil}",
   "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
+  "def self.typed_column_count()",
+  "__hx_rails_schema()[:columns].length",
   "belongs_to :user",
   "# haxe column id: Int",
   "# haxe column title: String",
@@ -143,7 +145,7 @@ for (const expected of [
   /module Controllers/,
   /class TodosController < ActionController::Base/,
   /todos__hx\d+ = Models::Todo\.incomplete\(\)/,
-  /self\.render\(template: "controllers\/todos\/index", locals: \{"todos" => todos__hx\d+\}\)/,
+  /self\.render\(template: "controllers\/todos\/index", locals: \{"todos" => todos__hx\d+, "todo_count" => todos__hx\d+\.length, "typed_column_count" => Models::Todo\.typed_column_count\(\), "sample_user" => Models::User\.first\(\)\}\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
   /self\.redirect_to\(self\.todos_path\(\)\)/,
@@ -186,16 +188,23 @@ for (const expected of [
 
 const view = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "index.html.erb"), "utf8");
 for (const expected of [
-  "Typed Rails, polished Ruby.",
   "RailsHx sample",
-  'render partial: "controllers/todos/composer", locals: {sample_user: sample_user}',
-  'render partial: "controllers/todos/list", locals: {todos: todos}',
+  "Typed Rails, polished Ruby.",
+  "<%= todo_count %>",
+  "<%= typed_column_count %>",
+  '<%= render partial: "controllers/todos/composer", locals: {"sample_user" => sample_user} %>',
+  '<%= render partial: "controllers/todos/list", locals: {"todos" => todos} %>',
   "todo-shell",
-  "Models::Todo.__hx_rails_schema",
-  'render partial: "controllers/todos/dashboard", locals: {todos: todos}',
+  '<%= render partial: "controllers/todos/dashboard", locals: {"todos" => todos, "todo_count" => todo_count, "typed_column_count" => typed_column_count, "sample_user" => sample_user} %>',
 ]) {
   if (!view.includes(expected)) {
     console.error(`todoapp_rails view missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+for (const forbidden of ["<% todos ||= [] %>", "<% sample_user = Models::User.order(:id).first %>", "controllers/todos/hero"]) {
+  if (view.includes(forbidden)) {
+    console.error(`todoapp_rails HHX index should not contain raw shell content: ${forbidden}`);
     process.exit(1);
   }
 }

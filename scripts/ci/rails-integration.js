@@ -35,11 +35,11 @@ syntaxCheck([
   "test/controllers/todos_controller_test.rb",
 ]);
 viewContentCheck("app/views/controllers/todos/index.html.erb", [
-  "Typed Rails, polished Ruby.",
   "RailsHx sample",
+  "Typed Rails, polished Ruby.",
   'render partial: "controllers/todos/composer"',
   'render partial: "controllers/todos/dashboard"',
-  "Models::Todo.__hx_rails_schema",
+  "typed_column_count",
 ]);
 viewContentCheck("app/views/controllers/todos/_composer.html.erb", [
   "if sample_user != nil",

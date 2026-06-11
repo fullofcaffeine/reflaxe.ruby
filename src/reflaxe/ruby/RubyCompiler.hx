@@ -484,6 +484,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		lines.push("    ]");
 		lines.push("  }");
 		lines.push("end");
+		lines.push("def self.typed_column_count()");
+		lines.push("  __hx_rails_schema()[:columns].length");
+		lines.push("end");
 		return lines;
 	}
 

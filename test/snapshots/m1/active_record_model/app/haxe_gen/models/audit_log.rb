@@ -13,6 +13,9 @@ module Models
         ]
       }
     end
+    def self.typed_column_count()
+      __hx_rails_schema()[:columns].length
+    end
     # haxe column event_count: Int
     def initialize()
       super()
