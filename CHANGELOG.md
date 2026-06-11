@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.8.0...v1.9.0) (2026-06-11)
+
+
+### Features
+
+* add typed Rails render templates ([59446f1](https://github.com/fullofcaffeine/reflaxe.ruby/commit/59446f1fe314d627e209446da846860ab35feaa3))
+
 # [1.8.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.7.0...v1.8.0) (2026-06-11)
 
 
