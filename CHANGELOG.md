@@ -1,3 +1,11 @@
+# [1.7.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.6.0...v1.7.0) (2026-06-11)
+
+
+### Features
+
+* add Rails ActiveRecord schema metadata ([e381864](https://github.com/fullofcaffeine/reflaxe.ruby/commit/e3818641186b9e454386f1e2cce520e06b3cc41e))
+* upgrade RailsHx todoapp sample ([14b6786](https://github.com/fullofcaffeine/reflaxe.ruby/commit/14b6786528882ab999466a5c369f50fb5076975a))
+
 # [1.6.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.5.0...v1.6.0) (2026-06-11)
 
 
