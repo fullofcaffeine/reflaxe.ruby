@@ -7,15 +7,10 @@
     --ink: #18221f;
     --muted: #68736d;
     --paper: #fffaf0;
-    --card: rgba(255, 255, 255, 0.76);
     --mint: #b9f4d3;
     --ember: #ff6b35;
     --sun: #ffd166;
     --line: rgba(24, 34, 31, 0.14);
-  }
-
-  * {
-    box-sizing: border-box;
   }
 
   body {
@@ -35,45 +30,25 @@
     padding: 56px 0;
   }
 
-  .hero {
+  .hero,
+  .workspace {
     display: grid;
-    grid-template-columns: 1.08fr 0.92fr;
+    grid-template-columns: 1.05fr 0.95fr;
     gap: 28px;
-    align-items: stretch;
   }
 
-  .hero-card,
-  .panel {
+  .card {
     border: 1px solid var(--line);
     border-radius: 34px;
-    background: var(--card);
+    background: rgba(255, 255, 255, 0.76);
     box-shadow: 0 24px 80px rgba(24, 34, 31, 0.16);
     backdrop-filter: blur(20px);
-  }
-
-  .hero-card {
-    padding: 42px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .hero-card::after {
-    content: "";
-    position: absolute;
-    right: -70px;
-    bottom: -82px;
-    width: 220px;
-    height: 220px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, var(--ember), var(--sun));
-    opacity: 0.24;
+    padding: 34px;
   }
 
   .eyebrow {
     display: inline-flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 26px;
+    margin-bottom: 22px;
     padding: 8px 12px;
     border-radius: 999px;
     background: rgba(24, 34, 31, 0.08);
@@ -86,29 +61,21 @@
   h1 {
     max-width: 760px;
     margin: 0;
-    font-size: clamp(3.2rem, 8vw, 7.6rem);
+    font-size: clamp(3.2rem, 8vw, 7.4rem);
     line-height: 0.88;
     letter-spacing: -0.075em;
   }
 
-  .hero-copy {
-    max-width: 620px;
-    margin: 24px 0 0;
+  h2 {
+    margin: 0 0 18px;
+    font-size: 2rem;
+    letter-spacing: -0.04em;
+  }
+
+  .hero-copy,
+  .empty-state {
     color: var(--muted);
-    font: 1.16rem/1.7 "Avenir Next", "Trebuchet MS", sans-serif;
-  }
-
-  .stats {
-    display: grid;
-    gap: 14px;
-    padding: 24px;
-  }
-
-  .stat {
-    padding: 22px;
-    border-radius: 24px;
-    background: rgba(255, 250, 240, 0.72);
-    border: 1px solid var(--line);
+    font: 1.08rem/1.7 "Avenir Next", "Trebuchet MS", sans-serif;
   }
 
   .stat strong {
@@ -117,40 +84,23 @@
     letter-spacing: -0.06em;
   }
 
-  .stat span {
-    color: var(--muted);
-    font: 700 0.78rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .workspace {
-    display: grid;
-    grid-template-columns: 0.9fr 1.1fr;
-    gap: 28px;
-    margin-top: 28px;
-  }
-
-  .panel {
-    padding: 28px;
-  }
-
-  .panel h2 {
-    margin: 0 0 18px;
-    font-size: 2rem;
-    letter-spacing: -0.04em;
-  }
-
-  .todo-form {
-    display: grid;
-    gap: 14px;
-  }
-
+  .stat span,
   .todo-form label {
     color: var(--muted);
     font: 800 0.78rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
     letter-spacing: 0.11em;
     text-transform: uppercase;
+  }
+
+  .workspace {
+    grid-template-columns: 0.9fr 1.1fr;
+    margin-top: 28px;
+  }
+
+  .todo-form,
+  .todo-list {
+    display: grid;
+    gap: 14px;
   }
 
   .todo-form input {
@@ -162,11 +112,6 @@
     background: rgba(255, 255, 255, 0.78);
     font: 1rem/1.2 "Avenir Next", "Trebuchet MS", sans-serif;
     outline: none;
-  }
-
-  .todo-form input:focus {
-    border-color: rgba(255, 107, 53, 0.62);
-    box-shadow: 0 0 0 5px rgba(255, 107, 53, 0.12);
   }
 
   .todo-form button {
@@ -183,8 +128,6 @@
   }
 
   .todo-list {
-    display: grid;
-    gap: 12px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -198,10 +141,10 @@
     border-radius: 22px;
     background: rgba(255, 255, 255, 0.68);
     border: 1px solid var(--line);
+    font: 800 1rem/1.35 "Avenir Next", "Trebuchet MS", sans-serif;
   }
 
   .todo-dot {
-    flex: 0 0 auto;
     width: 14px;
     height: 14px;
     border-radius: 999px;
@@ -209,17 +152,11 @@
     box-shadow: 0 0 0 6px rgba(255, 107, 53, 0.14);
   }
 
-  .todo-title {
-    font: 800 1rem/1.35 "Avenir Next", "Trebuchet MS", sans-serif;
-  }
-
   .empty-state {
-    padding: 28px;
+    padding: 24px;
     border: 1px dashed rgba(24, 34, 31, 0.24);
     border-radius: 24px;
-    color: var(--muted);
     background: rgba(255, 255, 255, 0.48);
-    font: 1rem/1.6 "Avenir Next", "Trebuchet MS", sans-serif;
   }
 
   @media (max-width: 820px) {
@@ -227,31 +164,21 @@
     .workspace {
       grid-template-columns: 1fr;
     }
-
-    .todo-shell {
-      padding: 28px 0;
-    }
-
-    .hero-card,
-    .panel {
-      border-radius: 26px;
-      padding: 24px;
-    }
   }
 </style>
 
 <main class="todo-shell">
   <section class="hero">
-    <div class="hero-card">
+    <div class="card">
       <span class="eyebrow">RailsHx sample</span>
       <h1>Typed Rails, polished Ruby.</h1>
       <p class="hero-copy">
         This todo app is authored in Haxe with typed ActiveRecord metadata,
-        strong params, route helpers, and Rails-native rendering.
+        strong params, route helpers, and a Haxe-owned Rails template artifact.
       </p>
     </div>
 
-    <aside class="stats panel" aria-label="Todo stats">
+    <aside class="card" aria-label="Todo stats">
       <div class="stat">
         <strong><%= todo_count %></strong>
         <span>open tasks</span>
@@ -264,7 +191,7 @@
   </section>
 
   <section class="workspace">
-    <div class="panel">
+    <div class="card">
       <h2>Add a task</h2>
       <% if sample_user %>
         <%= form_with url: todos_path, scope: :todo, local: true, class: "todo-form" do |form| %>
@@ -283,20 +210,20 @@
       <% end %>
     </div>
 
-    <div class="panel">
+    <div class="card">
       <h2>Open work</h2>
       <% if todos.any? %>
         <ul class="todo-list">
           <% todos.each do |todo| %>
             <li class="todo-item">
               <span class="todo-dot" aria-hidden="true"></span>
-              <span class="todo-title"><%= todo.title %></span>
+              <span><%= todo.title %></span>
             </li>
           <% end %>
         </ul>
       <% else %>
         <div class="empty-state">
-          No open tasks. Suspiciously serene.
+          No open tasks. Serene, but suspicious.
         </div>
       <% end %>
     </div>

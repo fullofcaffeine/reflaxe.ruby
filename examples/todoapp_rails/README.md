@@ -16,8 +16,8 @@ This is the end-to-end RailsHx sample for `reflaxe.ruby`. It shows typed Haxe au
 
 - `models/Todo.hx` and `models/User.hx` are RailsHx ActiveRecord models.
 - `controllers/TodosController.hx` is a RailsHx controller using typed params and route helpers.
-- `views/TodoIndexView.hx` declares the typed Rails template artifact.
-- `app/views/controllers/todos/index.html.erb` is the ERB source materialized by the compiler into generated Rails output.
+- `views/TodoIndexView.hx` declares the typed Rails template artifact and owns the inline ERB body.
+- Generated `app/views/controllers/todos/index.html.erb` is materialized from that Haxe template marker.
 - `src_haxe/routes/Routes.hx` is generated from Rails route output.
 - `db/migrate/20260101000000_create_todos.rb` is the Rails migration template for the sample app.
 
@@ -51,4 +51,4 @@ npm run test:rails-integration
 
 RailsHx does not yet generate migrations from `@:railsColumn` metadata. This sample keeps the migration as Rails-owned Ruby for now, but the model schema metadata is shaped so the future migration DSL/generator can consume it.
 
-RailsHx has the first typed ActionView seam: controllers render through `ViewMacro.renderTemplate(this, (Template.named("...") : Template<TLocals>), locals)`, which type-checks locals in Haxe and lowers to a normal Rails `render(template:, locals:)` call. `@:railsTemplate(...)` classes now materialize Rails-native ERB artifacts into generated output. The visual page still uses ERB syntax for now; the destination is a fuller typed Rails template layer inspired by `../haxe.elixir.codex`'s HXX/HEEx architecture.
+RailsHx has the first typed ActionView seam: controllers render through `ViewMacro.renderTemplate(this, (Template.named("...") : Template<TLocals>), locals)`, which type-checks locals in Haxe and lowers to a normal Rails `render(template:, locals:)` call. `@:railsTemplate(...)` classes now materialize Rails-native ERB artifacts into generated output from Haxe-owned template bodies. The visual page still uses ERB syntax for now; the destination is a fuller typed Rails template layer inspired by `../haxe.elixir.codex`'s HXX/HEEx architecture.

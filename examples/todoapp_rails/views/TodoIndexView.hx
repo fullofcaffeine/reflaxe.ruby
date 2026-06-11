@@ -2,7 +2,238 @@ package views;
 
 import controllers.TodosController.TodoIndexLocals;
 
-@:railsTemplate("controllers/todos/index", "../app/views/controllers/todos/index.html.erb")
+@:railsTemplate("controllers/todos/index")
 class TodoIndexView {
 	public static var locals:TodoIndexLocals;
+	public static var body:String = '<% todos ||= [] %>
+<% todo_count = todos.length %>
+<% sample_user = Models::User.order(:id).first %>
+
+<style>
+  :root {
+    --ink: #18221f;
+    --muted: #68736d;
+    --paper: #fffaf0;
+    --mint: #b9f4d3;
+    --ember: #ff6b35;
+    --sun: #ffd166;
+    --line: rgba(24, 34, 31, 0.14);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    background:
+      radial-gradient(circle at 16% 16%, rgba(255, 209, 102, 0.72), transparent 26rem),
+      radial-gradient(circle at 88% 10%, rgba(185, 244, 211, 0.82), transparent 24rem),
+      linear-gradient(135deg, #fff6df 0%, #eef8ef 52%, #f7e7d8 100%);
+  }
+
+  .todo-shell {
+    width: min(1120px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 56px 0;
+  }
+
+  .hero,
+  .workspace {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 28px;
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 34px;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: 0 24px 80px rgba(24, 34, 31, 0.16);
+    backdrop-filter: blur(20px);
+    padding: 34px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    margin-bottom: 22px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(24, 34, 31, 0.08);
+    color: #365249;
+    font: 700 0.76rem/1.1 "Avenir Next", "Trebuchet MS", sans-serif;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    max-width: 760px;
+    margin: 0;
+    font-size: clamp(3.2rem, 8vw, 7.4rem);
+    line-height: 0.88;
+    letter-spacing: -0.075em;
+  }
+
+  h2 {
+    margin: 0 0 18px;
+    font-size: 2rem;
+    letter-spacing: -0.04em;
+  }
+
+  .hero-copy,
+  .empty-state {
+    color: var(--muted);
+    font: 1.08rem/1.7 "Avenir Next", "Trebuchet MS", sans-serif;
+  }
+
+  .stat strong {
+    display: block;
+    font-size: 3rem;
+    letter-spacing: -0.06em;
+  }
+
+  .stat span,
+  .todo-form label {
+    color: var(--muted);
+    font: 800 0.78rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
+  .workspace {
+    grid-template-columns: 0.9fr 1.1fr;
+    margin-top: 28px;
+  }
+
+  .todo-form,
+  .todo-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .todo-form input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 16px 18px;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.78);
+    font: 1rem/1.2 "Avenir Next", "Trebuchet MS", sans-serif;
+    outline: none;
+  }
+
+  .todo-form button {
+    border: 0;
+    border-radius: 18px;
+    padding: 16px 18px;
+    color: white;
+    cursor: pointer;
+    font: 900 0.9rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #18221f, #365249);
+    box-shadow: 0 16px 38px rgba(24, 34, 31, 0.24);
+  }
+
+  .todo-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .todo-item {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.68);
+    border: 1px solid var(--line);
+    font: 800 1rem/1.35 "Avenir Next", "Trebuchet MS", sans-serif;
+  }
+
+  .todo-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--ember);
+    box-shadow: 0 0 0 6px rgba(255, 107, 53, 0.14);
+  }
+
+  .empty-state {
+    padding: 24px;
+    border: 1px dashed rgba(24, 34, 31, 0.24);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.48);
+  }
+
+  @media (max-width: 820px) {
+    .hero,
+    .workspace {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<main class="todo-shell">
+  <section class="hero">
+    <div class="card">
+      <span class="eyebrow">RailsHx sample</span>
+      <h1>Typed Rails, polished Ruby.</h1>
+      <p class="hero-copy">
+        This todo app is authored in Haxe with typed ActiveRecord metadata,
+        strong params, route helpers, and a Haxe-owned Rails template artifact.
+      </p>
+    </div>
+
+    <aside class="card" aria-label="Todo stats">
+      <div class="stat">
+        <strong><%= todo_count %></strong>
+        <span>open tasks</span>
+      </div>
+      <div class="stat">
+        <strong><%= Models::Todo.__hx_rails_schema[:columns].length %></strong>
+        <span>typed columns</span>
+      </div>
+    </aside>
+  </section>
+
+  <section class="workspace">
+    <div class="card">
+      <h2>Add a task</h2>
+      <% if sample_user %>
+        <%= form_with url: todos_path, scope: :todo, local: true, class: "todo-form" do |form| %>
+          <%= form.hidden_field :user_id, value: sample_user.id %>
+          <%= form.hidden_field :is_completed, value: false %>
+          <div>
+            <%= form.label :title, "What should ship next?" %>
+            <%= form.text_field :title, placeholder: "Write the migration DSL", required: true %>
+          </div>
+          <%= form.submit "Add task", type: "submit" %>
+        <% end %>
+      <% else %>
+        <div class="empty-state">
+          Create a user first; the integration fixture seeds one before exercising this page.
+        </div>
+      <% end %>
+    </div>
+
+    <div class="card">
+      <h2>Open work</h2>
+      <% if todos.any? %>
+        <ul class="todo-list">
+          <% todos.each do |todo| %>
+            <li class="todo-item">
+              <span class="todo-dot" aria-hidden="true"></span>
+              <span><%= todo.title %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <div class="empty-state">
+          No open tasks. Serene, but suspicious.
+        </div>
+      <% end %>
+    </div>
+  </section>
+</main>';
 }
