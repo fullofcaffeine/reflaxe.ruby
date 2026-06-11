@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.21.0...v1.22.0) (2026-06-11)
+
+
+### Features
+
+* project typed Rails template locals ([b8c6b05](https://github.com/fullofcaffeine/reflaxe.ruby/commit/b8c6b05caab9019309682f0e5d92cac7934c553c))
+
 # [1.21.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.20.0...v1.21.0) (2026-06-11)
 
 
