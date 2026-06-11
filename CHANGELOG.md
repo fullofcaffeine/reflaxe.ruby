@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.4.0...v1.5.0) (2026-06-11)
+
+
+### Features
+
+* prefer ruby_first profile naming ([e262e2c](https://github.com/fullofcaffeine/reflaxe.ruby/commit/e262e2cec283f45c0efda736b7c450e6d4247227))
+
 # [1.4.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.3.0...v1.4.0) (2026-06-10)
 
 
