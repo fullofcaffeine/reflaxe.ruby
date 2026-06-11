@@ -11,8 +11,8 @@
     "macro"
   ],
   "description": "A Reflaxe-based Haxe target for idiomatic Ruby output with Rails-first typed APIs.",
-  "version": "1.19.0",
-  "releasenote": "v1.19.0: See CHANGELOG.md",
+  "version": "1.20.0",
+  "releasenote": "v1.20.0: See CHANGELOG.md",
   "contributors": [
     "fullofcaffeine"
   ],

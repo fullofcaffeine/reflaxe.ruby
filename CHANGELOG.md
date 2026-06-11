@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.19.0...v1.20.0) (2026-06-11)
+
+
+### Features
+
+* support HHX helper expression children ([a4ae6c9](https://github.com/fullofcaffeine/reflaxe.ruby/commit/a4ae6c92374d75828fd137227131edb5ce1bb7ee))
+
 # [1.19.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.18.0...v1.19.0) (2026-06-11)
 
 
