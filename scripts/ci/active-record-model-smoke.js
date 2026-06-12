@@ -12,6 +12,12 @@ const invalidWhereSourceDir = join(root, "test", ".generated", "active_record_mo
 const invalidWhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_out");
 const invalidWhereTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_type_src");
 const invalidWhereTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_type_out");
+const invalidRelationWhereSourceDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_src");
+const invalidRelationWhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_out");
+const invalidFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_src");
+const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
+const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
+const invalidFindByOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -40,6 +46,12 @@ rmSync(invalidWhereSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidRelationWhereSourceDir, { force: true, recursive: true });
+rmSync(invalidRelationWhereOutputDir, { force: true, recursive: true });
+rmSync(invalidFindSourceDir, { force: true, recursive: true });
+rmSync(invalidFindOutputDir, { force: true, recursive: true });
+rmSync(invalidFindBySourceDir, { force: true, recursive: true });
+rmSync(invalidFindByOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile active_record_model through Reflaxe.");
@@ -110,9 +122,12 @@ for (const expected of [
 
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
 for (const expected of [
-  'Models::Todo.where(title: "ship").order(title: :asc).limit(10)',
+  'Models::Todo.where(title: "ship").where(completed: false).order(title: :asc).limit(10)',
   'Models::Todo.create(title: "ship")',
   "Models::AuditLog.where(event_count: 1).order(event_count: :desc)",
+  "Models::Todo.find(1)",
+  'Models::Todo.find_by(external_id: "ship-1")',
+  'Models::Todo.where(title: "ship").find_by(completed: false)',
   "first__hx",
   ".first()",
 ]) {
@@ -125,6 +140,9 @@ for (const expected of [
 expectInvalidColumnDefaultFailure();
 expectInvalidWhereFieldFailure();
 expectInvalidWhereValueTypeFailure();
+expectInvalidRelationWhereFieldFailure();
+expectInvalidFindValueTypeFailure();
+expectInvalidFindByFieldFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -197,6 +215,69 @@ function expectInvalidWhereValueTypeFailure() {
     invalidWhereTypeOutputDir,
     "Invalid ActiveRecord where value type compiled successfully.",
     "String should be Null<Bool>"
+  );
+}
+
+function expectInvalidRelationWhereFieldFailure() {
+  mkdirSync(invalidRelationWhereSourceDir, { recursive: true });
+  writeFileSync(join(invalidRelationWhereSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.where({title: \"ship\"}).where({missing: \"nope\"});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidRelationWhereSourceDir,
+    invalidRelationWhereOutputDir,
+    "Invalid ActiveRecord relation where field compiled successfully.",
+    "has extra field missing"
+  );
+}
+
+function expectInvalidFindValueTypeFailure() {
+  mkdirSync(invalidFindSourceDir, { recursive: true });
+  writeFileSync(join(invalidFindSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.find(\"nope\");",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidFindSourceDir,
+    invalidFindOutputDir,
+    "Invalid ActiveRecord find id type compiled successfully.",
+    "String should be Int"
+  );
+}
+
+function expectInvalidFindByFieldFailure() {
+  mkdirSync(invalidFindBySourceDir, { recursive: true });
+  writeFileSync(join(invalidFindBySourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.findBy({missing: \"nope\"});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidFindBySourceDir,
+    invalidFindByOutputDir,
+    "Invalid ActiveRecord findBy field compiled successfully.",
+    "has extra field missing"
   );
 }
 

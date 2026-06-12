@@ -40,7 +40,7 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - `models/Todo.hx` and `models/User.hx` are RailsHx ActiveRecord models.
 - `migrations/CreateTodos.hx` is the Haxe-authored Rails migration source; generated Ruby lands at `db/migrate/20260101000000_create_todos.rb`.
 - `controllers/TodosController.hx` is a RailsHx controller using typed params and route helpers.
-- `Todo.incomplete()` returns `Relation<Todo>`, and the controller keeps the query chain typed with `order(Todo.f.title.asc()).limit(10).toArray()` before handing an array to HHX templates.
+- `Todo.incomplete()` returns an inferred typed relation shape, and the controller keeps the query chain typed with `order(Todo.f.title.asc()).limit(10).toArray()` before handing an array to HHX templates.
 - `views/ApplicationLayoutView.hx` owns the Rails layout as typed HHX, including the doctype, Rails CSRF/CSP helper tags, stylesheet/importmap tags, and `<rails_yield />`; generated ERB lands at `app/views/layouts/application.html.erb`.
 - `views/TodoIndexView.hx` declares the typed Rails template artifact and owns the full page shell as HHX; scalar locals project from Haxe names such as `todoCount` to Rails locals such as `todo_count`.
 - `views/TodoComposerView.hx` owns the typed sample-user branch and composes the form through typed `<partial>` locals, then generates `app/views/controllers/todos/_composer.html.erb`.
@@ -179,4 +179,4 @@ Rails layout helper tags are typed HHX too: `<doctype_html />`, `<csrf_meta_tags
 
 RailsHx ActiveRecord field refs are the default form/params seam. `@:railsColumn` fields generate `Todo.fields.title` / `Todo.f.title : Field<Todo, String>` and `Todo.railsParamKey : ModelKey<Todo>`. HHX form helpers accept those refs and lower them to Rails-native field names, while `ParamsMacro.requirePermit(...)` validates that permitted fields belong to the same typed params root before emitting Rails symbols.
 
-RailsHx ActiveRecord queries now have the first typed relation seam. Model `where({...})` checks object-literal keys and value types against `@:railsColumn` metadata, returns `Relation<Todo>`, and supports Rails-shaped chains such as `Todo.where({isCompleted: false}).order(Todo.f.title.asc()).limit(10).toArray()`. The compiler lowers this to normal ActiveRecord calls such as `where(is_completed: false).order(title: :asc).limit(10).to_a`.
+RailsHx ActiveRecord queries now have the first typed relation seam. Model and relation `where({...})` checks object-literal keys and value types against `@:railsColumn` metadata, returns `Relation<Todo>`, and supports Rails-shaped chains such as `Todo.where({isCompleted: false}).where({title: "ship"}).order(Todo.f.title.asc()).limit(10).toArray()`. `find(...)` uses the typed primary key and `findBy({...})` uses the same typed criteria object. The compiler lowers this to normal ActiveRecord calls such as `where(is_completed: false).order(title: :asc).limit(10).to_a`.

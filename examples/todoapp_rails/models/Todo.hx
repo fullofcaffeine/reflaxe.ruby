@@ -25,7 +25,7 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:validates({presence: true})
 	public var titleValidation:rails.ActiveRecord.Validation<String>;
 
-	public static function incomplete():rails.active_record.Relation<Todo> {
+	public static function incomplete() {
 		return Todo.where({isCompleted: false});
 	}
 }

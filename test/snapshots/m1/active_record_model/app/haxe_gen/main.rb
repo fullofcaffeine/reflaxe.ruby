@@ -5,14 +5,20 @@ class Main
     "Main"
   end
   def self.main()
-    found__hx19042 = Models::Todo.where(title: "ship").order(title: :asc).limit(10)
-    made__hx19043 = Models::Todo.create(title: "ship")
-    logs__hx19044 = Models::AuditLog.where(event_count: 1).order(event_count: :desc)
-    first__hx19045 = found__hx19042.first()
-    puts(HXRuby.stringify((found__hx19042 == nil)))
-    puts(HXRuby.stringify((made__hx19043 == nil)))
-    puts(HXRuby.stringify((logs__hx19044 == nil)))
-    puts(HXRuby.stringify((first__hx19045 == nil)))
+    found__hx19125 = Models::Todo.where(title: "ship").where(completed: false).order(title: :asc).limit(10)
+    made__hx19126 = Models::Todo.create(title: "ship")
+    logs__hx19127 = Models::AuditLog.where(event_count: 1).order(event_count: :desc)
+    loaded__hx19128 = Models::Todo.find(1)
+    found_by__hx19129 = Models::Todo.find_by(external_id: "ship-1")
+    relation_found_by__hx19130 = Models::Todo.where(title: "ship").find_by(completed: false)
+    first__hx19131 = found__hx19125.first()
+    puts(HXRuby.stringify((found__hx19125 == nil)))
+    puts(HXRuby.stringify((made__hx19126 == nil)))
+    puts(HXRuby.stringify((logs__hx19127 == nil)))
+    puts(HXRuby.stringify((loaded__hx19128 == nil)))
+    puts(HXRuby.stringify((found_by__hx19129 == nil)))
+    puts(HXRuby.stringify((relation_found_by__hx19130 == nil)))
+    puts(HXRuby.stringify((first__hx19131 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

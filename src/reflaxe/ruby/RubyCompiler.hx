@@ -872,9 +872,26 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActiveRecordRelationCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
+			case TField(target, access) if (fieldAccessRawName(access) == "where" && params.length == 1):
+				var criteria = activeRecordCriteriaArg(params[0]);
+				criteria == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(criteria)]);
+			case TField(target, access) if ((fieldAccessRawName(access) == "findBy" || fieldAccessRawName(access) == "find_by") && params.length == 1):
+				var criteria = activeRecordCriteriaArg(params[0]);
+				criteria == null ? null : RubyCall(compileExpr(target), "find_by", [RubyRawExpr(criteria)]);
 			case TField(target, access) if (fieldAccessRawName(access) == "order" && params.length == 1):
 				var orderArg = activeRecordOrderArg(params[0]);
 				orderArg == null ? null : RubyCall(compileExpr(target), "order", [RubyRawExpr(orderArg)]);
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordCriteriaArg(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordCriteriaArg(inner);
+			case TObjectDecl(fields):
+				[for (field in fields) RubyNaming.toMethodName(field.name) + ": " + printInlineExpr(field.expr)].join(", ");
 			case _:
 				null;
 		}

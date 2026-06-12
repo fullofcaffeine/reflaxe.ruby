@@ -8,7 +8,7 @@ The repo currently has a Rails MVP:
 
 - Rails output roots and autoload affordances via `-D reflaxe_ruby_rails`.
 - Minimal ActiveRecord model surface through `rails.active_record.Base<T>` and `rails.macros.ModelMacro`, including generated model-owned field refs such as `Todo.fields.title` / `Todo.f.title : Field<Todo, String>` and params/form scopes such as `Todo.railsParamKey : ModelKey<Todo>`.
-- Initial typed ActiveRecord relation chain through `Relation<T>`, typed model `where({...})` criteria, `order(Todo.f.title.asc())`, `limit(...)`, `first()`, and `toArray()`, while emitting normal Rails `ActiveRecord::Relation` calls.
+- Initial typed ActiveRecord relation chain through `Relation<T>`, typed model/relation `where({...})` criteria, typed `find(...)`/`findBy({...})`, `order(Todo.f.title.asc())`, `limit(...)`, `first()`, and `toArray()`, while emitting normal Rails `ActiveRecord::Relation` calls.
 - Minimal ActionController/strong params surface through `rails.action_controller.Base`, `Params`, and `ParamsMacro`, including typed model-scope validation for `ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title])`.
 - First typed ActionView render seam through `rails.action_view.Template<TLocals>`, `ViewMacro.renderTemplate(...)`, and `@:railsTemplate(...)` artifact generation.
 - First typed ActionView AST seam through Rails HHX inline markup, `rails.action_view.H`, `HtmlNode`, `HtmlAttr`, and `@:railsTemplateAst(...)`, currently proven by the todoapp's generated index shell, generated partials, typed partial composition, typed route-helper links, and initial typed form helpers.
@@ -59,7 +59,7 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 
 - `haxe.ruby-wpi.1` (closed): document the RailsHx architecture contract and agent guidance.
 - `haxe.ruby-wpi.2`: implement ActiveRecord schema registry and typed column metadata.
-- `haxe.ruby-wpi.3`: implement typed `Relation<T>` and ActiveRecord query DSL. The first slice exists for typed model `where` criteria, typed field order tokens, and `order`/`limit`/`first`/`toArray` chains; richer relation-level where validation, joins/includes, scopes, aggregations, and association-aware queries remain.
+- `haxe.ruby-wpi.3`: implement typed `Relation<T>` and ActiveRecord query DSL. The first slices exist for typed model/relation `where` criteria, typed `find`/`findBy`, typed field order tokens, and `order`/`limit`/`first`/`toArray` chains; joins/includes, scopes, aggregations, association-aware queries, and richer docs remain.
 - `haxe.ruby-wpi.4`: implement typed associations, validations, enums, and callbacks.
 - `haxe.ruby-wpi.5`: implement typed migration DSL and Rails migration generator. The initial create-table artifact lane exists; richer alter/drop/reversible DSL validation remains in progress.
 - `haxe.ruby-wpi.6`: implement typed controllers, params, and action results.

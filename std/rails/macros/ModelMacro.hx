@@ -12,11 +12,13 @@ class ModelMacro {
 		var pos = Context.currentPos();
 		var selfType:ComplexType = TPath({pack: cls.pack, name: cls.name});
 		var nullableSelf:ComplexType = TPath({pack: [], name: "Null", params: [TPType(selfType)]});
-		var relationSelf:ComplexType = TPath({pack: ["rails", "active_record"], name: "Relation", params: [TPType(selfType)]});
+		var criteriaType = criteriaComplexType(fields);
 
 		validateModelMetadata(fields);
 		addModelFieldRefs(fields, selfType, cls.name, pos);
-		addStub(fields, "where", criteriaComplexType(fields), relationSelf, pos);
+		addStub(fields, "where", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
+		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
+		addStub(fields, "findBy", criteriaType, nullableSelf, pos);
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
@@ -263,6 +265,73 @@ class ModelMacro {
 			});
 		}
 		return criteriaFields.length == 0 ? macro : Dynamic : TAnonymous(criteriaFields);
+	}
+
+	static function primaryKeyComplexType(fields:Array<Field>):ComplexType {
+		for (field in fields) {
+			if (isRailsColumn(field) && isPrimaryKeyField(field)) {
+				return fieldValueType(field);
+			}
+		}
+		for (field in fields) {
+			if (isRailsColumn(field) && field.name == "id") {
+				return fieldValueType(field);
+			}
+		}
+		return macro : Int;
+	}
+
+	static function relationComplexType(selfType:ComplexType, criteriaType:ComplexType, pos:Position):ComplexType {
+		var relationSelf:ComplexType = TPath({pack: ["rails", "active_record"], name: "Relation", params: [TPType(selfType)]});
+		var nullableSelf:ComplexType = TPath({pack: [], name: "Null", params: [TPType(selfType)]});
+		var arraySelf:ComplexType = TPath({pack: [], name: "Array", params: [TPType(selfType)]});
+		var orderType:ComplexType = TPath({pack: ["rails", "active_record"], name: "Order", params: [TPType(selfType)]});
+		return TAnonymous([
+			methodField("where", [{name: "criteria", type: criteriaType}], relationSelf, pos),
+			methodField("order", [{name: "order", type: orderType}], relationSelf, pos),
+			methodField("limit", [{name: "count", type: macro : Int}], relationSelf, pos),
+			methodField("findBy", [{name: "criteria", type: criteriaType}], nullableSelf, pos),
+			methodField("first", [], nullableSelf, pos),
+			methodField("toArray", [], arraySelf, pos, [{name: ":native", params: [macro "to_a"], pos: pos}])
+		]);
+	}
+
+	static function methodField(name:String, args:Array<FunctionArg>, ret:ComplexType, pos:Position, ?meta:Metadata):Field {
+		return {
+			name: name,
+			access: [],
+			kind: FFun({
+				args: args,
+				ret: ret,
+				expr: null
+			}),
+			meta: meta,
+			pos: pos
+		};
+	}
+
+	static function isPrimaryKeyField(field:Field):Bool {
+		if (field.meta == null) {
+			return false;
+		}
+		for (meta in field.meta) {
+			if (meta.name != ":railsColumn" || meta.params == null || meta.params.length == 0) {
+				continue;
+			}
+			switch (meta.params[0].expr) {
+				case EObjectDecl(options):
+					for (option in options) {
+						if (option.field == "primaryKey" && isBoolExpr(option.expr)) {
+							return switch (option.expr.expr) {
+								case EConst(CIdent("true")): true;
+								case _: false;
+							}
+						}
+					}
+				case _:
+			}
+		}
+		return false;
 	}
 
 	static function hasValidValidationArgs(params:Null<Array<Expr>>):Bool {
