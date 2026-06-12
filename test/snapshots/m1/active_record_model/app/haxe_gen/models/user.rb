@@ -18,6 +18,7 @@ module Models
       __hx_rails_schema()[:columns].length
     end
     has_many :todos, dependent: :destroy, inverse_of: :user
+    has_many :todo_owners, through: :todos, source: :user
     # haxe column id: Int
     # haxe column name: String
     def initialize(*args, **kwargs)

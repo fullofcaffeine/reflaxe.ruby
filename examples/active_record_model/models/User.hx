@@ -11,4 +11,7 @@ class User extends rails.active_record.Base<User> {
 
 	@:hasMany({dependent: "destroy", inverseOf: "user"})
 	public var todos:rails.ActiveRecord.HasMany<Todo>;
+
+	@:hasMany({through: "todos", source: "user"})
+	public var todoOwners:rails.ActiveRecord.HasMany<User>;
 }

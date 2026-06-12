@@ -310,6 +310,21 @@ class ModelMacro {
 							if (!isStringExpr(option.expr)) {
 								throw '@:association option className must be a String literal.';
 							}
+						case "through":
+							if (meta.name == ":belongsTo") {
+								throw '@:association option through is not valid for @:belongsTo.';
+							}
+							if (!isStringExpr(option.expr)) {
+								throw '@:association option through must be a String literal.';
+							}
+							validateThroughOption(field, fields, stringExprValue(option.expr));
+						case "source":
+							if (meta.name == ":belongsTo") {
+								throw '@:association option source is not valid for @:belongsTo.';
+							}
+							if (!isStringExpr(option.expr)) {
+								throw '@:association option source must be a String literal.';
+							}
 						case _:
 							throw '@:association unknown option ${option.field}.';
 					}
@@ -331,6 +346,16 @@ class ModelMacro {
 			case "destroy" | "deleteAll" | "nullify" | "restrictWithError" | "restrictWithException":
 			case _:
 				throw '@:association option dependent has unsupported value ${value}.';
+		}
+	}
+
+	static function validateThroughOption(field:Field, fields:Array<Field>, throughName:String):Void {
+		var through = findFieldNamed(fields, throughName);
+		if (through == null || !isRailsAssociation(through)) {
+			throw '@:association through option on ${field.name} must reference a model association named ${throughName}.';
+		}
+		if (through.name == field.name) {
+			throw '@:association through option on ${field.name} cannot reference itself.';
 		}
 	}
 

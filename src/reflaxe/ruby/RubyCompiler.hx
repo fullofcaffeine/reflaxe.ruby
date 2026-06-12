@@ -2532,7 +2532,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function railsAssociationOption(name:String, expr:haxe.macro.Expr):String {
 		var rubyName = RubyNaming.toMethodName(name);
 		var value = switch (name) {
-			case "dependent" | "inverseOf":
+			case "dependent" | "inverseOf" | "through" | "source":
 				railsSymbolOptionValue(expr);
 			case "foreignKey":
 				railsStringMethodOptionValue(expr);
