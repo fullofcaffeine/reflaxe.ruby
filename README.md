@@ -64,7 +64,7 @@ Rails mode is enabled with `-D reflaxe_ruby_rails`. It emits Haxe-owned app file
 - generated Rails migrations from Haxe-authored `@:railsMigration(...)` classes
 - typed `rails.action_controller.Base` controller classes
 - `ParamsMacro.requirePermit(...)` for strong params
-- model metadata for `@:belongsTo`, `@:hasMany`, `@:hasOne`, and `@:validates`
+- model metadata for `@:belongsTo`, `@:hasMany`, `@:hasOne`, `@:validates`, `@:railsEnum`, and typed callback metadata such as `@:beforeValidation`
 
 The canonical RailsHx end-to-end example is `examples/todoapp_rails`. The mixed Rails adoption example is `examples/rails_interop_app`.
 

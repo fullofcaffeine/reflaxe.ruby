@@ -7,15 +7,15 @@ class Main
     "Main"
   end
   def self.main()
-    count__hx18843 = 3
+    count__hx18866 = 3
     puts(HXRuby.stringify(JSON.generate({"name" => "ruby", "count" => 2})))
     puts(HXRuby.stringify(File.basename("/tmp/reflaxe.rb")))
     puts(HXRuby.stringify(RubyInterop.describe(name: "interop", count: 3)))
-    puts(HXRuby.stringify(RubyInterop.describe_details(name: "interop", tags: [:safe, :typed], count: count__hx18843)))
-    RubyInterop.each([4, 5]) { |value__hx18916| puts(HXRuby.stringify(value__hx18916)) }
-    RubyInterop.with_options([6, 7], prefix: "interop", tags: [:block], count: count__hx18843) do |value__hx18917|
+    puts(HXRuby.stringify(RubyInterop.describe_details(name: "interop", tags: [:safe, :typed], count: count__hx18866)))
+    RubyInterop.each([4, 5]) { |value__hx18939| puts(HXRuby.stringify(value__hx18939)) }
+    RubyInterop.with_options([6, 7], prefix: "interop", tags: [:block], count: count__hx18866) do |value__hx18940|
       Kernel.print("interop=")
-      puts(HXRuby.stringify(value__hx18917))
+      puts(HXRuby.stringify(value__hx18940))
     end
     puts(HXRuby.stringify(RubyInterop.accept_symbol(:ready)))
     Kernel.puts("kernel")

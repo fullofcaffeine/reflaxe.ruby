@@ -178,6 +178,8 @@ class ModelMacro {
 							throw "@:validates expects an options object, or a field name followed by an options object.";
 						}
 						validateValidationMetadata(field, fields, meta);
+					case ":beforeValidation" | ":afterValidation" | ":beforeSave" | ":afterSave" | ":beforeCreate" | ":afterCreate" | ":beforeUpdate" | ":afterUpdate" | ":beforeDestroy" | ":afterDestroy" | ":afterCommit" | ":afterRollback" | ":railsCallback":
+						validateCallbackMetadata(field, meta);
 					case _:
 				}
 			}
@@ -255,6 +257,62 @@ class ModelMacro {
 			throw '@:validates field ${field.name} must use Validation<${complexTypeName(targetType)}> for target ${targetField.name}.';
 		}
 		validateValidationOptions(validationOptionsExpr(meta.params));
+	}
+
+	static function validateCallbackMetadata(field:Field, meta:MetadataEntry):Void {
+		if (!isFuncField(field)) {
+			throw meta.name + " can only be used on model methods.";
+		}
+		switch (field.kind) {
+			case FFun(fn):
+				if (fn.args != null && fn.args.length > 0) {
+					throw meta.name + " callback methods must not declare arguments.";
+				}
+			case _:
+		}
+		if (field.name == "new") {
+			throw meta.name + " cannot be used on model constructors.";
+		}
+		if (hasAccess(field, AStatic)) {
+			throw meta.name + " callback methods must be instance methods.";
+		}
+		var callbackName = callbackRubyName(meta);
+		if (!isAllowedCallbackName(callbackName)) {
+			throw '@:railsCallback unknown callback ${callbackName}.';
+		}
+	}
+
+	static function callbackRubyName(meta:MetadataEntry):String {
+		return switch (meta.name) {
+			case ":beforeValidation": "before_validation";
+			case ":afterValidation": "after_validation";
+			case ":beforeSave": "before_save";
+			case ":afterSave": "after_save";
+			case ":beforeCreate": "before_create";
+			case ":afterCreate": "after_create";
+			case ":beforeUpdate": "before_update";
+			case ":afterUpdate": "after_update";
+			case ":beforeDestroy": "before_destroy";
+			case ":afterDestroy": "after_destroy";
+			case ":afterCommit": "after_commit";
+			case ":afterRollback": "after_rollback";
+			case ":railsCallback":
+				if (meta.params == null || meta.params.length != 1 || !isStringExpr(meta.params[0])) {
+					throw '@:railsCallback expects one Rails callback name string.';
+				}
+				stringExprValue(meta.params[0]);
+			case _:
+				"";
+		}
+	}
+
+	static function isAllowedCallbackName(name:String):Bool {
+		return switch (name) {
+			case "before_validation" | "after_validation" | "before_save" | "after_save" | "before_create" | "after_create" | "before_update" | "after_update" | "before_destroy" | "after_destroy" | "after_commit" | "after_rollback":
+				true;
+			case _:
+				false;
+		}
 	}
 
 	static function validateEnumMetadata(field:Field, meta:MetadataEntry):Void {
@@ -438,6 +496,17 @@ class ModelMacro {
 			case FVar(_, _): true;
 			case _: false;
 		}
+	}
+
+	static function isFuncField(field:Field):Bool {
+		return switch (field.kind) {
+			case FFun(_): true;
+			case _: false;
+		}
+	}
+
+	static function hasAccess(field:Field, access:Access):Bool {
+		return field.access != null && field.access.indexOf(access) >= 0;
 	}
 
 	static function isRailsColumn(field:Field):Bool {

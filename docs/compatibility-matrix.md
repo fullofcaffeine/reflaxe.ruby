@@ -43,7 +43,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed ActiveRecord relation chain | `Todo.where({completed: false}).where(...).order(Todo.f.title.asc()).limit(10) : Relation<Todo, criteria>` inferred | Initial query slice |
 | Typed ActiveRecord association queries | `Todo.includes(Todo.associations.user).joins(Todo.a.user)` | Initial association query slice |
 | Typed ActiveRecord find helpers | `Todo.find(1)`, `Todo.findBy({externalId: "x"})`, `relation.findBy({...})` | Initial query slice |
-| Associations/validations metadata | `@:belongsTo`, `@:hasMany`, `@:hasOne`, `@:validates` | Implemented |
+| Model associations/validations/enums/callbacks metadata | `@:belongsTo`, `@:hasMany`, `@:hasOne`, `@:validates`, `@:railsEnum`, `@:beforeValidation`, `@:railsCallback("after_commit")` | Implemented initial typed metadata validation |
 | ActionController surface | `rails.action_controller.Base` | Implemented |
 | Strong params macro | `ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title])` | Typed field-ref validation implemented |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |

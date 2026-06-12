@@ -32,4 +32,10 @@ class Todo extends rails.active_record.Base<Todo> {
 	public static function incomplete() {
 		return Todo.where({completed: false});
 	}
+
+	@:beforeValidation
+	public function normalizeTitle():Void {}
+
+	@:railsCallback("after_commit")
+	public function publishLifecycleEvent():Void {}
 }

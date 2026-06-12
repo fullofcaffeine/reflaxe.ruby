@@ -31,9 +31,17 @@ module Models
     # haxe column notes: Null
     # haxe column external_id: String
     # haxe column user_id: Int
+    before_validation :normalize_title
+    after_commit :publish_lifecycle_event
     def initialize(*args, **kwargs)
       args = args + [kwargs] unless kwargs.empty?
       super(*args)
+    end
+    def normalize_title()
+      nil
+    end
+    def publish_lifecycle_event()
+      nil
     end
     def self.incomplete()
       return Models::Todo.where(completed: false)

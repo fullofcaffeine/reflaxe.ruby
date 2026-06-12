@@ -468,6 +468,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 		}
 		for (field in funcFields) {
+			var callbacks = railsCallbackNames(field.field.meta);
+			for (callback in callbacks) {
+				body.push(callback + " :" + RubyNaming.toMethodName(field.field.name));
+			}
+		}
+		for (field in funcFields) {
 			if (field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
@@ -2500,6 +2506,42 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return "{}";
 		}
 		return metadataValueCode(entries[0].params[0]);
+	}
+
+	static function railsCallbackNames(meta:Null<haxe.macro.Type.MetaAccess>):Array<String> {
+		if (meta == null || meta.extract == null) {
+			return [];
+		}
+		var names:Array<String> = [];
+		var callbackPairs:Array<{metaName:String, rubyName:String}> = [
+			{metaName: ":beforeValidation", rubyName: "before_validation"},
+			{metaName: ":afterValidation", rubyName: "after_validation"},
+			{metaName: ":beforeSave", rubyName: "before_save"},
+			{metaName: ":afterSave", rubyName: "after_save"},
+			{metaName: ":beforeCreate", rubyName: "before_create"},
+			{metaName: ":afterCreate", rubyName: "after_create"},
+			{metaName: ":beforeUpdate", rubyName: "before_update"},
+			{metaName: ":afterUpdate", rubyName: "after_update"},
+			{metaName: ":beforeDestroy", rubyName: "before_destroy"},
+			{metaName: ":afterDestroy", rubyName: "after_destroy"},
+			{metaName: ":afterCommit", rubyName: "after_commit"},
+			{metaName: ":afterRollback", rubyName: "after_rollback"}
+		];
+		for (callback in callbackPairs) {
+			if (meta.extract(callback.metaName).length > 0) {
+				names.push(callback.rubyName);
+			}
+		}
+		for (entry in meta.extract(":railsCallback")) {
+			if (entry.params != null && entry.params.length > 0) {
+				switch (entry.params[0].expr) {
+					case EConst(CString(value, _)):
+						names.push(RubyNaming.toMethodName(value));
+					case _:
+				}
+			}
+		}
+		return names;
 	}
 
 	static function metadataObjectOptions(expr:haxe.macro.Expr):Array<String> {

@@ -38,6 +38,14 @@ const invalidEnumValueSourceDir = join(root, "test", ".generated", "active_recor
 const invalidEnumValueOutputDir = join(root, "test", ".generated", "active_record_model_invalid_enum_value_out");
 const invalidEnumTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_enum_type_src");
 const invalidEnumTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_enum_type_out");
+const invalidCallbackStaticSourceDir = join(root, "test", ".generated", "active_record_model_invalid_callback_static_src");
+const invalidCallbackStaticOutputDir = join(root, "test", ".generated", "active_record_model_invalid_callback_static_out");
+const invalidCallbackArgsSourceDir = join(root, "test", ".generated", "active_record_model_invalid_callback_args_src");
+const invalidCallbackArgsOutputDir = join(root, "test", ".generated", "active_record_model_invalid_callback_args_out");
+const invalidCallbackNameSourceDir = join(root, "test", ".generated", "active_record_model_invalid_callback_name_src");
+const invalidCallbackNameOutputDir = join(root, "test", ".generated", "active_record_model_invalid_callback_name_out");
+const invalidCallbackFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_callback_field_src");
+const invalidCallbackFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_callback_field_out");
 const invalidFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_src");
 const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
 const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
@@ -96,6 +104,14 @@ rmSync(invalidEnumValueSourceDir, { force: true, recursive: true });
 rmSync(invalidEnumValueOutputDir, { force: true, recursive: true });
 rmSync(invalidEnumTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidEnumTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidCallbackStaticSourceDir, { force: true, recursive: true });
+rmSync(invalidCallbackStaticOutputDir, { force: true, recursive: true });
+rmSync(invalidCallbackArgsSourceDir, { force: true, recursive: true });
+rmSync(invalidCallbackArgsOutputDir, { force: true, recursive: true });
+rmSync(invalidCallbackNameSourceDir, { force: true, recursive: true });
+rmSync(invalidCallbackNameOutputDir, { force: true, recursive: true });
+rmSync(invalidCallbackFieldSourceDir, { force: true, recursive: true });
+rmSync(invalidCallbackFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidFindSourceDir, { force: true, recursive: true });
 rmSync(invalidFindOutputDir, { force: true, recursive: true });
 rmSync(invalidFindBySourceDir, { force: true, recursive: true });
@@ -148,6 +164,10 @@ for (const expected of [
   "# haxe column user_id: Int",
   "def self.incomplete()",
   "Models::Todo.where(completed: false)",
+  "before_validation :normalize_title",
+  "after_commit :publish_lifecycle_event",
+  "def normalize_title()",
+  "def publish_lifecycle_event()",
 ]) {
   if (!todoRuby.includes(expected)) {
     console.error(`ActiveRecord model output missing expected line: ${expected}`);
@@ -234,6 +254,10 @@ expectInvalidValidationTypeFailure();
 expectInvalidEnumShapeFailure();
 expectInvalidEnumValueFailure();
 expectInvalidEnumTypeFailure();
+expectInvalidCallbackStaticFailure();
+expectInvalidCallbackArgsFailure();
+expectInvalidCallbackNameFailure();
+expectInvalidCallbackFieldFailure();
 expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 
@@ -689,6 +713,122 @@ function expectInvalidEnumTypeFailure() {
     invalidEnumTypeOutputDir,
     "Invalid enum field type compiled successfully.",
     "@:railsEnum status values are String literals, so the field must be String"
+  );
+}
+
+function expectInvalidCallbackStaticFailure() {
+  mkdirSync(join(invalidCallbackStaticSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidCallbackStaticSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidCallbackStaticSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:beforeSave public static function normalizeTitle():Void {}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidCallbackStaticSourceDir,
+    invalidCallbackStaticOutputDir,
+    "Invalid static callback compiled successfully.",
+    ":beforeSave callback methods must be instance methods"
+  );
+}
+
+function expectInvalidCallbackArgsFailure() {
+  mkdirSync(join(invalidCallbackArgsSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidCallbackArgsSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidCallbackArgsSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:beforeSave public function normalizeTitle(value:String):Void {}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidCallbackArgsSourceDir,
+    invalidCallbackArgsOutputDir,
+    "Invalid callback with args compiled successfully.",
+    ":beforeSave callback methods must not declare arguments"
+  );
+}
+
+function expectInvalidCallbackNameFailure() {
+  mkdirSync(join(invalidCallbackNameSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidCallbackNameSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidCallbackNameSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsCallback(\"before_magic\") public function normalizeTitle():Void {}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidCallbackNameSourceDir,
+    invalidCallbackNameOutputDir,
+    "Invalid callback name compiled successfully.",
+    "@:railsCallback unknown callback before_magic"
+  );
+}
+
+function expectInvalidCallbackFieldFailure() {
+  mkdirSync(join(invalidCallbackFieldSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidCallbackFieldSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidCallbackFieldSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:beforeSave public var title:String;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidCallbackFieldSourceDir,
+    invalidCallbackFieldOutputDir,
+    "Invalid callback field compiled successfully.",
+    ":beforeSave can only be used on model methods"
   );
 }
 
