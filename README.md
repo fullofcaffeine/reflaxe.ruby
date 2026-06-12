@@ -101,6 +101,16 @@ npm run rails:app -- --output path/to/rails-app --name MyApp
 
 Rails-facing generators are implemented in Ruby and exposed through both npm convenience scripts and `hxruby` rake tasks, following the same host-framework-native generator lesson as PhoenixHx Mix tasks. The Haxe compiler is required to compile generated Haxe sources, not to run basic Rails adoption generators.
 
+In an installed Rails app, prefer the Rails generator entrypoints:
+
+```bash
+bin/rails generate hxruby:install MyApp
+bin/rails generate hxruby:routes
+bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
+bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
+bin/rails generate hxruby:adopt --discover
+```
+
 Inside a generated/adopted RailsHx app, the recommended development flow is:
 
 ```bash
@@ -213,6 +223,10 @@ npm run test:gem-package
 The gem exposes `require "hxruby"` for runtime helpers and `require "hxruby/tasks"` for Rails-oriented rake tasks:
 
 ```bash
+bin/rails generate hxruby:install MyApp
+bin/rails generate hxruby:routes
+bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
+bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
 rake hxruby:compile
 rake hxruby:compile:client
 rake hxruby:watch

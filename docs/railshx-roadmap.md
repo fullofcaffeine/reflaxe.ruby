@@ -13,7 +13,7 @@ The repo currently has a Rails MVP:
 - First typed ActionView AST seam through Rails HHX inline markup, `rails.action_view.H`, `HtmlNode`, `HtmlAttr`, and `@:railsTemplateAst(...)`, currently proven by the todoapp's generated index shell, generated partials, typed partial composition, typed route-helper links, and initial typed form helpers.
 - First gradual-adoption seam through `Template.external("...") : Template<TLocals>` plus typed Ruby externs, proven by `examples/rails_interop_app`: Haxe renders an existing ERB partial with typed locals, Haxe calls a legacy Ruby service, legacy ERB renders generated HHX output, and legacy Ruby/ERB calls a generated Haxe service as a normal Ruby constant.
 - First typed migration artifact seam through Haxe-authored `@:railsMigration(...)` classes, which emit standard timestamped `db/migrate/*.rb` create-table migrations from referenced ActiveRecord model metadata.
-- Ruby-native Rails-facing generators under `lib/hxruby/generators` and thin scripts under `scripts/rails`.
+- Ruby-native Rails-facing generators under `lib/hxruby/generators`, Rails generator adapters under `lib/generators/hxruby`, and thin scripts under `scripts/rails`.
 - A Rails todoapp example and optional Rails integration smoke coverage.
 
 That MVP is useful, but it is not yet a RailsHx compiler layer. RailsHx should add typed framework APIs, macro metadata registries, generated Rails artifacts, app generators, and end-to-end Rails tests.
@@ -63,7 +63,7 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 - `haxe.ruby-wpi.5`: implement typed migration DSL and Rails migration generator. The initial create-table artifact lane exists; richer alter/drop/reversible DSL validation remains in progress.
 - `haxe.ruby-wpi.6`: implement typed controllers, params, and action results.
 - `haxe.ruby-wpi.7`: harden route helper sync, then design Haxe-first routing.
-- `haxe.ruby-wpi.8`: implement RailsHx generators, rake tasks, and adoption tooling. The initial mixed-app adoption sample exists through `examples/rails_interop_app`; Ruby-native app, route, scaffold, and explicit adopt generators now exist, with richer Rails::Generators integration and smarter signature discovery left as follow-up work.
+- `haxe.ruby-wpi.8`: implement RailsHx generators, rake tasks, and adoption tooling. The initial mixed-app adoption sample exists through `examples/rails_interop_app`; Ruby-native app, route, scaffold, explicit adopt generators, Rails `hxruby:*` generator adapters, and suggest-only adoption discovery now exist, with smarter signature inference left as follow-up work.
 - `haxe.ruby-wpi.9`: add end-to-end Rails integration app and CI gate.
 - `haxe.ruby-wpi.10`: write RailsHx guides and API references.
 - `haxe.ruby-wpi.11`: plan post-core Rails surfaces such as ActionMailer, ActiveJob, ActionCable, ActiveStorage, ActionView/Hotwire, and ActiveSupport.

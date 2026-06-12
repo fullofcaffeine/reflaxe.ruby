@@ -18,6 +18,7 @@ module HXRuby
           templates: [],
           locals: "",
           force: false,
+          discover: false,
         }
         OptionParser.new do |parser|
           parser.on("--output PATH") { |value| options[:output] = value }
@@ -26,8 +27,11 @@ module HXRuby
           parser.on("--template PATH") { |value| options[:templates].concat(Common.split_csv(value)) }
           parser.on("--locals FIELDS") { |value| options[:locals] = value }
           parser.on("--force") { options[:force] = true }
+          parser.on("--discover") { options[:discover] = true }
         end.parse!(argv)
-        raise Error, "Provide at least one --service or --template boundary to adopt." if options[:services].empty? && options[:templates].empty?
+        if !options[:discover] && options[:services].empty? && options[:templates].empty?
+          raise Error, "Provide at least one --service or --template boundary to adopt."
+        end
 
         options
       end
@@ -39,14 +43,48 @@ module HXRuby
         @templates = options.fetch(:templates)
         @locals = parse_locals(options.fetch(:locals))
         @force = options.fetch(:force)
+        @discover = options.fetch(:discover)
       end
 
       def run
+        discover_boundaries if @discover
         @services.each { |service| write_service(service) }
         @templates.each { |template| write_template(template) }
       end
 
       private
+
+      def discover_boundaries
+        services = discover_services
+        templates = discover_templates
+
+        puts "[rails:adopt] Candidate Ruby constants:"
+        services.each { |service| puts "  --service #{service}" }
+        puts "  (none found)" if services.empty?
+
+        puts "[rails:adopt] Candidate ERB templates:"
+        templates.each { |template| puts "  --template #{template}" }
+        puts "  (none found)" if templates.empty?
+      end
+
+      def discover_services
+        service_files = Dir.glob(File.join(@output_dir, "app", "{models,services,helpers,components}", "**", "*.rb"))
+        service_files.map do |path|
+          content = File.read(path)
+          content.scan(/^\s*(?:class|module)\s+([A-Z][A-Za-z0-9_:]*)/).flatten
+        end.flatten.uniq.sort
+      end
+
+      def discover_templates
+        view_root = File.join(@output_dir, "app", "views")
+        Dir.glob(File.join(view_root, "**", "*.html.erb")).map do |path|
+          relative = path.delete_prefix("#{view_root}/")
+          relative = relative.sub(/\.html\.erb\z/, "")
+          dirname = File.dirname(relative)
+          basename = File.basename(relative).sub(/\A_/, "")
+          dirname == "." ? basename : File.join(dirname, basename)
+        end.uniq.sort
+      end
 
       def parse_locals(raw)
         Common.split_csv(raw).map do |entry|

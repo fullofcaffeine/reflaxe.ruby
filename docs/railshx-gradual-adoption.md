@@ -38,6 +38,7 @@ RailsHx emits a normal Rails render call and does not emit or overwrite `app/vie
 To scaffold this boundary in an existing app, use the Ruby-native adoption generator:
 
 ```bash
+bin/rails generate hxruby:adopt --template legacy/badge --locals label:String,tone:String
 npm run rails:adopt -- --template legacy/badge --locals label:String,tone:String
 ```
 
@@ -74,14 +75,23 @@ Prefer externs and typed facades over raw `__ruby__` so app code remains searcha
 The adoption generator can also scaffold the extern shell:
 
 ```bash
+bin/rails generate hxruby:adopt --service LegacyPriceFormatter
 npm run rails:adopt -- --service LegacyPriceFormatter
 ```
 
 It intentionally does not infer method signatures yet. Add method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
 
+Use discovery as an advisory report before choosing wrappers:
+
+```bash
+bin/rails generate hxruby:adopt --discover
+```
+
+Discovery prints candidate Ruby constants and ERB templates but does not write guessed contracts.
+
 ## Generator Design
 
-RailsHx public generators are Ruby-native because they run inside Rails projects, package with the `hxruby` gem, and should feel like normal Rails tooling. This mirrors the PhoenixHx split: host-app scaffolding is implemented as Mix tasks, while Haxe project creation is a separate bootstrap path.
+RailsHx public generators are Ruby-native because they run inside Rails projects, package with the `hxruby` gem, and should feel like normal Rails tooling. Prefer `bin/rails generate hxruby:*` inside Rails apps. This mirrors the PhoenixHx split: host-app scaffolding is implemented as Mix tasks, while Haxe project creation is a separate bootstrap path.
 
 Haxe->Ruby self-hosted generators may be useful later for dogfooding and greenfield project creation, but they should not be required for gradual adoption in an existing Rails app. A Rails team should be able to install the gem, run a rake task, and receive Haxe contracts around existing Ruby/ERB without installing extra Node generator code or rewriting Rails-owned source.
 

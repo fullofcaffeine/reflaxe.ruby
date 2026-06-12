@@ -1,0 +1,29 @@
+# frozen_string_literal: true
+
+require_relative "../base"
+require "hxruby/generators/scaffold"
+
+if defined?(Rails::Generators::Base)
+  module Hxruby
+    class ScaffoldGenerator < Rails::Generators::NamedBase
+      include GeneratorSupport
+
+      desc "Generate a RailsHx Haxe model/controller/migration scaffold"
+      argument :attributes, type: :array, default: [], banner: "field:Type field:Type"
+      class_option :validate, type: :string, default: "", desc: "Comma-separated fields with presence validation"
+      class_option :controller, type: :boolean, default: false, desc: "Generate a typed controller scaffold"
+      class_option :output, type: :string, default: ".", desc: "Output root"
+
+      def generate_scaffold
+        args = [
+          "--model", class_name,
+          "--fields", attributes.join(","),
+          "--output", File.expand_path(hxruby_option(:output, "."), hxruby_destination_root),
+        ]
+        args += ["--validate", hxruby_option(:validate, "")] unless hxruby_option(:validate, "").to_s.empty?
+        args << "--controller" if hxruby_flag?(:controller)
+        HXRuby::Generators::Scaffold.run(args)
+      end
+    end
+  end
+end

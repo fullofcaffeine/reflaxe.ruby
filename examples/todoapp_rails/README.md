@@ -118,6 +118,7 @@ The production artifact must include generated `app/haxe_gen/**`, generated Acti
 RailsHx app/adoption files can be generated into a Rails app with:
 
 ```bash
+bin/rails generate hxruby:install MyApp
 npm run rails:app -- --output path/to/rails-app --name MyApp
 ```
 
@@ -130,6 +131,8 @@ bundle exec rake hxruby:gen:app NAME=MyApp
 The Rails-facing generators are Ruby-native and package with the `hxruby` gem. For gradual adoption of existing Rails code, scaffold typed wrappers without touching Rails-owned ERB/Ruby:
 
 ```bash
+bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
+bin/rails generate hxruby:adopt --discover
 npm run rails:adopt -- --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
 bundle exec rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=label:String,tone:String
 ```
