@@ -5,6 +5,7 @@ import rails.action_view.HtmlNode;
 import rails.action_view.Template;
 import views.TodoComposerView.TodoComposerLocals;
 import views.TodoListView.TodoListLocals;
+import views.TodoDashboardView;
 
 @:railsTemplate("controllers/todos/index")
 @:railsTemplateAst("render")
@@ -41,16 +42,16 @@ class TodoIndexView {
 				<section class="workspace">
 					<div class="card">
 						<h2>Add a task</h2>
-						<partial template=${(Template.named("controllers/todos/composer") : Template<TodoComposerLocals>)} locals=${{sampleUser: locals.sampleUser}} />
+						<partial template=${(Template.of(TodoComposerView) : Template<TodoComposerLocals>)} locals=${{sampleUser: locals.sampleUser}} />
 					</div>
 
 					<div id="open-work" class="card open-work-card" tabindex="-1">
 						<h2>Open work</h2>
-						<partial template=${(Template.named("controllers/todos/list") : Template<TodoListLocals>)} locals=${{todos: locals.todos}} />
+						<partial template=${(Template.of(TodoListView) : Template<TodoListLocals>)} locals=${{todos: locals.todos}} />
 					</div>
 				</section>
 
-				<partial template=${(Template.named("controllers/todos/dashboard") : Template<TodoIndexLocals>)} locals=${{
+				<partial template=${(Template.of(TodoDashboardView) : Template<TodoIndexLocals>)} locals=${{
 					todos: locals.todos,
 					todoCount: locals.todoCount,
 					typedColumnCount: locals.typedColumnCount,

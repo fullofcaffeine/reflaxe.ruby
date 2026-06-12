@@ -21,6 +21,10 @@ const typedFormInvalidSourceDir = join(root, "test", ".generated", "todoapp_rail
 const typedFormInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_out");
 const typedSlotInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_slot_invalid_src");
 const typedSlotInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_slot_invalid_out");
+const templateRefInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_ref_invalid_src");
+const templateRefInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_ref_invalid_out");
+const templatePathInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_src");
+const templatePathInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -57,6 +61,10 @@ rmSync(typedFormInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedFormInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedSlotInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedSlotInvalidOutputDir, { force: true, recursive: true });
+rmSync(templateRefInvalidSourceDir, { force: true, recursive: true });
+rmSync(templateRefInvalidOutputDir, { force: true, recursive: true });
+rmSync(templatePathInvalidSourceDir, { force: true, recursive: true });
+rmSync(templatePathInvalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -245,9 +253,9 @@ for (const expected of [
   '@:railsTemplateAst("render")',
   "return <>",
   '<content_for name="head">',
-  '<partial template=${(Template.named("controllers/todos/composer")',
-  '<partial template=${(Template.named("controllers/todos/list")',
-  '<partial template=${(Template.named("controllers/todos/dashboard")',
+  '<partial template=${(Template.of(TodoComposerView)',
+  '<partial template=${(Template.of(TodoListView)',
+  '<partial template=${(Template.of(TodoDashboardView)',
 ]) {
   if (!indexSource.includes(expected)) {
     console.error(`todoapp_rails index source is missing expected HHX content: ${expected}`);
@@ -411,6 +419,8 @@ expectTypedPartialLocalsFailure();
 expectTypedRouteHelperFailure();
 expectTypedFormFieldRequiresFormFailure();
 expectTypedSlotContentRequiresComponentFailure();
+expectTemplateOfRequiresRailsTemplateFailure();
+expectUnsafeRailsTemplatePathFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -465,6 +475,7 @@ function expectInvalidTemplateLocalsFailure() {
     "import models.Todo;",
     "import rails.action_view.Template;",
     "import rails.macros.ViewMacro;",
+    "import views.TodoIndexView;",
     "",
     "typedef TodoIndexLocals = {",
     "\tvar todos:Array<Todo>;",
@@ -474,7 +485,7 @@ function expectInvalidTemplateLocalsFailure() {
     "class BadTodosController extends rails.action_controller.Base {",
     "\tpublic function index() {",
     "\t\tvar todos = Todo.incomplete();",
-    "\t\tViewMacro.renderTemplate(this, (Template.named(\"controllers/todos/index\") : Template<TodoIndexLocals>), {items: todos});",
+    "\t\tViewMacro.renderTemplate(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {items: todos});",
     "\t}",
     "}",
     "",
@@ -698,13 +709,14 @@ function expectTypedPartialLocalsFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "import rails.action_view.Template;",
+    "import views.TodoSummaryView;",
     "import views.TodoSummaryView.TodoSummaryLocals;",
     "",
     "@:railsTemplate(\"controllers/todos/bad_partial\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTypedPartialView {",
     "\tpublic static function render(todos:Array<Todo>):HtmlNode {",
-    "\t\treturn H.partial((Template.named(\"controllers/todos/summary\") : Template<TodoSummaryLocals>), {items: todos});",
+    "\t\treturn H.partial((Template.of(TodoSummaryView) : Template<TodoSummaryLocals>), {items: todos});",
     "\t}",
     "}",
     "",
@@ -981,6 +993,164 @@ function expectTypedSlotContentRequiresComponentFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid typed slot check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectTemplateOfRequiresRailsTemplateFailure() {
+  mkdirSync(join(templateRefInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(templateRefInvalidSourceDir, "InvalidTemplateRefMain.hx"), [
+    "import views.BadTemplateRefView;",
+    "",
+    "class InvalidTemplateRefMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTemplateRefView> = BadTemplateRefView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(templateRefInvalidSourceDir, "views", "PlainView.hx"), [
+    "package views;",
+    "",
+    "class PlainView {}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(templateRefInvalidSourceDir, "views", "BadTemplateRefView.hx"), [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "import rails.action_view.Template;",
+    "",
+    "typedef DummyLocals = {",
+    "\tvar title:String;",
+    "}",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad_template_ref\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTemplateRefView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.partial((Template.of(PlainView) : Template<DummyLocals>), {title: \"bad\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${templateRefInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      templateRefInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTemplateRefMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Template.of accepted a class without @:railsTemplate.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("Template.of/layout expects a class annotated with @:railsTemplate")) {
+      console.error("Invalid Template.of view failed, but not with the expected template annotation error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid Template.of check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectUnsafeRailsTemplatePathFailure() {
+  mkdirSync(join(templatePathInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(templatePathInvalidSourceDir, "InvalidTemplatePathMain.hx"), [
+    "import views.BadTemplatePathView;",
+    "",
+    "class InvalidTemplatePathMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTemplatePathView> = BadTemplatePathView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(templatePathInvalidSourceDir, "views", "BadTemplatePathView.hx"), [
+    "package views;",
+    "",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"../bad\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTemplatePathView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <div>bad</div>;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${templatePathInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      templatePathInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTemplatePathMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Unsafe @:railsTemplate path compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("@:railsTemplate path must be a safe Rails template path relative to app/views")) {
+      console.error("Unsafe @:railsTemplate path failed, but not with the expected path safety error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid @:railsTemplate path check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

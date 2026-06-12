@@ -6,6 +6,8 @@ import rails.action_view.Template;
 import rails.macros.ParamsMacro;
 import rails.macros.ViewMacro;
 import routes.Routes;
+import views.ApplicationLayoutView;
+import views.TodoIndexView;
 
 typedef TodoIndexLocals = {
 	var todos:Array<Todo>;
@@ -18,12 +20,12 @@ typedef TodoIndexLocals = {
 class TodosController extends rails.action_controller.Base {
 	public function index() {
 		var todos = Todo.incomplete();
-		ViewMacro.renderTemplateWithLayout(this, (Template.named("controllers/todos/index") : Template<TodoIndexLocals>), {
+		ViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {
 			todos: todos,
 			todoCount: todos.length,
 			typedColumnCount: Todo.typedColumnCount(),
 			sampleUser: User.first()
-		}, "application");
+		}, Template.layout(ApplicationLayoutView));
 	}
 
 	public function create() {

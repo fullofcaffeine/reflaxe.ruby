@@ -14,7 +14,7 @@ typedef TodoComposerLocals = {
 class TodoComposerView {
 	public static function render(locals:TodoComposerLocals):HtmlNode {
 		return <if ${locals.sampleUser != null}>
-			<partial template=${(Template.named("controllers/todos/typed_form") : Template<TodoFormLocals>)} locals=${{sampleUserId: locals.sampleUser.id}} />
+			<partial template=${(Template.of(TodoFormView) : Template<TodoFormLocals>)} locals=${{sampleUserId: locals.sampleUser.id}} />
 		<else>
 			<div class="empty-state">
 				Create a user first; the integration fixture seeds one before exercising this page.

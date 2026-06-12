@@ -4,7 +4,7 @@ This sample shows the gradual adoption path for an existing Rails app or a quick
 
 ## What It Proves
 
-- Haxe can render an existing ERB partial through `Template.external("legacy/badge")` while type-checking the locals object.
+- Haxe can render an existing ERB partial through `Template.existing("legacy/badge")` while type-checking the locals object and checking that the Rails-owned ERB file exists.
 - Haxe can call existing Ruby through a typed extern such as `@:native("LegacyPriceFormatter")`.
 - Existing ERB can render a RailsHx-generated HHX partial through normal Rails `render partial:`.
 - Existing Ruby/ERB can call a generated Haxe service as a normal Ruby constant, for example `Services::TypedStats.summary(...)`.
@@ -19,7 +19,7 @@ typedef LegacyBadgeLocals = {
 	var tone:String;
 }
 
-<partial template=${(Template.external("legacy/badge") : Template<LegacyBadgeLocals>)} locals=${{
+<partial template=${(Template.existing("legacy/badge") : Template<LegacyBadgeLocals>)} locals=${{
 	label: locals.legacyBadgeLabel,
 	tone: "warm"
 }} />

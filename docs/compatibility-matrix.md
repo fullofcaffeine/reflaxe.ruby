@@ -42,7 +42,8 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | ActionController surface | `rails.action_controller.Base` | Implemented |
 | Strong params macro | `ParamsMacro.requirePermit(...)` | Implemented |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |
-| External Rails template locals | `Template.external("path") : Template<TLocals>` | Initial interop slice |
+| RailsHx-owned template refs | `Template.of(ViewClass) : Template<TLocals>`, `Template.layout(LayoutViewClass)` | Initial checked-template slice |
+| External Rails template locals | `Template.existing("path") : Template<TLocals>`; `Template.external("path")` as lower-level escape | Initial interop slice |
 | Rails template artifact generation | `@:railsTemplate(...)` | Implemented |
 | Rails HHX inline templates | `@:railsTemplateAst(...)` + `return <div>...</div>` | Initial page/partial helper slice |
 | Typed Rails partial locals object | `render(locals:TLocals)` + `locals.foo` projection | Initial locals slice |

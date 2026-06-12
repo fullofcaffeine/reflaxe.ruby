@@ -36,14 +36,14 @@ class HaxeShellView {
 					</article>
 					<article class="panel">
 						<span class="eyebrow">Haxe renders existing ERB</span>
-						<partial template=${(Template.external("legacy/badge") : Template<LegacyBadgeLocals>)} locals=${{
+						<partial template=${(Template.existing("legacy/badge") : Template<LegacyBadgeLocals>)} locals=${{
 							label: locals.legacyBadgeLabel,
 							tone: "warm"
 						}} />
 						<p>The ERB partial is external Rails source; RailsHx type-checks the locals object before emitting the render call.</p>
 					</article>
 				</div>
-				<partial template=${(Template.named("typed_widgets/summary") : Template<TypedSummaryLocals>)} locals=${{
+				<partial template=${(Template.of(TypedWidgetView) : Template<TypedSummaryLocals>)} locals=${{
 					title: "HHX island rendered from Haxe",
 					count: 3,
 					note: locals.typedSummary

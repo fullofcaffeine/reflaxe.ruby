@@ -1365,6 +1365,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsTemplate expects a Rails template path string.", classType.pos);
 			return;
 		}
+		validateRailsTemplatePath(templatePath, classType.pos, "@:railsTemplate");
 		var usesTypedTemplateAst = metaStringParam(classType.meta, ":railsTemplateAst", 0) != null;
 		var body = railsTemplateSourceBody(classType, varFields, funcFields);
 		if (body == null) {
@@ -1908,7 +1909,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplatePartial(template:TypedExpr, locals:TypedExpr, scope:RailsTemplateScope):String {
 		var path = extractTypedTemplatePath(template);
 		if (path == null) {
-			Context.error("HtmlNode.Partial expects Template.named(\"path\") or Template.external(\"path\") as the template argument.", template.pos);
+			Context.error("HtmlNode.Partial expects Template.of(ViewClass), Template.existing(\"path\"), Template.named(\"path\"), or Template.external(\"path\") as the template argument.",
+				template.pos);
 			return "";
 		}
 		var localsHash = lowerTemplateLocalsHash(locals, scope, null, null);
@@ -1918,7 +1920,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateComponent(template:TypedExpr, locals:TypedExpr, slotNameExpr:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
 		var path = extractTypedTemplatePath(template);
 		if (path == null) {
-			Context.error("HtmlNode.Component expects Template.named(\"path\") or Template.external(\"path\") as the template argument.", template.pos);
+			Context.error("HtmlNode.Component expects Template.of(ViewClass), Template.existing(\"path\"), Template.named(\"path\"), or Template.external(\"path\") as the template argument.",
+				template.pos);
 			return "";
 		}
 		var slotName = expectTemplateString(slotNameExpr, "HtmlNode.Component slotName must be a string literal.");
@@ -1964,7 +1967,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var unwrapped = unwrapTemplateExpr(template);
 		return switch (unwrapped.expr) {
 			case TCall(callee, [path]) if (isTemplatePathCall(callee)):
-				expectTemplateString(path, "Template.named/external expects a string literal path.");
+				var value = expectTemplateString(path, "Template.named/external expects a string literal path.");
+				validateRailsTemplatePath(value, path.pos, "Template.named/external");
+				normalizeRailsRenderPath(value);
 			case _:
 				null;
 		}
@@ -2081,17 +2086,50 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsTemplateOutputPath(path:String):String {
-		var normalized = StringTools.replace(path, "\\", "/");
+		var normalized = normalizeRailsTemplatePath(path);
 		while (StringTools.startsWith(normalized, "/")) {
 			normalized = normalized.substr(1);
-		}
-		if (normalized == "" || normalized.indexOf("..") != -1) {
-			return "app/views/invalid_template_path.html.erb";
 		}
 		if (!StringTools.endsWith(normalized, ".erb")) {
 			normalized += ".html.erb";
 		}
 		return "app/views/" + normalized;
+	}
+
+	static function normalizeRailsRenderPath(path:String):String {
+		var normalized = normalizeRailsTemplatePath(path);
+		if (StringTools.endsWith(normalized, ".html.erb")) {
+			normalized = normalized.substr(0, normalized.length - ".html.erb".length);
+		} else if (StringTools.endsWith(normalized, ".erb")) {
+			normalized = normalized.substr(0, normalized.length - ".erb".length);
+		}
+		var segments = normalized.split("/");
+		var last = segments.pop();
+		if (last != null && StringTools.startsWith(last, "_")) {
+			last = last.substr(1);
+		}
+		if (last != null) {
+			segments.push(last);
+		}
+		return segments.join("/");
+	}
+
+	static function validateRailsTemplatePath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
+		var normalized = normalizeRailsTemplatePath(path);
+		if (normalized == "" || StringTools.startsWith(normalized, "/") || normalized.indexOf("..") != -1 || normalized.indexOf("//") != -1) {
+			Context.error(context + " path must be a safe Rails template path relative to app/views.", pos);
+			return;
+		}
+		for (segment in normalized.split("/")) {
+			if (segment == "" || segment == "." || segment == "..") {
+				Context.error(context + " path must not contain empty, '.', or '..' segments.", pos);
+				return;
+			}
+		}
+	}
+
+	static function normalizeRailsTemplatePath(path:String):String {
+		return StringTools.replace(path == null ? "" : StringTools.trim(path), "\\", "/");
 	}
 
 	static function normalizeGeneratedText(value:String):String {

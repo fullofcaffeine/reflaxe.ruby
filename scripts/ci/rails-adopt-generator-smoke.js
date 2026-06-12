@@ -39,7 +39,7 @@ assertIncludes("src_haxe/interop/templates/LegacyBadgeTemplate.hx", [
   "typedef LegacyBadgeLocals",
   "var label:String;",
   "var tone:String;",
-  'Template.external("legacy/badge")',
+  'Template.existing("legacy/badge")',
 ]);
 
 const erbAfter = readFileSync(existingErb, "utf8");

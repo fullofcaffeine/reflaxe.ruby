@@ -7,7 +7,8 @@ RailsHx should make mixed Rails apps boring. A team can start with a quick pure 
 RailsHx-authored UI is HHX-first. Existing Rails UI is external Rails source.
 
 - Use HHX and `@:railsTemplateAst(...)` for new Haxe-owned templates, partials, and layouts.
-- Use `Template.external("path") : Template<TLocals>` when Haxe renders an existing ERB partial/template.
+- Use `Template.existing("path") : Template<TLocals>` when Haxe renders an existing ERB partial/template that is discoverable under `app/views` or `rails/app/views`.
+- Reserve lower-level `Template.external("path") : Template<TLocals>` for unusual/test layouts where the macro cannot discover the file, and document why the filesystem check cannot apply.
 - Use `@:native("RubyConstant") extern class ...` for existing Ruby services, helpers, components, and framework objects.
 - Let Ruby consume generated Haxe through normal Rails constants and normal `render partial:` calls.
 
@@ -27,7 +28,7 @@ typedef LegacyBadgeLocals = {
 Render the existing partial from HHX:
 
 ```haxe
-<partial template=${(Template.external("legacy/badge") : Template<LegacyBadgeLocals>)} locals=${{
+<partial template=${(Template.existing("legacy/badge") : Template<LegacyBadgeLocals>)} locals=${{
 	label: locals.legacyBadgeLabel,
 	tone: "warm"
 }} />
@@ -48,7 +49,7 @@ Inside a Rails app with the gem tasks loaded, the equivalent host-framework comm
 bundle exec rake hxruby:gen:adopt TEMPLATE=legacy/badge LOCALS=label:String,tone:String
 ```
 
-The generated Haxe wrapper owns only the typed `Template.external(...)` contract. The existing ERB file remains Rails-owned source.
+The generated Haxe wrapper owns only the typed `Template.existing(...)`/`Template.external(...)` contract. The existing ERB file remains Rails-owned source.
 
 ## Haxe Consumes Existing Ruby
 
@@ -119,7 +120,7 @@ Ruby callers do not need a RailsHx adapter. If a generated Haxe API needs a nice
 
 `examples/rails_interop_app` demonstrates four adoption paths:
 
-- Haxe shell renders a legacy ERB partial through `Template.external`.
+- Haxe shell renders a legacy ERB partial through `Template.existing`.
 - Haxe controller calls a legacy Ruby service through a typed extern.
 - Legacy ERB shell renders a RailsHx-generated HHX partial.
 - Legacy ERB calls a generated Haxe service as a normal Ruby constant.

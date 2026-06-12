@@ -145,7 +145,7 @@ module HXRuby
           "}",
           "",
           "class #{haxe_class} {",
-          "\tpublic static final template:Template<#{locals_name}> = Template.external(#{Common.haxe_string(template_path)});",
+          "\tpublic static final template:Template<#{locals_name}> = Template.existing(#{Common.haxe_string(template_path)});",
           "}",
           "",
         ]

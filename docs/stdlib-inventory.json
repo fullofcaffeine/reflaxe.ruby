@@ -172,7 +172,7 @@
       "status": "implemented",
       "path": "std/rails/action_view/Template.hx",
       "surface": "rails.action_view.Template",
-      "reason": "Typed ActionView template marker used to bind Rails template paths to Haxe locals types."
+      "reason": "Typed ActionView template marker used to bind Rails template paths to Haxe locals types, including class-backed RailsHx-owned refs and checked external ERB refs."
     },
     {
       "id": "std.rails.action_view_html_attr",

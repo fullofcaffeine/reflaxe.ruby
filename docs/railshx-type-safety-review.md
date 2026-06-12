@@ -9,11 +9,12 @@ The todoapp already has strong typed seams:
 - Route calls use generated externs such as `Routes.todosPath()`.
 - Template locals use `Template<TLocals>` and object-literal locals, so missing/wrong locals fail in Haxe.
 - HHX embedded expressions, conditionals, loops, and route helper calls are typed before ERB is emitted.
-- Rails-owned ERB interop is separated through `Template.external(...)`.
+- RailsHx-owned templates can be referenced through `Template.of(ViewClass)`/`Template.layout(LayoutViewClass)`, so missing or renamed Haxe view classes fail at compile time.
+- Rails-owned ERB interop is separated through checked `Template.existing(...)` where the ERB file is discoverable, with lower-level `Template.external(...)` reserved for explicit escapes.
 
 The remaining stringly seams are the next targets:
 
-- Template identity: `@:railsTemplate("...")`, `Template.named("...")`, and layout `"application"` are literal-only today but should be validated against known RailsHx templates/layouts or explicit external templates.
+- Template identity: `Template.of(...)`, `Template.layout(...)`, and `Template.existing(...)` cover the default owned/external cases. Remaining `@:railsTemplate("...")`, `Template.named("...")`, and layout strings are literal-only and path-shape checked, but should continue moving behind typed references or generated constants where possible.
 - Form and params fields: `<text_field name="title">`, `<text_area name="notes">`, `"todo"`, and `["title", "notes", "userId"]` should come from typed model/schema field references or checked field-name macros.
 - Slots and DOM hooks: `"head"`, `"#open-work"`, `"data-railshx-scroll"`, and `"data-railshx-flash"` should become typed constants/abstracts when reused across Haxe templates, Haxe JS, and Playwright.
 - CSS classes: local one-off styling strings are fine, but behavior-bearing classes such as `"todo-form"` should be centralized as typed hooks.
