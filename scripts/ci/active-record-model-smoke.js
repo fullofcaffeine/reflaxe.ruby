@@ -32,6 +32,12 @@ const invalidValidationShapeSourceDir = join(root, "test", ".generated", "active
 const invalidValidationShapeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_shape_out");
 const invalidValidationTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_type_src");
 const invalidValidationTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_type_out");
+const invalidEnumShapeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_enum_shape_src");
+const invalidEnumShapeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_enum_shape_out");
+const invalidEnumValueSourceDir = join(root, "test", ".generated", "active_record_model_invalid_enum_value_src");
+const invalidEnumValueOutputDir = join(root, "test", ".generated", "active_record_model_invalid_enum_value_out");
+const invalidEnumTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_enum_type_src");
+const invalidEnumTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_enum_type_out");
 const invalidFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_src");
 const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
 const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
@@ -84,6 +90,12 @@ rmSync(invalidValidationShapeSourceDir, { force: true, recursive: true });
 rmSync(invalidValidationShapeOutputDir, { force: true, recursive: true });
 rmSync(invalidValidationTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidValidationTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidEnumShapeSourceDir, { force: true, recursive: true });
+rmSync(invalidEnumShapeOutputDir, { force: true, recursive: true });
+rmSync(invalidEnumValueSourceDir, { force: true, recursive: true });
+rmSync(invalidEnumValueOutputDir, { force: true, recursive: true });
+rmSync(invalidEnumTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidEnumTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidFindSourceDir, { force: true, recursive: true });
 rmSync(invalidFindOutputDir, { force: true, recursive: true });
 rmSync(invalidFindBySourceDir, { force: true, recursive: true });
@@ -121,13 +133,16 @@ for (const expected of [
   "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
   "{name: :title, haxe_name: \"title\", ruby_name: \"title\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   "{name: :completed, haxe_name: \"completed\", ruby_name: \"completed\", haxe_type: \"Bool\", rails_type: :boolean, nullable: false, default: false, primary_key: false, index: false, unique: false, db_type: nil}",
+  "{name: :status, haxe_name: \"status\", ruby_name: \"status\", haxe_type: \"String\", rails_type: :string, nullable: false, default: \"open\", primary_key: false, index: false, unique: false, db_type: nil}",
   "{name: :notes, haxe_name: \"notes\", ruby_name: \"notes\", haxe_type: \"String\", rails_type: :text, nullable: true, default: nil, primary_key: false, index: false, unique: false, db_type: :text}",
   "{name: :external_id, haxe_name: \"externalId\", ruby_name: \"external_id\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: false, unique: true, db_type: nil}",
   "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   "belongs_to :user",
+  'enum :status, {open: "open", done: "done"}',
   "# haxe column id: Int",
   "# haxe column title: String",
   "# haxe column completed: Bool",
+  "# haxe column status: String",
   "# haxe column notes: Null",
   "# haxe column external_id: String",
   "# haxe column user_id: Int",
@@ -183,7 +198,7 @@ for (const expected of [
 
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
 for (const expected of [
-  'Models::Todo.includes(:user).where(title: "ship").where(completed: false).joins(:user).order(title: :asc).limit(10)',
+  'Models::Todo.includes(:user).where(title: "ship", status: "open").where(completed: false).joins(:user).order(title: :asc).limit(10)',
   "Models::Todo.incomplete().includes(:user).limit(5)",
   'Models::User.includes(:todos).joins(:todos).where(name: "owner")',
   'Models::Todo.create(title: "ship", user_id: 1)',
@@ -216,6 +231,9 @@ expectInvalidValidationTargetFailure();
 expectInvalidValidationOptionFailure();
 expectInvalidValidationShapeFailure();
 expectInvalidValidationTypeFailure();
+expectInvalidEnumShapeFailure();
+expectInvalidEnumValueFailure();
+expectInvalidEnumTypeFailure();
 expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 
@@ -578,6 +596,99 @@ function expectInvalidValidationTypeFailure() {
     invalidValidationTypeOutputDir,
     "Invalid validation generic type compiled successfully.",
     "@:validates field titleValidation must use Validation<String> for target title"
+  );
+}
+
+function expectInvalidEnumShapeFailure() {
+  mkdirSync(join(invalidEnumShapeSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidEnumShapeSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidEnumShapeSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn",
+    "\t@:railsEnum(\"open\")",
+    "\tpublic var status:String;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidEnumShapeSourceDir,
+    invalidEnumShapeOutputDir,
+    "Invalid enum shape compiled successfully.",
+    "@:railsEnum expects one options object"
+  );
+}
+
+function expectInvalidEnumValueFailure() {
+  mkdirSync(join(invalidEnumValueSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidEnumValueSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidEnumValueSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn",
+    "\t@:railsEnum({open: true})",
+    "\tpublic var status:String;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidEnumValueSourceDir,
+    invalidEnumValueOutputDir,
+    "Invalid enum value compiled successfully.",
+    "@:railsEnum value open must be a String or Int literal"
+  );
+}
+
+function expectInvalidEnumTypeFailure() {
+  mkdirSync(join(invalidEnumTypeSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidEnumTypeSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidEnumTypeSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn",
+    "\t@:railsEnum({open: \"open\"})",
+    "\tpublic var status:Int;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidEnumTypeSourceDir,
+    invalidEnumTypeOutputDir,
+    "Invalid enum field type compiled successfully.",
+    "@:railsEnum status values are String literals, so the field must be String"
   );
 }
 

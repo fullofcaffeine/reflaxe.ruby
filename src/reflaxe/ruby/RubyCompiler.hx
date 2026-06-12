@@ -451,6 +451,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 		}
 		for (field in varFields) {
+			if (hasMeta(field.field.meta, ":railsEnum")) {
+				body.push("enum :" + RubyNaming.toMethodName(field.field.name) + ", " + railsEnumOptions(field.field.meta));
+			}
+		}
+		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":railsColumn")) {
 				body.push("# haxe column " + RubyNaming.toMethodName(field.field.name) + ": " + typeLabel(field.field.type));
 			}
@@ -2484,6 +2489,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _: null;
 		}
 		return options == null ? [] : metadataObjectOptions(options);
+	}
+
+	static function railsEnumOptions(meta:Null<haxe.macro.Type.MetaAccess>):String {
+		if (meta == null || meta.extract == null) {
+			return "{}";
+		}
+		var entries = meta.extract(":railsEnum");
+		if (entries.length == 0 || entries[0].params == null || entries[0].params.length == 0) {
+			return "{}";
+		}
+		return metadataValueCode(entries[0].params[0]);
 	}
 
 	static function metadataObjectOptions(expr:haxe.macro.Expr):Array<String> {

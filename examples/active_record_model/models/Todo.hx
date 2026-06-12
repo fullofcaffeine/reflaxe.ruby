@@ -14,6 +14,10 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:railsColumn({defaultValue: false})
 	public var completed:Bool;
 
+	@:railsColumn({defaultValue: "open"})
+	@:railsEnum({open: "open", done: "done"})
+	public var status:String;
+
 	@:railsColumn({nullable: true, dbType: "text"})
 	public var notes:Null<String>;
 

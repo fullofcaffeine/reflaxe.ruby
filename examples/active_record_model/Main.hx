@@ -4,7 +4,7 @@ import models.User;
 
 class Main {
 	static function main() {
-		var found = Todo.includes(Todo.associations.user).where({title: "ship"}).where({completed: false}).joins(Todo.associations.user).order(Todo.f.title.asc()).limit(10);
+		var found = Todo.includes(Todo.associations.user).where({title: "ship", status: "open"}).where({completed: false}).joins(Todo.associations.user).order(Todo.f.title.asc()).limit(10);
 		var scoped = Todo.incomplete().includes(Todo.a.user).limit(5);
 		var users = User.includes(User.a.todos).joins(User.a.todos).where({name: "owner"});
 		var made:Todo = Todo.create({title: "ship", userId: 1});

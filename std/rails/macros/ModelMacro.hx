@@ -162,6 +162,14 @@ class ModelMacro {
 						if (!isVarField(field)) {
 							throw meta.name + " can only be used on model fields.";
 						}
+					case ":railsEnum":
+						if (!isVarField(field)) {
+							throw "@:railsEnum can only be used on model fields.";
+						}
+						if (!isRailsColumn(field)) {
+							throw "@:railsEnum requires the same field to be marked @:railsColumn.";
+						}
+						validateEnumMetadata(field, meta);
 					case ":validates":
 						if (!isVarField(field)) {
 							throw "@:validates can only be used on model fields.";
@@ -247,6 +255,39 @@ class ModelMacro {
 			throw '@:validates field ${field.name} must use Validation<${complexTypeName(targetType)}> for target ${targetField.name}.';
 		}
 		validateValidationOptions(validationOptionsExpr(meta.params));
+	}
+
+	static function validateEnumMetadata(field:Field, meta:MetadataEntry):Void {
+		var params = meta.params;
+		if (params == null || params.length != 1) {
+			throw "@:railsEnum expects one options object.";
+		}
+		var enumValueKind = "";
+		switch (params[0].expr) {
+			case EObjectDecl(options):
+				if (options.length == 0) {
+					throw "@:railsEnum expects at least one enum value.";
+				}
+				for (option in options) {
+					var currentKind = switch (option.expr.expr) {
+						case EConst(CString(_, _)): "String";
+						case EConst(CInt(_, _)): "Int";
+						case _:
+							throw '@:railsEnum value ${option.field} must be a String or Int literal.';
+					}
+					if (enumValueKind == "") {
+						enumValueKind = currentKind;
+					} else if (enumValueKind != currentKind) {
+						throw "@:railsEnum values must all use the same literal type.";
+					}
+				}
+			case _:
+				throw "@:railsEnum expects one options object.";
+		}
+		var fieldType = fieldTypeName(field);
+		if (fieldType != enumValueKind) {
+			throw '@:railsEnum ${field.name} values are ${enumValueKind} literals, so the field must be ${enumValueKind}.';
+		}
 	}
 
 	static function validationTargetName(field:Field, meta:MetadataEntry):String {
