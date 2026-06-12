@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+
+const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { join, resolve } = require("node:path");
+const { spawnSync } = require("node:child_process");
+
+const root = resolve(__dirname, "..", "..");
+const outputDir = join(root, "test", ".generated", "rails_adopt_generator");
+const existingErb = join(outputDir, "app", "views", "legacy", "_badge.html.erb");
+
+rmSync(outputDir, { force: true, recursive: true });
+mkdirSync(join(outputDir, "app", "views", "legacy"), { recursive: true });
+writeFileSync(existingErb, "<strong><%= label %></strong>\n");
+
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--package",
+  "interop",
+  "--service",
+  "LegacyPriceFormatter",
+  "--template",
+  "legacy/badge",
+  "--locals",
+  "label:String,tone:String",
+]);
+
+assertIncludes("src_haxe/interop/LegacyPriceFormatter.hx", [
+  "package interop;",
+  '@:native("LegacyPriceFormatter")',
+  "extern class LegacyPriceFormatter",
+]);
+assertIncludes("src_haxe/interop/templates/LegacyBadgeTemplate.hx", [
+  "package interop.templates;",
+  "import rails.action_view.Template;",
+  "typedef LegacyBadgeLocals",
+  "var label:String;",
+  "var tone:String;",
+  'Template.external("legacy/badge")',
+]);
+
+const erbAfter = readFileSync(existingErb, "utf8");
+if (erbAfter !== "<strong><%= label %></strong>\n") {
+  fail("adoption generator overwrote Rails-owned ERB source");
+}
+
+writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
+  "import interop.LegacyPriceFormatter;",
+  "import interop.templates.LegacyBadgeTemplate;",
+  "",
+  "class Main {",
+  "\tstatic function main() {",
+  "\t\tvar service:Class<LegacyPriceFormatter> = LegacyPriceFormatter;",
+  "\t\tSys.println(service != null);",
+  "\t\tSys.println(LegacyBadgeTemplate.template.templatePath);",
+  "\t}",
+  "}",
+  "",
+].join("\n"));
+
+run("haxe", [
+  "-cp",
+  join(root, "src"),
+  "-cp",
+  join(root, "std"),
+  "-cp",
+  join(outputDir, "src_haxe"),
+  "-main",
+  "Main",
+  "--interp",
+]);
+
+const overwrite = spawnSync("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--service",
+  "LegacyPriceFormatter",
+], {
+  cwd: root,
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"],
+});
+if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite")) {
+  process.stdout.write(overwrite.stdout);
+  process.stderr.write(overwrite.stderr);
+  fail("adoption generator did not protect existing wrapper files");
+}
+
+console.log("[rails-adopt-generator] OK");
+
+function assertIncludes(relativeFile, expectedLines) {
+  const fullPath = join(outputDir, relativeFile);
+  if (!existsSync(fullPath)) {
+    fail(`missing generated file: ${relativeFile}`);
+  }
+  const content = readFileSync(fullPath, "utf8");
+  for (const expected of expectedLines) {
+    if (!content.includes(expected)) {
+      fail(`${relativeFile} missing expected line: ${expected}`);
+    }
+  }
+}
+
+function run(command, args) {
+  const result = spawnSync(command, args, {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (result.status !== 0) {
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(result.status ?? 1);
+  }
+  return result;
+}
+
+function fail(message) {
+  console.error(`[rails-adopt-generator] ERROR: ${message}`);
+  process.exit(1);
+}

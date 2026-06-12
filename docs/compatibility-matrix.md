@@ -7,7 +7,7 @@ This document records the supported tool/runtime contract for `reflaxe.ruby`.
 | Surface | Versions | Status | Notes |
 | --- | --- | --- | --- |
 | Haxe | `4.3.7` | Supported | Pinned by `.haxerc` and `.github/workflows/ci.yml`. |
-| Node.js | `20` | Supported | Used for CI scripts, generators, and semantic-release. |
+| Node.js | `20` | Supported | Used for CI scripts, release tooling, and repository sample materializers. Rails-facing generators are Ruby-native. |
 | Ruby | `3.2`, `3.3`, `4.0` | Supported | CI matrix validates runtime smoke tests against these versions. |
 | Rails | Rails 7+/8 style app shape | Compile/syntax covered | Runtime Rails tests run when Rails gems are available; set `REQUIRE_RAILS=1` to make them mandatory. |
 
@@ -55,6 +55,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed HHX nested helper slots | `<link_to>...</link_to>` block-form content | Initial slot slice |
 | Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented for migration/interop only |
 | Mixed Rails/RailsHx adoption sample | `examples/rails_interop_app` + `npm run test:rails-interop` | Initial compile/static smoke |
+| Existing Rails boundary adoption generator | `npm run rails:adopt` / `rake hxruby:gen:adopt` | Initial explicit wrapper scaffold |
 | Route helper generator | `npm run rails:generate-routes` | Implemented |
 | Scaffold generator | `npm run rails:scaffold` | Implemented |
 

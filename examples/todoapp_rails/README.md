@@ -127,6 +127,13 @@ That writes `build.hxml`, `build-client.hxml`, `src_haxe/**`, `app/javascript/**
 bundle exec rake hxruby:gen:app NAME=MyApp
 ```
 
+The Rails-facing generators are Ruby-native and package with the `hxruby` gem. For gradual adoption of existing Rails code, scaffold typed wrappers without touching Rails-owned ERB/Ruby:
+
+```bash
+npm run rails:adopt -- --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
+bundle exec rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=label:String,tone:String
+```
+
 ## Manual Compile
 
 ```bash

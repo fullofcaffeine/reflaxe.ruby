@@ -2,6 +2,10 @@
 
 require "rake"
 require "shellwords"
+require "hxruby/generators/adopt"
+require "hxruby/generators/app"
+require "hxruby/generators/routes"
+require "hxruby/generators/scaffold"
 
 module HXRuby
   module Tasks
@@ -46,7 +50,7 @@ module HXRuby
             args += ["--main", ENV["MAIN"]] if ENV["MAIN"]
             args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
             args << "--force" if truthy?(ENV["FORCE"])
-            sh("#{node_script("app.js")} #{args.map(&:shellescape).join(" ")}")
+            HXRuby::Generators::App.run(args)
           end
 
           desc "Generate Haxe route externs from Rails routes"
@@ -54,7 +58,8 @@ module HXRuby
             output = ENV.fetch("OUTPUT", "src_haxe/routes/Routes.hx")
             package_name = ENV.fetch("PACKAGE", "routes")
             class_name = ENV.fetch("CLASS", "Routes")
-            sh("#{rails_command.shellescape} routes | #{node_script("generate-routes.js")} --output #{output.shellescape} --package #{package_name.shellescape} --class #{class_name.shellescape}")
+            routes = IO.popen("#{rails_command} routes", &:read)
+            HXRuby::Generators::Routes.run(["--output", output, "--package", package_name, "--class", class_name], input: routes)
           end
 
           desc "Generate a Rails-oriented Haxe model/controller scaffold"
@@ -65,7 +70,19 @@ module HXRuby
             args += ["--validate", ENV["VALIDATE"]] if ENV["VALIDATE"]
             args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
             args << "--controller" if truthy?(ENV["CONTROLLER"])
-            sh("#{node_script("scaffold.js")} #{args.map(&:shellescape).join(" ")}")
+            HXRuby::Generators::Scaffold.run(args)
+          end
+
+          desc "Adopt existing Ruby/ERB boundaries through typed Haxe wrappers"
+          task :adopt do
+            args = []
+            args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
+            args += ["--package", ENV["PACKAGE"]] if ENV["PACKAGE"]
+            args += ["--service", ENV["SERVICE"]] if ENV["SERVICE"]
+            args += ["--template", ENV["TEMPLATE"]] if ENV["TEMPLATE"]
+            args += ["--locals", ENV["LOCALS"]] if ENV["LOCALS"]
+            args << "--force" if truthy?(ENV["FORCE"])
+            HXRuby::Generators::Adopt.run(args)
           end
         end
       end
@@ -77,16 +94,8 @@ module HXRuby
       File.expand_path("../..", __dir__)
     end
 
-    def node_command
-      ENV.fetch("NODE", "node")
-    end
-
     def rails_command
       ENV.fetch("RAILS", "bin/rails")
-    end
-
-    def node_script(name)
-      [node_command, File.join(gem_root, "scripts", "rails", name)].map(&:shellescape).join(" ")
     end
 
     def compile_haxe(hxml)

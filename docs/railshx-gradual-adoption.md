@@ -35,6 +35,20 @@ Render the existing partial from HHX:
 
 RailsHx emits a normal Rails render call and does not emit or overwrite `app/views/legacy/_badge.html.erb`.
 
+To scaffold this boundary in an existing app, use the Ruby-native adoption generator:
+
+```bash
+npm run rails:adopt -- --template legacy/badge --locals label:String,tone:String
+```
+
+Inside a Rails app with the gem tasks loaded, the equivalent host-framework command is:
+
+```bash
+bundle exec rake hxruby:gen:adopt TEMPLATE=legacy/badge LOCALS=label:String,tone:String
+```
+
+The generated Haxe wrapper owns only the typed `Template.external(...)` contract. The existing ERB file remains Rails-owned source.
+
 ## Haxe Consumes Existing Ruby
 
 Wrap Ruby with a typed extern:
@@ -56,6 +70,20 @@ LegacyPriceFormatter.badge_label("poc", 1299)
 ```
 
 Prefer externs and typed facades over raw `__ruby__` so app code remains searchable, type-checkable, and portable where it matters.
+
+The adoption generator can also scaffold the extern shell:
+
+```bash
+npm run rails:adopt -- --service LegacyPriceFormatter
+```
+
+It intentionally does not infer method signatures yet. Add method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
+
+## Generator Design
+
+RailsHx public generators are Ruby-native because they run inside Rails projects, package with the `hxruby` gem, and should feel like normal Rails tooling. This mirrors the PhoenixHx split: host-app scaffolding is implemented as Mix tasks, while Haxe project creation is a separate bootstrap path.
+
+Haxe->Ruby self-hosted generators may be useful later for dogfooding and greenfield project creation, but they should not be required for gradual adoption in an existing Rails app. A Rails team should be able to install the gem, run a rake task, and receive Haxe contracts around existing Ruby/ERB without installing extra Node generator code or rewriting Rails-owned source.
 
 ## Ruby Consumes Generated Haxe
 
@@ -90,6 +118,7 @@ Run the smoke lane:
 
 ```bash
 npm run test:rails-interop
+npm run test:rails-adopt-generator
 ```
 
 The smoke compiles Haxe, materializes `test/.generated/rails_interop`, copies the Rails-owned Ruby/ERB files, checks the generated artifacts, verifies a wrong external-template locals object fails at Haxe compile time, and runs Rails request tests when the local Rails bundle is available.

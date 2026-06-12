@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
     "hxruby.gemspec",
     *Dir["lib/**/*.rb"],
     *Dir["runtime/hxruby/**/*.rb"],
-    *Dir["scripts/rails/*.js"],
+    *Dir["scripts/rails/*.rb"],
   ].sort
   spec.require_paths = ["lib"]
 end

@@ -11,8 +11,10 @@ const fixture = join(root, "test", "fixtures", "rails_routes", "routes.txt");
 
 rmSync(outputDir, { force: true, recursive: true });
 
-const result = spawnSync(process.execPath, [
-  join(root, "scripts", "rails", "generate-routes.js"),
+const result = spawnSync("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "generate-routes.rb"),
   "--input",
   fixture,
   "--output",

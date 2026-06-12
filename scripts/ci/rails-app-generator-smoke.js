@@ -9,8 +9,10 @@ const root = resolve(__dirname, "..", "..");
 const tempRoot = mkdtempSync(join(tmpdir(), "railshx-app."));
 
 try {
-  run("node", [
-    join(root, "scripts", "rails", "app.js"),
+  run("ruby", [
+    "-I",
+    join(root, "lib"),
+    join(root, "scripts", "rails", "app.rb"),
     "--output",
     tempRoot,
     "--name",
@@ -70,8 +72,10 @@ try {
     "bundle exec rake hxruby:watch:client",
   ]);
 
-  const overwrite = spawnSync("node", [
-    join(root, "scripts", "rails", "app.js"),
+  const overwrite = spawnSync("ruby", [
+    "-I",
+    join(root, "lib"),
+    join(root, "scripts", "rails", "app.rb"),
     "--output",
     tempRoot,
   ], {

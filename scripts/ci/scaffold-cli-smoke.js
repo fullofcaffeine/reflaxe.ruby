@@ -15,8 +15,10 @@ const reflaxeCandidates = [
 
 rmSync(outputDir, { force: true, recursive: true });
 
-run(process.execPath, [
-  join(root, "scripts", "rails", "scaffold.js"),
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "scaffold.rb"),
   "--model",
   "Todo",
   "--fields",

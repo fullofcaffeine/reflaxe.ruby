@@ -99,6 +99,8 @@ For a Rails app adoption scaffold, generate the RailsHx source layout, compile c
 npm run rails:app -- --output path/to/rails-app --name MyApp
 ```
 
+Rails-facing generators are implemented in Ruby and exposed through both npm convenience scripts and `hxruby` rake tasks, following the same host-framework-native generator lesson as PhoenixHx Mix tasks. The Haxe compiler is required to compile generated Haxe sources, not to run basic Rails adoption generators.
+
 Inside a generated/adopted RailsHx app, the recommended development flow is:
 
 ```bash
@@ -125,6 +127,7 @@ Useful tooling:
 ```bash
 npm run rails:generate-routes -- --input routes.txt --output src_haxe/routes/Routes.hx
 npm run rails:scaffold -- --model Todo --fields title:String,isCompleted:Bool --validate title --controller --output tmp/todo
+npm run rails:adopt -- --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String --output tmp/rails_app
 npm run rails:app -- --output tmp/rails_app --name TodoApp
 ```
 
@@ -215,6 +218,7 @@ rake hxruby:compile:client
 rake hxruby:watch
 rake hxruby:watch:client
 rake hxruby:gen:app
+rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=label:String,tone:String
 rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
 ```
