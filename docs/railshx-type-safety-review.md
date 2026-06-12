@@ -1,0 +1,26 @@
+# RailsHx Type Safety Review
+
+RailsHx should use strings only where they are the best Rails/Ruby output representation, and those strings should be compile-time checked whenever practical.
+
+## Todoapp Findings
+
+The todoapp already has strong typed seams:
+
+- Route calls use generated externs such as `Routes.todosPath()`.
+- Template locals use `Template<TLocals>` and object-literal locals, so missing/wrong locals fail in Haxe.
+- HHX embedded expressions, conditionals, loops, and route helper calls are typed before ERB is emitted.
+- Rails-owned ERB interop is separated through `Template.external(...)`.
+
+The remaining stringly seams are the next targets:
+
+- Template identity: `@:railsTemplate("...")`, `Template.named("...")`, and layout `"application"` are literal-only today but should be validated against known RailsHx templates/layouts or explicit external templates.
+- Form and params fields: `<text_field name="title">`, `<text_area name="notes">`, `"todo"`, and `["title", "notes", "userId"]` should come from typed model/schema field references or checked field-name macros.
+- Slots and DOM hooks: `"head"`, `"#open-work"`, `"data-railshx-scroll"`, and `"data-railshx-flash"` should become typed constants/abstracts when reused across Haxe templates, Haxe JS, and Playwright.
+- CSS classes: local one-off styling strings are fine, but behavior-bearing classes such as `"todo-form"` should be centralized as typed hooks.
+
+## Direction
+
+- Prefer generated constants, abstracts, typedefs, and macros over free strings in Haxe-facing APIs.
+- Keep Rails-native output: typed Haxe constructs should lower to normal Rails strings, symbols, route helpers, partial names, params keys, and attributes.
+- Validate literal strings at macro/compiler time when a typed replacement is not yet available.
+- Add negative tests whenever a stringly surface becomes typed, for example missing partial path, unknown model field, wrong locals key, or invalid slot name.
