@@ -64,14 +64,13 @@ const bundleProbe = run("bundle", ["check"], { cwd: appDir, allowFailure: true }
 if (bundleProbe.status !== 0) {
   const message = "Rails bundle is not available for the mixed interop app; skipped runtime Rails test pass.";
   if (requireRails) {
-    process.stderr.write(`${message}\n`);
-    process.stderr.write(bundleProbe.stdout);
-    process.stderr.write(bundleProbe.stderr);
-    process.exit(1);
+    process.stdout.write("[rails-interop] Rails bundle missing; running bundle install because REQUIRE_RAILS=1.\n");
+    run("bundle", ["install"], { cwd: appDir });
+  } else {
+    process.stdout.write(`[rails-interop] ${message}\n`);
+    process.stdout.write("[rails-interop] Set REQUIRE_RAILS=1 after installing app gems to make this lane mandatory.\n");
+    process.exit(0);
   }
-  process.stdout.write(`[rails-interop] ${message}\n`);
-  process.stdout.write("[rails-interop] Set REQUIRE_RAILS=1 after installing app gems to make this lane mandatory.\n");
-  process.exit(0);
 }
 
 run("bundle", ["exec", "rails", "test"], {

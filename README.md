@@ -93,6 +93,14 @@ npm run test:rails-interop
 
 That lane proves Haxe can render existing ERB through `Template.external("path") : Template<TLocals>`, call existing Ruby through typed externs, and let legacy ERB consume generated Haxe services/partials as normal Rails artifacts. See [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md).
 
+To force the generated Rails runtime apps to install their bundles and execute Rails tests, run:
+
+```bash
+npm run test:rails-runtime
+```
+
+This is the mandatory CI lane for Rails runtime coverage. Plain `npm test` keeps the compiler loop fast and still syntax-checks generated Rails artifacts; the Rails runtime lanes skip only when Rails gems are unavailable in a local environment.
+
 For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, and dev process files:
 
 ```bash
@@ -141,7 +149,7 @@ npm run rails:adopt -- --service LegacyPriceFormatter --template legacy/badge --
 npm run rails:app -- --output tmp/rails_app --name TodoApp
 ```
 
-`npm run test:rails-integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed; set `REQUIRE_RAILS=1` in CI environments where Rails runtime execution must be mandatory.
+`npm run test:rails-integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed. `npm run test:rails-runtime` sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and makes both Rails integration and mixed-interop runtime execution mandatory.
 
 Route sync is phase 1 routing support: Rails-owned `config/routes.rb` stays the source of truth, and RailsHx generates typed Haxe externs from `rails routes`. Haxe-owned route emission is intentionally deferred until route-helper sync is fully deterministic.
 
@@ -168,16 +176,13 @@ eval "$(rbenv init - zsh)"
 ruby -v
 ```
 
-For the Rails runtime integration lane, install the Rails gems into the active rbenv Ruby:
+For mandatory Rails runtime integration, use the pinned Ruby and let the generated apps install their own bundles:
 
 ```bash
-gem install rails -v 7.2.3.1 --no-document
-gem install sqlite3 -v 1.7.3 --no-document
-rbenv rehash
-REQUIRE_RAILS=1 npm run test:rails-integration
+npm run test:rails-runtime
 ```
 
-`npm test` will run the Rails integration app when these gems are available. `REQUIRE_RAILS=1` makes missing Rails gems a hard failure instead of a local-prerequisite skip.
+`npm test` will run Rails runtime checks when generated app bundles are already available. `npm run test:rails-runtime` makes missing Rails gems a hard failure and installs the generated bundles first, matching the dedicated CI lane.
 
 ## Quality Gates
 
@@ -185,6 +190,7 @@ REQUIRE_RAILS=1 npm run test:rails-integration
 npm test
 npm run test:snapshots
 npm run test:strict-boundaries
+npm run test:rails-runtime
 npm run ci:version-sync
 npm run ci:release-contracts
 npm run test:gem-package

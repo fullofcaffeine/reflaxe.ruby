@@ -35,6 +35,7 @@
     "test:todoapp-playwright": "node scripts/ci/todoapp-playwright.js",
     "test:rails-integration": "node scripts/ci/rails-integration.js",
     "test:rails-interop": "node scripts/ci/rails-interop-smoke.js",
+    "test:rails-runtime": "REQUIRE_RAILS=1 npm run test:rails-integration && REQUIRE_RAILS=1 npm run test:rails-interop",
     "test:routes-generator": "node scripts/ci/routes-generator-smoke.js",
     "test:scaffold-cli": "node scripts/ci/scaffold-cli-smoke.js",
     "test:rails-app-generator": "node scripts/ci/rails-app-generator-smoke.js",

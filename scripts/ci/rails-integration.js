@@ -55,13 +55,13 @@ const railsProbe = run("bundle", ["exec", "ruby", "-e", "require 'rails'; puts R
 if (railsProbe.status !== 0) {
   const message = "Rails gems are not available for the generated integration app; skipped runtime Rails test pass.";
   if (requireRails) {
-    process.stderr.write(`${message}\n`);
-    process.stderr.write(railsProbe.stderr);
-    process.exit(1);
+    process.stdout.write("[rails-integration] Rails gems missing; running bundle install because REQUIRE_RAILS=1.\n");
+    run("bundle", ["install"], { cwd: appDir });
+  } else {
+    process.stdout.write(`[rails-integration] ${message}\n`);
+    process.stdout.write("[rails-integration] Set REQUIRE_RAILS=1 after installing app gems to make this lane mandatory.\n");
+    process.exit(0);
   }
-  process.stdout.write(`[rails-integration] ${message}\n`);
-  process.stdout.write("[rails-integration] Set REQUIRE_RAILS=1 after installing app gems to make this lane mandatory.\n");
-  process.exit(0);
 }
 
 run("bundle", ["exec", "rails", "db:migrate"], {
