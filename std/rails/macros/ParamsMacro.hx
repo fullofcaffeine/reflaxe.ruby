@@ -42,7 +42,7 @@ class ParamsMacro {
 				var sourceInfo = sourceRailsFieldInfo(expr);
 				var info = sourceInfo == null ? typedRailsFieldInfo(expr) : extractRailsFieldInfo(Context.typeExpr(expr));
 				if (info == null) {
-					throw "ParamsMacro.requirePermit fields must be string literals or generated RailsHx model field refs such as Todo.titleField.";
+					throw "ParamsMacro.requirePermit fields must be string literals or generated RailsHx model field refs such as Todo.f.title.";
 				}
 				if (sourceInfo != null && info.model == null) {
 					info.model = sourceInfo.model;
@@ -60,23 +60,36 @@ class ParamsMacro {
 	}
 
 	static function typedRailsModelKey(expr:Expr):Null<String> {
-		var sourceModel = sourceRailsModelKey(expr);
-		if (sourceModel != null) {
-			return sourceModel;
-		}
-		return try {
+		var typedModel = try {
 			extractRailsModelKey(Context.typeExpr(expr));
 		} catch (_:Dynamic) {
 			null;
 		}
+		if (typedModel != null) {
+			return typedModel;
+		}
+		return sourceRailsModelKey(expr);
 	}
 
 	static function sourceRailsFieldInfo(expr:Expr):Null<FieldInfo> {
 		return switch (expr.expr) {
+			case EField(owner, field) if (sourceFieldsOwnerModel(owner) != null):
+				{name: field, model: sourceFieldsOwnerModel(owner)};
 			case EField(owner, field) if (StringTools.endsWith(field, "Field")):
 				{name: field.substr(0, field.length - "Field".length), model: sourceExprName(owner)};
 			case EParenthesis(inner) | ECheckType(inner, _):
 				sourceRailsFieldInfo(inner);
+			case _:
+				null;
+		}
+	}
+
+	static function sourceFieldsOwnerModel(expr:Expr):Null<String> {
+		return switch (expr.expr) {
+			case EField(owner, "fields" | "f"):
+				sourceExprName(owner);
+			case EParenthesis(inner) | ECheckType(inner, _):
+				sourceFieldsOwnerModel(inner);
 			case _:
 				null;
 		}
@@ -148,10 +161,25 @@ class ParamsMacro {
 				expected = field.model;
 				continue;
 			}
-			if (field.model != expected) {
+			if (!sameModelName(field.model, expected)) {
 				Context.error("ParamsMacro.requirePermit field refs must belong to the same model as the typed params root.", pos);
 			}
 		}
+	}
+
+	static function sameModelName(left:String, right:String):Bool {
+		if (left == right) {
+			return true;
+		}
+		if (left.indexOf(".") >= 0 && right.indexOf(".") >= 0) {
+			return false;
+		}
+		return shortModelName(left) == shortModelName(right);
+	}
+
+	static function shortModelName(name:String):String {
+		var parts = name.split(".");
+		return parts[parts.length - 1];
 	}
 
 	static function fieldAccessRailsFieldName(access:FieldAccess):Null<String> {

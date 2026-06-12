@@ -38,7 +38,12 @@ class ModelMacro {
 				pos: pos
 			});
 		}
-		for (field in fields.copy()) {
+		var columnFields = [for (field in fields.copy()) if (isRailsColumn(field)) field];
+		if (columnFields.length > 0) {
+			addFieldsObject(fields, "fields", columnFields, selfType, pos);
+			addFieldsObject(fields, "f", columnFields, selfType, pos);
+		}
+		for (field in columnFields) {
 			if (!isRailsColumn(field)) {
 				continue;
 			}
@@ -60,6 +65,42 @@ class ModelMacro {
 				pos: pos
 			});
 		}
+	}
+
+	static function addFieldsObject(fields:Array<Field>, name:String, columnFields:Array<Field>, selfType:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, name)) {
+			return;
+		}
+		var objectFields:Array<Field> = [];
+		var values:Array<ObjectField> = [];
+		for (field in columnFields) {
+			var fieldType = typedFieldComplexType(selfType, fieldValueType(field));
+			objectFields.push({
+				name: field.name,
+				access: [],
+				kind: FVar(fieldType, null),
+				meta: [{name: ":railsField", params: [macro $v{field.name}], pos: pos}],
+				pos: pos
+			});
+			values.push({
+				field: field.name,
+				expr: macro rails.active_record.Field.named($v{field.name})
+			});
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic, AFinal],
+			kind: FVar(TAnonymous(objectFields), {expr: EObjectDecl(values), pos: pos}),
+			pos: pos
+		});
+	}
+
+	static function typedFieldComplexType(selfType:ComplexType, fieldType:ComplexType):ComplexType {
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "Field",
+			params: [TPType(selfType), TPType(fieldType)]
+		});
 	}
 
 	static function validateModelMetadata(fields:Array<Field>):Void {

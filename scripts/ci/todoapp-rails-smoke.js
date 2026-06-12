@@ -1193,7 +1193,7 @@ function expectUnknownTypedFormFieldFailure() {
     "@:railsTemplateAst(\"render\")",
     "class BadTypedFieldView {",
     "\tpublic static function render():HtmlNode {",
-    "\t\treturn <form_with url=\"/todos\" scope=${Todo.railsParamKey}><text_field name=${Todo.missingField} /></form_with>;",
+    "\t\treturn <form_with url=\"/todos\" scope=${Todo.railsParamKey}><text_field name=${Todo.f.missing} /></form_with>;",
     "\t}",
     "}",
     "",
@@ -1232,7 +1232,7 @@ function expectUnknownTypedFormFieldFailure() {
       process.exit(1);
     }
     const output = `${result.stdout}\n${result.stderr}`;
-    if (!output.includes("has no field missingField")) {
+    if (!output.includes("has no field missing")) {
       console.error("Unknown typed RailsHx form field failed, but not with the expected missing field error.");
       process.stdout.write(result.stdout);
       process.stderr.write(result.stderr);
@@ -1269,7 +1269,7 @@ function expectMixedModelStrongParamsFailure() {
     "@:railsController",
     "class BadTypedParamsController extends rails.action_controller.Base {",
     "\tpublic function create() {",
-    "\t\tParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.titleField, User.nameField]);",
+    "\t\tParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, User.f.name]);",
     "\t}",
     "}",
     "",
@@ -1346,7 +1346,7 @@ function expectUnknownStrongParamsFieldFailure() {
     "@:railsController",
     "class BadUnknownParamsController extends rails.action_controller.Base {",
     "\tpublic function create() {",
-    "\t\tParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.missingField]);",
+    "\t\tParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.missing]);",
     "\t}",
     "}",
     "",
@@ -1387,7 +1387,7 @@ function expectUnknownStrongParamsFieldFailure() {
       process.exit(1);
     }
     const output = `${result.stdout}\n${result.stderr}`;
-    if (!output.includes("has no field missingField")) {
+    if (!output.includes("has no field missing")) {
       console.error("Unknown ParamsMacro.requirePermit field failed, but not with the expected missing field error.");
       process.stdout.write(result.stdout);
       process.stderr.write(result.stderr);

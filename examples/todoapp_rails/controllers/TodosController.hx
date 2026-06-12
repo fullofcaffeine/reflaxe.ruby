@@ -29,7 +29,7 @@ class TodosController extends rails.action_controller.Base {
 	}
 
 	public function create() {
-		var attrs = ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.titleField, Todo.notesField, Todo.userIdField]);
+		var attrs = ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, Todo.f.notes, Todo.f.userId]);
 		var todo = Todo.create(attrs);
 		redirectTo(Routes.todosPath());
 	}
