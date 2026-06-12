@@ -1,3 +1,11 @@
+# [1.34.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.33.0...v1.34.0) (2026-06-12)
+
+
+### Features
+
+* add RailsHx gradual interop sample ([7a4f4de](https://github.com/fullofcaffeine/reflaxe.ruby/commit/7a4f4de1c0d8877891b464f5a9e62ed93cef4c48))
+* port RailsHx generators to Ruby ([f735a8c](https://github.com/fullofcaffeine/reflaxe.ruby/commit/f735a8c1b53980630c79f7e1bc676ced971e457e))
+
 # [1.33.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.32.0...v1.33.0) (2026-06-11)
 
 
