@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.36.0...v1.37.0) (2026-06-12)
+
+
+### Features
+
+* add checked RailsHx template references ([cc01756](https://github.com/fullofcaffeine/reflaxe.ruby/commit/cc01756a2eb8a21c2246dbce8a2b794a91f50748))
+
 # [1.36.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.35.0...v1.36.0) (2026-06-12)
 
 
