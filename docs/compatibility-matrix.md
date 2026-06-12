@@ -57,7 +57,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Mixed Rails/RailsHx adoption sample | `examples/rails_interop_app` + `npm run test:rails-interop` | Initial compile/static smoke |
 | Existing Rails boundary adoption generator | `bin/rails generate hxruby:adopt` / `rake hxruby:gen:adopt` | Initial explicit wrapper scaffold plus suggest-only discovery |
 | Rails app install generator | `bin/rails generate hxruby:install` / `rake hxruby:gen:app` | Implemented |
-| Route helper generator | `bin/rails generate hxruby:routes` / `npm run rails:generate-routes` | Implemented |
+| Route helper generator | `bin/rails generate hxruby:routes` / `npm run rails:generate-routes` | Hardened for named Rails routes, nested/resource params, namespaces, member/collection routes, optional segments, globs, and mount-like rows |
 | Scaffold generator | `bin/rails generate hxruby:scaffold` / `npm run rails:scaffold` | Implemented |
 
 The rows above describe the current Rails MVP. The deeper typed Rails compiler layer is tracked as RailsHx; see `docs/railshx-roadmap.md` and the `haxe.ruby-wpi` bead epic.

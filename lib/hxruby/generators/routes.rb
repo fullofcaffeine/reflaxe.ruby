@@ -6,7 +6,7 @@ require_relative "common"
 module HXRuby
   module Generators
     class Routes
-      VERBS = %w[GET POST PATCH PUT DELETE OPTIONS HEAD].freeze
+      VERB_PATTERN = /\A(?:GET|POST|PATCH|PUT|DELETE|OPTIONS|HEAD)(?:\|(?:GET|POST|PATCH|PUT|DELETE|OPTIONS|HEAD))*\z/
 
       def self.run(argv, input: nil)
         new(parse(argv), input: input).run
@@ -46,26 +46,16 @@ module HXRuby
       def parse_routes(input)
         seen = {}
         helpers = []
+        previous_prefix = nil
 
         input.each_line do |raw_line|
-          line = raw_line.strip
-          next if line.empty? || line.start_with?("Prefix ", "rails_")
+          route = parse_route_line(raw_line, previous_prefix)
+          previous_prefix = route.fetch(:prefix) if route && !route.fetch(:prefix).to_s.empty?
+          next unless route
 
-          tokens = line.split(/\s+/)
-          prefix = nil
-          verb = nil
-          uri = nil
-
-          if VERBS.include?(tokens[0])
-            verb = tokens[0]
-            uri = tokens[1]
-          elsif VERBS.include?(tokens[1])
-            prefix = tokens[0]
-            verb = tokens[1]
-            uri = tokens[2]
-          end
-
-          next unless prefix && verb && uri
+          prefix = route.fetch(:prefix)
+          uri = route.fetch(:uri)
+          next if skip_prefix?(prefix)
           next if seen[prefix]
 
           seen[prefix] = true
@@ -75,9 +65,50 @@ module HXRuby
         helpers
       end
 
+      def parse_route_line(raw_line, previous_prefix)
+        line = raw_line.strip
+        return nil if line.empty? || line.start_with?("Prefix ")
+
+        tokens = line.split(/\s+/)
+        verb_index = tokens.index { |token| route_verb?(token) }
+        return parse_mount_line(tokens) unless verb_index
+
+        uri = tokens[verb_index + 1]
+        return nil unless uri&.start_with?("/")
+
+        raw_prefix = tokens[0...verb_index].join("_")
+        prefix = raw_prefix.empty? ? previous_prefix : raw_prefix
+        return nil if prefix.to_s.empty?
+
+        { prefix: prefix, uri: uri }
+      end
+
+      def parse_mount_line(tokens)
+        return nil unless tokens.length >= 2
+
+        prefix = tokens[0]
+        uri = tokens[1]
+        return nil unless uri&.start_with?("/")
+
+        { prefix: prefix, uri: uri }
+      end
+
+      def route_verb?(token)
+        token.match?(VERB_PATTERN)
+      end
+
+      def skip_prefix?(prefix)
+        prefix.nil? || prefix.empty? || prefix.start_with?("rails_")
+      end
+
       def route_params(uri)
-        cleaned = uri.gsub(/\(\.:format\)/, "")
-        cleaned.scan(/:([A-Za-z_][A-Za-z0-9_]*)/).flatten.uniq
+        required_path = uri
+          .gsub(/\(\.:format\)/, "")
+          .gsub(/\([^)]*\)/, "")
+
+        params = required_path.scan(/:([A-Za-z_][A-Za-z0-9_]*)/).flatten
+        params += required_path.scan(/\*([A-Za-z_][A-Za-z0-9_]*)/).flatten
+        params.uniq
       end
 
       def render_routes(helpers)
