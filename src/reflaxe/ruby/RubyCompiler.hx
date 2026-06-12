@@ -441,13 +441,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		body = body.concat(railsSchemaRegistryLines(tableName, varFields, classType));
 		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":belongsTo")) {
-				body.push("belongs_to :" + RubyNaming.toMethodName(field.field.name));
+				body.push("belongs_to :" + RubyNaming.toMethodName(field.field.name) + railsAssociationOptionsSuffix(field.field.meta, ":belongsTo"));
 			}
 			if (hasMeta(field.field.meta, ":hasMany")) {
-				body.push("has_many :" + RubyNaming.toMethodName(field.field.name));
+				body.push("has_many :" + RubyNaming.toMethodName(field.field.name) + railsAssociationOptionsSuffix(field.field.meta, ":hasMany"));
 			}
 			if (hasMeta(field.field.meta, ":hasOne")) {
-				body.push("has_one :" + RubyNaming.toMethodName(field.field.name));
+				body.push("has_one :" + RubyNaming.toMethodName(field.field.name) + railsAssociationOptionsSuffix(field.field.meta, ":hasOne"));
 			}
 		}
 		for (field in varFields) {
@@ -2506,6 +2506,60 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return "{}";
 		}
 		return metadataValueCode(entries[0].params[0]);
+	}
+
+	static function railsAssociationOptionsSuffix(meta:Null<haxe.macro.Type.MetaAccess>, name:String):String {
+		if (meta == null || meta.extract == null) {
+			return "";
+		}
+		var entries = meta.extract(name);
+		if (entries.length == 0 || entries[0].params == null || entries[0].params.length == 0) {
+			return "";
+		}
+		var options = railsAssociationOptions(entries[0].params[0]);
+		return options.length == 0 ? "" : ", " + options.join(", ");
+	}
+
+	static function railsAssociationOptions(expr:haxe.macro.Expr):Array<String> {
+		return switch (expr.expr) {
+			case EObjectDecl(fields):
+				[for (field in fields) railsAssociationOption(field.field, field.expr)];
+			case _:
+				[];
+		}
+	}
+
+	static function railsAssociationOption(name:String, expr:haxe.macro.Expr):String {
+		var rubyName = RubyNaming.toMethodName(name);
+		var value = switch (name) {
+			case "dependent" | "inverseOf":
+				railsSymbolOptionValue(expr);
+			case "foreignKey":
+				railsStringMethodOptionValue(expr);
+			case "className":
+				metadataValueCode(expr);
+			case _:
+				metadataValueCode(expr);
+		}
+		return rubyName + ": " + value;
+	}
+
+	static function railsSymbolOptionValue(expr:haxe.macro.Expr):String {
+		return switch (expr.expr) {
+			case EConst(CString(value, _)):
+				":" + RubyNaming.toMethodName(value);
+			case _:
+				metadataValueCode(expr);
+		}
+	}
+
+	static function railsStringMethodOptionValue(expr:haxe.macro.Expr):String {
+		return switch (expr.expr) {
+			case EConst(CString(value, _)):
+				quoteRubyStringForCode(RubyNaming.toMethodName(value));
+			case _:
+				metadataValueCode(expr);
+		}
 	}
 
 	static function railsCallbackNames(meta:Null<haxe.macro.Type.MetaAccess>):Array<String> {

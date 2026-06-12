@@ -162,6 +162,7 @@ class ModelMacro {
 						if (!isVarField(field)) {
 							throw meta.name + " can only be used on model fields.";
 						}
+						validateAssociationOptions(field, meta, fields);
 					case ":railsEnum":
 						if (!isVarField(field)) {
 							throw "@:railsEnum can only be used on model fields.";
@@ -215,6 +216,37 @@ class ModelMacro {
 		return "";
 	}
 
+	static function associationMeta(field:Field):Null<MetadataEntry> {
+		if (field.meta == null) {
+			return null;
+		}
+		for (meta in field.meta) {
+			switch (meta.name) {
+				case ":belongsTo" | ":hasMany" | ":hasOne":
+					return meta;
+				case _:
+			}
+		}
+		return null;
+	}
+
+	static function associationStringOption(meta:Null<MetadataEntry>, name:String):Null<String> {
+		if (meta == null || meta.params == null || meta.params.length == 0) {
+			return null;
+		}
+		return switch (meta.params[0].expr) {
+			case EObjectDecl(options):
+				for (option in options) {
+					if (option.field == name && isStringExpr(option.expr)) {
+						return stringExprValue(option.expr);
+					}
+				}
+				null;
+			case _:
+				null;
+		}
+	}
+
 	static function validateAssociationTarget(field:Field, target:ComplexType, associationMeta:String):Void {
 		switch (target) {
 			case TPath(path) if (path.name != "Dynamic"):
@@ -235,7 +267,7 @@ class ModelMacro {
 	}
 
 	static function validateBelongsToForeignKey(field:Field, fields:Array<Field>):Void {
-		var foreignKeyName = field.name + "Id";
+		var foreignKeyName = belongsToForeignKeyName(field);
 		var foreignKey = findFieldNamed(fields, foreignKeyName);
 		if (foreignKey == null || !isRailsColumn(foreignKey)) {
 			throw '@:belongsTo field ${field.name} requires a @:railsColumn foreign key named ${foreignKeyName}.';
@@ -243,6 +275,78 @@ class ModelMacro {
 		if (complexTypeName(fieldValueType(foreignKey)) != "Int") {
 			throw '@:belongsTo foreign key ${foreignKeyName} must be Int for the current RailsHx association validator.';
 		}
+	}
+
+	static function validateAssociationOptions(field:Field, meta:MetadataEntry, fields:Array<Field>):Void {
+		if (meta.params == null || meta.params.length == 0) {
+			return;
+		}
+		if (meta.params.length != 1) {
+			throw meta.name + " expects zero arguments or one options object.";
+		}
+		switch (meta.params[0].expr) {
+			case EObjectDecl(options):
+				for (option in options) {
+					switch (option.field) {
+						case "dependent":
+							validateDependentOption(meta.name, option.expr);
+						case "optional":
+							if (meta.name != ":belongsTo") {
+								throw '@:association option optional is only valid for @:belongsTo.';
+							}
+							if (!isBoolExpr(option.expr)) {
+								throw '@:association option optional must be a Bool literal.';
+							}
+						case "foreignKey":
+							if (!isStringExpr(option.expr)) {
+								throw '@:association option foreignKey must be a String literal.';
+							}
+							validateForeignKeyOption(field, meta.name, fields, stringExprValue(option.expr));
+						case "inverseOf":
+							if (!isStringExpr(option.expr)) {
+								throw '@:association option inverseOf must be a String literal.';
+							}
+						case "className":
+							if (!isStringExpr(option.expr)) {
+								throw '@:association option className must be a String literal.';
+							}
+						case _:
+							throw '@:association unknown option ${option.field}.';
+					}
+				}
+			case _:
+				throw meta.name + " expects an options object.";
+		}
+	}
+
+	static function validateDependentOption(associationMeta:String, expr:Expr):Void {
+		if (associationMeta == ":belongsTo") {
+			throw '@:association option dependent is not valid for @:belongsTo.';
+		}
+		if (!isStringExpr(expr)) {
+			throw '@:association option dependent must be a String literal.';
+		}
+		var value = stringExprValue(expr);
+		switch (value) {
+			case "destroy" | "deleteAll" | "nullify" | "restrictWithError" | "restrictWithException":
+			case _:
+				throw '@:association option dependent has unsupported value ${value}.';
+		}
+	}
+
+	static function validateForeignKeyOption(field:Field, associationMeta:String, fields:Array<Field>, foreignKeyName:String):Void {
+		if (associationMeta != ":belongsTo") {
+			return;
+		}
+		var foreignKey = findFieldNamed(fields, foreignKeyName);
+		if (foreignKey == null || !isRailsColumn(foreignKey)) {
+			throw '@:belongsTo field ${field.name} requires a @:railsColumn foreign key named ${foreignKeyName}.';
+		}
+	}
+
+	static function belongsToForeignKeyName(field:Field):String {
+		var explicit = associationStringOption(associationMeta(field), "foreignKey");
+		return explicit == null ? field.name + "Id" : explicit;
 	}
 
 	static function validateValidationMetadata(field:Field, fields:Array<Field>, meta:MetadataEntry):Void {

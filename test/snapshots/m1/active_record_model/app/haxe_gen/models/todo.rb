@@ -22,7 +22,7 @@ module Models
     def self.typed_column_count()
       __hx_rails_schema()[:columns].length
     end
-    belongs_to :user
+    belongs_to :user, optional: false, foreign_key: "user_id", inverse_of: :todos
     enum :status, {open: "open", done: "done"}
     # haxe column id: Int
     # haxe column title: String

@@ -9,5 +9,6 @@ class User extends rails.active_record.Base<User> {
 	@:railsColumn({index: true})
 	public var name:String;
 
-	@:hasMany public var todos:rails.ActiveRecord.HasMany<Todo>;
+	@:hasMany({dependent: "destroy", inverseOf: "user"})
+	public var todos:rails.ActiveRecord.HasMany<Todo>;
 }

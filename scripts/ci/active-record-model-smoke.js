@@ -24,6 +24,12 @@ const invalidFkTypeSourceDir = join(root, "test", ".generated", "active_record_m
 const invalidFkTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_fk_type_out");
 const invalidAssociationTargetSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_target_src");
 const invalidAssociationTargetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_target_out");
+const invalidAssociationOptionSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_option_src");
+const invalidAssociationOptionOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_option_out");
+const invalidAssociationDependentSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_dependent_src");
+const invalidAssociationDependentOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_dependent_out");
+const invalidAssociationForeignKeySourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_foreign_key_src");
+const invalidAssociationForeignKeyOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_foreign_key_out");
 const invalidValidationTargetSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_target_src");
 const invalidValidationTargetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_target_out");
 const invalidValidationOptionSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_option_src");
@@ -90,6 +96,12 @@ rmSync(invalidFkTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidFkTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidAssociationTargetSourceDir, { force: true, recursive: true });
 rmSync(invalidAssociationTargetOutputDir, { force: true, recursive: true });
+rmSync(invalidAssociationOptionSourceDir, { force: true, recursive: true });
+rmSync(invalidAssociationOptionOutputDir, { force: true, recursive: true });
+rmSync(invalidAssociationDependentSourceDir, { force: true, recursive: true });
+rmSync(invalidAssociationDependentOutputDir, { force: true, recursive: true });
+rmSync(invalidAssociationForeignKeySourceDir, { force: true, recursive: true });
+rmSync(invalidAssociationForeignKeyOutputDir, { force: true, recursive: true });
 rmSync(invalidValidationTargetSourceDir, { force: true, recursive: true });
 rmSync(invalidValidationTargetOutputDir, { force: true, recursive: true });
 rmSync(invalidValidationOptionSourceDir, { force: true, recursive: true });
@@ -153,7 +165,7 @@ for (const expected of [
   "{name: :notes, haxe_name: \"notes\", ruby_name: \"notes\", haxe_type: \"String\", rails_type: :text, nullable: true, default: nil, primary_key: false, index: false, unique: false, db_type: :text}",
   "{name: :external_id, haxe_name: \"externalId\", ruby_name: \"external_id\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: false, unique: true, db_type: nil}",
   "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
-  "belongs_to :user",
+  'belongs_to :user, optional: false, foreign_key: "user_id", inverse_of: :todos',
   'enum :status, {open: "open", done: "done"}',
   "# haxe column id: Int",
   "# haxe column title: String",
@@ -184,7 +196,7 @@ for (const expected of [
   "timestamps: true",
   "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
   "{name: :name, haxe_name: \"name\", ruby_name: \"name\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
-  "has_many :todos",
+  "has_many :todos, dependent: :destroy, inverse_of: :user",
   "# haxe column id: Int",
   "# haxe column name: String",
 ]) {
@@ -247,6 +259,9 @@ expectInvalidAssociationOwnerFailure();
 expectInvalidMissingBelongsToForeignKeyFailure();
 expectInvalidBelongsToForeignKeyTypeFailure();
 expectInvalidAssociationTargetFailure();
+expectInvalidAssociationOptionFailure();
+expectInvalidAssociationDependentFailure();
+expectInvalidAssociationForeignKeyFailure();
 expectInvalidValidationTargetFailure();
 expectInvalidValidationOptionFailure();
 expectInvalidValidationShapeFailure();
@@ -496,6 +511,101 @@ function expectInvalidAssociationTargetFailure() {
     invalidAssociationTargetOutputDir,
     "Invalid association target compiled successfully.",
     ":belongsTo target invalid.PlainOwner must be a @:railsModel class"
+  );
+}
+
+function expectInvalidAssociationOptionFailure() {
+  mkdirSync(join(invalidAssociationOptionSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidAssociationOptionSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo.associations.user == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidAssociationOptionSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "import models.User;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var userId:Int;",
+    "\t@:belongsTo({magic: true}) public var user:rails.ActiveRecord.BelongsTo<User>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidAssociationOptionSourceDir,
+    invalidAssociationOptionOutputDir,
+    "Invalid association option compiled successfully.",
+    "@:association unknown option magic"
+  );
+}
+
+function expectInvalidAssociationDependentFailure() {
+  mkdirSync(join(invalidAssociationDependentSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidAssociationDependentSourceDir, "Main.hx"), [
+    "import invalid.BadUser;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadUser.associations.todos == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidAssociationDependentSourceDir, "invalid", "BadUser.hx"), [
+    "package invalid;",
+    "",
+    "import models.Todo;",
+    "",
+    "@:railsModel(\"bad_users\")",
+    "class BadUser extends rails.active_record.Base<BadUser> {",
+    "\t@:hasMany({dependent: \"explode\"}) public var todos:rails.ActiveRecord.HasMany<Todo>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidAssociationDependentSourceDir,
+    invalidAssociationDependentOutputDir,
+    "Invalid association dependent value compiled successfully.",
+    "@:association option dependent has unsupported value explode"
+  );
+}
+
+function expectInvalidAssociationForeignKeyFailure() {
+  mkdirSync(join(invalidAssociationForeignKeySourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidAssociationForeignKeySourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo.associations.user == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidAssociationForeignKeySourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "import models.User;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var userId:Int;",
+    "\t@:belongsTo({foreignKey: \"ownerId\"}) public var user:rails.ActiveRecord.BelongsTo<User>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidAssociationForeignKeySourceDir,
+    invalidAssociationForeignKeyOutputDir,
+    "Invalid association foreign key compiled successfully.",
+    "@:belongsTo field user requires a @:railsColumn foreign key named ownerId"
   );
 }
 

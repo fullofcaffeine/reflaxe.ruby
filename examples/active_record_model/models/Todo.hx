@@ -27,7 +27,8 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:railsColumn({index: true})
 	public var userId:Int;
 
-	@:belongsTo public var user:rails.ActiveRecord.BelongsTo<User>;
+	@:belongsTo({optional: false, foreignKey: "userId", inverseOf: "todos"})
+	public var user:rails.ActiveRecord.BelongsTo<User>;
 
 	public static function incomplete() {
 		return Todo.where({completed: false});
