@@ -5,16 +5,16 @@ class Main
     "Main"
   end
   def self.main()
-    total__hx18601 = 7
-    if (total__hx18601 > 5)
+    total__hx18729 = 7
+    if (total__hx18729 > 5)
       puts(HXRuby.stringify("big"))
     else
       puts(HXRuby.stringify("small"))
     end
-    i__hx18674 = 0
-    while (i__hx18674 < 2)
+    i__hx18802 = 0
+    while (i__hx18802 < 2)
       puts(HXRuby.stringify("loop"))
-      i__hx18674 = (i__hx18674 + 1)
+      i__hx18802 = (i__hx18802 + 1)
     end
     puts(HXRuby.stringify([1, 2, 3]))
     puts(HXRuby.stringify({"name" => "ruby", "count" => 3}))

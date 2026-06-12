@@ -140,7 +140,23 @@
       "status": "implemented",
       "path": "std/rails/active_record/Field.hx",
       "surface": "rails.active_record.Field",
-      "reason": "Typed ActiveRecord model field reference that lets RailsHx forms and params share one checked field source while lowering to Rails-native names/symbols."
+      "reason": "Typed ActiveRecord model field reference that lets RailsHx forms, params, and order expressions share one checked field source while lowering to Rails-native names/symbols."
+    },
+    {
+      "id": "std.rails.active_record_order",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Order.hx",
+      "surface": "rails.active_record.Order",
+      "reason": "Typed ActiveRecord order token produced from field refs and lowered by the compiler into Rails-native order(column: :direction) arguments."
+    },
+    {
+      "id": "std.rails.active_record_relation",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Relation.hx",
+      "surface": "rails.active_record.Relation",
+      "reason": "Typed ActiveRecord::Relation facade for model query chains such as where/order/limit/first/toArray."
     },
     {
       "id": "std.rails.active_record_model_key",
@@ -156,7 +172,7 @@
       "status": "implemented",
       "path": "std/rails/macros/ModelMacro.hx",
       "surface": "rails.macros.ModelMacro",
-      "reason": "Build macro for railsModel/railsColumn metadata validation, generated typed field refs/model params keys, and typed where/create stubs."
+      "reason": "Build macro for railsModel/railsColumn metadata validation, generated typed field refs/model params keys, typed where criteria, and typed create/relation stubs."
     },
     {
       "id": "std.rails.action_controller",

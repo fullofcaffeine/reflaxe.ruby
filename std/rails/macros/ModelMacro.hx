@@ -12,11 +12,11 @@ class ModelMacro {
 		var pos = Context.currentPos();
 		var selfType:ComplexType = TPath({pack: cls.pack, name: cls.name});
 		var nullableSelf:ComplexType = TPath({pack: [], name: "Null", params: [TPType(selfType)]});
-		var arraySelf:ComplexType = TPath({pack: [], name: "Array", params: [TPType(selfType)]});
+		var relationSelf:ComplexType = TPath({pack: ["rails", "active_record"], name: "Relation", params: [TPType(selfType)]});
 
 		validateModelMetadata(fields);
 		addModelFieldRefs(fields, selfType, cls.name, pos);
-		addStub(fields, "where", macro : Dynamic, arraySelf, pos);
+		addStub(fields, "where", criteriaComplexType(fields), relationSelf, pos);
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
@@ -246,6 +246,23 @@ class ModelMacro {
 			case _:
 				macro : Dynamic;
 		}
+	}
+
+	static function criteriaComplexType(fields:Array<Field>):ComplexType {
+		var criteriaFields:Array<Field> = [];
+		for (field in fields) {
+			if (!isRailsColumn(field)) {
+				continue;
+			}
+			criteriaFields.push({
+				name: field.name,
+				access: [],
+				kind: FVar(fieldValueType(field), null),
+				meta: [{name: ":optional", pos: field.pos}],
+				pos: field.pos
+			});
+		}
+		return criteriaFields.length == 0 ? macro : Dynamic : TAnonymous(criteriaFields);
 	}
 
 	static function hasValidValidationArgs(params:Null<Array<Expr>>):Bool {

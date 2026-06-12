@@ -8,6 +8,10 @@ const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "active_record_model");
 const invalidSourceDir = join(root, "test", ".generated", "active_record_model_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "active_record_model_invalid_out");
+const invalidWhereSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_src");
+const invalidWhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_out");
+const invalidWhereTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_type_src");
+const invalidWhereTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_type_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -32,6 +36,10 @@ function run(command, args, options = {}) {
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereTypeOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile active_record_model through Reflaxe.");
@@ -102,9 +110,11 @@ for (const expected of [
 
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
 for (const expected of [
-  'Models::Todo.where(title: "ship")',
+  'Models::Todo.where(title: "ship").order(title: :asc).limit(10)',
   'Models::Todo.create(title: "ship")',
-  "Models::AuditLog.where(event_count: 1)",
+  "Models::AuditLog.where(event_count: 1).order(event_count: :desc)",
+  "first__hx",
+  ".first()",
 ]) {
   if (!mainRuby.includes(expected)) {
     console.error(`ActiveRecord call shape missing from main.rb: ${expected}`);
@@ -113,6 +123,8 @@ for (const expected of [
 }
 
 expectInvalidColumnDefaultFailure();
+expectInvalidWhereFieldFailure();
+expectInvalidWhereValueTypeFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -144,6 +156,96 @@ function compileWithFirstAvailableReflaxe() {
     }
   }
   return null;
+}
+
+function expectInvalidWhereFieldFailure() {
+  mkdirSync(invalidWhereSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.where({missing: \"nope\"});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereSourceDir,
+    invalidWhereOutputDir,
+    "Invalid ActiveRecord where field compiled successfully.",
+    "has extra field missing"
+  );
+}
+
+function expectInvalidWhereValueTypeFailure() {
+  mkdirSync(invalidWhereTypeSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereTypeSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.where({completed: \"nope\"});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereTypeSourceDir,
+    invalidWhereTypeOutputDir,
+    "Invalid ActiveRecord where value type compiled successfully.",
+    "String should be Null<Bool>"
+  );
+}
+
+function expectInvalidCompile(sourceDir, rubyOutputDir, successMessage, expectedDiagnostic) {
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${rubyOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      join(root, "examples", "active_record_model"),
+      "-cp",
+      sourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "Main",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error(successMessage);
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes(expectedDiagnostic)) {
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      console.error(`Invalid ActiveRecord compile failed without expected diagnostic: ${expectedDiagnostic}`);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to find Reflaxe source for invalid ActiveRecord compile check.");
+    process.exit(1);
+  }
 }
 
 function expectInvalidColumnDefaultFailure() {

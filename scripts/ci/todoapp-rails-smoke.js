@@ -176,7 +176,7 @@ for (const expected of [
   /require "action_controller\/railtie"/,
   /module Controllers/,
   /class TodosController < ActionController::Base/,
-  /todos__hx\d+ = Models::Todo\.incomplete\(\)/,
+  /todos__hx\d+ = Models::Todo\.incomplete\(\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)/,
   /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: Models::User\.first\(\)\}, layout: "application"\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,

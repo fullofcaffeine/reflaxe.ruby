@@ -19,7 +19,7 @@ typedef TodoIndexLocals = {
 @:railsController
 class TodosController extends rails.action_controller.Base {
 	public function index() {
-		var todos = Todo.incomplete();
+		var todos = Todo.incomplete().order(Todo.f.title.asc()).limit(10).toArray();
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {
 			todos: todos,
 			todoCount: todos.length,

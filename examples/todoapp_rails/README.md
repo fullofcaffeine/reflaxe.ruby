@@ -26,7 +26,7 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 
 - Haxe-authored ActiveRecord models with `@:railsModel`, typed `@:railsColumn(...)` metadata, associations, validations, and timestamps.
 - Generated Rails model Ruby with `self.__hx_rails_schema` metadata for later query/migration tooling.
-- Haxe-authored ActionController logic with typed model calls, `ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, ...])` strong-params generation, and `ViewMacro.renderTemplate(...)` typed locals for Rails rendering.
+- Haxe-authored ActionController logic with typed model calls, `Relation<Todo>` query chaining, `ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, ...])` strong-params generation, and `ViewMacro.renderTemplate(...)` typed locals for Rails rendering.
 - Haxe-owned ActionView artifact generation through `@:railsTemplate(...)`, which materializes the Rails-native ERB file under `app/views`.
 - Haxe-authored typed ActionView partials through `@:railsTemplateAst(...)`, Rails HHX inline markup, `H`, `HtmlNode`, and `HtmlAttr`; the compiler type-checks embedded expressions such as `todo.title`, typed conditionals/loops, typed partial locals, route helper calls, and typed form locals before emitting ERB.
 - HHX-first ActionView authoring: the index page and all extracted view pieces are authored as typed HHX, while Rails-native ERB is compiler output.
@@ -40,6 +40,7 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - `models/Todo.hx` and `models/User.hx` are RailsHx ActiveRecord models.
 - `migrations/CreateTodos.hx` is the Haxe-authored Rails migration source; generated Ruby lands at `db/migrate/20260101000000_create_todos.rb`.
 - `controllers/TodosController.hx` is a RailsHx controller using typed params and route helpers.
+- `Todo.incomplete()` returns `Relation<Todo>`, and the controller keeps the query chain typed with `order(Todo.f.title.asc()).limit(10).toArray()` before handing an array to HHX templates.
 - `views/ApplicationLayoutView.hx` owns the Rails layout as typed HHX, including the doctype, Rails CSRF/CSP helper tags, stylesheet/importmap tags, and `<rails_yield />`; generated ERB lands at `app/views/layouts/application.html.erb`.
 - `views/TodoIndexView.hx` declares the typed Rails template artifact and owns the full page shell as HHX; scalar locals project from Haxe names such as `todoCount` to Rails locals such as `todo_count`.
 - `views/TodoComposerView.hx` owns the typed sample-user branch and composes the form through typed `<partial>` locals, then generates `app/views/controllers/todos/_composer.html.erb`.
@@ -177,3 +178,5 @@ RailsHx has the first typed ActionView seams: controllers render through `ViewMa
 Rails layout helper tags are typed HHX too: `<doctype_html />`, `<csrf_meta_tags />`, `<csp_meta_tag />`, `<stylesheet_link_tag />`, `<javascript_importmap_tags />`, `<rails_yield />`, `<yield_content name="..." />`, and `<content_for name="...">...</content_for>` lower to Rails-native ERB helpers. Layouts and named slots must follow the same rule as partials: author in HHX, generate ERB.
 
 RailsHx ActiveRecord field refs are the default form/params seam. `@:railsColumn` fields generate `Todo.fields.title` / `Todo.f.title : Field<Todo, String>` and `Todo.railsParamKey : ModelKey<Todo>`. HHX form helpers accept those refs and lower them to Rails-native field names, while `ParamsMacro.requirePermit(...)` validates that permitted fields belong to the same typed params root before emitting Rails symbols.
+
+RailsHx ActiveRecord queries now have the first typed relation seam. Model `where({...})` checks object-literal keys and value types against `@:railsColumn` metadata, returns `Relation<Todo>`, and supports Rails-shaped chains such as `Todo.where({isCompleted: false}).order(Todo.f.title.asc()).limit(10).toArray()`. The compiler lowers this to normal ActiveRecord calls such as `where(is_completed: false).order(title: :asc).limit(10).to_a`.

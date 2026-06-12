@@ -754,6 +754,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (isIdentifierCallee(callee, "__is__")) {
 			return RubyCall(RubyLocal("HXRuby"), "is_of_type", [compileParam(params, 0), compileParam(params, 1)]);
 		}
+		var activeRecordCall = compileActiveRecordRelationCall(callee, params);
+		if (activeRecordCall != null) {
+			return activeRecordCall;
+		}
 		var arrayCall = compileArrayCall(callee, params);
 		if (arrayCall != null) {
 			return arrayCall;
@@ -864,6 +868,73 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				null;
 		}
+	}
+
+	static function compileActiveRecordRelationCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (callee.expr) {
+			case TField(target, access) if (fieldAccessRawName(access) == "order" && params.length == 1):
+				var orderArg = activeRecordOrderArg(params[0]);
+				orderArg == null ? null : RubyCall(compileExpr(target), "order", [RubyRawExpr(orderArg)]);
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordOrderArg(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordOrderArg(inner);
+			case TCall({expr: TField(fieldExpr, access)}, []) if (isOrderDirection(fieldAccessRawName(access))):
+				activeRecordOrderArgForField(fieldExpr, fieldAccessRawName(access));
+			case TCall({expr: TField(_, access)}, [fieldExpr]) if (isOrderDirection(fieldAccessRawName(access))):
+				activeRecordOrderArgForField(fieldExpr, fieldAccessRawName(access));
+			case TCall({expr: TField(_, access)}, [fieldExpr, directionExpr]) if (fieldAccessRawName(access) == "named"):
+				var fieldName = activeRecordFieldName(fieldExpr);
+				var direction = activeRecordDirectionName(directionExpr);
+				fieldName == null || direction == null ? null : RubyNaming.toMethodName(fieldName) + ": :" + direction;
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordOrderArgForField(fieldExpr:TypedExpr, direction:String):Null<String> {
+		var fieldName = activeRecordFieldName(fieldExpr);
+		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": :" + direction;
+	}
+
+	static function activeRecordFieldName(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordFieldName(inner);
+			case TField(_, access):
+				var value = fieldAccessRailsFieldName(access);
+				if (value == null) {
+					var raw = fieldAccessRawName(access);
+					value = StringTools.endsWith(raw, "Field") ? raw.substr(0, raw.length - "Field".length) : null;
+				}
+				value;
+			case TConst(TString(value)):
+				value;
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordDirectionName(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordDirectionName(inner);
+			case TConst(TString("asc")):
+				"asc";
+			case TConst(TString("desc")):
+				"desc";
+			case _:
+				null;
+		}
+	}
+
+	static function isOrderDirection(name:String):Bool {
+		return name == "asc" || name == "desc";
 	}
 
 	static function compileStdIsOfType(params:Array<TypedExpr>):RubyExpr {

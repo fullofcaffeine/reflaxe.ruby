@@ -20,4 +20,12 @@ abstract Field<TModel, TValue>(String) from String to String {
 	public static inline function named<TModel, TValue>(name:String):Field<TModel, TValue> {
 		return new Field(name);
 	}
+
+	public function asc():Order<TModel> {
+		return Order.named(this, "asc");
+	}
+
+	public function desc():Order<TModel> {
+		return Order.named(this, "desc");
+	}
 }
