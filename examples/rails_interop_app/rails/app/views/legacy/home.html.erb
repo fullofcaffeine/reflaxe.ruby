@@ -1,0 +1,20 @@
+<main class="interop-page legacy-shell">
+  <section class="interop-hero">
+    <span class="eyebrow">Pure Rails shell</span>
+    <h1>Legacy ERB, typed Haxe inside.</h1>
+    <p class="lede">
+      This page is ordinary Rails ERB. It calls a generated Haxe service and renders a generated HHX partial without knowing RailsHx exists.
+    </p>
+
+    <%= render partial: "legacy/badge", locals: { label: "Existing ERB remains source", tone: "cool" } %>
+
+    <%= render partial: "typed_widgets/summary", locals: {
+      title: "HHX island rendered from ERB",
+      count: 2,
+      note: Services::TypedStats.confidence_label
+    } %>
+
+    <p class="handoff"><%= Services::TypedStats.summary(["legacy shell", "typed service"]) %></p>
+    <%= link_to "Open the Haxe shell consuming legacy Rails", "/haxe-shell", class: "cta-link" %>
+  </section>
+</main>

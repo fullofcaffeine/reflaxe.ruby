@@ -1908,7 +1908,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplatePartial(template:TypedExpr, locals:TypedExpr, scope:RailsTemplateScope):String {
 		var path = extractTypedTemplatePath(template);
 		if (path == null) {
-			Context.error("HtmlNode.Partial expects Template.named(\"path\") as the template argument.", template.pos);
+			Context.error("HtmlNode.Partial expects Template.named(\"path\") or Template.external(\"path\") as the template argument.", template.pos);
 			return "";
 		}
 		var localsHash = lowerTemplateLocalsHash(locals, scope, null, null);
@@ -1918,7 +1918,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateComponent(template:TypedExpr, locals:TypedExpr, slotNameExpr:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
 		var path = extractTypedTemplatePath(template);
 		if (path == null) {
-			Context.error("HtmlNode.Component expects Template.named(\"path\") as the template argument.", template.pos);
+			Context.error("HtmlNode.Component expects Template.named(\"path\") or Template.external(\"path\") as the template argument.", template.pos);
 			return "";
 		}
 		var slotName = expectTemplateString(slotNameExpr, "HtmlNode.Component slotName must be a string literal.");
@@ -1963,17 +1963,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function extractTypedTemplatePath(template:TypedExpr):Null<String> {
 		var unwrapped = unwrapTemplateExpr(template);
 		return switch (unwrapped.expr) {
-			case TCall(callee, [path]) if (isTemplateNamedCall(callee)):
-				expectTemplateString(path, "Template.named expects a string literal path.");
+			case TCall(callee, [path]) if (isTemplatePathCall(callee)):
+				expectTemplateString(path, "Template.named/external expects a string literal path.");
 			case _:
 				null;
 		}
 	}
 
-	static function isTemplateNamedCall(callee:TypedExpr):Bool {
+	static function isTemplatePathCall(callee:TypedExpr):Bool {
 		return switch (unwrapTemplateExpr(callee).expr) {
 			case TField(_, access):
-				fieldAccessName(access) == "named";
+				var name = fieldAccessName(access);
+				name == "named" || name == "external";
 			case _:
 				false;
 		}

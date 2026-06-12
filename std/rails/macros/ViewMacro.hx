@@ -41,11 +41,11 @@ class ViewMacro {
 		return switch (unwrapTypedMarker(template).expr) {
 			case ECall(callee, [path]):
 				if (!isTemplatePathCallee(callee)) {
-					throw "ViewMacro.renderTemplate expects rails.action_view.Template.named(...) as the template argument.";
+					throw "ViewMacro.renderTemplate expects rails.action_view.Template.named(...) or Template.external(...) as the template argument.";
 				}
-				extractString(path, "Template.named expects a string literal path.");
+				extractString(path, "Template.named/external expects a string literal path.");
 			case _:
-				throw "ViewMacro.renderTemplate expects rails.action_view.Template.named(...) as the template argument.";
+				throw "ViewMacro.renderTemplate expects rails.action_view.Template.named(...) or Template.external(...) as the template argument.";
 		}
 	}
 
@@ -59,7 +59,7 @@ class ViewMacro {
 
 	static function isTemplatePathCallee(callee:Expr):Bool {
 		return switch (callee.expr) {
-			case EField(_, "named"): true;
+			case EField(_, "named" | "external"): true;
 			case _: false;
 		}
 	}

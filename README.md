@@ -66,7 +66,7 @@ Rails mode is enabled with `-D reflaxe_ruby_rails`. It emits Haxe-owned app file
 - `ParamsMacro.requirePermit(...)` for strong params
 - model metadata for `@:belongsTo`, `@:hasMany`, `@:hasOne`, and `@:validates`
 
-The canonical RailsHx end-to-end example is `examples/todoapp_rails`.
+The canonical RailsHx end-to-end example is `examples/todoapp_rails`. The mixed Rails adoption example is `examples/rails_interop_app`.
 
 Run the generated Rails todo app locally:
 
@@ -84,6 +84,14 @@ npm run test:todoapp-playwright
 ```
 
 That prepares the generated Rails app, boots Rails on a dedicated port, runs `examples/todoapp_rails/e2e/*.spec.ts`, and tears the server down.
+
+For gradual adoption of an existing Rails app or a quick Ruby/ERB PoC, use typed boundaries instead of an all-at-once rewrite:
+
+```bash
+npm run test:rails-interop
+```
+
+That lane proves Haxe can render existing ERB through `Template.external("path") : Template<TLocals>`, call existing Ruby through typed externs, and let legacy ERB consume generated Haxe services/partials as normal Rails artifacts. See [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md).
 
 For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, and dev process files:
 
@@ -110,7 +118,7 @@ RAILS_ENV=production bundle exec rails zeitwerk:check
 RAILS_ENV=production bundle exec rails assets:precompile
 ```
 
-The current Rails surface is an MVP. The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`.
+The current Rails surface is an MVP. The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`. See [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md) for mixed Ruby/ERB and Haxe adoption patterns.
 
 Useful tooling:
 

@@ -42,6 +42,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | ActionController surface | `rails.action_controller.Base` | Implemented |
 | Strong params macro | `ParamsMacro.requirePermit(...)` | Implemented |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |
+| External Rails template locals | `Template.external("path") : Template<TLocals>` | Initial interop slice |
 | Rails template artifact generation | `@:railsTemplate(...)` | Implemented |
 | Rails HHX inline templates | `@:railsTemplateAst(...)` + `return <div>...</div>` | Initial page/partial helper slice |
 | Typed Rails partial locals object | `render(locals:TLocals)` + `locals.foo` projection | Initial locals slice |
@@ -53,6 +54,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed HHX helper label children | static text or `${...}` expression children | Initial helper slice |
 | Typed HHX nested helper slots | `<link_to>...</link_to>` block-form content | Initial slot slice |
 | Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented for migration/interop only |
+| Mixed Rails/RailsHx adoption sample | `examples/rails_interop_app` + `npm run test:rails-interop` | Initial compile/static smoke |
 | Route helper generator | `npm run rails:generate-routes` | Implemented |
 | Scaffold generator | `npm run rails:scaffold` | Implemented |
 

@@ -6,7 +6,7 @@
   "description": "Reflaxe-based Ruby target for Haxe.",
   "scripts": {
     "postinstall": "lix download",
-    "test": "npm run ci:version-sync && npm run ci:release-contracts && npm run test:haxe-build-context && npm run test:profile-resolver && npm run test:haxe-compiler-shell && npm run test:ruby-naming && npm run test:hello-world && npm run test:core-subset && npm run test:class-members && npm run test:lambda-values && npm run test:enum-adt && npm run test:switch-cases && npm run test:exception-flow && npm run test:runtime-core && npm run test:runtime-minitest && npm run test:stdlib-mvp && npm run test:require-registry && npm run test:native-mapping && npm run test:ruby-call-shapes && npm run test:ruby-interop && npm run test:rails-autoload && npm run test:active-record-model && npm run test:action-controller-params && npm run test:todoapp-rails && npm run test:rails-integration && npm run test:routes-generator && npm run test:scaffold-cli && npm run test:rails-app-generator && npm run test:strict-boundaries && npm run test:snapshots && npm run test:stdlib-inventory && npm run test:gap-report && npm run test:haxelib-package && npm run test:gem-package",
+    "test": "npm run ci:version-sync && npm run ci:release-contracts && npm run test:haxe-build-context && npm run test:profile-resolver && npm run test:haxe-compiler-shell && npm run test:ruby-naming && npm run test:hello-world && npm run test:core-subset && npm run test:class-members && npm run test:lambda-values && npm run test:enum-adt && npm run test:switch-cases && npm run test:exception-flow && npm run test:runtime-core && npm run test:runtime-minitest && npm run test:stdlib-mvp && npm run test:require-registry && npm run test:native-mapping && npm run test:ruby-call-shapes && npm run test:ruby-interop && npm run test:rails-autoload && npm run test:active-record-model && npm run test:action-controller-params && npm run test:todoapp-rails && npm run test:rails-integration && npm run test:rails-interop && npm run test:routes-generator && npm run test:scaffold-cli && npm run test:rails-app-generator && npm run test:strict-boundaries && npm run test:snapshots && npm run test:stdlib-inventory && npm run test:gap-report && npm run test:haxelib-package && npm run test:gem-package",
     "ci:version-sync": "node scripts/ci/version-sync-check.js",
     "ci:release-contracts": "node scripts/ci/release-contracts-check.js",
     "test:haxe-build-context": "haxe test/build_context_compile.hxml",
@@ -34,6 +34,7 @@
     "test:todoapp-rails": "node scripts/ci/todoapp-rails-smoke.js",
     "test:todoapp-playwright": "node scripts/ci/todoapp-playwright.js",
     "test:rails-integration": "node scripts/ci/rails-integration.js",
+    "test:rails-interop": "node scripts/ci/rails-interop-smoke.js",
     "test:routes-generator": "node scripts/ci/routes-generator-smoke.js",
     "test:scaffold-cli": "node scripts/ci/scaffold-cli-smoke.js",
     "test:rails-app-generator": "node scripts/ci/rails-app-generator-smoke.js",
