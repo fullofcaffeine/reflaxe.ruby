@@ -135,12 +135,28 @@
       "reason": "Typed ActiveRecord base surface for Rails model classes."
     },
     {
+      "id": "std.rails.active_record_field",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Field.hx",
+      "surface": "rails.active_record.Field",
+      "reason": "Typed ActiveRecord model field reference that lets RailsHx forms and params share one checked field source while lowering to Rails-native names/symbols."
+    },
+    {
+      "id": "std.rails.active_record_model_key",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/ModelKey.hx",
+      "surface": "rails.active_record.ModelKey",
+      "reason": "Typed Rails params/form scope key generated from model metadata so strong params can validate field refs against the intended ActiveRecord model."
+    },
+    {
       "id": "std.rails.model_macro",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/macros/ModelMacro.hx",
       "surface": "rails.macros.ModelMacro",
-      "reason": "Build macro for railsModel/railsColumn metadata validation and typed where/create stubs."
+      "reason": "Build macro for railsModel/railsColumn metadata validation, generated typed field refs/model params keys, and typed where/create stubs."
     },
     {
       "id": "std.rails.action_controller",
@@ -228,7 +244,7 @@
       "status": "implemented",
       "path": "std/rails/macros/ParamsMacro.hx",
       "surface": "rails.macros.ParamsMacro",
-      "reason": "Macro expansion for require/permit params with snake_case Ruby keys."
+      "reason": "Macro expansion for require/permit params with typed model key and field-ref validation before emitting snake_case Ruby keys."
     },
     {
       "id": "std.rails.view_macro",

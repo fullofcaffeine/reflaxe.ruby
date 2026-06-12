@@ -3,6 +3,7 @@ package rails.macros;
 #if macro
 import haxe.macro.Context;
 import haxe.macro.Expr;
+import reflaxe.ruby.naming.RubyNaming;
 
 class ModelMacro {
 	public static function build():Array<Field> {
@@ -14,11 +15,51 @@ class ModelMacro {
 		var arraySelf:ComplexType = TPath({pack: [], name: "Array", params: [TPType(selfType)]});
 
 		validateModelMetadata(fields);
+		addModelFieldRefs(fields, selfType, cls.name, pos);
 		addStub(fields, "where", macro : Dynamic, arraySelf, pos);
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
 		return fields;
+	}
+
+	static function addModelFieldRefs(fields:Array<Field>, selfType:ComplexType, className:String, pos:Position):Void {
+		var paramKey = "railsParamKey";
+		if (!hasFieldNamed(fields, paramKey)) {
+			var paramKeyType:ComplexType = TPath({
+				pack: ["rails", "active_record"],
+				name: "ModelKey",
+				params: [TPType(selfType)]
+			});
+			fields.push({
+				name: paramKey,
+				access: [APublic, AStatic, AInline, AFinal],
+				kind: FVar(paramKeyType, macro rails.active_record.ModelKey.named($v{RubyNaming.toLocalName(className)})),
+				pos: pos
+			});
+		}
+		for (field in fields.copy()) {
+			if (!isRailsColumn(field)) {
+				continue;
+			}
+			var refName = field.name + "Field";
+			if (hasFieldNamed(fields, refName)) {
+				continue;
+			}
+			var fieldType = fieldValueType(field);
+			var refType:ComplexType = TPath({
+				pack: ["rails", "active_record"],
+				name: "Field",
+				params: [TPType(selfType), TPType(fieldType)]
+			});
+			fields.push({
+				name: refName,
+				access: [APublic, AStatic, AInline, AFinal],
+				kind: FVar(refType, macro rails.active_record.Field.named($v{field.name})),
+				meta: [{name: ":railsField", params: [macro $v{field.name}], pos: pos}],
+				pos: pos
+			});
+		}
 	}
 
 	static function validateModelMetadata(fields:Array<Field>):Void {
@@ -133,6 +174,36 @@ class ModelMacro {
 		return switch (field.kind) {
 			case FVar(_, _): true;
 			case _: false;
+		}
+	}
+
+	static function isRailsColumn(field:Field):Bool {
+		if (field.meta == null) {
+			return false;
+		}
+		for (meta in field.meta) {
+			if (meta.name == ":railsColumn") {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static function hasFieldNamed(fields:Array<Field>, name:String):Bool {
+		for (field in fields) {
+			if (field.name == name) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static function fieldValueType(field:Field):ComplexType {
+		return switch (field.kind) {
+			case FVar(t, _) | FProp(_, _, t, _):
+				t == null ? macro : Dynamic : t;
+			case _:
+				macro : Dynamic;
 		}
 	}
 

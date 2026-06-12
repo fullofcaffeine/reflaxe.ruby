@@ -11,11 +11,12 @@ The todoapp already has strong typed seams:
 - HHX embedded expressions, conditionals, loops, and route helper calls are typed before ERB is emitted.
 - RailsHx-owned templates can be referenced through `Template.of(ViewClass)`/`Template.layout(LayoutViewClass)`, so missing or renamed Haxe view classes fail at compile time.
 - Rails-owned ERB interop is separated through checked `Template.existing(...)` where the ERB file is discoverable, with lower-level `Template.external(...)` reserved for explicit escapes.
+- ActiveRecord columns generate typed field refs such as `Todo.titleField : Field<Todo, String>` and a typed params/form scope `Todo.railsParamKey : ModelKey<Todo>`. HHX form helpers and `ParamsMacro.requirePermit(...)` can share those refs, so unknown fields and wrong-model strong params fail during Haxe compilation while generated ERB/Ruby still uses normal Rails names and symbols.
 
 The remaining stringly seams are the next targets:
 
 - Template identity: `Template.of(...)`, `Template.layout(...)`, and `Template.existing(...)` cover the default owned/external cases. Remaining `@:railsTemplate("...")`, `Template.named("...")`, and layout strings are literal-only and path-shape checked, but should continue moving behind typed references or generated constants where possible.
-- Form and params fields: `<text_field name="title">`, `<text_area name="notes">`, `"todo"`, and `["title", "notes", "userId"]` should come from typed model/schema field references or checked field-name macros.
+- Form and params fields: the todoapp now uses typed field refs for the default path. Remaining raw string support exists for compatibility and low-level Rails interop, but canonical RailsHx examples should keep model-owned form fields and strong params behind generated refs.
 - Slots and DOM hooks: `"head"`, `"#open-work"`, `"data-railshx-scroll"`, and `"data-railshx-flash"` should become typed constants/abstracts when reused across Haxe templates, Haxe JS, and Playwright.
 - CSS classes: local one-off styling strings are fine, but behavior-bearing classes such as `"todo-form"` should be centralized as typed hooks.
 

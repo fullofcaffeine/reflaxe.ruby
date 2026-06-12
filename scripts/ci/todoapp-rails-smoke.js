@@ -25,6 +25,12 @@ const templateRefInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const templateRefInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_ref_invalid_out");
 const templatePathInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_src");
 const templatePathInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_out");
+const typedFieldInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_field_invalid_src");
+const typedFieldInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_field_invalid_out");
+const typedParamsInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_params_invalid_src");
+const typedParamsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_params_invalid_out");
+const typedParamsUnknownSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_params_unknown_src");
+const typedParamsUnknownOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_params_unknown_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -65,6 +71,12 @@ rmSync(templateRefInvalidSourceDir, { force: true, recursive: true });
 rmSync(templateRefInvalidOutputDir, { force: true, recursive: true });
 rmSync(templatePathInvalidSourceDir, { force: true, recursive: true });
 rmSync(templatePathInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedFieldInvalidSourceDir, { force: true, recursive: true });
+rmSync(typedFieldInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedParamsInvalidSourceDir, { force: true, recursive: true });
+rmSync(typedParamsInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedParamsUnknownSourceDir, { force: true, recursive: true });
+rmSync(typedParamsUnknownOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -421,6 +433,9 @@ expectTypedFormFieldRequiresFormFailure();
 expectTypedSlotContentRequiresComponentFailure();
 expectTemplateOfRequiresRailsTemplateFailure();
 expectUnsafeRailsTemplatePathFailure();
+expectUnknownTypedFormFieldFailure();
+expectUnknownStrongParamsFieldFailure();
+expectMixedModelStrongParamsFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -1151,6 +1166,237 @@ function expectUnsafeRailsTemplatePathFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid @:railsTemplate path check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectUnknownTypedFormFieldFailure() {
+  mkdirSync(join(typedFieldInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(typedFieldInvalidSourceDir, "InvalidTypedFieldMain.hx"), [
+    "import views.BadTypedFieldView;",
+    "",
+    "class InvalidTypedFieldMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTypedFieldView> = BadTypedFieldView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedFieldInvalidSourceDir, "views", "BadTypedFieldView.hx"), [
+    "package views;",
+    "",
+    "import models.Todo;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad_typed_field\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTypedFieldView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <form_with url=\"/todos\" scope=${Todo.railsParamKey}><text_field name=${Todo.missingField} /></form_with>;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedFieldInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      typedFieldInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTypedFieldMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Unknown typed RailsHx form field compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("has no field missingField")) {
+      console.error("Unknown typed RailsHx form field failed, but not with the expected missing field error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid typed form field ref check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectMixedModelStrongParamsFailure() {
+  mkdirSync(join(typedParamsInvalidSourceDir, "controllers"), { recursive: true });
+  writeFileSync(join(typedParamsInvalidSourceDir, "InvalidTypedParamsMain.hx"), [
+    "import controllers.BadTypedParamsController;",
+    "",
+    "class InvalidTypedParamsMain {",
+    "\tstatic function main() {",
+    "\t\tvar controller:BadTypedParamsController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedParamsInvalidSourceDir, "controllers", "BadTypedParamsController.hx"), [
+    "package controllers;",
+    "",
+    "import models.Todo;",
+    "import models.User;",
+    "import rails.macros.ParamsMacro;",
+    "",
+    "@:railsController",
+    "class BadTypedParamsController extends rails.action_controller.Base {",
+    "\tpublic function create() {",
+    "\t\tParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.titleField, User.nameField]);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedParamsInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      join(exampleDir, "src_haxe"),
+      "-cp",
+      typedParamsInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTypedParamsMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Mixed-model ParamsMacro.requirePermit field refs compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("ParamsMacro.requirePermit field refs must belong to the same model as the typed params root")) {
+      console.error("Mixed-model ParamsMacro.requirePermit failed, but not with the expected model-scope error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid mixed-model strong params check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectUnknownStrongParamsFieldFailure() {
+  mkdirSync(join(typedParamsUnknownSourceDir, "controllers"), { recursive: true });
+  writeFileSync(join(typedParamsUnknownSourceDir, "InvalidUnknownParamsMain.hx"), [
+    "import controllers.BadUnknownParamsController;",
+    "",
+    "class InvalidUnknownParamsMain {",
+    "\tstatic function main() {",
+    "\t\tvar controller:BadUnknownParamsController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedParamsUnknownSourceDir, "controllers", "BadUnknownParamsController.hx"), [
+    "package controllers;",
+    "",
+    "import models.Todo;",
+    "import rails.macros.ParamsMacro;",
+    "",
+    "@:railsController",
+    "class BadUnknownParamsController extends rails.action_controller.Base {",
+    "\tpublic function create() {",
+    "\t\tParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.missingField]);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedParamsUnknownOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      join(exampleDir, "src_haxe"),
+      "-cp",
+      typedParamsUnknownSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidUnknownParamsMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Unknown ParamsMacro.requirePermit field ref compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("has no field missingField")) {
+      console.error("Unknown ParamsMacro.requirePermit field failed, but not with the expected missing field error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid unknown strong params field check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

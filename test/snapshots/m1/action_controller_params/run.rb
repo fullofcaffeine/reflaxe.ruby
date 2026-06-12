@@ -3,7 +3,6 @@ $LOAD_PATH.unshift(__dir__)
 require "action_controller/railtie"
 require_relative "app/haxe_gen/hxruby/core"
 require_relative "app/haxe_gen/hxruby/data_define"
-require_relative "app/haxe_gen/hxruby/hx_exception"
 require_relative "any"
 require_relative "any/any_impl"
 require_relative "app/haxe_gen/controllers/todos_controller"

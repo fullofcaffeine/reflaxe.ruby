@@ -1781,7 +1781,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function lowerTemplateFormWith(url:TypedExpr, scopeExpr:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
 		var formVar = "form";
-		var helperArgs = ["url: " + printTemplateExpr(url, scope), "scope: " + rubySymbolLiteral(expectTemplateString(scopeExpr, "HtmlNode.FormWith scope must be a string literal."))];
+		var helperArgs = ["url: " + printTemplateExpr(url, scope),
+			"scope: " + rubySymbolLiteral(expectTemplateString(scopeExpr, "HtmlNode.FormWith scope must be a string literal."))];
 		helperArgs = helperArgs.concat(lowerTemplateHelperAttrs(attrs, scope));
 		var formScope = cloneTemplateScope(scope);
 		formScope.formBuilderName = formVar;
@@ -1794,31 +1795,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function lowerTemplateFormHiddenField(name:TypedExpr, value:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		return "<%= " + form + ".hidden_field " + rubySymbolLiteral(expectTemplateString(name, "H.hiddenField name must be a string literal."))
+		return "<%= " + form + ".hidden_field "
+			+ rubySymbolLiteral(expectTemplateFieldName(name, "H.hiddenField name must be a string literal or RailsHx model field ref."))
 			+ ", value: " + printTemplateExpr(value, scope) + " %>";
 	}
 
 	static function lowerTemplateFormLabel(name:TypedExpr, text:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		return "<%= " + form + ".label " + rubySymbolLiteral(expectTemplateString(name, "H.label name must be a string literal."))
+		return "<%= " + form + ".label " + rubySymbolLiteral(expectTemplateFieldName(name, "H.label name must be a string literal or RailsHx model field ref."))
 			+ ", " + printTemplateExpr(text, scope) + " %>";
 	}
 
 	static function lowerTemplateFormTextField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		var args = [rubySymbolLiteral(expectTemplateString(name, "H.textField name must be a string literal."))].concat(lowerTemplateHelperAttrs(attrs, scope));
+		var args = [rubySymbolLiteral(expectTemplateFieldName(name, "H.textField name must be a string literal or RailsHx model field ref."))]
+			.concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".text_field " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormTextArea(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		var args = [rubySymbolLiteral(expectTemplateString(name, "H.textArea name must be a string literal."))].concat(lowerTemplateHelperAttrs(attrs, scope));
+		var args = [rubySymbolLiteral(expectTemplateFieldName(name, "H.textArea name must be a string literal or RailsHx model field ref."))]
+			.concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".text_area " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormCheckBox(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		var args = [rubySymbolLiteral(expectTemplateString(name, "H.checkBox name must be a string literal."))].concat(lowerTemplateHelperAttrs(attrs, scope));
+		var args = [rubySymbolLiteral(expectTemplateFieldName(name, "H.checkBox name must be a string literal or RailsHx model field ref."))]
+			.concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".check_box " + args.join(", ") + " %>";
 	}
 
@@ -2028,6 +2033,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error(message, expr.pos);
 				"";
 		}
+	}
+
+	static function expectTemplateFieldName(expr:TypedExpr, message:String):String {
+		var unwrapped = unwrapTemplateExpr(expr);
+		return switch (unwrapped.expr) {
+			case TConst(TString(value)):
+				RubyNaming.toMethodName(value);
+			case TField(_, access):
+				var value = fieldAccessRailsFieldName(access);
+				if (value == null) {
+					Context.error(message, expr.pos);
+					"";
+				} else {
+					RubyNaming.toMethodName(value);
+				}
+			case _:
+				Context.error(message, expr.pos);
+				"";
+		}
+	}
+
+	static function fieldAccessRailsFieldName(access:haxe.macro.Type.FieldAccess):Null<String> {
+		var meta = switch (access) {
+			case FInstance(_, _, field) | FStatic(_, field): field.get().meta;
+			case FAnon(fieldRef) | FClosure(_, fieldRef): fieldRef.get().meta;
+			case FEnum(_, field): field.meta;
+			case FDynamic(_): null;
+		}
+		return metaStringParam(meta, ":railsField", 0);
 	}
 
 	static function printTemplateExpr(expr:TypedExpr, scope:RailsTemplateScope):String {
