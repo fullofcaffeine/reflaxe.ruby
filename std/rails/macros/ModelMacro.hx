@@ -169,6 +169,7 @@ class ModelMacro {
 						if (!hasValidValidationArgs(meta.params)) {
 							throw "@:validates expects an options object, or a field name followed by an options object.";
 						}
+						validateValidationMetadata(field, fields, meta);
 					case _:
 				}
 			}
@@ -231,6 +232,84 @@ class ModelMacro {
 		}
 		if (complexTypeName(fieldValueType(foreignKey)) != "Int") {
 			throw '@:belongsTo foreign key ${foreignKeyName} must be Int for the current RailsHx association validator.';
+		}
+	}
+
+	static function validateValidationMetadata(field:Field, fields:Array<Field>, meta:MetadataEntry):Void {
+		var targetName = validationTargetName(field, meta);
+		var targetField = findRailsColumnByHaxeOrRubyName(fields, targetName);
+		if (targetField == null) {
+			throw '@:validates target ${targetName} must match a @:railsColumn field.';
+		}
+		var validationType = validationValueType(field);
+		var targetType = fieldValueType(targetField);
+		if (complexTypeName(validationType) != "Dynamic" && complexTypeName(validationType) != complexTypeName(targetType)) {
+			throw '@:validates field ${field.name} must use Validation<${complexTypeName(targetType)}> for target ${targetField.name}.';
+		}
+		validateValidationOptions(validationOptionsExpr(meta.params));
+	}
+
+	static function validationTargetName(field:Field, meta:MetadataEntry):String {
+		if (meta.params != null && meta.params.length > 1) {
+			return stringExprValue(meta.params[0]);
+		}
+		var suffix = "Validation";
+		if (StringTools.endsWith(field.name, suffix) && field.name.length > suffix.length) {
+			return field.name.substr(0, field.name.length - suffix.length);
+		}
+		return field.name;
+	}
+
+	static function validateValidationOptions(expr:Expr):Void {
+		switch (expr.expr) {
+			case EObjectDecl(options):
+				for (option in options) {
+					switch (option.field) {
+						case "presence" | "uniqueness" | "absence" | "acceptance" | "confirmation":
+							if (!isBoolExpr(option.expr) && !isObjectExpr(option.expr)) {
+								throw '@:validates option ${option.field} must be a Bool literal or an options object.';
+							}
+							validateMetadataLiteralValue(option.expr, '@:validates option ${option.field}');
+						case "length" | "format" | "inclusion" | "exclusion" | "numericality":
+							if (!isObjectExpr(option.expr)) {
+								throw '@:validates option ${option.field} must be an options object.';
+							}
+							validateMetadataLiteralValue(option.expr, '@:validates option ${option.field}');
+						case "allowBlank" | "allowNil":
+							if (!isBoolExpr(option.expr)) {
+								throw '@:validates option ${option.field} must be a Bool literal.';
+							}
+						case "message" | "on" | "if" | "unless":
+							if (!isStringExpr(option.expr)) {
+								throw '@:validates option ${option.field} must be a String literal.';
+							}
+						case "strict":
+							if (!isBoolExpr(option.expr) && !isStringExpr(option.expr)) {
+								throw "@:validates option strict must be a Bool or String literal.";
+							}
+						case _:
+							throw '@:validates unknown option ${option.field}.';
+					}
+				}
+			case _:
+				throw "@:validates expects an options object.";
+		}
+	}
+
+	static function validateMetadataLiteralValue(expr:Expr, label:String):Void {
+		switch (expr.expr) {
+			case EConst(CIdent("true" | "false" | "null")):
+			case EConst(CString(_, _)) | EConst(CInt(_, _)) | EConst(CFloat(_, _)):
+			case EArrayDecl(values):
+				for (value in values) {
+					validateMetadataLiteralValue(value, label);
+				}
+			case EObjectDecl(options):
+				for (option in options) {
+					validateMetadataLiteralValue(option.expr, label + "." + option.field);
+				}
+			case _:
+				throw label + " must contain only literal metadata values.";
 		}
 	}
 
@@ -364,10 +443,34 @@ class ModelMacro {
 		return null;
 	}
 
+	static function findRailsColumnByHaxeOrRubyName(fields:Array<Field>, name:String):Null<Field> {
+		for (field in fields) {
+			if (!isRailsColumn(field)) {
+				continue;
+			}
+			if (field.name == name || RubyNaming.toMethodName(field.name) == RubyNaming.toMethodName(name)) {
+				return field;
+			}
+		}
+		return null;
+	}
+
 	static function fieldValueType(field:Field):ComplexType {
 		return switch (field.kind) {
 			case FVar(t, _) | FProp(_, _, t, _):
 				t == null ? macro : Dynamic : t;
+			case _:
+				macro : Dynamic;
+		}
+	}
+
+	static function validationValueType(field:Field):ComplexType {
+		return switch (fieldValueType(field)) {
+			case TPath(path) if (path.params != null && path.params.length == 1):
+				switch (path.params[0]) {
+					case TPType(inner): inner;
+					case _: macro : Dynamic;
+				}
 			case _:
 				macro : Dynamic;
 		}
@@ -464,6 +567,23 @@ class ModelMacro {
 			return isObjectExpr(params[0]);
 		}
 		return isStringExpr(params[0]) && isObjectExpr(params[1]);
+	}
+
+	static function validationOptionsExpr(params:Null<Array<Expr>>):Expr {
+		if (params == null || params.length == 0) {
+			return macro {};
+		}
+		if (params.length > 1) {
+			return params[1];
+		}
+		return params[0];
+	}
+
+	static function stringExprValue(expr:Expr):String {
+		return switch (expr.expr) {
+			case EConst(CString(value, _)): value;
+			case _: "";
+		}
 	}
 
 	static function isObjectExpr(expr:Expr):Bool {

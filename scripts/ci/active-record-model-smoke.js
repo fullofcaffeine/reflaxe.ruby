@@ -24,6 +24,14 @@ const invalidFkTypeSourceDir = join(root, "test", ".generated", "active_record_m
 const invalidFkTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_fk_type_out");
 const invalidAssociationTargetSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_target_src");
 const invalidAssociationTargetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_target_out");
+const invalidValidationTargetSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_target_src");
+const invalidValidationTargetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_target_out");
+const invalidValidationOptionSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_option_src");
+const invalidValidationOptionOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_option_out");
+const invalidValidationShapeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_shape_src");
+const invalidValidationShapeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_shape_out");
+const invalidValidationTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_type_src");
+const invalidValidationTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_type_out");
 const invalidFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_src");
 const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
 const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
@@ -68,6 +76,14 @@ rmSync(invalidFkTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidFkTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidAssociationTargetSourceDir, { force: true, recursive: true });
 rmSync(invalidAssociationTargetOutputDir, { force: true, recursive: true });
+rmSync(invalidValidationTargetSourceDir, { force: true, recursive: true });
+rmSync(invalidValidationTargetOutputDir, { force: true, recursive: true });
+rmSync(invalidValidationOptionSourceDir, { force: true, recursive: true });
+rmSync(invalidValidationOptionOutputDir, { force: true, recursive: true });
+rmSync(invalidValidationShapeSourceDir, { force: true, recursive: true });
+rmSync(invalidValidationShapeOutputDir, { force: true, recursive: true });
+rmSync(invalidValidationTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidValidationTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidFindSourceDir, { force: true, recursive: true });
 rmSync(invalidFindOutputDir, { force: true, recursive: true });
 rmSync(invalidFindBySourceDir, { force: true, recursive: true });
@@ -196,6 +212,10 @@ expectInvalidAssociationOwnerFailure();
 expectInvalidMissingBelongsToForeignKeyFailure();
 expectInvalidBelongsToForeignKeyTypeFailure();
 expectInvalidAssociationTargetFailure();
+expectInvalidValidationTargetFailure();
+expectInvalidValidationOptionFailure();
+expectInvalidValidationShapeFailure();
+expectInvalidValidationTypeFailure();
 expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 
@@ -434,6 +454,130 @@ function expectInvalidAssociationTargetFailure() {
     invalidAssociationTargetOutputDir,
     "Invalid association target compiled successfully.",
     ":belongsTo target invalid.PlainOwner must be a @:railsModel class"
+  );
+}
+
+function expectInvalidValidationTargetFailure() {
+  mkdirSync(join(invalidValidationTargetSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidValidationTargetSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidValidationTargetSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var title:String;",
+    "\t@:validates({presence: true})",
+    "\tpublic var missingValidation:rails.ActiveRecord.Validation<String>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidValidationTargetSourceDir,
+    invalidValidationTargetOutputDir,
+    "Invalid validation target compiled successfully.",
+    "@:validates target missing must match a @:railsColumn field"
+  );
+}
+
+function expectInvalidValidationOptionFailure() {
+  mkdirSync(join(invalidValidationOptionSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidValidationOptionSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidValidationOptionSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var title:String;",
+    "\t@:validates({present: true})",
+    "\tpublic var titleValidation:rails.ActiveRecord.Validation<String>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidValidationOptionSourceDir,
+    invalidValidationOptionOutputDir,
+    "Invalid validation option compiled successfully.",
+    "@:validates unknown option present"
+  );
+}
+
+function expectInvalidValidationShapeFailure() {
+  mkdirSync(join(invalidValidationShapeSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidValidationShapeSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidValidationShapeSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var title:String;",
+    "\t@:validates({length: true})",
+    "\tpublic var titleValidation:rails.ActiveRecord.Validation<String>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidValidationShapeSourceDir,
+    invalidValidationShapeOutputDir,
+    "Invalid validation option shape compiled successfully.",
+    "@:validates option length must be an options object"
+  );
+}
+
+function expectInvalidValidationTypeFailure() {
+  mkdirSync(join(invalidValidationTypeSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidValidationTypeSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidValidationTypeSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var title:String;",
+    "\t@:validates({presence: true})",
+    "\tpublic var titleValidation:rails.ActiveRecord.Validation<Int>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidValidationTypeSourceDir,
+    invalidValidationTypeOutputDir,
+    "Invalid validation generic type compiled successfully.",
+    "@:validates field titleValidation must use Validation<String> for target title"
   );
 }
 
