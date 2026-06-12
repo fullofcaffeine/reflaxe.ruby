@@ -282,32 +282,11 @@ class ModelMacro {
 	}
 
 	static function relationComplexType(selfType:ComplexType, criteriaType:ComplexType, pos:Position):ComplexType {
-		var relationSelf:ComplexType = TPath({pack: ["rails", "active_record"], name: "Relation", params: [TPType(selfType)]});
-		var nullableSelf:ComplexType = TPath({pack: [], name: "Null", params: [TPType(selfType)]});
-		var arraySelf:ComplexType = TPath({pack: [], name: "Array", params: [TPType(selfType)]});
-		var orderType:ComplexType = TPath({pack: ["rails", "active_record"], name: "Order", params: [TPType(selfType)]});
-		return TAnonymous([
-			methodField("where", [{name: "criteria", type: criteriaType}], relationSelf, pos),
-			methodField("order", [{name: "order", type: orderType}], relationSelf, pos),
-			methodField("limit", [{name: "count", type: macro : Int}], relationSelf, pos),
-			methodField("findBy", [{name: "criteria", type: criteriaType}], nullableSelf, pos),
-			methodField("first", [], nullableSelf, pos),
-			methodField("toArray", [], arraySelf, pos, [{name: ":native", params: [macro "to_a"], pos: pos}])
-		]);
-	}
-
-	static function methodField(name:String, args:Array<FunctionArg>, ret:ComplexType, pos:Position, ?meta:Metadata):Field {
-		return {
-			name: name,
-			access: [],
-			kind: FFun({
-				args: args,
-				ret: ret,
-				expr: null
-			}),
-			meta: meta,
-			pos: pos
-		};
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "Relation",
+			params: [TPType(selfType), TPType(criteriaType)]
+		});
 	}
 
 	static function isPrimaryKeyField(field:Field):Bool {

@@ -14,6 +14,8 @@ const invalidWhereTypeSourceDir = join(root, "test", ".generated", "active_recor
 const invalidWhereTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_type_out");
 const invalidRelationWhereSourceDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_src");
 const invalidRelationWhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_out");
+const invalidAssignedRelationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_assigned_relation_src");
+const invalidAssignedRelationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_assigned_relation_out");
 const invalidFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_src");
 const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
 const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
@@ -48,6 +50,8 @@ rmSync(invalidWhereTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidRelationWhereSourceDir, { force: true, recursive: true });
 rmSync(invalidRelationWhereOutputDir, { force: true, recursive: true });
+rmSync(invalidAssignedRelationSourceDir, { force: true, recursive: true });
+rmSync(invalidAssignedRelationOutputDir, { force: true, recursive: true });
 rmSync(invalidFindSourceDir, { force: true, recursive: true });
 rmSync(invalidFindOutputDir, { force: true, recursive: true });
 rmSync(invalidFindBySourceDir, { force: true, recursive: true });
@@ -128,6 +132,9 @@ for (const expected of [
   "Models::Todo.find(1)",
   'Models::Todo.find_by(external_id: "ship-1")',
   'Models::Todo.where(title: "ship").find_by(completed: false)',
+  'Models::Todo.where(title: "assigned").order(title: :asc).limit(5)',
+  'assigned__hx',
+  'find_by(external_id: "assigned-1")',
   "first__hx",
   ".first()",
 ]) {
@@ -141,6 +148,7 @@ expectInvalidColumnDefaultFailure();
 expectInvalidWhereFieldFailure();
 expectInvalidWhereValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
+expectInvalidAssignedRelationFieldFailure();
 expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 
@@ -235,6 +243,28 @@ function expectInvalidRelationWhereFieldFailure() {
     invalidRelationWhereSourceDir,
     invalidRelationWhereOutputDir,
     "Invalid ActiveRecord relation where field compiled successfully.",
+    "has extra field missing"
+  );
+}
+
+function expectInvalidAssignedRelationFieldFailure() {
+  mkdirSync(invalidAssignedRelationSourceDir, { recursive: true });
+  writeFileSync(join(invalidAssignedRelationSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar relation = Todo.where({title: \"ship\"}).order(Todo.f.title.asc()).limit(10);",
+    "\t\tvar bad = relation.where({missing: \"nope\"});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidAssignedRelationSourceDir,
+    invalidAssignedRelationOutputDir,
+    "Invalid assigned ActiveRecord relation where field compiled successfully.",
     "has extra field missing"
   );
 }
