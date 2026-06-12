@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.34.0...v1.35.0) (2026-06-12)
+
+
+### Features
+
+* add RailsHx Rails generators ([fa2eb86](https://github.com/fullofcaffeine/reflaxe.ruby/commit/fa2eb86f79ccb8b77665141b74252f117ad5c5f4))
+
 # [1.34.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.33.0...v1.34.0) (2026-06-12)
 
 
