@@ -173,6 +173,65 @@ class ModelMacro {
 				}
 			}
 		}
+		validateAssociationMetadata(fields);
+	}
+
+	static function validateAssociationMetadata(fields:Array<Field>):Void {
+		for (field in fields) {
+			if (!isRailsAssociation(field)) {
+				continue;
+			}
+			var associationMeta = associationMetaName(field);
+			var target = associationTargetType(field);
+			validateAssociationTarget(field, target, associationMeta);
+			if (associationMeta == ":belongsTo") {
+				validateBelongsToForeignKey(field, fields);
+			}
+		}
+	}
+
+	static function associationMetaName(field:Field):String {
+		if (field.meta == null) {
+			return "";
+		}
+		for (meta in field.meta) {
+			switch (meta.name) {
+				case ":belongsTo" | ":hasMany" | ":hasOne":
+					return meta.name;
+				case _:
+			}
+		}
+		return "";
+	}
+
+	static function validateAssociationTarget(field:Field, target:ComplexType, associationMeta:String):Void {
+		switch (target) {
+			case TPath(path) if (path.name != "Dynamic"):
+				var fullName = path.pack.concat([path.name]).join(".");
+				switch (Context.getType(fullName)) {
+					case TInst(ref, _):
+						var cls = ref.get();
+						var resolvedName = cls.pack.concat([cls.name]).join(".");
+						if (cls.meta == null || !cls.meta.has(":railsModel")) {
+							throw associationMeta + " target " + resolvedName + " must be a @:railsModel class.";
+						}
+					case _:
+						throw associationMeta + " target " + fullName + " must resolve to a class.";
+				}
+			case _:
+				throw associationMeta + " must specify a concrete @:railsModel target type.";
+		}
+	}
+
+	static function validateBelongsToForeignKey(field:Field, fields:Array<Field>):Void {
+		var foreignKeyName = field.name + "Id";
+		var foreignKey = findFieldNamed(fields, foreignKeyName);
+		if (foreignKey == null || !isRailsColumn(foreignKey)) {
+			throw '@:belongsTo field ${field.name} requires a @:railsColumn foreign key named ${foreignKeyName}.';
+		}
+		if (complexTypeName(fieldValueType(foreignKey)) != "Int") {
+			throw '@:belongsTo foreign key ${foreignKeyName} must be Int for the current RailsHx association validator.';
+		}
 	}
 
 	static function validateColumnOptions(field:Field, meta:MetadataEntry):Void {
@@ -294,6 +353,15 @@ class ModelMacro {
 			}
 		}
 		return false;
+	}
+
+	static function findFieldNamed(fields:Array<Field>, name:String):Null<Field> {
+		for (field in fields) {
+			if (field.name == name) {
+				return field;
+			}
+		}
+		return null;
 	}
 
 	static function fieldValueType(field:Field):ComplexType {

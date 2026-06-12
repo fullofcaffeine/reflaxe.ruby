@@ -18,6 +18,12 @@ const invalidAssignedRelationSourceDir = join(root, "test", ".generated", "activ
 const invalidAssignedRelationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_assigned_relation_out");
 const invalidAssociationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_src");
 const invalidAssociationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_out");
+const invalidMissingFkSourceDir = join(root, "test", ".generated", "active_record_model_invalid_missing_fk_src");
+const invalidMissingFkOutputDir = join(root, "test", ".generated", "active_record_model_invalid_missing_fk_out");
+const invalidFkTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_fk_type_src");
+const invalidFkTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_fk_type_out");
+const invalidAssociationTargetSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_target_src");
+const invalidAssociationTargetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_target_out");
 const invalidFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_src");
 const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
 const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
@@ -56,6 +62,12 @@ rmSync(invalidAssignedRelationSourceDir, { force: true, recursive: true });
 rmSync(invalidAssignedRelationOutputDir, { force: true, recursive: true });
 rmSync(invalidAssociationSourceDir, { force: true, recursive: true });
 rmSync(invalidAssociationOutputDir, { force: true, recursive: true });
+rmSync(invalidMissingFkSourceDir, { force: true, recursive: true });
+rmSync(invalidMissingFkOutputDir, { force: true, recursive: true });
+rmSync(invalidFkTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidFkTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidAssociationTargetSourceDir, { force: true, recursive: true });
+rmSync(invalidAssociationTargetOutputDir, { force: true, recursive: true });
 rmSync(invalidFindSourceDir, { force: true, recursive: true });
 rmSync(invalidFindOutputDir, { force: true, recursive: true });
 rmSync(invalidFindBySourceDir, { force: true, recursive: true });
@@ -181,6 +193,9 @@ expectInvalidWhereValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
 expectInvalidAssignedRelationFieldFailure();
 expectInvalidAssociationOwnerFailure();
+expectInvalidMissingBelongsToForeignKeyFailure();
+expectInvalidBelongsToForeignKeyTypeFailure();
+expectInvalidAssociationTargetFailure();
 expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 
@@ -320,6 +335,105 @@ function expectInvalidAssociationOwnerFailure() {
     invalidAssociationOutputDir,
     "Invalid ActiveRecord association owner compiled successfully.",
     "Association<models.User"
+  );
+}
+
+function expectInvalidMissingBelongsToForeignKeyFailure() {
+  mkdirSync(join(invalidMissingFkSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidMissingFkSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo.associations.user == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidMissingFkSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "import models.User;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:belongsTo public var user:rails.ActiveRecord.BelongsTo<User>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidMissingFkSourceDir,
+    invalidMissingFkOutputDir,
+    "Invalid belongsTo without foreign key compiled successfully.",
+    "@:belongsTo field user requires a @:railsColumn foreign key named userId"
+  );
+}
+
+function expectInvalidBelongsToForeignKeyTypeFailure() {
+  mkdirSync(join(invalidFkTypeSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidFkTypeSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo.associations.user == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidFkTypeSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "import models.User;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var userId:String;",
+    "\t@:belongsTo public var user:rails.ActiveRecord.BelongsTo<User>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidFkTypeSourceDir,
+    invalidFkTypeOutputDir,
+    "Invalid belongsTo foreign key type compiled successfully.",
+    "@:belongsTo foreign key userId must be Int"
+  );
+}
+
+function expectInvalidAssociationTargetFailure() {
+  mkdirSync(join(invalidAssociationTargetSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidAssociationTargetSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo.associations.owner == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidAssociationTargetSourceDir, "invalid", "PlainOwner.hx"), [
+    "package invalid;",
+    "",
+    "class PlainOwner {}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidAssociationTargetSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var ownerId:Int;",
+    "\t@:belongsTo public var owner:rails.ActiveRecord.BelongsTo<PlainOwner>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidAssociationTargetSourceDir,
+    invalidAssociationTargetOutputDir,
+    "Invalid association target compiled successfully.",
+    ":belongsTo target invalid.PlainOwner must be a @:railsModel class"
   );
 }
 
