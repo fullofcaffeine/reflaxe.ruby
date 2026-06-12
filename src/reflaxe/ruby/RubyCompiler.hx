@@ -68,6 +68,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	public var currentCompilationContext:Null<CompilationContext>;
 	var emittedRubyPaths:Array<String> = [];
 	var emittedAppRubyPaths:Array<String> = [];
+	var emittedRailsMigrationPaths:Map<String, String> = [];
 	var requireRegistry:RequireRegistry = new RequireRegistry();
 	var buildContext:RubyBuildContext;
 	var didEmitMain:Bool = false;
@@ -1280,7 +1281,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var body = railsMigrationBody(config);
 		var fileName = config.timestamp + "_" + RubyNaming.fileName(config.className) + ".rb";
-		setExtraFile(OutputPath.fromStr("db/migrate/" + fileName), normalizeGeneratedText(body));
+		var outputPath = "db/migrate/" + fileName;
+		if (emittedRailsMigrationPaths.exists(outputPath)) {
+			Context.error('@:railsMigration emits duplicate migration file ${outputPath}; first emitted by ${emittedRailsMigrationPaths.get(outputPath)}.', classType.pos);
+			return;
+		}
+		emittedRailsMigrationPaths.set(outputPath, fullTypeName(classType.pack, classType.name));
+		setExtraFile(OutputPath.fromStr(outputPath), normalizeGeneratedText(body));
 	}
 
 	static function railsMigrationConfig(classType:ClassType):Null<RailsMigrationConfig> {
@@ -1322,6 +1329,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return null;
 		}
 		var models:Array<ClassType> = [];
+		var tableNames:Map<String, String> = [];
 		for (path in modelPaths) {
 			switch (Context.getType(path)) {
 				case TInst(ref, _):
@@ -1329,6 +1337,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					if (!hasMeta(model.meta, ":railsModel")) {
 						Context.error('@:railsMigration model "$path" must be annotated with @:railsModel.', classType.pos);
 					}
+					var tableName = railsModelTableName(model);
+					if (tableNames.exists(tableName)) {
+						Context.error('@:railsMigration cannot create table "$tableName" more than once; already provided by ${tableNames.get(tableName)}.', classType.pos);
+					}
+					tableNames.set(tableName, path);
 					models.push(model);
 				case _:
 					Context.error('@:railsMigration model "$path" must resolve to a class.', classType.pos);

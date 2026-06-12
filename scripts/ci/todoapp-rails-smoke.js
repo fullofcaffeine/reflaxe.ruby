@@ -31,6 +31,16 @@ const typedParamsInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const typedParamsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_params_invalid_out");
 const typedParamsUnknownSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_params_unknown_src");
 const typedParamsUnknownOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_params_unknown_out");
+const migrationDuplicateTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_table_src");
+const migrationDuplicateTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_table_out");
+const migrationDuplicateFileSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_file_src");
+const migrationDuplicateFileOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_file_out");
+const migrationNonModelSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_non_model_src");
+const migrationNonModelOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_non_model_out");
+const migrationBadTimestampSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_timestamp_src");
+const migrationBadTimestampOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_timestamp_out");
+const migrationUnknownOptionSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_option_src");
+const migrationUnknownOptionOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_option_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -77,6 +87,16 @@ rmSync(typedParamsInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedParamsInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedParamsUnknownSourceDir, { force: true, recursive: true });
 rmSync(typedParamsUnknownOutputDir, { force: true, recursive: true });
+rmSync(migrationDuplicateTableSourceDir, { force: true, recursive: true });
+rmSync(migrationDuplicateTableOutputDir, { force: true, recursive: true });
+rmSync(migrationDuplicateFileSourceDir, { force: true, recursive: true });
+rmSync(migrationDuplicateFileOutputDir, { force: true, recursive: true });
+rmSync(migrationNonModelSourceDir, { force: true, recursive: true });
+rmSync(migrationNonModelOutputDir, { force: true, recursive: true });
+rmSync(migrationBadTimestampSourceDir, { force: true, recursive: true });
+rmSync(migrationBadTimestampOutputDir, { force: true, recursive: true });
+rmSync(migrationUnknownOptionSourceDir, { force: true, recursive: true });
+rmSync(migrationUnknownOptionOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -436,6 +456,11 @@ expectUnsafeRailsTemplatePathFailure();
 expectUnknownTypedFormFieldFailure();
 expectUnknownStrongParamsFieldFailure();
 expectMixedModelStrongParamsFailure();
+expectMigrationDuplicateTableFailure();
+expectMigrationDuplicateFileFailure();
+expectMigrationNonModelFailure();
+expectMigrationBadTimestampFailure();
+expectMigrationUnknownOptionFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -469,6 +494,252 @@ function compileWithFirstAvailableReflaxe() {
     }
   }
   return null;
+}
+
+function expectInvalidMigrationCompile(sourceDir, invalidOutputDir, mainClass, successMessage, expectedDiagnostic) {
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${invalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      sourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      mainClass,
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error(successMessage);
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes(expectedDiagnostic)) {
+      console.error(`Invalid migration failed, but not with the expected diagnostic: ${expectedDiagnostic}`);
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid migration check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectMigrationDuplicateTableFailure() {
+  mkdirSync(join(migrationDuplicateTableSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationDuplicateTableSourceDir, "InvalidDuplicateTableMain.hx"), [
+    "import migrations.BadDuplicateTable;",
+    "",
+    "class InvalidDuplicateTableMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadDuplicateTable> = BadDuplicateTable;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationDuplicateTableSourceDir, "migrations", "BadDuplicateTable.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000001\",",
+    "\tclassName: \"BadDuplicateTable\",",
+    "\tmodels: [\"models.User\", \"models.User\"]",
+    "})",
+    "class BadDuplicateTable extends Migration {}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationDuplicateTableSourceDir,
+    migrationDuplicateTableOutputDir,
+    "InvalidDuplicateTableMain",
+    "Duplicate-table RailsHx migration compiled successfully.",
+    "@:railsMigration cannot create table \"users\" more than once"
+  );
+}
+
+function expectMigrationDuplicateFileFailure() {
+  mkdirSync(join(migrationDuplicateFileSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationDuplicateFileSourceDir, "InvalidDuplicateFileMain.hx"), [
+    "import migrations.BadDuplicateFileA;",
+    "import migrations.BadDuplicateFileB;",
+    "",
+    "class InvalidDuplicateFileMain {",
+    "\tstatic function main() {",
+    "\t\tvar first:Class<BadDuplicateFileA> = BadDuplicateFileA;",
+    "\t\tvar second:Class<BadDuplicateFileB> = BadDuplicateFileB;",
+    "\t\tSys.println(first != null && second != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationDuplicateFileSourceDir, "migrations", "BadDuplicateFileA.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000002\",",
+    "\tclassName: \"BadDuplicateFile\",",
+    "\tmodels: [\"models.User\"]",
+    "})",
+    "class BadDuplicateFileA extends Migration {}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationDuplicateFileSourceDir, "migrations", "BadDuplicateFileB.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000002\",",
+    "\tclassName: \"BadDuplicateFile\",",
+    "\tmodels: [\"models.Todo\"]",
+    "})",
+    "class BadDuplicateFileB extends Migration {}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationDuplicateFileSourceDir,
+    migrationDuplicateFileOutputDir,
+    "InvalidDuplicateFileMain",
+    "Duplicate-file RailsHx migration compiled successfully.",
+    "@:railsMigration emits duplicate migration file db/migrate/20260101000002_bad_duplicate_file.rb"
+  );
+}
+
+function expectMigrationNonModelFailure() {
+  mkdirSync(join(migrationNonModelSourceDir, "invalid"), { recursive: true });
+  mkdirSync(join(migrationNonModelSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationNonModelSourceDir, "InvalidNonModelMigrationMain.hx"), [
+    "import migrations.BadNonModelMigration;",
+    "",
+    "class InvalidNonModelMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadNonModelMigration> = BadNonModelMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationNonModelSourceDir, "invalid", "Plain.hx"), [
+    "package invalid;",
+    "",
+    "class Plain {}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationNonModelSourceDir, "migrations", "BadNonModelMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000003\",",
+    "\tclassName: \"BadNonModelMigration\",",
+    "\tmodels: [\"invalid.Plain\"]",
+    "})",
+    "class BadNonModelMigration extends Migration {}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationNonModelSourceDir,
+    migrationNonModelOutputDir,
+    "InvalidNonModelMigrationMain",
+    "Non-model RailsHx migration compiled successfully.",
+    "@:railsMigration model \"invalid.Plain\" must be annotated with @:railsModel"
+  );
+}
+
+function expectMigrationBadTimestampFailure() {
+  mkdirSync(join(migrationBadTimestampSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationBadTimestampSourceDir, "InvalidBadTimestampMigrationMain.hx"), [
+    "import migrations.BadTimestampMigration;",
+    "",
+    "class InvalidBadTimestampMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadTimestampMigration> = BadTimestampMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationBadTimestampSourceDir, "migrations", "BadTimestampMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"tomorrow\",",
+    "\tclassName: \"BadTimestampMigration\",",
+    "\tmodels: [\"models.User\"]",
+    "})",
+    "class BadTimestampMigration extends Migration {}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationBadTimestampSourceDir,
+    migrationBadTimestampOutputDir,
+    "InvalidBadTimestampMigrationMain",
+    "Bad-timestamp RailsHx migration compiled successfully.",
+    "@:railsMigration timestamp must be a 14-digit string"
+  );
+}
+
+function expectMigrationUnknownOptionFailure() {
+  mkdirSync(join(migrationUnknownOptionSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationUnknownOptionSourceDir, "InvalidUnknownOptionMigrationMain.hx"), [
+    "import migrations.BadUnknownOptionMigration;",
+    "",
+    "class InvalidUnknownOptionMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadUnknownOptionMigration> = BadUnknownOptionMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationUnknownOptionSourceDir, "migrations", "BadUnknownOptionMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000004\",",
+    "\tclassName: \"BadUnknownOptionMigration\",",
+    "\tmodels: [\"models.User\"],",
+    "\tmagic: true",
+    "})",
+    "class BadUnknownOptionMigration extends Migration {}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationUnknownOptionSourceDir,
+    migrationUnknownOptionOutputDir,
+    "InvalidUnknownOptionMigrationMain",
+    "Unknown-option RailsHx migration compiled successfully.",
+    "@:railsMigration unknown option magic"
+  );
 }
 
 function expectInvalidTemplateLocalsFailure() {
