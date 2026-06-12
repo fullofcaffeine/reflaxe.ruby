@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.35.0...v1.36.0) (2026-06-12)
+
+
+### Features
+
+* harden RailsHx route helper sync ([27110f1](https://github.com/fullofcaffeine/reflaxe.ruby/commit/27110f19de0c32be7ff18ac0107eee7ff47e73fd))
+
 # [1.35.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.34.0...v1.35.0) (2026-06-12)
 
 
