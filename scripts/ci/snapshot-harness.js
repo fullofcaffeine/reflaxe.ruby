@@ -42,6 +42,7 @@ const cases = [
     files: [
       "app/haxe_gen/models/audit_log.rb",
       "app/haxe_gen/models/todo.rb",
+      "app/haxe_gen/models/user.rb",
       "app/haxe_gen/main.rb",
       "config/initializers/hxruby_autoload.rb",
       "run.rb",

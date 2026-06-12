@@ -9,6 +9,8 @@ extern class Relation<TModel, TCriteria> {
 	public function where(criteria:TCriteria):Relation<TModel, TCriteria>;
 	public function order(order:Order<TModel>):Relation<TModel, TCriteria>;
 	public function limit(count:Int):Relation<TModel, TCriteria>;
+	public function includes<TTarget>(association:Association<TModel, TTarget>):Relation<TModel, TCriteria>;
+	public function joins<TTarget>(association:Association<TModel, TTarget>):Relation<TModel, TCriteria>;
 	public function find(id:Dynamic):TModel;
 	@:native("find_by")
 	public function findBy(criteria:TCriteria):Null<TModel>;

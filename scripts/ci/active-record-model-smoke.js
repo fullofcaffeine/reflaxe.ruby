@@ -16,6 +16,8 @@ const invalidRelationWhereSourceDir = join(root, "test", ".generated", "active_r
 const invalidRelationWhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_out");
 const invalidAssignedRelationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_assigned_relation_src");
 const invalidAssignedRelationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_assigned_relation_out");
+const invalidAssociationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_src");
+const invalidAssociationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_out");
 const invalidFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_src");
 const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
 const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
@@ -52,6 +54,8 @@ rmSync(invalidRelationWhereSourceDir, { force: true, recursive: true });
 rmSync(invalidRelationWhereOutputDir, { force: true, recursive: true });
 rmSync(invalidAssignedRelationSourceDir, { force: true, recursive: true });
 rmSync(invalidAssignedRelationOutputDir, { force: true, recursive: true });
+rmSync(invalidAssociationSourceDir, { force: true, recursive: true });
+rmSync(invalidAssociationOutputDir, { force: true, recursive: true });
 rmSync(invalidFindSourceDir, { force: true, recursive: true });
 rmSync(invalidFindOutputDir, { force: true, recursive: true });
 rmSync(invalidFindBySourceDir, { force: true, recursive: true });
@@ -64,6 +68,7 @@ if (!compileWithFirstAvailableReflaxe()) {
 
 for (const file of [
   "app/haxe_gen/models/todo.rb",
+  "app/haxe_gen/models/user.rb",
   "app/haxe_gen/models/audit_log.rb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
@@ -90,14 +95,38 @@ for (const expected of [
   "{name: :completed, haxe_name: \"completed\", ruby_name: \"completed\", haxe_type: \"Bool\", rails_type: :boolean, nullable: false, default: false, primary_key: false, index: false, unique: false, db_type: nil}",
   "{name: :notes, haxe_name: \"notes\", ruby_name: \"notes\", haxe_type: \"String\", rails_type: :text, nullable: true, default: nil, primary_key: false, index: false, unique: false, db_type: :text}",
   "{name: :external_id, haxe_name: \"externalId\", ruby_name: \"external_id\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: false, unique: true, db_type: nil}",
+  "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
+  "belongs_to :user",
   "# haxe column id: Int",
   "# haxe column title: String",
   "# haxe column completed: Bool",
   "# haxe column notes: Null",
   "# haxe column external_id: String",
+  "# haxe column user_id: Int",
+  "def self.incomplete()",
+  "Models::Todo.where(completed: false)",
 ]) {
   if (!todoRuby.includes(expected)) {
     console.error(`ActiveRecord model output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const userRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "user.rb"), "utf8");
+for (const expected of [
+  "class User < ::ApplicationRecord",
+  'self.table_name = "users"',
+  "def self.__hx_rails_schema()",
+  'table_name: "users"',
+  "timestamps: true",
+  "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
+  "{name: :name, haxe_name: \"name\", ruby_name: \"name\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
+  "has_many :todos",
+  "# haxe column id: Int",
+  "# haxe column name: String",
+]) {
+  if (!userRuby.includes(expected)) {
+    console.error(`ActiveRecord user model output missing expected line: ${expected}`);
     process.exit(1);
   }
 }
@@ -126,8 +155,10 @@ for (const expected of [
 
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
 for (const expected of [
-  'Models::Todo.where(title: "ship").where(completed: false).order(title: :asc).limit(10)',
-  'Models::Todo.create(title: "ship")',
+  'Models::Todo.includes(:user).where(title: "ship").where(completed: false).joins(:user).order(title: :asc).limit(10)',
+  "Models::Todo.incomplete().includes(:user).limit(5)",
+  'Models::User.includes(:todos).joins(:todos).where(name: "owner")',
+  'Models::Todo.create(title: "ship", user_id: 1)',
   "Models::AuditLog.where(event_count: 1).order(event_count: :desc)",
   "Models::Todo.find(1)",
   'Models::Todo.find_by(external_id: "ship-1")',
@@ -149,6 +180,7 @@ expectInvalidWhereFieldFailure();
 expectInvalidWhereValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
 expectInvalidAssignedRelationFieldFailure();
+expectInvalidAssociationOwnerFailure();
 expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 
@@ -266,6 +298,28 @@ function expectInvalidAssignedRelationFieldFailure() {
     invalidAssignedRelationOutputDir,
     "Invalid assigned ActiveRecord relation where field compiled successfully.",
     "has extra field missing"
+  );
+}
+
+function expectInvalidAssociationOwnerFailure() {
+  mkdirSync(invalidAssociationSourceDir, { recursive: true });
+  writeFileSync(join(invalidAssociationSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.includes(User.a.todos);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidAssociationSourceDir,
+    invalidAssociationOutputDir,
+    "Invalid ActiveRecord association owner compiled successfully.",
+    "Association<models.User"
   );
 }
 

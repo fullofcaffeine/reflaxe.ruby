@@ -1,10 +1,13 @@
 import models.AuditLog;
 import models.Todo;
+import models.User;
 
 class Main {
 	static function main() {
-		var found = Todo.where({title: "ship"}).where({completed: false}).order(Todo.f.title.asc()).limit(10);
-		var made:Todo = Todo.create({title: "ship"});
+		var found = Todo.includes(Todo.associations.user).where({title: "ship"}).where({completed: false}).joins(Todo.associations.user).order(Todo.f.title.asc()).limit(10);
+		var scoped = Todo.incomplete().includes(Todo.a.user).limit(5);
+		var users = User.includes(User.a.todos).joins(User.a.todos).where({name: "owner"});
+		var made:Todo = Todo.create({title: "ship", userId: 1});
 		var logs = AuditLog.where({eventCount: 1}).order(AuditLog.f.eventCount.desc());
 		var loaded:Todo = Todo.find(1);
 		var foundBy:Null<Todo> = Todo.findBy({externalId: "ship-1"});
@@ -13,6 +16,8 @@ class Main {
 		var assignedFoundBy:Null<Todo> = assigned.findBy({externalId: "assigned-1"});
 		var first:Null<Todo> = found.first();
 		Sys.println(found == null);
+		Sys.println(scoped == null);
+		Sys.println(users == null);
 		Sys.println(made == null);
 		Sys.println(logs == null);
 		Sys.println(loaded == null);

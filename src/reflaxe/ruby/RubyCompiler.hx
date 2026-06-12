@@ -881,6 +881,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (fieldAccessRawName(access) == "order" && params.length == 1):
 				var orderArg = activeRecordOrderArg(params[0]);
 				orderArg == null ? null : RubyCall(compileExpr(target), "order", [RubyRawExpr(orderArg)]);
+			case TField(target, access) if ((fieldAccessRawName(access) == "includes" || fieldAccessRawName(access) == "joins") && params.length == 1):
+				var associationArg = activeRecordAssociationArg(params[0]);
+				associationArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(associationArg)]);
 			case _:
 				null;
 		}
@@ -917,6 +920,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function activeRecordOrderArgForField(fieldExpr:TypedExpr, direction:String):Null<String> {
 		var fieldName = activeRecordFieldName(fieldExpr);
 		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": :" + direction;
+	}
+
+	static function activeRecordAssociationArg(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordAssociationArg(inner);
+			case TField(_, access):
+				var value = fieldAccessRailsAssociationName(access);
+				if (value == null) {
+					value = fieldAccessRawName(access);
+				}
+				":" + RubyNaming.toMethodName(value);
+			case TConst(TString(value)):
+				":" + RubyNaming.toMethodName(value);
+			case _:
+				null;
+		}
 	}
 
 	static function activeRecordFieldName(expr:TypedExpr):Null<String> {
@@ -2150,6 +2170,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case FDynamic(_): null;
 		}
 		return metaStringParam(meta, ":railsField", 0);
+	}
+
+	static function fieldAccessRailsAssociationName(access:haxe.macro.Type.FieldAccess):Null<String> {
+		var meta = switch (access) {
+			case FInstance(_, _, field) | FStatic(_, field): field.get().meta;
+			case FAnon(fieldRef) | FClosure(_, fieldRef): fieldRef.get().meta;
+			case FEnum(_, field): field.meta;
+			case FDynamic(_): null;
+		}
+		return metaStringParam(meta, ":railsAssociation", 0);
 	}
 
 	static function printTemplateExpr(expr:TypedExpr, scope:RailsTemplateScope):String {

@@ -16,7 +16,10 @@ class ModelMacro {
 
 		validateModelMetadata(fields);
 		addModelFieldRefs(fields, selfType, cls.name, pos);
+		addModelAssociationRefs(fields, selfType, pos);
 		addStub(fields, "where", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
+		addPlainStub(fields, "includes", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
+		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
 		addStub(fields, "findBy", criteriaType, nullableSelf, pos);
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
@@ -67,6 +70,44 @@ class ModelMacro {
 				pos: pos
 			});
 		}
+	}
+
+	static function addModelAssociationRefs(fields:Array<Field>, selfType:ComplexType, pos:Position):Void {
+		var associationFields = [for (field in fields.copy()) if (isRailsAssociation(field)) field];
+		if (associationFields.length == 0) {
+			return;
+		}
+		addAssociationsObject(fields, "associations", associationFields, selfType, pos);
+		addAssociationsObject(fields, "a", associationFields, selfType, pos);
+	}
+
+	static function addAssociationsObject(fields:Array<Field>, name:String, associationFields:Array<Field>, selfType:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, name)) {
+			return;
+		}
+		var objectFields:Array<Field> = [];
+		var values:Array<ObjectField> = [];
+		for (field in associationFields) {
+			var targetType = associationTargetType(field);
+			var assocType = associationComplexType(selfType, targetType);
+			objectFields.push({
+				name: field.name,
+				access: [],
+				kind: FVar(assocType, null),
+				meta: [{name: ":railsAssociation", params: [macro $v{field.name}], pos: pos}],
+				pos: pos
+			});
+			values.push({
+				field: field.name,
+				expr: macro rails.active_record.Association.named($v{field.name})
+			});
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic, AFinal],
+			kind: FVar(TAnonymous(objectFields), {expr: EObjectDecl(values), pos: pos}),
+			pos: pos
+		});
 	}
 
 	static function addFieldsObject(fields:Array<Field>, name:String, columnFields:Array<Field>, selfType:ComplexType, pos:Position):Void {
@@ -232,6 +273,20 @@ class ModelMacro {
 		return false;
 	}
 
+	static function isRailsAssociation(field:Field):Bool {
+		if (field.meta == null) {
+			return false;
+		}
+		for (meta in field.meta) {
+			switch (meta.name) {
+				case ":belongsTo" | ":hasMany" | ":hasOne":
+					return true;
+				case _:
+			}
+		}
+		return false;
+	}
+
 	static function hasFieldNamed(fields:Array<Field>, name:String):Bool {
 		for (field in fields) {
 			if (field.name == name) {
@@ -248,6 +303,26 @@ class ModelMacro {
 			case _:
 				macro : Dynamic;
 		}
+	}
+
+	static function associationTargetType(field:Field):ComplexType {
+		return switch (fieldValueType(field)) {
+			case TPath(path) if (path.params != null && path.params.length == 1):
+				switch (path.params[0]) {
+					case TPType(inner): inner;
+					case _: macro : Dynamic;
+				}
+			case _:
+				macro : Dynamic;
+		}
+	}
+
+	static function associationComplexType(selfType:ComplexType, targetType:ComplexType):ComplexType {
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "Association",
+			params: [TPType(selfType), TPType(targetType)]
+		});
 	}
 
 	static function criteriaComplexType(fields:Array<Field>):ComplexType {
@@ -396,6 +471,28 @@ class ModelMacro {
 				expr: macro return cast null
 			}),
 			meta: [
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addPlainStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, pos:Position):Void {
+		for (field in fields) {
+			if (field.name == name) {
+				return;
+			}
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				args: [{name: argName, type: argType}],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{name}], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos

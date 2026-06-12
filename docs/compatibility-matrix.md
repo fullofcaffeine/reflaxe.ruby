@@ -39,7 +39,9 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | ActiveRecord model surface | `rails.active_record.Base<T>` | Implemented |
 | ActiveRecord schema registry | `Todo.__hx_rails_schema` | Implemented |
 | Typed ActiveRecord field refs | `Todo.fields.title` / `Todo.f.title : Field<Todo, String>`, `Todo.railsParamKey : ModelKey<Todo>` | Initial form/params slice |
+| Typed ActiveRecord association refs | `Todo.associations.user` / `Todo.a.user : Association<Todo, User>` | Initial association query slice |
 | Typed ActiveRecord relation chain | `Todo.where({completed: false}).where(...).order(Todo.f.title.asc()).limit(10) : Relation<Todo, criteria>` inferred | Initial query slice |
+| Typed ActiveRecord association queries | `Todo.includes(Todo.associations.user).joins(Todo.a.user)` | Initial association query slice |
 | Typed ActiveRecord find helpers | `Todo.find(1)`, `Todo.findBy({externalId: "x"})`, `relation.findBy({...})` | Initial query slice |
 | Associations/validations metadata | `@:belongsTo`, `@:hasMany`, `@:hasOne`, `@:validates` | Implemented |
 | ActionController surface | `rails.action_controller.Base` | Implemented |
