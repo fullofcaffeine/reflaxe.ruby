@@ -85,6 +85,14 @@ module HXRuby
     end
   end
 
+  def active_record_group_count(counts, key_kind)
+    map = key_kind == :int ? Haxe::Ds::IntMap.new : Haxe::Ds::StringMap.new
+    counts.each do |key, value|
+      map.set(key_kind == :int ? key.to_i : key.to_s, value.to_i)
+    end
+    map
+  end
+
   def array_join(array, separator)
     array.map { |entry| stringify(entry) }.join(separator.to_s)
   end

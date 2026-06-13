@@ -177,6 +177,11 @@ var rows:Array<{id:Int, title:String}> = Projection.pluck(
 	Todo.where({status: "open"}),
 	{id: Todo.f.id, title: Todo.f.title}
 );
+var statusCounts:haxe.ds.StringMap<Int> = Group.count(
+	Todo.where({status: "open"}),
+	Todo.f.status
+);
+var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
 var latestTitle:Null<String> = Todo.where({status: "open"}).maximum(Todo.f.title);
 ```
@@ -190,6 +195,8 @@ Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
 HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
+HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)
+HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
 Models::Todo.minimum(:id)
 Models::Todo.where(status: "open").maximum(:title)
 ```
@@ -214,6 +221,12 @@ return type is inferred from the object keys and field value types, such as
 `Array<{id:Int, title:String}>`. Generated Ruby still uses Rails `pluck(:id,
 :title)` and a small `HXRuby` row shaper so app code sees named rows instead of
 positional arrays.
+
+`Group.count(...)` is for typed grouped counts. `String` fields return
+`haxe.ds.StringMap<Int>`, `Int` fields return `haxe.ds.IntMap<Int>`, and fields
+from another model are rejected before Rails runs. v1 deliberately rejects other
+key types, such as `Bool`, until the target has a clear map representation for
+those keys.
 
 `minimum(...)` and `maximum(...)` use the same field refs and return nullable
 field values because Rails may not find a row. For example, an integer field

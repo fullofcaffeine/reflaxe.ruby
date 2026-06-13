@@ -1297,6 +1297,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (activeRecordProjectionCall != null) {
 			return activeRecordProjectionCall;
 		}
+		var activeRecordGroupCall = compileActiveRecordGroupStaticCall(callee, params);
+		if (activeRecordGroupCall != null) {
+			return activeRecordGroupCall;
+		}
 		var arrayCall = compileArrayCall(callee, params);
 		if (arrayCall != null) {
 			return arrayCall;
@@ -1493,6 +1497,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var pluckArgs = [for (fieldName in fieldNames) RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))];
 		var keyArray = RubyRawExpr("[" + [for (key in keys) quoteRubyStringForCode(key)].join(", ") + "]");
 		return RubyCall(RubyLocal("HXRuby"), "active_record_projection", [RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keyArray]);
+	}
+
+	static function compileActiveRecordGroupStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		var info = staticCallInfo(callee);
+		if (info == null || info.owner != "rails.active_record.GroupRuntime" || info.name != "count" || params.length != 3) {
+			return null;
+		}
+		var fieldName = staticString(params[1]);
+		var keyKind = staticString(params[2]);
+		if (fieldName == null || keyKind == null) {
+			Context.error("GroupRuntime.count expects static field and key-kind strings emitted by Group.count.", callee.pos);
+		}
+		var groupedCount = RubyCall(RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]), "count", []);
+		return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [groupedCount, RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))]);
+	}
+
+	static function staticString(expr:TypedExpr):Null<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)): value;
+			case _:
+				null;
+		}
 	}
 
 	static function staticStringArray(expr:TypedExpr):Null<Array<String>> {

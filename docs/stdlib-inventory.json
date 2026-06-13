@@ -143,6 +143,22 @@
       "reason": "Typed ActiveRecord model field reference that lets RailsHx forms, params, and order expressions share one checked field source while lowering to Rails-native names/symbols."
     },
     {
+      "id": "std.rails.active_record_group",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Group.hx",
+      "surface": "rails.active_record.Group",
+      "reason": "Macro facade for typed ActiveRecord grouped counts that returns StringMap<Int> or IntMap<Int> from generated model field refs."
+    },
+    {
+      "id": "std.rails.active_record_group_runtime",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/GroupRuntime.hx",
+      "surface": "rails.active_record.GroupRuntime",
+      "reason": "Internal compiler marker used by Group.count so app code stays typed while generated Ruby emits Rails-native group(:field).count plus HXRuby map shaping."
+    },
+    {
       "id": "std.rails.active_record_order",
       "owner": "std",
       "status": "implemented",

@@ -1,6 +1,7 @@
 import models.AuditLog;
 import models.Todo;
 import models.User;
+import rails.active_record.Group;
 import rails.active_record.Projection;
 
 // Typed ActiveRecord query smoke.
@@ -9,7 +10,8 @@ import rails.active_record.Projection;
 // `all`, `distinct`, `select`, `where`, `rewhere`, `order`, `reorder`, `limit`,
 // `offset`, `pluck`, `minimum`, `maximum`, `find`, `findBy`, `exists`, `count`,
 // `first`, and `last` authored as typed Haxe calls, plus named multi-field
-// projections through `Projection.pluck`.
+// projections through `Projection.pluck` and typed grouped counts through
+// `Group.count`.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -57,6 +59,9 @@ class Main {
 			Todo,
 			{id: Todo.f.id, externalId: Todo.f.externalId}
 		);
+		var statusCounts:haxe.ds.StringMap<Int> = Group.count(Todo.where({status: "open"}), Todo.f.status);
+		var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
+		var eventCounts:haxe.ds.IntMap<Int> = Group.count(AuditLog.where({eventCount: 1}), AuditLog.f.eventCount);
 		var minId:Null<Int> = Todo.minimum(Todo.f.id);
 		var maxTitle:Null<String> = Todo.maximum(Todo.f.title);
 		var assignedMaxId:Null<Int> = assigned.maximum(Todo.f.id);
@@ -80,6 +85,9 @@ class Main {
 		Sys.println(assignedIds.length >= 0);
 		Sys.println(projected.length >= 0);
 		Sys.println(projectedFromModel.length >= 0);
+		Sys.println(statusCounts.get("open") == null);
+		Sys.println(userCounts.get(1) == null);
+		Sys.println(eventCounts.get(1) == null);
 		Sys.println(minId == null);
 		Sys.println(maxTitle == null);
 		Sys.println(assignedMaxId == null);

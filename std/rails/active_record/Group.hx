@@ -7,9 +7,8 @@ import haxe.macro.Type;
 import haxe.macro.Type.FieldAccess;
 import haxe.macro.Type.MetaAccess;
 import haxe.macro.Type.TypedExpr;
-import haxe.macro.TypeTools;
 
-private typedef ProjectionFieldInfo = {
+private typedef GroupFieldInfo = {
 	name:String,
 	model:Null<String>,
 	valueType:Type,
@@ -17,46 +16,26 @@ private typedef ProjectionFieldInfo = {
 }
 #end
 
-class Projection {
-	public static macro function pluck(source:Expr, spec:Expr):Expr {
+class Group {
+	public static macro function count(source:Expr, field:Expr):Expr {
 		#if macro
 		var sourceModel = sourceModelName(source);
 		if (sourceModel == null) {
-			Context.error("Projection.pluck source must be a @:railsModel class or Relation<TModel, TCriteria>.", source.pos);
+			Context.error("Group.count source must be a @:railsModel class or Relation<TModel, TCriteria>.", source.pos);
 		}
-
-		var fields = projectionFields(spec);
-		var expectedModel = sourceModel;
-		for (field in fields) {
-			if (field.model == null) {
-				Context.error("Projection.pluck specs must use generated RailsHx model field refs such as Todo.f.title.", field.pos);
-			}
-			if (!sameModelName(field.model, expectedModel)) {
-				Context.error("Projection.pluck field refs must belong to the same model as the source.", field.pos);
-			}
+		var info = fieldInfo(field);
+		if (info == null || info.model == null) {
+			Context.error("Group.count field must be a generated RailsHx model field ref such as Todo.f.status.", field.pos);
 		}
-
-		var rowFields:Array<Field> = [
-			for (field in fields)
-				{
-					name: field.name,
-					access: [],
-					kind: FVar(TypeTools.toComplexType(field.valueType), null),
-					pos: field.pos
-				}
-		];
-		var rowType:ComplexType = TAnonymous(rowFields);
-		var arrayType:ComplexType = TPath({
-			pack: [],
-			name: "Array",
-			params: [TPType(rowType)]
-		});
-		var fieldNames = [for (field in fields) fieldSourceName(field.expr)];
-		var keys = [for (field in fields) field.name];
-		var call = macro rails.active_record.ProjectionRuntime.pluck($source, $e{stringArrayExpr(fieldNames)}, $e{stringArrayExpr(keys)});
+		if (!sameModelName(info.model, sourceModel)) {
+			Context.error("Group.count field refs must belong to the same model as the source.", field.pos);
+		}
+		var keyKind = groupKeyKind(info.valueType, field.pos);
+		var ret = groupReturnType(keyKind);
+		var call = macro rails.active_record.GroupRuntime.count($source, $v{info.name}, $v{keyKind});
 		return {
-			expr: ECheckType({expr: ECast(call, null), pos: spec.pos}, arrayType),
-			pos: spec.pos
+			expr: ECheckType({expr: ECast(call, null), pos: field.pos}, ret),
+			pos: field.pos
 		};
 		#else
 		return macro null;
@@ -64,34 +43,26 @@ class Projection {
 	}
 
 	#if macro
-	static function projectionFields(spec:Expr):Array<{name:String, expr:Expr, model:Null<String>, valueType:Type, pos:Position}> {
-		return switch (spec.expr) {
-			case EObjectDecl(values):
-				if (values.length == 0) {
-					Context.error("Projection.pluck spec must be a non-empty object literal.", spec.pos);
-				}
-				[
-					for (value in values) {
-						var info = fieldInfo(value.expr);
-						if (info == null) {
-							Context.error("Projection.pluck specs must use generated RailsHx model field refs such as Todo.f.title.", value.expr.pos);
-						}
-						{
-							name: value.field,
-							expr: value.expr,
-							model: info.model,
-							valueType: info.valueType,
-							pos: value.expr.pos
-						};
-					}
-				];
-			case _:
-				Context.error("Projection.pluck spec must be a non-empty object literal.", spec.pos);
-				[];
+	static function groupKeyKind(type:Type, pos:Position):String {
+		return switch (typeName(type)) {
+			case "String": "string";
+			case "Int": "int";
+			case other:
+				Context.error("Group.count only supports String and Int fields in v1; unsupported field type: " + other + ".", pos);
+				"unsupported";
 		}
 	}
 
-	static function fieldInfo(expr:Expr):Null<ProjectionFieldInfo> {
+	static function groupReturnType(keyKind:String):ComplexType {
+		var mapName = keyKind == "int" ? "IntMap" : "StringMap";
+		return TPath({
+			pack: ["haxe", "ds"],
+			name: mapName,
+			params: [TPType(macro : Int)]
+		});
+	}
+
+	static function fieldInfo(expr:Expr):Null<GroupFieldInfo> {
 		var typed = try {
 			Context.typeExpr(expr);
 		} catch (_:Dynamic) {
@@ -100,7 +71,7 @@ class Projection {
 		return extractRailsFieldInfo(typed);
 	}
 
-	static function extractRailsFieldInfo(expr:TypedExpr):Null<ProjectionFieldInfo> {
+	static function extractRailsFieldInfo(expr:TypedExpr):Null<GroupFieldInfo> {
 		return switch (expr.expr) {
 			case TMeta(_, inner) | TParenthesis(inner) | TCast(inner, _):
 				extractRailsFieldInfo(inner);
@@ -113,10 +84,7 @@ class Projection {
 				if (name == null) {
 					name = fieldAccessGeneratedFieldName(access);
 				}
-				if (name == null) {
-					return null;
-				}
-				{
+				name == null ? null : {
 					name: name,
 					model: typeName(params.model),
 					valueType: params.value,
@@ -155,9 +123,7 @@ class Projection {
 				} else {
 					null;
 				}
-			case TType(_, params) if (params.length > 0):
-				relationModelName(Context.follow(type));
-			case TAbstract(_, _):
+			case TType(_, _) | TAbstract(_, _):
 				relationModelName(Context.follow(type));
 			case TLazy(lazy):
 				relationModelName(lazy());
@@ -182,18 +148,6 @@ class Projection {
 			case _:
 				null;
 		}
-	}
-
-	static function fieldSourceName(expr:Expr):String {
-		var info = fieldInfo(expr);
-		return info == null ? "" : info.name;
-	}
-
-	static function stringArrayExpr(values:Array<String>):Expr {
-		return {
-			expr: EArrayDecl([for (value in values) macro $v{value}]),
-			pos: Context.currentPos()
-		};
 	}
 
 	static function fieldAccessRailsFieldName(access:FieldAccess):Null<String> {

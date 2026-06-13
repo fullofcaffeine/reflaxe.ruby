@@ -44,6 +44,11 @@ var projected:Array<{id:Int, title:String}> = Projection.pluck(
 	Todo.where({status: "open"}),
 	{id: Todo.f.id, title: Todo.f.title}
 );
+var statusCounts:haxe.ds.StringMap<Int> = Group.count(
+	Todo.where({status: "open"}),
+	Todo.f.status
+);
+var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
 var maxTitle:Null<String> = Todo.maximum(Todo.f.title);
 
@@ -68,6 +73,8 @@ Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(title: "assigned").pluck(:id)
 HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
+HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)
+HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
 Models::Todo.minimum(:id)
 Models::Todo.maximum(:title)
 Models::Todo
@@ -92,6 +99,9 @@ Type-safety features used here:
 - `Projection.pluck(Todo.where(...), {id: Todo.f.id, title: Todo.f.title})`
   returns named rows such as `Array<{id:Int, title:String}>`, rejects empty
   specs, and rejects fields from another model before Rails runs.
+- `Group.count(Todo.where(...), Todo.f.status)` returns `StringMap<Int>` for
+  string keys, `Group.count(Todo, Todo.f.userId)` returns `IntMap<Int>` for
+  integer keys, and unsupported key types fail during Haxe compilation.
 - `Todo.maximum(Todo.f.id)` returns `Null<Int>` and rejects fields from other models.
 - The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
   `order`, `limit`, and `offset`.
