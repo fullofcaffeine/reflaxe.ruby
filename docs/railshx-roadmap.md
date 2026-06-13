@@ -78,6 +78,8 @@ For typed controller and params authoring, see [RailsHx Controller And Params Gu
 
 Typed Rails templates are part of the RailsHx destination. `haxe.ruby-wpi.12` now has an initial HHX-first ActionView path through Rails HHX plus `H`/`HtmlNode`/`HtmlAttr`, including the todoapp index shell, typed locals-object projection, conditionals, loops, partial composition, `Template.of` owned partial refs, `Template.existing` interop partials, route-helper links, `link_to` block slots, typed model field refs in form helpers, and helper-tag static/expression child text. Raw ERB is retained only as an explicit migration/interop escape hatch or Rails-owned external source in gradual-adoption examples. The remaining work is broader component ergonomics, more helper slots, stricter typed assigns/components, richer adopt generators, richer typed `Relation<T, TCriteria>` querying, and continued expansion of HHX coverage while preserving Rails-native output.
 
+For post-core Rails surfaces, see [RailsHx Post-Core Roadmap](railshx-post-core-roadmap.md). ActionMailer, ActiveJob, ActiveStorage, Hotwire/Turbo/ActionCable, instrumentation, ViewComponent-style components, and engines/plugins are intentionally sequenced after the core CRUD spine so ecosystem breadth does not block stable RailsHx app development.
+
 ## Acceptance Bar
 
 RailsHx work is ready when:
