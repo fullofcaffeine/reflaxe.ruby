@@ -5,28 +5,30 @@ class Main
     "Main"
   end
   def self.main()
-    todo__hx20339 = nil
-    migration__hx20340 = Migrations::CreateTodos
-    controller__hx20341 = nil
-    layout_view__hx20342 = Views::ApplicationLayoutView
-    card_view__hx20343 = Views::TodoCardView
-    composer_view__hx20344 = Views::TodoComposerView
-    dashboard_view__hx20345 = Views::TodoDashboardView
-    form_view__hx20346 = Views::TodoFormView
-    list_view__hx20347 = Views::TodoListView
-    view__hx20348 = Views::TodoIndexView
-    summary_view__hx20349 = Views::TodoSummaryView
-    puts(HXRuby.stringify((todo__hx20339 == nil)))
-    puts(HXRuby.stringify((migration__hx20340 != nil)))
-    puts(HXRuby.stringify((controller__hx20341 == nil)))
-    puts(HXRuby.stringify((layout_view__hx20342 != nil)))
-    puts(HXRuby.stringify((card_view__hx20343 != nil)))
-    puts(HXRuby.stringify((composer_view__hx20344 != nil)))
-    puts(HXRuby.stringify((dashboard_view__hx20345 != nil)))
-    puts(HXRuby.stringify((form_view__hx20346 != nil)))
-    puts(HXRuby.stringify((list_view__hx20347 != nil)))
-    puts(HXRuby.stringify((view__hx20348 != nil)))
-    puts(HXRuby.stringify((summary_view__hx20349 != nil)))
+    todo__hx20524 = nil
+    migration__hx20525 = Migrations::CreateTodos
+    update_migration__hx20526 = Migrations::UpdateTodos
+    controller__hx20527 = nil
+    layout_view__hx20528 = Views::ApplicationLayoutView
+    card_view__hx20529 = Views::TodoCardView
+    composer_view__hx20530 = Views::TodoComposerView
+    dashboard_view__hx20531 = Views::TodoDashboardView
+    form_view__hx20532 = Views::TodoFormView
+    list_view__hx20533 = Views::TodoListView
+    view__hx20534 = Views::TodoIndexView
+    summary_view__hx20535 = Views::TodoSummaryView
+    puts(HXRuby.stringify((todo__hx20524 == nil)))
+    puts(HXRuby.stringify((migration__hx20525 != nil)))
+    puts(HXRuby.stringify((update_migration__hx20526 != nil)))
+    puts(HXRuby.stringify((controller__hx20527 == nil)))
+    puts(HXRuby.stringify((layout_view__hx20528 != nil)))
+    puts(HXRuby.stringify((card_view__hx20529 != nil)))
+    puts(HXRuby.stringify((composer_view__hx20530 != nil)))
+    puts(HXRuby.stringify((dashboard_view__hx20531 != nil)))
+    puts(HXRuby.stringify((form_view__hx20532 != nil)))
+    puts(HXRuby.stringify((list_view__hx20533 != nil)))
+    puts(HXRuby.stringify((view__hx20534 != nil)))
+    puts(HXRuby.stringify((summary_view__hx20535 != nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

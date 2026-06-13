@@ -74,6 +74,7 @@ for (const required of [
   "std/rails/action_view/Slot.hx",
   "std/rails/action_view/Template.hx",
   "std/rails/migration/Migration.hx",
+  "std/rails/migration/MigrationOperation.hx",
   "std/rails/turbo/Turbo.hx",
   "std/rails/macros/ViewMacro.hx",
   "runtime/hxruby/core.rb",

@@ -263,6 +263,14 @@
       "reason": "Marker base for Haxe-authored Rails migration classes lowered into ActiveRecord migration files."
     },
     {
+      "id": "std.rails.migration_operation",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/migration/MigrationOperation.hx",
+      "surface": "rails.migration.MigrationOperation",
+      "reason": "Typed RailsHx migration operation DSL for alter/drop/index-style ActiveRecord migration statements."
+    },
+    {
       "id": "std.rails.params_macro",
       "owner": "std",
       "status": "implemented",

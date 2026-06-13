@@ -1,5 +1,6 @@
 import controllers.TodosController;
 import migrations.CreateTodos;
+import migrations.UpdateTodos;
 import models.Todo;
 import views.ApplicationLayoutView;
 import views.TodoCardView;
@@ -14,6 +15,7 @@ class Main {
 	static function main() {
 		var todo:Todo = null;
 		var migration:Class<CreateTodos> = CreateTodos;
+		var updateMigration:Class<UpdateTodos> = UpdateTodos;
 		var controller:TodosController = null;
 		var layoutView:Class<ApplicationLayoutView> = ApplicationLayoutView;
 		var cardView:Class<TodoCardView> = TodoCardView;
@@ -25,6 +27,7 @@ class Main {
 		var summaryView:Class<TodoSummaryView> = TodoSummaryView;
 		Sys.println(todo == null);
 		Sys.println(migration != null);
+		Sys.println(updateMigration != null);
 		Sys.println(controller == null);
 		Sys.println(layoutView != null);
 		Sys.println(cardView != null);

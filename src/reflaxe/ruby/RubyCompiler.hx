@@ -50,7 +50,8 @@ typedef RailsBelongsToInfo = {
 typedef RailsMigrationConfig = {
 	timestamp:String,
 	className:String,
-	models:Array<ClassType>
+	models:Array<ClassType>,
+	operations:Array<String>
 }
 
 typedef RubyMetadataField = {
@@ -145,7 +146,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		setRubyOutputPath(classType.pack, classType.name);
 		var moduleRequires = collectModuleRequires(classType.meta);
 		if (hasMeta(classType.meta, ":railsMigration")) {
-			emitRailsMigrationArtifact(classType);
+			emitRailsMigrationArtifact(classType, varFields);
 		}
 		if (hasMeta(classType.meta, ":railsTemplate")) {
 			return compileRailsTemplateImpl(classType, varFields, funcFields, moduleRequires);
@@ -1270,12 +1271,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		setExtraFile(OutputPath.fromStr("config/initializers/hxruby_autoload.rb"), lines.join("\n"));
 	}
 
-	function emitRailsMigrationArtifact(classType:ClassType):Void {
+	function emitRailsMigrationArtifact(classType:ClassType, varFields:Array<ClassVarData>):Void {
 		if (!buildContext.railsMode) {
 			Context.error("@:railsMigration requires -D reflaxe_ruby_rails.", classType.pos);
 			return;
 		}
-		var config = railsMigrationConfig(classType);
+		var config = railsMigrationConfig(classType, varFields);
 		if (config == null) {
 			return;
 		}
@@ -1290,7 +1291,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		setExtraFile(OutputPath.fromStr(outputPath), normalizeGeneratedText(body));
 	}
 
-	static function railsMigrationConfig(classType:ClassType):Null<RailsMigrationConfig> {
+	static function railsMigrationConfig(classType:ClassType, varFields:Array<ClassVarData>):Null<RailsMigrationConfig> {
 		var entries = classType.meta.extract(":railsMigration");
 		if (entries.length == 0 || entries[0].params == null || entries[0].params.length == 0) {
 			Context.error("@:railsMigration expects an options object with timestamp, className, and models.", classType.pos);
@@ -1324,8 +1325,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsMigration className must be a non-empty string.", classType.pos);
 			return null;
 		}
-		if (modelPaths.length == 0) {
-			Context.error("@:railsMigration models must include at least one model path.", classType.pos);
+		var operations = railsMigrationOperations(varFields, classType);
+		if (modelPaths.length == 0 && operations.length == 0) {
+			Context.error("@:railsMigration models must include at least one model path unless typed operations are provided.", classType.pos);
 			return null;
 		}
 		var models:Array<ClassType> = [];
@@ -1347,7 +1349,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					Context.error('@:railsMigration model "$path" must resolve to a class.', classType.pos);
 			}
 		}
-		return {timestamp: timestamp, className: className, models: models};
+		return {timestamp: timestamp, className: className, models: models, operations: operations};
 	}
 
 	static function railsMigrationBody(config:RailsMigrationConfig):String {
@@ -1361,6 +1363,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				lines.push("");
 			}
 			appendRailsCreateTableMigration(lines, config.models[index]);
+		}
+		if (config.operations.length > 0) {
+			if (config.models.length > 0) {
+				lines.push("");
+			}
+			for (operation in config.operations) {
+				lines.push("    " + operation);
+			}
 		}
 		lines.push("  end");
 		lines.push("end");
@@ -1400,6 +1410,166 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 		}
 		lines.push("    end");
+	}
+
+	static function railsMigrationOperations(varFields:Array<ClassVarData>, classType:ClassType):Array<String> {
+		var operationField:Null<ClassVarData> = null;
+		for (field in varFields) {
+			if (field.isStatic && field.field.name == "operations") {
+				operationField = field;
+				break;
+			}
+		}
+		if (operationField == null) {
+			return [];
+		}
+		var expr = operationField.field.expr();
+		if (expr == null) {
+			Context.error("@:railsMigration operations must be a static final Array<MigrationOperation> literal.", operationField.field.pos);
+			return [];
+		}
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				[for (value in values) railsMigrationOperationLine(value, classType)];
+			case _:
+				Context.error("@:railsMigration operations must be an Array<MigrationOperation> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationOperationLine(expr:TypedExpr, classType:ClassType):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall({expr: TField(_, FEnum(_, field))}, args):
+				switch (field.name) {
+					case "AddColumn" if (args.length == 3):
+						var column = railsMigrationColumnDsl(args[2], classType);
+						"add_column :" + railsMigrationSymbolArg(args[0], "AddColumn table") + ", :" + railsMigrationSymbolArg(args[1], "AddColumn name") + ", :" + column.type + railsMigrationOptionSuffix(column.options);
+					case "RemoveColumn" if (args.length == 2):
+						"remove_column :" + railsMigrationSymbolArg(args[0], "RemoveColumn table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveColumn name");
+					case "AddIndex" if (args.length == 3):
+						var options = railsMigrationIndexDslOptions(args[2]);
+						"add_index :" + railsMigrationSymbolArg(args[0], "AddIndex table") + ", :" + railsMigrationSymbolArg(args[1], "AddIndex column") + railsMigrationOptionSuffix(options);
+					case "RemoveIndex" if (args.length == 2):
+						"remove_index :" + railsMigrationSymbolArg(args[0], "RemoveIndex table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveIndex column");
+					case "DropTable" if (args.length == 1):
+						"drop_table :" + railsMigrationSymbolArg(args[0], "DropTable table");
+					case _:
+						Context.error('@:railsMigration unsupported MigrationOperation ${field.name}.', expr.pos);
+						"# unsupported RailsHx migration operation";
+				}
+			case _:
+				Context.error("@:railsMigration operations must contain MigrationOperation enum values.", expr.pos);
+				"# invalid RailsHx migration operation";
+		}
+	}
+
+	static function railsMigrationColumnDsl(expr:TypedExpr, classType:ClassType):{type:String, options:Array<String>} {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall({expr: TField(_, FEnum(_, field))}, args) if (args.length == 1):
+				var type = switch (field.name) {
+					case "StringColumn": "string";
+					case "TextColumn": "text";
+					case "IntegerColumn": "integer";
+					case "BooleanColumn": "boolean";
+					case "FloatColumn": "float";
+					case _:
+						Context.error('@:railsMigration unsupported MigrationColumn ${field.name}.', expr.pos);
+						"string";
+				}
+				{type: type, options: railsMigrationColumnDslOptions(args[0])};
+			case _:
+				Context.error("@:railsMigration AddColumn expects a MigrationColumn enum value.", expr.pos);
+				{type: "string", options: []};
+		}
+	}
+
+	static function railsMigrationColumnDslOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				for (field in fields) {
+					switch (field.name) {
+						case "nullable":
+							var value = typedBoolLiteral(field.expr, "MigrationColumn nullable");
+							if (!value) {
+								options.push("null: false");
+							}
+						case "defaultValue":
+							options.push("default: " + typedMigrationLiteralCode(field.expr));
+						case _:
+							Context.error('@:railsMigration unknown MigrationColumn option ${field.name}.', field.expr.pos);
+					}
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration MigrationColumn options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationIndexDslOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				for (field in fields) {
+					switch (field.name) {
+						case "unique":
+							if (typedBoolLiteral(field.expr, "MigrationIndex unique")) {
+								options.push("unique: true");
+							}
+						case _:
+							Context.error('@:railsMigration unknown MigrationIndex option ${field.name}.', field.expr.pos);
+					}
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration AddIndex options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationSymbolArg(expr:TypedExpr, label:String):String {
+		var value = typedStringLiteral(expr);
+		if (value == null || value == "") {
+			Context.error('@:railsMigration ${label} must be a non-empty String literal.', expr.pos);
+			return "invalid";
+		}
+		return RubyNaming.toMethodName(value);
+	}
+
+	static function typedMigrationLiteralCode(expr:TypedExpr):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)): quoteRubyStringForCode(value);
+			case TConst(TInt(value)): Std.string(value);
+			case TConst(TFloat(value)): value;
+			case TConst(TBool(value)): value ? "true" : "false";
+			case _:
+				Context.error("@:railsMigration literal option value must be a String, Int, Float, or Bool literal.", expr.pos);
+				"nil";
+		}
+	}
+
+	static function typedStringLiteral(expr:TypedExpr):Null<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)): value;
+			case _: null;
+		}
+	}
+
+	static function typedBoolLiteral(expr:TypedExpr, label:String):Bool {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TBool(value)): value;
+			case _:
+				Context.error('@:railsMigration ${label} must be a Bool literal.', expr.pos);
+				false;
+		}
+	}
+
+	static function unwrapTypedExpr(expr:TypedExpr):TypedExpr {
+		return switch (expr.expr) {
+			case TCast(inner, _) | TParenthesis(inner) | TMeta(_, inner): unwrapTypedExpr(inner);
+			case _: expr;
+		}
 	}
 
 	static function railsMigrationColumnOptions(info:RailsColumnInfo):Array<String> {
