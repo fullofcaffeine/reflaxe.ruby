@@ -2,6 +2,7 @@ import models.AuditLog;
 import models.Todo;
 import models.User;
 import rails.active_record.Group;
+import rails.active_record.Order;
 import rails.active_record.Projection;
 
 // Typed ActiveRecord query smoke.
@@ -10,8 +11,8 @@ import rails.active_record.Projection;
 // `all`, `distinct`, `select`, `where`, `rewhere`, `order`, `reorder`, `limit`,
 // `offset`, `pluck`, `minimum`, `maximum`, `sum`, `average`, `find`, `findBy`,
 // `exists`, `count`, `first`, and `last` authored as typed Haxe calls, plus
-// named multi-field projections through `Projection.pluck` and typed grouped
-// counts through `Group.count`.
+// typed multi-field orders through `Order.many`, named multi-field projections
+// through `Projection.pluck`, and typed grouped counts through `Group.count`.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -37,6 +38,8 @@ class Main {
 		var relationSelected = assigned.select(Todo.f.id).limit(2);
 		var reordered = assigned.reorder(Todo.f.id.desc());
 		var staticReordered = Todo.reorder(Todo.f.title.desc()).limit(4);
+		var multiOrdered = Todo.order(Order.many([Todo.f.title.asc(), Todo.f.id.desc()])).limit(6);
+		var relationMultiReordered = assigned.reorder(Order.many([Todo.f.id.desc(), Todo.f.title.asc()]));
 		var reassigned = assigned.rewhere({status: "done"});
 		var staticRewhere = Todo.rewhere({completed: true}).limit(1);
 		var offsetRelation = Todo.where({status: "open"}).offset(20).limit(10);
@@ -106,6 +109,8 @@ class Main {
 		Sys.println(relationSelected == null);
 		Sys.println(reordered == null);
 		Sys.println(staticReordered == null);
+		Sys.println(multiOrdered == null);
+		Sys.println(relationMultiReordered == null);
 		Sys.println(reassigned == null);
 		Sys.println(staticRewhere == null);
 		Sys.println(offsetRelation == null);

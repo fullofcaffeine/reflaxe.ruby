@@ -1845,7 +1845,30 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var fieldName = activeRecordFieldName(fieldExpr);
 				var direction = activeRecordDirectionName(directionExpr);
 				fieldName == null || direction == null ? null : RubyNaming.toMethodName(fieldName) + ": :" + direction;
+			case TCall({expr: TField(_, access)}, [ordersExpr]) if (fieldAccessRawName(access) == "many"):
+				activeRecordOrderManyArg(ordersExpr);
 			case _:
+				null;
+		}
+	}
+
+	static function activeRecordOrderManyArg(expr:TypedExpr):Null<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				if (values.length == 0) {
+					Context.error("Order.many expects at least one typed order.", expr.pos);
+				}
+				var out:Array<String> = [];
+				for (value in values) {
+					var orderArg = activeRecordOrderArg(value);
+					if (orderArg == null) {
+						Context.error("Order.many expects an array literal of typed field order expressions.", value.pos);
+					}
+					out.push(orderArg);
+				}
+				out.join(", ");
+			case _:
+				Context.error("Order.many expects a static array literal so RailsHx can emit Rails-native order arguments.", expr.pos);
 				null;
 		}
 	}

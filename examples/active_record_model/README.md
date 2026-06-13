@@ -24,6 +24,7 @@ entrypoint when you want to start from a full model relation:
 
 ```haxe
 import rails.active_record.Group;
+import rails.active_record.Order;
 import rails.active_record.Projection;
 
 var allOpen = Todo
@@ -38,6 +39,10 @@ var distinctOpen = Todo
 	.order(Todo.f.title.asc());
 
 var staticReordered = Todo.reorder(Todo.f.title.desc()).limit(4);
+var multiOrdered = Todo.order(Order.many([Todo.f.title.asc(), Todo.f.id.desc()])).limit(6);
+var relationMultiReordered = Todo
+	.where({title: "assigned"})
+	.reorder(Order.many([Todo.f.id.desc(), Todo.f.title.asc()]));
 var reassigned = Todo.where({title: "assigned"}).rewhere({status: "done"});
 var staticRewhere = Todo.rewhere({completed: true}).limit(1);
 var selected = Todo.select(Todo.f.title).where({status: "open"});
@@ -73,6 +78,8 @@ Generated Ruby:
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo.reorder(title: :desc).limit(4)
+Models::Todo.order(title: :asc, id: :desc).limit(6)
+Models::Todo.where(title: "assigned").reorder(id: :desc, title: :asc)
 Models::Todo.where(title: "assigned").rewhere(status: "done")
 Models::Todo.rewhere(completed: true).limit(1)
 Models::Todo.select(:title).where(status: "open")
@@ -101,6 +108,8 @@ Type-safety features used here:
 - `rewhere({...})` uses the same typed criteria object while lowering to Rails `rewhere`.
 - `Todo.associations.user` / `Todo.a.user` must belong to `Todo`.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
+- `Order.many([Todo.f.title.asc(), Todo.f.id.desc()])` produces one typed
+  multi-field `Order<Todo>` and lowers to Rails `order(title: :asc, id: :desc)`.
 - `Todo.select(Todo.f.title)` returns a relation and lowers to Rails `select(:title)`.
 - `Todo.reorder(Todo.f.title.desc())` uses the same owner-typed order token.
 - `Todo.pluck(Todo.f.title)` returns `Array<String>` from the field value type.

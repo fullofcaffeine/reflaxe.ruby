@@ -20,4 +20,8 @@ abstract Order<TModel>(String) from String to String {
 	public static inline function named<TModel>(field:String, direction:String):Order<TModel> {
 		return new Order(field + ":" + direction);
 	}
+
+	public static function many<TModel>(orders:Array<Order<TModel>>):Order<TModel> {
+		return new Order(orders.join(","));
+	}
 }

@@ -168,6 +168,7 @@ Use generated field refs for query helpers that need a column identity:
 
 ```haxe
 import rails.active_record.Group;
+import rails.active_record.Order;
 import rails.active_record.Projection;
 
 var recent = AuditLog
@@ -175,6 +176,10 @@ var recent = AuditLog
 	.order(AuditLog.f.eventCount.desc());
 
 var rewritten = Todo.reorder(Todo.f.title.desc()).limit(4);
+var stablePage = Todo.order(Order.many([Todo.f.title.asc(), Todo.f.id.desc()])).limit(20);
+var stableRewrite = Todo
+	.where({status: "open"})
+	.reorder(Order.many([Todo.f.id.desc(), Todo.f.title.asc()]));
 var selected = Todo.select(Todo.f.title).where({status: "open"});
 
 var titles:Array<String> = Todo.pluck(Todo.f.title);
@@ -199,6 +204,8 @@ Generated Ruby:
 ```ruby
 Models::AuditLog.where(event_count: 1).order(event_count: :desc)
 Models::Todo.reorder(title: :desc).limit(4)
+Models::Todo.order(title: :asc, id: :desc).limit(20)
+Models::Todo.where(status: "open").reorder(id: :desc, title: :asc)
 Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
@@ -216,7 +223,10 @@ form may be useful at low-level interop boundaries later, but RailsHx examples
 should keep field identity behind generated refs.
 
 `reorder(...)` uses the same typed `Order<TModel>` tokens as `order(...)`, so an
-order from another model is rejected before Rails runs.
+order from another model is rejected before Rails runs. Use `Order.many([...])`
+when a stable Rails order needs more than one column; every item in the array
+must be an `Order<TModel>`, so mixed-model order lists fail during Haxe
+compilation while generated Ruby remains `order(title: :asc, id: :desc)`.
 
 `select(...)` uses generated field refs too. It returns a typed relation and
 lowers to Rails `select(:field)`, while fields from another model are rejected.

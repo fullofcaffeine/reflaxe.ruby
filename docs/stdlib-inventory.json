@@ -164,7 +164,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/Order.hx",
       "surface": "rails.active_record.Order",
-      "reason": "Typed ActiveRecord order token produced from field refs and lowered by the compiler into Rails-native order(column: :direction) arguments."
+      "reason": "Typed ActiveRecord order token produced from field refs, including multi-field Order.many lists, and lowered by the compiler into Rails-native order(column: :direction) arguments."
     },
     {
       "id": "std.rails.active_record_projection",
