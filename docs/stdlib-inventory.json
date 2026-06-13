@@ -455,6 +455,30 @@
       "reason": "Typed Haxe facade over Turbo lifecycle events, visit actions/options, frame helpers, and stream-message rendering for RailsHx client-side JavaScript."
     },
     {
+      "id": "std.rails.turbo_stream_target",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/StreamTarget.hx",
+      "surface": "rails.turbo.StreamTarget",
+      "reason": "Typed DOM target token for server-side Rails Turbo stream helper calls."
+    },
+    {
+      "id": "std.rails.turbo_stream_name",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/StreamName.hx",
+      "surface": "rails.turbo.StreamName",
+      "reason": "Typed server-side Turbo stream name carrying the broadcast payload/locals shape."
+    },
+    {
+      "id": "std.rails.turbo_streams",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboStreams.hx",
+      "surface": "rails.turbo.TurboStreams",
+      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers."
+    },
+    {
       "id": "std.rails.turbo_event",
       "owner": "std",
       "status": "implemented",

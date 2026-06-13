@@ -1320,6 +1320,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (actionCableStaticCall != null) {
 			return actionCableStaticCall;
 		}
+		var turboStreamsCall = compileTurboStreamsCall(info, params);
+		if (turboStreamsCall != null) {
+			return turboStreamsCall;
+		}
 		var activeSupportNotificationsCall = compileActiveSupportNotificationsCall(info, params);
 		if (activeSupportNotificationsCall != null) {
 			return activeSupportNotificationsCall;
@@ -1527,6 +1531,65 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				null;
 		}
+	}
+
+	static function compileTurboStreamsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (info.name == "named" && (info.owner == "rails.turbo.StreamTarget" || StringTools.endsWith(info.owner, ".StreamTarget_Impl_")
+			|| info.owner == "rails.turbo.StreamName" || StringTools.endsWith(info.owner, ".StreamName_Impl_")) && params.length == 1) {
+			return compileExpr(params[0]);
+		}
+		if (info.owner != "rails.turbo.TurboStreams") {
+			return null;
+		}
+		return switch (info.name) {
+			case "append" if (params.length == 3):
+				compileTurboStreamRenderCall("append", params);
+			case "prepend" if (params.length == 3):
+				compileTurboStreamRenderCall("prepend", params);
+			case "replace" if (params.length == 3):
+				compileTurboStreamRenderCall("replace", params);
+			case "update" if (params.length == 3):
+				compileTurboStreamRenderCall("update", params);
+			case "remove" if (params.length == 1):
+				RubyRawExpr("turbo_stream.remove(" + printParam(params, 0) + ")");
+			case "broadcastAppendTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("append", params);
+			case "broadcastPrependTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("prepend", params);
+			case "broadcastReplaceTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("replace", params);
+			case "broadcastUpdateTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("update", params);
+			case "broadcastRemoveTo" if (params.length == 2):
+				RubyRawExpr("Turbo::StreamsChannel.broadcast_remove_to(" + printParam(params, 0) + ", target: " + printParam(params, 1) + ")");
+			case _:
+				null;
+		}
+	}
+
+	static function compileTurboStreamRenderCall(action:String, params:Array<TypedExpr>):RubyExpr {
+		return RubyRawExpr("turbo_stream." + action + "(" + printParam(params, 0) + ", partial: " + turboStreamPartialPath(params[1]) + ", locals: "
+			+ turboStreamLocals(params[2]) + ")");
+	}
+
+	static function compileTurboStreamBroadcastCall(action:String, params:Array<TypedExpr>):RubyExpr {
+		return RubyRawExpr("Turbo::StreamsChannel.broadcast_" + action + "_to(" + printParam(params, 0) + ", target: " + printParam(params, 1)
+			+ ", partial: " + turboStreamPartialPath(params[2]) + ", locals: " + turboStreamLocals(params[3]) + ")");
+	}
+
+	static function turboStreamPartialPath(template:TypedExpr):String {
+		var path = extractTypedTemplatePath(template);
+		if (path == null) {
+			Context.error("TurboStreams template arguments expect Template.of(ViewClass), Template.existing(\"path\"), Template.named(\"path\"), or Template.external(\"path\").",
+				template.pos);
+			return "\"\"";
+		}
+		return quoteRubyStringForCode(path);
+	}
+
+	static function turboStreamLocals(locals:TypedExpr):String {
+		var hash = printRailsLocalsHash(locals);
+		return hash == null ? printInlineExpr(locals) : hash;
 	}
 
 	static function compileActiveSupportNotificationsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -1938,7 +2001,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function printRailsLocalsHash(expr:TypedExpr):Null<String> {
-		return switch (expr.expr) {
+		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				"{" + [for (field in fields) RubyNaming.toLocalName(field.name) + ": " + printInlineExpr(field.expr)].join(", ") + "}";
 			case _:

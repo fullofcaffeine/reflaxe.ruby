@@ -89,9 +89,64 @@ Turbo.renderStreamMessage(
 ```
 
 The stream helper is intentionally low-level: the `template` argument should
-already be trusted/generated HTML. Server-side Rails stream helpers and
-broadcasting remain future work and should lower to normal Rails
-`turbo_stream.*`/broadcast APIs, not a RailsHx runtime.
+already be trusted/generated HTML.
+
+## Server-Side Streams
+
+Server-side streams use `rails.turbo.TurboStreams`. The Haxe API checks targets,
+stream names, typed partial refs, and locals; the compiler emits normal Rails
+helpers:
+
+```haxe
+import rails.action_view.Template;
+import rails.turbo.StreamName;
+import rails.turbo.StreamTarget;
+import rails.turbo.TurboStreams;
+
+typedef TodoRowLocals = {
+	var domId:String;
+	var title:String;
+	var completed:Bool;
+}
+
+class TodoStreams {
+	public static inline var listTarget:StreamTarget = "todos";
+	public static inline var listStream:StreamName<TodoRowLocals> = "todos";
+}
+
+TurboStreams.append(TodoStreams.listTarget,
+	(Template.of(TodoRowView) : Template<TodoRowLocals>), {
+		domId: "todo_1",
+		title: "Ship typed streams",
+		completed: false
+	});
+
+TurboStreams.broadcastAppendTo(TodoStreams.listStream, TodoStreams.listTarget,
+	(Template.of(TodoRowView) : Template<TodoRowLocals>), {
+		domId: "todo_1",
+		title: "Ship typed streams",
+		completed: false
+	});
+```
+
+Generated Ruby stays Rails-shaped:
+
+```ruby
+turbo_stream.append("todos", partial: "todos/todo",
+  locals: {dom_id: "todo_1", title: "Ship typed streams", completed: false})
+
+Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos",
+  partial: "todos/todo",
+  locals: {dom_id: "todo_1", title: "Ship typed streams", completed: false})
+```
+
+Use inline typed target/stream constants for app-level names. Use
+`Template.of(ViewClass) : Template<TLocals>` for RailsHx-owned HHX partials and
+`Template.existing("path") : Template<TLocals>` for Rails-owned ERB partials.
+Pass locals as object literals when possible so the compiler can lower Haxe
+`camelCase` fields to Rails `snake_case` locals at compile time. A prebuilt
+locals value is accepted by the Haxe type system, but Rails will receive that
+runtime value as-is.
 
 ## Rails Workflow
 
@@ -113,6 +168,7 @@ Use the static Turbo smoke for typed API coverage:
 
 ```bash
 npm run test:turbo
+npm run test:turbo-streams
 ```
 
 Use the real-browser todoapp sentinel for Rails/importmap/Turbo integration:
@@ -121,6 +177,6 @@ Use the real-browser todoapp sentinel for Rails/importmap/Turbo integration:
 npm run test:todoapp-playwright
 ```
 
-`npm test` includes the static Turbo smoke. Browser and Rails runtime lanes stay
-separate so local compiler work remains fast while CI can require full Rails
-coverage.
+`npm test` includes the static Turbo and Turbo Streams smokes. Browser and Rails
+runtime lanes stay separate so local compiler work remains fast while CI can
+require full Rails coverage.
