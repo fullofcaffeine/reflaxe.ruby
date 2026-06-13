@@ -54,6 +54,19 @@ Interop is typed through metadata and small std surfaces:
 - `@:rubyModule("Name")` and `@:rubyConcern("Name")` let Haxe author Ruby modules and ActiveSupport::Concern-style modules directly.
 - `ruby.Symbol.of("ready")` lowers to `:ready`.
 
+Rails/ActiveSupport facades are typed std contracts over real Rails APIs:
+
+```haxe
+using rails.active_support.ObjectPresence;
+using rails.active_support.StringFilters;
+
+var normalized = "  Ship   typed Rails  ".squish();
+var maybeTitle = normalized.presence();
+if (maybeTitle.present()) trace(maybeTitle);
+```
+
+Generated Ruby requires the matching ActiveSupport core extension files and calls the patched receivers directly.
+
 Raw `__ruby__` injection exists as an escape hatch, but examples and production-style code should prefer typed externs or std/runtime wrappers. The strict boundary defines enforce that policy.
 
 See [Ruby Extension Interop](docs/ruby-extension-interop.md) for examples ranging from simple module include/extend through existing gem wrapping, gradual adoption, Haxe-owned libraries, and metaprogramming-heavy contract generation.

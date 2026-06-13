@@ -88,4 +88,5 @@ The rows above describe the current Rails MVP. The deeper typed Rails compiler l
 | Haxe-owned Ruby module authoring | `@:rubyModule("RubyModuleName")` | Initial implementation |
 | Haxe-owned ActiveSupport::Concern authoring | `@:rubyConcern("RubyModuleName")` | Initial static output implementation |
 | Typed monkey-patch/`using` contracts | `@:rubyPatch(ReceiverType)` plus Haxe `using` | Initial implementation |
+| Typed ActiveSupport receiver facades | `rails.active_support.ObjectPresence`, `rails.active_support.StringFilters` | Initial facade slice |
 | Generator-assisted contracts from Ruby/RBS/YARD/Rails metadata/LLM suggestions | planned | Not implemented |

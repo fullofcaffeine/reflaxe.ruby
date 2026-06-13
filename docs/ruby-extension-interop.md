@@ -280,6 +280,19 @@ Filesystem-backed macros/generators must fail closed. If an API references `app/
 
 Rails and Ruby std facades should use the same rule. For example, ActiveSupport-style receiver extensions should usually start as generated or hand-written `@:rubyPatch` contracts; module/Concern APIs should use `@:rubyMixin`/`@:rubyInclude`/`@:rubyExtend`; file-backed Rails components should use checked template/model/route macros. Prefer local reference sources in `../haxe.compilerdev.reference/rails` and `../haxe.compilerdev.reference/ruby` when designing these wrappers so the Haxe API stays typed while the output remains recognizable Ruby/Rails.
 
+The initial std facades live under `rails.active_support`:
+
+```haxe
+using rails.active_support.ObjectPresence;
+using rails.active_support.StringFilters;
+
+var normalized = "  typed   rails ".squish();
+var maybeValue = normalized.presence();
+var hasValue = maybeValue.present();
+```
+
+These facades are still Ruby/Rails-owned APIs. Haxe provides the typed contract and completion surface; ActiveSupport provides the runtime implementation.
+
 ## Current Example
 
 `examples/ruby_extensions` demonstrates:

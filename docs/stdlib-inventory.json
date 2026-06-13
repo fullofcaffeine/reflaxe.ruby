@@ -287,6 +287,22 @@
       "reason": "Macro expansion for typed ActionView template locals into Rails-native render options."
     },
     {
+      "id": "std.rails.active_support_object_presence",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/ObjectPresence.hx",
+      "surface": "rails.active_support.ObjectPresence",
+      "reason": "Typed ActiveSupport Object#blank?, Object#present?, and Object#presence receiver extension facade using @:rubyPatch and Haxe using."
+    },
+    {
+      "id": "std.rails.active_support_string_filters",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/StringFilters.hx",
+      "surface": "rails.active_support.StringFilters",
+      "reason": "Typed ActiveSupport String#squish receiver extension facade using @:rubyPatch and Haxe using."
+    },
+    {
       "id": "std.math",
       "owner": "std",
       "status": "implemented",
