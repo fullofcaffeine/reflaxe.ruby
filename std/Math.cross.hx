@@ -7,7 +7,7 @@ class Math {
 	public static var NaN(default, null):Float = untyped __ruby__("Float::NAN");
 
 	public static function abs(v:Float):Float {
-		return untyped __ruby__("HXRuby.math_abs({0})", v);
+		return untyped __ruby__("{0}.abs", v);
 	}
 
 	public static function min(a:Float, b:Float):Float {
@@ -91,7 +91,7 @@ class Math {
 	}
 
 	public static function isFinite(f:Float):Bool {
-		return untyped __ruby__("HXRuby.math_finite?({0})", f);
+		return untyped __ruby__("{0}.finite?", f);
 	}
 
 	public static function isNaN(f:Float):Bool {

@@ -52,6 +52,25 @@ if (actual !== expected) {
   process.exit(1);
 }
 
+const mathRuby = readFileSync(join(outputDir, "math.rb"), "utf8");
+for (const expectedMathShape of [
+  /def self\.abs\(v__hx\d+\)\n\s+return v__hx\d+\.abs/,
+  /def self\.is_finite\(f__hx\d+\)\n\s+return f__hx\d+\.finite\?/,
+]) {
+  if (!expectedMathShape.test(mathRuby)) {
+    console.error(`Expected idiomatic direct Ruby Math lowering missing: ${expectedMathShape}`);
+    console.error(mathRuby);
+    process.exit(1);
+  }
+}
+for (const helperCall of ["HXRuby.math_abs", "HXRuby.math_finite?"]) {
+  if (mathRuby.includes(helperCall)) {
+    console.error(`Math output should not delegate to ${helperCall} when Ruby has matching receiver semantics.`);
+    console.error(mathRuby);
+    process.exit(1);
+  }
+}
+
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
     if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {

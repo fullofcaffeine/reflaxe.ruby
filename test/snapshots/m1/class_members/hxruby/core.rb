@@ -203,10 +203,6 @@ module HXRuby
     index.negative? ? 0 : index
   end
 
-  def math_abs(value)
-    value.abs
-  end
-
   def math_min(left, right)
     return Float::NAN if math_nan?(left) || math_nan?(right)
 
@@ -240,10 +236,6 @@ module HXRuby
 
   def math_round(value)
     (value + 0.5).floor
-  end
-
-  def math_finite?(value)
-    value.respond_to?(:finite?) && value.finite?
   end
 
   def math_nan?(value)

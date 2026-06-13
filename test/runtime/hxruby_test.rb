@@ -67,7 +67,7 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal 1, HXRuby.math_round(0.5)
     assert_equal 3.0, HXRuby.math_unary(:sqrt, 9)
     assert HXRuby.math_nan?(HXRuby.math_unary(:sqrt, -1))
-    assert HXRuby.math_finite?(3.5)
-    refute HXRuby.math_finite?(Float::INFINITY)
+    assert HXRuby.math_nan?(Float::NAN)
+    refute HXRuby.math_nan?(1)
   end
 end
