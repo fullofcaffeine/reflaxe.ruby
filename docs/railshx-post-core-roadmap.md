@@ -110,6 +110,9 @@ Typed boundary:
 - Attachment refs generated from model metadata: `User.attachments.avatar`.
 - Typed single/many attachment declarations.
 - Typed helpers for attach, attached, purge, and URL helper seams.
+- Initial slice exists through `@:hasOneAttached`, `@:hasManyAttached`, and
+  `Model.attachments.*` refs. See
+  [RailsHx ActiveStorage Guide](railshx-active-storage-guide.md).
 
 Lowering strategy:
 

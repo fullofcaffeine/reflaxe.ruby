@@ -191,6 +191,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (hasMeta(classType.meta, ":railsModel")) {
 			requireRegistry.addRequire("active_record");
 			moduleRequires.addRequire("active_record");
+			if (railsModelHasAttachments(classType)) {
+				requireRegistry.addRequire("active_storage/engine");
+				moduleRequires.addRequire("active_storage/engine");
+			}
 			return compileRailsModelImpl(classType, varFields, funcFields, moduleRequires);
 		}
 		if (hasMeta(classType.meta, ":railsController")) {
@@ -910,6 +914,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (hasMeta(field.field.meta, ":hasOne")) {
 				body.push("has_one :" + RubyNaming.toMethodName(field.field.name) + railsAssociationOptionsSuffix(field.field.meta, ":hasOne"));
 			}
+			if (hasMeta(field.field.meta, ":hasOneAttached")) {
+				body.push("has_one_attached :" + RubyNaming.toMethodName(field.field.name));
+			}
+			if (hasMeta(field.field.meta, ":hasManyAttached")) {
+				body.push("has_many_attached :" + RubyNaming.toMethodName(field.field.name));
+			}
 		}
 		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":railsEnum")) {
@@ -1246,9 +1256,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (actionControllerResponseCall != null) {
 			return actionControllerResponseCall;
 		}
+		var activeStorageCall = compileActiveStorageCall(callee, params);
+		if (activeStorageCall != null) {
+			return activeStorageCall;
+		}
 		var info = staticCallInfo(callee);
 		if (info == null) {
 			return null;
+		}
+		var activeStorageStaticCall = compileActiveStorageStaticCall(info, params);
+		if (activeStorageStaticCall != null) {
+			return activeStorageStaticCall;
 		}
 		if ((info.owner == "ruby.Symbol" || StringTools.endsWith(info.owner, ".Symbol_Impl_")) && info.name == "of") {
 			return compileRubySymbol(params);
@@ -1379,6 +1397,60 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if ((fieldAccessRawName(access) == "includes" || fieldAccessRawName(access) == "joins") && params.length == 1):
 				var associationArg = activeRecordAssociationArg(params[0]);
 				associationArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(associationArg)]);
+			case _:
+				null;
+		}
+	}
+
+	static function compileActiveStorageCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (callee.expr) {
+			case TField(target, access):
+				var attachment = typedExprRailsAttachmentName(target);
+				if (attachment == null || params.length == 0) {
+					null;
+				} else {
+					var receiver = RubyCall(compileExpr(params[0]), RubyNaming.toMethodName(attachment), []);
+					switch (fieldAccessRawName(access)) {
+						case "attached":
+							RubyCall(receiver, "attached?", []);
+						case "attach" if (params.length == 2):
+							RubyCall(receiver, "attach", [compileExpr(params[1])]);
+						case "purge":
+							RubyCall(receiver, "purge", []);
+						case _:
+							null;
+					}
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function compileActiveStorageStaticCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (info.owner.indexOf("rails.active_storage") == -1 || params.length < 2) {
+			return null;
+		}
+		var attachment = typedExprRailsAttachmentName(params[0]);
+		if (attachment == null) {
+			return null;
+		}
+		var receiver = RubyCall(compileExpr(params[1]), RubyNaming.toMethodName(attachment), []);
+		return switch (info.name) {
+			case "attached":
+				RubyCall(receiver, "attached?", []);
+			case "attach" if (params.length == 3):
+				RubyCall(receiver, "attach", [compileExpr(params[2])]);
+			case "purge":
+				RubyCall(receiver, "purge", []);
+			case _:
+				null;
+		}
+	}
+
+	static function typedExprRailsAttachmentName(expr:TypedExpr):Null<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, access):
+				fieldAccessRailsAttachmentName(access);
 			case _:
 				null;
 		}
@@ -3305,6 +3377,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return metaStringParam(meta, ":railsAssociation", 0);
 	}
 
+	static function fieldAccessRailsAttachmentName(access:haxe.macro.Type.FieldAccess):Null<String> {
+		var meta = switch (access) {
+			case FInstance(_, _, field) | FStatic(_, field): field.get().meta;
+			case FAnon(fieldRef) | FClosure(_, fieldRef): fieldRef.get().meta;
+			case FEnum(_, field): field.meta;
+			case FDynamic(_): null;
+		}
+		return metaStringParam(meta, ":railsAttachment", 0);
+	}
+
 	static function printTemplateExpr(expr:TypedExpr, scope:RailsTemplateScope):String {
 		var unwrapped = unwrapTemplateExpr(expr);
 		return switch (unwrapped.expr) {
@@ -3566,6 +3648,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return explicit;
 		}
 		return RubyNaming.fileName(classType.name) + "s";
+	}
+
+	static function railsModelHasAttachments(classType:ClassType):Bool {
+		for (field in classType.fields.get()) {
+			if (hasMeta(field.meta, ":hasOneAttached") || hasMeta(field.meta, ":hasManyAttached")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	static function metaStringValue(meta:Null<haxe.macro.Type.MetaAccess>, name:String):Null<String> {

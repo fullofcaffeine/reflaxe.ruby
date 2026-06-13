@@ -17,6 +17,7 @@ class ModelMacro {
 		validateModelMetadata(fields);
 		addModelFieldRefs(fields, selfType, cls.name, pos);
 		addModelAssociationRefs(fields, selfType, pos);
+		addModelAttachmentRefs(fields, selfType, pos);
 		addStub(fields, "where", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addPlainStub(fields, "includes", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
@@ -81,6 +82,45 @@ class ModelMacro {
 		}
 		addAssociationsObject(fields, "associations", associationFields, selfType, pos);
 		addAssociationsObject(fields, "a", associationFields, selfType, pos);
+	}
+
+	static function addModelAttachmentRefs(fields:Array<Field>, selfType:ComplexType, pos:Position):Void {
+		var attachmentFields = [for (field in fields.copy()) if (isRailsAttachment(field)) field];
+		if (attachmentFields.length == 0) {
+			return;
+		}
+		addAttachmentsObject(fields, "attachments", attachmentFields, selfType, pos);
+	}
+
+	static function addAttachmentsObject(fields:Array<Field>, name:String, attachmentFields:Array<Field>, selfType:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, name)) {
+			return;
+		}
+		var objectFields:Array<Field> = [];
+		var values:Array<ObjectField> = [];
+		for (field in attachmentFields) {
+			var refType = attachmentComplexType(field, selfType);
+			objectFields.push({
+				name: field.name,
+				access: [],
+				kind: FVar(refType, null),
+				meta: [
+					{name: ":railsAttachment", params: [macro $v{field.name}], pos: pos},
+					{name: ":railsAttachmentKind", params: [macro $v{attachmentKind(field)}], pos: pos}
+				],
+				pos: pos
+			});
+			values.push({
+				field: field.name,
+				expr: attachmentConstructorExpr(field)
+			});
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic, AFinal],
+			kind: FVar(TAnonymous(objectFields), {expr: EObjectDecl(values), pos: pos}),
+			pos: pos
+		});
 	}
 
 	static function addAssociationsObject(fields:Array<Field>, name:String, associationFields:Array<Field>, selfType:ComplexType, pos:Position):Void {
@@ -165,6 +205,11 @@ class ModelMacro {
 							throw meta.name + " can only be used on model fields.";
 						}
 						validateAssociationOptions(field, meta, fields);
+					case ":hasOneAttached" | ":hasManyAttached":
+						if (!isVarField(field)) {
+							throw meta.name + " can only be used on model fields.";
+						}
+						validateAttachmentType(field, meta.name);
 					case ":railsEnum":
 						if (!isVarField(field)) {
 							throw "@:railsEnum can only be used on model fields.";
@@ -664,6 +709,69 @@ class ModelMacro {
 			}
 		}
 		return false;
+	}
+
+	static function isRailsAttachment(field:Field):Bool {
+		if (field.meta == null) {
+			return false;
+		}
+		for (meta in field.meta) {
+			switch (meta.name) {
+				case ":hasOneAttached" | ":hasManyAttached":
+					return true;
+				case _:
+			}
+		}
+		return false;
+	}
+
+	static function attachmentKind(field:Field):String {
+		if (field.meta == null) {
+			return "one";
+		}
+		for (meta in field.meta) {
+			switch (meta.name) {
+				case ":hasOneAttached":
+					return "one";
+				case ":hasManyAttached":
+					return "many";
+				case _:
+			}
+		}
+		return "one";
+	}
+
+	static function attachmentComplexType(field:Field, selfType:ComplexType):ComplexType {
+		return TPath({
+			pack: ["rails", "active_storage"],
+			name: attachmentKind(field) == "many" ? "Many" : "One",
+			params: [TPType(selfType)]
+		});
+	}
+
+	static function attachmentConstructorExpr(field:Field):Expr {
+		return attachmentKind(field) == "many" ? macro rails.active_storage.Many.named($v{field.name}) : macro rails.active_storage.One.named($v{field.name});
+	}
+
+	static function validateAttachmentType(field:Field, metaName:String):Void {
+		var expected = metaName == ":hasManyAttached" ? "Many" : "One";
+		switch (fieldValueType(field)) {
+			case TPath(path) if (attachmentTypePathName(path) == "rails.active_storage." + expected
+				|| attachmentTypePathName(path) == "rails.ActiveStorage." + expected):
+			case TPath(path):
+				throw metaName + ' field ${field.name} must be typed as rails.ActiveStorage.$expected<ThisModel>.';
+			case _:
+				throw metaName + ' field ${field.name} must be typed as rails.ActiveStorage.$expected<ThisModel>.';
+		}
+	}
+
+	static function attachmentTypePathName(path:TypePath):String {
+		var parts = path.pack.copy();
+		parts.push(path.name);
+		if (path.sub != null) {
+			parts.push(path.sub);
+		}
+		return parts.join(".");
 	}
 
 	static function hasFieldNamed(fields:Array<Field>, name:String):Bool {

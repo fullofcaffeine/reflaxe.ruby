@@ -311,6 +311,30 @@
       "reason": "Build macro for railsJob classes that injects typed performLater/performNow enqueue helpers from the perform signature."
     },
     {
+      "id": "std.rails.active_storage",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/ActiveStorage.hx",
+      "surface": "rails.ActiveStorage",
+      "reason": "Top-level ActiveStorage marker module plus one/many attachment typedefs for Rails model metadata."
+    },
+    {
+      "id": "std.rails.active_storage_one",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_storage/One.hx",
+      "surface": "rails.active_storage.One",
+      "reason": "Typed single ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls."
+    },
+    {
+      "id": "std.rails.active_storage_many",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_storage/Many.hx",
+      "surface": "rails.active_storage.Many",
+      "reason": "Typed many ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls."
+    },
+    {
       "id": "std.rails.action_view_template",
       "owner": "std",
       "status": "implemented",
