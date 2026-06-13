@@ -18,6 +18,9 @@ The rule of thumb is simple:
 - Cross from lazy relation to loaded data intentionally with `toArray()` when a
   controller/template needs an `Array<Todo>`.
 
+For the planned multi-field projection and grouped-count APIs, see
+[RailsHx Multi-Field Projection And Grouping Design](railshx-projections-grouping-design.md).
+
 ## Model Setup
 
 Typed queries start with typed ActiveRecord models:
