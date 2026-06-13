@@ -40,10 +40,12 @@ for (const file of [
 
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
 for (const expected of [
-  /turbo_stream\.append\("todos", partial: "todos\/todo", locals: \{dom_id: "todo_1", title: "Ship typed Turbo Streams", completed: false\}\)/,
-  /turbo_stream\.replace\("todos", partial: "todos\/todo", locals: \{dom_id: "todo_1", title: "Ship typed Turbo Streams, but polished", completed: true\}\)/,
+  /turbo_stream\.append\("todos", partial: "todos\/todo", locals: \{completed: \(append_locals__hx\d+\)\["completed"\], dom_id: \(append_locals__hx\d+\)\["domId"\], title: \(append_locals__hx\d+\)\["title"\]\}\)/,
+  /turbo_stream\.replace\("todos", partial: "todos\/todo", locals: \{completed: \(replace_locals__hx\d+\)\["completed"\], dom_id: \(replace_locals__hx\d+\)\["domId"\], title: \(replace_locals__hx\d+\)\["title"\]\}\)/,
+  /turbo_stream\.update\("todos", partial: "todos\/todo", locals: \{dom_id: "todo_2", title: "Inline locals still work", completed: false\}\)/,
+  /turbo_stream\.prepend\("todos", partial: "todos\/todo", locals: dynamic_locals__hx\d+\)/,
   /turbo_stream\.remove\("todos"\)/,
-  /Turbo::StreamsChannel\.broadcast_append_to\("todos", target: "todos", partial: "todos\/todo", locals: \{dom_id: "todo_1", title: "Ship typed Turbo Streams", completed: false\}\)/,
+  /Turbo::StreamsChannel\.broadcast_append_to\("todos", target: "todos", partial: "todos\/todo", locals: \{completed: \(append_locals__hx\d+\)\["completed"\], dom_id: \(append_locals__hx\d+\)\["domId"\], title: \(append_locals__hx\d+\)\["title"\]\}\)/,
 ]) {
   if (!expected.test(mainRuby)) {
     fail(`Turbo Streams output missing expected line: ${expected}`);

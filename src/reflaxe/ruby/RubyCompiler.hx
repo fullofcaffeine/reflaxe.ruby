@@ -13,6 +13,7 @@ import haxe.macro.Type.FieldAccess;
 import haxe.macro.Type.ModuleType;
 import haxe.macro.Type.TypedExpr;
 import haxe.macro.Type.TVar;
+import haxe.macro.TypeTools;
 import reflaxe.GenericCompiler;
 import reflaxe.data.ClassFuncData;
 import reflaxe.data.ClassVarData;
@@ -2005,7 +2006,34 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TObjectDecl(fields):
 				"{" + [for (field in fields) RubyNaming.toLocalName(field.name) + ": " + printInlineExpr(field.expr)].join(", ") + "}";
 			case _:
+				printRailsLocalsHashFromTypedValue(expr);
+		}
+	}
+
+	static function printRailsLocalsHashFromTypedValue(expr:TypedExpr):Null<String> {
+		if (!isStableRailsLocalsProjectionSource(expr)) {
+			return null;
+		}
+		var fields = switch (TypeTools.follow(expr.t)) {
+			case TAnonymous(anonRef):
+				anonRef.get().fields;
+			case _:
 				null;
+		}
+		if (fields == null || fields.length == 0) {
+			return null;
+		}
+		var receiver = printInlineExpr(expr);
+		return "{" + [
+			for (field in fields)
+				RubyNaming.toLocalName(field.name) + ": (" + receiver + ")[" + quoteRubyStringForCode(field.name) + "]"
+		].join(", ") + "}";
+	}
+
+	static function isStableRailsLocalsProjectionSource(expr:TypedExpr):Bool {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TLocal(_): true;
+			case _: false;
 		}
 	}
 

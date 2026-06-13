@@ -17,31 +17,44 @@ class TodoStreams {
 
 class Main {
 	static function main():Void {
-		// Demonstrates: Rails view/controller-context stream rendering. The output
-		// is `turbo_stream.append(...)`, not a RailsHx runtime helper.
-		TurboStreams.append(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), {
+		var appendLocals:TodoRowLocals = {
 			domId: "todo_1",
 			title: "Ship typed Turbo Streams",
 			completed: false
-		});
-
-		// Demonstrates: same typed partial/locals contract for another Rails
-		// stream action.
-		TurboStreams.replace(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), {
+		};
+		var replaceLocals:TodoRowLocals = {
 			domId: "todo_1",
 			title: "Ship typed Turbo Streams, but polished",
 			completed: true
+		};
+		var dynamicLocals:Dynamic = appendLocals;
+
+		// Demonstrates: Rails view/controller-context stream rendering. The output
+		// is `turbo_stream.append(...)`, not a RailsHx runtime helper. Prebuilt
+		// typed locals values are projected into snake_case Rails locals hashes.
+		TurboStreams.append(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
+
+		// Demonstrates: same typed partial/locals contract for another Rails
+		// stream action.
+		TurboStreams.replace(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), replaceLocals);
+
+		// Demonstrates: inline object literals still lower directly to Rails
+		// snake_case locals without needing an intermediate value.
+		TurboStreams.update(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), {
+			domId: "todo_2",
+			title: "Inline locals still work",
+			completed: false
 		});
+
+		// Demonstrates: dynamic locals stay explicit pass-through values. This is
+		// the escape hatch for Ruby/Rails-owned runtime hashes.
+		TurboStreams.prepend(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), dynamicLocals);
 
 		// Demonstrates: remove only needs the typed DOM target.
 		TurboStreams.remove(TodoStreams.listTarget);
 
 		// Demonstrates: server-side broadcast lowering to the Rails Turbo channel
 		// helper while preserving the same typed target/template/locals contract.
-		TurboStreams.broadcastAppendTo(TodoStreams.listStream, TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), {
-			domId: "todo_1",
-			title: "Ship typed Turbo Streams",
-			completed: false
-		});
+		TurboStreams.broadcastAppendTo(TodoStreams.listStream, TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
 	}
 }

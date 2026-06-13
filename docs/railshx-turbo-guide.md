@@ -114,39 +114,36 @@ class TodoStreams {
 	public static inline var listStream:StreamName<TodoRowLocals> = "todos";
 }
 
-TurboStreams.append(TodoStreams.listTarget,
-	(Template.of(TodoRowView) : Template<TodoRowLocals>), {
-		domId: "todo_1",
-		title: "Ship typed streams",
-		completed: false
-	});
+var locals:TodoRowLocals = {
+	domId: "todo_1",
+	title: "Ship typed streams",
+	completed: false
+};
+
+TurboStreams.append(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 
 TurboStreams.broadcastAppendTo(TodoStreams.listStream, TodoStreams.listTarget,
-	(Template.of(TodoRowView) : Template<TodoRowLocals>), {
-		domId: "todo_1",
-		title: "Ship typed streams",
-		completed: false
-	});
+	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 ```
 
 Generated Ruby stays Rails-shaped:
 
 ```ruby
 turbo_stream.append("todos", partial: "todos/todo",
-  locals: {dom_id: "todo_1", title: "Ship typed streams", completed: false})
+  locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
 
 Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos",
   partial: "todos/todo",
-  locals: {dom_id: "todo_1", title: "Ship typed streams", completed: false})
+  locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
 ```
 
 Use inline typed target/stream constants for app-level names. Use
 `Template.of(ViewClass) : Template<TLocals>` for RailsHx-owned HHX partials and
 `Template.existing("path") : Template<TLocals>` for Rails-owned ERB partials.
-Pass locals as object literals when possible so the compiler can lower Haxe
-`camelCase` fields to Rails `snake_case` locals at compile time. A prebuilt
-locals value is accepted by the Haxe type system, but Rails will receive that
-runtime value as-is.
+Pass locals as object literals or typed anonymous-object/typedef values. In both
+cases the compiler emits a Rails `locals: {snake_case: ...}` hash. Values typed
+as `Dynamic` are treated as explicit Ruby/Rails-owned runtime hashes and are
+passed through unchanged.
 
 ## Rails Workflow
 
