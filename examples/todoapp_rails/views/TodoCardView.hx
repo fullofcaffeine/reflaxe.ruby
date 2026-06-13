@@ -9,6 +9,15 @@ typedef TodoCardLocals = {
 	var body:Slot;
 }
 
+// Reusable typed component partial.
+//
+// Demonstrates: Rails-native component composition using a typed partial local
+// (`body:Slot`) rather than copying Phoenix slot syntax.
+// Type safety: callers must pass `TodoCardLocals`; `body` is a typed captured
+// slot value and `locals.eyebrow/title` are checked as `String`.
+// IntelliSense: editors should complete `TodoCardLocals` fields at call sites
+// and `locals.*` fields inside the HHX body.
+// Ruby/Rails output: `_card.html.erb` with normal Rails captured-buffer locals.
 @:railsTemplate("controllers/todos/_card")
 @:railsTemplateAst("render")
 class TodoCardView {

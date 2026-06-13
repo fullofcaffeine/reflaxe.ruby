@@ -11,6 +11,15 @@ import views.TodoIndexView;
 import views.TodoListView;
 import views.TodoSummaryView;
 
+// RailsHx todoapp compile sentinel.
+//
+// Demonstrates: the end-to-end app graph compiles: models, migrations,
+// controller, layout, and all HHX views.
+// Type safety: each imported class must resolve through Haxe, so renaming a view
+// or migration breaks the compile before Rails receives stale generated files.
+// IntelliSense: editors should complete the full app surface from Haxe packages.
+// Ruby/Rails output: generated Rails app artifacts under the configured output
+// root plus ActionView templates and migrations.
 class Main {
 	static function main() {
 		var todo:Todo = null;

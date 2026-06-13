@@ -1,3 +1,14 @@
+// End-to-end Ruby interop smoke.
+//
+// Demonstrates: combining native constants, `require`, keyword args, block args,
+// symbols, and Kernel calls in one realistic Ruby boundary.
+// Type safety: the Ruby boundary is modeled as extern classes, so Haxe checks
+// method names, parameter shapes, callback signatures, and return types before
+// Ruby is generated.
+// IntelliSense: editors should complete the extern APIs exactly like normal
+// Haxe classes while preserving Ruby names through metadata.
+// Ruby output: direct `JSON`, `File`, and `RubyInterop` calls with Ruby-native
+// kwargs/block syntax.
 import ruby.Kernel;
 import ruby.Symbol;
 

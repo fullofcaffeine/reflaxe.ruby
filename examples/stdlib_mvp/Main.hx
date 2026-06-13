@@ -1,3 +1,14 @@
+// Standard-library MVP coverage.
+//
+// Demonstrates: the currently supported Haxe std surface for `Std`,
+// `StringTools`, `Math`, `Sys`, reflection-ish `Type`, arrays, and maps.
+// Type safety: calls use normal Haxe std signatures, so wrong argument types
+// fail before Ruby is emitted; runtime helpers only exist where Ruby semantics
+// need adaptation to Haxe behavior.
+// IntelliSense: editors should complete the same Haxe std APIs users would
+// expect on other targets, with inferred result types for chained expressions.
+// Ruby output: direct Ruby methods where semantics match and `HXRuby` runtime
+// helpers where Haxe compatibility requires extra behavior.
 class Main {
 	static function main() {
 		Sys.println(Std.string(null));

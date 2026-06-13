@@ -2,6 +2,17 @@ import models.AuditLog;
 import models.Todo;
 import models.User;
 
+// Typed ActiveRecord query smoke.
+//
+// Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
+// `order`, `limit`, `find`, `findBy`) authored as typed Haxe calls.
+// Type safety: criteria objects are checked against model fields, `Todo.f.*`
+// exposes typed field refs for ordering, and `Todo.a.*` exposes typed
+// association refs for `includes`/`joins`.
+// IntelliSense: editors should complete `Todo.f.title`, `Todo.a.user`,
+// relation methods, and model-owned scopes such as `Todo.incomplete()`.
+// Ruby output: ordinary ActiveRecord calls such as `where(...)`,
+// `includes(:user)`, `order(title: :asc)`, and `limit(10)`.
 class Main {
 	static function main() {
 		var found = Todo.includes(Todo.associations.user).where({title: "ship", status: "open"}).where({completed: false}).joins(Todo.associations.user).order(Todo.f.title.asc()).limit(10);

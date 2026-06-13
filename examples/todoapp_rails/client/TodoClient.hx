@@ -5,6 +5,17 @@ import js.html.Element;
 import js.html.Event;
 import rails.turbo.Turbo;
 
+// Haxe-authored Rails/Turbo client behavior.
+//
+// Demonstrates: RailsHx can use Haxe for browser JavaScript while staying
+// Turbo-idiomatic through typed `rails.turbo.Turbo` event helpers.
+// Type safety: DOM values are typed as `Element`/`Event` where possible;
+// storage keys and behavior hooks are centralized constants instead of repeated
+// magic strings.
+// IntelliSense: editors should complete `Turbo.onLoad`, `Turbo.onSubmitStart`,
+// `Browser.document`, `Element` methods, and the helper functions below.
+// JS/Rails output: compiled JavaScript pinned through Rails importmap and run
+// alongside Turbo.
 class TodoClient {
 	static inline var submitStorageKey = "railshx.todo.just_added";
 	static inline var submitScrollStorageKey = "railshx.todo.submit_scroll_y";

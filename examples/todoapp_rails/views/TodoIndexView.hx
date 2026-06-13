@@ -7,6 +7,17 @@ import views.TodoComposerView.TodoComposerLocals;
 import views.TodoListView.TodoListLocals;
 import views.TodoDashboardView;
 
+// Todo index page authored as typed HHX.
+//
+// Demonstrates: a full Rails page composed from typed partials, typed locals,
+// content-for layout slots, DOM hooks for Haxe-authored JS, and static markup.
+// Type safety: `TodoIndexLocals` drives `locals.*` completion; each
+// `Template.of(...) : Template<...Locals>` cast validates the partial class and
+// the locals object passed to it.
+// IntelliSense: editors should complete `locals.todoCount`,
+// `locals.typedColumnCount`, `Template.of`, and partial-local field names.
+// Ruby/Rails output: `index.html.erb` with ordinary Rails `content_for` and
+// `render partial:` calls.
 @:railsTemplate("controllers/todos/index")
 @:railsTemplateAst("render")
 class TodoIndexView {

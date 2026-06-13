@@ -16,6 +16,17 @@ typedef TodoIndexLocals = {
 	var sampleUser:Null<User>;
 }
 
+// RailsHx todo controller.
+//
+// Demonstrates: typed ActiveRecord queries, typed route helpers, typed strong
+// params, and typed template rendering in one Rails controller.
+// Type safety: `Todo.a.user` and `Todo.f.title` are generated association/field
+// refs; `Template.of(TodoIndexView) : Template<TodoIndexLocals>` checks render
+// locals; `ParamsMacro.requirePermit` derives permitted fields from model refs.
+// IntelliSense: editors should complete model refs, relation chains,
+// `Routes.todosPath`, locals fields, and controller helper methods.
+// Ruby/Rails output: a normal Rails controller using ActiveRecord, strong
+// params, route helpers, and `render`/`redirect_to`.
 @:railsController
 class TodosController extends rails.action_controller.Base {
 	public function index() {

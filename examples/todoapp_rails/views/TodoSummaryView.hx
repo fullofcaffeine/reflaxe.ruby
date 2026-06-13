@@ -7,6 +7,15 @@ typedef TodoSummaryLocals = {
 	var todos:Array<Todo>;
 }
 
+// Typed summary partial.
+//
+// Demonstrates: a partial can accept a directly typed argument (`Array<Todo>`)
+// instead of only a locals object when the template shape is simple.
+// Type safety: `todos` is an `Array<Todo>`, so loop bodies get typed `Todo`
+// fields and bad property names fail in Haxe.
+// IntelliSense: editors should complete array members (`length`) and `Todo`
+// fields (`title`, `notes`) inside the HHX body.
+// Ruby/Rails output: a normal `_summary.html.erb` partial generated from HHX.
 @:railsTemplate("controllers/todos/_summary")
 @:railsTemplateAst("render")
 class TodoSummaryView {

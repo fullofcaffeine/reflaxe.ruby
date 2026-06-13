@@ -2,6 +2,19 @@ package models;
 
 import models.User;
 
+// Full typed ActiveRecord model fixture.
+//
+// Demonstrates: table naming, timestamps, typed columns, defaults, enum
+// metadata, nullable fields, indexes, uniqueness, associations, scopes, and
+// lifecycle callbacks.
+// Type safety: `Base<Todo>` makes static query APIs return `Relation<Todo>`;
+// `@:railsColumn` generates field refs such as `Todo.f.title`; `@:belongsTo`
+// generates association refs such as `Todo.a.user`; callbacks reference typed
+// instance methods.
+// IntelliSense: editors should complete model fields, generated refs/scopes,
+// relation methods, and association helpers directly from this class.
+// Ruby output: a normal Rails model with `self.table_name`, association macros,
+// validation/schema metadata, enum declarations, and callbacks.
 @:railsModel("todos")
 @:railsTimestamps
 class Todo extends rails.active_record.Base<Todo> {

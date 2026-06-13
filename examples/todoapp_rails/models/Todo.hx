@@ -2,6 +2,17 @@ package models;
 
 import models.User;
 
+// Todo ActiveRecord model source of truth.
+//
+// Demonstrates: typed Rails columns, belongs-to association metadata,
+// validation metadata, timestamps, and a model-owned scope.
+// Type safety: `@:railsColumn` drives generated field refs (`Todo.f.title`,
+// `Todo.f.userId`), `@:belongsTo` drives association refs (`Todo.a.user`), and
+// `Base<Todo>` makes query chains return typed `Relation<Todo>`.
+// IntelliSense: editors should complete fields, `Todo.f.*`, `Todo.a.user`,
+// `Todo.where`, `Todo.incomplete`, and relation methods.
+// Ruby/Rails output: a normal `ApplicationRecord` model with Rails macros and
+// compiler-emitted schema metadata.
 @:railsModel("todos")
 @:railsTimestamps
 class Todo extends rails.active_record.Base<Todo> {

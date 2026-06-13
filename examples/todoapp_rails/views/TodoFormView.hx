@@ -8,6 +8,16 @@ typedef TodoFormLocals = {
 	var sampleUserId:Int;
 }
 
+// Typed Rails form partial.
+//
+// Demonstrates: Rails form helpers authored as HHX tags and backed by typed
+// model field refs.
+// Type safety: `Todo.railsParamKey` supplies the form scope; `Todo.f.userId`,
+// `Todo.f.title`, and `Todo.f.notes` are generated field refs, so renamed/missing
+// model fields fail in Haxe instead of becoming broken Rails params.
+// IntelliSense: editors should complete `Todo.f.*`, `Routes.todosPath`, and the
+// `sampleUserId` local.
+// Ruby/Rails output: normal Rails form builder ERB with strong Rails param names.
 @:railsTemplate("controllers/todos/_typed_form")
 @:railsTemplateAst("render")
 class TodoFormView {

@@ -1,3 +1,14 @@
+// Ruby call-shape interop smoke.
+//
+// Demonstrates: Ruby keyword arguments, block arguments, Ruby symbols, native
+// method names, and direct Kernel extern calls from typed Haxe.
+// Type safety: object-literal kwargs are checked by Haxe structural typing,
+// block functions have typed parameters, and `Symbol.of(...)` avoids raw symbol
+// strings at call sites.
+// IntelliSense: editors should complete typed extern methods, required kwargs,
+// block function signatures, and `Kernel` helpers.
+// Ruby output: idiomatic Ruby calls such as `foo(name: ..., count: ...)`,
+// block syntax, and `:symbol` literals.
 import ruby.Kernel;
 import ruby.Symbol;
 

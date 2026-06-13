@@ -8,6 +8,17 @@ import routes.Routes;
 import views.TodoCardView.TodoCardLocals;
 import views.TodoSummaryView.TodoSummaryLocals;
 
+// Typed component/slot dashboard.
+//
+// Demonstrates: RailsHx component composition with captured child content, route
+// helper links, typed locals, and nested typed partials.
+// Type safety: `Template.of(TodoCardView) : Template<TodoCardLocals>` validates
+// component locals, `Slot.content()` supplies the captured child slot, and
+// `TodoSummaryLocals` checks the nested summary render.
+// IntelliSense: editors should complete `Routes`, `Template.of`, `Slot`, and
+// `locals.todos` as `Array<Todo>`.
+// Ruby/Rails output: Rails-native `link_to` and `render partial:` calls, not a
+// custom component runtime.
 @:railsTemplate("controllers/todos/_dashboard")
 @:railsTemplateAst("render")
 class TodoDashboardView {

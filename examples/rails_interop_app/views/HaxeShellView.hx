@@ -16,6 +16,19 @@ typedef HaxeShellLocals = {
 	var typedSummary:String;
 }
 
+// Gradual-adoption HHX shell.
+//
+// Demonstrates: a Haxe-owned template that composes existing ERB and generated
+// HHX partials in the same Rails page.
+// Type safety: `HaxeShellLocals` drives completion for `locals.*`; the
+// `Template.existing("legacy/badge") : Template<LegacyBadgeLocals>` cast checks
+// the locals object passed to an external Rails partial; `Template.of` checks
+// the generated HHX partial class.
+// IntelliSense: editors should complete `locals.title`, `locals.formattedPrice`,
+// `Template.existing`, `Template.of`, and the required locals fields for each
+// partial call.
+// Ruby/Rails output: a normal Rails `.html.erb` template with `render partial:`
+// calls; the external ERB file remains Rails-owned.
 @:railsTemplate("mixed/haxe_shell")
 @:railsTemplateAst("render")
 class HaxeShellView {

@@ -8,6 +8,16 @@ import views.ApplicationLayoutView;
 import views.HaxeShellView;
 import views.HaxeShellView.HaxeShellLocals;
 
+// Gradual-adoption controller.
+//
+// Demonstrates: a RailsHx controller rendering an HHX view while consuming an
+// existing Ruby service and an existing ERB partial through typed contracts.
+// Type safety: `Template.of(HaxeShellView) : Template<HaxeShellLocals>` ties the
+// locals object to the view typedef; missing/wrong locals fail in Haxe.
+// IntelliSense: editors should complete `LegacyPriceFormatter`, `TypedStats`,
+// `ViewMacro.renderTemplateWithLayout`, and the required locals fields.
+// Ruby output: a normal Rails controller action that calls Ruby constants and
+// renders a Rails template/layout.
 @:railsController
 class MixedController extends rails.action_controller.Base {
 	public function haxeShell() {
