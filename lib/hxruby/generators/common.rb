@@ -64,6 +64,20 @@ module HXRuby
         package_name.to_s.tr(".", "/")
       end
 
+      def safe_relative_path(value, label:)
+        normalized = value.to_s.strip.tr("\\", "/").sub(%r{/+\z}, "")
+        if normalized.empty? || normalized.start_with?("/") || normalized.include?("//") || normalized.include?("..")
+          raise Error, "#{label} must be a safe relative path"
+        end
+
+        segments = normalized.split("/")
+        if segments.any? { |segment| segment.empty? || segment == "." || segment == ".." }
+          raise Error, "#{label} must not contain empty, '.', or '..' segments"
+        end
+
+        normalized
+      end
+
       def split_csv(value)
         value.to_s.split(",").map(&:strip).reject(&:empty?)
       end

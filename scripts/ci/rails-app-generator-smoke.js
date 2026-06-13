@@ -21,12 +21,15 @@ try {
     "app_haxe",
     "--main",
     "Boot",
+    "--rails-output-root",
+    "engines/blog/app/haxe_gen",
   ]);
 
   expectFile("build.hxml", [
     "-lib reflaxe.ruby",
     "-D ruby_output=.",
     "-D reflaxe_ruby_rails",
+    "-D reflaxe_ruby_rails_output_root=engines/blog/app/haxe_gen",
     "-cp app_haxe",
     "-main Boot",
   ]);

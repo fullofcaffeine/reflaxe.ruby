@@ -13,6 +13,7 @@ module HXRuby
         name: "RailsHxApp",
         source: "src_haxe",
         main: "Main",
+        rails_output_root: "app/haxe_gen",
         force: false,
       }.freeze
 
@@ -27,6 +28,7 @@ module HXRuby
           parser.on("--name NAME") { |value| options[:name] = value }
           parser.on("--source PATH") { |value| options[:source] = value }
           parser.on("--main CLASS") { |value| options[:main] = value }
+          parser.on("--rails-output-root PATH") { |value| options[:rails_output_root] = value }
           parser.on("--force") { options[:force] = true }
         end.parse!(argv)
         options
@@ -37,6 +39,7 @@ module HXRuby
         @app_name = options.fetch(:name)
         @source_dir = options.fetch(:source)
         @main_class = options.fetch(:main)
+        @rails_output_root = Common.safe_relative_path(options.fetch(:rails_output_root), label: "--rails-output-root")
         @force = options.fetch(:force)
       end
 
@@ -72,12 +75,13 @@ module HXRuby
           "-D ruby_output=.",
           "-D reflaxe_runtime",
           "-D reflaxe_ruby_rails",
+          @rails_output_root == "app/haxe_gen" ? nil : "-D reflaxe_ruby_rails_output_root=#{@rails_output_root}",
           "-cp #{@source_dir}",
           "--macro reflaxe.ruby.CompilerBootstrap.Start()",
           "--macro reflaxe.ruby.CompilerInit.Start()",
           "-main #{@main_class}",
           "",
-        ].join("\n")
+        ].compact.join("\n")
       end
 
       def render_client_build

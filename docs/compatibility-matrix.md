@@ -35,7 +35,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Feature | Define/tool | Status |
 | --- | --- | --- |
 | Rails output root | `-D reflaxe_ruby_rails` | Implemented |
-| Custom Rails output root | `-D reflaxe_ruby_rails_output_root=<path>` | Implemented |
+| Custom Rails output root | `-D reflaxe_ruby_rails_output_root=<path>` | Implemented with safe relative path validation |
 | ActiveRecord model surface | `rails.active_record.Base<T>` | Implemented |
 | ActiveRecord schema registry | `Todo.__hx_rails_schema` | Implemented |
 | Typed ActiveRecord field refs | `Todo.fields.title` / `Todo.f.title : Field<Todo, String>`, `Todo.railsParamKey : ModelKey<Todo>` | Initial form/params slice |
@@ -75,6 +75,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Rails app install generator | `bin/rails generate hxruby:install` / `rake hxruby:gen:app` | Implemented |
 | Route helper generator | `bin/rails generate hxruby:routes` / `npm run rails:generate-routes` | Hardened for named Rails routes, nested/resource params, namespaces, member/collection routes, optional segments, globs, and mount-like rows |
 | Scaffold generator | `bin/rails generate hxruby:scaffold` / `npm run rails:scaffold` | Implemented |
+| Rails engine/plugin affordances | `--rails-output-root`, engine-local `reflaxe_ruby_rails_output_root`, generated autoload initializer | Initial engine-local output and host-consumption slice |
 
 The rows above describe the current Rails MVP. The deeper typed Rails compiler layer is tracked as RailsHx; see `docs/railshx-roadmap.md`, [RailsHx Typed ActiveRecord Query Guide](railshx-query-guide.md), and the `haxe.ruby-wpi` bead epic.
 

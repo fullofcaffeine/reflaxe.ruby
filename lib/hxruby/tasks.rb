@@ -48,6 +48,7 @@ module HXRuby
             args += ["--name", ENV["NAME"]] if ENV["NAME"]
             args += ["--source", ENV["SOURCE"]] if ENV["SOURCE"]
             args += ["--main", ENV["MAIN"]] if ENV["MAIN"]
+            args += ["--rails-output-root", ENV["RAILS_OUTPUT_ROOT"]] if ENV["RAILS_OUTPUT_ROOT"]
             args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
             args << "--force" if truthy?(ENV["FORCE"])
             HXRuby::Generators::App.run(args)

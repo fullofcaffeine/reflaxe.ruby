@@ -12,6 +12,7 @@ if defined?(Rails::Generators::Base)
       argument :app_name, type: :string, required: false
       class_option :source, type: :string, default: "src_haxe", desc: "Haxe source directory"
       class_option :main, type: :string, default: "Main", desc: "Haxe server main class"
+      class_option :rails_output_root, type: :string, default: "app/haxe_gen", desc: "Generated Rails Ruby output root, relative to the Rails app or engine"
       class_option :force, type: :boolean, default: false, desc: "Overwrite existing generated files"
 
       def install_railshx
@@ -20,6 +21,7 @@ if defined?(Rails::Generators::Base)
           "--name", hxruby_app_name,
           "--source", hxruby_option(:source, "src_haxe"),
           "--main", hxruby_option(:main, "Main"),
+          "--rails-output-root", hxruby_option(:rails_output_root, "app/haxe_gen"),
         ]
         args << "--force" if hxruby_flag?(:force)
         HXRuby::Generators::App.run(args)

@@ -237,7 +237,11 @@ Graduation criteria:
 
 Typed boundary:
 
-- Engine-local output roots and namespace-aware route/model/controller helpers.
+- Initial implemented slice: safe engine/plugin output roots through
+  `reflaxe_ruby_rails_output_root`, generator `--rails-output-root`, generated
+  autoload/eager-load initializer, and host-app extern consumption guidance.
+  See [RailsHx Engines And Plugins Guide](railshx-engines-plugins-guide.md).
+- Namespace-aware route/model/controller helper contracts for future slices.
 - Generator options for mountable engine layout.
 - Typed route sync that preserves engine namespace and mount paths.
 
@@ -245,10 +249,14 @@ Lowering strategy:
 
 - Extend output-root and route generator configuration before adding new DSLs.
 - Prefer Rails generator adapters and Ruby-native install tasks.
+- Keep generated artifacts as normal Rails/Ruby constants under the configured
+  output root.
 
 Integration strategy:
 
-- Generated dummy app or engine fixture.
+- Focused engine/plugin smoke checks engine-local output, autoload config,
+  generator build config, Ruby execution, and unsafe path failures.
+- Generated dummy app or engine fixture for broader follow-up work.
 - Route helper sync smoke for mounted routes.
 - Optional Rails runtime lane with engine dummy app when dependencies exist.
 
