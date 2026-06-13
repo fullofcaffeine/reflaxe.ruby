@@ -43,6 +43,11 @@ var openOrDone = Todo
 	.or(Todo.where({status: "done"}))
 	.order(Todo.f.title.asc());
 
+var mergedOpen = Todo
+	.where({status: "open"})
+	.merge(Todo.where({completed: false}))
+	.limit(7);
+
 var staticReordered = Todo.reorder(Todo.f.title.desc()).limit(4);
 var multiOrdered = Todo.order(Order.many([Todo.f.title.asc(), Todo.f.id.desc()])).limit(6);
 var relationMultiReordered = Todo
@@ -83,6 +88,7 @@ Generated Ruby:
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
+Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.reorder(title: :desc).limit(4)
 Models::Todo.order(title: :asc, id: :desc).limit(6)
 Models::Todo.where(title: "assigned").reorder(id: :desc, title: :asc)
@@ -114,6 +120,8 @@ Type-safety features used here:
 - `rewhere({...})` uses the same typed criteria object while lowering to Rails `rewhere`.
 - `relation.or(otherRelation)` requires another `Relation<Todo, ...>` operand
   and lowers to Rails-native `.or(...)`.
+- `relation.merge(otherRelation)` uses the same typed same-model operand rule
+  and lowers to Rails-native `.merge(...)`.
 - `Todo.associations.user` / `Todo.a.user` must belong to `Todo`.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
 - `Order.many([Todo.f.title.asc(), Todo.f.id.desc()])` produces one typed
@@ -131,7 +139,7 @@ Type-safety features used here:
 - `Todo.sum(Todo.f.userId)` returns `Int`, `Todo.average(Todo.f.userId)`
   returns `Null<Float>`, and non-`Int` fields fail during Haxe compilation.
 - The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
-  `or`, `order`, `limit`, and `offset`.
+  `or`, `merge`, `order`, `limit`, and `offset`.
 
 Invalid projection/grouping examples fail during Haxe compilation:
 
@@ -328,6 +336,7 @@ Todo.where({missing: "nope"});
 Todo.where({completed: "nope"});
 Todo.where({title: "ship"}).where({missing: "nope"});
 Todo.where({status: "open"}).or(User.where({name: "owner"}));
+Todo.where({status: "open"}).merge(User.where({name: "owner"}));
 Todo.includes(User.a.todos);
 Todo.find("nope");
 Todo.findBy({missing: "nope"});

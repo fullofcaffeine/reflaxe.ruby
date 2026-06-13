@@ -70,6 +70,8 @@ const invalidOffsetSourceDir = join(root, "test", ".generated", "active_record_m
 const invalidOffsetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_offset_out");
 const invalidOrSourceDir = join(root, "test", ".generated", "active_record_model_invalid_or_src");
 const invalidOrOutputDir = join(root, "test", ".generated", "active_record_model_invalid_or_out");
+const invalidMergeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_merge_src");
+const invalidMergeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_merge_out");
 const invalidReorderSourceDir = join(root, "test", ".generated", "active_record_model_invalid_reorder_src");
 const invalidReorderOutputDir = join(root, "test", ".generated", "active_record_model_invalid_reorder_out");
 const invalidSelectFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_select_field_src");
@@ -174,6 +176,8 @@ rmSync(invalidOffsetSourceDir, { force: true, recursive: true });
 rmSync(invalidOffsetOutputDir, { force: true, recursive: true });
 rmSync(invalidOrSourceDir, { force: true, recursive: true });
 rmSync(invalidOrOutputDir, { force: true, recursive: true });
+rmSync(invalidMergeSourceDir, { force: true, recursive: true });
+rmSync(invalidMergeOutputDir, { force: true, recursive: true });
 rmSync(invalidReorderSourceDir, { force: true, recursive: true });
 rmSync(invalidReorderOutputDir, { force: true, recursive: true });
 rmSync(invalidSelectFieldSourceDir, { force: true, recursive: true });
@@ -308,6 +312,7 @@ for (const expected of [
   'Models::Todo.distinct().where(status: "open").order(title: :asc)',
   '.distinct().limit(2)',
   'Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)',
+  'Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)',
   'Models::Todo.select(:title).where(status: "open")',
   'assigned__hx',
   '.select(:id).limit(2)',
@@ -370,6 +375,7 @@ for (const expected of [
   "var allOpen = Todo.all()",
   "Todo.distinct()",
   ".or(Todo.where({status",
+  ".merge(Todo.where({completed",
   "select(Todo.f.title)",
   "reorder(Todo.f.id.desc())",
   "findBy({externalId",
@@ -399,6 +405,7 @@ for (const expected of [
   "var allOpen = Todo",
   ".distinct()",
   ".or(Todo.where({status",
+  ".merge(Todo.where({completed",
   "Todo.select(Todo.f.title)",
   "Todo.reorder(Todo.f.title.desc())",
   "Order.many([Todo.f.title.asc(), Todo.f.id.desc()])",
@@ -452,6 +459,7 @@ expectInvalidFindByFieldFailure();
 expectInvalidExistsFieldFailure();
 expectInvalidOffsetValueTypeFailure();
 expectInvalidOrOwnerFailure();
+expectInvalidMergeOwnerFailure();
 expectInvalidReorderOwnerFailure();
 expectInvalidSelectFieldOwnerFailure();
 expectInvalidPluckFieldOwnerFailure();
@@ -575,6 +583,28 @@ function expectInvalidOrOwnerFailure() {
     invalidOrSourceDir,
     invalidOrOutputDir,
     "Invalid ActiveRecord or owner compiled successfully.",
+    "Relation<models.User"
+  );
+}
+
+function expectInvalidMergeOwnerFailure() {
+  mkdirSync(invalidMergeSourceDir, { recursive: true });
+  writeFileSync(join(invalidMergeSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.where({status: \"open\"}).merge(User.where({name: \"owner\"}));",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidMergeSourceDir,
+    invalidMergeOutputDir,
+    "Invalid ActiveRecord merge owner compiled successfully.",
     "Relation<models.User"
   );
 }

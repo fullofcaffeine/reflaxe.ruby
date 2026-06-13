@@ -105,6 +105,10 @@ var openOrDone = Todo.where({status: "open"})
 	.or(Todo.where({status: "done"}))
 	.order(Todo.f.title.asc());
 
+var mergedOpen = Todo.where({status: "open"})
+	.merge(Todo.where({completed: false}))
+	.limit(7);
+
 var selectedOpen = Todo.select(Todo.f.title)
 	.where({status: "open"});
 
@@ -126,6 +130,7 @@ Generated Ruby:
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
+Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.select(:title).where(status: "open")
 assigned = Models::Todo.where(title: "assigned").rewhere(status: "done").distinct().order(title: :asc).reorder(id: :desc).offset(20).limit(5)
 assigned.find_by(external_id: "assigned-1")
@@ -180,6 +185,20 @@ Generated Ruby:
 
 ```ruby
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done"))
+```
+
+`merge(...)` follows the same conservative v1 rule: merge another typed relation
+for the same model and criteria shape, and let Rails do the actual scope merge:
+
+```haxe
+var mergedOpen = Todo.where({status: "open"})
+	.merge(Todo.where({completed: false}));
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false))
 ```
 
 ## Field Refs And Order
@@ -465,7 +484,7 @@ The current query slice intentionally covers the common Rails relation path:
 
 - Typed criteria for flat model columns.
 - Typed association refs for `includes` and `joins`.
-- Typed relation composition through `or`.
+- Typed relation composition through `or` and `merge`.
 - Typed field refs for `order`.
 - `limit`, `offset`, `first`, `find`, `findBy`, `create`, and `toArray`.
 - Relation criteria checks that persist through assigned relation variables.
