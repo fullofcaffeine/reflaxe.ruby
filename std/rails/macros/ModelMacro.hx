@@ -22,6 +22,7 @@ class ModelMacro {
 		addPlainStub(fields, "includes", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "offset", macro : Int, relationComplexType(selfType, criteriaType, pos), "count", pos);
+		addNoArgStub(fields, "all", relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
 		addStub(fields, "findBy", criteriaType, nullableSelf, pos);
 		addOptionalStub(fields, "exists", criteriaType, macro : Bool, "criteria", "exists?", pos);

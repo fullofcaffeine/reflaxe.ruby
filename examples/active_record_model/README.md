@@ -18,9 +18,16 @@ owners, invalid association metadata, invalid callbacks, and invalid `find` /
 
 ## Main Query Shapes
 
-`Main.hx` proves relation composition:
+`Main.hx` proves relation composition, including `all()` as a typed model
+entrypoint when you want to start from a full model relation:
 
 ```haxe
+var allOpen = Todo
+	.all()
+	.where({status: "open"})
+	.order(Todo.f.title.asc())
+	.limit(3);
+
 var found = Todo
 	.includes(Todo.associations.user)
 	.where({title: "ship", status: "open"})
@@ -33,6 +40,7 @@ var found = Todo
 Generated Ruby:
 
 ```ruby
+Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo
   .includes(:user)
   .where(title: "ship", status: "open")

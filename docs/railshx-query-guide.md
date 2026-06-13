@@ -6,8 +6,8 @@ field value types, primary-key types, and relation return shapes.
 
 The rule of thumb is simple:
 
-- Keep query chains Rails-shaped: `where`, `includes`, `joins`, `order`, `limit`, `offset`,
-  `find`, `findBy`, `exists`, `count`, `first`, and `toArray`.
+- Keep query chains Rails-shaped: `all`, `where`, `includes`, `joins`, `order`,
+  `limit`, `offset`, `find`, `findBy`, `exists`, `count`, `first`, and `toArray`.
 - Put type information at the Haxe boundary: `@:railsColumn`, associations, field
   refs such as `Todo.f.title`, and association refs such as `Todo.a.user`.
 - Let the compiler lower Haxe names to Rails names: `externalId` becomes
@@ -84,6 +84,11 @@ Model query methods return `Relation<TModel, TCriteria>`. Relation methods keep
 the same criteria type, so checks continue after the first query call:
 
 ```haxe
+var allOpen = Todo.all()
+	.where({status: "open"})
+	.order(Todo.f.title.asc())
+	.limit(3);
+
 var relation = Todo
 	.where({title: "assigned"})
 	.order(Todo.f.title.asc())
@@ -96,6 +101,7 @@ var assigned:Null<Todo> = relation.findBy({externalId: "assigned-1"});
 Generated Ruby:
 
 ```ruby
+Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 assigned = Models::Todo.where(title: "assigned").order(title: :asc).offset(20).limit(5)
 assigned.find_by(external_id: "assigned-1")
 ```
