@@ -8,8 +8,8 @@ The rule of thumb is simple:
 
 - Keep query chains Rails-shaped: `all`, `distinct`, `select`, `where`, `rewhere`, `includes`,
   `joins`, `order`, `reorder`, `limit`, `offset`, `pluck`, `minimum`,
-  `maximum`, `find`, `findBy`, `exists`, `count`, `first`, `last`, and
-  `toArray`.
+  `maximum`, `sum`, `average`, `find`, `findBy`, `exists`, `count`, `first`,
+  `last`, and `toArray`.
 - Use macro facades for query results whose Haxe return type depends on more
   than one field: `Projection.pluck(...)` for named multi-field rows and
   `Group.count(...)` for typed grouped counts.
@@ -190,6 +190,8 @@ var statusCounts:haxe.ds.StringMap<Int> = Group.count(
 var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
 var latestTitle:Null<String> = Todo.where({status: "open"}).maximum(Todo.f.title);
+var totalUserIds:Int = Todo.sum(Todo.f.userId);
+var averageUserId:Null<Float> = Todo.where({status: "open"}).average(Todo.f.userId);
 ```
 
 Generated Ruby:
@@ -205,6 +207,8 @@ HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:statu
 HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
 Models::Todo.minimum(:id)
 Models::Todo.where(status: "open").maximum(:title)
+Models::Todo.sum(:user_id)
+Models::Todo.where(status: "open").average(:user_id)
 ```
 
 Prefer `Todo.f.title` over `"title"` for behavior-bearing query code. The string
@@ -247,6 +251,11 @@ Group.count(Todo, Todo.f.completed);
 `minimum(...)` and `maximum(...)` use the same field refs and return nullable
 field values because Rails may not find a row. For example, an integer field
 returns `Null<Int>` and a string field returns `Null<String>`.
+
+`sum(...)` and `average(...)` are v1 numeric aggregations for `Int` field refs.
+`sum(Todo.f.userId)` returns `Int`; `average(Todo.f.userId)` returns
+`Null<Float>` because Rails may not find a row. Non-`Int` fields, such as
+`Todo.f.title`, are rejected during Haxe compilation.
 
 ## Association Refs
 

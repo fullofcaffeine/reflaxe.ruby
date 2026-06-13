@@ -8,10 +8,10 @@ import rails.active_record.Projection;
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
 // `all`, `distinct`, `select`, `where`, `rewhere`, `order`, `reorder`, `limit`,
-// `offset`, `pluck`, `minimum`, `maximum`, `find`, `findBy`, `exists`, `count`,
-// `first`, and `last` authored as typed Haxe calls, plus named multi-field
-// projections through `Projection.pluck` and typed grouped counts through
-// `Group.count`.
+// `offset`, `pluck`, `minimum`, `maximum`, `sum`, `average`, `find`, `findBy`,
+// `exists`, `count`, `first`, and `last` authored as typed Haxe calls, plus
+// named multi-field projections through `Projection.pluck` and typed grouped
+// counts through `Group.count`.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -65,6 +65,10 @@ class Main {
 		var minId:Null<Int> = Todo.minimum(Todo.f.id);
 		var maxTitle:Null<String> = Todo.maximum(Todo.f.title);
 		var assignedMaxId:Null<Int> = assigned.maximum(Todo.f.id);
+		var totalUserIds:Int = Todo.sum(Todo.f.userId);
+		var averageUserId:Null<Float> = Todo.average(Todo.f.userId);
+		var assignedUserSum:Int = assigned.sum(Todo.f.userId);
+		var assignedAverageUserId:Null<Float> = assigned.average(Todo.f.userId);
 		Sys.println(found == null);
 		Sys.println(scoped == null);
 		Sys.println(users == null);
@@ -91,6 +95,10 @@ class Main {
 		Sys.println(minId == null);
 		Sys.println(maxTitle == null);
 		Sys.println(assignedMaxId == null);
+		Sys.println(totalUserIds >= 0);
+		Sys.println(averageUserId == null);
+		Sys.println(assignedUserSum >= 0);
+		Sys.println(assignedAverageUserId == null);
 		Sys.println(allOpen == null);
 		Sys.println(distinctOpen == null);
 		Sys.println(relationDistinct == null);

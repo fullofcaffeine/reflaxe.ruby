@@ -40,7 +40,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | ActiveRecord schema registry | `Todo.__hx_rails_schema` | Implemented |
 | Typed ActiveRecord field refs | `Todo.fields.title` / `Todo.f.title : Field<Todo, String>`, `Todo.railsParamKey : ModelKey<Todo>` | Initial form/params slice |
 | Typed ActiveRecord association refs | `Todo.associations.user` / `Todo.a.user : Association<Todo, User>` | Initial association query slice |
-| Typed ActiveRecord relation chain | `Todo.select(Todo.f.title).distinct().where({completed: false}).rewhere({status: "done"}).order(Todo.f.title.asc()).reorder(Todo.f.id.desc()).offset(20).limit(10) : Relation<Todo, criteria>`, `Todo.pluck(Todo.f.title) : Array<String>`, `Todo.maximum(Todo.f.id) : Null<Int>` inferred | Initial query slice |
+| Typed ActiveRecord relation chain | `Todo.select(Todo.f.title).distinct().where({completed: false}).rewhere({status: "done"}).order(Todo.f.title.asc()).reorder(Todo.f.id.desc()).offset(20).limit(10) : Relation<Todo, criteria>`, `Todo.pluck(Todo.f.title) : Array<String>`, `Todo.maximum(Todo.f.id) : Null<Int>`, `Todo.sum(Todo.f.userId) : Int`, `Todo.average(Todo.f.userId) : Null<Float>` inferred | Initial query slice |
 | Typed ActiveRecord projections/grouped counts | `Projection.pluck(Todo.where({...}), {id: Todo.f.id, title: Todo.f.title}) : Array<{id:Int, title:String}>`, `Group.count(Todo, Todo.f.userId) : haxe.ds.IntMap<Int>` | Initial projection/grouping slice |
 | Typed ActiveRecord association queries | `Todo.includes(Todo.associations.user).joins(Todo.a.user)` | Initial association query slice |
 | Typed ActiveRecord find helpers | `Todo.find(1)`, `Todo.findBy({externalId: "x"})`, `relation.findBy({...})` | Initial query slice |

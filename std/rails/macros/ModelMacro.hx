@@ -37,6 +37,8 @@ class ModelMacro {
 		addPluckStub(fields, selfType, pos);
 		addFieldProjectionStub(fields, "minimum", selfType, nullableGenericComplexType("TValue"), pos);
 		addFieldProjectionStub(fields, "maximum", selfType, nullableGenericComplexType("TValue"), pos);
+		addIntFieldProjectionStub(fields, "sum", selfType, macro : Int, pos);
+		addIntFieldProjectionStub(fields, "average", selfType, macro : Null<Float>, pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
 		return fields;
 	}
@@ -1055,6 +1057,26 @@ class ModelMacro {
 
 	static function addFieldProjectionStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
 		addFieldRefStub(fields, name, selfType, ret, pos);
+	}
+
+	static function addIntFieldProjectionStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, name)) {
+			return;
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				args: [{name: "field", type: typedFieldComplexType(selfType, macro : Int)}],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{name}], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
 	}
 
 	static function addFieldRelationStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {

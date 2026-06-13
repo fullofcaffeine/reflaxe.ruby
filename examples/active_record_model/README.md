@@ -55,6 +55,8 @@ var statusCounts:haxe.ds.StringMap<Int> = Group.count(
 var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
 var maxTitle:Null<String> = Todo.maximum(Todo.f.title);
+var totalUserIds:Int = Todo.sum(Todo.f.userId);
+var averageUserId:Null<Float> = Todo.average(Todo.f.userId);
 
 var found = Todo
 	.includes(Todo.associations.user)
@@ -81,6 +83,8 @@ HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:statu
 HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
 Models::Todo.minimum(:id)
 Models::Todo.maximum(:title)
+Models::Todo.sum(:user_id)
+Models::Todo.average(:user_id)
 Models::Todo
   .includes(:user)
   .where(title: "ship", status: "open")
@@ -107,6 +111,8 @@ Type-safety features used here:
   string keys, `Group.count(Todo, Todo.f.userId)` returns `IntMap<Int>` for
   integer keys, and unsupported key types fail during Haxe compilation.
 - `Todo.maximum(Todo.f.id)` returns `Null<Int>` and rejects fields from other models.
+- `Todo.sum(Todo.f.userId)` returns `Int`, `Todo.average(Todo.f.userId)`
+  returns `Null<Float>`, and non-`Int` fields fail during Haxe compilation.
 - The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
   `order`, `limit`, and `offset`.
 

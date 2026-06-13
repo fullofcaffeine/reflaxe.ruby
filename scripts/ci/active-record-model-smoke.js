@@ -84,6 +84,8 @@ const invalidGroupUnsupportedSourceDir = join(root, "test", ".generated", "activ
 const invalidGroupUnsupportedOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_unsupported_out");
 const invalidAggregateFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_src");
 const invalidAggregateFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_out");
+const invalidAggregateNumericSourceDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_numeric_src");
+const invalidAggregateNumericOutputDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_numeric_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -184,6 +186,8 @@ rmSync(invalidGroupUnsupportedSourceDir, { force: true, recursive: true });
 rmSync(invalidGroupUnsupportedOutputDir, { force: true, recursive: true });
 rmSync(invalidAggregateFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidAggregateFieldOutputDir, { force: true, recursive: true });
+rmSync(invalidAggregateNumericSourceDir, { force: true, recursive: true });
+rmSync(invalidAggregateNumericOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile active_record_model through Reflaxe.");
@@ -335,6 +339,12 @@ for (const expected of [
   "Models::Todo.maximum(:title)",
   "assigned__hx",
   ".maximum(:id)",
+  "Models::Todo.sum(:user_id)",
+  "Models::Todo.average(:user_id)",
+  "assigned__hx",
+  ".sum(:user_id)",
+  "assigned__hx",
+  ".average(:user_id)",
 ]) {
   if (!mainRuby.includes(expected)) {
     console.error(`ActiveRecord call shape missing from main.rb: ${expected}`);
@@ -438,6 +448,7 @@ expectInvalidProjectionEmptySpecFailure();
 expectInvalidGroupFieldOwnerFailure();
 expectInvalidGroupUnsupportedFieldFailure();
 expectInvalidAggregateFieldOwnerFailure();
+expectInvalidAggregateNumericFieldFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -709,6 +720,27 @@ function expectInvalidAggregateFieldOwnerFailure() {
     invalidAggregateFieldOutputDir,
     "Invalid ActiveRecord aggregate field owner compiled successfully.",
     "Field<models.User"
+  );
+}
+
+function expectInvalidAggregateNumericFieldFailure() {
+  mkdirSync(invalidAggregateNumericSourceDir, { recursive: true });
+  writeFileSync(join(invalidAggregateNumericSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.sum(Todo.f.title);",
+    "\t\tSys.println(bad);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidAggregateNumericSourceDir,
+    invalidAggregateNumericOutputDir,
+    "Invalid ActiveRecord numeric aggregate field compiled successfully.",
+    "String should be Int"
   );
 }
 
