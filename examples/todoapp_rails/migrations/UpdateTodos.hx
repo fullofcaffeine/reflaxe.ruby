@@ -10,15 +10,14 @@ import rails.migration.MigrationOperation;
 })
 class UpdateTodos extends Migration {
 	public static final operations:Array<MigrationOperation> = [
-		ChangeColumn("todos", "title", StringColumn({nullable: false})),
 		Reversible([
+			ChangeColumn("todos", "title", StringColumn({nullable: false})),
 			AddForeignKey("todos", "users", {column: "user_id", onDelete: Cascade})
 		], [
-			RemoveForeignKey("todos", "users")
+			RemoveForeignKey("todos", "users"),
+			ChangeColumn("todos", "title", StringColumn({nullable: true}))
 		]),
 		AddColumn("todos", "priority", IntegerColumn({nullable: false, defaultValue: 0})),
-		AddIndex("todos", "priority", {unique: false}),
-		RemoveIndex("todos", "priority"),
-		RemoveColumn("todos", "priority")
+		AddIndex("todos", "priority", {unique: false})
 	];
 }

@@ -31,6 +31,7 @@ syntaxCheck([
   "config/routes.rb",
   "config/initializers/hxruby_autoload.rb",
   "db/migrate/20260101000000_create_todos.rb",
+  "db/migrate/20260101000001_update_todos.rb",
   "test/models/todo_test.rb",
   "test/controllers/todos_controller_test.rb",
 ]);

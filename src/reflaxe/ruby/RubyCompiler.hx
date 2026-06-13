@@ -3,6 +3,7 @@ package reflaxe.ruby;
 #if (macro || reflaxe_runtime)
 import haxe.io.Path;
 import haxe.macro.Context;
+import haxe.macro.Expr.Position;
 import haxe.macro.Type.AbstractType;
 import haxe.macro.Type.ClassType;
 import haxe.macro.Type.DefType;
@@ -51,7 +52,26 @@ typedef RailsMigrationConfig = {
 	timestamp:String,
 	className:String,
 	models:Array<ClassType>,
-	operations:Array<String>
+	operations:Array<RailsMigrationOperationInfo>
+}
+
+typedef RailsMigrationOperationInfo = {
+	lines:Array<String>,
+	foreignKeys:Array<RailsMigrationForeignKeyRef>
+}
+
+typedef RailsMigrationForeignKeyRef = {
+	fromTable:String,
+	toTable:String
+}
+
+typedef RailsEmittedMigration = {
+	timestamp:String,
+	className:String,
+	source:String,
+	pos:Position,
+	createdTables:Array<String>,
+	foreignKeys:Array<RailsMigrationForeignKeyRef>
 }
 
 typedef RubyMetadataField = {
@@ -70,6 +90,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	var emittedRubyPaths:Array<String> = [];
 	var emittedAppRubyPaths:Array<String> = [];
 	var emittedRailsMigrationPaths:Map<String, String> = [];
+	var emittedRailsMigrations:Array<RailsEmittedMigration> = [];
 	var requireRegistry:RequireRegistry = new RequireRegistry();
 	var buildContext:RubyBuildContext;
 	var didEmitMain:Bool = false;
@@ -1287,8 +1308,66 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error('@:railsMigration emits duplicate migration file ${outputPath}; first emitted by ${emittedRailsMigrationPaths.get(outputPath)}.', classType.pos);
 			return;
 		}
-		emittedRailsMigrationPaths.set(outputPath, fullTypeName(classType.pack, classType.name));
+		var source = fullTypeName(classType.pack, classType.name);
+		registerRailsMigration(config, source, classType.pos);
+		emittedRailsMigrationPaths.set(outputPath, source);
 		setExtraFile(OutputPath.fromStr(outputPath), normalizeGeneratedText(body));
+	}
+
+	function registerRailsMigration(config:RailsMigrationConfig, source:String, pos:Position):Void {
+		emittedRailsMigrations.push({
+			timestamp: config.timestamp,
+			className: config.className,
+			source: source,
+			pos: pos,
+			createdTables: [for (model in config.models) railsModelTableName(model)],
+			foreignKeys: railsMigrationForeignKeys(config)
+		});
+		validateRailsMigrationRegistry();
+	}
+
+	function validateRailsMigrationRegistry():Void {
+		var timestamps:Map<String, RailsEmittedMigration> = [];
+		var tableCreators:Map<String, RailsEmittedMigration> = [];
+		for (migration in emittedRailsMigrations) {
+			if (timestamps.exists(migration.timestamp)) {
+				var first = timestamps.get(migration.timestamp);
+				Context.error('@:railsMigration timestamp ${migration.timestamp} is already used by ${first.source}; migration timestamps must be unique for deterministic Rails ordering.', migration.pos);
+			}
+			timestamps.set(migration.timestamp, migration);
+			for (table in migration.createdTables) {
+				if (!tableCreators.exists(table) || tableCreators.get(table).timestamp > migration.timestamp) {
+					tableCreators.set(table, migration);
+				}
+			}
+		}
+		for (migration in emittedRailsMigrations) {
+			for (foreignKey in migration.foreignKeys) {
+				validateRailsMigrationForeignKeyTable(tableCreators, migration, foreignKey.fromTable, "source");
+				validateRailsMigrationForeignKeyTable(tableCreators, migration, foreignKey.toTable, "target");
+			}
+		}
+	}
+
+	function validateRailsMigrationForeignKeyTable(tableCreators:Map<String, RailsEmittedMigration>, migration:RailsEmittedMigration, table:String, label:String):Void {
+		var creator = tableCreators.get(table);
+		if (creator != null && creator.timestamp > migration.timestamp) {
+			Context.error('@:railsMigration foreign key ${label} table "$table" is created by ${creator.source} at ${creator.timestamp}, after ${migration.source} at ${migration.timestamp}. Move the foreign key to a later migration or adjust timestamps.', migration.pos);
+		}
+	}
+
+	static function railsMigrationForeignKeys(config:RailsMigrationConfig):Array<RailsMigrationForeignKeyRef> {
+		var out:Array<RailsMigrationForeignKeyRef> = [];
+		for (model in config.models) {
+			var table = railsModelTableName(model);
+			for (assoc in railsBelongsToInfo(model)) {
+				out.push({fromTable: table, toTable: assoc.referencedTable});
+			}
+		}
+		for (operation in config.operations) {
+			out = out.concat(operation.foreignKeys);
+		}
+		return out;
 	}
 
 	static function railsMigrationConfig(classType:ClassType, varFields:Array<ClassVarData>):Null<RailsMigrationConfig> {
@@ -1369,7 +1448,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				lines.push("");
 			}
 			for (operation in config.operations) {
-				lines.push("    " + operation);
+				for (line in operation.lines) {
+					lines.push("    " + line);
+				}
 			}
 		}
 		lines.push("  end");
@@ -1412,7 +1493,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		lines.push("    end");
 	}
 
-	static function railsMigrationOperations(varFields:Array<ClassVarData>, classType:ClassType):Array<String> {
+	static function railsMigrationOperations(varFields:Array<ClassVarData>, classType:ClassType):Array<RailsMigrationOperationInfo> {
 		var operationField:Null<ClassVarData> = null;
 		for (field in varFields) {
 			if (field.isStatic && field.field.name == "operations") {
@@ -1428,72 +1509,93 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsMigration operations must be a static final Array<MigrationOperation> literal.", operationField.field.pos);
 			return [];
 		}
-		return railsMigrationOperationArray(expr, "@:railsMigration operations");
+		return railsMigrationOperationArray(expr, "@:railsMigration operations", false);
 	}
 
-	static function railsMigrationOperationArray(expr:TypedExpr, label:String):Array<String> {
+	static function railsMigrationOperationArray(expr:TypedExpr, label:String, allowIrreversible:Bool):Array<RailsMigrationOperationInfo> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
-				var lines:Array<String> = [];
+				var operations:Array<RailsMigrationOperationInfo> = [];
 				for (value in values) {
-					lines = lines.concat(railsMigrationOperationLines(value));
+					operations.push(railsMigrationOperationInfo(value, allowIrreversible));
 				}
-				lines;
+				operations;
 			case _:
 				Context.error(label + " must be an Array<MigrationOperation> literal.", expr.pos);
 				[];
 		}
 	}
 
-	static function railsMigrationOperationLines(expr:TypedExpr):Array<String> {
+	static function railsMigrationOperationInfo(expr:TypedExpr, allowIrreversible:Bool):RailsMigrationOperationInfo {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args):
 				switch (field.name) {
 					case "AddColumn" if (args.length == 3):
 						var column = railsMigrationColumnDsl(args[2]);
-						["add_column :" + railsMigrationSymbolArg(args[0], "AddColumn table") + ", :" + railsMigrationSymbolArg(args[1], "AddColumn name") + ", :" + column.type + railsMigrationOptionSuffix(column.options)];
+						railsMigrationOperation(["add_column :" + railsMigrationSymbolArg(args[0], "AddColumn table") + ", :" + railsMigrationSymbolArg(args[1], "AddColumn name") + ", :" + column.type + railsMigrationOptionSuffix(column.options)]);
 					case "RemoveColumn" if (args.length == 2):
-						["remove_column :" + railsMigrationSymbolArg(args[0], "RemoveColumn table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveColumn name")];
+						railsMigrationRequireReversibleContext("RemoveColumn", allowIrreversible, expr);
+						railsMigrationOperation(["remove_column :" + railsMigrationSymbolArg(args[0], "RemoveColumn table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveColumn name")]);
 					case "ChangeColumn" if (args.length == 3):
+						railsMigrationRequireReversibleContext("ChangeColumn", allowIrreversible, expr);
 						var column = railsMigrationColumnDsl(args[2]);
-						["change_column :" + railsMigrationSymbolArg(args[0], "ChangeColumn table") + ", :" + railsMigrationSymbolArg(args[1], "ChangeColumn name") + ", :" + column.type + railsMigrationOptionSuffix(column.options)];
+						railsMigrationOperation(["change_column :" + railsMigrationSymbolArg(args[0], "ChangeColumn table") + ", :" + railsMigrationSymbolArg(args[1], "ChangeColumn name") + ", :" + column.type + railsMigrationOptionSuffix(column.options)]);
 					case "AddIndex" if (args.length == 3):
 						var options = railsMigrationIndexDslOptions(args[2]);
-						["add_index :" + railsMigrationSymbolArg(args[0], "AddIndex table") + ", :" + railsMigrationSymbolArg(args[1], "AddIndex column") + railsMigrationOptionSuffix(options)];
+						railsMigrationOperation(["add_index :" + railsMigrationSymbolArg(args[0], "AddIndex table") + ", :" + railsMigrationSymbolArg(args[1], "AddIndex column") + railsMigrationOptionSuffix(options)]);
 					case "RemoveIndex" if (args.length == 2):
-						["remove_index :" + railsMigrationSymbolArg(args[0], "RemoveIndex table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveIndex column")];
+						railsMigrationOperation(["remove_index :" + railsMigrationSymbolArg(args[0], "RemoveIndex table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveIndex column")]);
 					case "AddForeignKey" if (args.length == 3):
 						var options = railsMigrationForeignKeyDslOptions(args[2]);
-						["add_foreign_key :" + railsMigrationSymbolArg(args[0], "AddForeignKey fromTable") + ", :" + railsMigrationSymbolArg(args[1], "AddForeignKey toTable") + railsMigrationOptionSuffix(options)];
+						var fromTable = railsMigrationSymbolArg(args[0], "AddForeignKey fromTable");
+						var toTable = railsMigrationSymbolArg(args[1], "AddForeignKey toTable");
+						railsMigrationOperation(["add_foreign_key :" + fromTable + ", :" + toTable + railsMigrationOptionSuffix(options)], [{fromTable: fromTable, toTable: toTable}]);
 					case "RemoveForeignKey" if (args.length == 2):
-						["remove_foreign_key :" + railsMigrationSymbolArg(args[0], "RemoveForeignKey fromTable") + ", :" + railsMigrationSymbolArg(args[1], "RemoveForeignKey toTable")];
+						railsMigrationOperation(["remove_foreign_key :" + railsMigrationSymbolArg(args[0], "RemoveForeignKey fromTable") + ", :" + railsMigrationSymbolArg(args[1], "RemoveForeignKey toTable")]);
 					case "DropTable" if (args.length == 1):
-						["drop_table :" + railsMigrationSymbolArg(args[0], "DropTable table")];
+						railsMigrationRequireReversibleContext("DropTable", allowIrreversible, expr);
+						railsMigrationOperation(["drop_table :" + railsMigrationSymbolArg(args[0], "DropTable table")]);
 					case "Reversible" if (args.length == 2):
-						railsMigrationReversibleLines(args[0], args[1]);
+						railsMigrationReversibleOperation(args[0], args[1]);
 					case _:
 						Context.error('@:railsMigration unsupported MigrationOperation ${field.name}.', expr.pos);
-						["# unsupported RailsHx migration operation"];
+						railsMigrationOperation(["# unsupported RailsHx migration operation"]);
 				}
 			case _:
 				Context.error("@:railsMigration operations must contain MigrationOperation enum values.", expr.pos);
-				["# invalid RailsHx migration operation"];
+				railsMigrationOperation(["# invalid RailsHx migration operation"]);
 		}
 	}
 
-	static function railsMigrationReversibleLines(upExpr:TypedExpr, downExpr:TypedExpr):Array<String> {
+	static function railsMigrationRequireReversibleContext(operation:String, allowIrreversible:Bool, expr:TypedExpr):Void {
+		if (!allowIrreversible) {
+			Context.error('@:railsMigration ${operation} must be wrapped in Reversible(up, down) so RailsHx has an explicit rollback shape.', expr.pos);
+		}
+	}
+
+	static function railsMigrationOperation(lines:Array<String>, ?foreignKeys:Array<RailsMigrationForeignKeyRef>):RailsMigrationOperationInfo {
+		return {lines: lines, foreignKeys: foreignKeys == null ? [] : foreignKeys};
+	}
+
+	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr):RailsMigrationOperationInfo {
 		var lines = ["reversible do |dir|", "  dir.up do"];
-		for (line in railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up")) {
-			lines.push("    " + line);
+		var foreignKeys:Array<RailsMigrationForeignKeyRef> = [];
+		for (operation in railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up", true)) {
+			foreignKeys = foreignKeys.concat(operation.foreignKeys);
+			for (line in operation.lines) {
+				lines.push("    " + line);
+			}
 		}
 		lines.push("  end");
 		lines.push("  dir.down do");
-		for (line in railsMigrationOperationArray(downExpr, "@:railsMigration Reversible down")) {
-			lines.push("    " + line);
+		for (operation in railsMigrationOperationArray(downExpr, "@:railsMigration Reversible down", true)) {
+			for (line in operation.lines) {
+				lines.push("    " + line);
+			}
 		}
 		lines.push("  end");
 		lines.push("end");
-		return lines;
+		return railsMigrationOperation(lines, foreignKeys);
 	}
 
 	static function railsMigrationColumnDsl(expr:TypedExpr):{type:String, options:Array<String>} {

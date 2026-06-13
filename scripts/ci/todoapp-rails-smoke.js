@@ -43,6 +43,12 @@ const migrationUnknownOptionSourceDir = join(root, "test", ".generated", "todoap
 const migrationUnknownOptionOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_option_out");
 const migrationBadOperationSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_operation_src");
 const migrationBadOperationOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_operation_out");
+const migrationDuplicateTimestampSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_timestamp_src");
+const migrationDuplicateTimestampOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_timestamp_out");
+const migrationForeignKeyOrderSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_foreign_key_order_src");
+const migrationForeignKeyOrderOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_foreign_key_order_out");
+const migrationIrreversibleOperationSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_operation_src");
+const migrationIrreversibleOperationOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_operation_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -101,6 +107,12 @@ rmSync(migrationUnknownOptionSourceDir, { force: true, recursive: true });
 rmSync(migrationUnknownOptionOutputDir, { force: true, recursive: true });
 rmSync(migrationBadOperationSourceDir, { force: true, recursive: true });
 rmSync(migrationBadOperationOutputDir, { force: true, recursive: true });
+rmSync(migrationDuplicateTimestampSourceDir, { force: true, recursive: true });
+rmSync(migrationDuplicateTimestampOutputDir, { force: true, recursive: true });
+rmSync(migrationForeignKeyOrderSourceDir, { force: true, recursive: true });
+rmSync(migrationForeignKeyOrderOutputDir, { force: true, recursive: true });
+rmSync(migrationIrreversibleOperationSourceDir, { force: true, recursive: true });
+rmSync(migrationIrreversibleOperationOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -270,10 +282,9 @@ for (const expected of [
   "add_foreign_key :todos, :users, column: :user_id, on_delete: :cascade",
   "dir.down do",
   "remove_foreign_key :todos, :users",
+  "change_column :todos, :title, :string",
   "add_column :todos, :priority, :integer, null: false, default: 0",
   "add_index :todos, :priority",
-  "remove_index :todos, :priority",
-  "remove_column :todos, :priority",
 ]) {
   if (!updateMigrationRuby.includes(expected)) {
     console.error(`todoapp_rails generated update migration missing expected line: ${expected}`);
@@ -502,6 +513,9 @@ expectMigrationNonModelFailure();
 expectMigrationBadTimestampFailure();
 expectMigrationUnknownOptionFailure();
 expectMigrationBadOperationFailure();
+expectMigrationDuplicateTimestampFailure();
+expectMigrationForeignKeyOrderFailure();
+expectMigrationIrreversibleOperationFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -821,6 +835,182 @@ function expectMigrationBadOperationFailure() {
     "InvalidBadOperationMigrationMain",
     "Bad-operation RailsHx migration compiled successfully.",
     "@:railsMigration AddColumn table must be a non-empty String literal"
+  );
+}
+
+function expectMigrationDuplicateTimestampFailure() {
+  mkdirSync(join(migrationDuplicateTimestampSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationDuplicateTimestampSourceDir, "InvalidDuplicateTimestampMigrationMain.hx"), [
+    "import migrations.BadDuplicateTimestampA;",
+    "import migrations.BadDuplicateTimestampB;",
+    "",
+    "class InvalidDuplicateTimestampMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar first:Class<BadDuplicateTimestampA> = BadDuplicateTimestampA;",
+    "\t\tvar second:Class<BadDuplicateTimestampB> = BadDuplicateTimestampB;",
+    "\t\tSys.println(first != null && second != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationDuplicateTimestampSourceDir, "migrations", "BadDuplicateTimestampA.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000006\",",
+    "\tclassName: \"BadDuplicateTimestampA\",",
+    "\tmodels: [\"models.User\"]",
+    "})",
+    "class BadDuplicateTimestampA extends Migration {}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationDuplicateTimestampSourceDir, "migrations", "BadDuplicateTimestampB.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000006\",",
+    "\tclassName: \"BadDuplicateTimestampB\",",
+    "\tmodels: [\"models.Todo\"]",
+    "})",
+    "class BadDuplicateTimestampB extends Migration {}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationDuplicateTimestampSourceDir,
+    migrationDuplicateTimestampOutputDir,
+    "InvalidDuplicateTimestampMigrationMain",
+    "Duplicate-timestamp RailsHx migration compiled successfully.",
+    "@:railsMigration timestamp 20260101000006 is already used"
+  );
+}
+
+function expectMigrationForeignKeyOrderFailure() {
+  mkdirSync(join(migrationForeignKeyOrderSourceDir, "models"), { recursive: true });
+  mkdirSync(join(migrationForeignKeyOrderSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationForeignKeyOrderSourceDir, "InvalidForeignKeyOrderMigrationMain.hx"), [
+    "import migrations.BadCreateTodosFirst;",
+    "import migrations.BadCreateUsersLater;",
+    "",
+    "class InvalidForeignKeyOrderMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar todos:Class<BadCreateTodosFirst> = BadCreateTodosFirst;",
+    "\t\tvar users:Class<BadCreateUsersLater> = BadCreateUsersLater;",
+    "\t\tSys.println(todos != null && users != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationForeignKeyOrderSourceDir, "models", "LateUser.hx"), [
+    "package models;",
+    "",
+    "import rails.ActiveRecord;",
+    "",
+    "@:railsModel(\"users\")",
+    "class LateUser extends ActiveRecord {",
+    "\t@:railsColumn({type: \"integer\", primaryKey: true})",
+    "\tpublic var id:Int;",
+    "",
+    "\t@:railsColumn({type: \"string\", nullable: false})",
+    "\tpublic var name:String;",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationForeignKeyOrderSourceDir, "models", "EarlyTodo.hx"), [
+    "package models;",
+    "",
+    "import rails.ActiveRecord;",
+    "",
+    "@:railsModel(\"todos\")",
+    "class EarlyTodo extends ActiveRecord {",
+    "\t@:railsColumn({type: \"integer\", primaryKey: true})",
+    "\tpublic var id:Int;",
+    "",
+    "\t@:railsColumn({type: \"string\", nullable: false})",
+    "\tpublic var title:String;",
+    "",
+    "\t@:railsColumn({type: \"integer\", nullable: false})",
+    "\tpublic var userId:Int;",
+    "",
+    "\t@:belongsTo public var user:rails.ActiveRecord.BelongsTo<LateUser>;",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationForeignKeyOrderSourceDir, "migrations", "BadCreateTodosFirst.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000007\",",
+    "\tclassName: \"BadCreateTodosFirst\",",
+    "\tmodels: [\"models.EarlyTodo\"]",
+    "})",
+    "class BadCreateTodosFirst extends Migration {}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationForeignKeyOrderSourceDir, "migrations", "BadCreateUsersLater.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000008\",",
+    "\tclassName: \"BadCreateUsersLater\",",
+    "\tmodels: [\"models.LateUser\"]",
+    "})",
+    "class BadCreateUsersLater extends Migration {}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationForeignKeyOrderSourceDir,
+    migrationForeignKeyOrderOutputDir,
+    "InvalidForeignKeyOrderMigrationMain",
+    "Foreign-key-order RailsHx migration compiled successfully.",
+    "@:railsMigration foreign key target table \"users\" is created"
+  );
+}
+
+function expectMigrationIrreversibleOperationFailure() {
+  mkdirSync(join(migrationIrreversibleOperationSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationIrreversibleOperationSourceDir, "InvalidIrreversibleOperationMigrationMain.hx"), [
+    "import migrations.BadIrreversibleOperationMigration;",
+    "",
+    "class InvalidIrreversibleOperationMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadIrreversibleOperationMigration> = BadIrreversibleOperationMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationIrreversibleOperationSourceDir, "migrations", "BadIrreversibleOperationMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000009\",",
+    "\tclassName: \"BadIrreversibleOperationMigration\",",
+    "\tmodels: []",
+    "})",
+    "class BadIrreversibleOperationMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tChangeColumn(\"todos\", \"title\", StringColumn({nullable: false}))",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationIrreversibleOperationSourceDir,
+    migrationIrreversibleOperationOutputDir,
+    "InvalidIrreversibleOperationMigrationMain",
+    "Irreversible-operation RailsHx migration compiled successfully.",
+    "@:railsMigration ChangeColumn must be wrapped in Reversible(up, down)"
   );
 }
 
