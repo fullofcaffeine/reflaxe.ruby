@@ -70,6 +70,8 @@ const invalidOffsetSourceDir = join(root, "test", ".generated", "active_record_m
 const invalidOffsetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_offset_out");
 const invalidReorderSourceDir = join(root, "test", ".generated", "active_record_model_invalid_reorder_src");
 const invalidReorderOutputDir = join(root, "test", ".generated", "active_record_model_invalid_reorder_out");
+const invalidSelectFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_select_field_src");
+const invalidSelectFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_select_field_out");
 const invalidPluckFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_pluck_field_src");
 const invalidPluckFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_pluck_field_out");
 const invalidAggregateFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_src");
@@ -160,6 +162,8 @@ rmSync(invalidOffsetSourceDir, { force: true, recursive: true });
 rmSync(invalidOffsetOutputDir, { force: true, recursive: true });
 rmSync(invalidReorderSourceDir, { force: true, recursive: true });
 rmSync(invalidReorderOutputDir, { force: true, recursive: true });
+rmSync(invalidSelectFieldSourceDir, { force: true, recursive: true });
+rmSync(invalidSelectFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidPluckFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidPluckFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidAggregateFieldSourceDir, { force: true, recursive: true });
@@ -279,6 +283,9 @@ for (const expected of [
   'Models::Todo.all().where(status: "open").order(title: :asc).limit(3)',
   'Models::Todo.distinct().where(status: "open").order(title: :asc)',
   '.distinct().limit(2)',
+  'Models::Todo.select(:title).where(status: "open")',
+  'assigned__hx',
+  '.select(:id).limit(2)',
   'assigned__hx',
   '.reorder(id: :desc)',
   'Models::Todo.reorder(title: :desc).limit(4)',
@@ -323,6 +330,7 @@ for (const expected of [
   "Todo.a.user",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
+  "select(Todo.f.title)",
   "reorder(Todo.f.id.desc())",
   "findBy({externalId",
   "exists({externalId",
@@ -348,6 +356,7 @@ for (const expected of [
   "Todo.rewhere({completed: true})",
   "var allOpen = Todo",
   ".distinct()",
+  "Todo.select(Todo.f.title)",
   "Todo.reorder(Todo.f.title.desc())",
   "Todo.incomplete().includes(Todo.a.user)",
   "AuditLog.where({eventCount: 1})",
@@ -397,6 +406,7 @@ expectInvalidFindByFieldFailure();
 expectInvalidExistsFieldFailure();
 expectInvalidOffsetValueTypeFailure();
 expectInvalidReorderOwnerFailure();
+expectInvalidSelectFieldOwnerFailure();
 expectInvalidPluckFieldOwnerFailure();
 expectInvalidAggregateFieldOwnerFailure();
 
@@ -514,6 +524,28 @@ function expectInvalidReorderOwnerFailure() {
     invalidReorderOutputDir,
     "Invalid ActiveRecord reorder owner compiled successfully.",
     "Order<models.User"
+  );
+}
+
+function expectInvalidSelectFieldOwnerFailure() {
+  mkdirSync(invalidSelectFieldSourceDir, { recursive: true });
+  writeFileSync(join(invalidSelectFieldSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.select(User.f.name);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidSelectFieldSourceDir,
+    invalidSelectFieldOutputDir,
+    "Invalid ActiveRecord select field owner compiled successfully.",
+    "Field<models.User"
   );
 }
 

@@ -26,6 +26,7 @@ class ModelMacro {
 		addPlainStub(fields, "offset", macro : Int, relationComplexType(selfType, criteriaType, pos), "count", pos);
 		addNoArgStub(fields, "all", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "distinct", relationComplexType(selfType, criteriaType, pos), pos);
+		addFieldRelationStub(fields, "select", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
 		addStub(fields, "findBy", criteriaType, nullableSelf, pos);
 		addOptionalStub(fields, "exists", criteriaType, macro : Bool, "criteria", "exists?", pos);
@@ -1053,6 +1054,14 @@ class ModelMacro {
 	}
 
 	static function addFieldProjectionStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		addFieldRefStub(fields, name, selfType, ret, pos);
+	}
+
+	static function addFieldRelationStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		addFieldRefStub(fields, name, selfType, ret, pos);
+	}
+
+	static function addFieldRefStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
 		if (hasFieldNamed(fields, name)) {
 			return;
 		}

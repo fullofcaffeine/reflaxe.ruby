@@ -6,7 +6,7 @@ field value types, primary-key types, and relation return shapes.
 
 The rule of thumb is simple:
 
-- Keep query chains Rails-shaped: `all`, `distinct`, `where`, `rewhere`, `includes`,
+- Keep query chains Rails-shaped: `all`, `distinct`, `select`, `where`, `rewhere`, `includes`,
   `joins`, `order`, `reorder`, `limit`, `offset`, `pluck`, `minimum`,
   `maximum`, `find`, `findBy`, `exists`, `count`, `first`, `last`, and
   `toArray`.
@@ -95,6 +95,9 @@ var distinctOpen = Todo.distinct()
 	.where({status: "open"})
 	.order(Todo.f.title.asc());
 
+var selectedOpen = Todo.select(Todo.f.title)
+	.where({status: "open"});
+
 var relation = Todo
 	.where({title: "assigned"})
 	.rewhere({status: "done"})
@@ -112,6 +115,7 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
+Models::Todo.select(:title).where(status: "open")
 assigned = Models::Todo.where(title: "assigned").rewhere(status: "done").distinct().order(title: :asc).reorder(id: :desc).offset(20).limit(5)
 assigned.find_by(external_id: "assigned-1")
 ```
@@ -162,6 +166,7 @@ var recent = AuditLog
 	.order(AuditLog.f.eventCount.desc());
 
 var rewritten = Todo.reorder(Todo.f.title.desc()).limit(4);
+var selected = Todo.select(Todo.f.title).where({status: "open"});
 
 var titles:Array<String> = Todo.pluck(Todo.f.title);
 var ids:Array<Int> = Todo.where({status: "open"}).pluck(Todo.f.id);
@@ -174,6 +179,7 @@ Generated Ruby:
 ```ruby
 Models::AuditLog.where(event_count: 1).order(event_count: :desc)
 Models::Todo.reorder(title: :desc).limit(4)
+Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
 Models::Todo.minimum(:id)
@@ -186,6 +192,9 @@ should keep field identity behind generated refs.
 
 `reorder(...)` uses the same typed `Order<TModel>` tokens as `order(...)`, so an
 order from another model is rejected before Rails runs.
+
+`select(...)` uses generated field refs too. It returns a typed relation and
+lowers to Rails `select(:field)`, while fields from another model are rejected.
 
 `pluck(...)` preserves the field value type in the returned array. A string
 column becomes `Array<String>`, an integer primary key becomes `Array<Int>`, and
