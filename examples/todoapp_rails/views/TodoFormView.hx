@@ -3,6 +3,7 @@ package views;
 import models.Todo;
 import rails.action_view.HtmlNode;
 import routes.Routes;
+import shared.TodoHooks;
 
 typedef TodoFormLocals = {
 	var sampleUserId:Int;
@@ -22,7 +23,7 @@ typedef TodoFormLocals = {
 @:railsTemplateAst("render")
 class TodoFormView {
 	public static function render(locals:TodoFormLocals):HtmlNode {
-		return <form_with url=${Routes.todosPath()} scope=${Todo.railsParamKey} local class="todo-form">
+		return <form_with url=${Routes.todosPath()} scope=${Todo.railsParamKey} local class=${TodoHooks.formClass}>
 			<hidden_field name=${Todo.f.userId} value=${locals.sampleUserId} />
 			<div>
 				<field_label name=${Todo.f.title}>What should ship next?</field_label>

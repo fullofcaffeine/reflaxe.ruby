@@ -7,8 +7,8 @@ class HaxeOwnedPost
   include Decorated
   extend Decorated
   attr_accessor :title
-  def initialize(title__hx19737)
-    self.title = title__hx19737
+  def initialize(title__hx19767)
+    self.title = title__hx19767
   end
   def display_title()
     return ("title:" + self.title)

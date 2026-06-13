@@ -4,6 +4,7 @@ import js.Browser;
 import js.html.Element;
 import js.html.Event;
 import rails.turbo.Turbo;
+import shared.TodoHooks;
 
 // Haxe-authored Rails/Turbo client behavior.
 //
@@ -17,10 +18,6 @@ import rails.turbo.Turbo;
 // JS/Rails output: compiled JavaScript pinned through Rails importmap and run
 // alongside Turbo.
 class TodoClient {
-	static inline var submitStorageKey = "railshx.todo.just_added";
-	static inline var submitScrollStorageKey = "railshx.todo.submit_scroll_y";
-	static inline var boundAttr = "data-railshx-bound";
-
 	public static function main():Void {
 		boot();
 		Turbo.onLoad(function(_:Event):Void {
@@ -38,11 +35,11 @@ class TodoClient {
 	}
 
 	static function bindTodoForm():Void {
-		var form = Browser.document.querySelector(".todo-form");
-		if (form == null || form.getAttribute(boundAttr) == "true") {
+		var form = Browser.document.querySelector(TodoHooks.classSelector(TodoHooks.formClass));
+		if (form == null || form.getAttribute(TodoHooks.boundAttr) == "true") {
 			return;
 		}
-		form.setAttribute(boundAttr, "true");
+		form.setAttribute(TodoHooks.boundAttr, "true");
 		form.addEventListener("submit", function(event:Event):Void {
 			captureTodoSubmit(event.target);
 		});
@@ -50,23 +47,23 @@ class TodoClient {
 
 	static function captureTodoSubmit(target:Dynamic):Void {
 		var form:Element = cast target;
-		if (form == null || !form.classList.contains("todo-form")) {
+		if (form == null || !form.classList.contains(TodoHooks.formClass)) {
 			return;
 		}
 		try {
-			Browser.window.sessionStorage.setItem(submitStorageKey, "1");
-			Browser.window.sessionStorage.setItem(submitScrollStorageKey, Std.string(currentScrollY()));
+			Browser.window.sessionStorage.setItem(TodoHooks.submitStorageKey, "1");
+			Browser.window.sessionStorage.setItem(TodoHooks.submitScrollStorageKey, Std.string(currentScrollY()));
 		} catch (_:Dynamic) {}
 	}
 
 	static function bindScrollLinks():Void {
-		var links = Browser.document.querySelectorAll("[data-railshx-scroll]");
+		var links = Browser.document.querySelectorAll(TodoHooks.attrSelector(TodoHooks.scrollAttr));
 		for (i in 0...links.length) {
 			var link:Element = cast links.item(i);
-			if (link == null || link.getAttribute(boundAttr) == "true") {
+			if (link == null || link.getAttribute(TodoHooks.boundAttr) == "true") {
 				continue;
 			}
-			link.setAttribute(boundAttr, "true");
+			link.setAttribute(TodoHooks.boundAttr, "true");
 			link.addEventListener("click", function(event:Event):Void {
 				var href = link.getAttribute("href");
 				if (href == null || href.charAt(0) != "#") {
@@ -86,10 +83,10 @@ class TodoClient {
 		var shouldAnnounce = false;
 		var savedScrollY:Null<Float> = null;
 		try {
-			shouldAnnounce = Browser.window.sessionStorage.getItem(submitStorageKey) == "1";
-			savedScrollY = Std.parseFloat(Browser.window.sessionStorage.getItem(submitScrollStorageKey));
-			Browser.window.sessionStorage.removeItem(submitStorageKey);
-			Browser.window.sessionStorage.removeItem(submitScrollStorageKey);
+			shouldAnnounce = Browser.window.sessionStorage.getItem(TodoHooks.submitStorageKey) == "1";
+			savedScrollY = Std.parseFloat(Browser.window.sessionStorage.getItem(TodoHooks.submitScrollStorageKey));
+			Browser.window.sessionStorage.removeItem(TodoHooks.submitStorageKey);
+			Browser.window.sessionStorage.removeItem(TodoHooks.submitScrollStorageKey);
 		} catch (_:Dynamic) {}
 		if (!shouldAnnounce) {
 			return;
@@ -99,7 +96,7 @@ class TodoClient {
 			restoreScroll(savedScrollY);
 		}
 
-		var flash = Browser.document.querySelector("[data-railshx-flash]");
+		var flash = Browser.document.querySelector(TodoHooks.attrSelector(TodoHooks.flashAttr));
 		if (flash != null) {
 			flash.textContent = "Task added to open work";
 			flash.removeAttribute("hidden");

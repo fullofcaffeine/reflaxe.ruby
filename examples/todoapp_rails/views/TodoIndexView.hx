@@ -3,6 +3,7 @@ package views;
 import controllers.TodosController.TodoIndexLocals;
 import rails.action_view.HtmlNode;
 import rails.action_view.Template;
+import shared.TodoHooks;
 import views.TodoComposerView.TodoComposerLocals;
 import views.TodoListView.TodoListLocals;
 import views.TodoDashboardView;
@@ -23,11 +24,11 @@ import views.TodoDashboardView;
 class TodoIndexView {
 	public static function render(locals:TodoIndexLocals):HtmlNode {
 		return <>
-			<content_for name="head">
-				<meta name="railshx-template" content="todo-index" />
+			<content_for name=${TodoHooks.headSlot}>
+				<meta name=${TodoHooks.templateMetaName} content=${TodoHooks.templateMetaContent} />
 			</content_for>
-			<main class="todo-shell">
-				<div class="railshx-flash" data-railshx-flash role="status" aria-live="polite" hidden></div>
+			<main class=${TodoHooks.shellClass}>
+				<div class=${TodoHooks.flashClass} data-railshx-flash role="status" aria-live="polite" hidden></div>
 				<section class="hero">
 					<div class="card">
 						<span class="eyebrow">RailsHx sample</span>
@@ -56,7 +57,7 @@ class TodoIndexView {
 						<partial template=${(Template.of(TodoComposerView) : Template<TodoComposerLocals>)} locals=${{sampleUser: locals.sampleUser}} />
 					</div>
 
-					<div id="open-work" class="card open-work-card" tabindex="-1">
+					<div id=${TodoHooks.openWorkId} class="card open-work-card" tabindex="-1">
 						<h2>Open work</h2>
 						<partial template=${(Template.of(TodoListView) : Template<TodoListLocals>)} locals=${{todos: locals.todos}} />
 					</div>

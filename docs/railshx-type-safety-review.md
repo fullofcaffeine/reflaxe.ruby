@@ -17,8 +17,8 @@ The remaining stringly seams are the next targets:
 
 - Template identity: `Template.of(...)`, `Template.layout(...)`, and `Template.existing(...)` cover the default owned/external cases. Remaining `@:railsTemplate("...")`, `Template.named("...")`, and layout strings are literal-only and path-shape checked, but should continue moving behind typed references or generated constants where possible.
 - Form and params fields: the todoapp now uses typed field refs for the default path. Remaining raw string support exists for compatibility and low-level Rails interop, but canonical RailsHx examples should keep model-owned form fields and strong params behind generated refs.
-- Slots and DOM hooks: `"head"`, `"#open-work"`, `"data-railshx-scroll"`, and `"data-railshx-flash"` should become typed constants/abstracts when reused across Haxe templates, Haxe JS, and Playwright.
-- CSS classes: local one-off styling strings are fine, but behavior-bearing classes such as `"todo-form"` should be centralized as typed hooks.
+- Slots and DOM hooks: the todoapp now uses `shared.TodoHooks` for `"head"`, `"#open-work"`, `"data-railshx-scroll"`, `"data-railshx-flash"`, storage keys, and selectors shared across HHX, Haxe JS, and Playwright. Future samples should follow that pattern instead of copying hook strings.
+- CSS classes: local one-off styling strings are fine, but behavior-bearing classes such as `"todo-form"` should be centralized as typed hooks when JS or tests depend on them.
 
 ## Direction
 

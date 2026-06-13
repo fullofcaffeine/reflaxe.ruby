@@ -1,11 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
+import { hooks } from './todo_hooks'
 
 async function gotoTodos(page: Page) {
   let lastError: unknown = null
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       await page.goto('/todos', { waitUntil: 'domcontentloaded', timeout: 15_000 })
-      await expect(page.locator('.todo-shell')).toBeVisible()
+      await expect(page.locator(hooks.selectors.shell)).toBeVisible()
       return
     } catch (error) {
       lastError = error
@@ -20,9 +21,9 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
 
   await expect(page).toHaveTitle(/RailsHx Todoapp/)
   await expect(page.getByText('Typed Rails, polished Ruby.')).toBeVisible()
-  await expect(page.locator('meta[name="railshx-template"]')).toHaveAttribute('content', 'todo-index')
-  await expect(page.locator('.todo-form')).toHaveAttribute('data-railshx-bound', 'true')
-  await expect(page.locator('[data-railshx-scroll]').first()).toHaveAttribute('data-railshx-bound', 'true')
+  await expect(page.locator(`meta[name="${hooks.meta.templateName}"]`)).toHaveAttribute('content', hooks.meta.templateContent)
+  await expect(page.locator(hooks.selectors.form)).toHaveAttribute(hooks.attrs.bound, 'true')
+  await expect(page.locator(hooks.selectors.scrollLinks).first()).toHaveAttribute(hooks.attrs.bound, 'true')
 
   const bodyText = await page.locator('body').innerText()
   expect(bodyText).toMatch(/RailsHx sample/i)
@@ -41,8 +42,8 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
     expect(href).not.toMatch(/undefined|null|javascript:/i)
   }
 
-  const items = page.locator('.todo-item')
-  const dots = page.locator('.todo-item .todo-dot')
+  const items = page.locator(hooks.selectors.items)
+  const dots = page.locator(hooks.selectors.dots)
   const dotCount = await dots.count()
   expect(dotCount).toBeGreaterThan(0)
   await expect(dots).toHaveCount(await items.count())
@@ -64,7 +65,7 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
 test('creates a task through Turbo/importmap-backed Rails form flow', async ({ page }) => {
   await gotoTodos(page)
 
-  const beforeCount = await page.locator('.todo-list .todo-item').count()
+  const beforeCount = await page.locator(hooks.selectors.listItems).count()
   const title = `Playwright task ${Date.now()}`
   const notes = 'Created through the RailsHx browser sentinel.'
 
@@ -73,17 +74,17 @@ test('creates a task through Turbo/importmap-backed Rails form flow', async ({ p
   await page.getByRole('button', { name: 'Add task' }).click()
 
   await expect(page.getByText('Task added to open work')).toBeVisible()
-  await expect(page.locator('.todo-item').filter({ hasText: title }).first()).toBeVisible()
-  await expect(page.locator('.todo-item').filter({ hasText: notes }).first()).toBeVisible()
-  await expect.poll(async () => page.locator('.todo-list .todo-item').count()).toBeGreaterThanOrEqual(beforeCount + 1)
+  await expect(page.locator(hooks.selectors.items).filter({ hasText: title }).first()).toBeVisible()
+  await expect(page.locator(hooks.selectors.items).filter({ hasText: notes }).first()).toBeVisible()
+  await expect.poll(async () => page.locator(hooks.selectors.listItems).count()).toBeGreaterThanOrEqual(beforeCount + 1)
 })
 
 test('uses typed Haxe client behavior for same-page Rails links', async ({ page }) => {
   await gotoTodos(page)
 
   await page.evaluate(() => window.scrollTo(0, 0))
-  await page.locator('[data-railshx-scroll]').first().click()
+  await page.locator(hooks.selectors.scrollLinks).first().click()
 
-  await expect(page.locator('#open-work')).toBeFocused()
+  await expect(page.locator(hooks.selectors.openWork)).toBeFocused()
   await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 })

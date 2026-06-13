@@ -2513,8 +2513,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							Context.error("HtmlAttr.Expr expects name and value arguments.", attr.pos);
 							"";
 						} else {
-							" " + expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal.") + "=\"<%= "
-								+ printTemplateExpr(params[1], scope) + " %>\"";
+							var name = expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal.");
+							var staticValue = templateStaticString(params[1]);
+							if (staticValue != null) {
+								" " + name + "=" + quoteHtmlAttr(staticValue);
+							} else {
+								" " + name + "=\"<%= " + printTemplateExpr(params[1], scope) + " %>\"";
+							}
 						}
 					case other:
 						Context.error('Unsupported HtmlAttr constructor "$other" in @:railsTemplateAst.', attr.pos);
@@ -2811,12 +2816,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function expectTemplateString(expr:TypedExpr, message:String):String {
-		return switch (unwrapTemplateExpr(expr).expr) {
-			case TConst(TString(value)): value;
-			case _:
-				Context.error(message, expr.pos);
-				"";
+		var value = templateStaticString(expr);
+		if (value == null) {
+			Context.error(message, expr.pos);
+			return "";
 		}
+		return value;
+	}
+
+	static function templateStaticString(expr:TypedExpr):Null<String> {
+		var unwrapped = unwrapTemplateExpr(expr);
+		return switch (unwrapped.expr) {
+			case TConst(TString(value)):
+				value;
+			case TField(_, FStatic(_, fieldRef)):
+				templateStaticFieldString(fieldRef.get());
+			case _:
+				null;
+		}
+	}
+
+	static function templateStaticFieldString(field:ClassField):Null<String> {
+		var expr = field.expr();
+		if (expr != null) {
+			var value = templateStaticString(expr);
+			if (value != null) {
+				return value;
+			}
+		}
+		return null;
 	}
 
 	static function expectTemplateFieldName(expr:TypedExpr, message:String):String {
@@ -2871,6 +2899,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TConst(TInt(value)): Std.string(value);
 			case TConst(TFloat(value)): value;
 			case TConst(TString(value)): quoteRubyStringForCode(value);
+			case TField(_, FStatic(_, fieldRef)):
+				var staticValue = templateStaticFieldString(fieldRef.get());
+				if (staticValue != null) {
+					quoteRubyStringForCode(staticValue);
+				} else {
+					reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped));
+				}
 			case TArray(target, index): printTemplateExpr(target, scope) + "[" + printTemplateExpr(index, scope) + "]";
 			case TArrayDecl(values): "[" + [for (value in values) printTemplateExpr(value, scope)].join(", ") + "]";
 			case TBinop(op, lhs, rhs): printTemplateExpr(lhs, scope) + " " + binopToRuby(op) + " " + printTemplateExpr(rhs, scope);
