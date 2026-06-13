@@ -245,6 +245,8 @@ class TrackableConcern {
 
 This emits a Ruby module with `extend ActiveSupport::Concern`; static Haxe methods lower into a Rails `class_methods do ... end` block. Because this requires ActiveSupport at runtime, plain Ruby smoke examples should use `@:rubyModule` unless the fixture is intentionally Rails/ActiveSupport-backed.
 
+`npm run test:rails-concerns` is the Rails-backed coverage lane for this contract. It always compiles a Haxe-authored concern and verifies the emitted Ruby shape; when local Rails/ActiveSupport gems are available, it also includes the generated module into an `ActiveModel`-style model and an `ActionController::Base` controller and checks both instance methods and `class_methods` behavior. Set `REQUIRE_RAILS=1` to make missing Rails gems fail instead of skip.
+
 ## Haxe Plus Ruby Escape Hatch
 
 Use raw Ruby only for small metaprogramming islands that cannot yet be represented through typed std/compiler APIs:
