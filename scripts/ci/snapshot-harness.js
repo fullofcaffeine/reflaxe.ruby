@@ -25,7 +25,20 @@ const cases = [
   { name: "native_mapping", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
   { name: "ruby_call_shapes", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
   { name: "ruby_interop", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
-  { name: "ruby_extensions", files: ["hxruby/core.rb", "haxe_only_library.rb", "haxe_owned_post.rb", "haxe_raw_backed_post.rb", "main.rb", "run.rb"] },
+  {
+    name: "ruby_extensions",
+    files: [
+      "hxruby/core.rb",
+      "haxe_authored_class_methods.rb",
+      "haxe_authored_decorated.rb",
+      "haxe_module_post.rb",
+      "haxe_only_library.rb",
+      "haxe_owned_post.rb",
+      "haxe_raw_backed_post.rb",
+      "main.rb",
+      "run.rb",
+    ],
+  },
   {
     name: "rails_autoload",
     defines: ["reflaxe_ruby_rails"],

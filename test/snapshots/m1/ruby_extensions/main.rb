@@ -6,16 +6,19 @@ class Main
     "Main"
   end
   def self.main()
-    legacy__hx19492 = LegacyPost.new("Ship Typed Mixins")
-    puts(HXRuby.stringify(legacy__hx19492.slug()))
+    legacy__hx19517 = LegacyPost.new("Ship Typed Mixins")
+    puts(HXRuby.stringify(legacy__hx19517.slug()))
     puts(HXRuby.stringify(LegacyPost.find_by_slug("ship-typed-mixins").slug()))
-    owned__hx19565 = HaxeOwnedPost.new("Owned Type")
-    puts(HXRuby.stringify(owned__hx19565.decorated()))
+    owned__hx19590 = HaxeOwnedPost.new("Owned Type")
+    puts(HXRuby.stringify(owned__hx19590.decorated()))
     puts(HXRuby.stringify(HaxeOwnedPost.build_label("abc")))
-    puts(HXRuby.stringify(owned__hx19565.display_title()))
-    raw_backed__hx19566 = HaxeRawBackedPost.new("Raw Island")
-    puts(HXRuby.stringify(raw_backed__hx19566.raw_decorated()))
-    puts(HXRuby.stringify(raw_backed__hx19566.ruby_class_name()))
+    puts(HXRuby.stringify(owned__hx19590.display_title()))
+    module_post__hx19591 = HaxeModulePost.new()
+    puts(HXRuby.stringify(module_post__hx19591.haxe_badge("typed")))
+    puts(HXRuby.stringify(HaxeModulePost.haxe_class_badge("typed")))
+    raw_backed__hx19592 = HaxeRawBackedPost.new("Raw Island")
+    puts(HXRuby.stringify(raw_backed__hx19592.raw_decorated()))
+    puts(HXRuby.stringify(raw_backed__hx19592.ruby_class_name()))
     puts(HXRuby.stringify(HaxeOnlyLibrary.headline("library")))
   end
 end

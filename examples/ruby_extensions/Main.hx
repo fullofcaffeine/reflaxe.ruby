@@ -1,8 +1,8 @@
 // Ruby extension interop tour.
 //
 // Demonstrates: simple `include`, simple `extend`, wrapping an existing Ruby
-// class gradually, creating Haxe-owned Ruby output, and using a narrow raw Ruby
-// island for target-specific metaprogramming.
+// class gradually, creating Haxe-owned Ruby modules/classes, and using a narrow
+// raw Ruby island for target-specific metaprogramming.
 // Type safety: extension contracts inject typed instance/static members into
 // Haxe classes/externs; duplicates are compile errors unless explicitly
 // overridden; `@:native` keeps Ruby method names while preserving Haxe-friendly
@@ -95,7 +95,43 @@ class HaxeOwnedPost {
 	}
 }
 
-// Scenario 6: consume a Ruby module from a small raw-backed Haxe island.
+// Scenario 6: author a Ruby module in Haxe and include it.
+//
+// `@:rubyModule("DecoratedFromHaxe")` emits that Ruby `module`, not a class.
+// Instance methods in the Haxe module become Ruby module instance methods, so a
+// receiver can use them through `include DecoratedFromHaxe`.
+// Type safety/IntelliSense: `HaxeModulePost` receives a typed `haxeBadge(...)`
+// instance method through `@:rubyInclude(HaxeAuthoredDecorated)`.
+@:rubyModule("DecoratedFromHaxe")
+class HaxeAuthoredDecorated {
+	@:native("haxe_badge")
+	public function haxeBadge(value:String):String {
+		return "haxe-module:" + value;
+	}
+}
+
+// Scenario 7: author a Ruby module in Haxe and extend it.
+//
+// Ruby `extend Mod` adds module instance methods as class methods on the
+// receiver. The build macro understands `@:rubyModule` contracts, so
+// `@:rubyExtend(HaxeAuthoredClassMethods)` exposes `haxeClassBadge(...)` as a
+// typed static method on `HaxeModulePost` while the emitted Ruby remains
+// `extend ClassMethodsFromHaxe`.
+@:rubyModule("ClassMethodsFromHaxe")
+class HaxeAuthoredClassMethods {
+	@:native("haxe_class_badge")
+	public function haxeClassBadge(value:String):String {
+		return "haxe-class:" + value;
+	}
+}
+
+@:rubyInclude(HaxeAuthoredDecorated)
+@:rubyExtend(HaxeAuthoredClassMethods)
+class HaxeModulePost {
+	public function new() {}
+}
+
+// Scenario 8: consume a Ruby module from a small raw-backed Haxe island.
 //
 // `RawDecorated` is still typed as a normal mixin contract. The raw Ruby below
 // is intentionally separate from the mixin: it demonstrates how to keep a small
@@ -105,7 +141,7 @@ extern interface RawDecoratedInstance {
 	public function rawDecorated():String;
 }
 
-// Scenario 7: use `@:rubyAllowRaw` only around the smallest necessary type.
+// Scenario 9: use `@:rubyAllowRaw` only around the smallest necessary type.
 //
 // Strict examples reject `__ruby__` unless the module/type explicitly declares
 // raw authority. This is the escape-hatch shape for Ruby-specific behavior that
@@ -125,7 +161,7 @@ class HaxeRawBackedPost {
 	}
 }
 
-// Scenario 8: create and consume a pure Haxe library with no Ruby support file.
+// Scenario 10: create and consume a pure Haxe library with no Ruby support file.
 //
 // This class does not wrap Ruby and does not use `__ruby__`. It proves that the
 // same project can mix pure Haxe-owned Ruby output with typed wrappers around
@@ -137,9 +173,10 @@ class HaxeOnlyLibrary {
 }
 
 // The entrypoint exercises each scenario in increasing complexity:
-// existing Ruby externs, Haxe-owned mixin receivers, raw-backed islands, and a
-// pure Haxe library. The smoke test also inspects generated Ruby to ensure the
-// output stays Ruby-native (`include`/`extend`) and injected stubs do not leak.
+// existing Ruby externs, Haxe-authored modules, Haxe-owned mixin receivers,
+// raw-backed islands, and a pure Haxe library. The smoke test also inspects
+// generated Ruby to ensure the output stays Ruby-native (`module`,
+// `include`/`extend`) and injected stubs do not leak.
 class Main {
 	static function main() {
 		// Existing Ruby adoption: Haxe gets typed calls, Ruby keeps ownership.
@@ -152,6 +189,12 @@ class Main {
 		Sys.println(owned.decorated());
 		Sys.println(HaxeOwnedPost.buildLabel("abc"));
 		Sys.println(owned.displayTitle());
+
+		// Haxe-owned modules: generated Ruby defines modules and includes/extends
+		// them exactly like hand-written Ruby.
+		var modulePost = new HaxeModulePost();
+		Sys.println(modulePost.haxeBadge("typed"));
+		Sys.println(HaxeModulePost.haxeClassBadge("typed"));
 
 		// Raw-backed island: public API is typed, implementation is explicitly
 		// allowed to use Ruby-specific metaprogramming internally.

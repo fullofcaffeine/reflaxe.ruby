@@ -130,7 +130,7 @@ This supports quick PoCs: build the Ruby version first, wrap it with Haxe once t
 
 ## Create A New Library In Haxe
 
-For a pure Haxe-owned library, author the class in Haxe and attach contracts for the Ruby module shape you want to expose:
+For a pure Haxe-owned class, author the class in Haxe and attach contracts for the Ruby module shape you want to expose:
 
 ```haxe
 @:rubyMixin({module: "DisplayName"})
@@ -150,7 +150,61 @@ class Account {
 
 Ruby callers get a normal class. Haxe callers get typed members.
 
-If the module implementation is also Haxe-owned, prefer future compiler-owned `@:rubyModule`/`@:rubyConcern` style APIs over hand-written Ruby. Until that lands, keep module implementation in a small Ruby support file or a narrow raw-backed island.
+If the module implementation is also Haxe-owned, author it with `@:rubyModule`:
+
+```haxe
+@:rubyModule("DisplayName")
+class DisplayNameModule {
+	public function displayName(value:String):String {
+		return "display:" + value;
+	}
+}
+
+@:rubyInclude(DisplayNameModule)
+class Account {
+	public function new() {}
+}
+
+var label = new Account().displayName("Ada");
+```
+
+The Haxe module class emits a Ruby `module DisplayName`. Its instance methods become Ruby module instance methods, so they work with `include`.
+
+Ruby `extend Mod` also uses module instance methods, but exposes them as class methods on the receiver. `@:rubyExtend` understands `@:rubyModule` contracts and injects those methods as typed static methods:
+
+```haxe
+@:rubyModule("FindByToken")
+class FindByTokenModule {
+	@:native("find_by_token")
+	public function findByToken(token:String):Account {
+		return new Account();
+	}
+}
+
+@:rubyExtend(FindByTokenModule)
+class Account {
+	public function new() {}
+}
+
+var account = Account.findByToken("abc");
+```
+
+For Rails/ActiveSupport-style modules, use `@:rubyConcern`:
+
+```haxe
+@:rubyConcern("Trackable")
+class TrackableConcern {
+	public function trackingLabel():String {
+		return "tracked";
+	}
+
+	public static function lookupLabel(value:String):String {
+		return "lookup:" + value;
+	}
+}
+```
+
+This emits a Ruby module with `extend ActiveSupport::Concern`; static Haxe methods lower into a Rails `class_methods do ... end` block. Because this requires ActiveSupport at runtime, plain Ruby smoke examples should use `@:rubyModule` unless the fixture is intentionally Rails/ActiveSupport-backed.
 
 ## Haxe Plus Ruby Escape Hatch
 
@@ -192,6 +246,8 @@ Filesystem-backed macros/generators must fail closed. If an API references `app/
 - consuming an existing Ruby class that already includes and extends modules;
 - adding typed extension contracts to an extern;
 - generating a Haxe-owned class that emits normal `include` and `extend`;
+- authoring Haxe-owned Ruby modules with `@:rubyModule`;
+- statically verifying `@:rubyConcern` output for ActiveSupport::Concern-style modules;
 - keeping injected Haxe type stubs out of generated Ruby;
 - using a small `@:rubyAllowRaw` type for a deliberately raw-backed method.
 
@@ -203,9 +259,8 @@ npm run test:ruby-extensions
 
 ## Follow-Up Work
 
-The current slice supports typed mixin consumption and Haxe-owned `include`/`extend`/`prepend` emission. Remaining work:
+The current slice supports typed mixin consumption, Haxe-owned `include`/`extend`/`prepend` emission, Haxe-authored Ruby modules, and initial Haxe-authored ActiveSupport::Concern output. Remaining work:
 
-- author Haxe-owned Ruby modules/concerns directly;
 - support typed `using`/monkey-patch extension contracts;
 - add generator-assisted contract discovery from Ruby source, RBS, YARD, Rails schema/routes, and optional LLM suggestions;
-- add richer validation for dynamic DSLs such as `ActiveSupport::Concern`, Rails scopes, callbacks, and gem-specific metaprogramming.
+- add richer validation/runtime examples for dynamic DSLs such as Rails scopes, callbacks, and gem-specific metaprogramming.

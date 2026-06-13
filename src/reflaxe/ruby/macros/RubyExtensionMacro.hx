@@ -20,23 +20,23 @@ class RubyExtensionMacro {
 		}
 		var cls = localClass.get();
 		var pos = Context.currentPos();
-		applyContracts(fields, extractMeta(cls.meta, ":rubyInclude"), false, cls.isExtern, pos);
-		applyContracts(fields, extractMeta(cls.meta, ":rubyPrepend"), false, cls.isExtern, pos);
-		applyContracts(fields, extractMeta(cls.meta, ":rubyExtend"), true, cls.isExtern, pos);
+		applyContracts(fields, cls, extractMeta(cls.meta, ":rubyInclude"), false, cls.isExtern, pos);
+		applyContracts(fields, cls, extractMeta(cls.meta, ":rubyPrepend"), false, cls.isExtern, pos);
+		applyContracts(fields, cls, extractMeta(cls.meta, ":rubyExtend"), true, cls.isExtern, pos);
 		return fields;
 	}
 
-	static function applyContracts(fields:Array<Field>, entries:Array<MetadataEntry>, staticOnly:Bool, targetIsExtern:Bool, pos:Position):Void {
+	static function applyContracts(fields:Array<Field>, owner:ClassType, entries:Array<MetadataEntry>, staticOnly:Bool, targetIsExtern:Bool, pos:Position):Void {
 		for (entry in entries) {
 			if (entry.params == null || entry.params.length == 0) {
 				Context.error(entry.name + " expects an extension contract type.", entry.pos);
 				continue;
 			}
-			var contract = contractType(entry.params[0], entry.name);
+			var contract = contractType(entry.params[0], owner, entry.name);
 			if (contract == null) {
 				continue;
 			}
-			var sourceFields = staticOnly ? contract.statics.get() : contract.fields.get();
+			var sourceFields = staticOnly && !isRubyModuleContract(contract) ? contract.statics.get() : contract.fields.get();
 			for (source in sourceFields) {
 				if (!source.isPublic || source.name == "new") {
 					continue;
@@ -46,17 +46,33 @@ class RubyExtensionMacro {
 		}
 	}
 
-	static function contractType(expr:Expr, metaName:String):Null<ClassType> {
+	static function contractType(expr:Expr, owner:ClassType, metaName:String):Null<ClassType> {
 		var path = typePathExpr(expr);
 		if (path == null) {
 			Context.error(metaName + " expects a type path such as SluggableMethods.", expr.pos);
 			return null;
 		}
-		return switch (Context.getType(path)) {
+		var resolved = tryGetType(path);
+		if (resolved == null && owner.module != null && owner.module != "" && path.indexOf(".") == -1) {
+			resolved = tryGetType(owner.module + "." + path);
+		}
+		if (resolved == null) {
+			Context.error(metaName + " contract " + path + " could not be resolved.", expr.pos);
+			return null;
+		}
+		return switch (resolved) {
 			case TInst(ref, _): ref.get();
 			case _:
 				Context.error(metaName + " contract " + path + " must resolve to a class or interface.", expr.pos);
 				null;
+		}
+	}
+
+	static function tryGetType(path:String):Null<haxe.macro.Type> {
+		try {
+			return Context.getType(path);
+		} catch (_:Dynamic) {
+			return null;
 		}
 	}
 
@@ -68,7 +84,7 @@ class RubyExtensionMacro {
 			}
 			return;
 		}
-		switch (source.type) {
+		switch (resolvedFieldType(source.type)) {
 			case TFun(args, ret):
 				fields.push({
 					name: source.name,
@@ -105,6 +121,14 @@ class RubyExtensionMacro {
 		return out;
 	}
 
+	static function resolvedFieldType(type:haxe.macro.Type):haxe.macro.Type {
+		return try {
+			Context.follow(type);
+		} catch (_:Dynamic) {
+			type;
+		}
+	}
+
 	static function typePathExpr(expr:Expr):Null<String> {
 		return switch (expr.expr) {
 			case EConst(CIdent(name)): name;
@@ -135,6 +159,14 @@ class RubyExtensionMacro {
 			}
 		}
 		return false;
+	}
+
+	static function isRubyModuleContract(contract:ClassType):Bool {
+		return hasTypeMeta(contract.meta, ":rubyModule") || hasTypeMeta(contract.meta, ":rubyConcern");
+	}
+
+	static function hasTypeMeta(meta:Null<MetaAccess>, name:String):Bool {
+		return meta != null && meta.has != null && meta.has(name);
 	}
 
 	static function extractMeta(meta:Null<MetaAccess>, name:String):Array<MetadataEntry> {

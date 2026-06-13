@@ -182,13 +182,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			moduleRequires.addRequire("action_controller/railtie");
 			return compileRailsControllerImpl(classType, varFields, funcFields, moduleRequires);
 		}
+		var isRubyModule = hasMeta(classType.meta, ":rubyModule");
+		var isRubyConcern = hasMeta(classType.meta, ":rubyConcern");
+		if (isRubyConcern) {
+			requireRegistry.addRequire("active_support/concern");
+			moduleRequires.addRequire("active_support/concern");
+		}
 		var classBody:Array<RubyStatement> = [];
 		classBody.push(typeNameMetadata(fullTypeName(classType.pack, classType.name)));
+		if (isRubyConcern) {
+			classBody.push(RubyRawStatement("extend ActiveSupport::Concern"));
+		}
 		classBody = classBody.concat(rubyExtensionStatements(classType.meta, classType));
 		for (field in varFields) {
 			var mathConstant = mathConstantValue(classType.pack, classType.name, field.field.name);
 			classBody.push(mathConstant == null ? compileVarField(field) : compileMathConstantField(field.field.name, mathConstant));
 		}
+		var concernClassMethods:Array<RubyStatement> = [];
 		for (field in funcFields) {
 			if (field.expr == null) {
 				continue;
@@ -196,7 +206,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
-			classBody.push(compileMethod(field));
+			if ((isRubyModule || isRubyConcern) && !field.isStatic && field.field.name == "new") {
+				Context.error("@:rubyModule/@:rubyConcern types cannot define constructors; Ruby modules are included or extended, not instantiated.", field.field.pos);
+				continue;
+			}
+			if (isRubyConcern && field.isStatic) {
+				concernClassMethods.push(compileMethodAs(field, false));
+			} else {
+				classBody.push(compileMethod(field));
+			}
+		}
+		if (concernClassMethods.length > 0) {
+			classBody.push(RubyRawStatement("class_methods do\n" + indentLines(renderStatements(concernClassMethods), 1).join("\n") + "\nend"));
 		}
 		if (classBody.length == 0) {
 			classBody.push(RubyComment("No Ruby members emitted for " + fullTypeName(classType.pack, classType.name)));
@@ -277,10 +298,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function rubyClassDeclaration(classType:ClassType, body:Array<RubyStatement>):RubyStatement {
 		var constant = RubyNaming.toConstantName(classType.name);
-		if (fullTypeName(classType.pack, classType.name) == "Math") {
-			return RubyModuleDecl(constant, body);
+		if (isRubyModuleType(classType) || fullTypeName(classType.pack, classType.name) == "Math") {
+			return RubyModuleDecl(isRubyModuleType(classType) ? rubyModuleDeclarationName(classType) : constant, body);
 		}
 		return RubyClassDecl(constant, body);
+	}
+
+	static function isRubyModuleType(classType:ClassType):Bool {
+		return hasMeta(classType.meta, ":rubyModule") || hasMeta(classType.meta, ":rubyConcern");
+	}
+
+	static function rubyModuleDeclarationName(classType:ClassType):String {
+		return rubyMixinModuleName(classType.meta) ?? RubyNaming.toConstantName(classType.name);
 	}
 
 	function collectModuleRequires(meta:Null<haxe.macro.Type.MetaAccess>):RequireRegistry {
@@ -367,6 +396,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return null;
 		}
 		var entries = meta.extract(":rubyMixin");
+		if (entries.length == 0) {
+			entries = meta.extract(":rubyModule");
+		}
+		if (entries.length == 0) {
+			entries = meta.extract(":rubyConcern");
+		}
 		if (entries.length == 0 || entries[0].params == null || entries[0].params.length == 0) {
 			return null;
 		}
@@ -426,11 +461,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileMethod(field:ClassFuncData):RubyStatement {
+		return compileMethodAs(field, field.isStatic);
+	}
+
+	static function compileMethodAs(field:ClassFuncData, emitStatic:Bool):RubyStatement {
 		var name = RubyNaming.toMethodName(field.field.name);
-		if (!field.isStatic && field.field.name == "new") {
+		if (!emitStatic && field.field.name == "new") {
 			name = "initialize";
 		}
-		if (field.isStatic) {
+		if (emitStatic) {
 			name = "self." + name;
 		}
 		var args = [for (arg in field.args) arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)];
@@ -1373,6 +1412,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		for (line in lines) {
 			target.push(indent + line);
 		}
+	}
+
+	static function indentLines(lines:Array<String>, indentLevel:Int):Array<String> {
+		var out:Array<String> = [];
+		appendIndentedLines(out, lines, indentLevel);
+		return out;
 	}
 
 	function setRuntimeExtraFile(name:String):Void {

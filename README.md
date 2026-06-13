@@ -50,6 +50,7 @@ Interop is typed through metadata and small std surfaces:
 - `@:rubyKwargs` lowers trailing object literals into Ruby keyword args.
 - `@:rubyBlockArg` lowers trailing function args into Ruby blocks.
 - `@:rubyMixin`, `@:rubyInclude`, `@:rubyPrepend`, and `@:rubyExtend` model Ruby module extension APIs as typed Haxe contracts while emitting normal Ruby `include`/`prepend`/`extend`.
+- `@:rubyModule("Name")` and `@:rubyConcern("Name")` let Haxe author Ruby modules and ActiveSupport::Concern-style modules directly.
 - `ruby.Symbol.of("ready")` lowers to `:ready`.
 
 Raw `__ruby__` injection exists as an escape hatch, but examples and production-style code should prefer typed externs or std/runtime wrappers. The strict boundary defines enforce that policy.

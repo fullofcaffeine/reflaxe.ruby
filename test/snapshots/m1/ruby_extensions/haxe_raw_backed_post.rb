@@ -6,8 +6,8 @@ class HaxeRawBackedPost
   end
   include RawDecorated
   attr_accessor :title
-  def initialize(title__hx19490)
-    self.title = title__hx19490
+  def initialize(title__hx19515)
+    self.title = title__hx19515
   end
   def ruby_class_name()
     return self.class.name

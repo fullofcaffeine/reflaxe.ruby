@@ -6,6 +6,8 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "ruby_extensions");
+const concernFixtureDir = join(root, "test", ".generated", "ruby_extensions_concern_src");
+const concernOutputDir = join(root, "test", ".generated", "ruby_extensions_concern");
 const failureFixtureDir = join(root, "test", ".generated", "ruby_extensions_failure_src");
 const failureOutputDir = join(root, "test", ".generated", "ruby_extensions_failure");
 const reflaxeCandidates = [
@@ -30,6 +32,8 @@ function run(command, args, options = {}) {
 }
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(concernFixtureDir, { force: true, recursive: true });
+rmSync(concernOutputDir, { force: true, recursive: true });
 rmSync(failureFixtureDir, { force: true, recursive: true });
 rmSync(failureOutputDir, { force: true, recursive: true });
 
@@ -83,7 +87,17 @@ writeFileSync(join(supportDir, "extensions.rb"), [
   "",
 ].join("\n"));
 
-for (const file of ["hxruby/core.rb", "haxe_only_library.rb", "haxe_owned_post.rb", "haxe_raw_backed_post.rb", "main.rb", "run.rb"]) {
+for (const file of [
+  "hxruby/core.rb",
+  "haxe_authored_class_methods.rb",
+  "haxe_authored_decorated.rb",
+  "haxe_module_post.rb",
+  "haxe_only_library.rb",
+  "haxe_owned_post.rb",
+  "haxe_raw_backed_post.rb",
+  "main.rb",
+  "run.rb",
+]) {
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     console.error(`Expected generated Ruby file missing: ${fullPath}`);
@@ -102,6 +116,9 @@ const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
 assertOrdered(runRuby, [
   'require_relative "./support/extensions"',
   'require_relative "hxruby/core"',
+  'require_relative "haxe_authored_class_methods"',
+  'require_relative "haxe_authored_decorated"',
+  'require_relative "haxe_module_post"',
   'require_relative "haxe_only_library"',
   'require_relative "haxe_owned_post"',
   'require_relative "haxe_raw_backed_post"',
@@ -127,6 +144,52 @@ for (const unexpected of ["def decorated()", "def self.build_label()"]) {
   }
 }
 
+const haxeAuthoredDecoratedRuby = readFileSync(join(outputDir, "haxe_authored_decorated.rb"), "utf8");
+for (const expected of [
+  "module DecoratedFromHaxe",
+  "def haxe_badge(value",
+  'return ("haxe-module:" + value',
+]) {
+  if (!haxeAuthoredDecoratedRuby.includes(expected)) {
+    console.error(`Expected Haxe-authored module output missing: ${expected}`);
+    process.exit(1);
+  }
+}
+if (haxeAuthoredDecoratedRuby.includes("class DecoratedFromHaxe")) {
+  console.error("Haxe-authored module emitted as a Ruby class.");
+  process.exit(1);
+}
+
+const haxeAuthoredClassMethodsRuby = readFileSync(join(outputDir, "haxe_authored_class_methods.rb"), "utf8");
+for (const expected of [
+  "module ClassMethodsFromHaxe",
+  "def haxe_class_badge(value",
+  'return ("haxe-class:" + value',
+]) {
+  if (!haxeAuthoredClassMethodsRuby.includes(expected)) {
+    console.error(`Expected Haxe-authored class-method module output missing: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const haxeModulePostRuby = readFileSync(join(outputDir, "haxe_module_post.rb"), "utf8");
+for (const expected of [
+  "class HaxeModulePost",
+  "include DecoratedFromHaxe",
+  "extend ClassMethodsFromHaxe",
+]) {
+  if (!haxeModulePostRuby.includes(expected)) {
+    console.error(`Expected Haxe module receiver output missing: ${expected}`);
+    process.exit(1);
+  }
+}
+for (const unexpected of ["def haxe_badge", "def self.haxe_class_badge"]) {
+  if (haxeModulePostRuby.includes(unexpected)) {
+    console.error(`Injected Haxe-authored module stub leaked into receiver Ruby: ${unexpected}`);
+    process.exit(1);
+  }
+}
+
 const rawBackedRuby = readFileSync(join(outputDir, "haxe_raw_backed_post.rb"), "utf8");
 for (const expected of [
   "include RawDecorated",
@@ -146,6 +209,8 @@ for (const expected of [
   /LegacyPost\.find_by_slug/,
   /owned__hx\d+\.decorated\(\)/,
   /HaxeOwnedPost\.build_label/,
+  /module_post__hx\d+\.haxe_badge\("typed"\)/,
+  /HaxeModulePost\.haxe_class_badge\("typed"\)/,
   /raw_backed__hx\d+\.raw_decorated\(\)/,
   /HaxeOnlyLibrary\.headline/,
 ]) {
@@ -162,6 +227,8 @@ const expected = [
   "decorated:Owned Type",
   "label:abc",
   "title:Owned Type",
+  "haxe-module:typed",
+  "haxe-class:typed",
   "raw:Raw Island",
   "HaxeRawBackedPost",
   "haxe:library",
@@ -176,6 +243,7 @@ if (actual !== expected) {
 }
 
 expectConflictFailure();
+expectConcernOutput();
 
 function compile(sourceDir, targetDir, options = {}) {
   return run("haxe", [
@@ -233,6 +301,51 @@ function expectConflictFailure() {
   if (!output.includes(expectedDiagnostic)) {
     console.error(`Missing expected duplicate extension diagnostic: ${expectedDiagnostic}`);
     console.error(output);
+    process.exit(1);
+  }
+}
+
+function expectConcernOutput() {
+  mkdirSync(concernFixtureDir, { recursive: true });
+  writeFileSync(join(concernFixtureDir, "Main.hx"), [
+    "@:rubyConcern(\"Trackable\")",
+    "class Trackable {",
+    "\tpublic function trackingLabel():String {",
+    "\t\treturn \"tracked\";",
+    "\t}",
+    "",
+    "\tpublic static function lookupLabel(value:String):String {",
+    "\t\treturn \"lookup:\" + value;",
+    "\t}",
+    "}",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar concern:Class<Trackable> = Trackable;",
+    "\t\tSys.println(concern != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  compile(concernFixtureDir, concernOutputDir);
+  const concernRuby = readFileSync(join(concernOutputDir, "trackable.rb"), "utf8");
+  for (const expected of [
+    'require "active_support/concern"',
+    "module Trackable",
+    "extend ActiveSupport::Concern",
+    "def tracking_label()",
+    "class_methods do",
+    "def lookup_label(value",
+  ]) {
+    if (!concernRuby.includes(expected)) {
+      console.error(`Expected Haxe-authored concern output missing: ${expected}`);
+      console.error(concernRuby);
+      process.exit(1);
+    }
+  }
+  if (concernRuby.includes("class Trackable")) {
+    console.error("Haxe-authored concern emitted as a Ruby class.");
     process.exit(1);
   }
 }

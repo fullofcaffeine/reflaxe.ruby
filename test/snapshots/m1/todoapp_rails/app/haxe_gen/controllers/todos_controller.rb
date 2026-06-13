@@ -7,12 +7,12 @@ module Controllers
       super()
     end
     def index()
-      todos__hx20878 = Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()
-      self.render(template: "controllers/todos/index", locals: {todos: todos__hx20878, todo_count: todos__hx20878.length, typed_column_count: Models::Todo.typed_column_count(), sample_user: Models::User.first()}, layout: "application")
+      todos__hx20899 = Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()
+      self.render(template: "controllers/todos/index", locals: {todos: todos__hx20899, todo_count: todos__hx20899.length, typed_column_count: Models::Todo.typed_column_count(), sample_user: Models::User.first()}, layout: "application")
     end
     def create()
-      attrs__hx20880 = self.params().require("todo").permit([:title, :notes, :user_id])
-      todo__hx20881 = Models::Todo.create(attrs__hx20880)
+      attrs__hx20901 = self.params().require("todo").permit([:title, :notes, :user_id])
+      todo__hx20902 = Models::Todo.create(attrs__hx20901)
       self.redirect_to(self.todos_path())
     end
   end
