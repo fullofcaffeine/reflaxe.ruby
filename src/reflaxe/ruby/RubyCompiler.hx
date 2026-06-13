@@ -1259,6 +1259,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileSpecialExpr(expr:TypedExpr):Null<RubyExpr> {
+		var activeSupportPayloadField = compileActiveSupportNotificationPayloadField(expr);
+		if (activeSupportPayloadField != null) {
+			return activeSupportPayloadField;
+		}
 		return switch (expr.expr) {
 			case TCall(callee, params):
 				compileSpecialCall(callee, params);
@@ -1310,6 +1314,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var actionCableStaticCall = compileActionCableStaticCall(info, params);
 		if (actionCableStaticCall != null) {
 			return actionCableStaticCall;
+		}
+		var activeSupportNotificationsCall = compileActiveSupportNotificationsCall(info, params);
+		if (activeSupportNotificationsCall != null) {
+			return activeSupportNotificationsCall;
 		}
 		var activeStorageStaticCall = compileActiveStorageStaticCall(info, params);
 		if (activeStorageStaticCall != null) {
@@ -1513,6 +1521,62 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				compileExpr(params[0]);
 			case _:
 				null;
+		}
+	}
+
+	static function compileActiveSupportNotificationsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch [info.owner, info.name] {
+			case ["rails.active_support.Notifications", "instrument"] if (params.length == 3 && isFunctionExpr(params[2])):
+				RubyRawExpr("ActiveSupport::Notifications.instrument(" + printParam(params, 0) + ", "
+					+ activeSupportNotificationPayload(params[1]) + ") " + renderRubyBlock(params[2]));
+			case ["rails.active_support.Notifications", "subscribe"] if (params.length == 2 && isFunctionExpr(params[1])):
+				RubyRawExpr("ActiveSupport::Notifications.subscribe(" + printParam(params, 0) + ") " + renderRubyBlock(params[1]));
+			case ["rails.active_support.Notifications", "monotonicSubscribe"] if (params.length == 2 && isFunctionExpr(params[1])):
+				RubyRawExpr("ActiveSupport::Notifications.monotonic_subscribe(" + printParam(params, 0) + ") " + renderRubyBlock(params[1]));
+			case ["rails.active_support.Notifications", "unsubscribe"] if (params.length == 1):
+				RubyRawExpr("ActiveSupport::Notifications.unsubscribe(" + printParam(params, 0) + ")");
+			case ["rails.active_support.EventName", "named"] if (params.length == 1):
+				compileExpr(params[0]);
+			case _:
+				null;
+		}
+	}
+
+	static function compileActiveSupportNotificationPayloadField(expr:TypedExpr):Null<RubyExpr> {
+		return switch (expr.expr) {
+			case TField(target, access):
+				var receiver = activeSupportNotificationPayloadReceiver(target);
+				receiver == null ? null : RubyRawExpr(receiver + "[" + rubySymbolLiteral(RubyNaming.toMethodName(fieldAccessRawName(access))) + "]");
+			case _:
+				null;
+		}
+	}
+
+	static function activeSupportNotificationPayloadReceiver(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TField(eventExpr, access) if (fieldAccessRawName(access) == "payload" && isActiveSupportNotificationEventExpr(eventExpr)):
+				printInlineExpr(eventExpr) + ".payload";
+			case _:
+				null;
+		}
+	}
+
+	static function isActiveSupportNotificationEventExpr(expr:TypedExpr):Bool {
+		return switch (expr.t) {
+			case TInst(classRef, _):
+				var classType = classRef.get();
+				fullTypeName(classType.pack, classType.name) == "rails.active_support.NotificationEvent";
+			case _:
+				false;
+		}
+	}
+
+	static function activeSupportNotificationPayload(expr:TypedExpr):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				"{" + [for (field in fields) RubyNaming.toMethodName(field.name) + ": " + printInlineExpr(field.expr)].join(", ") + "}";
+			case _:
+				printInlineExpr(expr);
 		}
 	}
 
@@ -1881,7 +1945,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (expr.expr) {
 			case TFunction(fn):
 				var args = [for (arg in fn.args) localName(arg.v)].join(", ");
-				var body = renderStatements(compileFunctionBody(fn.expr));
+				var body = renderStatements(compileRubyBlockBody(fn.expr));
 				if (canRenderInlineBlock(body)) {
 					var prefix = args == "" ? "" : "|" + args + "| ";
 					"{ " + prefix + body[0] + " }";
@@ -1893,6 +1957,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 			case _:
 			"{ |value| " + printInlineExpr(expr) + ".call(value) }";
+		}
+	}
+
+	static function compileRubyBlockBody(expr:TypedExpr):Array<RubyStatement> {
+		var body = compileFunctionBody(expr);
+		if (body.length == 0) {
+			return [RubyNilStatement()];
+		}
+		return switch (body[body.length - 1]) {
+			case RubyReturn(value):
+				body.slice(0, body.length - 1).concat([RubyExprStatement(value == null ? RubyNil : value)]);
+			case _:
+				body;
 		}
 	}
 

@@ -170,20 +170,30 @@ Graduation criteria:
 
 Typed boundary:
 
-- `rails.active_support.Notifications.instrument(name, payload, fn)`.
+- Initial implemented slice: `rails.active_support.EventName<TPayload>`,
+  `Notifications.instrument(...)`, `Notifications.subscribe(...)`,
+  `Notifications.monotonicSubscribe(...)`, and `NotificationEvent<TPayload>`.
+  See [RailsHx ActiveSupport Instrumentation Guide](railshx-instrumentation-guide.md).
 - Typed event-name abstracts for app-owned events.
 - Typed payload typedefs for known app events.
 
 Lowering strategy:
 
 - Lower to `ActiveSupport::Notifications.instrument`.
+- Lower subscriptions to `ActiveSupport::Notifications.subscribe` and
+  `ActiveSupport::Notifications.monotonic_subscribe`.
 - Keep event names as Rails strings, but expose typed constants/abstracts in
   Haxe.
+- Lower typed payload field reads such as `event.payload.listId` to Rails-style
+  `event.payload[:list_id]`.
 
 Integration strategy:
 
-- Runtime smoke subscribes to an event and verifies payload.
-- Static smoke checks no raw string drift in examples.
+- Runtime smoke subscribes to an event and verifies payload when ActiveSupport
+  is locally available.
+- Static smoke checks generated Ruby shape and no raw string drift in examples.
+- Negative Haxe compile tests cover missing publish payload fields and wrong
+  subscriber payload field types.
 
 Graduation criteria:
 

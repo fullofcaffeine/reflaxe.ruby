@@ -615,6 +615,38 @@
       "reason": "Typed ActiveSupport String#squish receiver extension facade using @:rubyPatch and Haxe using."
     },
     {
+      "id": "std.rails.active_support_event_name",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/EventName.hx",
+      "surface": "rails.active_support.EventName",
+      "reason": "Typed ActiveSupport::Notifications event-name token carrying the payload shape while lowering to Rails string event names."
+    },
+    {
+      "id": "std.rails.active_support_notification_event",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/NotificationEvent.hx",
+      "surface": "rails.active_support.NotificationEvent",
+      "reason": "Typed ActiveSupport notification event facade exposing typed payloads plus Rails event metadata such as name, duration, and allocations."
+    },
+    {
+      "id": "std.rails.active_support_notifications",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/Notifications.hx",
+      "surface": "rails.active_support.Notifications",
+      "reason": "Typed ActiveSupport::Notifications publish/subscribe facade for checked event names and payloads."
+    },
+    {
+      "id": "std.rails.active_support_subscription",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/Subscription.hx",
+      "surface": "rails.active_support.Subscription",
+      "reason": "Typed subscription handle returned by ActiveSupport::Notifications subscribe helpers and accepted by unsubscribe."
+    },
+    {
       "id": "std.math",
       "owner": "std",
       "status": "implemented",
