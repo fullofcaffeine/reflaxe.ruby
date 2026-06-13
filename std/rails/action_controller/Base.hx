@@ -7,6 +7,14 @@ class Base {
 		return cast null;
 	}
 
+	public function request():Request {
+		return cast null;
+	}
+
+	public function response():Response {
+		return cast null;
+	}
+
 	public function flash():KeyValueStore<String> {
 		return cast null;
 	}

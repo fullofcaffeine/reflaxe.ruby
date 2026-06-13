@@ -8,6 +8,9 @@ module Controllers
     end
     def create()
       attrs__hx0 = self.params().require("todo").permit([:title, :is_completed])
+      request_method__hx0 = self.request().request_method()
+      request_path__hx0 = self.request().path()
+      current_status__hx0 = self.response().status()
       self.flash()[:notice] = "Todo queued"
       self.session()[:last_todo_title] = attrs__hx0
       remembered__hx0 = self.session()[:last_todo_title]

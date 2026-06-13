@@ -207,6 +207,22 @@
       "reason": "Typed Rails params wrapper for require/permit flows."
     },
     {
+      "id": "std.rails.action_controller_request",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/Request.hx",
+      "surface": "rails.action_controller.Request",
+      "reason": "Typed extern facade over Rails request objects for request_method/path/fullpath/format/xhr access."
+    },
+    {
+      "id": "std.rails.action_controller_response",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/Response.hx",
+      "surface": "rails.action_controller.Response",
+      "reason": "Typed extern facade over Rails response objects for status and media_type access."
+    },
+    {
       "id": "std.rails.action_controller_key_value_store",
       "owner": "std",
       "status": "implemented",

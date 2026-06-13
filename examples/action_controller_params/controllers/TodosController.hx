@@ -12,9 +12,11 @@ import rails.macros.ParamsMacro;
 // to exercise the lower-level API; RailsHx app code should prefer model field
 // refs such as `Todo.f.title` when a model schema is available. `flash`,
 // `session`, and `cookies` expose typed store helpers instead of raw Dynamic
-// bracket access.
+// bracket access. `request()` and `response()` expose typed facades over the
+// Rails runtime objects without wrapping them.
 // IntelliSense: editors should complete `params`, `render`, `redirectTo`, and
-// the `ParamsMacro` entrypoint, plus store methods `get`, `set`, and `delete`.
+// the `ParamsMacro` entrypoint, plus store methods `get`, `set`, and `delete`
+// and request/response helpers such as `requestMethod`, `path`, and `status`.
 // Ruby output: an `ActionController::Base` subclass with normal Rails
 // `params.require(...).permit(...)`, `flash[:key]`, `session[:key]`,
 // `cookies[:key]`, `render(..., status: :status)`, `redirect_to`, and
@@ -23,6 +25,9 @@ import rails.macros.ParamsMacro;
 class TodosController extends rails.action_controller.Base {
 	public function create() {
 		var attrs = ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"]);
+		var requestMethod = request().requestMethod();
+		var requestPath = request().path();
+		var currentStatus = response().status();
 		flash().set("notice", "Todo queued");
 		session().set("lastTodoTitle", attrs);
 		var remembered = session().get("lastTodoTitle");
