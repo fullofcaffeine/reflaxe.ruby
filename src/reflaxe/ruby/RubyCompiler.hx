@@ -94,6 +94,11 @@ typedef RailsTemplateScope = {
 	?formBuilderName:String
 }
 
+typedef LocalNameScope = {
+	names:Map<Int, String>,
+	nextByBase:Map<String, Int>
+}
+
 class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFile, RubyFile> {
 	public var currentCompilationContext:Null<CompilationContext>;
 	var emittedRubyPaths:Array<String> = [];
@@ -105,6 +110,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	var didEmitMain:Bool = false;
 	static var needsDataDefine:Bool = false;
 	static var needsHxException:Bool = false;
+	static var localNameScope:Null<LocalNameScope> = null;
 
 	public function new() {
 		super();
@@ -127,6 +133,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		didEmitMain = false;
 		needsDataDefine = false;
 		needsHxException = false;
+		localNameScope = null;
 	}
 
 	override public function onCompileEnd():Void {
@@ -267,7 +274,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	public function compileExpressionImpl(expr:TypedExpr, topLevel:Bool):Null<RubyExpr> {
-		return compileExpr(expr);
+		return withLocalNameScope([], () -> compileExpr(expr));
 	}
 
 	override public function compileTypedefImpl(typedefType:DefType):Null<RubyFile> {
@@ -474,15 +481,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileMethodAs(field:ClassFuncData, emitStatic:Bool):RubyStatement {
-		var name = RubyNaming.toMethodName(field.field.name);
-		if (!emitStatic && field.field.name == "new") {
-			name = "initialize";
-		}
-		if (emitStatic) {
-			name = "self." + name;
-		}
-		var args = [for (arg in field.args) arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)];
-		return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
+		return withLocalNameScope([for (arg in field.args) if (arg.tvar != null) arg.tvar], () -> {
+			var name = RubyNaming.toMethodName(field.field.name);
+			if (!emitStatic && field.field.name == "new") {
+				name = "initialize";
+			}
+			if (emitStatic) {
+				name = "self." + name;
+			}
+			var args = [for (arg in field.args) arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)];
+			return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
+		});
 	}
 
 	static function compileRailsModelMethod(field:ClassFuncData):RubyStatement {
@@ -493,14 +502,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileVarField(field:ClassVarData):RubyStatement {
-		var name = RubyNaming.toLocalName(field.field.name);
-		if (!field.isStatic) {
-			return RubyRawStatement("attr_accessor :" + name);
-		}
-		var init = field.findDefaultExpr();
-		var initExpr = init == null ? compileUntypedConst(field.getDefaultUntypedExpr()) : compileExpr(init);
-		return RubyRawStatement("class << self\n  attr_accessor :" + name + "\nend\n@" + name + " = "
-			+ reflaxe.ruby.ast.RubyASTPrinter.printExpr(initExpr));
+		return withLocalNameScope([], () -> {
+			var name = RubyNaming.toLocalName(field.field.name);
+			if (!field.isStatic) {
+				return RubyRawStatement("attr_accessor :" + name);
+			}
+			var init = field.findDefaultExpr();
+			var initExpr = init == null ? compileUntypedConst(field.getDefaultUntypedExpr()) : compileExpr(init);
+			return RubyRawStatement("class << self\n  attr_accessor :" + name + "\nend\n@" + name + " = "
+				+ reflaxe.ruby.ast.RubyASTPrinter.printExpr(initExpr));
+		});
 	}
 
 	static function compileMathConstantField(name:String, value:String):RubyStatement {
@@ -3459,8 +3470,36 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return isRubyIdentStart(code) || (code >= 48 && code <= 57);
 	}
 
+	static function withLocalNameScope<T>(args:Array<TVar>, build:Void->T):T {
+		var previous = localNameScope;
+		localNameScope = {names: [], nextByBase: []};
+		for (arg in args) {
+			localName(arg);
+		}
+		try {
+			var result = build();
+			localNameScope = previous;
+			return result;
+		} catch (e:Dynamic) {
+			localNameScope = previous;
+			throw e;
+		}
+	}
+
 	static function localName(v:TVar):String {
-		return RubyNaming.toLocalName(v.name) + "__hx" + v.id;
+		if (localNameScope == null) {
+			localNameScope = {names: [], nextByBase: []};
+		}
+		var existing = localNameScope.names.get(v.id);
+		if (existing != null) {
+			return existing;
+		}
+		var base = RubyNaming.toLocalName(v.name);
+		var next = localNameScope.nextByBase.exists(base) ? localNameScope.nextByBase.get(base) : 0;
+		localNameScope.nextByBase.set(base, next + 1);
+		var name = base + "__hx" + Std.string(next);
+		localNameScope.names.set(v.id, name);
+		return name;
 	}
 
 	static function loopIteratorName(v:TVar, iterable:TypedExpr):String {

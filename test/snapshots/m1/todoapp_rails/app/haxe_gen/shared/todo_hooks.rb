@@ -5,17 +5,17 @@ module Shared
     def self.__hx_name()
       "shared.TodoHooks"
     end
-    def self.class_selector(value__hx21144)
-      return ("." + value__hx21144)
+    def self.class_selector(value__hx0)
+      return ("." + value__hx0)
     end
-    def self.id_selector(value__hx21145)
-      return ("#" + value__hx21145)
+    def self.id_selector(value__hx0)
+      return ("#" + value__hx0)
     end
-    def self.attr_selector(value__hx21146)
-      return (("[" + value__hx21146) + "]")
+    def self.attr_selector(value__hx0)
+      return (("[" + value__hx0) + "]")
     end
-    def self.anchor_href(value__hx21147)
-      return ("#" + value__hx21147)
+    def self.anchor_href(value__hx0)
+      return ("#" + value__hx0)
     end
   end
 end

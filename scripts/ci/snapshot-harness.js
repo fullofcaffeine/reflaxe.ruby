@@ -255,4 +255,12 @@ function assertStableText(label, content) {
     console.error(`Snapshot contains workspace-local absolute path: ${label}`);
     process.exit(1);
   }
+  const globalLookingTemp = content.match(/__hx\d{4,}/);
+  if (globalLookingTemp) {
+    console.error(
+      `Snapshot contains global-looking Haxe temp suffix ${globalLookingTemp[0]}: ${label}`
+    );
+    console.error("Temp locals should use deterministic per-scope suffixes like __hx0.");
+    process.exit(1);
+  }
 }
