@@ -13,16 +13,33 @@ import rails.macros.ParamsMacro;
 // refs such as `Todo.f.title` when a model schema is available. `flash`,
 // `session`, and `cookies` expose typed store helpers instead of raw Dynamic
 // bracket access. `request()` and `response()` expose typed facades over the
-// Rails runtime objects without wrapping them.
+// Rails runtime objects without wrapping them. `@:beforeAction`,
+// `@:afterAction`, and `@:railsFilter(...)` annotate real Haxe methods, so the
+// callback method exists at compile time and Rails receives normal symbols.
 // IntelliSense: editors should complete `params`, `render`, `redirectTo`, and
 // the `ParamsMacro` entrypoint, plus store methods `get`, `set`, and `delete`
 // and request/response helpers such as `requestMethod`, `path`, and `status`.
 // Ruby output: an `ActionController::Base` subclass with normal Rails
 // `params.require(...).permit(...)`, `flash[:key]`, `session[:key]`,
-// `cookies[:key]`, `render(..., status: :status)`, `redirect_to`, and
-// `head(:status)` calls.
+// `cookies[:key]`, `render(..., status: :status)`, `redirect_to`,
+// `head(:status)`, and Rails filter declarations.
 @:railsController
 class TodosController extends rails.action_controller.Base {
+	@:beforeAction({only: ["create"]})
+	function authenticateUser() {
+		var method = request().requestMethod();
+	}
+
+	@:afterAction({only: ["create"]})
+	function auditResponse() {
+		var status = response().status();
+	}
+
+	@:railsFilter("before_action", {except: ["index"]})
+	function loadTenant() {
+		var path = request().path();
+	}
+
 	public function create() {
 		var attrs = ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"]);
 		var requestMethod = request().requestMethod();

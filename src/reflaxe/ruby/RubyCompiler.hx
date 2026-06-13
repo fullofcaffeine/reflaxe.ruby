@@ -581,6 +581,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	function compileRailsControllerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
+		body = body.concat(railsControllerFilterLines(funcFields));
 		for (field in varFields) {
 			body = body.concat(renderStatements([compileVarField(field)]));
 		}
@@ -610,6 +611,124 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			modulePath: classType.pack == null ? [] : classType.pack.copy(),
 			statements: statements
 		};
+	}
+
+	static function railsControllerFilterLines(funcFields:Array<ClassFuncData>):Array<String> {
+		var lines:Array<String> = [];
+		for (field in funcFields) {
+			for (filter in railsControllerFilters(field)) {
+				lines.push(filter.kind + " " + rubySymbolLiteral(filter.method) + filter.options);
+			}
+		}
+		return lines;
+	}
+
+	static function railsControllerFilters(field:ClassFuncData):Array<{kind:String, method:String, options:String}> {
+		var filters:Array<{kind:String, method:String, options:String}> = [];
+		var meta = field.field.meta;
+		if (meta == null || meta.extract == null) {
+			return filters;
+		}
+		var pairs:Array<{metaName:String, rubyName:String}> = [
+			{metaName: ":beforeAction", rubyName: "before_action"},
+			{metaName: ":afterAction", rubyName: "after_action"},
+			{metaName: ":aroundAction", rubyName: "around_action"}
+		];
+		for (pair in pairs) {
+			for (entry in meta.extract(pair.metaName)) {
+				railsControllerValidateFilter(field, pair.metaName);
+				filters.push({
+					kind: pair.rubyName,
+					method: RubyNaming.toMethodName(field.field.name),
+					options: railsControllerFilterOptions(entry.params)
+				});
+			}
+		}
+		for (entry in meta.extract(":railsFilter")) {
+			railsControllerValidateFilter(field, ":railsFilter");
+			if (entry.params == null || entry.params.length == 0) {
+				Context.error("@:railsFilter expects a Rails filter name such as \"before_action\".", field.field.pos);
+				continue;
+			}
+			var kind = switch (entry.params[0].expr) {
+				case EConst(CString(value, _)) if (isSupportedRailsControllerFilter(value)):
+					RubyNaming.toMethodName(value);
+				case EConst(CString(value, _)):
+					Context.error('@:railsFilter unsupported filter "$value". Use before_action, after_action, or around_action.', entry.params[0].pos);
+					"before_action";
+				case _:
+					Context.error("@:railsFilter first argument must be a string literal.", entry.params[0].pos);
+					"before_action";
+			}
+			filters.push({
+				kind: kind,
+				method: RubyNaming.toMethodName(field.field.name),
+				options: railsControllerFilterOptions(entry.params.slice(1))
+			});
+		}
+		return filters;
+	}
+
+	static function railsControllerValidateFilter(field:ClassFuncData, metaName:String):Void {
+		if (field.isStatic) {
+			Context.error(metaName + " must annotate an instance method.", field.field.pos);
+		}
+		if (field.field.name == "new") {
+			Context.error(metaName + " cannot annotate a constructor.", field.field.pos);
+		}
+		if (field.args.length > 0) {
+			Context.error(metaName + " callback method must not declare Haxe arguments; Rails calls controller filters without Haxe parameters.", field.field.pos);
+		}
+	}
+
+	static function isSupportedRailsControllerFilter(value:String):Bool {
+		var normalized = RubyNaming.toMethodName(value);
+		return normalized == "before_action" || normalized == "after_action" || normalized == "around_action";
+	}
+
+	static function railsControllerFilterOptions(params:Null<Array<haxe.macro.Expr>>):String {
+		if (params == null || params.length == 0) {
+			return "";
+		}
+		var options = switch (params[0].expr) {
+			case EObjectDecl(fields):
+				[for (field in fields) railsControllerFilterOption(field.field, field.expr)];
+			case _:
+				Context.error("@:beforeAction/@:afterAction/@:aroundAction filter options must be an object literal.", params[0].pos);
+				[];
+		}
+		return options.length == 0 ? "" : ", " + options.join(", ");
+	}
+
+	static function railsControllerFilterOption(name:String, expr:haxe.macro.Expr):String {
+		var rubyName = RubyNaming.toMethodName(name);
+		var value = switch (name) {
+			case "only" | "except":
+				railsControllerActionListOption(expr);
+			case _:
+				metadataValueCode(expr);
+		}
+		return rubyName + ": " + value;
+	}
+
+	static function railsControllerActionListOption(expr:haxe.macro.Expr):String {
+		return switch (expr.expr) {
+			case EArrayDecl(values):
+				"[" + [for (value in values) railsControllerActionSymbolOption(value)].join(", ") + "]";
+			case EConst(CString(value, _)):
+				rubySymbolLiteral(RubyNaming.toMethodName(value));
+			case _:
+				metadataValueCode(expr);
+		}
+	}
+
+	static function railsControllerActionSymbolOption(expr:haxe.macro.Expr):String {
+		return switch (expr.expr) {
+			case EConst(CString(value, _)):
+				rubySymbolLiteral(RubyNaming.toMethodName(value));
+			case _:
+				metadataValueCode(expr);
+		}
 	}
 
 	function compileRailsModelImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {

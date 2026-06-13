@@ -3,8 +3,20 @@
 require "action_controller/railtie"
 module Controllers
   class TodosController < ActionController::Base
+    before_action :authenticate_user, only: [:create]
+    after_action :audit_response, only: [:create]
+    before_action :load_tenant, except: [:index]
     def initialize()
       super()
+    end
+    def authenticate_user()
+      method__hx0 = self.request().request_method()
+    end
+    def audit_response()
+      status__hx0 = self.response().status()
+    end
+    def load_tenant()
+      path__hx0 = self.request().path()
     end
     def create()
       attrs__hx0 = self.params().require("todo").permit([:title, :is_completed])
