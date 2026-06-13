@@ -62,6 +62,8 @@ const invalidFindSourceDir = join(root, "test", ".generated", "active_record_mod
 const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
 const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
 const invalidFindByOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_out");
+const invalidExistsSourceDir = join(root, "test", ".generated", "active_record_model_invalid_exists_src");
+const invalidExistsOutputDir = join(root, "test", ".generated", "active_record_model_invalid_exists_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -140,6 +142,8 @@ rmSync(invalidFindSourceDir, { force: true, recursive: true });
 rmSync(invalidFindOutputDir, { force: true, recursive: true });
 rmSync(invalidFindBySourceDir, { force: true, recursive: true });
 rmSync(invalidFindByOutputDir, { force: true, recursive: true });
+rmSync(invalidExistsSourceDir, { force: true, recursive: true });
+rmSync(invalidExistsOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile active_record_model through Reflaxe.");
@@ -252,6 +256,11 @@ for (const expected of [
   'Models::Todo.find_by(external_id: "ship-1")',
   'Models::Todo.where(title: "ship").find_by(completed: false)',
   'Models::Todo.where(title: "assigned").order(title: :asc).limit(5)',
+  'Models::Todo.exists?(external_id: "assigned-1")',
+  'assigned__hx',
+  'exists?(status: "open")',
+  'Models::Todo.where(status: "open").count()',
+  'Models::Todo.count()',
   'assigned__hx',
   'find_by(external_id: "assigned-1")',
   "first__hx",
@@ -270,6 +279,8 @@ for (const expected of [
   "Todo.f.title.asc()",
   "Todo.a.user",
   "findBy({externalId",
+  "exists({externalId",
+  ".count()",
   ".toArray()",
   "Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()",
 ]) {
@@ -286,6 +297,8 @@ for (const expected of [
   "Todo.associations.user",
   "Todo.incomplete().includes(Todo.a.user)",
   "AuditLog.where({eventCount: 1})",
+  "Todo.exists({externalId",
+  "Todo.count()",
   "Todo.includes(User.a.todos)",
 ]) {
   if (!exampleReadme.includes(expected)) {
@@ -322,6 +335,7 @@ expectInvalidCallbackNameFailure();
 expectInvalidCallbackFieldFailure();
 expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
+expectInvalidExistsFieldFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -372,6 +386,27 @@ function expectInvalidWhereFieldFailure() {
     invalidWhereSourceDir,
     invalidWhereOutputDir,
     "Invalid ActiveRecord where field compiled successfully.",
+    "has extra field missing"
+  );
+}
+
+function expectInvalidExistsFieldFailure() {
+  mkdirSync(invalidExistsSourceDir, { recursive: true });
+  writeFileSync(join(invalidExistsSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.exists({missing: \"nope\"});",
+    "\t\tSys.println(bad);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidExistsSourceDir,
+    invalidExistsOutputDir,
+    "Invalid ActiveRecord exists field compiled successfully.",
     "has extra field missing"
   );
 }

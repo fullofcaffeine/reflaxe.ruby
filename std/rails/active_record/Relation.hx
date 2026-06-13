@@ -14,6 +14,9 @@ extern class Relation<TModel, TCriteria> {
 	public function find(id:Dynamic):TModel;
 	@:native("find_by")
 	public function findBy(criteria:TCriteria):Null<TModel>;
+	@:native("exists?")
+	public function exists(?criteria:TCriteria):Bool;
+	public function count():Int;
 	public function first():Null<TModel>;
 
 	@:native("to_a")

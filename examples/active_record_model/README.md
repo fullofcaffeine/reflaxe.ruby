@@ -14,7 +14,7 @@ npm run test:active-record-model
 The smoke compiles the example, checks generated Rails-shaped Ruby, and runs
 negative compile tests for invalid fields, invalid value types, wrong association
 owners, invalid association metadata, invalid callbacks, and invalid `find` /
-`findBy` usage.
+`findBy` / `exists` usage.
 
 ## Main Query Shapes
 
@@ -117,6 +117,36 @@ Models::Todo.find_by(external_id: "ship-1")
 Models::Todo.where(title: "ship").find_by(completed: false)
 ```
 
+## Exists And Count
+
+`exists` is criteria typed and lowers to Rails `exists?`:
+
+```haxe
+var hasAssigned = Todo.exists({externalId: "assigned-1"});
+var hasOpenAssigned = assigned.exists({status: "open"});
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.exists?(external_id: "assigned-1")
+assigned.exists?(status: "open")
+```
+
+`count()` stays Rails-shaped on both models and relations:
+
+```haxe
+var openCount = Todo.where({status: "open"}).count();
+var totalCount = Todo.count();
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(status: "open").count()
+Models::Todo.count()
+```
+
 ## Different Models
 
 The fixture includes `AuditLog` to show snake_case lowering for non-trivial Haxe
@@ -177,6 +207,7 @@ Todo.where({title: "ship"}).where({missing: "nope"});
 Todo.includes(User.a.todos);
 Todo.find("nope");
 Todo.findBy({missing: "nope"});
+Todo.exists({missing: "nope"});
 ```
 
 The goal is not to hide Rails. The goal is to keep the Rails API shape while

@@ -7,7 +7,7 @@ field value types, primary-key types, and relation return shapes.
 The rule of thumb is simple:
 
 - Keep query chains Rails-shaped: `where`, `includes`, `joins`, `order`, `limit`,
-  `find`, `findBy`, `first`, and `toArray`.
+  `find`, `findBy`, `exists`, `count`, `first`, and `toArray`.
 - Put type information at the Haxe boundary: `@:railsColumn`, associations, field
   refs such as `Todo.f.title`, and association refs such as `Todo.a.user`.
 - Let the compiler lower Haxe names to Rails names: `externalId` becomes
@@ -170,6 +170,42 @@ Generated Ruby:
 Models::Todo.find(1)
 Models::Todo.find_by(external_id: "ship-1")
 Models::Todo.where(title: "ship").find_by(completed: false)
+```
+
+## Existence And Counts
+
+Use `exists({...})` when you need a typed Rails `exists?` check without loading a
+record:
+
+```haxe
+var hasAssigned = Todo.exists({externalId: "assigned-1"});
+var hasOpenAssigned = Todo
+	.where({title: "assigned"})
+	.exists({status: "open"});
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.exists?(external_id: "assigned-1")
+Models::Todo.where(title: "assigned").exists?(status: "open")
+```
+
+`exists(...)` uses the same criteria type as `where(...)` and `findBy(...)`, so
+unknown fields and wrong value types fail during Haxe compilation.
+
+Use `count()` for Rails-native counts on models or composed relations:
+
+```haxe
+var openCount = Todo.where({status: "open"}).count();
+var totalCount = Todo.count();
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(status: "open").count()
+Models::Todo.count()
 ```
 
 ## Loading For Controllers And Templates

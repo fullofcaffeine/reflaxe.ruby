@@ -22,6 +22,8 @@ class ModelMacro {
 		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
 		addStub(fields, "findBy", criteriaType, nullableSelf, pos);
+		addOptionalStub(fields, "exists", criteriaType, macro : Bool, "criteria", "exists?", pos);
+		addNoArgStub(fields, "count", macro : Int, pos);
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
@@ -898,6 +900,28 @@ class ModelMacro {
 				expr: macro return cast null
 			}),
 			meta: [
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addOptionalStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, nativeName:String, pos:Position):Void {
+		for (field in fields) {
+			if (field.name == name) {
+				return;
+			}
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				args: [{name: argName, type: argType, opt: true}],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{nativeName}], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos

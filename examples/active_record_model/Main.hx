@@ -5,7 +5,8 @@ import models.User;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `order`, `limit`, `find`, `findBy`) authored as typed Haxe calls.
+// `order`, `limit`, `find`, `findBy`, `exists`, and `count`) authored as
+// typed Haxe calls.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -24,6 +25,10 @@ class Main {
 		var foundBy:Null<Todo> = Todo.findBy({externalId: "ship-1"});
 		var relationFoundBy:Null<Todo> = Todo.where({title: "ship"}).findBy({completed: false});
 		var assigned = Todo.where({title: "assigned"}).order(Todo.f.title.asc()).limit(5);
+		var hasAssigned:Bool = Todo.exists({externalId: "assigned-1"});
+		var hasOpenAssigned:Bool = assigned.exists({status: "open"});
+		var openCount:Int = Todo.where({status: "open"}).count();
+		var totalCount:Int = Todo.count();
 		var assignedFoundBy:Null<Todo> = assigned.findBy({externalId: "assigned-1"});
 		var first:Null<Todo> = found.first();
 		Sys.println(found == null);
@@ -34,6 +39,10 @@ class Main {
 		Sys.println(loaded == null);
 		Sys.println(foundBy == null);
 		Sys.println(relationFoundBy == null);
+		Sys.println(hasAssigned);
+		Sys.println(hasOpenAssigned);
+		Sys.println(openCount >= 0);
+		Sys.println(totalCount >= 0);
 		Sys.println(assignedFoundBy == null);
 		Sys.println(first == null);
 	}
