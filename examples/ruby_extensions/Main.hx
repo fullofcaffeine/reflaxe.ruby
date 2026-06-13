@@ -12,7 +12,9 @@
 // typed public APIs even when implementation is Ruby-owned.
 // Ruby output: externs remain type-only, Haxe-owned classes emit normal
 // `include`/`extend`, and injected type stubs do not leak into generated Ruby.
-//
+
+using StringMonkeyPatch;
+
 // Scenario 1: consume an existing Ruby module that adds instance methods.
 //
 // `Sluggable` is implemented in Ruby, not Haxe. This extern interface is the
@@ -161,7 +163,15 @@ class HaxeRawBackedPost {
 	}
 }
 
-// Scenario 10: create and consume a pure Haxe library with no Ruby support file.
+// Scenario 10: consume monkey-patched Ruby receiver methods through `using`.
+//
+// `StringMonkeyPatch` is an extern `@:rubyPatch(String)` contract in
+// `StringMonkeyPatch.hx`. It models methods that Ruby adds directly to `String`
+// by reopening the class. Haxe gets completion/type-checking for
+// `"value".headline()` and `"value".surround(...)`; generated Ruby calls those
+// patched receiver methods directly, without a wrapper class or helper object.
+
+// Scenario 11: create and consume a pure Haxe library with no Ruby support file.
 //
 // This class does not wrap Ruby and does not use `__ruby__`. It proves that the
 // same project can mix pure Haxe-owned Ruby output with typed wrappers around
@@ -201,6 +211,12 @@ class Main {
 		var rawBacked = new HaxeRawBackedPost("Raw Island");
 		Sys.println(rawBacked.rawDecorated());
 		Sys.println(rawBacked.rubyClassName());
+
+		// Monkey-patch contract: Haxe `using` makes Ruby receiver extensions
+		// discoverable and checked, then the compiler lowers to direct calls.
+		Sys.println("typed patch".headline());
+		Sys.println("typed patch".surround("[", "]"));
+		Sys.println(StringMonkeyPatch.headline("direct patch"));
 
 		// Pure Haxe library: no Ruby source required.
 		Sys.println(HaxeOnlyLibrary.headline("library"));

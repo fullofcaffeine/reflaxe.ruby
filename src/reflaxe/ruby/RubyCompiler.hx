@@ -5,6 +5,7 @@ import haxe.io.Path;
 import haxe.macro.Context;
 import haxe.macro.Expr.Position;
 import haxe.macro.Type.AbstractType;
+import haxe.macro.Type.ClassField;
 import haxe.macro.Type.ClassType;
 import haxe.macro.Type.DefType;
 import haxe.macro.Type.EnumType;
@@ -923,6 +924,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (injected != null) {
 			return injected;
 		}
+		var rubyPatchCall = compileRubyPatchCall(callee, params);
+		if (rubyPatchCall != null) {
+			return rubyPatchCall;
+		}
 		if (isIdentifierCallee(callee, "__is__")) {
 			return RubyCall(RubyLocal("HXRuby"), "is_of_type", [compileParam(params, 0), compileParam(params, 1)]);
 		}
@@ -1163,15 +1168,46 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyInteropCall(target:TypedExpr, access:haxe.macro.Type.FieldAccess, params:Array<TypedExpr>):RubyExpr {
+		return compileRubyReceiverCall(target, fieldAccessName(access), params, hasFieldAccessMeta(access, ":rubyKwargs"), hasFieldAccessMeta(access, ":rubyBlockArg"));
+	}
+
+	static function compileRubyPatchCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		var info = rubyPatchCallInfo(callee);
+		if (info == null) {
+			return null;
+		}
+		if (params.length == 0) {
+			Context.error("@:rubyPatch method " + info.className + "." + info.field.name + " requires the receiver as its first argument.", callee.pos);
+			return RubyNil;
+		}
+		var receiver = params[0];
+		var remaining = params.slice(1);
+		return compileRubyReceiverCall(receiver, rubyFieldName(info.field.name, info.field.meta), remaining, hasMeta(info.field.meta, ":rubyKwargs"), hasMeta(info.field.meta, ":rubyBlockArg"));
+	}
+
+	static function rubyPatchCallInfo(callee:TypedExpr):Null<{className:String, field:ClassField}> {
+		return switch (callee.expr) {
+			case TField(_, FStatic(classRef, fieldRef)):
+				var classType = classRef.get();
+				if (!hasMeta(classType.meta, ":rubyPatch")) {
+					null;
+				} else {
+					{className: fullTypeName(classType.pack, classType.name), field: fieldRef.get()};
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function compileRubyReceiverCall(target:TypedExpr, method:String, params:Array<TypedExpr>, useKwargs:Bool, useBlockArg:Bool):RubyExpr {
 		var receiver = reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(target));
-		var method = fieldAccessName(access);
 		var remaining = params.copy();
 		var block:Null<TypedExpr> = null;
-		if (hasFieldAccessMeta(access, ":rubyBlockArg") && remaining.length > 0 && isFunctionExpr(remaining[remaining.length - 1])) {
+		if (useBlockArg && remaining.length > 0 && isFunctionExpr(remaining[remaining.length - 1])) {
 			block = remaining.pop();
 		}
 		var keywordSource:Null<TypedExpr> = null;
-		if (hasFieldAccessMeta(access, ":rubyKwargs") && remaining.length > 0 && isObjectDeclExpr(remaining[remaining.length - 1])) {
+		if (useKwargs && remaining.length > 0 && isObjectDeclExpr(remaining[remaining.length - 1])) {
 			keywordSource = remaining.pop();
 		}
 		var args = [for (param in remaining) printInlineExpr(param)];

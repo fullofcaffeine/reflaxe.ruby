@@ -48,6 +48,29 @@ end
 
 For extern targets, the injected members are type-only and no Ruby file is emitted. For Haxe-owned targets, the compiler emits `include`/`prepend`/`extend` and erases the injected stubs from the generated Ruby body.
 
+For monkey-patched receiver methods, use `@:rubyPatch(ReceiverType)` plus Haxe `using`:
+
+```haxe
+using ActiveSupportStringPatch;
+
+@:rubyRequire("active_support/core_ext/object/blank")
+@:rubyPatch(String)
+extern class ActiveSupportStringPatch {
+	@:native("blank?")
+	public static function blank(receiver:String):Bool;
+}
+
+var isBlank = "".blank();
+```
+
+Haxe type-checks `blank()` as a normal static extension method on `String`. Generated Ruby is direct receiver dispatch:
+
+```ruby
+"".blank?()
+```
+
+Patch contracts are for consuming existing Ruby receiver extensions. They must be `extern` classes whose public members are static functions with the patched receiver as the first argument. Use `@:native` when Ruby method names contain punctuation or do not fit Haxe naming.
+
 ## Simplest Cases
 
 Simple instance mixin:
@@ -90,6 +113,22 @@ extern interface InstrumentedSaveInstance {
 @:rubyPrepend(InstrumentedSaveInstance)
 class Invoice {}
 ```
+
+Simple monkey-patch contract:
+
+```haxe
+using StringMonkeyPatch;
+
+@:rubyPatch(String)
+extern class StringMonkeyPatch {
+	public static function headline(receiver:String):String;
+	public static function surround(receiver:String, left:String, right:String):String;
+}
+
+var value = "ship".surround("[", "]");
+```
+
+The first argument is the receiver that Ruby will dispatch on. Editors should complete `headline()` and `surround(...)` on `String` values after the `using` import.
 
 ## Wrap An Existing Ruby Library
 
@@ -239,6 +278,8 @@ The generator should produce Haxe externs and extension contracts, never uncheck
 
 Filesystem-backed macros/generators must fail closed. If an API references `app/models`, `app/views`, `sig`, `rbs_collection`, a gem path, or any other file/directory source, missing paths must be compile/generator errors by default. Provide an explicit unchecked escape hatch only when there is a real synthetic/test/adoption reason, and name it accordingly (`external`, `unchecked`, or similar).
 
+Rails and Ruby std facades should use the same rule. For example, ActiveSupport-style receiver extensions should usually start as generated or hand-written `@:rubyPatch` contracts; module/Concern APIs should use `@:rubyMixin`/`@:rubyInclude`/`@:rubyExtend`; file-backed Rails components should use checked template/model/route macros. Prefer local reference sources in `../haxe.compilerdev.reference/rails` and `../haxe.compilerdev.reference/ruby` when designing these wrappers so the Haxe API stays typed while the output remains recognizable Ruby/Rails.
+
 ## Current Example
 
 `examples/ruby_extensions` demonstrates:
@@ -248,6 +289,7 @@ Filesystem-backed macros/generators must fail closed. If an API references `app/
 - generating a Haxe-owned class that emits normal `include` and `extend`;
 - authoring Haxe-owned Ruby modules with `@:rubyModule`;
 - statically verifying `@:rubyConcern` output for ActiveSupport::Concern-style modules;
+- consuming monkey-patched receiver methods through `@:rubyPatch` and Haxe `using`;
 - keeping injected Haxe type stubs out of generated Ruby;
 - using a small `@:rubyAllowRaw` type for a deliberately raw-backed method.
 
@@ -259,8 +301,7 @@ npm run test:ruby-extensions
 
 ## Follow-Up Work
 
-The current slice supports typed mixin consumption, Haxe-owned `include`/`extend`/`prepend` emission, Haxe-authored Ruby modules, and initial Haxe-authored ActiveSupport::Concern output. Remaining work:
+The current slice supports typed mixin consumption, Haxe-owned `include`/`extend`/`prepend` emission, Haxe-authored Ruby modules, initial Haxe-authored ActiveSupport::Concern output, and typed monkey-patch/`using` contracts. Remaining work:
 
-- support typed `using`/monkey-patch extension contracts;
 - add generator-assisted contract discovery from Ruby source, RBS, YARD, Rails schema/routes, and optional LLM suggestions;
 - add richer validation/runtime examples for dynamic DSLs such as Rails scopes, callbacks, and gem-specific metaprogramming.

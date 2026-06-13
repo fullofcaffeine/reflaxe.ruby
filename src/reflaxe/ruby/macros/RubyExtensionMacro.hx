@@ -23,7 +23,34 @@ class RubyExtensionMacro {
 		applyContracts(fields, cls, extractMeta(cls.meta, ":rubyInclude"), false, cls.isExtern, pos);
 		applyContracts(fields, cls, extractMeta(cls.meta, ":rubyPrepend"), false, cls.isExtern, pos);
 		applyContracts(fields, cls, extractMeta(cls.meta, ":rubyExtend"), true, cls.isExtern, pos);
+		validateRubyPatch(fields, cls);
 		return fields;
+	}
+
+	static function validateRubyPatch(fields:Array<Field>, cls:ClassType):Void {
+		if (!hasTypeMeta(cls.meta, ":rubyPatch")) {
+			return;
+		}
+		if (!cls.isExtern) {
+			Context.error("@:rubyPatch is a typed contract for existing Ruby receiver methods and must be used on an extern class.", cls.pos);
+		}
+		for (field in fields) {
+			if (!isPublic(field.access) || field.name == "new") {
+				continue;
+			}
+			if (!isStatic(field.access)) {
+				Context.error("@:rubyPatch contract field " + field.name + " must be static so Haxe `using` can type-check it as an extension method.", field.pos);
+				continue;
+			}
+			switch (field.kind) {
+				case FFun(fn):
+					if (fn.args.length == 0) {
+						Context.error("@:rubyPatch contract method " + field.name + " must declare the patched receiver as its first argument.", field.pos);
+					}
+				case _:
+					Context.error("@:rubyPatch contract field " + field.name + " must be a static function.", field.pos);
+			}
+		}
 	}
 
 	static function applyContracts(fields:Array<Field>, owner:ClassType, entries:Array<MetadataEntry>, staticOnly:Bool, targetIsExtern:Bool, pos:Position):Void {
@@ -147,6 +174,24 @@ class RubyExtensionMacro {
 			}
 		}
 		return null;
+	}
+
+	static function isPublic(access:Array<haxe.macro.Expr.Access>):Bool {
+		for (item in access) {
+			if (item == APublic) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static function isStatic(access:Array<haxe.macro.Expr.Access>):Bool {
+		for (item in access) {
+			if (item == AStatic) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	static function hasMeta(meta:Null<Metadata>, name:String):Bool {

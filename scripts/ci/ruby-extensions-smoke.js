@@ -10,6 +10,10 @@ const concernFixtureDir = join(root, "test", ".generated", "ruby_extensions_conc
 const concernOutputDir = join(root, "test", ".generated", "ruby_extensions_concern");
 const failureFixtureDir = join(root, "test", ".generated", "ruby_extensions_failure_src");
 const failureOutputDir = join(root, "test", ".generated", "ruby_extensions_failure");
+const patchFailureFixtureDir = join(root, "test", ".generated", "ruby_extensions_patch_failure_src");
+const patchFailureOutputDir = join(root, "test", ".generated", "ruby_extensions_patch_failure");
+const patchOnlyFixtureDir = join(root, "test", ".generated", "ruby_extensions_patch_only_src");
+const patchOnlyOutputDir = join(root, "test", ".generated", "ruby_extensions_patch_only");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -36,6 +40,10 @@ rmSync(concernFixtureDir, { force: true, recursive: true });
 rmSync(concernOutputDir, { force: true, recursive: true });
 rmSync(failureFixtureDir, { force: true, recursive: true });
 rmSync(failureOutputDir, { force: true, recursive: true });
+rmSync(patchFailureFixtureDir, { force: true, recursive: true });
+rmSync(patchFailureOutputDir, { force: true, recursive: true });
+rmSync(patchOnlyFixtureDir, { force: true, recursive: true });
+rmSync(patchOnlyOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -85,6 +93,16 @@ writeFileSync(join(supportDir, "extensions.rb"), [
   "  end",
   "end",
   "",
+  "class String",
+  "  def headline",
+  "    \"headline:#{self}\"",
+  "  end",
+  "",
+  "  def surround(left, right)",
+  "    \"#{left}#{self}#{right}\"",
+  "  end",
+  "end",
+  "",
 ].join("\n"));
 
 for (const file of [
@@ -105,7 +123,7 @@ for (const file of [
   }
 }
 
-for (const file of ["legacy_post.rb", "sluggable_instance.rb", "slug_search_class_methods.rb"]) {
+for (const file of ["legacy_post.rb", "sluggable_instance.rb", "slug_search_class_methods.rb", "string_monkey_patch.rb"]) {
   if (existsSync(join(outputDir, file))) {
     console.error(`Extern extension contract should not be emitted: ${file}`);
     process.exit(1);
@@ -212,6 +230,9 @@ for (const expected of [
   /module_post__hx\d+\.haxe_badge\("typed"\)/,
   /HaxeModulePost\.haxe_class_badge\("typed"\)/,
   /raw_backed__hx\d+\.raw_decorated\(\)/,
+  /"typed patch"\.headline\(\)/,
+  /"typed patch"\.surround\("\[", "\]"\)/,
+  /"direct patch"\.headline\(\)/,
   /HaxeOnlyLibrary\.headline/,
 ]) {
   if (!expected.test(mainRuby)) {
@@ -231,6 +252,9 @@ const expected = [
   "haxe-class:typed",
   "raw:Raw Island",
   "HaxeRawBackedPost",
+  "headline:typed patch",
+  "[typed patch]",
+  "headline:direct patch",
   "haxe:library",
   "",
 ].join("\n");
@@ -243,6 +267,8 @@ if (actual !== expected) {
 }
 
 expectConflictFailure();
+expectPatchContractFailure();
+expectPatchOnlyRequireOutput();
 expectConcernOutput();
 
 function compile(sourceDir, targetDir, options = {}) {
@@ -301,6 +327,73 @@ function expectConflictFailure() {
   if (!output.includes(expectedDiagnostic)) {
     console.error(`Missing expected duplicate extension diagnostic: ${expectedDiagnostic}`);
     console.error(output);
+    process.exit(1);
+  }
+}
+
+function expectPatchContractFailure() {
+  mkdirSync(patchFailureFixtureDir, { recursive: true });
+  writeFileSync(join(patchFailureFixtureDir, "Main.hx"), [
+    "@:rubyPatch(String)",
+    "extern class BadStringPatch {",
+    "\tpublic static function missingReceiver():String;",
+    "}",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(\"unused\");",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  const result = compile(patchFailureFixtureDir, patchFailureOutputDir, { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Expected malformed @:rubyPatch contract to fail.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  const expectedDiagnostic = "@:rubyPatch contract method missingReceiver must declare the patched receiver as its first argument";
+  if (!output.includes(expectedDiagnostic)) {
+    console.error(`Missing expected ruby patch diagnostic: ${expectedDiagnostic}`);
+    console.error(output);
+    process.exit(1);
+  }
+}
+
+function expectPatchOnlyRequireOutput() {
+  mkdirSync(patchOnlyFixtureDir, { recursive: true });
+  writeFileSync(join(patchOnlyFixtureDir, "ActiveSupportStringPatch.hx"), [
+    "@:rubyRequire(\"active_support/core_ext/object/blank\")",
+    "@:rubyPatch(String)",
+    "extern class ActiveSupportStringPatch {",
+    "\t@:native(\"blank?\")",
+    "\tpublic static function blank(receiver:String):Bool;",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(patchOnlyFixtureDir, "Main.hx"), [
+    "using ActiveSupportStringPatch;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(\"\".blank());",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  compile(patchOnlyFixtureDir, patchOnlyOutputDir);
+  const runRuby = readFileSync(join(patchOnlyOutputDir, "run.rb"), "utf8");
+  if (!runRuby.includes('require "active_support/core_ext/object/blank"')) {
+    console.error("Expected patch-only @:rubyRequire metadata to be emitted in run.rb.");
+    console.error(runRuby);
+    process.exit(1);
+  }
+  const mainRuby = readFileSync(join(patchOnlyOutputDir, "main.rb"), "utf8");
+  if (!mainRuby.includes('puts(HXRuby.stringify("".blank?()))')) {
+    console.error("Expected patch-only call to lower to direct receiver dispatch.");
+    console.error(mainRuby);
     process.exit(1);
   }
 }

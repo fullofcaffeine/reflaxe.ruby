@@ -87,5 +87,5 @@ The rows above describe the current Rails MVP. The deeper typed Rails compiler l
 | Haxe-owned mixin emission | generated Ruby `include`/`prepend`/`extend` | Initial implementation |
 | Haxe-owned Ruby module authoring | `@:rubyModule("RubyModuleName")` | Initial implementation |
 | Haxe-owned ActiveSupport::Concern authoring | `@:rubyConcern("RubyModuleName")` | Initial static output implementation |
-| Typed monkey-patch/`using` contracts | planned | Not implemented |
+| Typed monkey-patch/`using` contracts | `@:rubyPatch(ReceiverType)` plus Haxe `using` | Initial implementation |
 | Generator-assisted contracts from Ruby/RBS/YARD/Rails metadata/LLM suggestions | planned | Not implemented |
