@@ -67,7 +67,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed HHX nested helper slots | `<link_to>...</link_to>` block-form content | Initial slot slice |
 | Typed RailsHx components | `Component<TLocals>`, `<component component=${...}>`, `Slot.content()` | Initial ActionView capture/render partial slice |
 | Typed Turbo client helpers | `rails.turbo.Turbo`, `TurboVisitAction`, `TurboStreamAction` | Initial Haxe JS/importmap-friendly slice |
-| Typed server-side Turbo streams | `TurboStreams.append/replace/remove/broadcastAppendTo`, `StreamTarget`, `StreamName<TPayload>`, `Template<TLocals>` | Initial Rails-native `turbo_stream.*`/`Turbo::StreamsChannel` slice |
+| Typed server-side Turbo streams | `TurboStreams.append/prepend/before/after/replace/update/remove`, `broadcast*To`, `StreamTarget`, `StreamName<TPayload>`, `Template<TLocals>` | Rails-native `turbo_stream.*`/`Turbo::StreamsChannel` slice |
 | Typed ActionCable channels/subscriptions | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, `SubscriptionParam<T>` | Initial ActionCable channel/client static smoke slice |
 | Typed ActiveSupport instrumentation | `EventName<TPayload>`, `Notifications.instrument/subscribe`, `NotificationEvent<TPayload>` | Initial ActiveSupport::Notifications static/runtime-if-available slice |
 | Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented for migration/interop only |

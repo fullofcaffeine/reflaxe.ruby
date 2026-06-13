@@ -50,11 +50,30 @@ class Main {
 		// the escape hatch for Ruby/Rails-owned runtime hashes.
 		TurboStreams.prepend(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), dynamicLocals);
 
+		// Demonstrates: positional insert actions map to normal
+		// `turbo_stream.before/after(...)` helpers.
+		TurboStreams.before(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), {
+			domId: "todo_before",
+			title: "Inserted before the list",
+			completed: false
+		});
+		TurboStreams.after(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), {
+			domId: "todo_after",
+			title: "Inserted after the list",
+			completed: false
+		});
+
 		// Demonstrates: remove only needs the typed DOM target.
 		TurboStreams.remove(TodoStreams.listTarget);
 
 		// Demonstrates: server-side broadcast lowering to the Rails Turbo channel
 		// helper while preserving the same typed target/template/locals contract.
 		TurboStreams.broadcastAppendTo(TodoStreams.listStream, TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
+		TurboStreams.broadcastPrependTo(TodoStreams.listStream, TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
+		TurboStreams.broadcastBeforeTo(TodoStreams.listStream, TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
+		TurboStreams.broadcastAfterTo(TodoStreams.listStream, TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
+		TurboStreams.broadcastReplaceTo(TodoStreams.listStream, TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), replaceLocals);
+		TurboStreams.broadcastUpdateTo(TodoStreams.listStream, TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), replaceLocals);
+		TurboStreams.broadcastRemoveTo(TodoStreams.listStream, TodoStreams.listTarget);
 	}
 }

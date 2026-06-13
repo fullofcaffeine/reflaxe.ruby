@@ -8,6 +8,10 @@ class TurboStreams {
 
 	public static function prepend<TLocals>(target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 
+	public static function before<TLocals>(target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
+	public static function after<TLocals>(target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
 	public static function replace<TLocals>(target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 
 	public static function update<TLocals>(target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
@@ -17,6 +21,10 @@ class TurboStreams {
 	public static function broadcastAppendTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 
 	public static function broadcastPrependTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
+	public static function broadcastBeforeTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
+	public static function broadcastAfterTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 
 	public static function broadcastReplaceTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 

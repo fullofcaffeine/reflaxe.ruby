@@ -121,8 +121,12 @@ var locals:TodoRowLocals = {
 };
 
 TurboStreams.append(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+TurboStreams.before(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+TurboStreams.after(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 
 TurboStreams.broadcastAppendTo(TodoStreams.listStream, TodoStreams.listTarget,
+	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+TurboStreams.broadcastReplaceTo(TodoStreams.listStream, TodoStreams.listTarget,
 	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 ```
 
@@ -131,8 +135,15 @@ Generated Ruby stays Rails-shaped:
 ```ruby
 turbo_stream.append("todos", partial: "todos/todo",
   locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
+turbo_stream.before("todos", partial: "todos/todo",
+  locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
+turbo_stream.after("todos", partial: "todos/todo",
+  locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
 
 Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos",
+  partial: "todos/todo",
+  locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
+Turbo::StreamsChannel.broadcast_replace_to("todos", target: "todos",
   partial: "todos/todo",
   locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
 ```
@@ -140,6 +151,8 @@ Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos",
 Use inline typed target/stream constants for app-level names. Use
 `Template.of(ViewClass) : Template<TLocals>` for RailsHx-owned HHX partials and
 `Template.existing("path") : Template<TLocals>` for Rails-owned ERB partials.
+The typed action set currently covers `append`, `prepend`, `before`, `after`,
+`replace`, `update`, `remove`, and the matching `broadcast*To` helpers.
 Pass locals as object literals or typed anonymous-object/typedef values. In both
 cases the compiler emits a Rails `locals: {snake_case: ...}` hash. Values typed
 as `Dynamic` are treated as explicit Ruby/Rails-owned runtime hashes and are

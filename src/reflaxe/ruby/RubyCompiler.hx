@@ -1547,6 +1547,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				compileTurboStreamRenderCall("append", params);
 			case "prepend" if (params.length == 3):
 				compileTurboStreamRenderCall("prepend", params);
+			case "before" if (params.length == 3):
+				compileTurboStreamRenderCall("before", params);
+			case "after" if (params.length == 3):
+				compileTurboStreamRenderCall("after", params);
 			case "replace" if (params.length == 3):
 				compileTurboStreamRenderCall("replace", params);
 			case "update" if (params.length == 3):
@@ -1557,6 +1561,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				compileTurboStreamBroadcastCall("append", params);
 			case "broadcastPrependTo" if (params.length == 4):
 				compileTurboStreamBroadcastCall("prepend", params);
+			case "broadcastBeforeTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("before", params);
+			case "broadcastAfterTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("after", params);
 			case "broadcastReplaceTo" if (params.length == 4):
 				compileTurboStreamBroadcastCall("replace", params);
 			case "broadcastUpdateTo" if (params.length == 4):
