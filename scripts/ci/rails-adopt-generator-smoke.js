@@ -12,6 +12,7 @@ rmSync(outputDir, { force: true, recursive: true });
 mkdirSync(join(outputDir, "app", "views", "legacy"), { recursive: true });
 mkdirSync(join(outputDir, "app", "services"), { recursive: true });
 mkdirSync(join(outputDir, "app", "models", "concerns"), { recursive: true });
+mkdirSync(join(outputDir, "sig"), { recursive: true });
 writeFileSync(existingErb, "<strong><%= label %></strong>\n");
 const serviceSource = join(outputDir, "app", "services", "legacy_price_formatter.rb");
 writeFileSync(serviceSource, [
@@ -57,6 +58,16 @@ writeFileSync(extensionSource, [
   "end",
   "",
 ].join("\n"));
+const rbsSource = join(outputDir, "sig", "rbs_price_formatter.rbs");
+writeFileSync(rbsSource, [
+  "class RbsPriceFormatter",
+  "  def initialize: (?String currency) -> void",
+  "  def label_for: (String kind, ?Integer cents) -> String",
+  "  def unknown_shape: (Money amount) -> Money",
+  "  def self.call: (Integer cents, ?bool include_symbol) -> String",
+  "end",
+  "",
+].join("\n"));
 
 run("ruby", [
   "-I",
@@ -68,8 +79,12 @@ run("ruby", [
   "interop",
   "--service",
   "LegacyPriceFormatter",
+  "--service",
+  "RbsPriceFormatter",
   "--service-source",
   serviceSource,
+  "--rbs",
+  rbsSource,
   "--template",
   "legacy/badge",
   "--locals",
@@ -90,6 +105,18 @@ assertIncludes("src_haxe/interop/LegacyPriceFormatter.hx", [
   "public function badgeLabel(kind:Dynamic, ?cents:Int):Dynamic;",
   "TODO: ambiguous uses splat",
   "public static function call(cents:Dynamic, ?includeSymbol:Bool):Dynamic;",
+]);
+assertIncludes("src_haxe/interop/RbsPriceFormatter.hx", [
+  "package interop;",
+  "// Generated from sig/rbs_price_formatter.rbs.",
+  "// Generated from deterministic RBS metadata.",
+  "// TODO: Review any Dynamic placeholders from unsupported or application-specific RBS types.",
+  '@:native("RbsPriceFormatter")',
+  "extern class RbsPriceFormatter",
+  "public function new(?currency:String):Void;",
+  "public function labelFor(kind:String, ?cents:Int):String;",
+  "public function unknownShape(amount:Dynamic):Dynamic;",
+  "public static function call(cents:Int, ?includeSymbol:Bool):String;",
 ]);
 assertIncludes("src_haxe/interop/templates/LegacyBadgeTemplate.hx", [
   "package interop.templates;",
@@ -122,6 +149,7 @@ if (erbAfter !== "<strong><%= label %></strong>\n") {
 
 writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "import interop.LegacyPriceFormatter;",
+  "import interop.RbsPriceFormatter;",
   "import interop.extensions.SluggableClassMethods;",
   "import interop.extensions.SluggableInstance;",
   "import interop.templates.LegacyBadgeTemplate;",
@@ -129,14 +157,19 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "class Main {",
   "\tstatic function main() {",
   "\t\tvar service:Class<LegacyPriceFormatter> = LegacyPriceFormatter;",
+  "\t\tvar rbsService:Class<RbsPriceFormatter> = RbsPriceFormatter;",
   "\t\tvar classMethods:Class<SluggableClassMethods> = SluggableClassMethods;",
   "\t\tvar instanceContract:Dynamic = (null : SluggableInstance);",
   "\t\tif (false) {",
   "\t\t\tvar formatter = new LegacyPriceFormatter();",
   "\t\t\tformatter.badgeLabel(\"ok\", 1);",
   "\t\t\tLegacyPriceFormatter.call(100);",
+  "\t\t\tvar rbsFormatter = new RbsPriceFormatter(\"USD\");",
+  "\t\t\trbsFormatter.labelFor(\"ok\", 1);",
+  "\t\t\tRbsPriceFormatter.call(100);",
   "\t\t}",
   "\t\tSys.println(service != null);",
+  "\t\tSys.println(rbsService != null);",
   "\t\tSys.println(classMethods != null);",
   "\t\tSys.println(instanceContract == null);",
   "\t\tSys.println(LegacyBadgeTemplate.template.templatePath);",
@@ -193,6 +226,27 @@ if (missingSource.status === 0 || !missingSource.stderr.includes("Extension sour
   process.stdout.write(missingSource.stdout);
   process.stderr.write(missingSource.stderr);
   fail("adoption generator did not fail closed for missing extension source");
+}
+
+const missingRbs = spawnSync("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--service",
+  "RbsPriceFormatter",
+  "--rbs",
+  join(outputDir, "sig", "missing.rbs"),
+], {
+  cwd: root,
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"],
+});
+if (missingRbs.status === 0 || !missingRbs.stderr.includes("RBS source does not exist")) {
+  process.stdout.write(missingRbs.stdout);
+  process.stderr.write(missingRbs.stderr);
+  fail("adoption generator did not fail closed for missing RBS source");
 }
 
 console.log("[rails-adopt-generator] OK");

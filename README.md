@@ -134,6 +134,7 @@ bin/rails generate hxruby:install MyApp
 bin/rails generate hxruby:routes
 bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
+bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 bin/rails generate hxruby:adopt --discover
 ```
 
@@ -253,12 +254,14 @@ bin/rails generate hxruby:install MyApp
 bin/rails generate hxruby:routes
 bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
+bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 rake hxruby:compile
 rake hxruby:compile:client
 rake hxruby:watch
 rake hxruby:watch:client
 rake hxruby:gen:app
 rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=label:String,tone:String
+rake hxruby:gen:adopt SERVICE=RbsPriceFormatter RBS=sig/rbs_price_formatter.rbs
 rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
 ```

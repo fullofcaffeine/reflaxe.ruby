@@ -96,4 +96,5 @@ The rows above describe the current Rails MVP. The deeper typed Rails compiler l
 | Typed monkey-patch/`using` contracts | `@:rubyPatch(ReceiverType)` plus Haxe `using` | Initial implementation |
 | Typed ActiveSupport receiver facades | `rails.active_support.ObjectPresence`, `rails.active_support.StringFilters` | Initial facade slice |
 | Generator-assisted contracts from Ruby source metadata | `hxruby:adopt --extension-source ... --extension-module ...` | Initial Ripper-backed implementation |
-| Generator-assisted contracts from RBS/YARD/Rails metadata/LLM suggestions | planned | Not implemented |
+| Generator-assisted contracts from RBS | `hxruby:adopt --service Foo --rbs sig/foo.rbs` | Initial deterministic subset implemented |
+| Generator-assisted contracts from YARD/Rails metadata/LLM suggestions | planned | Not implemented; LLM suggestions must remain advisory and pass compile/tests |

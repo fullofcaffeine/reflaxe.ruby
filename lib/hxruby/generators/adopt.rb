@@ -17,6 +17,7 @@ module HXRuby
           package: "interop",
           services: [],
           service_sources: [],
+          rbs_sources: [],
           templates: [],
           extension_sources: [],
           extension_modules: [],
@@ -29,6 +30,7 @@ module HXRuby
           parser.on("--package NAME") { |value| options[:package] = value }
           parser.on("--service NAME") { |value| options[:services].concat(Common.split_csv(value)) }
           parser.on("--service-source PATH") { |value| options[:service_sources].concat(Common.split_csv(value)) }
+          parser.on("--rbs PATH") { |value| options[:rbs_sources].concat(Common.split_csv(value)) }
           parser.on("--template PATH") { |value| options[:templates].concat(Common.split_csv(value)) }
           parser.on("--extension-source PATH") { |value| options[:extension_sources].concat(Common.split_csv(value)) }
           parser.on("--extension-module NAME") { |value| options[:extension_modules].concat(Common.split_csv(value)) }
@@ -38,6 +40,9 @@ module HXRuby
         end.parse!(argv)
         if options[:services].empty? && options[:service_sources].any?
           raise Error, "--service-source requires at least one explicit --service constant."
+        end
+        if options[:services].empty? && options[:rbs_sources].any?
+          raise Error, "--rbs requires at least one explicit --service constant."
         end
         if !options[:discover] && options[:services].empty? && options[:templates].empty? && options[:extension_sources].empty?
           raise Error, "Provide at least one --service, --template, or --extension-source boundary to adopt."
@@ -51,6 +56,7 @@ module HXRuby
         @package_name = options.fetch(:package)
         @services = options.fetch(:services)
         @service_sources = options.fetch(:service_sources)
+        @rbs_sources = options.fetch(:rbs_sources)
         @templates = options.fetch(:templates)
         @extension_sources = options.fetch(:extension_sources)
         @extension_modules = options.fetch(:extension_modules)
@@ -130,9 +136,18 @@ module HXRuby
         if contract
           lines += [
             "// Generated from #{contract.fetch(:source_label)}.",
-            "// Review required: Ruby source does not carry complete Haxe type metadata.",
-            "// Replace Dynamic placeholders with precise types as this boundary stabilizes.",
           ]
+          if contract.fetch(:source_kind, "ruby_source") == "rbs"
+            lines += [
+              "// Generated from deterministic RBS metadata.",
+              "// TODO: Review any Dynamic placeholders from unsupported or application-specific RBS types.",
+            ]
+          else
+            lines += [
+              "// Review required: Ruby source does not carry complete Haxe type metadata.",
+              "// Replace Dynamic placeholders with precise types as this boundary stabilizes.",
+            ]
+          end
         else
           lines << "// Add method signatures here as the boundary stabilizes; keep raw Ruby out of Haxe app code."
         end
@@ -153,11 +168,11 @@ module HXRuby
       end
 
       def service_contract(native_name)
-        return nil if @service_sources.empty?
+        return nil if @service_sources.empty? && @rbs_sources.empty?
 
-        contracts = service_source_contracts
+        contracts = rbs_contracts + service_source_contracts
         contract = contracts.find { |candidate| candidate.fetch(:constant_name) == native_name }
-        raise Error, "Service #{native_name} not found in --service-source file(s)." unless contract
+        raise Error, "Service #{native_name} not found in --service-source/--rbs file(s)." unless contract
 
         contract
       end
@@ -168,6 +183,15 @@ module HXRuby
           raise Error, "Service source does not exist: #{source}" unless File.file?(source_path)
 
           ServiceSourceParser.new(source_path, relative_output_path(source_path)).contracts
+        end
+      end
+
+      def rbs_contracts
+        @rbs_contracts ||= @rbs_sources.flat_map do |source|
+          source_path = File.expand_path(source, @output_dir)
+          raise Error, "RBS source does not exist: #{source}" unless File.file?(source_path)
+
+          RbsSourceParser.new(source_path, relative_output_path(source_path)).contracts
         end
       end
 
@@ -198,11 +222,12 @@ module HXRuby
       def inferred_function_lines(method, access, args)
         ruby_name = method.fetch(:ruby_name)
         haxe_name = Common.haxe_method_name(ruby_name)
+        return_type = method.fetch(:return_type, "Dynamic")
         lines = [
-          "\t// Inferred from Ruby source; tighten Dynamic types after review.",
+          "\t// #{method.fetch(:comment, "Inferred from Ruby source; tighten Dynamic types after review.")}",
         ]
         lines << "\t@:native(#{Common.haxe_string(ruby_name)})" if haxe_name != ruby_name
-        lines << "\t#{access} #{haxe_name}(#{args.join(", ")}):Dynamic;"
+        lines << "\t#{access} #{haxe_name}(#{args.join(", ")}):#{return_type};"
         lines
       end
 
@@ -397,6 +422,7 @@ module HXRuby
         def method_info(node)
           {
             ruby_name: node[1][1],
+            return_type: "Dynamic",
             **params_info(node[2]),
           }
         end
@@ -407,6 +433,7 @@ module HXRuby
 
           {
             ruby_name: node[3][1],
+            return_type: "Dynamic",
             **params_info(node[4]),
           }
         end
@@ -449,6 +476,103 @@ module HXRuby
           else
             "Dynamic"
           end
+        end
+      end
+
+      class RbsSourceParser
+        TYPE_MAP = {
+          "String" => "String",
+          "Integer" => "Int",
+          "int" => "Int",
+          "Float" => "Float",
+          "float" => "Float",
+          "bool" => "Bool",
+          "boolish" => "Bool",
+          "Boolean" => "Bool",
+          "void" => "Void",
+          "nil" => "Void",
+          "untyped" => "Dynamic",
+          "Object" => "Dynamic",
+        }.freeze
+
+        def initialize(path, source_label)
+          @path = path
+          @source_label = source_label
+          @source = File.read(path)
+        end
+
+        def contracts
+          out = []
+          current = nil
+          @source.each_line.with_index(1) do |line, line_number|
+            stripped = line.strip
+            next if stripped.empty? || stripped.start_with?("#")
+
+            if (match = stripped.match(/\A(?:class|module)\s+([A-Z][A-Za-z0-9_:]*)\b/))
+              current = {
+                constant_name: match[1],
+                source_label: @source_label,
+                source_kind: "rbs",
+                constructors: [],
+                instance: [],
+                class_methods: [],
+              }
+              out << current
+              next
+            end
+            if stripped == "end"
+              current = nil
+              next
+            end
+            next unless current
+
+            method = parse_method(stripped, line_number)
+            next unless method
+
+            if method.fetch(:ruby_name) == "initialize"
+              current[:constructors] << method
+            elsif method.delete(:class_method)
+              current[:class_methods] << method
+            else
+              current[:instance] << method
+            end
+          end
+          out
+        end
+
+        private
+
+        def parse_method(line, line_number)
+          match = line.match(/\Adef\s+(?:(self)\.)?([A-Za-z_][A-Za-z0-9_!?=]*)\s*:\s*\((.*)\)\s*->\s*([A-Za-z0-9_:?\[\]]+)\z/)
+          return nil unless match
+
+          {
+            ruby_name: match[2],
+            class_method: !match[1].nil?,
+            args: parse_args(match[3], line_number),
+            complex: false,
+            return_type: haxe_type(match[4]),
+            comment: "Inferred from RBS metadata; review Dynamic placeholders.",
+          }
+        end
+
+        def parse_args(raw, line_number)
+          return [] if raw.strip.empty?
+
+          raw.split(",").map do |arg|
+            token = arg.strip
+            optional = token.start_with?("?")
+            token = token.delete_prefix("?").strip
+            match = token.match(/\A([A-Za-z0-9_:?\[\]]+)\s+([A-Za-z_][A-Za-z0-9_]*)\z/)
+            raise Error, "Unsupported RBS argument in #{@path}:#{line_number}: #{arg}" unless match
+
+            { name: match[2], optional: optional, type: haxe_type(match[1]) }
+          end
+        end
+
+        def haxe_type(rbs_type)
+          normalized = rbs_type.to_s.delete_suffix("?")
+          TYPE_MAP.fetch(normalized, "Dynamic")
         end
       end
 

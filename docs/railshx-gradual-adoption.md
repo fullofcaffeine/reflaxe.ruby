@@ -94,6 +94,24 @@ npm run rails:adopt -- \
 
 The service source path is checked and parsed with `Ripper`; app code is not executed. The generator emits constructors from `initialize`, instance methods from `def method`, and static methods from `def self.method`. Required arguments default to `Dynamic`; optional arguments with obvious scalar defaults become `String`, `Int`, `Float`, or `Bool`. Ambiguous splats, keyword-heavy signatures, and blocks are marked as TODO comments instead of guessed unsafely.
 
+If a service already has RBS, prefer that as the deterministic type source:
+
+```bash
+bin/rails generate hxruby:adopt \
+  --service RbsPriceFormatter \
+  --rbs sig/rbs_price_formatter.rbs
+
+npm run rails:adopt -- \
+  --service RbsPriceFormatter \
+  --rbs sig/rbs_price_formatter.rbs
+
+bundle exec rake hxruby:gen:adopt \
+  SERVICE=RbsPriceFormatter \
+  RBS=sig/rbs_price_formatter.rbs
+```
+
+RBS-backed adoption is file-backed and fail-closed: a missing `--rbs` path is a generator error. The first deterministic subset supports class declarations, `initialize`, instance methods, and `self.method` signatures with simple required and optional positional arguments. Known scalar types lower to Haxe types, while unsupported or application-specific RBS types lower to `Dynamic` with TODO/review comments in the generated extern. LLM-generated suggestions may help draft contracts later, but they must remain advisory patches; they do not bypass generator validation, Haxe compilation, Ruby syntax checks, or Rails runtime gates.
+
 Add or tighten method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
 
 For Ruby extension modules, the generator can inspect a checked source file and scaffold `@:rubyMixin` contracts:
