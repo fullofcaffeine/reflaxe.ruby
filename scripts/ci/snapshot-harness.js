@@ -87,6 +87,16 @@ const cases = [
     ],
   },
   {
+    name: "active_job",
+    defines: ["reflaxe_ruby_rails"],
+    files: [
+      "app/haxe_gen/jobs/send_welcome_email_job.rb",
+      "app/haxe_gen/main.rb",
+      "config/initializers/hxruby_autoload.rb",
+      "run.rb",
+    ],
+  },
+  {
     name: "todoapp_rails",
     defines: ["reflaxe_ruby_rails"],
     extraClassPaths: ["examples/todoapp_rails/src_haxe"],

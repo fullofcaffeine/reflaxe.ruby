@@ -81,12 +81,16 @@ Typed boundary:
 - `rails.active_job.Base<TArgs>` or macro-generated `perform(...)` contracts.
 - Queue name and retry/discard metadata as checked literals/enums.
 - Typed enqueue helpers such as `MyJob.performLater(args)`.
+- Initial slice exists through `@:railsJob`, queue/retry/discard metadata, and
+  macro-generated `performLater`/`performNow` helpers. See
+  [RailsHx ActiveJob Guide](railshx-active-job-guide.md).
 
 Lowering strategy:
 
 - `@:railsJob` emits `ApplicationJob`/`ActiveJob::Base` subclasses.
 - Haxe `perform` args lower to Ruby method args.
 - Queue/retry metadata lowers to Rails class macros.
+- Static enqueue helpers lower to `perform_later` and `perform_now`.
 
 Integration strategy:
 

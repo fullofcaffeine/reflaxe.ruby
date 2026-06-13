@@ -1,0 +1,3 @@
+package rails;
+
+class ActiveJob {}

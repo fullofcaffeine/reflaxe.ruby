@@ -287,6 +287,30 @@
       "reason": "Macro expansion for typed ActionMailer template locals into Rails-native mail format render blocks."
     },
     {
+      "id": "std.rails.active_job",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/ActiveJob.hx",
+      "surface": "rails.ActiveJob",
+      "reason": "Top-level ActiveJob marker module for Rails interop."
+    },
+    {
+      "id": "std.rails.active_job_base",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_job/Base.hx",
+      "surface": "rails.active_job.Base",
+      "reason": "Typed ActiveJob base surface for Rails job classes."
+    },
+    {
+      "id": "std.rails.job_macro",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/JobMacro.hx",
+      "surface": "rails.macros.JobMacro",
+      "reason": "Build macro for railsJob classes that injects typed performLater/performNow enqueue helpers from the perform signature."
+    },
+    {
       "id": "std.rails.action_view_template",
       "owner": "std",
       "status": "implemented",
