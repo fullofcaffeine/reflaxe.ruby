@@ -169,6 +169,22 @@ Models::Todo.where(status: "open").count()
 Models::Todo.count()
 ```
 
+`first()` and `last()` load one nullable typed model:
+
+```haxe
+var first:Null<Todo> = Todo.where({status: "open"}).first();
+var last:Null<Todo> = Todo.last();
+var relationLast:Null<Todo> = Todo.where({title: "assigned"}).last();
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(status: "open").first()
+Models::Todo.last()
+Models::Todo.where(title: "assigned").last()
+```
+
 ## Different Models
 
 The fixture includes `AuditLog` to show snake_case lowering for non-trivial Haxe

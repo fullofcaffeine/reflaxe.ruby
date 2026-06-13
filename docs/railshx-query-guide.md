@@ -7,7 +7,8 @@ field value types, primary-key types, and relation return shapes.
 The rule of thumb is simple:
 
 - Keep query chains Rails-shaped: `all`, `where`, `includes`, `joins`, `order`,
-  `limit`, `offset`, `find`, `findBy`, `exists`, `count`, `first`, and `toArray`.
+  `limit`, `offset`, `find`, `findBy`, `exists`, `count`, `first`, `last`, and
+  `toArray`.
 - Put type information at the Haxe boundary: `@:railsColumn`, associations, field
   refs such as `Todo.f.title`, and association refs such as `Todo.a.user`.
 - Let the compiler lower Haxe names to Rails names: `externalId` becomes
@@ -213,6 +214,23 @@ Generated Ruby:
 ```ruby
 Models::Todo.where(status: "open").count()
 Models::Todo.count()
+```
+
+Use `first()` and `last()` when the query intentionally loads one nullable
+record:
+
+```haxe
+var first:Null<Todo> = Todo.where({status: "open"}).first();
+var last:Null<Todo> = Todo.last();
+var assignedLast:Null<Todo> = Todo.where({title: "assigned"}).last();
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(status: "open").first()
+Models::Todo.last()
+Models::Todo.where(title: "assigned").last()
 ```
 
 Use `offset(...)` when composing paginated Rails relations. It preserves the

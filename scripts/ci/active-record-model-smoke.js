@@ -272,6 +272,10 @@ for (const expected of [
   'find_by(external_id: "assigned-1")',
   "first__hx",
   ".first()",
+  "last__hx",
+  "Models::Todo.last()",
+  "relation_last__hx",
+  ".last()",
 ]) {
   if (!mainRuby.includes(expected)) {
     console.error(`ActiveRecord call shape missing from main.rb: ${expected}`);
@@ -289,6 +293,7 @@ for (const expected of [
   "findBy({externalId",
   "exists({externalId",
   ".count()",
+  ".last()",
   ".offset(",
   ".toArray()",
   "Models::Todo.incomplete().includes(:user).order(title: :asc).offset(20).limit(10).to_a()",
@@ -310,6 +315,7 @@ for (const expected of [
   "Todo.where({status: \"open\"}).offset(20).limit(10)",
   "Todo.exists({externalId",
   "Todo.count()",
+  "Todo.last()",
   "Todo.includes(User.a.todos)",
 ]) {
   if (!exampleReadme.includes(expected)) {

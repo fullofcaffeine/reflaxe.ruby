@@ -5,8 +5,8 @@ import models.User;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `order`, `limit`, `offset`, `find`, `findBy`, `exists`, and `count`)
-// authored as typed Haxe calls.
+// `all`, `order`, `limit`, `offset`, `find`, `findBy`, `exists`, `count`,
+// `first`, and `last` authored as typed Haxe calls.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -34,6 +34,8 @@ class Main {
 		var totalCount:Int = Todo.count();
 		var assignedFoundBy:Null<Todo> = assigned.findBy({externalId: "assigned-1"});
 		var first:Null<Todo> = found.first();
+		var last:Null<Todo> = Todo.last();
+		var relationLast:Null<Todo> = assigned.last();
 		Sys.println(found == null);
 		Sys.println(scoped == null);
 		Sys.println(users == null);
@@ -48,6 +50,8 @@ class Main {
 		Sys.println(totalCount >= 0);
 		Sys.println(assignedFoundBy == null);
 		Sys.println(first == null);
+		Sys.println(last == null);
+		Sys.println(relationLast == null);
 		Sys.println(allOpen == null);
 		Sys.println(offsetRelation == null);
 		Sys.println(offsetFromModel == null);

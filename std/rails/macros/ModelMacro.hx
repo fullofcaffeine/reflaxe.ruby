@@ -29,6 +29,7 @@ class ModelMacro {
 		addNoArgStub(fields, "count", macro : Int, pos);
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
+		addNoArgStub(fields, "last", nullableSelf, pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
 		return fields;
 	}

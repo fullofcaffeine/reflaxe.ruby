@@ -43,7 +43,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed ActiveRecord relation chain | `Todo.all().where({completed: false}).order(Todo.f.title.asc()).offset(20).limit(10) : Relation<Todo, criteria>` inferred | Initial query slice |
 | Typed ActiveRecord association queries | `Todo.includes(Todo.associations.user).joins(Todo.a.user)` | Initial association query slice |
 | Typed ActiveRecord find helpers | `Todo.find(1)`, `Todo.findBy({externalId: "x"})`, `relation.findBy({...})` | Initial query slice |
-| Typed ActiveRecord existence/count helpers | `Todo.exists({externalId: "x"})`, `relation.exists({...})`, `Todo.count()`, `relation.count()` | Initial query slice |
+| Typed ActiveRecord existence/count/loading helpers | `Todo.exists({externalId: "x"})`, `relation.exists({...})`, `Todo.count()`, `relation.count()`, `Todo.first()`, `relation.last()` | Initial query slice |
 | Model associations/validations/enums/callbacks metadata | `@:belongsTo`, `@:hasMany`, `@:hasOne`, `@:validates`, `@:railsEnum`, `@:beforeValidation`, `@:railsCallback("after_commit")` | Implemented initial typed metadata validation |
 | Typed Rails migrations | `@:railsMigration({models: [...], knownModels: [...], externalTables: [...]})` + `MigrationOperation` | Create-table generation plus known table/column/index/FK validation |
 | ActionController surface | `rails.action_controller.Base` | Implemented |

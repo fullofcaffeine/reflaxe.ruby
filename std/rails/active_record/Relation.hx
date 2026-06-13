@@ -19,6 +19,7 @@ extern class Relation<TModel, TCriteria> {
 	public function exists(?criteria:TCriteria):Bool;
 	public function count():Int;
 	public function first():Null<TModel>;
+	public function last():Null<TModel>;
 
 	@:native("to_a")
 	public function toArray():Array<TModel>;
