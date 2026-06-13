@@ -75,3 +75,16 @@ The rows above describe the current Rails MVP. The deeper typed Rails compiler l
 | `reflaxe_ruby_strict_examples` | Implemented | Rejects raw `__ruby__` injection in examples and tests/snapshots. |
 | `reflaxe_ruby_strict` | Implemented | Rejects raw `__ruby__` injection in project sources. |
 | `@:rubyAllowRaw` | Implemented | Narrow module/type escape hatch for policy-specific tests or framework-owned islands. |
+
+## Ruby Extension Interop
+
+| Feature | Surface | Status |
+| --- | --- | --- |
+| Typed instance mixin contracts | `@:rubyMixin` + `@:rubyInclude(Contract)` | Initial implementation |
+| Typed prepend contracts | `@:rubyMixin` + `@:rubyPrepend(Contract)` | Initial implementation |
+| Typed class-method mixin contracts | `@:rubyMixin` + `@:rubyExtend(Contract)` | Initial implementation |
+| Extern extension consumption | `@:native("RubyConstant") extern class ...` plus extension contracts | Initial implementation |
+| Haxe-owned mixin emission | generated Ruby `include`/`prepend`/`extend` | Initial implementation |
+| Haxe-owned Ruby module/Concern authoring | planned | Not implemented |
+| Typed monkey-patch/`using` contracts | planned | Not implemented |
+| Generator-assisted contracts from Ruby/RBS/YARD/Rails metadata/LLM suggestions | planned | Not implemented |

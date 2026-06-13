@@ -184,6 +184,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var classBody:Array<RubyStatement> = [];
 		classBody.push(typeNameMetadata(fullTypeName(classType.pack, classType.name)));
+		classBody = classBody.concat(rubyExtensionStatements(classType.meta, classType));
 		for (field in varFields) {
 			var mathConstant = mathConstantValue(classType.pack, classType.name, field.field.name);
 			classBody.push(mathConstant == null ? compileVarField(field) : compileMathConstantField(field.field.name, mathConstant));
@@ -302,6 +303,102 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			out.push(RubyRawStatement("require_relative " + quoteRubyStringForCode(value)));
 		}
 		return out;
+	}
+
+	static function rubyExtensionStatements(meta:Null<haxe.macro.Type.MetaAccess>, ?owner:ClassType):Array<RubyStatement> {
+		return [for (line in rubyExtensionLines(meta, owner)) RubyRawStatement(line)];
+	}
+
+	static function rubyExtensionLines(meta:Null<haxe.macro.Type.MetaAccess>, ?owner:ClassType):Array<String> {
+		var lines:Array<String> = [];
+		appendRubyExtensionLines(lines, meta, ":rubyInclude", "include", owner);
+		appendRubyExtensionLines(lines, meta, ":rubyPrepend", "prepend", owner);
+		appendRubyExtensionLines(lines, meta, ":rubyExtend", "extend", owner);
+		return lines;
+	}
+
+	static function appendRubyExtensionLines(lines:Array<String>, meta:Null<haxe.macro.Type.MetaAccess>, metaName:String, rubyKeyword:String, ?owner:ClassType):Void {
+		if (meta == null || meta.extract == null) {
+			return;
+		}
+		for (entry in meta.extract(metaName)) {
+			if (entry.params == null || entry.params.length == 0) {
+				continue;
+			}
+			var moduleName = rubyExtensionModuleName(entry.params[0], owner);
+			if (moduleName != null && moduleName != "") {
+				lines.push(rubyKeyword + " " + moduleName);
+			}
+		}
+	}
+
+	static function rubyExtensionModuleName(expr:haxe.macro.Expr, ?owner:ClassType):Null<String> {
+		var path = metadataTypePath(expr);
+		if (path == null) {
+			return null;
+		}
+		return switch (rubyExtensionContractType(path, owner)) {
+			case TInst(ref, _):
+				var contract = ref.get();
+				rubyMixinModuleName(contract.meta) ?? rubyNativeName(contract.meta) ?? rubyConstantPath(contract.pack, contract.name);
+			case _:
+				null;
+		}
+	}
+
+	static function rubyExtensionContractType(path:String, ?owner:ClassType):Null<haxe.macro.Type> {
+		var resolved = tryGetType(path);
+		if (resolved != null || owner == null || path.indexOf(".") != -1 || owner.module == null || owner.module == "") {
+			return resolved;
+		}
+		return tryGetType(owner.module + "." + path);
+	}
+
+	static function tryGetType(path:String):Null<haxe.macro.Type> {
+		try {
+			return Context.getType(path);
+		} catch (_:Dynamic) {
+			return null;
+		}
+	}
+
+	static function rubyMixinModuleName(meta:Null<haxe.macro.Type.MetaAccess>):Null<String> {
+		if (meta == null || meta.extract == null) {
+			return null;
+		}
+		var entries = meta.extract(":rubyMixin");
+		if (entries.length == 0 || entries[0].params == null || entries[0].params.length == 0) {
+			return null;
+		}
+		return rubyMixinModuleParam(entries[0].params[0]);
+	}
+
+	static function rubyMixinModuleParam(expr:haxe.macro.Expr):Null<String> {
+		return switch (expr.expr) {
+			case EConst(CString(value, _)) if (value.length > 0):
+				value;
+			case EObjectDecl(fields):
+				var moduleName:Null<String> = null;
+				for (field in (fields : Array<RubyMetadataField>)) {
+					if (field.field == "module") {
+						moduleName = metadataStringLiteral(field.expr);
+					}
+				}
+				moduleName;
+			case _:
+				null;
+		}
+	}
+
+	static function metadataTypePath(expr:haxe.macro.Expr):Null<String> {
+		return switch (expr.expr) {
+			case EConst(CIdent(name)): name;
+			case EField(target, field):
+				var parent = metadataTypePath(target);
+				parent == null ? null : parent + "." + field;
+			case _:
+				null;
+		}
 	}
 
 	static function wrapInModules(pack:Array<String>, statement:RubyStatement):RubyStatement {
@@ -424,6 +521,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	function compileRailsControllerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
 		var body:Array<String> = [];
+		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		for (field in varFields) {
 			body = body.concat(renderStatements([compileVarField(field)]));
 		}
@@ -461,6 +559,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (tableName != null) {
 			body.push("self.table_name = " + quoteRubyStringForCode(tableName));
 		}
+		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		body = body.concat(railsSchemaRegistryLines(tableName, varFields, classType));
 		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":belongsTo")) {

@@ -49,9 +49,12 @@ Interop is typed through metadata and small std surfaces:
 - `@:rubyRequireRelative("./support/foo")` emits `require_relative "./support/foo"`.
 - `@:rubyKwargs` lowers trailing object literals into Ruby keyword args.
 - `@:rubyBlockArg` lowers trailing function args into Ruby blocks.
+- `@:rubyMixin`, `@:rubyInclude`, `@:rubyPrepend`, and `@:rubyExtend` model Ruby module extension APIs as typed Haxe contracts while emitting normal Ruby `include`/`prepend`/`extend`.
 - `ruby.Symbol.of("ready")` lowers to `:ready`.
 
 Raw `__ruby__` injection exists as an escape hatch, but examples and production-style code should prefer typed externs or std/runtime wrappers. The strict boundary defines enforce that policy.
+
+See [Ruby Extension Interop](docs/ruby-extension-interop.md) for examples ranging from simple module include/extend through existing gem wrapping, gradual adoption, Haxe-owned libraries, and metaprogramming-heavy contract generation.
 
 ## Rails Workflow
 
