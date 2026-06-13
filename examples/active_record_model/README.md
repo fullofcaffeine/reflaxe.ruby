@@ -28,6 +28,11 @@ var allOpen = Todo
 	.order(Todo.f.title.asc())
 	.limit(3);
 
+var distinctOpen = Todo
+	.distinct()
+	.where({status: "open"})
+	.order(Todo.f.title.asc());
+
 var found = Todo
 	.includes(Todo.associations.user)
 	.where({title: "ship", status: "open"})
@@ -41,6 +46,7 @@ Generated Ruby:
 
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
+Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo
   .includes(:user)
   .where(title: "ship", status: "open")
@@ -56,8 +62,8 @@ Type-safety features used here:
 - `where({...})` values must match those field types.
 - `Todo.associations.user` / `Todo.a.user` must belong to `Todo`.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
-- The chain remains a typed relation after `where`, `joins`, `order`, and
-  `limit`, and `offset`.
+- The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
+  `order`, `limit`, and `offset`.
 
 ## Scopes
 

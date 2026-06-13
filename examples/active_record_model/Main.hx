@@ -5,8 +5,8 @@ import models.User;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `order`, `limit`, `offset`, `find`, `findBy`, `exists`, `count`,
-// `first`, and `last` authored as typed Haxe calls.
+// `all`, `distinct`, `order`, `limit`, `offset`, `find`, `findBy`, `exists`,
+// `count`, `first`, and `last` authored as typed Haxe calls.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -26,6 +26,8 @@ class Main {
 		var relationFoundBy:Null<Todo> = Todo.where({title: "ship"}).findBy({completed: false});
 		var assigned = Todo.where({title: "assigned"}).order(Todo.f.title.asc()).limit(5);
 		var allOpen = Todo.all().where({status: "open"}).order(Todo.f.title.asc()).limit(3);
+		var distinctOpen = Todo.distinct().where({status: "open"}).order(Todo.f.title.asc());
+		var relationDistinct = assigned.distinct().limit(2);
 		var offsetRelation = Todo.where({status: "open"}).offset(20).limit(10);
 		var offsetFromModel = Todo.offset(5).where({completed: false});
 		var hasAssigned:Bool = Todo.exists({externalId: "assigned-1"});
@@ -53,6 +55,8 @@ class Main {
 		Sys.println(last == null);
 		Sys.println(relationLast == null);
 		Sys.println(allOpen == null);
+		Sys.println(distinctOpen == null);
+		Sys.println(relationDistinct == null);
 		Sys.println(offsetRelation == null);
 		Sys.println(offsetFromModel == null);
 	}

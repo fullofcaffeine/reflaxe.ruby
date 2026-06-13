@@ -6,9 +6,9 @@ field value types, primary-key types, and relation return shapes.
 
 The rule of thumb is simple:
 
-- Keep query chains Rails-shaped: `all`, `where`, `includes`, `joins`, `order`,
-  `limit`, `offset`, `find`, `findBy`, `exists`, `count`, `first`, `last`, and
-  `toArray`.
+- Keep query chains Rails-shaped: `all`, `distinct`, `where`, `includes`,
+  `joins`, `order`, `limit`, `offset`, `find`, `findBy`, `exists`, `count`,
+  `first`, `last`, and `toArray`.
 - Put type information at the Haxe boundary: `@:railsColumn`, associations, field
   refs such as `Todo.f.title`, and association refs such as `Todo.a.user`.
 - Let the compiler lower Haxe names to Rails names: `externalId` becomes
@@ -90,8 +90,13 @@ var allOpen = Todo.all()
 	.order(Todo.f.title.asc())
 	.limit(3);
 
+var distinctOpen = Todo.distinct()
+	.where({status: "open"})
+	.order(Todo.f.title.asc());
+
 var relation = Todo
 	.where({title: "assigned"})
+	.distinct()
 	.order(Todo.f.title.asc())
 	.offset(20)
 	.limit(5);
@@ -103,12 +108,30 @@ Generated Ruby:
 
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
-assigned = Models::Todo.where(title: "assigned").order(title: :asc).offset(20).limit(5)
+Models::Todo.distinct().where(status: "open").order(title: :asc)
+assigned = Models::Todo.where(title: "assigned").distinct().order(title: :asc).offset(20).limit(5)
 assigned.find_by(external_id: "assigned-1")
 ```
 
 This is still a Rails relation chain. Haxe is only making the relation shape and
 field refs visible to the compiler.
+
+`distinct()` is intentionally just the Rails relation helper. It returns the
+same typed `Relation<TModel, TCriteria>` shape, so criteria and field checks
+continue after it:
+
+```haxe
+var distinctPage = Todo.distinct()
+	.where({completed: false})
+	.offset(10)
+	.limit(10);
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.distinct().where(completed: false).offset(10).limit(10)
+```
 
 ## Field Refs And Order
 
