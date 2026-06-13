@@ -19,6 +19,8 @@ extern class Relation<TModel, TCriteria> {
 	public function none():Relation<TModel, TCriteria>;
 	@:native("reverse_order")
 	public function reverseOrder():Relation<TModel, TCriteria>;
+	@:native("readonly")
+	public function readOnly():Relation<TModel, TCriteria>;
 	public function select<TValue>(field:Field<TModel, TValue>):Relation<TModel, TCriteria>;
 	public function includes<TTarget>(association:Association<TModel, TTarget>):Relation<TModel, TCriteria>;
 	public function joins<TTarget>(association:Association<TModel, TTarget>):Relation<TModel, TCriteria>;

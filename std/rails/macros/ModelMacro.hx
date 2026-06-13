@@ -29,6 +29,7 @@ class ModelMacro {
 		addNoArgStub(fields, "distinct", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "none", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgNativeStub(fields, "reverseOrder", "reverse_order", relationComplexType(selfType, criteriaType, pos), pos);
+		addNoArgNativeStub(fields, "readOnly", "readonly", relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRelationStub(fields, "select", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
 		addStub(fields, "findBy", criteriaType, nullableSelf, pos);

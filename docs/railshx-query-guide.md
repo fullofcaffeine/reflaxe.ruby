@@ -116,6 +116,14 @@ var reverseAssigned = Todo.where({title: "assigned"})
 	.reverseOrder()
 	.limit(2);
 
+var readonlyOpen = Todo.readOnly()
+	.where({status: "open"})
+	.limit(2);
+
+var readonlyAssigned = Todo.where({title: "assigned"})
+	.readOnly()
+	.limit(2);
+
 var openOrDone = Todo.where({status: "open"})
 	.or(Todo.where({status: "done"}))
 	.order(Todo.f.title.asc());
@@ -148,6 +156,8 @@ Models::Todo.none().where(status: "open")
 Models::Todo.where(title: "assigned").none().limit(1)
 Models::Todo.reverse_order().where(status: "open").limit(2)
 Models::Todo.where(title: "assigned").reverse_order().limit(2)
+Models::Todo.readonly().where(status: "open").limit(2)
+Models::Todo.where(title: "assigned").readonly().limit(2)
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.select(:title).where(status: "open")
@@ -219,6 +229,21 @@ Generated Ruby:
 ```ruby
 Models::Todo.reverse_order().where(status: "open").limit(2)
 Models::Todo.where(title: "assigned").reverse_order().limit(2)
+```
+
+`readOnly()` maps to Rails `readonly` and keeps the relation typed for further
+composition:
+
+```haxe
+var readonlyOpen = Todo.readOnly().where({status: "open"}).limit(2);
+var readonlyAssigned = Todo.where({title: "assigned"}).readOnly().limit(2);
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.readonly().where(status: "open").limit(2)
+Models::Todo.where(title: "assigned").readonly().limit(2)
 ```
 
 `or(...)` composes two typed relations for the same model and criteria shape.
@@ -534,7 +559,7 @@ The current query slice intentionally covers the common Rails relation path:
 - Typed criteria for flat model columns.
 - Typed association refs for `includes` and `joins`.
 - Typed null relations through `none`.
-- Typed Rails snake_case query helpers through Haxe casing, such as `reverseOrder()`.
+- Typed Rails query helpers through Haxe casing, such as `reverseOrder()` and `readOnly()`.
 - Typed relation composition through `or` and `merge`.
 - Typed field refs for `order`.
 - `limit`, `offset`, `first`, `find`, `findBy`, `create`, and `toArray`.
