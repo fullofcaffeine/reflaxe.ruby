@@ -10,10 +10,11 @@ import rails.macros.ParamsMacro;
 // Type safety: `ParamsMacro.requirePermit(...)` validates the call shape in
 // Haxe and lowers to Rails strong params. This small fixture uses string fields
 // to exercise the lower-level API; RailsHx app code should prefer model field
-// refs such as `Todo.f.title` when a model schema is available. `flash`,
-// `session`, and `cookies` expose typed store helpers instead of raw Dynamic
-// bracket access. `request()` and `response()` expose typed facades over the
-// Rails runtime objects without wrapping them. `@:beforeAction`,
+// refs such as `Todo.f.title` when a model schema is available. Nested permit
+// specs use Rails-shaped Haxe object literals, e.g. `{metadata: ["source"]}`.
+// `flash`, `session`, and `cookies` expose typed store helpers instead of raw
+// Dynamic bracket access. `request()` and `response()` expose typed facades
+// over the Rails runtime objects without wrapping them. `@:beforeAction`,
 // `@:afterAction`, and `@:railsFilter(...)` annotate real Haxe methods, so the
 // callback method exists at compile time and Rails receives normal symbols.
 // IntelliSense: editors should complete `params`, `render`, `redirectTo`, and
@@ -41,7 +42,7 @@ class TodosController extends rails.action_controller.Base {
 	}
 
 	public function create() {
-		var attrs = ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"]);
+		var attrs = ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"], {metadata: ["source", "priority"], tags: []});
 		var requestMethod = request().requestMethod();
 		var requestPath = request().path();
 		var currentStatus = response().status();

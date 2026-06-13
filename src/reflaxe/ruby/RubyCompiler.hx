@@ -1093,6 +1093,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return compileRubySymbol(params);
 		}
 		return switch [info.owner, info.name] {
+			case ["rails.action_controller.PermitSpec", "field"]:
+				compileRailsPermitSpecField(params);
+			case ["rails.action_controller.PermitSpec", "nested"]:
+				compileRailsPermitSpecNested(params);
 			case ["Std", "string"]:
 				RubyCall(RubyLocal("HXRuby"), "stringify", [compileParam(params, 0)]);
 			case ["Std", "is"] | ["Std", "isOfType"]:
@@ -1459,6 +1463,34 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				RubyRawExpr("(" + printParam(params, 0) + ").to_sym");
 		}
+	}
+
+	static function compileRailsPermitSpecField(params:Array<TypedExpr>):RubyExpr {
+		if (params.length == 0) {
+			return RubyRawExpr(":\"\"");
+		}
+		return switch (unwrapTypedExpr(params[0]).expr) {
+			case TConst(TString(value)):
+				RubyRawExpr(rubySymbolLiteral(RubyNaming.toMethodName(value)));
+			case _:
+				RubyRawExpr("(" + printParam(params, 0) + ").to_sym");
+		}
+	}
+
+	static function compileRailsPermitSpecNested(params:Array<TypedExpr>):RubyExpr {
+		if (params.length < 2) {
+			return RubyRawExpr("{}");
+		}
+		var key = switch (unwrapTypedExpr(params[0]).expr) {
+			case TConst(TString(value)):
+				RubyNaming.toMethodName(value);
+			case _:
+				null;
+		}
+		var children = printParam(params, 1);
+		return key == null
+			? RubyRawExpr("{(" + printParam(params, 0) + ").to_sym => " + children + "}")
+			: RubyRawExpr("{" + key + ": " + children + "}");
 	}
 
 	static function compileRubyInjection(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {

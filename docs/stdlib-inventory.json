@@ -207,6 +207,14 @@
       "reason": "Typed Rails params wrapper for require/permit flows."
     },
     {
+      "id": "std.rails.action_controller_permit_spec",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/PermitSpec.hx",
+      "surface": "rails.action_controller.PermitSpec",
+      "reason": "Typed strong-params permit entry lowered to Rails symbols and nested permit hashes."
+    },
+    {
       "id": "std.rails.action_controller_request",
       "owner": "std",
       "status": "implemented",

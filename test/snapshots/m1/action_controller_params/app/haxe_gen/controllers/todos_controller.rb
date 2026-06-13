@@ -19,7 +19,7 @@ module Controllers
       path__hx0 = self.request().path()
     end
     def create()
-      attrs__hx0 = self.params().require("todo").permit([:title, :is_completed])
+      attrs__hx0 = self.params().require("todo").permit([:title, :is_completed, {metadata: [:source, :priority]}, {tags: []}])
       request_method__hx0 = self.request().request_method()
       request_path__hx0 = self.request().path()
       current_status__hx0 = self.response().status()

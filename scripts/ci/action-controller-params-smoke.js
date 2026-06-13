@@ -58,7 +58,7 @@ for (const expected of [
   /def authenticate_user\(\)/,
   /def audit_response\(\)/,
   /def load_tenant\(\)/,
-  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed\]\)/,
+  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, \{metadata: \[:source, :priority\]\}, \{tags: \[\]\}\]\)/,
   /request_method__hx\d+ = self\.request\(\)\.request_method\(\)/,
   /request_path__hx\d+ = self\.request\(\)\.path\(\)/,
   /current_status__hx\d+ = self\.response\(\)\.status\(\)/,

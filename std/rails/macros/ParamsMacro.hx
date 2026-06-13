@@ -16,24 +16,110 @@ private typedef FieldInfo = {
 	name:String,
 	model:Null<String>
 }
+
+private typedef PermitSpec = {
+	name:String,
+	model:Null<String>,
+	children:Null<Array<PermitSpec>>
+}
 #end
 
 class ParamsMacro {
-	public static macro function requirePermit(params:Expr, root:Expr, fields:Expr):Expr {
+	public static macro function requirePermit(params:Expr, root:Expr, fields:Expr, ?nested:Expr):Expr {
 		var rootModel = typedRailsModelKey(root);
-		var fieldInfos = switch (fields.expr) {
-			case EArrayDecl(values):
-				[for (value in values) fieldInfo(value)];
-			case _:
-				throw "ParamsMacro.requirePermit expects an array literal of field names.";
-				[];
+		var permit = permitSpecs(fields);
+		if (nested != null && !isNullExpr(nested)) {
+			permit = permit.concat(nestedPermitRootSpecs(nested));
 		}
-		validateFieldModels(rootModel, fieldInfos, fields.pos);
-		var symbols = [for (info in fieldInfos) macro ruby.Symbol.of($v{RubyNaming.toMethodName(info.name)})];
-		return macro $params.requireParam($root).permit([$a{symbols}]);
+		validateFieldModels(rootModel, topLevelFieldInfos(permit), fields.pos);
+		return macro $params.requireParam($root).permit($e{permitArrayExpr(permit)});
 	}
 
 	#if macro
+	static function permitSpecs(expr:Expr):Array<PermitSpec> {
+		return switch (expr.expr) {
+			case EArrayDecl(values):
+				var specs:Array<PermitSpec> = [];
+				for (value in values) {
+					specs = specs.concat(permitSpecValue(value));
+				}
+				specs;
+			case _:
+				throw "ParamsMacro.requirePermit expects an array literal of field names or nested permit specs.";
+				[];
+		}
+	}
+
+	static function isNullExpr(expr:Expr):Bool {
+		return switch (expr.expr) {
+			case EConst(CIdent("null")):
+				true;
+			case _:
+				false;
+		}
+	}
+
+	static function permitSpecValue(expr:Expr):Array<PermitSpec> {
+		return switch (expr.expr) {
+			case EObjectDecl(fields):
+				[for (field in fields) {
+					name: field.field,
+					model: null,
+					children: nestedPermitSpecs(field.expr)
+				}];
+			case _:
+				var info = fieldInfo(expr);
+				[{name: info.name, model: info.model, children: null}];
+		}
+	}
+
+	static function nestedPermitSpecs(expr:Expr):Array<PermitSpec> {
+		return switch (expr.expr) {
+			case EArrayDecl(values):
+				var specs:Array<PermitSpec> = [];
+				for (value in values) {
+					specs = specs.concat(permitSpecValue(value));
+				}
+				specs;
+			case _:
+				Context.error("ParamsMacro.requirePermit nested permit specs must use array literals.", expr.pos);
+				[];
+		}
+	}
+
+	static function nestedPermitRootSpecs(expr:Expr):Array<PermitSpec> {
+		return switch (expr.expr) {
+			case EObjectDecl(fields):
+				[for (field in fields) {
+					name: field.field,
+					model: null,
+					children: nestedPermitSpecs(field.expr)
+				}];
+			case _:
+				Context.error("ParamsMacro.requirePermit nested root specs must use an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function topLevelFieldInfos(specs:Array<PermitSpec>):Array<FieldInfo> {
+		return [for (spec in specs) if (spec.children == null) {name: spec.name, model: spec.model}];
+	}
+
+	static function permitArrayExpr(specs:Array<PermitSpec>):Expr {
+		return {
+			expr: EArrayDecl([for (spec in specs) permitSpecExpr(spec)]),
+			pos: Context.currentPos()
+		};
+	}
+
+	static function permitSpecExpr(spec:PermitSpec):Expr {
+		var name = RubyNaming.toMethodName(spec.name);
+		if (spec.children == null) {
+			return macro rails.action_controller.PermitSpec.field($v{name});
+		}
+		return macro rails.action_controller.PermitSpec.nested($v{name}, $e{permitArrayExpr(spec.children)});
+	}
+
 	static function fieldInfo(expr:Expr):FieldInfo {
 		return switch (expr.expr) {
 			case EConst(CString(value, _)):
