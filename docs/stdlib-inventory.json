@@ -196,7 +196,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/Relation.hx",
       "surface": "rails.active_record.Relation",
-      "reason": "Typed ActiveRecord::Relation facade for model query chains such as all/distinct/none/select/where/rewhere/or/merge/includes/joins/order/reorder/limit/offset/pluck/minimum/maximum/sum/average/find/findBy/exists/count/first/last/toArray."
+      "reason": "Typed ActiveRecord::Relation facade for model query chains such as all/distinct/none/reverseOrder/select/where/rewhere/or/merge/includes/joins/order/reorder/limit/offset/pluck/minimum/maximum/sum/average/find/findBy/exists/count/first/last/toArray."
     },
     {
       "id": "std.rails.active_record_model_key",
@@ -212,7 +212,7 @@
       "status": "implemented",
       "path": "std/rails/macros/ModelMacro.hx",
       "surface": "rails.macros.ModelMacro",
-      "reason": "Build macro for railsModel/railsColumn/association metadata validation, generated typed field refs, association refs, model params keys, typed where/rewhere/findBy/exists criteria, typed primary-key find, and typed create/relation/count/all/distinct/none/select/reorder/first/last/pluck/minimum/maximum/sum/average stubs."
+      "reason": "Build macro for railsModel/railsColumn/association metadata validation, generated typed field refs, association refs, model params keys, typed where/rewhere/findBy/exists criteria, typed primary-key find, and typed create/relation/count/all/distinct/none/reverseOrder/select/reorder/first/last/pluck/minimum/maximum/sum/average stubs."
     },
     {
       "id": "std.rails.action_controller",

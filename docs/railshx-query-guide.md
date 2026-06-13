@@ -108,6 +108,14 @@ var emptyAssigned = Todo.where({title: "assigned"})
 	.none()
 	.limit(1);
 
+var reverseOpen = Todo.reverseOrder()
+	.where({status: "open"})
+	.limit(2);
+
+var reverseAssigned = Todo.where({title: "assigned"})
+	.reverseOrder()
+	.limit(2);
+
 var openOrDone = Todo.where({status: "open"})
 	.or(Todo.where({status: "done"}))
 	.order(Todo.f.title.asc());
@@ -138,6 +146,8 @@ Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo.none().where(status: "open")
 Models::Todo.where(title: "assigned").none().limit(1)
+Models::Todo.reverse_order().where(status: "open").limit(2)
+Models::Todo.where(title: "assigned").reverse_order().limit(2)
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.select(:title).where(status: "open")
@@ -194,6 +204,21 @@ Generated Ruby:
 ```ruby
 Models::Todo.none().where(status: "open")
 Models::Todo.where(title: "assigned").none().limit(1)
+```
+
+`reverseOrder()` maps to Rails `reverse_order`. RailsHx uses the Haxe-style
+method name at the authoring layer and emits the Rails-native snake_case call:
+
+```haxe
+var reverseOpen = Todo.reverseOrder().where({status: "open"}).limit(2);
+var reverseAssigned = Todo.where({title: "assigned"}).reverseOrder().limit(2);
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.reverse_order().where(status: "open").limit(2)
+Models::Todo.where(title: "assigned").reverse_order().limit(2)
 ```
 
 `or(...)` composes two typed relations for the same model and criteria shape.
@@ -509,6 +534,7 @@ The current query slice intentionally covers the common Rails relation path:
 - Typed criteria for flat model columns.
 - Typed association refs for `includes` and `joins`.
 - Typed null relations through `none`.
+- Typed Rails snake_case query helpers through Haxe casing, such as `reverseOrder()`.
 - Typed relation composition through `or` and `merge`.
 - Typed field refs for `order`.
 - `limit`, `offset`, `first`, `find`, `findBy`, `create`, and `toArray`.

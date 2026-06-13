@@ -28,6 +28,7 @@ class ModelMacro {
 		addNoArgStub(fields, "all", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "distinct", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "none", relationComplexType(selfType, criteriaType, pos), pos);
+		addNoArgNativeStub(fields, "reverseOrder", "reverse_order", relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRelationStub(fields, "select", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
 		addStub(fields, "findBy", criteriaType, nullableSelf, pos);
@@ -1046,6 +1047,28 @@ class ModelMacro {
 				expr: macro return cast null
 			}),
 			meta: [
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addNoArgNativeStub(fields:Array<Field>, name:String, nativeName:String, ret:ComplexType, pos:Position):Void {
+		for (field in fields) {
+			if (field.name == name) {
+				return;
+			}
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				args: [],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{nativeName}], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos
