@@ -74,6 +74,8 @@ The first implementation slice should prove the complete CRUD path: typed model,
 
 For the current query authoring contract, see [RailsHx Typed ActiveRecord Query Guide](railshx-query-guide.md). The short version: keep chains Rails-shaped, use generated field/association refs for compile-time checks, and cross from `Relation<T>` to loaded arrays with `toArray()` at controller/template boundaries.
 
+For typed controller and params authoring, see [RailsHx Controller And Params Guide](railshx-controller-guide.md). It covers `@:railsController`, `ParamsMacro.requirePermit(...)`, nested strong params, method-backed filters, flash/session/cookies, request/response facades, status tokens, and typed template rendering.
+
 Typed Rails templates are part of the RailsHx destination. `haxe.ruby-wpi.12` now has an initial HHX-first ActionView path through Rails HHX plus `H`/`HtmlNode`/`HtmlAttr`, including the todoapp index shell, typed locals-object projection, conditionals, loops, partial composition, `Template.of` owned partial refs, `Template.existing` interop partials, route-helper links, `link_to` block slots, typed model field refs in form helpers, and helper-tag static/expression child text. Raw ERB is retained only as an explicit migration/interop escape hatch or Rails-owned external source in gradual-adoption examples. The remaining work is broader component ergonomics, more helper slots, stricter typed assigns/components, richer adopt generators, richer typed `Relation<T, TCriteria>` querying, and continued expansion of HHX coverage while preserving Rails-native output.
 
 ## Acceptance Bar

@@ -156,7 +156,7 @@ RAILS_ENV=production bundle exec rails zeitwerk:check
 RAILS_ENV=production bundle exec rails assets:precompile
 ```
 
-The current Rails surface is an MVP. The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`. See [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md) for mixed Ruby/ERB and Haxe adoption patterns.
+The current Rails surface is an MVP. The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`. See [docs/railshx-controller-guide.md](docs/railshx-controller-guide.md) for typed controllers/params and [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md) for mixed Ruby/ERB and Haxe adoption patterns.
 
 Useful tooling:
 
