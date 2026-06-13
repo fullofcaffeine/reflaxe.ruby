@@ -263,6 +263,37 @@ for (const expected of [
   }
 }
 
+const queryGuide = readFileSync(join(root, "docs", "railshx-query-guide.md"), "utf8");
+for (const expected of [
+  "RailsHx Typed ActiveRecord Query Guide",
+  "Todo.where({",
+  "Todo.f.title.asc()",
+  "Todo.a.user",
+  "findBy({externalId",
+  ".toArray()",
+  "Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()",
+]) {
+  if (!queryGuide.includes(expected)) {
+    console.error(`RailsHx query guide missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const exampleReadme = readFileSync(join(root, "examples", "active_record_model", "README.md"), "utf8");
+for (const expected of [
+  "ActiveRecord Model And Query Example",
+  "npm run test:active-record-model",
+  "Todo.associations.user",
+  "Todo.incomplete().includes(Todo.a.user)",
+  "AuditLog.where({eventCount: 1})",
+  "Todo.includes(User.a.todos)",
+]) {
+  if (!exampleReadme.includes(expected)) {
+    console.error(`ActiveRecord example README missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
 expectInvalidColumnDefaultFailure();
 expectInvalidWhereFieldFailure();
 expectInvalidWhereValueTypeFailure();
