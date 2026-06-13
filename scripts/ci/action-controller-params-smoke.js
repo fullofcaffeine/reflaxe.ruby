@@ -58,7 +58,7 @@ for (const expected of [
   /remembered__hx\d+ = self\.session\(\)\[:last_todo_title\]/,
   /self\.cookies\(\)\[:todo_filter\] = "open"/,
   /self\.cookies\(\)\.delete\(:stale_filter\)/,
-  /self\.render\(json: attrs__hx\d+\)/,
+  /self\.render\(json: attrs__hx\d+, status: :created\)/,
   /self\.redirect_to\(action: "index"\)/,
   /self\.head\(:no_content\)/,
 ]) {

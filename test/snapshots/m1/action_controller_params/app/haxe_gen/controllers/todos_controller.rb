@@ -13,7 +13,7 @@ module Controllers
       remembered__hx0 = self.session()[:last_todo_title]
       self.cookies()[:todo_filter] = "open"
       self.cookies().delete(:stale_filter)
-      self.render(json: attrs__hx0)
+      self.render(json: attrs__hx0, status: :created)
       self.redirect_to(action: "index")
       self.head(:no_content)
     end

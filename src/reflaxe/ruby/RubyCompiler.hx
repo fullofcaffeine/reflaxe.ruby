@@ -1397,6 +1397,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				return locals;
 			}
 		}
+		if (fieldName == "status") {
+			var status = railsStatusArg(expr);
+			if (status != null) {
+				return status;
+			}
+		}
 		return printInlineExpr(expr);
 	}
 
