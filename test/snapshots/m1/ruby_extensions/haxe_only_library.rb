@@ -4,7 +4,7 @@ class HaxeOnlyLibrary
   def self.__hx_name()
     "HaxeOnlyLibrary"
   end
-  def self.headline(value__hx19559)
-    return ("haxe:" + value__hx19559)
+  def self.headline(value__hx19742)
+    return ("haxe:" + value__hx19742)
   end
 end

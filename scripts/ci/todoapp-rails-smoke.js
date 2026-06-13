@@ -49,6 +49,14 @@ const migrationForeignKeyOrderSourceDir = join(root, "test", ".generated", "todo
 const migrationForeignKeyOrderOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_foreign_key_order_out");
 const migrationIrreversibleOperationSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_operation_src");
 const migrationIrreversibleOperationOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_operation_out");
+const migrationUnknownTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_table_src");
+const migrationUnknownTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_table_out");
+const migrationUnknownColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_src");
+const migrationUnknownColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_out");
+const migrationExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_src");
+const migrationExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_out");
+const migrationDropTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_src");
+const migrationDropTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -113,6 +121,14 @@ rmSync(migrationForeignKeyOrderSourceDir, { force: true, recursive: true });
 rmSync(migrationForeignKeyOrderOutputDir, { force: true, recursive: true });
 rmSync(migrationIrreversibleOperationSourceDir, { force: true, recursive: true });
 rmSync(migrationIrreversibleOperationOutputDir, { force: true, recursive: true });
+rmSync(migrationUnknownTableSourceDir, { force: true, recursive: true });
+rmSync(migrationUnknownTableOutputDir, { force: true, recursive: true });
+rmSync(migrationUnknownColumnSourceDir, { force: true, recursive: true });
+rmSync(migrationUnknownColumnOutputDir, { force: true, recursive: true });
+rmSync(migrationExternalTableSourceDir, { force: true, recursive: true });
+rmSync(migrationExternalTableOutputDir, { force: true, recursive: true });
+rmSync(migrationDropTableSourceDir, { force: true, recursive: true });
+rmSync(migrationDropTableOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
@@ -516,6 +532,10 @@ expectMigrationBadOperationFailure();
 expectMigrationDuplicateTimestampFailure();
 expectMigrationForeignKeyOrderFailure();
 expectMigrationIrreversibleOperationFailure();
+expectMigrationUnknownTableFailure();
+expectMigrationUnknownColumnFailure();
+expectMigrationExternalTableAllowed();
+expectMigrationDropTableReversibleOutput();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -595,6 +615,48 @@ function expectInvalidMigrationCompile(sourceDir, invalidOutputDir, mainClass, s
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid migration check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function compileValidMigration(sourceDir, validOutputDir, mainClass) {
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${validOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      sourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      mainClass,
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      return;
+    }
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(result.status ?? 1);
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run valid migration check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }
@@ -1012,6 +1074,189 @@ function expectMigrationIrreversibleOperationFailure() {
     "Irreversible-operation RailsHx migration compiled successfully.",
     "@:railsMigration ChangeColumn must be wrapped in Reversible(up, down)"
   );
+}
+
+function expectMigrationUnknownTableFailure() {
+  mkdirSync(join(migrationUnknownTableSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationUnknownTableSourceDir, "InvalidUnknownTableMigrationMain.hx"), [
+    "import migrations.BadUnknownTableMigration;",
+    "",
+    "class InvalidUnknownTableMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadUnknownTableMigration> = BadUnknownTableMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationUnknownTableSourceDir, "migrations", "BadUnknownTableMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Demonstrates fail-closed table validation: knownModels gives the compiler",
+    "// the existing typed schema, so misspelled table names are rejected before",
+    "// Rails sees the migration.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000010\",",
+    "\tclassName: \"BadUnknownTableMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadUnknownTableMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddIndex(\"todoss\", \"title\", {unique: false})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationUnknownTableSourceDir,
+    migrationUnknownTableOutputDir,
+    "InvalidUnknownTableMigrationMain",
+    "Unknown-table RailsHx migration compiled successfully.",
+    "@:railsMigration AddIndex table references unknown table \"todoss\""
+  );
+}
+
+function expectMigrationUnknownColumnFailure() {
+  mkdirSync(join(migrationUnknownColumnSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationUnknownColumnSourceDir, "InvalidUnknownColumnMigrationMain.hx"), [
+    "import migrations.BadUnknownColumnMigration;",
+    "",
+    "class InvalidUnknownColumnMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadUnknownColumnMigration> = BadUnknownColumnMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationUnknownColumnSourceDir, "migrations", "BadUnknownColumnMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Demonstrates fail-closed column validation: typed model metadata lets",
+    "// RailsHx reject invalid index references while preserving Rails-shaped",
+    "// string/symbol output in the generated migration.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000011\",",
+    "\tclassName: \"BadUnknownColumnMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadUnknownColumnMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddIndex(\"todos\", \"missing_title\", {unique: false})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationUnknownColumnSourceDir,
+    migrationUnknownColumnOutputDir,
+    "InvalidUnknownColumnMigrationMain",
+    "Unknown-column RailsHx migration compiled successfully.",
+    "@:railsMigration AddIndex column references unknown column \"missing_title\" on table \"todos\""
+  );
+}
+
+function expectMigrationExternalTableAllowed() {
+  mkdirSync(join(migrationExternalTableSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationExternalTableSourceDir, "ExternalTableMigrationMain.hx"), [
+    "import migrations.ExternalTableMigration;",
+    "",
+    "class ExternalTableMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<ExternalTableMigration> = ExternalTableMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationExternalTableSourceDir, "migrations", "ExternalTableMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Demonstrates the Rails-owned table escape path: externalTables keeps",
+    "// known typed models checked while allowing deliberate integration with",
+    "// pre-existing/engine-owned Rails schema that Haxe does not own.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000012\",",
+    "\tclassName: \"ExternalTableMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"],",
+    "\texternalTables: [\"legacy_events\"]",
+    "})",
+    "class ExternalTableMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddIndex(\"legacy_events\", \"external_id\", {unique: true})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  compileValidMigration(
+    migrationExternalTableSourceDir,
+    migrationExternalTableOutputDir,
+    "ExternalTableMigrationMain"
+  );
+  const migrationRuby = readFileSync(join(migrationExternalTableOutputDir, "db", "migrate", "20260101000012_external_table_migration.rb"), "utf8");
+  if (!migrationRuby.includes("add_index :legacy_events, :external_id, unique: true")) {
+    console.error("External-table migration did not emit the expected unchecked Rails index.");
+    process.exit(1);
+  }
+}
+
+function expectMigrationDropTableReversibleOutput() {
+  mkdirSync(join(migrationDropTableSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationDropTableSourceDir, "DropTableMigrationMain.hx"), [
+    "import migrations.DropTableMigration;",
+    "",
+    "class DropTableMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<DropTableMigration> = DropTableMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationDropTableSourceDir, "migrations", "DropTableMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Demonstrates reversible destructive migration validation: DropTable is",
+    "// allowed only inside Reversible, and knownModels makes the table reference",
+    "// compile-time checked without emitting another create_table.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000013\",",
+    "\tclassName: \"DropTableMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class DropTableMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tReversible([DropTable(\"todos\")], [])",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  compileValidMigration(
+    migrationDropTableSourceDir,
+    migrationDropTableOutputDir,
+    "DropTableMigrationMain"
+  );
+  const migrationRuby = readFileSync(join(migrationDropTableOutputDir, "db", "migrate", "20260101000013_drop_table_migration.rb"), "utf8");
+  if (!migrationRuby.includes("drop_table :todos")) {
+    console.error("Drop-table migration did not emit the expected reversible drop_table statement.");
+    process.exit(1);
+  }
 }
 
 function expectInvalidTemplateLocalsFailure() {

@@ -31,6 +31,14 @@ enum MigrationColumn {
 }
 
 enum MigrationOperation {
+	/**
+		Typed Rails migration operations lower to normal ActiveRecord statements.
+
+		When `@:railsMigration({knownModels: [...]})` is present, the compiler
+		validates table, column, index, and foreign-key column references against
+		the referenced `@:railsModel` metadata. Use `externalTables` for deliberate
+		interop with Rails-owned tables that Haxe does not own.
+	**/
 	AddColumn(table:String, name:String, column:MigrationColumn);
 	RemoveColumn(table:String, name:String);
 	ChangeColumn(table:String, name:String, column:MigrationColumn);
