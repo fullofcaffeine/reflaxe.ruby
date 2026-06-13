@@ -8,6 +8,11 @@ module Controllers
     end
     def create()
       attrs__hx0 = self.params().require("todo").permit([:title, :is_completed])
+      self.flash()[:notice] = "Todo queued"
+      self.session()[:last_todo_title] = attrs__hx0
+      remembered__hx0 = self.session()[:last_todo_title]
+      self.cookies()[:todo_filter] = "open"
+      self.cookies().delete(:stale_filter)
       self.render(json: attrs__hx0)
       self.redirect_to(action: "index")
     end

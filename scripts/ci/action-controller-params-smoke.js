@@ -53,6 +53,11 @@ for (const expected of [
   /module Controllers/,
   /class TodosController < ActionController::Base/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed\]\)/,
+  /self\.flash\(\)\[:notice\] = "Todo queued"/,
+  /self\.session\(\)\[:last_todo_title\] = attrs__hx\d+/,
+  /remembered__hx\d+ = self\.session\(\)\[:last_todo_title\]/,
+  /self\.cookies\(\)\[:todo_filter\] = "open"/,
+  /self\.cookies\(\)\.delete\(:stale_filter\)/,
   /self\.render\(json: attrs__hx\d+\)/,
   /self\.redirect_to\(action: "index"\)/,
 ]) {

@@ -958,6 +958,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (arrayCall != null) {
 			return arrayCall;
 		}
+		var actionControllerStoreCall = compileActionControllerStoreCall(callee, params);
+		if (actionControllerStoreCall != null) {
+			return actionControllerStoreCall;
+		}
 		var info = staticCallInfo(callee);
 		if (info == null) {
 			return null;
@@ -1089,6 +1093,43 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				associationArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(associationArg)]);
 			case _:
 				null;
+		}
+	}
+
+	static function compileActionControllerStoreCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (callee.expr) {
+			case TField(target, access) if (isActionControllerKeyValueStore(target)):
+				switch (fieldAccessRawName(access)) {
+					case "get" if (params.length == 1):
+						RubyRawExpr(printInlineExpr(target) + "[" + railsStoreKey(params[0]) + "]");
+					case "set" if (params.length == 2):
+						RubyRawExpr(printInlineExpr(target) + "[" + railsStoreKey(params[0]) + "] = " + printInlineExpr(params[1]));
+					case "delete" if (params.length == 1):
+						RubyCall(compileExpr(target), "delete", [RubyRawExpr(railsStoreKey(params[0]))]);
+					case _:
+						null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function isActionControllerKeyValueStore(expr:TypedExpr):Bool {
+		return switch (expr.t) {
+			case TInst(classRef, _):
+				var classType = classRef.get();
+				classType.pack.join(".") == "rails.action_controller" && classType.name == "KeyValueStore";
+			case _:
+				false;
+		}
+	}
+
+	static function railsStoreKey(expr:TypedExpr):String {
+		return switch (expr.expr) {
+			case TConst(TString(value)):
+				rubySymbolLiteral(RubyNaming.toLocalName(value));
+			case _:
+				printInlineExpr(expr);
 		}
 	}
 

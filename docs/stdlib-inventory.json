@@ -207,6 +207,14 @@
       "reason": "Typed Rails params wrapper for require/permit flows."
     },
     {
+      "id": "std.rails.action_controller_key_value_store",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/KeyValueStore.hx",
+      "surface": "rails.action_controller.KeyValueStore",
+      "reason": "Typed controller facade for Rails flash/session/cookies get/set/delete calls lowered into Rails-native bracket/delete access."
+    },
+    {
       "id": "std.rails.action_view_template",
       "owner": "std",
       "status": "implemented",

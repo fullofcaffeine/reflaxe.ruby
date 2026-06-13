@@ -7,6 +7,18 @@ class Base {
 		return cast null;
 	}
 
+	public function flash():KeyValueStore<String> {
+		return cast null;
+	}
+
+	public function session():KeyValueStore<Dynamic> {
+		return cast null;
+	}
+
+	public function cookies():KeyValueStore<String> {
+		return cast null;
+	}
+
 	@:rubyKwargs
 	public function render(options:Dynamic):Void {}
 

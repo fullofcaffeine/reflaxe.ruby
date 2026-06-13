@@ -69,6 +69,7 @@ for (const required of [
   "src/reflaxe/ruby/macros/RubyExtensionMacro.hx",
   "std/Std.cross.hx",
   "std/rails/ActiveRecord.hx",
+  "std/rails/action_controller/KeyValueStore.hx",
   "std/rails/action_view/H.hx",
   "std/rails/action_view/HtmlAttr.hx",
   "std/rails/action_view/HtmlNode.hx",
