@@ -101,6 +101,13 @@ var distinctOpen = Todo.distinct()
 	.where({status: "open"})
 	.order(Todo.f.title.asc());
 
+var emptyOpen = Todo.none()
+	.where({status: "open"});
+
+var emptyAssigned = Todo.where({title: "assigned"})
+	.none()
+	.limit(1);
+
 var openOrDone = Todo.where({status: "open"})
 	.or(Todo.where({status: "done"}))
 	.order(Todo.f.title.asc());
@@ -129,6 +136,8 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
+Models::Todo.none().where(status: "open")
+Models::Todo.where(title: "assigned").none().limit(1)
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.select(:title).where(status: "open")
@@ -170,6 +179,21 @@ Generated Ruby:
 
 ```ruby
 Models::Todo.distinct().where(completed: false).offset(10).limit(10)
+```
+
+`none()` creates or keeps a Rails null relation while preserving the typed
+relation shape for subsequent calls:
+
+```haxe
+var emptyOpen = Todo.none().where({status: "open"});
+var emptyAssigned = Todo.where({title: "assigned"}).none().limit(1);
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.none().where(status: "open")
+Models::Todo.where(title: "assigned").none().limit(1)
 ```
 
 `or(...)` composes two typed relations for the same model and criteria shape.
@@ -484,6 +508,7 @@ The current query slice intentionally covers the common Rails relation path:
 
 - Typed criteria for flat model columns.
 - Typed association refs for `includes` and `joins`.
+- Typed null relations through `none`.
 - Typed relation composition through `or` and `merge`.
 - Typed field refs for `order`.
 - `limit`, `offset`, `first`, `find`, `findBy`, `create`, and `toArray`.

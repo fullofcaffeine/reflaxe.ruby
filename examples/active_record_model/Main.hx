@@ -8,7 +8,7 @@ import rails.active_record.Projection;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `distinct`, `select`, `where`, `rewhere`, `or`, `merge`, `order`, `reorder`, `limit`,
+// `all`, `distinct`, `none`, `select`, `where`, `rewhere`, `or`, `merge`, `order`, `reorder`, `limit`,
 // `offset`, `pluck`, `minimum`, `maximum`, `sum`, `average`, `find`, `findBy`,
 // `exists`, `count`, `first`, and `last` authored as typed Haxe calls, plus
 // typed multi-field orders through `Order.many`, named multi-field projections
@@ -34,6 +34,8 @@ class Main {
 		var allOpen = Todo.all().where({status: "open"}).order(Todo.f.title.asc()).limit(3);
 		var distinctOpen = Todo.distinct().where({status: "open"}).order(Todo.f.title.asc());
 		var relationDistinct = assigned.distinct().limit(2);
+		var emptyOpen = Todo.none().where({status: "open"});
+		var emptyAssigned = assigned.none().limit(1);
 		var openOrDone = Todo.where({status: "open"}).or(Todo.where({status: "done"})).order(Todo.f.title.asc());
 		var mergedOpen = Todo.where({status: "open"}).merge(Todo.where({completed: false})).limit(7);
 		var selected = Todo.select(Todo.f.title).where({status: "open"});
@@ -107,6 +109,8 @@ class Main {
 		Sys.println(allOpen == null);
 		Sys.println(distinctOpen == null);
 		Sys.println(relationDistinct == null);
+		Sys.println(emptyOpen == null);
+		Sys.println(emptyAssigned == null);
 		Sys.println(openOrDone == null);
 		Sys.println(mergedOpen == null);
 		Sys.println(selected == null);

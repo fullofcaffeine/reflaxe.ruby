@@ -38,6 +38,9 @@ var distinctOpen = Todo
 	.where({status: "open"})
 	.order(Todo.f.title.asc());
 
+var emptyOpen = Todo.none().where({status: "open"});
+var emptyAssigned = Todo.where({title: "assigned"}).none().limit(1);
+
 var openOrDone = Todo
 	.where({status: "open"})
 	.or(Todo.where({status: "done"}))
@@ -87,6 +90,8 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
+Models::Todo.none().where(status: "open")
+Models::Todo.where(title: "assigned").none().limit(1)
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.reorder(title: :desc).limit(4)
@@ -118,6 +123,8 @@ Type-safety features used here:
 - `where({...})` object keys must be `@:railsColumn` fields.
 - `where({...})` values must match those field types.
 - `rewhere({...})` uses the same typed criteria object while lowering to Rails `rewhere`.
+- `Todo.none()` and `relation.none()` keep a typed null relation that can still
+  be chained before Rails runs.
 - `relation.or(otherRelation)` requires another `Relation<Todo, ...>` operand
   and lowers to Rails-native `.or(...)`.
 - `relation.merge(otherRelation)` uses the same typed same-model operand rule
@@ -139,7 +146,7 @@ Type-safety features used here:
 - `Todo.sum(Todo.f.userId)` returns `Int`, `Todo.average(Todo.f.userId)`
   returns `Null<Float>`, and non-`Int` fields fail during Haxe compilation.
 - The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
-  `or`, `merge`, `order`, `limit`, and `offset`.
+  `none`, `or`, `merge`, `order`, `limit`, and `offset`.
 
 Invalid projection/grouping examples fail during Haxe compilation:
 
