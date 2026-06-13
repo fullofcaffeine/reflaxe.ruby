@@ -268,7 +268,7 @@
       "status": "implemented",
       "path": "std/rails/migration/MigrationOperation.hx",
       "surface": "rails.migration.MigrationOperation",
-      "reason": "Typed RailsHx migration operation DSL for alter/drop/index-style ActiveRecord migration statements."
+      "reason": "Typed RailsHx migration operation DSL for alter/drop/index/foreign-key/reversible ActiveRecord migration statements."
     },
     {
       "id": "std.rails.params_macro",

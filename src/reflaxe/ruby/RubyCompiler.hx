@@ -1428,42 +1428,75 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsMigration operations must be a static final Array<MigrationOperation> literal.", operationField.field.pos);
 			return [];
 		}
+		return railsMigrationOperationArray(expr, "@:railsMigration operations");
+	}
+
+	static function railsMigrationOperationArray(expr:TypedExpr, label:String):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
-				[for (value in values) railsMigrationOperationLine(value, classType)];
+				var lines:Array<String> = [];
+				for (value in values) {
+					lines = lines.concat(railsMigrationOperationLines(value));
+				}
+				lines;
 			case _:
-				Context.error("@:railsMigration operations must be an Array<MigrationOperation> literal.", expr.pos);
+				Context.error(label + " must be an Array<MigrationOperation> literal.", expr.pos);
 				[];
 		}
 	}
 
-	static function railsMigrationOperationLine(expr:TypedExpr, classType:ClassType):String {
+	static function railsMigrationOperationLines(expr:TypedExpr):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args):
 				switch (field.name) {
 					case "AddColumn" if (args.length == 3):
-						var column = railsMigrationColumnDsl(args[2], classType);
-						"add_column :" + railsMigrationSymbolArg(args[0], "AddColumn table") + ", :" + railsMigrationSymbolArg(args[1], "AddColumn name") + ", :" + column.type + railsMigrationOptionSuffix(column.options);
+						var column = railsMigrationColumnDsl(args[2]);
+						["add_column :" + railsMigrationSymbolArg(args[0], "AddColumn table") + ", :" + railsMigrationSymbolArg(args[1], "AddColumn name") + ", :" + column.type + railsMigrationOptionSuffix(column.options)];
 					case "RemoveColumn" if (args.length == 2):
-						"remove_column :" + railsMigrationSymbolArg(args[0], "RemoveColumn table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveColumn name");
+						["remove_column :" + railsMigrationSymbolArg(args[0], "RemoveColumn table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveColumn name")];
+					case "ChangeColumn" if (args.length == 3):
+						var column = railsMigrationColumnDsl(args[2]);
+						["change_column :" + railsMigrationSymbolArg(args[0], "ChangeColumn table") + ", :" + railsMigrationSymbolArg(args[1], "ChangeColumn name") + ", :" + column.type + railsMigrationOptionSuffix(column.options)];
 					case "AddIndex" if (args.length == 3):
 						var options = railsMigrationIndexDslOptions(args[2]);
-						"add_index :" + railsMigrationSymbolArg(args[0], "AddIndex table") + ", :" + railsMigrationSymbolArg(args[1], "AddIndex column") + railsMigrationOptionSuffix(options);
+						["add_index :" + railsMigrationSymbolArg(args[0], "AddIndex table") + ", :" + railsMigrationSymbolArg(args[1], "AddIndex column") + railsMigrationOptionSuffix(options)];
 					case "RemoveIndex" if (args.length == 2):
-						"remove_index :" + railsMigrationSymbolArg(args[0], "RemoveIndex table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveIndex column");
+						["remove_index :" + railsMigrationSymbolArg(args[0], "RemoveIndex table") + ", :" + railsMigrationSymbolArg(args[1], "RemoveIndex column")];
+					case "AddForeignKey" if (args.length == 3):
+						var options = railsMigrationForeignKeyDslOptions(args[2]);
+						["add_foreign_key :" + railsMigrationSymbolArg(args[0], "AddForeignKey fromTable") + ", :" + railsMigrationSymbolArg(args[1], "AddForeignKey toTable") + railsMigrationOptionSuffix(options)];
+					case "RemoveForeignKey" if (args.length == 2):
+						["remove_foreign_key :" + railsMigrationSymbolArg(args[0], "RemoveForeignKey fromTable") + ", :" + railsMigrationSymbolArg(args[1], "RemoveForeignKey toTable")];
 					case "DropTable" if (args.length == 1):
-						"drop_table :" + railsMigrationSymbolArg(args[0], "DropTable table");
+						["drop_table :" + railsMigrationSymbolArg(args[0], "DropTable table")];
+					case "Reversible" if (args.length == 2):
+						railsMigrationReversibleLines(args[0], args[1]);
 					case _:
 						Context.error('@:railsMigration unsupported MigrationOperation ${field.name}.', expr.pos);
-						"# unsupported RailsHx migration operation";
+						["# unsupported RailsHx migration operation"];
 				}
 			case _:
 				Context.error("@:railsMigration operations must contain MigrationOperation enum values.", expr.pos);
-				"# invalid RailsHx migration operation";
+				["# invalid RailsHx migration operation"];
 		}
 	}
 
-	static function railsMigrationColumnDsl(expr:TypedExpr, classType:ClassType):{type:String, options:Array<String>} {
+	static function railsMigrationReversibleLines(upExpr:TypedExpr, downExpr:TypedExpr):Array<String> {
+		var lines = ["reversible do |dir|", "  dir.up do"];
+		for (line in railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up")) {
+			lines.push("    " + line);
+		}
+		lines.push("  end");
+		lines.push("  dir.down do");
+		for (line in railsMigrationOperationArray(downExpr, "@:railsMigration Reversible down")) {
+			lines.push("    " + line);
+		}
+		lines.push("  end");
+		lines.push("end");
+		return lines;
+	}
+
+	static function railsMigrationColumnDsl(expr:TypedExpr):{type:String, options:Array<String>} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args) if (args.length == 1):
 				var type = switch (field.name) {
@@ -1525,6 +1558,54 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error("@:railsMigration AddIndex options must be an object literal.", expr.pos);
 				[];
+		}
+	}
+
+	static function railsMigrationForeignKeyDslOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				for (field in fields) {
+					switch (field.name) {
+						case "column":
+							options.push("column: :" + railsMigrationSymbolArg(field.expr, "ForeignKey column"));
+						case "primaryKey":
+							options.push("primary_key: :" + railsMigrationSymbolArg(field.expr, "ForeignKey primaryKey"));
+						case "onDelete":
+							options.push("on_delete: :" + railsMigrationForeignKeyAction(field.expr, "ForeignKey onDelete"));
+						case "onUpdate":
+							options.push("on_update: :" + railsMigrationForeignKeyAction(field.expr, "ForeignKey onUpdate"));
+						case _:
+							Context.error('@:railsMigration unknown ForeignKey option ${field.name}.', field.expr.pos);
+					}
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration AddForeignKey options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationForeignKeyAction(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall({expr: TField(_, FEnum(_, field))}, args) if (args.length == 0):
+				railsMigrationForeignKeyActionName(field.name, label, expr);
+			case TField(_, FEnum(_, field)):
+				railsMigrationForeignKeyActionName(field.name, label, expr);
+			case _:
+				Context.error('@:railsMigration ${label} must be a ForeignKeyAction enum value.', expr.pos);
+				"restrict";
+		}
+	}
+
+	static function railsMigrationForeignKeyActionName(name:String, label:String, expr:TypedExpr):String {
+		return switch (name) {
+			case "Cascade": "cascade";
+			case "Nullify": "nullify";
+			case "Restrict": "restrict";
+			case _:
+				Context.error('@:railsMigration unsupported ${label} action ${name}.', expr.pos);
+				"restrict";
 		}
 	}
 
