@@ -1293,6 +1293,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (activeRecordCall != null) {
 			return activeRecordCall;
 		}
+		var activeRecordProjectionCall = compileActiveRecordProjectionStaticCall(callee, params);
+		if (activeRecordProjectionCall != null) {
+			return activeRecordProjectionCall;
+		}
 		var arrayCall = compileArrayCall(callee, params);
 		if (arrayCall != null) {
 			return arrayCall;
@@ -1471,6 +1475,39 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if ((fieldAccessRawName(access) == "includes" || fieldAccessRawName(access) == "joins") && params.length == 1):
 				var associationArg = activeRecordAssociationArg(params[0]);
 				associationArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(associationArg)]);
+			case _:
+				null;
+		}
+	}
+
+	static function compileActiveRecordProjectionStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		var info = staticCallInfo(callee);
+		if (info == null || info.owner != "rails.active_record.ProjectionRuntime" || info.name != "pluck" || params.length != 3) {
+			return null;
+		}
+		var fieldNames = staticStringArray(params[1]);
+		var keys = staticStringArray(params[2]);
+		if (fieldNames == null || keys == null || fieldNames.length == 0 || fieldNames.length != keys.length) {
+			Context.error("ProjectionRuntime.pluck expects matching static field and key arrays emitted by Projection.pluck.", callee.pos);
+		}
+		var pluckArgs = [for (fieldName in fieldNames) RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))];
+		var keyArray = RubyRawExpr("[" + [for (key in keys) quoteRubyStringForCode(key)].join(", ") + "]");
+		return RubyCall(RubyLocal("HXRuby"), "active_record_projection", [RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keyArray]);
+	}
+
+	static function staticStringArray(expr:TypedExpr):Null<Array<String>> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					switch (unwrapTypedExpr(value).expr) {
+						case TConst(TString(raw)):
+							out.push(raw);
+						case _:
+							return null;
+					}
+				}
+				out;
 			case _:
 				null;
 		}

@@ -76,6 +76,15 @@ module HXRuby
     array + other
   end
 
+  def active_record_projection(rows, keys)
+    rows.map do |row|
+      values = row.is_a?(Array) ? row : [row]
+      keys.each_with_index.each_with_object({}) do |(key, index), out|
+        out[key.to_s] = values[index]
+      end
+    end
+  end
+
   def array_join(array, separator)
     array.map { |entry| stringify(entry) }.join(separator.to_s)
   end

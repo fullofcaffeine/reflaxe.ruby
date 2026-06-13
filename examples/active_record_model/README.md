@@ -40,6 +40,10 @@ var selected = Todo.select(Todo.f.title).where({status: "open"});
 
 var titles:Array<String> = Todo.pluck(Todo.f.title);
 var assignedIds:Array<Int> = Todo.where({title: "assigned"}).pluck(Todo.f.id);
+var projected:Array<{id:Int, title:String}> = Projection.pluck(
+	Todo.where({status: "open"}),
+	{id: Todo.f.id, title: Todo.f.title}
+);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
 var maxTitle:Null<String> = Todo.maximum(Todo.f.title);
 
@@ -63,6 +67,7 @@ Models::Todo.rewhere(completed: true).limit(1)
 Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(title: "assigned").pluck(:id)
+HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
 Models::Todo.minimum(:id)
 Models::Todo.maximum(:title)
 Models::Todo
@@ -84,6 +89,9 @@ Type-safety features used here:
 - `Todo.select(Todo.f.title)` returns a relation and lowers to Rails `select(:title)`.
 - `Todo.reorder(Todo.f.title.desc())` uses the same owner-typed order token.
 - `Todo.pluck(Todo.f.title)` returns `Array<String>` from the field value type.
+- `Projection.pluck(Todo.where(...), {id: Todo.f.id, title: Todo.f.title})`
+  returns named rows such as `Array<{id:Int, title:String}>`, rejects empty
+  specs, and rejects fields from another model before Rails runs.
 - `Todo.maximum(Todo.f.id)` returns `Null<Int>` and rejects fields from other models.
 - The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
   `order`, `limit`, and `offset`.

@@ -74,6 +74,10 @@ const invalidSelectFieldSourceDir = join(root, "test", ".generated", "active_rec
 const invalidSelectFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_select_field_out");
 const invalidPluckFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_pluck_field_src");
 const invalidPluckFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_pluck_field_out");
+const invalidProjectionFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_projection_field_src");
+const invalidProjectionFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_projection_field_out");
+const invalidProjectionEmptySourceDir = join(root, "test", ".generated", "active_record_model_invalid_projection_empty_src");
+const invalidProjectionEmptyOutputDir = join(root, "test", ".generated", "active_record_model_invalid_projection_empty_out");
 const invalidAggregateFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_src");
 const invalidAggregateFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_out");
 const reflaxeCandidates = [
@@ -166,6 +170,10 @@ rmSync(invalidSelectFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidSelectFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidPluckFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidPluckFieldOutputDir, { force: true, recursive: true });
+rmSync(invalidProjectionFieldSourceDir, { force: true, recursive: true });
+rmSync(invalidProjectionFieldOutputDir, { force: true, recursive: true });
+rmSync(invalidProjectionEmptySourceDir, { force: true, recursive: true });
+rmSync(invalidProjectionEmptyOutputDir, { force: true, recursive: true });
 rmSync(invalidAggregateFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidAggregateFieldOutputDir, { force: true, recursive: true });
 
@@ -310,6 +318,8 @@ for (const expected of [
   "Models::Todo.pluck(:title)",
   "assigned__hx",
   ".pluck(:id)",
+  'HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])',
+  'HXRuby.active_record_projection(Models::Todo.pluck(:id, :external_id), ["id", "externalId"])',
   "Models::Todo.minimum(:id)",
   "Models::Todo.maximum(:title)",
   "assigned__hx",
@@ -337,6 +347,7 @@ for (const expected of [
   ".count()",
   ".last()",
   "pluck(Todo.f.title)",
+  "Projection.pluck(",
   "minimum(Todo.f.id)",
   ".offset(",
   ".toArray()",
@@ -365,6 +376,7 @@ for (const expected of [
   "Todo.count()",
   "Todo.last()",
   "Todo.pluck(Todo.f.title)",
+  "Projection.pluck(Todo.where",
   "Todo.minimum(Todo.f.id)",
   "Todo.includes(User.a.todos)",
 ]) {
@@ -408,6 +420,8 @@ expectInvalidOffsetValueTypeFailure();
 expectInvalidReorderOwnerFailure();
 expectInvalidSelectFieldOwnerFailure();
 expectInvalidPluckFieldOwnerFailure();
+expectInvalidProjectionFieldOwnerFailure();
+expectInvalidProjectionEmptySpecFailure();
 expectInvalidAggregateFieldOwnerFailure();
 
 function compileWithFirstAvailableReflaxe() {
@@ -568,6 +582,51 @@ function expectInvalidPluckFieldOwnerFailure() {
     invalidPluckFieldOutputDir,
     "Invalid ActiveRecord pluck field owner compiled successfully.",
     "Field<models.User"
+  );
+}
+
+function expectInvalidProjectionFieldOwnerFailure() {
+  mkdirSync(invalidProjectionFieldSourceDir, { recursive: true });
+  writeFileSync(join(invalidProjectionFieldSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "import rails.active_record.Projection;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Projection.pluck(Todo, {id: Todo.f.id, name: User.f.name});",
+    "\t\tSys.println(bad.length);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidProjectionFieldSourceDir,
+    invalidProjectionFieldOutputDir,
+    "Invalid ActiveRecord projection field owner compiled successfully.",
+    "Projection.pluck field refs must belong to the same model as the source"
+  );
+}
+
+function expectInvalidProjectionEmptySpecFailure() {
+  mkdirSync(invalidProjectionEmptySourceDir, { recursive: true });
+  writeFileSync(join(invalidProjectionEmptySourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import rails.active_record.Projection;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Projection.pluck(Todo, {});",
+    "\t\tSys.println(bad.length);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidProjectionEmptySourceDir,
+    invalidProjectionEmptyOutputDir,
+    "Invalid ActiveRecord empty projection spec compiled successfully.",
+    "Projection.pluck spec must be a non-empty object literal"
   );
 }
 

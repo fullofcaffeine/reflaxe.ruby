@@ -173,6 +173,10 @@ var selected = Todo.select(Todo.f.title).where({status: "open"});
 
 var titles:Array<String> = Todo.pluck(Todo.f.title);
 var ids:Array<Int> = Todo.where({status: "open"}).pluck(Todo.f.id);
+var rows:Array<{id:Int, title:String}> = Projection.pluck(
+	Todo.where({status: "open"}),
+	{id: Todo.f.id, title: Todo.f.title}
+);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
 var latestTitle:Null<String> = Todo.where({status: "open"}).maximum(Todo.f.title);
 ```
@@ -185,6 +189,7 @@ Models::Todo.reorder(title: :desc).limit(4)
 Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
+HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
 Models::Todo.minimum(:id)
 Models::Todo.where(status: "open").maximum(:title)
 ```
@@ -202,6 +207,13 @@ lowers to Rails `select(:field)`, while fields from another model are rejected.
 `pluck(...)` preserves the field value type in the returned array. A string
 column becomes `Array<String>`, an integer primary key becomes `Array<Int>`, and
 fields from another model are rejected by Haxe before Rails runs.
+
+`Projection.pluck(...)` is for named multi-field projections. The spec must be a
+non-empty object literal of generated field refs from the source model; the
+return type is inferred from the object keys and field value types, such as
+`Array<{id:Int, title:String}>`. Generated Ruby still uses Rails `pluck(:id,
+:title)` and a small `HXRuby` row shaper so app code sees named rows instead of
+positional arrays.
 
 `minimum(...)` and `maximum(...)` use the same field refs and return nullable
 field values because Rails may not find a row. For example, an integer field

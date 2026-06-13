@@ -1,13 +1,15 @@
 import models.AuditLog;
 import models.Todo;
 import models.User;
+import rails.active_record.Projection;
 
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
 // `all`, `distinct`, `select`, `where`, `rewhere`, `order`, `reorder`, `limit`,
 // `offset`, `pluck`, `minimum`, `maximum`, `find`, `findBy`, `exists`, `count`,
-// `first`, and `last` authored as typed Haxe calls.
+// `first`, and `last` authored as typed Haxe calls, plus named multi-field
+// projections through `Projection.pluck`.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -47,6 +49,14 @@ class Main {
 		var relationLast:Null<Todo> = assigned.last();
 		var titles:Array<String> = Todo.pluck(Todo.f.title);
 		var assignedIds:Array<Int> = assigned.pluck(Todo.f.id);
+		var projected:Array<{id:Int, title:String}> = Projection.pluck(
+			Todo.where({status: "open"}),
+			{id: Todo.f.id, title: Todo.f.title}
+		);
+		var projectedFromModel:Array<{id:Int, externalId:String}> = Projection.pluck(
+			Todo,
+			{id: Todo.f.id, externalId: Todo.f.externalId}
+		);
 		var minId:Null<Int> = Todo.minimum(Todo.f.id);
 		var maxTitle:Null<String> = Todo.maximum(Todo.f.title);
 		var assignedMaxId:Null<Int> = assigned.maximum(Todo.f.id);
@@ -68,6 +78,8 @@ class Main {
 		Sys.println(relationLast == null);
 		Sys.println(titles.length >= 0);
 		Sys.println(assignedIds.length >= 0);
+		Sys.println(projected.length >= 0);
+		Sys.println(projectedFromModel.length >= 0);
 		Sys.println(minId == null);
 		Sys.println(maxTitle == null);
 		Sys.println(assignedMaxId == null);
