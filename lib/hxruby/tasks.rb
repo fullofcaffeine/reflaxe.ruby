@@ -80,6 +80,8 @@ module HXRuby
             args += ["--package", ENV["PACKAGE"]] if ENV["PACKAGE"]
             args += ["--service", ENV["SERVICE"]] if ENV["SERVICE"]
             args += ["--template", ENV["TEMPLATE"]] if ENV["TEMPLATE"]
+            args += ["--extension-source", ENV["EXTENSION_SOURCE"]] if ENV["EXTENSION_SOURCE"]
+            args += ["--extension-module", ENV["EXTENSION_MODULE"]] if ENV["EXTENSION_MODULE"]
             args += ["--locals", ENV["LOCALS"]] if ENV["LOCALS"]
             args << "--force" if truthy?(ENV["FORCE"])
             HXRuby::Generators::Adopt.run(args)

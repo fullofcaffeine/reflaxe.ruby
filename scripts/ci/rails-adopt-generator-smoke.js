@@ -10,7 +10,31 @@ const existingErb = join(outputDir, "app", "views", "legacy", "_badge.html.erb")
 
 rmSync(outputDir, { force: true, recursive: true });
 mkdirSync(join(outputDir, "app", "views", "legacy"), { recursive: true });
+mkdirSync(join(outputDir, "app", "models", "concerns"), { recursive: true });
 writeFileSync(existingErb, "<strong><%= label %></strong>\n");
+const extensionSource = join(outputDir, "app", "models", "concerns", "sluggable.rb");
+writeFileSync(extensionSource, [
+  "module Sluggable",
+  "  def slug",
+  "    title.downcase",
+  "  end",
+  "",
+  "  def decorated_title(prefix, tone = nil)",
+  "    \"#{prefix}:#{title}\"",
+  "  end",
+  "",
+  "  def dynamic_tags(*tags)",
+  "    tags.join(',')",
+  "  end",
+  "",
+  "  module ClassMethods",
+  "    def find_by_slug(slug)",
+  "      nil",
+  "    end",
+  "  end",
+  "end",
+  "",
+].join("\n"));
 
 run("ruby", [
   "-I",
@@ -26,6 +50,10 @@ run("ruby", [
   "legacy/badge",
   "--locals",
   "label:String,tone:String",
+  "--extension-source",
+  extensionSource,
+  "--extension-module",
+  "Sluggable",
 ]);
 
 assertIncludes("src_haxe/interop/LegacyPriceFormatter.hx", [
@@ -41,6 +69,21 @@ assertIncludes("src_haxe/interop/templates/LegacyBadgeTemplate.hx", [
   "var tone:String;",
   'Template.existing("legacy/badge")',
 ]);
+assertIncludes("src_haxe/interop/extensions/SluggableInstance.hx", [
+  "package interop.extensions;",
+  "// Review required: Ruby source does not carry Haxe return/argument types.",
+  '@:rubyMixin({module: "Sluggable"})',
+  "extern interface SluggableInstance",
+  "public function slug():Dynamic;",
+  "public function decoratedTitle(prefix:Dynamic, ?tone:Dynamic):Dynamic;",
+  "Skipped dynamic_tags",
+]);
+assertIncludes("src_haxe/interop/extensions/SluggableClassMethods.hx", [
+  "package interop.extensions;",
+  '@:rubyMixin({module: "Sluggable"})',
+  "extern class SluggableClassMethods",
+  "public static function findBySlug(slug:Dynamic):Dynamic;",
+]);
 
 const erbAfter = readFileSync(existingErb, "utf8");
 if (erbAfter !== "<strong><%= label %></strong>\n") {
@@ -49,12 +92,18 @@ if (erbAfter !== "<strong><%= label %></strong>\n") {
 
 writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "import interop.LegacyPriceFormatter;",
+  "import interop.extensions.SluggableClassMethods;",
+  "import interop.extensions.SluggableInstance;",
   "import interop.templates.LegacyBadgeTemplate;",
   "",
   "class Main {",
   "\tstatic function main() {",
   "\t\tvar service:Class<LegacyPriceFormatter> = LegacyPriceFormatter;",
+  "\t\tvar classMethods:Class<SluggableClassMethods> = SluggableClassMethods;",
+  "\t\tvar instanceContract:Dynamic = (null : SluggableInstance);",
   "\t\tSys.println(service != null);",
+  "\t\tSys.println(classMethods != null);",
+  "\t\tSys.println(instanceContract == null);",
   "\t\tSys.println(LegacyBadgeTemplate.template.templatePath);",
   "\t}",
   "}",
@@ -90,6 +139,25 @@ if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite"
   process.stdout.write(overwrite.stdout);
   process.stderr.write(overwrite.stderr);
   fail("adoption generator did not protect existing wrapper files");
+}
+
+const missingSource = spawnSync("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--extension-source",
+  join(outputDir, "app", "models", "concerns", "missing.rb"),
+], {
+  cwd: root,
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"],
+});
+if (missingSource.status === 0 || !missingSource.stderr.includes("Extension source does not exist")) {
+  process.stdout.write(missingSource.stdout);
+  process.stderr.write(missingSource.stderr);
+  fail("adoption generator did not fail closed for missing extension source");
 }
 
 console.log("[rails-adopt-generator] OK");

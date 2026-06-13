@@ -23,7 +23,26 @@ module HXRuby
       end
 
       def haxe_method_name(ruby_name)
-        ruby_name.to_s.gsub(/_([a-z0-9])/) { Regexp.last_match(1).upcase }
+        ruby_name.to_s
+          .sub(/[!?=]\z/, "")
+          .gsub(/_([a-z0-9])/) { Regexp.last_match(1).upcase }
+      end
+
+      def haxe_identifier(value, fallback: "value")
+        name = value.to_s.gsub(/[^A-Za-z0-9_]/, "_")
+        name = fallback if name.empty?
+        name = "_#{name}" unless name.match?(/\A[A-Za-z_]/)
+        haxe_keywords.include?(name) ? "#{name}Value" : name
+      end
+
+      def haxe_keywords
+        @haxe_keywords ||= %w[
+          abstract break case cast catch class continue default do dynamic else enum
+          extends extern false final for function if implements import in inline
+          interface macro new null operator overload override package private public
+          return static super switch this throw true try typedef untyped using var
+          while
+        ]
       end
 
       def file_name(value)

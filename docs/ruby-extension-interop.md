@@ -271,8 +271,10 @@ For gems that define methods from declarations, database schema, routes, Sorbet/
 
 ```bash
 bin/rails generate hxruby:adopt --discover
-bin/rails generate hxruby:adopt --service LegacySearch --signature-source rbs
+bin/rails generate hxruby:adopt --extension-source app/models/concerns/sluggable.rb --extension-module Sluggable
 ```
+
+The initial source-backed generator uses Ruby's parser to inspect module declarations and method signatures without executing app code. It emits `@:rubyMixin` instance/class-method contracts with `Dynamic` placeholders and review comments when source files lack real type metadata. Simple required and optional arguments are emitted; splats, keyword-heavy methods, and block signatures are skipped with comments so the generated Haxe remains compileable.
 
 The generator should produce Haxe externs and extension contracts, never unchecked dynamic calls by default. LLM assistance is acceptable as a suggest-only layer: it can draft contracts from Ruby source/docs, but the generated Haxe should compile, and risky guesses should be marked for review.
 
@@ -314,7 +316,7 @@ npm run test:ruby-extensions
 
 ## Follow-Up Work
 
-The current slice supports typed mixin consumption, Haxe-owned `include`/`extend`/`prepend` emission, Haxe-authored Ruby modules, initial Haxe-authored ActiveSupport::Concern output, and typed monkey-patch/`using` contracts. Remaining work:
+The current slice supports typed mixin consumption, Haxe-owned `include`/`extend`/`prepend` emission, Haxe-authored Ruby modules, initial Haxe-authored ActiveSupport::Concern output, typed monkey-patch/`using` contracts, and source-backed generation of initial `@:rubyMixin` contracts. Remaining work:
 
-- add generator-assisted contract discovery from Ruby source, RBS, YARD, Rails schema/routes, and optional LLM suggestions;
+- add richer generator-assisted contract discovery from RBS, YARD, Rails schema/routes, and optional LLM suggestions;
 - add richer validation/runtime examples for dynamic DSLs such as Rails scopes, callbacks, and gem-specific metaprogramming.

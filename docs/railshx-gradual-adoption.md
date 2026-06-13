@@ -82,6 +82,24 @@ npm run rails:adopt -- --service LegacyPriceFormatter
 
 It intentionally does not infer method signatures yet. Add method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
 
+For Ruby extension modules, the generator can inspect a checked source file and scaffold `@:rubyMixin` contracts:
+
+```bash
+bin/rails generate hxruby:adopt \
+  --extension-source app/models/concerns/sluggable.rb \
+  --extension-module Sluggable
+
+npm run rails:adopt -- \
+  --extension-source app/models/concerns/sluggable.rb \
+  --extension-module Sluggable
+
+bundle exec rake hxruby:gen:adopt \
+  EXTENSION_SOURCE=app/models/concerns/sluggable.rb \
+  EXTENSION_MODULE=Sluggable
+```
+
+This reads Ruby source through `Ripper`; it does not execute app code. It emits instance and class-method contracts such as `SluggableInstance` and `SluggableClassMethods`, using `Dynamic` placeholders plus review comments when Ruby source has no type metadata. Simple required/optional arguments are emitted; splats, keyword-heavy signatures, and blocks are skipped with a comment so the generated Haxe remains compileable. Missing source files fail closed.
+
 Use discovery as an advisory report before choosing wrappers:
 
 ```bash
