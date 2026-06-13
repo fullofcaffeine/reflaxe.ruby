@@ -169,7 +169,7 @@ npm run rails:app -- --output tmp/rails_app --name TodoApp
 
 `npm run test:rails-integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed. `npm run test:rails-runtime` sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and makes both Rails integration and mixed-interop runtime execution mandatory.
 
-Route sync is phase 1 routing support: Rails-owned `config/routes.rb` stays the source of truth, and RailsHx generates typed Haxe externs from `rails routes`. Haxe-owned route emission is intentionally deferred until route-helper sync is fully deterministic.
+Route sync is phase 1 routing support: Rails-owned `config/routes.rb` stays the source of truth, and RailsHx generates typed Haxe externs from `rails routes`. Haxe-owned route emission is intentionally deferred until route-helper sync is fully deterministic; see [docs/railshx-routing-design.md](docs/railshx-routing-design.md).
 
 ## Compatibility
 

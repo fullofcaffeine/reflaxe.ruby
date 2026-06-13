@@ -63,7 +63,7 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 - `haxe.ruby-wpi.4`: implement typed associations, validations, enums, and callbacks.
 - `haxe.ruby-wpi.5`: implement typed migration DSL and Rails migration generator. The initial create-table artifact lane exists; follow-up operation validation now covers known tables, columns, indexes, foreign-key columns, reversible destructive operations, and explicit `externalTables` for Rails-owned schema. Richer migration builders and schema-history inference remain follow-up work.
 - `haxe.ruby-wpi.6`: implement typed controllers, params, and action results.
-- `haxe.ruby-wpi.7`: harden route helper sync, then design Haxe-first routing. Phase 1 is Rails-owned route sync from `rails routes`; Haxe-owned route emission remains explicitly deferred until helper sync is deterministic.
+- `haxe.ruby-wpi.7`: harden route helper sync, then design Haxe-first routing. Phase 1 is Rails-owned route sync from `rails routes`; Haxe-owned route emission remains explicitly deferred until helper sync is deterministic. See [RailsHx Routing Design](railshx-routing-design.md).
 - `haxe.ruby-wpi.8`: implement RailsHx generators, rake tasks, and adoption tooling. The initial mixed-app adoption sample exists through `examples/rails_interop_app`; Ruby-native app, route, scaffold, explicit adopt generators, Rails `hxruby:*` generator adapters, suggest-only adoption discovery, source-backed service signature inference, and source-backed extension contract generation now exist. Richer RBS/YARD/schema-assisted inference remains follow-up work.
 - `haxe.ruby-wpi.9`: add end-to-end Rails integration app and CI gate.
 - `haxe.ruby-wpi.10`: write RailsHx guides and API references.
