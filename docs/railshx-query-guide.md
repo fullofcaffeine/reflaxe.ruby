@@ -101,6 +101,10 @@ var distinctOpen = Todo.distinct()
 	.where({status: "open"})
 	.order(Todo.f.title.asc());
 
+var openOrDone = Todo.where({status: "open"})
+	.or(Todo.where({status: "done"}))
+	.order(Todo.f.title.asc());
+
 var selectedOpen = Todo.select(Todo.f.title)
 	.where({status: "open"});
 
@@ -121,6 +125,7 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
+Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.select(:title).where(status: "open")
 assigned = Models::Todo.where(title: "assigned").rewhere(status: "done").distinct().order(title: :asc).reorder(id: :desc).offset(20).limit(5)
 assigned.find_by(external_id: "assigned-1")
@@ -160,6 +165,21 @@ Generated Ruby:
 
 ```ruby
 Models::Todo.distinct().where(completed: false).offset(10).limit(10)
+```
+
+`or(...)` composes two typed relations for the same model and criteria shape.
+The generated Ruby is the normal Rails call, while Haxe rejects a relation from
+another model:
+
+```haxe
+var openOrDone = Todo.where({status: "open"})
+	.or(Todo.where({status: "done"}));
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(status: "open").or(Models::Todo.where(status: "done"))
 ```
 
 ## Field Refs And Order
@@ -445,6 +465,7 @@ The current query slice intentionally covers the common Rails relation path:
 
 - Typed criteria for flat model columns.
 - Typed association refs for `includes` and `joins`.
+- Typed relation composition through `or`.
 - Typed field refs for `order`.
 - `limit`, `offset`, `first`, `find`, `findBy`, `create`, and `toArray`.
 - Relation criteria checks that persist through assigned relation variables.

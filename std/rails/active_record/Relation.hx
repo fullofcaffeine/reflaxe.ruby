@@ -8,6 +8,8 @@ package rails.active_record;
 extern class Relation<TModel, TCriteria> {
 	public function where(criteria:TCriteria):Relation<TModel, TCriteria>;
 	public function rewhere(criteria:TCriteria):Relation<TModel, TCriteria>;
+	@:native("or")
+	public function or(other:Relation<TModel, TCriteria>):Relation<TModel, TCriteria>;
 	public function order(order:Order<TModel>):Relation<TModel, TCriteria>;
 	public function reorder(order:Order<TModel>):Relation<TModel, TCriteria>;
 	public function limit(count:Int):Relation<TModel, TCriteria>;

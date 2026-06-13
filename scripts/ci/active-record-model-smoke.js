@@ -68,6 +68,8 @@ const invalidExistsSourceDir = join(root, "test", ".generated", "active_record_m
 const invalidExistsOutputDir = join(root, "test", ".generated", "active_record_model_invalid_exists_out");
 const invalidOffsetSourceDir = join(root, "test", ".generated", "active_record_model_invalid_offset_src");
 const invalidOffsetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_offset_out");
+const invalidOrSourceDir = join(root, "test", ".generated", "active_record_model_invalid_or_src");
+const invalidOrOutputDir = join(root, "test", ".generated", "active_record_model_invalid_or_out");
 const invalidReorderSourceDir = join(root, "test", ".generated", "active_record_model_invalid_reorder_src");
 const invalidReorderOutputDir = join(root, "test", ".generated", "active_record_model_invalid_reorder_out");
 const invalidSelectFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_select_field_src");
@@ -170,6 +172,8 @@ rmSync(invalidExistsSourceDir, { force: true, recursive: true });
 rmSync(invalidExistsOutputDir, { force: true, recursive: true });
 rmSync(invalidOffsetSourceDir, { force: true, recursive: true });
 rmSync(invalidOffsetOutputDir, { force: true, recursive: true });
+rmSync(invalidOrSourceDir, { force: true, recursive: true });
+rmSync(invalidOrOutputDir, { force: true, recursive: true });
 rmSync(invalidReorderSourceDir, { force: true, recursive: true });
 rmSync(invalidReorderOutputDir, { force: true, recursive: true });
 rmSync(invalidSelectFieldSourceDir, { force: true, recursive: true });
@@ -303,6 +307,7 @@ for (const expected of [
   'Models::Todo.all().where(status: "open").order(title: :asc).limit(3)',
   'Models::Todo.distinct().where(status: "open").order(title: :asc)',
   '.distinct().limit(2)',
+  'Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)',
   'Models::Todo.select(:title).where(status: "open")',
   'assigned__hx',
   '.select(:id).limit(2)',
@@ -364,6 +369,7 @@ for (const expected of [
   "Todo.a.user",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
+  ".or(Todo.where({status",
   "select(Todo.f.title)",
   "reorder(Todo.f.id.desc())",
   "findBy({externalId",
@@ -392,6 +398,7 @@ for (const expected of [
   "Todo.rewhere({completed: true})",
   "var allOpen = Todo",
   ".distinct()",
+  ".or(Todo.where({status",
   "Todo.select(Todo.f.title)",
   "Todo.reorder(Todo.f.title.desc())",
   "Order.many([Todo.f.title.asc(), Todo.f.id.desc()])",
@@ -444,6 +451,7 @@ expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 expectInvalidExistsFieldFailure();
 expectInvalidOffsetValueTypeFailure();
+expectInvalidOrOwnerFailure();
 expectInvalidReorderOwnerFailure();
 expectInvalidSelectFieldOwnerFailure();
 expectInvalidPluckFieldOwnerFailure();
@@ -546,6 +554,28 @@ function expectInvalidOffsetValueTypeFailure() {
     invalidOffsetOutputDir,
     "Invalid ActiveRecord offset value type compiled successfully.",
     "String should be Int"
+  );
+}
+
+function expectInvalidOrOwnerFailure() {
+  mkdirSync(invalidOrSourceDir, { recursive: true });
+  writeFileSync(join(invalidOrSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.where({status: \"open\"}).or(User.where({name: \"owner\"}));",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidOrSourceDir,
+    invalidOrOutputDir,
+    "Invalid ActiveRecord or owner compiled successfully.",
+    "Relation<models.User"
   );
 }
 
