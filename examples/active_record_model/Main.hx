@@ -5,8 +5,9 @@ import models.User;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `distinct`, `order`, `reorder`, `limit`, `offset`, `pluck`, `minimum`,
-// `maximum`, `find`, `findBy`, `exists`, `count`, `first`, and `last` authored as typed Haxe calls.
+// `all`, `distinct`, `where`, `rewhere`, `order`, `reorder`, `limit`, `offset`,
+// `pluck`, `minimum`, `maximum`, `find`, `findBy`, `exists`, `count`, `first`,
+// and `last` authored as typed Haxe calls.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -30,6 +31,8 @@ class Main {
 		var relationDistinct = assigned.distinct().limit(2);
 		var reordered = assigned.reorder(Todo.f.id.desc());
 		var staticReordered = Todo.reorder(Todo.f.title.desc()).limit(4);
+		var reassigned = assigned.rewhere({status: "done"});
+		var staticRewhere = Todo.rewhere({completed: true}).limit(1);
 		var offsetRelation = Todo.where({status: "open"}).offset(20).limit(10);
 		var offsetFromModel = Todo.offset(5).where({completed: false});
 		var hasAssigned:Bool = Todo.exists({externalId: "assigned-1"});
@@ -71,6 +74,8 @@ class Main {
 		Sys.println(relationDistinct == null);
 		Sys.println(reordered == null);
 		Sys.println(staticReordered == null);
+		Sys.println(reassigned == null);
+		Sys.println(staticRewhere == null);
 		Sys.println(offsetRelation == null);
 		Sys.println(offsetFromModel == null);
 	}

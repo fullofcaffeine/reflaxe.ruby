@@ -6,7 +6,7 @@ field value types, primary-key types, and relation return shapes.
 
 The rule of thumb is simple:
 
-- Keep query chains Rails-shaped: `all`, `distinct`, `where`, `includes`,
+- Keep query chains Rails-shaped: `all`, `distinct`, `where`, `rewhere`, `includes`,
   `joins`, `order`, `reorder`, `limit`, `offset`, `pluck`, `minimum`,
   `maximum`, `find`, `findBy`, `exists`, `count`, `first`, `last`, and
   `toArray`.
@@ -97,6 +97,7 @@ var distinctOpen = Todo.distinct()
 
 var relation = Todo
 	.where({title: "assigned"})
+	.rewhere({status: "done"})
 	.distinct()
 	.order(Todo.f.title.asc())
 	.reorder(Todo.f.id.desc())
@@ -111,12 +112,28 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
-assigned = Models::Todo.where(title: "assigned").distinct().order(title: :asc).reorder(id: :desc).offset(20).limit(5)
+assigned = Models::Todo.where(title: "assigned").rewhere(status: "done").distinct().order(title: :asc).reorder(id: :desc).offset(20).limit(5)
 assigned.find_by(external_id: "assigned-1")
 ```
 
 This is still a Rails relation chain. Haxe is only making the relation shape and
 field refs visible to the compiler.
+
+`rewhere({...})` uses the same typed criteria object as `where({...})`, so field
+names and field value types are still checked while Rails receives a normal
+`rewhere(...)` call:
+
+```haxe
+var reassigned = Todo
+	.where({title: "assigned"})
+	.rewhere({status: "done"});
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(title: "assigned").rewhere(status: "done")
+```
 
 `distinct()` is intentionally just the Rails relation helper. It returns the
 same typed `Relation<TModel, TCriteria>` shape, so criteria and field checks

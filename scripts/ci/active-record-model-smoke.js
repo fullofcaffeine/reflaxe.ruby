@@ -14,6 +14,8 @@ const invalidWhereTypeSourceDir = join(root, "test", ".generated", "active_recor
 const invalidWhereTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_type_out");
 const invalidRelationWhereSourceDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_src");
 const invalidRelationWhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_out");
+const invalidRewhereSourceDir = join(root, "test", ".generated", "active_record_model_invalid_rewhere_src");
+const invalidRewhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_rewhere_out");
 const invalidAssignedRelationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_assigned_relation_src");
 const invalidAssignedRelationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_assigned_relation_out");
 const invalidAssociationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_src");
@@ -102,6 +104,8 @@ rmSync(invalidWhereTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidRelationWhereSourceDir, { force: true, recursive: true });
 rmSync(invalidRelationWhereOutputDir, { force: true, recursive: true });
+rmSync(invalidRewhereSourceDir, { force: true, recursive: true });
+rmSync(invalidRewhereOutputDir, { force: true, recursive: true });
 rmSync(invalidAssignedRelationSourceDir, { force: true, recursive: true });
 rmSync(invalidAssignedRelationOutputDir, { force: true, recursive: true });
 rmSync(invalidAssociationSourceDir, { force: true, recursive: true });
@@ -278,6 +282,9 @@ for (const expected of [
   'assigned__hx',
   '.reorder(id: :desc)',
   'Models::Todo.reorder(title: :desc).limit(4)',
+  'assigned__hx',
+  'rewhere(status: "done")',
+  'Models::Todo.rewhere(completed: true).limit(1)',
   'Models::Todo.where(status: "open").offset(20).limit(10)',
   'Models::Todo.offset(5).where(completed: false)',
   'Models::Todo.exists?(external_id: "assigned-1")',
@@ -311,6 +318,7 @@ const queryGuide = readFileSync(join(root, "docs", "railshx-query-guide.md"), "u
 for (const expected of [
   "RailsHx Typed ActiveRecord Query Guide",
   "Todo.where({",
+  "rewhere({status",
   "Todo.f.title.asc()",
   "Todo.a.user",
   "var allOpen = Todo.all()",
@@ -337,6 +345,7 @@ for (const expected of [
   "ActiveRecord Model And Query Example",
   "npm run test:active-record-model",
   "Todo.associations.user",
+  "Todo.rewhere({completed: true})",
   "var allOpen = Todo",
   ".distinct()",
   "Todo.reorder(Todo.f.title.desc())",
@@ -360,6 +369,7 @@ expectInvalidColumnDefaultFailure();
 expectInvalidWhereFieldFailure();
 expectInvalidWhereValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
+expectInvalidRewhereFieldFailure();
 expectInvalidAssignedRelationFieldFailure();
 expectInvalidAssociationOwnerFailure();
 expectInvalidMissingBelongsToForeignKeyFailure();
@@ -589,6 +599,27 @@ function expectInvalidRelationWhereFieldFailure() {
     invalidRelationWhereSourceDir,
     invalidRelationWhereOutputDir,
     "Invalid ActiveRecord relation where field compiled successfully.",
+    "has extra field missing"
+  );
+}
+
+function expectInvalidRewhereFieldFailure() {
+  mkdirSync(invalidRewhereSourceDir, { recursive: true });
+  writeFileSync(join(invalidRewhereSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.where({title: \"ship\"}).rewhere({missing: \"nope\"});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidRewhereSourceDir,
+    invalidRewhereOutputDir,
+    "Invalid ActiveRecord rewhere field compiled successfully.",
     "has extra field missing"
   );
 }

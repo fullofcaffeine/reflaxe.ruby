@@ -1443,9 +1443,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActiveRecordRelationCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
-			case TField(target, access) if (fieldAccessRawName(access) == "where" && params.length == 1):
+			case TField(target, access) if ((fieldAccessRawName(access) == "where" || fieldAccessRawName(access) == "rewhere") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
-				criteria == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(criteria)]);
+				criteria == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(criteria)]);
 			case TField(target, access) if ((fieldAccessRawName(access) == "findBy" || fieldAccessRawName(access) == "find_by") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				criteria == null ? null : RubyCall(compileExpr(target), "find_by", [RubyRawExpr(criteria)]);

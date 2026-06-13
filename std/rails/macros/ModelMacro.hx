@@ -19,6 +19,7 @@ class ModelMacro {
 		addModelAssociationRefs(fields, selfType, pos);
 		addModelAttachmentRefs(fields, selfType, pos);
 		addStub(fields, "where", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
+		addStub(fields, "rewhere", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addPlainStub(fields, "reorder", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "includes", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);

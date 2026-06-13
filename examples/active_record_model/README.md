@@ -34,6 +34,8 @@ var distinctOpen = Todo
 	.order(Todo.f.title.asc());
 
 var staticReordered = Todo.reorder(Todo.f.title.desc()).limit(4);
+var reassigned = Todo.where({title: "assigned"}).rewhere({status: "done"});
+var staticRewhere = Todo.rewhere({completed: true}).limit(1);
 
 var titles:Array<String> = Todo.pluck(Todo.f.title);
 var assignedIds:Array<Int> = Todo.where({title: "assigned"}).pluck(Todo.f.id);
@@ -55,6 +57,8 @@ Generated Ruby:
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo.reorder(title: :desc).limit(4)
+Models::Todo.where(title: "assigned").rewhere(status: "done")
+Models::Todo.rewhere(completed: true).limit(1)
 Models::Todo.pluck(:title)
 Models::Todo.where(title: "assigned").pluck(:id)
 Models::Todo.minimum(:id)
@@ -72,6 +76,7 @@ Type-safety features used here:
 
 - `where({...})` object keys must be `@:railsColumn` fields.
 - `where({...})` values must match those field types.
+- `rewhere({...})` uses the same typed criteria object while lowering to Rails `rewhere`.
 - `Todo.associations.user` / `Todo.a.user` must belong to `Todo`.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
 - `Todo.reorder(Todo.f.title.desc())` uses the same owner-typed order token.
