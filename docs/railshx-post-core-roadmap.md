@@ -139,6 +139,11 @@ Typed boundary:
 - Initial implemented slice: typed Haxe client helpers for Turbo events,
   `Turbo.visit` options/actions, frame attributes, and client-side
   `Turbo.renderStreamMessage`.
+- Initial implemented slice: `@:railsChannel` classes, typed
+  `Channel<TParams, TPayload>`, typed subscription params, typed streams,
+  `ActionCable.broadcast(...)`, and a Haxe JS facade for
+  `consumer.subscriptions.create(...)`. See
+  [RailsHx ActionCable Guide](railshx-action-cable-guide.md).
 - Typed Turbo stream helpers for append/replace/remove/broadcast shapes.
 - Haxe-authored JS clients that layer on Rails importmap/Turbo conventions.
 - `rails.action_cable.Channel<TParams>` for channel params and stream names.

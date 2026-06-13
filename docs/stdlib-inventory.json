@@ -311,6 +311,70 @@
       "reason": "Build macro for railsJob classes that injects typed performLater/performNow enqueue helpers from the perform signature."
     },
     {
+      "id": "std.rails.action_cable",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/ActionCable.hx",
+      "surface": "rails.ActionCable",
+      "reason": "Typed top-level ActionCable facade for Rails-native server broadcasts."
+    },
+    {
+      "id": "std.rails.action_cable_channel",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/Channel.hx",
+      "surface": "rails.action_cable.Channel",
+      "reason": "Typed ActionCable channel base surface for railsChannel classes, subscription params, streams, transmit, reject, and stream cleanup helpers."
+    },
+    {
+      "id": "std.rails.action_cable_consumer",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/Consumer.hx",
+      "surface": "rails.action_cable.Consumer",
+      "reason": "Typed Haxe JavaScript facade for Rails ActionCable consumer creation and subscriptions."
+    },
+    {
+      "id": "std.rails.action_cable_stream",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/Stream.hx",
+      "surface": "rails.action_cable.Stream",
+      "reason": "Typed stream name wrapper carrying the broadcast payload shape for ActionCable stream_from and server broadcasts."
+    },
+    {
+      "id": "std.rails.action_cable_subscription_param",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/SubscriptionParam.hx",
+      "surface": "rails.action_cable.SubscriptionParam",
+      "reason": "Typed subscription parameter key wrapper lowered to Rails params access in generated channels."
+    },
+    {
+      "id": "std.rails.action_cable_subscription",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/Subscription.hx",
+      "surface": "rails.action_cable.Subscription",
+      "reason": "Typed structural facade for ActionCable client subscription handles."
+    },
+    {
+      "id": "std.rails.action_cable_subscription_callbacks",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/SubscriptionCallbacks.hx",
+      "surface": "rails.action_cable.SubscriptionCallbacks",
+      "reason": "Typed callback shape for Haxe-authored ActionCable client subscriptions."
+    },
+    {
+      "id": "std.rails.channel_macro",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/ChannelMacro.hx",
+      "surface": "rails.macros.ChannelMacro",
+      "reason": "Build macro for railsChannel classes that enforces the initial subscribed() channel contract."
+    },
+    {
       "id": "std.rails.active_storage",
       "owner": "std",
       "status": "implemented",
