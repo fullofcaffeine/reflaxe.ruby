@@ -10,8 +10,30 @@ const existingErb = join(outputDir, "app", "views", "legacy", "_badge.html.erb")
 
 rmSync(outputDir, { force: true, recursive: true });
 mkdirSync(join(outputDir, "app", "views", "legacy"), { recursive: true });
+mkdirSync(join(outputDir, "app", "services"), { recursive: true });
 mkdirSync(join(outputDir, "app", "models", "concerns"), { recursive: true });
 writeFileSync(existingErb, "<strong><%= label %></strong>\n");
+const serviceSource = join(outputDir, "app", "services", "legacy_price_formatter.rb");
+writeFileSync(serviceSource, [
+  "class LegacyPriceFormatter",
+  "  def initialize(currency = \"USD\")",
+  "    @currency = currency",
+  "  end",
+  "",
+  "  def badge_label(kind, cents = 0)",
+  "    \"#{kind}:#{cents}\"",
+  "  end",
+  "",
+  "  def ambiguous(*values)",
+  "    values.join(',')",
+  "  end",
+  "",
+  "  def self.call(cents, include_symbol = true)",
+  "    cents.to_s",
+  "  end",
+  "end",
+  "",
+].join("\n"));
 const extensionSource = join(outputDir, "app", "models", "concerns", "sluggable.rb");
 writeFileSync(extensionSource, [
   "module Sluggable",
@@ -46,6 +68,8 @@ run("ruby", [
   "interop",
   "--service",
   "LegacyPriceFormatter",
+  "--service-source",
+  serviceSource,
   "--template",
   "legacy/badge",
   "--locals",
@@ -58,8 +82,14 @@ run("ruby", [
 
 assertIncludes("src_haxe/interop/LegacyPriceFormatter.hx", [
   "package interop;",
+  "// Generated from app/services/legacy_price_formatter.rb.",
+  "// Replace Dynamic placeholders with precise types as this boundary stabilizes.",
   '@:native("LegacyPriceFormatter")',
   "extern class LegacyPriceFormatter",
+  "public function new(?currency:String):Void;",
+  "public function badgeLabel(kind:Dynamic, ?cents:Int):Dynamic;",
+  "TODO: ambiguous uses splat",
+  "public static function call(cents:Dynamic, ?includeSymbol:Bool):Dynamic;",
 ]);
 assertIncludes("src_haxe/interop/templates/LegacyBadgeTemplate.hx", [
   "package interop.templates;",
@@ -101,6 +131,11 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\tvar service:Class<LegacyPriceFormatter> = LegacyPriceFormatter;",
   "\t\tvar classMethods:Class<SluggableClassMethods> = SluggableClassMethods;",
   "\t\tvar instanceContract:Dynamic = (null : SluggableInstance);",
+  "\t\tif (false) {",
+  "\t\t\tvar formatter = new LegacyPriceFormatter();",
+  "\t\t\tformatter.badgeLabel(\"ok\", 1);",
+  "\t\t\tLegacyPriceFormatter.call(100);",
+  "\t\t}",
   "\t\tSys.println(service != null);",
   "\t\tSys.println(classMethods != null);",
   "\t\tSys.println(instanceContract == null);",

@@ -79,6 +79,7 @@ module HXRuby
             args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
             args += ["--package", ENV["PACKAGE"]] if ENV["PACKAGE"]
             args += ["--service", ENV["SERVICE"]] if ENV["SERVICE"]
+            args += ["--service-source", ENV["SERVICE_SOURCE"]] if ENV["SERVICE_SOURCE"]
             args += ["--template", ENV["TEMPLATE"]] if ENV["TEMPLATE"]
             args += ["--extension-source", ENV["EXTENSION_SOURCE"]] if ENV["EXTENSION_SOURCE"]
             args += ["--extension-module", ENV["EXTENSION_MODULE"]] if ENV["EXTENSION_MODULE"]

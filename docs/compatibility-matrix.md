@@ -61,7 +61,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Typed HHX nested helper slots | `<link_to>...</link_to>` block-form content | Initial slot slice |
 | Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented for migration/interop only |
 | Mixed Rails/RailsHx adoption sample | `examples/rails_interop_app` + `npm run test:rails-interop` | Initial compile/static smoke |
-| Existing Rails boundary adoption generator | `bin/rails generate hxruby:adopt` / `rake hxruby:gen:adopt` | Explicit service/template wrappers, source-backed extension contracts, plus suggest-only discovery |
+| Existing Rails boundary adoption generator | `bin/rails generate hxruby:adopt` / `rake hxruby:gen:adopt` | Explicit service/template wrappers, source-backed service signature inference, source-backed extension contracts, plus suggest-only discovery |
 | Rails app install generator | `bin/rails generate hxruby:install` / `rake hxruby:gen:app` | Implemented |
 | Route helper generator | `bin/rails generate hxruby:routes` / `npm run rails:generate-routes` | Hardened for named Rails routes, nested/resource params, namespaces, member/collection routes, optional segments, globs, and mount-like rows |
 | Scaffold generator | `bin/rails generate hxruby:scaffold` / `npm run rails:scaffold` | Implemented |

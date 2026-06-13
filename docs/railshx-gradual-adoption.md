@@ -80,7 +80,21 @@ bin/rails generate hxruby:adopt --service LegacyPriceFormatter
 npm run rails:adopt -- --service LegacyPriceFormatter
 ```
 
-It intentionally does not infer method signatures yet. Add method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
+For an explicit Ruby source file, it can also infer starter signatures:
+
+```bash
+bin/rails generate hxruby:adopt \
+  --service LegacyPriceFormatter \
+  --service-source app/services/legacy_price_formatter.rb
+
+npm run rails:adopt -- \
+  --service LegacyPriceFormatter \
+  --service-source app/services/legacy_price_formatter.rb
+```
+
+The service source path is checked and parsed with `Ripper`; app code is not executed. The generator emits constructors from `initialize`, instance methods from `def method`, and static methods from `def self.method`. Required arguments default to `Dynamic`; optional arguments with obvious scalar defaults become `String`, `Int`, `Float`, or `Bool`. Ambiguous splats, keyword-heavy signatures, and blocks are marked as TODO comments instead of guessed unsafely.
+
+Add or tighten method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
 
 For Ruby extension modules, the generator can inspect a checked source file and scaffold `@:rubyMixin` contracts:
 

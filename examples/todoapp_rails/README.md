@@ -133,10 +133,11 @@ The Rails-facing generators are Ruby-native and package with the `hxruby` gem. F
 
 ```bash
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
+bin/rails generate hxruby:adopt --service LegacyPriceFormatter --service-source app/services/legacy_price_formatter.rb
 bin/rails generate hxruby:adopt --extension-source app/models/concerns/sluggable.rb --extension-module Sluggable
 bin/rails generate hxruby:adopt --discover
 npm run rails:adopt -- --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
-bundle exec rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=label:String,tone:String
+bundle exec rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter SERVICE_SOURCE=app/services/legacy_price_formatter.rb TEMPLATE=legacy/badge LOCALS=label:String,tone:String
 ```
 
 ## Manual Compile

@@ -64,7 +64,7 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 - `haxe.ruby-wpi.5`: implement typed migration DSL and Rails migration generator. The initial create-table artifact lane exists; richer alter/drop/reversible DSL validation remains in progress.
 - `haxe.ruby-wpi.6`: implement typed controllers, params, and action results.
 - `haxe.ruby-wpi.7`: harden route helper sync, then design Haxe-first routing. Phase 1 is Rails-owned route sync from `rails routes`; Haxe-owned route emission remains explicitly deferred until helper sync is deterministic.
-- `haxe.ruby-wpi.8`: implement RailsHx generators, rake tasks, and adoption tooling. The initial mixed-app adoption sample exists through `examples/rails_interop_app`; Ruby-native app, route, scaffold, explicit adopt generators, Rails `hxruby:*` generator adapters, and suggest-only adoption discovery now exist, with smarter signature inference left as follow-up work.
+- `haxe.ruby-wpi.8`: implement RailsHx generators, rake tasks, and adoption tooling. The initial mixed-app adoption sample exists through `examples/rails_interop_app`; Ruby-native app, route, scaffold, explicit adopt generators, Rails `hxruby:*` generator adapters, suggest-only adoption discovery, source-backed service signature inference, and source-backed extension contract generation now exist. Richer RBS/YARD/schema-assisted inference remains follow-up work.
 - `haxe.ruby-wpi.9`: add end-to-end Rails integration app and CI gate.
 - `haxe.ruby-wpi.10`: write RailsHx guides and API references.
 - `haxe.ruby-wpi.11`: plan post-core Rails surfaces such as ActionMailer, ActiveJob, ActionCable, ActiveStorage, ActionView/Hotwire, and ActiveSupport.
