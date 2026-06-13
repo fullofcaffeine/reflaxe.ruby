@@ -7,8 +7,9 @@ field value types, primary-key types, and relation return shapes.
 The rule of thumb is simple:
 
 - Keep query chains Rails-shaped: `all`, `distinct`, `where`, `includes`,
-  `joins`, `order`, `limit`, `offset`, `pluck`, `minimum`, `maximum`, `find`,
-  `findBy`, `exists`, `count`, `first`, `last`, and `toArray`.
+  `joins`, `order`, `reorder`, `limit`, `offset`, `pluck`, `minimum`,
+  `maximum`, `find`, `findBy`, `exists`, `count`, `first`, `last`, and
+  `toArray`.
 - Put type information at the Haxe boundary: `@:railsColumn`, associations, field
   refs such as `Todo.f.title`, and association refs such as `Todo.a.user`.
 - Let the compiler lower Haxe names to Rails names: `externalId` becomes
@@ -98,6 +99,7 @@ var relation = Todo
 	.where({title: "assigned"})
 	.distinct()
 	.order(Todo.f.title.asc())
+	.reorder(Todo.f.id.desc())
 	.offset(20)
 	.limit(5);
 
@@ -109,7 +111,7 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
-assigned = Models::Todo.where(title: "assigned").distinct().order(title: :asc).offset(20).limit(5)
+assigned = Models::Todo.where(title: "assigned").distinct().order(title: :asc).reorder(id: :desc).offset(20).limit(5)
 assigned.find_by(external_id: "assigned-1")
 ```
 
@@ -142,6 +144,8 @@ var recent = AuditLog
 	.where({eventCount: 1})
 	.order(AuditLog.f.eventCount.desc());
 
+var rewritten = Todo.reorder(Todo.f.title.desc()).limit(4);
+
 var titles:Array<String> = Todo.pluck(Todo.f.title);
 var ids:Array<Int> = Todo.where({status: "open"}).pluck(Todo.f.id);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
@@ -152,6 +156,7 @@ Generated Ruby:
 
 ```ruby
 Models::AuditLog.where(event_count: 1).order(event_count: :desc)
+Models::Todo.reorder(title: :desc).limit(4)
 Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
 Models::Todo.minimum(:id)
@@ -161,6 +166,9 @@ Models::Todo.where(status: "open").maximum(:title)
 Prefer `Todo.f.title` over `"title"` for behavior-bearing query code. The string
 form may be useful at low-level interop boundaries later, but RailsHx examples
 should keep field identity behind generated refs.
+
+`reorder(...)` uses the same typed `Order<TModel>` tokens as `order(...)`, so an
+order from another model is rejected before Rails runs.
 
 `pluck(...)` preserves the field value type in the returned array. A string
 column becomes `Array<String>`, an integer primary key becomes `Array<Int>`, and

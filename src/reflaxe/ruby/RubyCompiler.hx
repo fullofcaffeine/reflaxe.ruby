@@ -1456,9 +1456,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					var criteria = activeRecordCriteriaArg(params[0]);
 					criteria == null ? null : RubyCall(compileExpr(target), "exists?", [RubyRawExpr(criteria)]);
 				}
-			case TField(target, access) if (fieldAccessRawName(access) == "order" && params.length == 1):
+			case TField(target, access) if ((fieldAccessRawName(access) == "order" || fieldAccessRawName(access) == "reorder") && params.length == 1):
 				var orderArg = activeRecordOrderArg(params[0]);
-				orderArg == null ? null : RubyCall(compileExpr(target), "order", [RubyRawExpr(orderArg)]);
+				orderArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(orderArg)]);
 			case TField(target, access) if (fieldAccessRawName(access) == "pluck" && params.length == 1):
 				var fieldName = activeRecordFieldName(params[0]);
 				fieldName == null ? null : RubyCall(compileExpr(target), "pluck", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);

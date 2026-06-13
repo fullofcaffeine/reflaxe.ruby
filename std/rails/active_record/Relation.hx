@@ -8,6 +8,7 @@ package rails.active_record;
 extern class Relation<TModel, TCriteria> {
 	public function where(criteria:TCriteria):Relation<TModel, TCriteria>;
 	public function order(order:Order<TModel>):Relation<TModel, TCriteria>;
+	public function reorder(order:Order<TModel>):Relation<TModel, TCriteria>;
 	public function limit(count:Int):Relation<TModel, TCriteria>;
 	public function offset(count:Int):Relation<TModel, TCriteria>;
 	public function distinct():Relation<TModel, TCriteria>;

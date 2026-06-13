@@ -17,6 +17,8 @@ class Main
     all_open__hx0 = Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
     distinct_open__hx0 = Models::Todo.distinct().where(status: "open").order(title: :asc)
     relation_distinct__hx0 = assigned__hx0.distinct().limit(2)
+    reordered__hx0 = assigned__hx0.reorder(id: :desc)
+    static_reordered__hx0 = Models::Todo.reorder(title: :desc).limit(4)
     offset_relation__hx0 = Models::Todo.where(status: "open").offset(20).limit(10)
     offset_from_model__hx0 = Models::Todo.offset(5).where(completed: false)
     has_assigned__hx0 = Models::Todo.exists?(external_id: "assigned-1")
@@ -56,6 +58,8 @@ class Main
     puts(HXRuby.stringify((all_open__hx0 == nil)))
     puts(HXRuby.stringify((distinct_open__hx0 == nil)))
     puts(HXRuby.stringify((relation_distinct__hx0 == nil)))
+    puts(HXRuby.stringify((reordered__hx0 == nil)))
+    puts(HXRuby.stringify((static_reordered__hx0 == nil)))
     puts(HXRuby.stringify((offset_relation__hx0 == nil)))
     puts(HXRuby.stringify((offset_from_model__hx0 == nil)))
   end

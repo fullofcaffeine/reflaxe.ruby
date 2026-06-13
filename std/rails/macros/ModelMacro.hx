@@ -19,6 +19,7 @@ class ModelMacro {
 		addModelAssociationRefs(fields, selfType, pos);
 		addModelAttachmentRefs(fields, selfType, pos);
 		addStub(fields, "where", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
+		addPlainStub(fields, "reorder", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "includes", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "offset", macro : Int, relationComplexType(selfType, criteriaType, pos), "count", pos);
@@ -888,6 +889,14 @@ class ModelMacro {
 			pack: ["rails", "active_record"],
 			name: "Relation",
 			params: [TPType(selfType), TPType(criteriaType)]
+		});
+	}
+
+	static function orderComplexType(selfType:ComplexType):ComplexType {
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "Order",
+			params: [TPType(selfType)]
 		});
 	}
 
