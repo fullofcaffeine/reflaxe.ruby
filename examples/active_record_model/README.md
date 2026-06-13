@@ -49,7 +49,7 @@ Type-safety features used here:
 - `Todo.associations.user` / `Todo.a.user` must belong to `Todo`.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
 - The chain remains a typed relation after `where`, `joins`, `order`, and
-  `limit`.
+  `limit`, and `offset`.
 
 ## Scopes
 
@@ -61,6 +61,20 @@ public static function incomplete() {
 }
 
 var scoped = Todo.incomplete().includes(Todo.a.user).limit(5);
+```
+
+`offset` is typed as `Int` and preserves the relation shape for pagination:
+
+```haxe
+var page = Todo.where({status: "open"}).offset(20).limit(10);
+var fromModel = Todo.offset(5).where({completed: false});
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(status: "open").offset(20).limit(10)
+Models::Todo.offset(5).where(completed: false)
 ```
 
 Generated Ruby:
@@ -183,6 +197,7 @@ boundaries when you need loaded records:
 var todos = Todo.incomplete()
 	.includes(Todo.a.user)
 	.order(Todo.f.title.asc())
+	.offset(20)
 	.limit(10)
 	.toArray();
 ```
@@ -190,7 +205,7 @@ var todos = Todo.incomplete()
 Generated Ruby:
 
 ```ruby
-Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()
+Models::Todo.incomplete().includes(:user).order(title: :asc).offset(20).limit(10).to_a()
 ```
 
 See `examples/todoapp_rails/controllers/TodosController.hx` for this pattern in
@@ -208,6 +223,7 @@ Todo.includes(User.a.todos);
 Todo.find("nope");
 Todo.findBy({missing: "nope"});
 Todo.exists({missing: "nope"});
+Todo.where({status: "open"}).offset("nope");
 ```
 
 The goal is not to hide Rails. The goal is to keep the Rails API shape while

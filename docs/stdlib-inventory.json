@@ -164,7 +164,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/Relation.hx",
       "surface": "rails.active_record.Relation",
-      "reason": "Typed ActiveRecord::Relation facade for model query chains such as where/includes/joins/order/limit/find/findBy/exists/count/first/toArray."
+      "reason": "Typed ActiveRecord::Relation facade for model query chains such as where/includes/joins/order/limit/offset/find/findBy/exists/count/first/toArray."
     },
     {
       "id": "std.rails.active_record_model_key",

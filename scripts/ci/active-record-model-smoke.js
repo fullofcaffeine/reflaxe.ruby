@@ -64,6 +64,8 @@ const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_m
 const invalidFindByOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_out");
 const invalidExistsSourceDir = join(root, "test", ".generated", "active_record_model_invalid_exists_src");
 const invalidExistsOutputDir = join(root, "test", ".generated", "active_record_model_invalid_exists_out");
+const invalidOffsetSourceDir = join(root, "test", ".generated", "active_record_model_invalid_offset_src");
+const invalidOffsetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_offset_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -144,6 +146,8 @@ rmSync(invalidFindBySourceDir, { force: true, recursive: true });
 rmSync(invalidFindByOutputDir, { force: true, recursive: true });
 rmSync(invalidExistsSourceDir, { force: true, recursive: true });
 rmSync(invalidExistsOutputDir, { force: true, recursive: true });
+rmSync(invalidOffsetSourceDir, { force: true, recursive: true });
+rmSync(invalidOffsetOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile active_record_model through Reflaxe.");
@@ -256,6 +260,8 @@ for (const expected of [
   'Models::Todo.find_by(external_id: "ship-1")',
   'Models::Todo.where(title: "ship").find_by(completed: false)',
   'Models::Todo.where(title: "assigned").order(title: :asc).limit(5)',
+  'Models::Todo.where(status: "open").offset(20).limit(10)',
+  'Models::Todo.offset(5).where(completed: false)',
   'Models::Todo.exists?(external_id: "assigned-1")',
   'assigned__hx',
   'exists?(status: "open")',
@@ -281,8 +287,9 @@ for (const expected of [
   "findBy({externalId",
   "exists({externalId",
   ".count()",
+  ".offset(",
   ".toArray()",
-  "Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()",
+  "Models::Todo.incomplete().includes(:user).order(title: :asc).offset(20).limit(10).to_a()",
 ]) {
   if (!queryGuide.includes(expected)) {
     console.error(`RailsHx query guide missing expected content: ${expected}`);
@@ -297,6 +304,7 @@ for (const expected of [
   "Todo.associations.user",
   "Todo.incomplete().includes(Todo.a.user)",
   "AuditLog.where({eventCount: 1})",
+  "Todo.where({status: \"open\"}).offset(20).limit(10)",
   "Todo.exists({externalId",
   "Todo.count()",
   "Todo.includes(User.a.todos)",
@@ -336,6 +344,7 @@ expectInvalidCallbackFieldFailure();
 expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 expectInvalidExistsFieldFailure();
+expectInvalidOffsetValueTypeFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -408,6 +417,27 @@ function expectInvalidExistsFieldFailure() {
     invalidExistsOutputDir,
     "Invalid ActiveRecord exists field compiled successfully.",
     "has extra field missing"
+  );
+}
+
+function expectInvalidOffsetValueTypeFailure() {
+  mkdirSync(invalidOffsetSourceDir, { recursive: true });
+  writeFileSync(join(invalidOffsetSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.where({status: \"open\"}).offset(\"not an int\");",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidOffsetSourceDir,
+    invalidOffsetOutputDir,
+    "Invalid ActiveRecord offset value type compiled successfully.",
+    "String should be Int"
   );
 }
 

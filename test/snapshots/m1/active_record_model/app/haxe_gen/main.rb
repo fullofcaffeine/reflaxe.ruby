@@ -14,6 +14,8 @@ class Main
     found_by__hx0 = Models::Todo.find_by(external_id: "ship-1")
     relation_found_by__hx0 = Models::Todo.where(title: "ship").find_by(completed: false)
     assigned__hx0 = Models::Todo.where(title: "assigned").order(title: :asc).limit(5)
+    offset_relation__hx0 = Models::Todo.where(status: "open").offset(20).limit(10)
+    offset_from_model__hx0 = Models::Todo.offset(5).where(completed: false)
     has_assigned__hx0 = Models::Todo.exists?(external_id: "assigned-1")
     has_open_assigned__hx0 = assigned__hx0.exists?(status: "open")
     open_count__hx0 = Models::Todo.where(status: "open").count()
@@ -34,6 +36,8 @@ class Main
     puts(HXRuby.stringify((total_count__hx0 >= 0)))
     puts(HXRuby.stringify((assigned_found_by__hx0 == nil)))
     puts(HXRuby.stringify((first__hx0 == nil)))
+    puts(HXRuby.stringify((offset_relation__hx0 == nil)))
+    puts(HXRuby.stringify((offset_from_model__hx0 == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

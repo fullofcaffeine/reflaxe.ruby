@@ -6,7 +6,7 @@ field value types, primary-key types, and relation return shapes.
 
 The rule of thumb is simple:
 
-- Keep query chains Rails-shaped: `where`, `includes`, `joins`, `order`, `limit`,
+- Keep query chains Rails-shaped: `where`, `includes`, `joins`, `order`, `limit`, `offset`,
   `find`, `findBy`, `exists`, `count`, `first`, and `toArray`.
 - Put type information at the Haxe boundary: `@:railsColumn`, associations, field
   refs such as `Todo.f.title`, and association refs such as `Todo.a.user`.
@@ -87,6 +87,7 @@ the same criteria type, so checks continue after the first query call:
 var relation = Todo
 	.where({title: "assigned"})
 	.order(Todo.f.title.asc())
+	.offset(20)
 	.limit(5);
 
 var assigned:Null<Todo> = relation.findBy({externalId: "assigned-1"});
@@ -95,7 +96,7 @@ var assigned:Null<Todo> = relation.findBy({externalId: "assigned-1"});
 Generated Ruby:
 
 ```ruby
-assigned = Models::Todo.where(title: "assigned").order(title: :asc).limit(5)
+assigned = Models::Todo.where(title: "assigned").order(title: :asc).offset(20).limit(5)
 assigned.find_by(external_id: "assigned-1")
 ```
 
@@ -208,6 +209,21 @@ Models::Todo.where(status: "open").count()
 Models::Todo.count()
 ```
 
+Use `offset(...)` when composing paginated Rails relations. It preserves the
+same typed `Relation<TModel, TCriteria>` shape and requires an `Int`:
+
+```haxe
+var page = Todo.where({status: "open"}).offset(20).limit(10);
+var fromModel = Todo.offset(5).where({completed: false});
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(status: "open").offset(20).limit(10)
+Models::Todo.offset(5).where(completed: false)
+```
+
 ## Loading For Controllers And Templates
 
 Keep relations lazy while composing query scopes. Convert to arrays only at the
@@ -218,6 +234,7 @@ var todos = Todo
 	.incomplete()
 	.includes(Todo.a.user)
 	.order(Todo.f.title.asc())
+	.offset(20)
 	.limit(10)
 	.toArray();
 
@@ -230,7 +247,7 @@ ViewMacro.renderTemplate(this, template, {
 Generated Ruby:
 
 ```ruby
-todos = Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()
+todos = Models::Todo.incomplete().includes(:user).order(title: :asc).offset(20).limit(10).to_a()
 ```
 
 That boundary is intentional: query code stays ActiveRecord-shaped, while
@@ -268,7 +285,7 @@ The current query slice intentionally covers the common Rails relation path:
 - Typed criteria for flat model columns.
 - Typed association refs for `includes` and `joins`.
 - Typed field refs for `order`.
-- `limit`, `first`, `find`, `findBy`, `create`, and `toArray`.
+- `limit`, `offset`, `first`, `find`, `findBy`, `create`, and `toArray`.
 - Relation criteria checks that persist through assigned relation variables.
 
 Follow-up work remains for richer scope builders, aggregations, nested
