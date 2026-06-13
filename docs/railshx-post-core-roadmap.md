@@ -50,12 +50,16 @@ Typed boundary:
 - `Template<TLocals>` for HTML/text mailer templates.
 - Typed `mail({to, from, subject, ...})` kwargs.
 - Optional typed params facade for parameterized mailers.
+- Initial slice exists through `@:railsMailer`,
+  `rails.macros.MailerMacro.mailHtml/mailText/mailMultipart`, and typed HHX
+  mail templates. See [RailsHx ActionMailer Guide](railshx-action-mailer-guide.md).
 
 Lowering strategy:
 
 - `@:railsMailer` emits `ActionMailer::Base` subclasses.
 - Mailer actions stay normal Ruby instance methods.
-- `ViewMacro.renderTemplate(...)` and HHX templates emit mailer-compatible ERB.
+- `MailerMacro` and HHX templates emit mailer-compatible ERB and Rails-native
+  format render blocks.
 
 Integration strategy:
 

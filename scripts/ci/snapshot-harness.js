@@ -73,6 +73,20 @@ const cases = [
     ],
   },
   {
+    name: "action_mailer",
+    defines: ["reflaxe_ruby_rails"],
+    files: [
+      "app/haxe_gen/mailers/user_mailer.rb",
+      "app/haxe_gen/views/welcome_email_html_view.rb",
+      "app/haxe_gen/views/welcome_email_text_view.rb",
+      "app/views/mailers/user_mailer/welcome.html.erb",
+      "app/views/mailers/user_mailer/welcome.text.erb",
+      "app/haxe_gen/main.rb",
+      "config/initializers/hxruby_autoload.rb",
+      "run.rb",
+    ],
+  },
+  {
     name: "todoapp_rails",
     defines: ["reflaxe_ruby_rails"],
     extraClassPaths: ["examples/todoapp_rails/src_haxe"],

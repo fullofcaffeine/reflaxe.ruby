@@ -247,6 +247,46 @@
       "reason": "Typed Rails response status tokens lowered to Rails-native symbols for controller response helpers."
     },
     {
+      "id": "std.rails.action_mailer",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/ActionMailer.hx",
+      "surface": "rails.ActionMailer",
+      "reason": "Top-level ActionMailer marker module for Rails interop."
+    },
+    {
+      "id": "std.rails.action_mailer_base",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/Base.hx",
+      "surface": "rails.action_mailer.Base",
+      "reason": "Typed ActionMailer base surface for Rails mailer classes, including Rails-native render and mail helpers."
+    },
+    {
+      "id": "std.rails.action_mailer_mail_format",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/MailFormat.hx",
+      "surface": "rails.action_mailer.MailFormat",
+      "reason": "Typed ActionMailer format block facade for multipart html/text mail rendering."
+    },
+    {
+      "id": "std.rails.action_mailer_mail_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/MailOptions.hx",
+      "surface": "rails.action_mailer.MailOptions",
+      "reason": "Typed mail kwargs surface for common ActionMailer mail options lowered to Rails-native keyword args."
+    },
+    {
+      "id": "std.rails.mailer_macro",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/MailerMacro.hx",
+      "surface": "rails.macros.MailerMacro",
+      "reason": "Macro expansion for typed ActionMailer template locals into Rails-native mail format render blocks."
+    },
+    {
       "id": "std.rails.action_view_template",
       "owner": "std",
       "status": "implemented",
