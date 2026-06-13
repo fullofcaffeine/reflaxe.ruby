@@ -21,6 +21,7 @@ extern class Relation<TModel, TCriteria> {
 	public function count():Int;
 	public function first():Null<TModel>;
 	public function last():Null<TModel>;
+	public function pluck<TValue>(field:Field<TModel, TValue>):Array<TValue>;
 
 	@:native("to_a")
 	public function toArray():Array<TModel>;

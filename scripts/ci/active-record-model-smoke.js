@@ -66,6 +66,8 @@ const invalidExistsSourceDir = join(root, "test", ".generated", "active_record_m
 const invalidExistsOutputDir = join(root, "test", ".generated", "active_record_model_invalid_exists_out");
 const invalidOffsetSourceDir = join(root, "test", ".generated", "active_record_model_invalid_offset_src");
 const invalidOffsetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_offset_out");
+const invalidPluckFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_pluck_field_src");
+const invalidPluckFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_pluck_field_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -148,6 +150,8 @@ rmSync(invalidExistsSourceDir, { force: true, recursive: true });
 rmSync(invalidExistsOutputDir, { force: true, recursive: true });
 rmSync(invalidOffsetSourceDir, { force: true, recursive: true });
 rmSync(invalidOffsetOutputDir, { force: true, recursive: true });
+rmSync(invalidPluckFieldSourceDir, { force: true, recursive: true });
+rmSync(invalidPluckFieldOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile active_record_model through Reflaxe.");
@@ -278,6 +282,9 @@ for (const expected of [
   "Models::Todo.last()",
   "relation_last__hx",
   ".last()",
+  "Models::Todo.pluck(:title)",
+  "assigned__hx",
+  ".pluck(:id)",
 ]) {
   if (!mainRuby.includes(expected)) {
     console.error(`ActiveRecord call shape missing from main.rb: ${expected}`);
@@ -297,6 +304,7 @@ for (const expected of [
   "exists({externalId",
   ".count()",
   ".last()",
+  "pluck(Todo.f.title)",
   ".offset(",
   ".toArray()",
   "Models::Todo.incomplete().includes(:user).order(title: :asc).offset(20).limit(10).to_a()",
@@ -320,6 +328,7 @@ for (const expected of [
   "Todo.exists({externalId",
   "Todo.count()",
   "Todo.last()",
+  "Todo.pluck(Todo.f.title)",
   "Todo.includes(User.a.todos)",
 ]) {
   if (!exampleReadme.includes(expected)) {
@@ -358,6 +367,7 @@ expectInvalidFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 expectInvalidExistsFieldFailure();
 expectInvalidOffsetValueTypeFailure();
+expectInvalidPluckFieldOwnerFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -451,6 +461,28 @@ function expectInvalidOffsetValueTypeFailure() {
     invalidOffsetOutputDir,
     "Invalid ActiveRecord offset value type compiled successfully.",
     "String should be Int"
+  );
+}
+
+function expectInvalidPluckFieldOwnerFailure() {
+  mkdirSync(invalidPluckFieldSourceDir, { recursive: true });
+  writeFileSync(join(invalidPluckFieldSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.pluck(User.f.name);",
+    "\t\tSys.println(bad.length);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidPluckFieldSourceDir,
+    invalidPluckFieldOutputDir,
+    "Invalid ActiveRecord pluck field owner compiled successfully.",
+    "Field<models.User"
   );
 }
 

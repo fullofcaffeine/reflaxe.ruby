@@ -7,8 +7,8 @@ field value types, primary-key types, and relation return shapes.
 The rule of thumb is simple:
 
 - Keep query chains Rails-shaped: `all`, `distinct`, `where`, `includes`,
-  `joins`, `order`, `limit`, `offset`, `find`, `findBy`, `exists`, `count`,
-  `first`, `last`, and `toArray`.
+  `joins`, `order`, `limit`, `offset`, `pluck`, `find`, `findBy`, `exists`,
+  `count`, `first`, `last`, and `toArray`.
 - Put type information at the Haxe boundary: `@:railsColumn`, associations, field
   refs such as `Todo.f.title`, and association refs such as `Todo.a.user`.
 - Let the compiler lower Haxe names to Rails names: `externalId` becomes
@@ -141,17 +141,26 @@ Use generated field refs for query helpers that need a column identity:
 var recent = AuditLog
 	.where({eventCount: 1})
 	.order(AuditLog.f.eventCount.desc());
+
+var titles:Array<String> = Todo.pluck(Todo.f.title);
+var ids:Array<Int> = Todo.where({status: "open"}).pluck(Todo.f.id);
 ```
 
 Generated Ruby:
 
 ```ruby
 Models::AuditLog.where(event_count: 1).order(event_count: :desc)
+Models::Todo.pluck(:title)
+Models::Todo.where(status: "open").pluck(:id)
 ```
 
 Prefer `Todo.f.title` over `"title"` for behavior-bearing query code. The string
 form may be useful at low-level interop boundaries later, but RailsHx examples
 should keep field identity behind generated refs.
+
+`pluck(...)` preserves the field value type in the returned array. A string
+column becomes `Array<String>`, an integer primary key becomes `Array<Int>`, and
+fields from another model are rejected by Haxe before Rails runs.
 
 ## Association Refs
 

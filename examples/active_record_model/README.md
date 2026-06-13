@@ -33,6 +33,9 @@ var distinctOpen = Todo
 	.where({status: "open"})
 	.order(Todo.f.title.asc());
 
+var titles:Array<String> = Todo.pluck(Todo.f.title);
+var assignedIds:Array<Int> = Todo.where({title: "assigned"}).pluck(Todo.f.id);
+
 var found = Todo
 	.includes(Todo.associations.user)
 	.where({title: "ship", status: "open"})
@@ -47,6 +50,8 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
+Models::Todo.pluck(:title)
+Models::Todo.where(title: "assigned").pluck(:id)
 Models::Todo
   .includes(:user)
   .where(title: "ship", status: "open")
@@ -62,6 +67,7 @@ Type-safety features used here:
 - `where({...})` values must match those field types.
 - `Todo.associations.user` / `Todo.a.user` must belong to `Todo`.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
+- `Todo.pluck(Todo.f.title)` returns `Array<String>` from the field value type.
 - The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
   `order`, `limit`, and `offset`.
 

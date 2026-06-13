@@ -31,6 +31,7 @@ class ModelMacro {
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "last", nullableSelf, pos);
+		addPluckStub(fields, selfType, pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
 		return fields;
 	}
@@ -888,6 +889,14 @@ class ModelMacro {
 		});
 	}
 
+	static function arrayComplexType(itemType:ComplexType):ComplexType {
+		return TPath({
+			pack: [],
+			name: "Array",
+			params: [TPType(itemType)]
+		});
+	}
+
 	static function isPrimaryKeyField(field:Field):Bool {
 		if (field.meta == null) {
 			return false;
@@ -1012,6 +1021,28 @@ class ModelMacro {
 				expr: macro return cast null
 			}),
 			meta: [
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addPluckStub(fields:Array<Field>, selfType:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, "pluck")) {
+			return;
+		}
+		var valueType:ComplexType = TPath({pack: [], name: "TValue"});
+		fields.push({
+			name: "pluck",
+			access: [APublic, AStatic],
+			kind: FFun({
+				params: [{name: "TValue", constraints: [], params: [], meta: []}],
+				args: [{name: "field", type: typedFieldComplexType(selfType, valueType)}],
+				ret: arrayComplexType(valueType),
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro "pluck"], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos

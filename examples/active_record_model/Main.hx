@@ -5,8 +5,8 @@ import models.User;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `distinct`, `order`, `limit`, `offset`, `find`, `findBy`, `exists`,
-// `count`, `first`, and `last` authored as typed Haxe calls.
+// `all`, `distinct`, `order`, `limit`, `offset`, `pluck`, `find`, `findBy`,
+// `exists`, `count`, `first`, and `last` authored as typed Haxe calls.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -38,6 +38,8 @@ class Main {
 		var first:Null<Todo> = found.first();
 		var last:Null<Todo> = Todo.last();
 		var relationLast:Null<Todo> = assigned.last();
+		var titles:Array<String> = Todo.pluck(Todo.f.title);
+		var assignedIds:Array<Int> = assigned.pluck(Todo.f.id);
 		Sys.println(found == null);
 		Sys.println(scoped == null);
 		Sys.println(users == null);
@@ -54,6 +56,8 @@ class Main {
 		Sys.println(first == null);
 		Sys.println(last == null);
 		Sys.println(relationLast == null);
+		Sys.println(titles.length >= 0);
+		Sys.println(assignedIds.length >= 0);
 		Sys.println(allOpen == null);
 		Sys.println(distinctOpen == null);
 		Sys.println(relationDistinct == null);
