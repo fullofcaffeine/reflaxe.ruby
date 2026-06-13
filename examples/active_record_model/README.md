@@ -14,7 +14,8 @@ npm run test:active-record-model
 The smoke compiles the example, checks generated Rails-shaped Ruby, and runs
 negative compile tests for invalid fields, invalid value types, wrong association
 owners, invalid association metadata, invalid callbacks, and invalid `find` /
-`findBy` / `exists` usage.
+`findBy` / `exists` usage, invalid projection specs, and invalid grouped-count
+fields.
 
 ## Main Query Shapes
 
@@ -22,6 +23,9 @@ owners, invalid association metadata, invalid callbacks, and invalid `find` /
 entrypoint when you want to start from a full model relation:
 
 ```haxe
+import rails.active_record.Group;
+import rails.active_record.Projection;
+
 var allOpen = Todo
 	.all()
 	.where({status: "open"})
@@ -105,6 +109,16 @@ Type-safety features used here:
 - `Todo.maximum(Todo.f.id)` returns `Null<Int>` and rejects fields from other models.
 - The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
   `order`, `limit`, and `offset`.
+
+Invalid projection/grouping examples fail during Haxe compilation:
+
+```haxe
+Projection.pluck(Todo, {id: User.f.id});
+Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name});
+Projection.pluck(Todo, {});
+Group.count(Todo, User.f.name);
+Group.count(Todo, Todo.f.completed);
+```
 
 ## Scopes
 

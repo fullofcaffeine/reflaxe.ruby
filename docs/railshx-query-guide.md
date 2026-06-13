@@ -10,6 +10,9 @@ The rule of thumb is simple:
   `joins`, `order`, `reorder`, `limit`, `offset`, `pluck`, `minimum`,
   `maximum`, `find`, `findBy`, `exists`, `count`, `first`, `last`, and
   `toArray`.
+- Use macro facades for query results whose Haxe return type depends on more
+  than one field: `Projection.pluck(...)` for named multi-field rows and
+  `Group.count(...)` for typed grouped counts.
 - Put type information at the Haxe boundary: `@:railsColumn`, associations, field
   refs such as `Todo.f.title`, and association refs such as `Todo.a.user`.
 - Let the compiler lower Haxe names to Rails names: `externalId` becomes
@@ -18,8 +21,8 @@ The rule of thumb is simple:
 - Cross from lazy relation to loaded data intentionally with `toArray()` when a
   controller/template needs an `Array<Todo>`.
 
-For the planned multi-field projection and grouped-count APIs, see
-[RailsHx Multi-Field Projection And Grouping Design](railshx-projections-grouping-design.md).
+For the rationale behind the implemented multi-field projection and grouped-count
+APIs, see [RailsHx Multi-Field Projection And Grouping Design](railshx-projections-grouping-design.md).
 
 ## Model Setup
 
@@ -164,6 +167,9 @@ Models::Todo.distinct().where(completed: false).offset(10).limit(10)
 Use generated field refs for query helpers that need a column identity:
 
 ```haxe
+import rails.active_record.Group;
+import rails.active_record.Projection;
+
 var recent = AuditLog
 	.where({eventCount: 1})
 	.order(AuditLog.f.eventCount.desc());
@@ -227,6 +233,16 @@ positional arrays.
 from another model are rejected before Rails runs. v1 deliberately rejects other
 key types, such as `Bool`, until the target has a clear map representation for
 those keys.
+
+Invalid projection/grouping examples fail during Haxe compilation:
+
+```haxe
+Projection.pluck(Todo, {id: User.f.id});
+Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name});
+Projection.pluck(Todo, {});
+Group.count(Todo, User.f.name);
+Group.count(Todo, Todo.f.completed);
+```
 
 `minimum(...)` and `maximum(...)` use the same field refs and return nullable
 field values because Rails may not find a row. For example, an integer field
@@ -415,10 +431,10 @@ The current query slice intentionally covers the common Rails relation path:
 - Relation criteria checks that persist through assigned relation variables.
 
 Follow-up work remains for richer scope builders, aggregations, nested
-association-aware criteria, select/projection typing, grouped queries, and more
-complete Rails query APIs. Until those land, prefer small typed externs or typed
-wrapper methods at the boundary rather than raw strings or `__ruby__` in app
-code.
+association-aware criteria, multi-model joins/projections, richer grouped-query
+key types, and more complete Rails query APIs. Until those land, prefer small
+typed externs or typed wrapper methods at the boundary rather than raw strings
+or `__ruby__` in app code.
 
 ## Example And Tests
 
