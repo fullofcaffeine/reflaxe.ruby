@@ -29,6 +29,8 @@ main().catch((error) => {
 });
 
 async function main() {
+  ensureSupportedRuby();
+
   const port = await resolvePort();
   const baseUrl = process.env.BASE_URL ?? `http://${bind}:${port}`;
 
@@ -118,6 +120,24 @@ function hasChromiumBrowser() {
     return false;
   }
   return readdirSync(cacheDir).some((entry) => entry.startsWith("chromium-") || entry.startsWith("chromium_headless_shell-"));
+}
+
+function ensureSupportedRuby() {
+  const result = spawnSync("ruby", ["-e", "print RUBY_VERSION"], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (result.status !== 0) {
+    process.stderr.write(result.stderr ?? "");
+    throw new Error("RailsHx Playwright requires Ruby to be available on PATH.");
+  }
+
+  const version = (result.stdout ?? "").trim();
+  const [major, minor] = version.split(".").map((part) => Number(part));
+  if (Number.isNaN(major) || Number.isNaN(minor) || major < 3 || (major === 3 && minor < 2)) {
+    throw new Error(`RailsHx Playwright requires Ruby >= 3.2 for the generated Rails app; current Ruby is ${version}.`);
+  }
 }
 
 async function waitForReady(url, deadlineMs) {

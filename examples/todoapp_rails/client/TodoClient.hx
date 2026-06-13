@@ -12,9 +12,10 @@ import shared.TodoHooks;
 // Turbo-idiomatic through typed `rails.turbo.Turbo` event helpers.
 // Type safety: DOM values are typed as `Element`/`Event` where possible;
 // storage keys and behavior hooks are centralized constants instead of repeated
-// magic strings.
+// magic strings; Turbo submit/fetch details use typed structural contracts.
 // IntelliSense: editors should complete `Turbo.onLoad`, `Turbo.onSubmitStart`,
-// `Browser.document`, `Element` methods, and the helper functions below.
+// `Turbo.onBeforeFetchRequest`, `Browser.document`, `Element` methods, and the
+// helper functions below.
 // JS/Rails output: compiled JavaScript pinned through Rails importmap and run
 // alongside Turbo.
 class TodoClient {
@@ -24,7 +25,13 @@ class TodoClient {
 			boot();
 		});
 		Turbo.onSubmitStart(function(event):Void {
-			captureTodoSubmit(event.target);
+			var form = event.detail.formSubmission == null ? null : event.detail.formSubmission.formElement;
+			captureTodoSubmit(form == null ? event.target : form);
+		});
+		Turbo.onBeforeFetchRequest(function(event):Void {
+			if (event.detail.fetchOptions != null) {
+				js.Syntax.code("{0}.headers = Object.assign({}, {0}.headers || {}, {'X-RailsHx-Client': 'todoapp'})", event.detail.fetchOptions);
+			}
 		});
 	}
 

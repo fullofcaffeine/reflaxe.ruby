@@ -2,35 +2,62 @@ package rails.turbo;
 
 import js.Browser;
 import js.html.Document;
+import js.html.Element;
 import js.html.Event;
-
-enum abstract TurboEvent(String) to String {
-	var BeforeCache = "turbo:before-cache";
-	var BeforeRender = "turbo:before-render";
-	var BeforeVisit = "turbo:before-visit";
-	var Load = "turbo:load";
-	var SubmitEnd = "turbo:submit-end";
-	var SubmitStart = "turbo:submit-start";
-}
-
-typedef TurboVisitOptions = {
-	var ?action:String;
-	var ?acceptsStreamResponse:Bool;
-	var ?frame:String;
-}
-
-typedef TurboSubmitEvent = {
-	var target:Dynamic;
-	var detail:Dynamic;
-}
 
 class Turbo {
 	public static function on(event:TurboEvent, handler:Event->Void, ?document:Document):Void {
 		(document == null ? Browser.document : document).addEventListener(event, handler);
 	}
 
+	public static function onTyped<TDetail>(event:TurboEvent, handler:TurboTypedEvent<TDetail>->Void, ?document:Document):Void {
+		on(event, function(event:Event):Void {
+			handler(cast event);
+		}, document);
+	}
+
 	public static function onLoad(handler:Event->Void):Void {
 		on(Load, handler);
+	}
+
+	public static function onBeforeVisit(handler:TurboTypedEvent<TurboVisitDetail>->Void):Void {
+		onTyped(BeforeVisit, handler);
+	}
+
+	public static function onVisit(handler:TurboTypedEvent<TurboVisitDetail>->Void):Void {
+		onTyped(Visit, handler);
+	}
+
+	public static function onBeforeRender(handler:TurboTypedEvent<TurboRenderDetail>->Void):Void {
+		onTyped(BeforeRender, handler);
+	}
+
+	public static function onRender(handler:TurboTypedEvent<TurboRenderDetail>->Void):Void {
+		onTyped(Render, handler);
+	}
+
+	public static function onBeforeFetchRequest(handler:TurboTypedEvent<TurboFetchRequestDetail>->Void):Void {
+		onTyped(BeforeFetchRequest, handler);
+	}
+
+	public static function onBeforeFetchResponse(handler:TurboTypedEvent<TurboFetchResponseDetail>->Void):Void {
+		onTyped(BeforeFetchResponse, handler);
+	}
+
+	public static function onFrameLoad(handler:Event->Void):Void {
+		on(FrameLoad, handler);
+	}
+
+	public static function onFrameRender(handler:TurboTypedEvent<TurboFrameRenderDetail>->Void):Void {
+		onTyped(FrameRender, handler);
+	}
+
+	public static function onBeforeFrameRender(handler:TurboTypedEvent<TurboFrameRenderDetail>->Void):Void {
+		onTyped(BeforeFrameRender, handler);
+	}
+
+	public static function onBeforeStreamRender(handler:TurboTypedEvent<TurboStreamRenderDetail>->Void):Void {
+		onTyped(BeforeStreamRender, handler);
 	}
 
 	public static function onSubmitStart(handler:TurboSubmitEvent->Void):Void {
@@ -51,6 +78,50 @@ class Turbo {
 			return;
 		}
 		js.Syntax.code("window.Turbo.visit({0}, {1})", location, options == null ? {} : options);
+	}
+
+	public static function renderStreamMessage(html:String):Void {
+		if (!isAvailable()) {
+			return;
+		}
+		js.Syntax.code("window.Turbo.renderStreamMessage({0})", html);
+	}
+
+	public static function stream(action:TurboStreamAction, target:String, ?template:String):String {
+		if (action == Refresh) {
+			return '<turbo-stream action="refresh"></turbo-stream>';
+		}
+		if (template == null) {
+			template = "";
+		}
+		return '<turbo-stream action="${action}" target="${target}"><template>${template}</template></turbo-stream>';
+	}
+
+	public static function frameById(id:String, ?document:Document):Null<Element> {
+		return (document == null ? Browser.document : document).getElementById(id);
+	}
+
+	public static function setFrameSrc(frame:Element, src:String):Void {
+		frame.setAttribute("src", src);
+	}
+
+	public static function setFrameLoading(frame:Element, loading:TurboFrameLoading):Void {
+		frame.setAttribute("loading", loading);
+	}
+
+	public static function setFrameTarget(frame:Element, target:TurboFrameTarget):Void {
+		frame.setAttribute("target", target);
+	}
+
+	public static function reloadFrame(frame:Element):Void {
+		if (Reflect.hasField(frame, "reload")) {
+			js.Syntax.code("{0}.reload()", frame);
+		} else {
+			var src = frame.getAttribute("src");
+			if (src != null) {
+				frame.setAttribute("src", src);
+			}
+		}
 	}
 
 	public static function isAvailable():Bool {

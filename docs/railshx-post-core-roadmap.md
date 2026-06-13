@@ -136,6 +136,9 @@ Graduation criteria:
 
 Typed boundary:
 
+- Initial implemented slice: typed Haxe client helpers for Turbo events,
+  `Turbo.visit` options/actions, frame attributes, and client-side
+  `Turbo.renderStreamMessage`.
 - Typed Turbo stream helpers for append/replace/remove/broadcast shapes.
 - Haxe-authored JS clients that layer on Rails importmap/Turbo conventions.
 - `rails.action_cable.Channel<TParams>` for channel params and stream names.

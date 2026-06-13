@@ -380,7 +380,127 @@
       "status": "implemented",
       "path": "std/rails/turbo/Turbo.hx",
       "surface": "rails.turbo.Turbo",
-      "reason": "Typed Haxe facade over Turbo lifecycle events and Turbo.visit for RailsHx client-side JavaScript."
+      "reason": "Typed Haxe facade over Turbo lifecycle events, visit actions/options, frame helpers, and stream-message rendering for RailsHx client-side JavaScript."
+    },
+    {
+      "id": "std.rails.turbo_event",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboEvent.hx",
+      "surface": "rails.turbo.TurboEvent",
+      "reason": "Typed Turbo lifecycle event names used by RailsHx Haxe-authored JavaScript instead of app-level string literals."
+    },
+    {
+      "id": "std.rails.turbo_visit_action",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboVisitAction.hx",
+      "surface": "rails.turbo.TurboVisitAction",
+      "reason": "Typed Turbo.visit action tokens for advance/replace/restore navigation."
+    },
+    {
+      "id": "std.rails.turbo_visit_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboVisitOptions.hx",
+      "surface": "rails.turbo.TurboVisitOptions",
+      "reason": "Typed Turbo.visit options for action, frame, and stream-response behavior."
+    },
+    {
+      "id": "std.rails.turbo_visit_detail",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboVisitDetail.hx",
+      "surface": "rails.turbo.TurboVisitDetail",
+      "reason": "Typed detail payload for Turbo visit lifecycle events."
+    },
+    {
+      "id": "std.rails.turbo_render_detail",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboRenderDetail.hx",
+      "surface": "rails.turbo.TurboRenderDetail",
+      "reason": "Typed detail payload for Turbo render lifecycle events."
+    },
+    {
+      "id": "std.rails.turbo_fetch_request_detail",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboFetchRequestDetail.hx",
+      "surface": "rails.turbo.TurboFetchRequestDetail",
+      "reason": "Typed detail payload for Turbo before-fetch-request hooks while preserving dynamic browser fetch options."
+    },
+    {
+      "id": "std.rails.turbo_fetch_response_detail",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboFetchResponseDetail.hx",
+      "surface": "rails.turbo.TurboFetchResponseDetail",
+      "reason": "Typed detail payload for Turbo before-fetch-response hooks while preserving dynamic Turbo fetch response objects."
+    },
+    {
+      "id": "std.rails.turbo_frame_loading",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboFrameLoading.hx",
+      "surface": "rails.turbo.TurboFrameLoading",
+      "reason": "Typed turbo-frame loading tokens for eager/lazy frame behavior."
+    },
+    {
+      "id": "std.rails.turbo_frame_target",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboFrameTarget.hx",
+      "surface": "rails.turbo.TurboFrameTarget",
+      "reason": "Typed turbo-frame target tokens such as _top for RailsHx client-side frame helpers."
+    },
+    {
+      "id": "std.rails.turbo_frame_render_detail",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboFrameRenderDetail.hx",
+      "surface": "rails.turbo.TurboFrameRenderDetail",
+      "reason": "Typed detail payload for Turbo frame render hooks."
+    },
+    {
+      "id": "std.rails.turbo_stream_action",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboStreamAction.hx",
+      "surface": "rails.turbo.TurboStreamAction",
+      "reason": "Typed Turbo stream action tokens for append/prepend/replace/update/remove and related stream operations."
+    },
+    {
+      "id": "std.rails.turbo_stream_render_detail",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboStreamRenderDetail.hx",
+      "surface": "rails.turbo.TurboStreamRenderDetail",
+      "reason": "Typed detail payload for Turbo before-stream-render hooks."
+    },
+    {
+      "id": "std.rails.turbo_form_submission",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboFormSubmission.hx",
+      "surface": "rails.turbo.TurboFormSubmission",
+      "reason": "Typed structural view of Turbo form submission details exposed to submit lifecycle handlers."
+    },
+    {
+      "id": "std.rails.turbo_submit_event",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboSubmitEvent.hx",
+      "surface": "rails.turbo.TurboSubmitEvent",
+      "reason": "Typed structural event for Turbo submit-start and submit-end handlers."
+    },
+    {
+      "id": "std.rails.turbo_typed_event",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboTypedEvent.hx",
+      "surface": "rails.turbo.TurboTypedEvent",
+      "reason": "Generic typed Turbo event shape for event detail payloads and preventDefault support."
     },
     {
       "id": "std.rails.migration",

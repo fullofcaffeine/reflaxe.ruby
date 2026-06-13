@@ -48,7 +48,7 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - `views/TodoDashboardView.hx` composes the summary partial through typed `<partial>` locals, emits a typed `<link_to>` route helper with nested HHX block content, and generates `app/views/controllers/todos/_dashboard.html.erb`, which the index renders with normal Rails locals.
 - `views/TodoListView.hx` is the index's typed open-work list island: HHX validates the `todos` local, `<if>` branch, `<for>` loop binder, and `todo.title`/`todo.notes` expressions before generating `app/views/controllers/todos/_list.html.erb`.
 - `views/TodoFormView.hx` uses HHX inline markup (`<form_with>`, `<hidden_field>`, `<field_label>`, `<text_field>`, `<text_area>`, `<submit>`) plus model-owned refs such as `Todo.railsParamKey`, `Todo.f.title`, and `Todo.f.notes` for a typed Rails form partial. It generates `app/views/controllers/todos/_typed_form.html.erb`, which the index renders with `sample_user_id`.
-- `std/rails/turbo/Turbo.hx` provides a small typed Haxe facade over Turbo lifecycle events and `Turbo.visit`, so client code uses Rails-native Turbo semantics without stringly-typed app logic.
+- `std/rails/turbo/Turbo.hx` provides a typed Haxe facade over Turbo lifecycle events, `Turbo.visit` actions/options, frame helpers, and client-side stream rendering, so client code uses Rails-native Turbo semantics without stringly-typed app logic.
 - `shared/TodoHooks.hx` centralizes behavior-bearing slots, IDs, selectors, data attributes, and storage keys as typed Haxe constants shared by HHX templates, Haxe JS, and Playwright.
 - `tools/ExportTodoHooks.hx` materializes those Haxe-owned hooks into `e2e/todo_hooks.ts`, so browser tests import the same selector contract instead of copying string literals.
 - `client/TodoClient.hx` compiles to `app/javascript/railshx/todo_client.js` and owns progressive enhancement: typed Turbo submit handling, smooth same-page navigation, scroll-position preservation after create, and a transient typed-status flash.
@@ -159,7 +159,7 @@ haxe -D ruby_output=test/.generated/todoapp_rails \
 
 Generated app-owned Ruby lands under `app/haxe_gen/**`, generated migrations land under `db/migrate/**`, and Rails autoload setup lands in `config/initializers/hxruby_autoload.rb`.
 
-The Haxe-authored client lane compiles through `examples/todoapp_rails/build-client.hxml`, which adds `-cp std` so `rails.turbo.Turbo` is available while emitting JavaScript for Rails importmap assets.
+The Haxe-authored client lane compiles through `examples/todoapp_rails/build-client.hxml`, which adds `-cp std` so `rails.turbo.Turbo` and its typed event/action modules are available while emitting JavaScript for Rails importmap assets.
 
 ## Test
 
