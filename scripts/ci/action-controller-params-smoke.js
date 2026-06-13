@@ -60,6 +60,7 @@ for (const expected of [
   /self\.cookies\(\)\.delete\(:stale_filter\)/,
   /self\.render\(json: attrs__hx\d+\)/,
   /self\.redirect_to\(action: "index"\)/,
+  /self\.head\(:no_content\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`ActionController output missing expected line: ${expected}`);

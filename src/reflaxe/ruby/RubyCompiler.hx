@@ -962,6 +962,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (actionControllerStoreCall != null) {
 			return actionControllerStoreCall;
 		}
+		var actionControllerResponseCall = compileActionControllerResponseCall(callee, params);
+		if (actionControllerResponseCall != null) {
+			return actionControllerResponseCall;
+		}
 		var info = staticCallInfo(callee);
 		if (info == null) {
 			return null;
@@ -1131,6 +1135,44 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				printInlineExpr(expr);
 		}
+	}
+
+	static function compileActionControllerResponseCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (callee.expr) {
+			case TField(target, access) if (fieldAccessRawName(access) == "head" && params.length == 1):
+				var status = railsStatusArg(params[0]);
+				status == null ? null : RubyCall(compileExpr(target), "head", [RubyRawExpr(status)]);
+			case _:
+				null;
+		}
+	}
+
+	static function railsStatusArg(expr:TypedExpr):Null<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)):
+				rubySymbolLiteral(RubyNaming.toLocalName(value));
+			case TField(_, FStatic(classRef, fieldRef)) if (isActionControllerStatusType(classRef.get())):
+				rubySymbolLiteral(RubyNaming.toLocalName(fieldRef.get().name));
+			case TCall(callee, [valueExpr]) if (isActionControllerStatusNamedCall(callee)):
+				switch (unwrapTypedExpr(valueExpr).expr) {
+					case TConst(TString(value)):
+						rubySymbolLiteral(RubyNaming.toLocalName(value));
+					case _:
+						printInlineExpr(valueExpr);
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function isActionControllerStatusNamedCall(callee:TypedExpr):Bool {
+		var info = staticCallInfo(callee);
+		return info != null && info.name == "named" && (info.owner == "rails.action_controller.Status" || StringTools.endsWith(info.owner, ".Status_Impl_"));
+	}
+
+	static function isActionControllerStatusType(classType:ClassType):Bool {
+		return fullTypeName(classType.pack, classType.name) == "rails.action_controller.Status"
+			|| fullTypeName(classType.pack, classType.name) == "rails.action_controller.Status_Impl_";
 	}
 
 	static function activeRecordCriteriaArg(expr:TypedExpr):Null<String> {

@@ -15,6 +15,7 @@ module Controllers
       self.cookies().delete(:stale_filter)
       self.render(json: attrs__hx0)
       self.redirect_to(action: "index")
+      self.head(:no_content)
     end
   end
 end

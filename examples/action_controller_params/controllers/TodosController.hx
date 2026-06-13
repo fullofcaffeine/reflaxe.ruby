@@ -1,5 +1,6 @@
 package controllers;
 
+import rails.action_controller.Status;
 import rails.macros.ParamsMacro;
 
 // Typed ActionController params fixture.
@@ -16,7 +17,7 @@ import rails.macros.ParamsMacro;
 // the `ParamsMacro` entrypoint, plus store methods `get`, `set`, and `delete`.
 // Ruby output: an `ActionController::Base` subclass with normal Rails
 // `params.require(...).permit(...)`, `flash[:key]`, `session[:key]`,
-// `cookies[:key]`, `render`, and `redirect_to` calls.
+// `cookies[:key]`, `render`, `redirect_to`, and `head(:status)` calls.
 @:railsController
 class TodosController extends rails.action_controller.Base {
 	public function create() {
@@ -28,5 +29,6 @@ class TodosController extends rails.action_controller.Base {
 		cookies().delete("staleFilter");
 		render({json: attrs});
 		redirectTo({action: "index"});
+		head(Status.noContent);
 	}
 }

@@ -25,4 +25,7 @@ class Base {
 	@:native("redirect_to")
 	@:rubyKwargs
 	public function redirectTo(options:Dynamic):Void {}
+
+	@:native("head")
+	public function head(status:Status):Void {}
 }

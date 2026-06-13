@@ -215,6 +215,14 @@
       "reason": "Typed controller facade for Rails flash/session/cookies get/set/delete calls lowered into Rails-native bracket/delete access."
     },
     {
+      "id": "std.rails.action_controller_status",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/Status.hx",
+      "surface": "rails.action_controller.Status",
+      "reason": "Typed Rails response status tokens lowered to Rails-native symbols for controller response helpers."
+    },
+    {
       "id": "std.rails.action_view_template",
       "owner": "std",
       "status": "implemented",
