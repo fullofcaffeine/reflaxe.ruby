@@ -722,11 +722,18 @@ private class RailsMarkupParser {
 				var locals = requireAttrValue(attrs, "locals", pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Partial($template, $locals);
 			case "component":
-				var template = requireAttrValue(attrs, "template", pos);
-				var locals = requireAttrValue(attrs, "locals", pos);
-				var slot = requireAttrValue(attrs, "slot", pos);
-				rejectAttrs(name, attrsExcept(attrs, ["template", "locals", "slot"]), pos);
-				macro @:pos(pos) rails.action_view.HtmlNode.Component($template, $locals, $slot, ${mkArray(children, pos)});
+				var component = attrValue(attrs, "component");
+				if (component != null) {
+					var locals = requireAttrValue(attrs, "locals", pos);
+					rejectAttrs(name, attrsExcept(attrs, ["component", "locals"]), pos);
+					macro @:pos(pos) rails.action_view.HtmlNode.ComponentRef($component, $locals, ${mkArray(children, pos)});
+				} else {
+					var template = requireAttrValue(attrs, "template", pos);
+					var locals = requireAttrValue(attrs, "locals", pos);
+					var slot = requireAttrValue(attrs, "slot", pos);
+					rejectAttrs(name, attrsExcept(attrs, ["template", "locals", "slot"]), pos);
+					macro @:pos(pos) rails.action_view.HtmlNode.Component($template, $locals, $slot, ${mkArray(children, pos)});
+				}
 			case "csrf_meta_tags":
 				rejectChildren(name, children, pos);
 				rejectAttrs(name, attrs, pos);

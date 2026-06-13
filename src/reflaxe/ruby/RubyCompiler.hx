@@ -94,6 +94,11 @@ typedef RailsTemplateScope = {
 	?formBuilderName:String
 }
 
+typedef RailsComponentRef = {
+	path:String,
+	slotName:String
+}
+
 typedef LocalNameScope = {
 	names:Map<Int, String>,
 	nextByBase:Map<String, Int>
@@ -2974,6 +2979,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateComponent(params[0], params[1], params[2], params[3], scope);
 						}
+					case "ComponentRef":
+						if (params.length != 3) {
+							Context.error("HtmlNode.ComponentRef expects component, locals, and children arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateComponentRef(params[0], params[1], params[2], scope);
+						}
 					case "LinkTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.LinkTo expects label, url, and attrs arguments.", node.pos);
@@ -3365,6 +3377,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return "";
 		}
 		var slotName = expectTemplateString(slotNameExpr, "HtmlNode.Component slotName must be a string literal.");
+		validateTemplateComponentSlotName(slotName, slotNameExpr.pos, "HtmlNode.Component");
+		return lowerTemplateComponentRender(path, slotName, locals, childrenExpr, scope);
+	}
+
+	static function lowerTemplateComponentRef(component:TypedExpr, locals:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
+		var ref = extractTypedComponentRef(component);
+		if (ref == null) {
+			Context.error("HtmlNode.ComponentRef expects Component.of(ViewClass, \"slot\"), Component.existing(\"path\", \"slot\"), Component.named(\"path\", \"slot\"), or Component.external(\"path\", \"slot\") as the component argument.",
+				component.pos);
+			return "";
+		}
+		return lowerTemplateComponentRender(ref.path, ref.slotName, locals, childrenExpr, scope);
+	}
+
+	static function lowerTemplateComponentRender(path:String, slotName:String, locals:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
 		var slotLocalName = "railshx_component_" + RubyNaming.toLocalName(slotName);
 		var out = "<% " + slotLocalName + " = capture do %>";
 		for (child in expectTemplateArray(childrenExpr, "HtmlNode.Component children must be an array literal.")) {
@@ -3415,11 +3442,36 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function extractTypedComponentRef(component:TypedExpr):Null<RailsComponentRef> {
+		var unwrapped = unwrapTemplateExpr(component);
+		return switch (unwrapped.expr) {
+			case TCall(callee, [path, slot]) if (isComponentPathCall(callee)):
+				var value = expectTemplateString(path, "Component.named/external expects a string literal path.");
+				var slotName = expectTemplateString(slot, "Component.named/external expects a string literal slot name.");
+				validateRailsTemplatePath(value, path.pos, "Component.named/external");
+				validateTemplateComponentSlotName(slotName, slot.pos, "Component.named/external");
+				{path: normalizeRailsRenderPath(value), slotName: slotName};
+			case _:
+				null;
+		}
+	}
+
 	static function isTemplatePathCall(callee:TypedExpr):Bool {
 		return switch (unwrapTemplateExpr(callee).expr) {
 			case TField(_, access):
 				var name = fieldAccessName(access);
 				name == "named" || name == "external";
+			case _:
+				false;
+		}
+	}
+
+	static function isComponentPathCall(callee:TypedExpr):Bool {
+		return switch (unwrapTemplateExpr(callee).expr) {
+			case TField(_, FStatic(classRef, fieldRef)):
+				var classType = classRef.get();
+				fullTypeName(classType.pack, classType.name) == "rails.action_view.Component"
+					&& ["named", "external"].indexOf(fieldRef.get().name) != -1;
 			case _:
 				false;
 		}
@@ -3644,6 +3696,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error(context + " path must not contain empty, '.', or '..' segments.", pos);
 				return;
 			}
+		}
+	}
+
+	static function validateTemplateComponentSlotName(slotName:String, pos:haxe.macro.Expr.Position, context:String):Void {
+		if (!~/^[A-Za-z_][A-Za-z0-9_]*$/.match(slotName)) {
+			Context.error(context + " slot name must be a safe Haxe/Ruby local identifier.", pos);
 		}
 	}
 

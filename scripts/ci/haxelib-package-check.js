@@ -95,6 +95,7 @@ for (const required of [
   "std/rails/action_controller/Response.hx",
   "std/rails/action_controller/Status.hx",
   "std/rails/action_view/H.hx",
+  "std/rails/action_view/Component.hx",
   "std/rails/action_view/HtmlAttr.hx",
   "std/rails/action_view/HtmlNode.hx",
   "std/rails/action_view/Slot.hx",

@@ -205,7 +205,10 @@ Graduation criteria:
 
 Typed boundary:
 
-- Component classes with typed initializer args and typed slots.
+- Initial implemented slice: `rails.action_view.Component<TLocals>`,
+  `Slot.content()`, and HHX `<component component=${...}>` capture/render
+  composition. See [RailsHx Components Guide](railshx-components-guide.md).
+- Component partials with typed locals and typed slots.
 - HHX component invocation with checked locals/slots.
 - Interop with existing Ruby ViewComponent classes through extern contracts.
 
@@ -214,12 +217,14 @@ Lowering strategy:
 - Do not copy Phoenix components directly. Use the existing RailsHx typed slot
   lesson: typed HHX children are captured and passed to Rails-native render
   calls.
+- Lower `Component<TLocals>` calls to `capture do ... end` plus normal
+  `render partial:` locals.
 - If ViewComponent is present, generate normal Ruby component classes or typed
   extern wrappers; otherwise stay in Rails partial/component helpers.
 
 Integration strategy:
 
-- Static smoke checks slot/arg failures.
+- Static smoke checks generated capture/render output plus slot/arg failures.
 - Runtime Rails view test renders generated component output.
 
 Graduation criteria:

@@ -34,4 +34,5 @@ enum HtmlNode {
 	ContentFor(name:String, children:Array<HtmlNode>);
 	YieldContent(name:String);
 	Component<TLocals>(template:Template<TLocals>, locals:TLocals, slotName:String, children:Array<HtmlNode>);
+	ComponentRef<TLocals>(component:Component<TLocals>, locals:TLocals, children:Array<HtmlNode>);
 }

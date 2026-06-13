@@ -1,6 +1,7 @@
 package views;
 
 import controllers.TodosController.TodoIndexLocals;
+import rails.action_view.Component as RailsComponent;
 import rails.action_view.HtmlNode;
 import rails.action_view.Slot;
 import rails.action_view.Template;
@@ -24,7 +25,7 @@ import views.TodoSummaryView.TodoSummaryLocals;
 @:railsTemplateAst("render")
 class TodoDashboardView {
 	public static function render(locals:TodoIndexLocals):HtmlNode {
-		return <component template=${(Template.of(TodoCardView) : Template<TodoCardLocals>)} slot=${TodoHooks.componentBodySlot} locals=${{
+		return <component component=${(RailsComponent.of(TodoCardView, TodoHooks.componentBodySlot) : RailsComponent<TodoCardLocals>)} locals=${{
 			eyebrow: "Composed typed component",
 			title: "One typed component, reused by Rails.",
 			body: Slot.content()
