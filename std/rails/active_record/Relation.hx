@@ -22,6 +22,8 @@ extern class Relation<TModel, TCriteria> {
 	public function first():Null<TModel>;
 	public function last():Null<TModel>;
 	public function pluck<TValue>(field:Field<TModel, TValue>):Array<TValue>;
+	public function minimum<TValue>(field:Field<TModel, TValue>):Null<TValue>;
+	public function maximum<TValue>(field:Field<TModel, TValue>):Null<TValue>;
 
 	@:native("to_a")
 	public function toArray():Array<TModel>;

@@ -35,6 +35,8 @@ var distinctOpen = Todo
 
 var titles:Array<String> = Todo.pluck(Todo.f.title);
 var assignedIds:Array<Int> = Todo.where({title: "assigned"}).pluck(Todo.f.id);
+var minId:Null<Int> = Todo.minimum(Todo.f.id);
+var maxTitle:Null<String> = Todo.maximum(Todo.f.title);
 
 var found = Todo
 	.includes(Todo.associations.user)
@@ -52,6 +54,8 @@ Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo.pluck(:title)
 Models::Todo.where(title: "assigned").pluck(:id)
+Models::Todo.minimum(:id)
+Models::Todo.maximum(:title)
 Models::Todo
   .includes(:user)
   .where(title: "ship", status: "open")
@@ -68,6 +72,7 @@ Type-safety features used here:
 - `Todo.associations.user` / `Todo.a.user` must belong to `Todo`.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
 - `Todo.pluck(Todo.f.title)` returns `Array<String>` from the field value type.
+- `Todo.maximum(Todo.f.id)` returns `Null<Int>` and rejects fields from other models.
 - The chain remains a typed relation after `all`, `distinct`, `where`, `joins`,
   `order`, `limit`, and `offset`.
 

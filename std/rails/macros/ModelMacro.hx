@@ -32,6 +32,8 @@ class ModelMacro {
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "last", nullableSelf, pos);
 		addPluckStub(fields, selfType, pos);
+		addFieldProjectionStub(fields, "minimum", selfType, nullableGenericComplexType("TValue"), pos);
+		addFieldProjectionStub(fields, "maximum", selfType, nullableGenericComplexType("TValue"), pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
 		return fields;
 	}
@@ -897,6 +899,14 @@ class ModelMacro {
 		});
 	}
 
+	static function nullableGenericComplexType(name:String):ComplexType {
+		return TPath({
+			pack: [],
+			name: "Null",
+			params: [TPType(TPath({pack: [], name: name}))]
+		});
+	}
+
 	static function isPrimaryKeyField(field:Field):Bool {
 		if (field.meta == null) {
 			return false;
@@ -1028,21 +1038,26 @@ class ModelMacro {
 	}
 
 	static function addPluckStub(fields:Array<Field>, selfType:ComplexType, pos:Position):Void {
-		if (hasFieldNamed(fields, "pluck")) {
+		var valueType:ComplexType = TPath({pack: [], name: "TValue"});
+		addFieldProjectionStub(fields, "pluck", selfType, arrayComplexType(valueType), pos);
+	}
+
+	static function addFieldProjectionStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, name)) {
 			return;
 		}
 		var valueType:ComplexType = TPath({pack: [], name: "TValue"});
 		fields.push({
-			name: "pluck",
+			name: name,
 			access: [APublic, AStatic],
 			kind: FFun({
 				params: [{name: "TValue", constraints: [], params: [], meta: []}],
 				args: [{name: "field", type: typedFieldComplexType(selfType, valueType)}],
-				ret: arrayComplexType(valueType),
+				ret: ret,
 				expr: macro return cast null
 			}),
 			meta: [
-				{name: ":native", params: [macro "pluck"], pos: pos},
+				{name: ":native", params: [macro $v{name}], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos

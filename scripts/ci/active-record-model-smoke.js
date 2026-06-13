@@ -68,6 +68,8 @@ const invalidOffsetSourceDir = join(root, "test", ".generated", "active_record_m
 const invalidOffsetOutputDir = join(root, "test", ".generated", "active_record_model_invalid_offset_out");
 const invalidPluckFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_pluck_field_src");
 const invalidPluckFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_pluck_field_out");
+const invalidAggregateFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_src");
+const invalidAggregateFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -152,6 +154,8 @@ rmSync(invalidOffsetSourceDir, { force: true, recursive: true });
 rmSync(invalidOffsetOutputDir, { force: true, recursive: true });
 rmSync(invalidPluckFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidPluckFieldOutputDir, { force: true, recursive: true });
+rmSync(invalidAggregateFieldSourceDir, { force: true, recursive: true });
+rmSync(invalidAggregateFieldOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile active_record_model through Reflaxe.");
@@ -285,6 +289,10 @@ for (const expected of [
   "Models::Todo.pluck(:title)",
   "assigned__hx",
   ".pluck(:id)",
+  "Models::Todo.minimum(:id)",
+  "Models::Todo.maximum(:title)",
+  "assigned__hx",
+  ".maximum(:id)",
 ]) {
   if (!mainRuby.includes(expected)) {
     console.error(`ActiveRecord call shape missing from main.rb: ${expected}`);
@@ -305,6 +313,7 @@ for (const expected of [
   ".count()",
   ".last()",
   "pluck(Todo.f.title)",
+  "minimum(Todo.f.id)",
   ".offset(",
   ".toArray()",
   "Models::Todo.incomplete().includes(:user).order(title: :asc).offset(20).limit(10).to_a()",
@@ -329,6 +338,7 @@ for (const expected of [
   "Todo.count()",
   "Todo.last()",
   "Todo.pluck(Todo.f.title)",
+  "Todo.minimum(Todo.f.id)",
   "Todo.includes(User.a.todos)",
 ]) {
   if (!exampleReadme.includes(expected)) {
@@ -368,6 +378,7 @@ expectInvalidFindByFieldFailure();
 expectInvalidExistsFieldFailure();
 expectInvalidOffsetValueTypeFailure();
 expectInvalidPluckFieldOwnerFailure();
+expectInvalidAggregateFieldOwnerFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -482,6 +493,28 @@ function expectInvalidPluckFieldOwnerFailure() {
     invalidPluckFieldSourceDir,
     invalidPluckFieldOutputDir,
     "Invalid ActiveRecord pluck field owner compiled successfully.",
+    "Field<models.User"
+  );
+}
+
+function expectInvalidAggregateFieldOwnerFailure() {
+  mkdirSync(invalidAggregateFieldSourceDir, { recursive: true });
+  writeFileSync(join(invalidAggregateFieldSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.maximum(User.f.name);",
+    "\t\tSys.println(bad);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidAggregateFieldSourceDir,
+    invalidAggregateFieldOutputDir,
+    "Invalid ActiveRecord aggregate field owner compiled successfully.",
     "Field<models.User"
   );
 }

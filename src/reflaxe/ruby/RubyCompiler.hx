@@ -1462,6 +1462,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (fieldAccessRawName(access) == "pluck" && params.length == 1):
 				var fieldName = activeRecordFieldName(params[0]);
 				fieldName == null ? null : RubyCall(compileExpr(target), "pluck", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
+			case TField(target, access) if ((fieldAccessRawName(access) == "minimum" || fieldAccessRawName(access) == "maximum") && params.length == 1):
+				var fieldName = activeRecordFieldName(params[0]);
+				fieldName == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
 			case TField(target, access) if ((fieldAccessRawName(access) == "includes" || fieldAccessRawName(access) == "joins") && params.length == 1):
 				var associationArg = activeRecordAssociationArg(params[0]);
 				associationArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(associationArg)]);
