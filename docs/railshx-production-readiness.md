@@ -71,7 +71,7 @@ RailsHx can be called production-ready when all of these are true:
 | `haxe.ruby-bjv.1` | Mandatory Rails runtime CI | `npm run test:rails-runtime` is a required CI gate on supported Ruby/Rails lanes, with clear failure staging. |
 | `haxe.ruby-bjv.2` | Deployable dogfood app | A RailsHx app proves production compile, migrations, Rails tests, `zeitwerk:check`, `assets:precompile`, and release artifact shape. |
 | `haxe.ruby-bjv.3` | Typed API completeness audit | Production Rails API blockers are inventoried in [RailsHx Typed API Production Gap Audit](railshx-typed-api-production-gap-audit.md) and converted into implementation beads. SQL/string-bearing APIs get a typed or explicit escape-hatch policy before implementation. |
-| `haxe.ruby-bjv.4` | Escape-hatch/security audit | Raw Ruby, raw ERB, raw SQL, dynamic boundaries, file-backed macros, and generator inference are fail-closed or explicit opt-ins with tests. |
+| `haxe.ruby-bjv.4` | Escape-hatch/security audit | Raw Ruby, raw ERB, raw SQL, dynamic boundaries, file-backed macros, and generator inference are named in [RailsHx Escape Hatch And Security Audit](railshx-escape-hatch-security-audit.md) and are fail-closed or explicit opt-ins with tests. |
 | `haxe.ruby-bjv.5` | Generator and workflow hardening | Install/scaffold/adopt/route generators, watch loops, client compilation, test flow, and production build flow are Rails-native and documented. |
 | `haxe.ruby-bjv.6` | Gradual adoption hardening | Existing Ruby/ERB/Rails code can consume Haxe output and Haxe can consume existing app code through typed, checked contracts. |
 | `haxe.ruby-bjv.7` | Public readiness checklist | User-facing docs state maturity, commands, versions, support expectations, known blockers, and release criteria. |
@@ -130,3 +130,6 @@ RAILS_ENV=production bundle exec rails assets:precompile
   files/directories are missing.
 - LLM assistance may propose adoption contracts, but generated code must still
   pass validation, Haxe compilation, Ruby syntax checks, and Rails runtime gates.
+- Before adding a new unsafe RailsHx boundary, update
+  [RailsHx Escape Hatch And Security Audit](railshx-escape-hatch-security-audit.md)
+  and file or link the follow-up bead.

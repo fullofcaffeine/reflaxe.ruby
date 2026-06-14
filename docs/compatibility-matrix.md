@@ -39,6 +39,8 @@ for the mandatory runtime, deploy, security, API-completeness, generator, and
 support gates required before declaring production-ready status. The current
 typed API production blockers are inventoried in
 [RailsHx Typed API Production Gap Audit](railshx-typed-api-production-gap-audit.md).
+Unsafe boundary policy is tracked in
+[RailsHx Escape Hatch And Security Audit](railshx-escape-hatch-security-audit.md).
 
 | Feature | Define/tool | Status |
 | --- | --- | --- |
@@ -96,6 +98,10 @@ The rows above describe the current Rails MVP. The deeper typed Rails compiler l
 | `reflaxe_ruby_strict_examples` | Implemented | Rejects raw `__ruby__` injection in examples and tests/snapshots. |
 | `reflaxe_ruby_strict` | Implemented | Rejects raw `__ruby__` injection in project sources. |
 | `@:rubyAllowRaw` | Implemented | Narrow module/type escape hatch for policy-specific tests or framework-owned islands. |
+
+See [RailsHx Escape Hatch And Security Audit](railshx-escape-hatch-security-audit.md)
+for the full raw Ruby, raw ERB, SQL/string, `Dynamic`, file-backed macro, and
+generator-inference policy.
 
 ## Ruby Extension Interop
 

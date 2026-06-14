@@ -2,6 +2,9 @@
 
 RailsHx should use strings only where they are the best Rails/Ruby output representation, and those strings should be compile-time checked whenever practical.
 
+For production escape-hatch policy, see
+[RailsHx Escape Hatch And Security Audit](railshx-escape-hatch-security-audit.md).
+
 ## Todoapp Findings
 
 The todoapp already has strong typed seams:
