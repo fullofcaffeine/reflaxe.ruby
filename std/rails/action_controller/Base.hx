@@ -40,4 +40,8 @@ class Base {
 
 	@:native("head")
 	public function head(status:Status):Void {}
+
+	@:native("respond_to")
+	@:rubyBlockArg
+	public function respondTo(block:Responder->Void):Void {}
 }

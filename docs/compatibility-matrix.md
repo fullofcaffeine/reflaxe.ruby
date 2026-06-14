@@ -64,6 +64,7 @@ Unsafe boundary policy is tracked in
 | Controller filters | `@:beforeAction({only: ["create"]}) function authenticateUser()` | Initial typed method-backed filter slice |
 | Controller stores | `flash().set("notice", "...")`, `session().get("key")`, `cookies().delete("key")` | Initial typed flash/session/cookies store slice |
 | Controller response statuses | `head(Status.noContent)`, `render({json: data, status: Status.created})` | Initial typed status-token slice lowering to Rails symbols |
+| Controller respond_to | `respondTo(function(format) { format.html(...); format.json(...); })` | Initial typed format collector slice |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |
 | RailsHx-owned template refs | `Template.of(ViewClass) : Template<TLocals>`, `Template.layout(LayoutViewClass)` | Initial checked-template slice |
 | External Rails template locals | `Template.existing("path") : Template<TLocals>`; `Template.external("path")` as lower-level escape | Initial interop slice |

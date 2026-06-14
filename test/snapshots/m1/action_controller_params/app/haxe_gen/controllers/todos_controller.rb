@@ -19,6 +19,7 @@ module Controllers
       path__hx0 = self.request().path()
     end
     def create()
+      gthis__hx0 = self
       attrs__hx0 = self.params().require("todo").permit([:title, :is_completed, {metadata: [:source, :priority]}, {tags: []}])
       request_method__hx0 = self.request().request_method()
       request_path__hx0 = self.request().path()
@@ -28,8 +29,10 @@ module Controllers
       remembered__hx0 = self.session()[:last_todo_title]
       self.cookies()[:todo_filter] = "open"
       self.cookies().delete(:stale_filter)
-      self.render(json: attrs__hx0, status: :created)
-      self.redirect_to(action: "index")
+      self.respond_to() do |format__hx0|
+        format__hx0.html() { gthis__hx0.redirect_to(action: "index") }
+        format__hx0.json() { gthis__hx0.render(json: attrs__hx0, status: :created) }
+      end
       self.head(:no_content)
     end
   end

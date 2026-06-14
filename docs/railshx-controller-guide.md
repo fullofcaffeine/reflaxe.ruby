@@ -228,6 +228,32 @@ Use `redirectTo("/path")` for location redirects and
 option-hash redirects. Raw string status values are rejected; use `Status.*` or
 `Status.named("custom_status")` at the typed boundary.
 
+Rails `respond_to` blocks use the typed responder collector:
+
+```haxe
+respondTo(function(format) {
+	format.html(function() {
+		redirectToOptions({action: "index"});
+	});
+	format.json(function() {
+		render({json: attrs, status: Status.created});
+	});
+});
+```
+
+Generated Ruby remains ordinary Rails:
+
+```ruby
+self.respond_to() do |format|
+  format.html() { self.redirect_to(action: "index") }
+  format.json() { self.render(json: attrs, status: :created) }
+end
+```
+
+The responder methods require blocks, so accidental calls such as
+`format.json("bad")` fail during Haxe compilation instead of becoming a broken
+Rails response branch.
+
 ## Rendering Typed Templates
 
 Controllers render RailsHx-owned templates through `Template<TLocals>`:

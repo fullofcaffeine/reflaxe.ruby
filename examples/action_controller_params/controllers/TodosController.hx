@@ -14,16 +14,18 @@ import rails.macros.ParamsMacro;
 // specs use Rails-shaped Haxe object literals, e.g. `{metadata: ["source"]}`.
 // `flash`, `session`, and `cookies` expose typed store helpers instead of raw
 // Dynamic bracket access. `request()` and `response()` expose typed facades
-// over the Rails runtime objects without wrapping them. `@:beforeAction`,
+// over the Rails runtime objects without wrapping them. `respondTo(...)` exposes
+// Rails' `respond_to do |format|` collector as typed format methods. `@:beforeAction`,
 // `@:afterAction`, and `@:railsFilter(...)` annotate real Haxe methods, so the
 // callback method exists at compile time and Rails receives normal symbols.
-// IntelliSense: editors should complete `params`, `render`, `redirectTo`, and
-// the `ParamsMacro` entrypoint, plus store methods `get`, `set`, and `delete`
-// and request/response helpers such as `requestMethod`, `path`, and `status`.
+// IntelliSense: editors should complete `params`, `render`, `redirectTo`,
+// `respondTo`, and the `ParamsMacro` entrypoint, plus store methods `get`,
+// `set`, and `delete` and request/response helpers such as `requestMethod`,
+// `path`, and `status`.
 // Ruby output: an `ActionController::Base` subclass with normal Rails
 // `params.require(...).permit(...)`, `flash[:key]`, `session[:key]`,
 // `cookies[:key]`, `render(..., status: :status)`, `redirect_to`,
-// `head(:status)`, and Rails filter declarations.
+// `head(:status)`, `respond_to do |format|`, and Rails filter declarations.
 @:railsController
 class TodosController extends rails.action_controller.Base {
 	@:beforeAction({only: ["create"]})
@@ -51,8 +53,14 @@ class TodosController extends rails.action_controller.Base {
 		var remembered = session().get("lastTodoTitle");
 		cookies().set("todoFilter", "open");
 		cookies().delete("staleFilter");
-		render({json: attrs, status: Status.created});
-		redirectToOptions({action: "index"});
+		respondTo(function(format) {
+			format.html(function() {
+				redirectToOptions({action: "index"});
+			});
+			format.json(function() {
+				render({json: attrs, status: Status.created});
+			});
+		});
 		head(Status.noContent);
 	}
 }

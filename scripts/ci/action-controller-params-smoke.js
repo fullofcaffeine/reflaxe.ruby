@@ -71,8 +71,9 @@ for (const expected of [
   /remembered__hx\d+ = self\.session\(\)\[:last_todo_title\]/,
   /self\.cookies\(\)\[:todo_filter\] = "open"/,
   /self\.cookies\(\)\.delete\(:stale_filter\)/,
-  /self\.render\(json: attrs__hx\d+, status: :created\)/,
-  /self\.redirect_to\(action: "index"\)/,
+  /self\.respond_to\(\) do \|format__hx\d+\|/,
+  /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(action: "index"\) \}/,
+  /format__hx\d+\.json\(\) \{ gthis__hx\d+\.render\(json: attrs__hx\d+, status: :created\) \}/,
   /self\.head\(:no_content\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
@@ -113,6 +114,23 @@ if (!/Status|RedirectOptions|Cannot unify|String should be rails\.action_control
   process.stdout.write(invalidRedirect.stdout);
   process.stderr.write(invalidRedirect.stderr);
   console.error("Invalid ActionController redirect options failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidResponder = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidResponderMain",
+  allowFailure: true,
+});
+if (invalidResponder == null || invalidResponder.status === 0) {
+  console.error("Expected invalid ActionController responder block compile to fail.");
+  process.exit(1);
+}
+if (!/Void -> Void|Responder|String should be/.test(invalidResponder.stderr + invalidResponder.stdout)) {
+  process.stdout.write(invalidResponder.stdout);
+  process.stderr.write(invalidResponder.stderr);
+  console.error("Invalid ActionController responder block failed for an unexpected reason.");
   process.exit(1);
 }
 
@@ -168,6 +186,17 @@ function writeInvalidFixtures() {
     "\tstatic function main():Void {",
     "\t\tvar controller = new controllers.TodosController();",
     "\t\tcontroller.redirectToOptions({action: \"index\", status: \"see_other\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidResponderMain.hx"), [
+    "class InvalidResponderMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tcontroller.respondTo(function(format) {",
+    "\t\t\tformat.json(\"bad\");",
+    "\t\t});",
     "\t}",
     "}",
     "",
