@@ -1678,7 +1678,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					switch (fieldAccessRawName(access)) {
 						case "attached":
 							RubyCall(receiver, "attached?", []);
-						case "attach" if (params.length == 2):
+						case "attach" | "attachUnchecked" if (params.length == 2):
 							RubyCall(receiver, "attach", [compileExpr(params[1])]);
 						case "purge":
 							RubyCall(receiver, "purge", []);
@@ -1703,7 +1703,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (info.name) {
 			case "attached":
 				RubyCall(receiver, "attached?", []);
-			case "attach" if (params.length == 3):
+			case "attach" | "attachUnchecked" if (params.length == 3):
 				RubyCall(receiver, "attach", [compileExpr(params[2])]);
 			case "purge":
 				RubyCall(receiver, "purge", []);

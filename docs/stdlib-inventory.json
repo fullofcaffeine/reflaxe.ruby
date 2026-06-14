@@ -492,7 +492,7 @@
       "status": "implemented",
       "path": "std/rails/active_storage/One.hx",
       "surface": "rails.active_storage.One",
-      "reason": "Typed single ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls."
+      "reason": "Typed single ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls, plus explicit attachUnchecked for raw Rails attachable shapes not modeled yet."
     },
     {
       "id": "std.rails.active_storage_many",
@@ -500,7 +500,7 @@
       "status": "implemented",
       "path": "std/rails/active_storage/Many.hx",
       "surface": "rails.active_storage.Many",
-      "reason": "Typed many ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls."
+      "reason": "Typed many ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls, plus explicit attachUnchecked for raw Rails attachable shapes not modeled yet."
     },
     {
       "id": "std.rails.action_view_template",

@@ -59,6 +59,27 @@ profile.avatar.purge
 Unknown refs such as `Profile.attachments.missing` fail in Haxe before Rails
 runs.
 
+The default `attach(...)` path is intentionally typed: single attachments accept
+a `String`, and many attachments accept `Array<String>`. This keeps common
+signed-id/path-like attachables easy while preventing accidental object-shaped
+`Dynamic` values from flowing into Rails.
+
+For Rails attachable shapes RailsHx has not modeled yet, use the explicit escape
+hatch:
+
+```haxe
+Profile.attachments.avatar.attachUnchecked(profile, {io: "raw", filename: "avatar.png"});
+```
+
+That still lowers to normal Rails:
+
+```ruby
+profile.avatar.attach({"io" => "raw", "filename" => "avatar.png"})
+```
+
+Use `attachUnchecked(...)` only at reviewed interop boundaries. Future typed
+attachable builders should replace common unchecked hash shapes.
+
 ## Runtime Strategy
 
 `npm run test:active-storage` is the fast compiler/static lane. It checks:
@@ -68,6 +89,8 @@ runs.
 - single vs many metadata type validation.
 - helper lowering for `attached`, `attach`, and `purge`.
 - unknown attachment refs failing during Haxe compilation.
+- object-shaped values failing on typed `attach(...)`, with
+  `attachUnchecked(...)` reserved as the explicit raw Rails attachable escape.
 
 Rails runtime execution should use the Rails test storage service in the
 generated app lane. When Rails gems are installed,

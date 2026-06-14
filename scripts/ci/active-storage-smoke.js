@@ -10,6 +10,8 @@ const invalidUnknownSourceDir = join(root, "test", ".generated", "active_storage
 const invalidUnknownOutputDir = join(root, "test", ".generated", "active_storage_invalid_unknown_out");
 const invalidKindSourceDir = join(root, "test", ".generated", "active_storage_invalid_kind_src");
 const invalidKindOutputDir = join(root, "test", ".generated", "active_storage_invalid_kind_out");
+const invalidAttachSourceDir = join(root, "test", ".generated", "active_storage_invalid_attach_src");
+const invalidAttachOutputDir = join(root, "test", ".generated", "active_storage_invalid_attach_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -31,7 +33,7 @@ function run(command, args, options = {}) {
   return result;
 }
 
-for (const dir of [outputDir, invalidUnknownSourceDir, invalidUnknownOutputDir, invalidKindSourceDir, invalidKindOutputDir]) {
+for (const dir of [outputDir, invalidUnknownSourceDir, invalidUnknownOutputDir, invalidKindSourceDir, invalidKindOutputDir, invalidAttachSourceDir, invalidAttachOutputDir]) {
   rmSync(dir, { force: true, recursive: true });
 }
 
@@ -77,6 +79,7 @@ const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "ut
 for (const expected of [
   /has_avatar__hx\d+ = profile__hx\d+\.avatar\(\)\.attached\?\(\)/,
   /profile__hx\d+\.avatar\(\)\.attach\("avatar.png"\)/,
+  /profile__hx\d+\.avatar\(\)\.attach\(\{"io" => "raw", "filename" => "avatar.png"\}\)/,
   /profile__hx\d+\.avatar\(\)\.purge\(\)/,
   /has_gallery__hx\d+ = profile__hx\d+\.gallery\(\)\.attached\?\(\)/,
   /profile__hx\d+\.gallery\(\)\.attach\(\["one.png", "two.png"\]\)/,
@@ -128,6 +131,23 @@ if (!/must be typed as rails\.ActiveStorage\.One/.test(invalidKind.stderr + inva
   process.stdout.write(invalidKind.stdout);
   process.stderr.write(invalidKind.stderr);
   console.error("Mismatched ActiveStorage attachment kind failed for an unexpected reason.");
+  process.exit(1);
+}
+
+writeInvalidAttachFixture();
+const invalidAttach = compileActiveStorage(invalidAttachOutputDir, {
+  classPath: invalidAttachSourceDir,
+  main: "InvalidAttachMain",
+  allowFailure: true,
+});
+if (invalidAttach.status === 0) {
+  console.error("Expected invalid ActiveStorage attachable compile to fail.");
+  process.exit(1);
+}
+if (!/String|Array<String>|Cannot unify/.test(invalidAttach.stderr + invalidAttach.stdout)) {
+  process.stdout.write(invalidAttach.stdout);
+  process.stderr.write(invalidAttach.stderr);
+  console.error("Invalid ActiveStorage attachable failed for an unexpected reason.");
   process.exit(1);
 }
 
@@ -200,6 +220,24 @@ function writeInvalidKindFixture() {
       "class BadProfile extends rails.active_record.Base<BadProfile> {",
       "\t@:railsColumn({primaryKey: true, dbType: \"bigint\"}) public var id:Int;",
       "\t@:hasOneAttached public var avatar:rails.ActiveStorage.Many<BadProfile>;",
+      "}",
+      "",
+    ].join("\n"),
+  );
+}
+
+function writeInvalidAttachFixture() {
+  mkdirSync(invalidAttachSourceDir, { recursive: true });
+  writeFileSync(
+    join(invalidAttachSourceDir, "InvalidAttachMain.hx"),
+    [
+      "import models.Profile;",
+      "",
+      "class InvalidAttachMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar profile = new Profile();",
+      "\t\tProfile.attachments.avatar.attach(profile, {io: \"raw\", filename: \"avatar.png\"});",
+      "\t}",
       "}",
       "",
     ].join("\n"),

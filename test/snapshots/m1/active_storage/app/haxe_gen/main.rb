@@ -8,6 +8,7 @@ class Main
     profile__hx0 = Models::Profile.new()
     has_avatar__hx0 = profile__hx0.avatar().attached?()
     profile__hx0.avatar().attach("avatar.png")
+    profile__hx0.avatar().attach({"io" => "raw", "filename" => "avatar.png"})
     profile__hx0.avatar().purge()
     has_gallery__hx0 = profile__hx0.gallery().attached?()
     profile__hx0.gallery().attach(["one.png", "two.png"])

@@ -19,7 +19,9 @@ abstract Many<TModel>(String) from String to String {
 		return cast false;
 	}
 
-	public function attach(model:TModel, attachables:Dynamic):Void {}
+	public function attach(model:TModel, attachables:Array<String>):Void {}
+
+	public function attachUnchecked(model:TModel, attachables:Dynamic):Void {}
 
 	public function purge(model:TModel):Void {}
 }
