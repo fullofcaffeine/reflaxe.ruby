@@ -67,6 +67,13 @@ var assignedNotArchived = Todo
 
 var notArchivedCount = Todo.whereNotIn(Todo.f.status, ["archived"]).count();
 
+var firstTen = Todo.whereBetween(Todo.f.id, 1, 10).order(Todo.f.id.asc());
+var outsideFirstTen = Todo.whereNotBetween(Todo.f.id, 1, 10).limit(3);
+var assignedOutsideFirstTen = Todo
+	.where({title: "assigned"})
+	.whereNotBetween(Todo.f.id, 1, 10)
+	.limit(2);
+
 var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
 var anyWithNotes = Todo.whereNotNull(Todo.f.notes).limit(3);
 var assignedWithNotes = Todo
@@ -207,6 +214,9 @@ Type-safety features used here:
 - `whereIn(Todo.f.status, ["open", "done"])` and `whereNotIn(...)` use typed
   field refs and `Array<TValue>` values while lowering to Rails array-valued
   hash criteria, avoiding raw `IN (...)` SQL fragments.
+- `whereBetween(Todo.f.id, 1, 10)` and `whereNotBetween(...)` use typed field
+  refs plus same-typed range endpoints while lowering to Rails hash range
+  criteria such as `where(id: 1..10)`.
 - `whereNull(Todo.f.notes)` and `whereNotNull(Todo.f.notes)` require nullable
   typed field refs and lower to Rails `nil` hash criteria, avoiding ad-hoc
   `IS NULL` / `IS NOT NULL` strings.

@@ -121,6 +121,14 @@ var assignedNotArchived = Todo
 	.whereNotIn(Todo.f.status, ["archived"])
 	.limit(2);
 
+var firstTen = Todo.whereBetween(Todo.f.id, 1, 10)
+	.order(Todo.f.id.asc());
+
+var assignedOutsideFirstTen = Todo
+	.where({title: "assigned"})
+	.whereNotBetween(Todo.f.id, 1, 10)
+	.limit(2);
+
 var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
 var assignedWithNotes = Todo
 	.where({title: "assigned"})
@@ -256,6 +264,22 @@ type are checked by Haxe:
 ```haxe
 Todo.whereIn(Todo.f.status, ["open", "done"]);
 Todo.whereNotIn(Todo.f.status, ["archived"]);
+```
+
+`whereBetween(field, min, max)` and `whereNotBetween(field, min, max)` cover
+Rails range predicates without raw SQL strings. The field owner and endpoint
+types are checked by Haxe:
+
+```haxe
+Todo.whereBetween(Todo.f.id, 1, 10);
+Todo.whereNotBetween(Todo.f.id, 1, 10);
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(id: 1..10)
+Models::Todo.where.not(id: 1..10)
 ```
 
 `whereNull(field)` and `whereNotNull(field)` cover Rails `nil` predicates

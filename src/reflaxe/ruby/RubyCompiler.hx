@@ -1533,6 +1533,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (fieldAccessRawName(access) == "whereNotIn" && params.length == 2):
 				var criteria = activeRecordFieldCriteriaArg(params[0], params[1]);
 				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
+			case TField(target, access) if (fieldAccessRawName(access) == "whereBetween" && params.length == 3):
+				var criteria = activeRecordFieldRangeCriteriaArg(params[0], params[1], params[2]);
+				criteria == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(criteria)]);
+			case TField(target, access) if (fieldAccessRawName(access) == "whereNotBetween" && params.length == 3):
+				var criteria = activeRecordFieldRangeCriteriaArg(params[0], params[1], params[2]);
+				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
 			case TField(target, access) if (fieldAccessRawName(access) == "whereNull" && params.length == 1):
 				var criteria = activeRecordFieldNilCriteriaArg(params[0]);
 				criteria == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(criteria)]);
@@ -1931,6 +1937,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function activeRecordFieldCriteriaArg(fieldExpr:TypedExpr, valueExpr:TypedExpr):Null<String> {
 		var fieldName = activeRecordFieldName(fieldExpr);
 		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": " + printInlineExpr(valueExpr);
+	}
+
+	static function activeRecordFieldRangeCriteriaArg(fieldExpr:TypedExpr, minExpr:TypedExpr, maxExpr:TypedExpr):Null<String> {
+		var fieldName = activeRecordFieldName(fieldExpr);
+		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": " + printInlineExpr(minExpr) + ".." + printInlineExpr(maxExpr);
 	}
 
 	static function activeRecordFieldNilCriteriaArg(fieldExpr:TypedExpr):Null<String> {

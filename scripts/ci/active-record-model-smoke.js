@@ -20,6 +20,14 @@ const invalidWhereInOwnerSourceDir = join(root, "test", ".generated", "active_re
 const invalidWhereInOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_in_owner_out");
 const invalidWhereInTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_in_type_src");
 const invalidWhereInTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_in_type_out");
+const invalidWhereInStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_in_string_src");
+const invalidWhereInStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_in_string_out");
+const invalidWhereBetweenOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_owner_src");
+const invalidWhereBetweenOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_owner_out");
+const invalidWhereBetweenTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_type_src");
+const invalidWhereBetweenTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_type_out");
+const invalidWhereBetweenStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_string_src");
+const invalidWhereBetweenStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_string_out");
 const invalidWhereNullOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_src");
 const invalidWhereNullOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_out");
 const invalidWhereNotNullTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_not_null_type_src");
@@ -148,6 +156,14 @@ rmSync(invalidWhereInOwnerSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereInOwnerOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereInTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereInTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereInStringSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereInStringOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereBetweenOwnerSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereBetweenOwnerOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereBetweenTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereBetweenTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereBetweenStringSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereBetweenStringOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereNullOwnerSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereNullOwnerOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereNotNullTypeSourceDir, { force: true, recursive: true });
@@ -373,6 +389,8 @@ for (const expected of [
   '.where.not(status: "done").limit(2)',
   'Models::Todo.where(status: ["open", "done"]).order(title: :asc).limit(9)',
   '.where.not(status: ["archived"]).limit(2)',
+  "Models::Todo.where(id: 1..10).order(id: :asc)",
+  ".where.not(id: 1..10).limit(2)",
   "Models::Todo.where(notes: nil).limit(3)",
   ".where.not(notes: nil).limit(2)",
   '.distinct().limit(2)',
@@ -452,6 +470,8 @@ for (const expected of [
   "whereNot({status",
   "whereIn(Todo.f.status",
   "whereNotIn(Todo.f.status",
+  "whereBetween(Todo.f.id",
+  "whereNotBetween(Todo.f.id",
   "whereNull(Todo.f.notes",
   "whereNotNull(Todo.f.notes",
   "rewhere({status",
@@ -463,6 +483,7 @@ for (const expected of [
   "where({user:",
   "Models::Todo.where.not(status:",
   "Models::Todo.where(status: [",
+  "Models::Todo.where(id: 1..10)",
   "Models::Todo.where(notes: nil)",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
@@ -508,6 +529,8 @@ for (const expected of [
   "Todo.whereNot({status",
   "Todo.whereIn(Todo.f.status",
   "Todo.whereNotIn(Todo.f.status",
+  "Todo.whereBetween(Todo.f.id",
+  "Todo.whereNotBetween(Todo.f.id",
   "Todo.whereNull(Todo.f.notes",
   "Todo.whereNotNull(Todo.f.notes",
   "Todo.rewhere({completed: true})",
@@ -556,6 +579,10 @@ expectInvalidWhereNotFieldFailure();
 expectInvalidWhereNotValueTypeFailure();
 expectInvalidWhereInOwnerFailure();
 expectInvalidWhereInValueTypeFailure();
+expectInvalidWhereInStringFieldFailure();
+expectInvalidWhereBetweenOwnerFailure();
+expectInvalidWhereBetweenValueTypeFailure();
+expectInvalidWhereBetweenStringFieldFailure();
 expectInvalidWhereNullOwnerFailure();
 expectInvalidWhereNotNullValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
@@ -1045,6 +1072,91 @@ function expectInvalidWhereInValueTypeFailure() {
     invalidWhereInTypeOutputDir,
     "Invalid ActiveRecord whereIn value type compiled successfully.",
     "String should be Int"
+  );
+}
+
+function expectInvalidWhereInStringFieldFailure() {
+  mkdirSync(invalidWhereInStringSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereInStringSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereIn(\"status\", [\"open\"]);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereInStringSourceDir,
+    invalidWhereInStringOutputDir,
+    "Invalid ActiveRecord whereIn string field compiled successfully.",
+    "String should be rails.active_record.Field<models.Todo"
+  );
+}
+
+function expectInvalidWhereBetweenOwnerFailure() {
+  mkdirSync(invalidWhereBetweenOwnerSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereBetweenOwnerSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereBetween(User.f.id, 1, 10);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereBetweenOwnerSourceDir,
+    invalidWhereBetweenOwnerOutputDir,
+    "Invalid ActiveRecord whereBetween field owner compiled successfully.",
+    "models.User should be models.Todo"
+  );
+}
+
+function expectInvalidWhereBetweenValueTypeFailure() {
+  mkdirSync(invalidWhereBetweenTypeSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereBetweenTypeSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereBetween(Todo.f.id, \"low\", \"high\");",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereBetweenTypeSourceDir,
+    invalidWhereBetweenTypeOutputDir,
+    "Invalid ActiveRecord whereBetween value type compiled successfully.",
+    "String should be Int"
+  );
+}
+
+function expectInvalidWhereBetweenStringFieldFailure() {
+  mkdirSync(invalidWhereBetweenStringSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereBetweenStringSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereBetween(\"id\", 1, 10);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereBetweenStringSourceDir,
+    invalidWhereBetweenStringOutputDir,
+    "Invalid ActiveRecord whereBetween string field compiled successfully.",
+    "String should be rails.active_record.Field<models.Todo"
   );
 }
 
