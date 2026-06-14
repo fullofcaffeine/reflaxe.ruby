@@ -56,7 +56,8 @@ RailsHx can be called production-ready when all of these are true:
   ActionCable, instrumentation, and gradual adoption.
 - Unsafe boundaries are explicit: raw Ruby, raw ERB, raw SQL/string clauses,
   unchecked file paths, `Dynamic`, and generated adoption contracts are either
-  typed, fail-closed, or clearly opt-in with tests.
+  typed, fail-closed, or clearly opt-in with tests. SQL/string-bearing APIs
+  follow [RailsHx SQL And String-Bearing API Policy](railshx-sql-string-policy.md).
 - Rails-facing generators and dev/prod workflows feel Rails-native and better
   than hand-written boilerplate, with actionable diagnostics.
 - Existing Ruby/ERB/Rails apps can adopt RailsHx incrementally without losing
@@ -87,6 +88,7 @@ npm run test:todoapp-playwright
 npm run test:todoapp-production
 npm run test:snapshots
 npm run test:strict-boundaries
+npm run test:sql-string-policy
 npm run test:haxelib-package
 npm run test:gem-package
 npm run ci:release-contracts

@@ -18,7 +18,8 @@ Tracking gate: `haxe.ruby-bjv.3`.
   are checked at compile/generator time, or when they are an explicit named
   escape hatch.
 - SQL-bearing APIs must not be added as casual strings. Each API needs a typed
-  builder/default, checked literal subset, or explicit audited escape hatch.
+  builder/default, checked literal subset, or explicit audited escape hatch as
+  defined in [RailsHx SQL And String-Bearing API Policy](railshx-sql-string-policy.md).
 - Missing filesystem-backed inputs must fail closed: templates, RBS files,
   Ruby source files, route dumps, and generator-discovered contracts.
 - Runtime confidence matters: production surfaces need static compiler tests
@@ -60,17 +61,13 @@ Tracking gate: `haxe.ruby-bjv.3`.
 
 ## SQL And String-Bearing Policy
 
-Until `haxe.ruby-bjv.3.7` lands, new API work must classify string-bearing
-surfaces before implementation:
+The detailed policy lives in
+[RailsHx SQL And String-Bearing API Policy](railshx-sql-string-policy.md).
+Every new string/SQL-bearing RailsHx API must classify itself as a typed
+default, checked literal, or explicit escape hatch before implementation.
 
-| Class | Meaning | Examples |
-| --- | --- | --- |
-| Typed default | Normal RailsHx app code should use generated refs/builders/macros. | `Todo.f.title`, `Todo.a.user`, `Template.of(TodoView)`, `Todo.railsParamKey`, `StreamTarget.of(...)`. |
-| Checked literal | Literal strings are accepted because Rails owns the value, but macros/generators validate path/shape/existence where possible. | `Template.existing("legacy/badge")`, route dump paths, RBS/source files, explicit external tables. |
-| Explicit escape hatch | Unsafe or intentionally dynamic strings are allowed only through named APIs/metadata that are searchable and testable. | Raw ERB via `@:railsAllowRawErb`, future raw SQL fragments, external Rails-owned paths that cannot be verified. |
-
-Any P1 implementation bead that adds string/SQL-bearing APIs must mention which
-class it uses and include negative tests for accidental drift.
+`npm run test:sql-string-policy` guards canonical RailsHx examples against
+casual raw query strings such as `.where("...")` or `.order("...")`.
 
 ## Current Readiness Summary
 
