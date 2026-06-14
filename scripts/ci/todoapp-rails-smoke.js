@@ -25,6 +25,8 @@ const templateRefInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const templateRefInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_ref_invalid_out");
 const templatePathInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_src");
 const templatePathInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_out");
+const rawLayoutInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_raw_layout_invalid_src");
+const rawLayoutInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_raw_layout_invalid_out");
 const typedFieldInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_field_invalid_src");
 const typedFieldInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_field_invalid_out");
 const typedParamsInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_params_invalid_src");
@@ -97,6 +99,8 @@ rmSync(templateRefInvalidSourceDir, { force: true, recursive: true });
 rmSync(templateRefInvalidOutputDir, { force: true, recursive: true });
 rmSync(templatePathInvalidSourceDir, { force: true, recursive: true });
 rmSync(templatePathInvalidOutputDir, { force: true, recursive: true });
+rmSync(rawLayoutInvalidSourceDir, { force: true, recursive: true });
+rmSync(rawLayoutInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedFieldInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedFieldInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedParamsInvalidSourceDir, { force: true, recursive: true });
@@ -577,6 +581,7 @@ expectTypedFormFieldRequiresFormFailure();
 expectTypedSlotContentRequiresComponentFailure();
 expectTemplateOfRequiresRailsTemplateFailure();
 expectUnsafeRailsTemplatePathFailure();
+expectRawLayoutStringFailure();
 expectUnknownTypedFormFieldFailure();
 expectUnknownStrongParamsFieldFailure();
 expectMixedModelStrongParamsFailure();
@@ -2021,6 +2026,91 @@ function expectUnsafeRailsTemplatePathFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid @:railsTemplate path check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectRawLayoutStringFailure() {
+  mkdirSync(join(rawLayoutInvalidSourceDir, "controllers"), { recursive: true });
+  writeFileSync(join(rawLayoutInvalidSourceDir, "RawLayoutMain.hx"), [
+    "import controllers.RawLayoutController;",
+    "",
+    "class RawLayoutMain {",
+    "\tstatic function main() {",
+    "\t\tvar controller:RawLayoutController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(rawLayoutInvalidSourceDir, "controllers", "RawLayoutController.hx"), [
+    "package controllers;",
+    "",
+    "import models.Todo;",
+    "import rails.action_view.Template;",
+    "import rails.macros.ViewMacro;",
+    "import views.TodoIndexView;",
+    "import views.TodoIndexView.TodoIndexLocals;",
+    "",
+    "@:railsController",
+    "class RawLayoutController extends rails.action_controller.Base {",
+    "\tpublic function index() {",
+    "\t\tvar todos = Todo.incomplete();",
+    "\t\tViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {",
+    "\t\t\ttodos: todos,",
+    "\t\t\ttodoCount: todos.length,",
+    "\t\t\ttypedColumnCount: Todo.typedColumnCount(),",
+    "\t\t\tsampleUser: models.User.first()",
+    "\t\t}, \"application\");",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${rawLayoutInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      rawLayoutInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "RawLayoutMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Raw string layout compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("String should be rails.action_view.Layout")
+      && !output.includes("ViewMacro.renderTemplateWithLayout layout expects Template.layout")) {
+      console.error("Raw string layout failed, but not with the expected typed layout diagnostic.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run raw layout string check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

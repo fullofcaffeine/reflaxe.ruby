@@ -98,6 +98,7 @@ for (const required of [
   "std/rails/action_view/Component.hx",
   "std/rails/action_view/HtmlAttr.hx",
   "std/rails/action_view/HtmlNode.hx",
+  "std/rails/action_view/Layout.hx",
   "std/rails/action_view/Slot.hx",
   "std/rails/action_view/Template.hx",
   "std/rails/migration/Migration.hx",

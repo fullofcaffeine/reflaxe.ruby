@@ -43,10 +43,10 @@ class Template<TLocals> {
 	/**
 		Build a Rails layout name from a RailsHx-owned layout view class.
 	**/
-	public static macro function layout(view:Expr):ExprOf<String> {
+	public static macro function layout(view:Expr):ExprOf<Layout> {
 		#if macro
 		var path = ownedTemplatePath(view, true);
-		return macro $v{path};
+		return macro rails.action_view.Layout.named($v{path});
 		#else
 		return macro null;
 		#end

@@ -511,6 +511,14 @@
       "reason": "Typed ActionView template marker used to bind Rails template paths to Haxe locals types, including class-backed RailsHx-owned refs and checked external ERB refs."
     },
     {
+      "id": "std.rails.action_view_layout",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_view/Layout.hx",
+      "surface": "rails.action_view.Layout",
+      "reason": "Typed Rails layout token used by ViewMacro.renderTemplateWithLayout so layouts use Template.layout(ViewClass) or explicit checked Layout.named(...) instead of raw strings."
+    },
+    {
       "id": "std.rails.action_view_component",
       "owner": "std",
       "status": "implemented",

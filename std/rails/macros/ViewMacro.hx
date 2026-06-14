@@ -24,7 +24,7 @@ class ViewMacro {
 	}
 
 	public static macro function renderTemplateWithLayout<TLocals>(controller:Expr, template:ExprOf<rails.action_view.Template<TLocals>>, locals:ExprOf<TLocals>,
-			layout:ExprOf<String>):Expr {
+			layout:ExprOf<rails.action_view.Layout>):Expr {
 		#if macro
 		var templatePath = extractTemplatePath(template);
 		var layoutPath = extractLayoutPath(layout);
@@ -66,10 +66,12 @@ class ViewMacro {
 		return switch (unwrapTypedMarker(layout).expr) {
 			case ECall(callee, [view]) if (templateCalleeName(callee) == "layout"):
 				ownedTemplatePath(view, true);
+			case ECall(callee, [path]) if (templateCalleeName(callee) == "named" && layoutCalleeOwnerName(callee) == "Layout"):
+				var value = extractString(path, "Layout.named expects a string literal path.");
+				validateTemplatePath(value, path.pos, "Layout.named");
+				normalizeLayoutPath(value);
 			case _:
-				var value = extractString(layout, "ViewMacro.renderTemplateWithLayout layout expects a string literal path or Template.layout(ViewClass).");
-				validateTemplatePath(value, layout.pos, "ViewMacro.renderTemplateWithLayout layout");
-				value;
+				throw "ViewMacro.renderTemplateWithLayout layout expects Template.layout(ViewClass) or Layout.named(\"path\").";
 		}
 	}
 
@@ -84,6 +86,18 @@ class ViewMacro {
 	static function templateCalleeName(callee:Expr):Null<String> {
 		return switch (callee.expr) {
 			case EField(_, name): name;
+			case _: null;
+		}
+	}
+
+	static function layoutCalleeOwnerName(callee:Expr):Null<String> {
+		return switch (callee.expr) {
+			case EField(owner, _):
+				switch (owner.expr) {
+					case EConst(CIdent(name)): name;
+					case EField(_, name): name;
+					case _: null;
+				}
 			case _: null;
 		}
 	}
