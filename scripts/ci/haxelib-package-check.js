@@ -74,6 +74,7 @@ for (const required of [
   "std/rails/ActionCable.hx",
   "std/rails/ActiveStorage.hx",
   "std/rails/active_job/Base.hx",
+  "std/rails/action_cable/Action.hx",
   "std/rails/action_cable/Channel.hx",
   "std/rails/action_cable/Consumer.hx",
   "std/rails/action_cable/Stream.hx",

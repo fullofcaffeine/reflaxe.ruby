@@ -13,6 +13,8 @@ const invalidRawStringSourceDir = join(root, "test", ".generated", "action_cable
 const invalidRawStringOutputDir = join(root, "test", ".generated", "action_cable_invalid_raw_string_out");
 const invalidConsumerSourceDir = join(root, "test", ".generated", "action_cable_invalid_consumer_src");
 const invalidConsumerOutputDir = join(root, "test", ".generated", "action_cable_invalid_consumer_out");
+const invalidPerformSourceDir = join(root, "test", ".generated", "action_cable_invalid_perform_src");
+const invalidPerformOutputDir = join(root, "test", ".generated", "action_cable_invalid_perform_out");
 const jsWorkDir = mkdtempSync(join(tmpdir(), "railshx-action-cable."));
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
@@ -27,6 +29,8 @@ rmSync(invalidRawStringSourceDir, { force: true, recursive: true });
 rmSync(invalidRawStringOutputDir, { force: true, recursive: true });
 rmSync(invalidConsumerSourceDir, { force: true, recursive: true });
 rmSync(invalidConsumerOutputDir, { force: true, recursive: true });
+rmSync(invalidPerformSourceDir, { force: true, recursive: true });
+rmSync(invalidPerformOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -86,6 +90,7 @@ compileClient();
 writeInvalidFixtures();
 writeInvalidRawStringFixtures();
 writeInvalidConsumerFixtures();
+writeInvalidPerformFixtures();
 
 const invalidPayload = compileActionCable(invalidOutputDir, {
   classPath: invalidSourceDir,
@@ -171,6 +176,34 @@ if (!/rails\.action_cable\.Consumer|Consumer|Cannot unify/.test(invalidConsumer.
   fail("Raw object ActionCable consumer failed for an unexpected reason.");
 }
 
+const invalidRawPerform = compileClient({
+  classPath: invalidPerformSourceDir,
+  main: "InvalidRawPerformMain",
+  allowFailure: true,
+});
+if (invalidRawPerform.status === 0) {
+  fail("Expected raw string ActionCable perform action compile to fail.");
+}
+if (!/rails\.action_cable\.Action|Action|Cannot unify/.test(invalidRawPerform.stderr + invalidRawPerform.stdout)) {
+  process.stdout.write(invalidRawPerform.stdout);
+  process.stderr.write(invalidRawPerform.stderr);
+  fail("Raw string ActionCable perform action failed for an unexpected reason.");
+}
+
+const invalidPerformPayload = compileClient({
+  classPath: invalidPerformSourceDir,
+  main: "InvalidPerformPayloadMain",
+  allowFailure: true,
+});
+if (invalidPerformPayload.status === 0) {
+  fail("Expected invalid ActionCable perform payload compile to fail.");
+}
+if (!/has no field title|title|Cannot unify/.test(invalidPerformPayload.stderr + invalidPerformPayload.stdout)) {
+  process.stdout.write(invalidPerformPayload.stdout);
+  process.stderr.write(invalidPerformPayload.stderr);
+  fail("Invalid ActionCable perform payload failed for an unexpected reason.");
+}
+
 console.log("[action-cable] OK");
 
 function compileActionCable(targetDir, options = {}) {
@@ -237,6 +270,7 @@ function compileClient(options = {}) {
     "ActionCable.createConsumer()",
     "Object.assign({ channel: channel }, params)",
     "consumer.subscriptions.create(identifier, callbacks)",
+    "subscription.perform(\"ping\", { title : \"client ping\"})",
     "Channels::TodosChannel",
     "received",
   ]) {
@@ -317,6 +351,31 @@ function writeInvalidConsumerFixtures() {
     "class InvalidConsumerMain {",
     "\tstatic function main():Void {",
     "\t\tTodosCableClient.subscribe({}, \"open\", function(title) {});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeInvalidPerformFixtures() {
+  mkdirSync(invalidPerformSourceDir, { recursive: true });
+  writeFileSync(join(invalidPerformSourceDir, "InvalidRawPerformMain.hx"), [
+    "import rails.action_cable.Consumer;",
+    "class InvalidRawPerformMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar subscription = Consumer.subscribe(Consumer.create(), \"Channels::TodosChannel\", {listId: \"open\"}, {});",
+    "\t\tsubscription.perform(\"ping\", {title: \"raw action string\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidPerformSourceDir, "InvalidPerformPayloadMain.hx"), [
+    "import channels.TodosChannel.TodoCable;",
+    "import rails.action_cable.Consumer;",
+    "class InvalidPerformPayloadMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar subscription = Consumer.subscribe(Consumer.create(), \"Channels::TodosChannel\", {listId: \"open\"}, {});",
+    "\t\tsubscription.perform(TodoCable.pingAction(), {missingTitle: \"bad payload\"});",
     "\t}",
     "}",
     "",

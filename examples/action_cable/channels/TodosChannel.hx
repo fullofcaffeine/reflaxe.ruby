@@ -1,6 +1,7 @@
 package channels;
 
 import rails.ActionCable;
+import rails.action_cable.Action;
 import rails.action_cable.Channel;
 import rails.action_cable.Stream;
 import rails.action_cable.SubscriptionParam;
@@ -14,6 +15,10 @@ typedef TodoBroadcast = {
 	var completed:Bool;
 }
 
+typedef TodoPingPayload = {
+	var title:String;
+}
+
 class TodoCable {
 	// Demonstrates: subscription params are explicit typed tokens. The value
 	// still lowers to Rails' normal `params["list_id"]`, but raw strings cannot
@@ -25,13 +30,18 @@ class TodoCable {
 	public static inline function listStream(listId:String):Stream<TodoBroadcast> {
 		return Stream.named("todos:" + listId);
 	}
+
+	public static inline function pingAction():Action<TodoPingPayload> {
+		return Action.named("ping");
+	}
 }
 
 // Demonstrates: a Haxe-authored ActionCable channel that emits a normal
 // ActionCable::Channel::Base subclass.
 // Type safety: subscription params use `SubscriptionParam<T>`, stream names carry
 // their broadcast payload type, and `ActionCable.broadcast(...)` rejects payloads
-// that do not match `TodoBroadcast`.
+// that do not match `TodoBroadcast`. Client action tokens such as
+// `TodoCable.pingAction()` keep `subscription.perform(...)` payloads typed too.
 // IntelliSense: editors should complete `param`, `streamFrom`, `transmit`,
 // `stopAllStreams`, and the typed `TodoCable` refs.
 // Rails output: generated Ruby calls `stream_from`, `transmit`,

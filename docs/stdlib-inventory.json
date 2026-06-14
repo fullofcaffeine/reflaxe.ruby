@@ -423,6 +423,14 @@
       "reason": "Typed top-level ActionCable facade for Rails-native server broadcasts."
     },
     {
+      "id": "std.rails.action_cable_action",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/Action.hx",
+      "surface": "rails.action_cable.Action",
+      "reason": "Typed client-side ActionCable perform action token that carries the outbound payload shape while lowering to Rails' string action name."
+    },
+    {
       "id": "std.rails.action_cable_channel",
       "owner": "std",
       "status": "implemented",
@@ -460,7 +468,7 @@
       "status": "implemented",
       "path": "std/rails/action_cable/Subscription.hx",
       "surface": "rails.action_cable.Subscription",
-      "reason": "Typed structural facade for ActionCable client subscription handles."
+      "reason": "Typed opaque facade for ActionCable client subscription handles with typed perform(action, payload), explicit performUnchecked, and unsubscribe helpers."
     },
     {
       "id": "std.rails.action_cable_subscription_callbacks",
