@@ -1527,6 +1527,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if ((fieldAccessRawName(access) == "whereNot" || fieldAccessRawName(access) == "where_not") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
+			case TField(target, access) if (fieldAccessRawName(access) == "whereExpr" && params.length == 1):
+				var predicate = activeRecordPredicateArg(params[0]);
+				predicate == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(predicate)]);
+			case TField(target, access) if (fieldAccessRawName(access) == "whereNotExpr" && params.length == 1):
+				var predicate = activeRecordPredicateArg(params[0]);
+				predicate == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + predicate + ")");
 			case TField(target, access) if (fieldAccessRawName(access) == "whereIn" && params.length == 2):
 				var criteria = activeRecordFieldCriteriaArg(params[0], params[1]);
 				criteria == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(criteria)]);
@@ -1951,12 +1957,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function activeRecordComparisonPredicateArg(fieldExpr:TypedExpr, op:Null<String>, valueExpr:TypedExpr):Null<String> {
-		var fieldName = activeRecordFieldName(fieldExpr);
-		var model = activeRecordFieldModelRubyPath(fieldExpr);
-		if (fieldName == null || model == null || op == null) {
+		var field = activeRecordArelField(fieldExpr);
+		if (field == null || op == null) {
 			return null;
 		}
-		return model + ".arel_table[:" + RubyNaming.toMethodName(fieldName) + "]." + op + "(" + printInlineExpr(valueExpr) + ")";
+		return field + "." + op + "(" + printInlineExpr(valueExpr) + ")";
 	}
 
 	static function activeRecordFieldNilCriteriaArg(fieldExpr:TypedExpr):Null<String> {
@@ -1997,8 +2002,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (expr.expr) {
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
 				activeRecordOrderArg(inner);
+			case TCall(callee, [exprArg]) if (isActiveRecordExprOrderCall(callee)):
+				activeRecordOrderArgForExpressionOrField(exprArg, staticCallInfo(callee).name);
 			case TCall({expr: TField(fieldExpr, access)}, []) if (isOrderDirection(fieldAccessRawName(access))):
-				activeRecordOrderArgForField(fieldExpr, fieldAccessRawName(access));
+				activeRecordOrderArgForExpressionOrField(fieldExpr, fieldAccessRawName(access));
 			case TCall({expr: TField(_, access)}, [fieldExpr]) if (isOrderDirection(fieldAccessRawName(access))):
 				activeRecordOrderArgForField(fieldExpr, fieldAccessRawName(access));
 			case TCall({expr: TField(_, access)}, [fieldExpr, directionExpr]) if (fieldAccessRawName(access) == "named"):
@@ -2036,6 +2043,87 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function activeRecordOrderArgForField(fieldExpr:TypedExpr, direction:String):Null<String> {
 		var fieldName = activeRecordFieldName(fieldExpr);
 		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": :" + direction;
+	}
+
+	static function activeRecordOrderArgForExpressionOrField(expr:TypedExpr, direction:String):Null<String> {
+		var expression = activeRecordExpressionArg(expr);
+		return expression == null ? activeRecordOrderArgForField(expr, direction) : expression + "." + direction;
+	}
+
+	static function activeRecordPredicateArg(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordPredicateArg(inner);
+			case TCall(callee, [expressionExpr, valueExpr]) if (isActiveRecordExprPredicateCall(callee)):
+				var op = activeRecordExpressionPredicateOp(staticCallInfo(callee).name);
+				var expression = activeRecordExpressionArg(expressionExpr);
+				expression == null || op == null ? null : expression + "." + op + "(" + printInlineExpr(valueExpr) + ")";
+			case TCall({expr: TField(expressionExpr, access)}, [valueExpr]):
+				var op = activeRecordExpressionPredicateOp(fieldAccessRawName(access));
+				var expression = activeRecordExpressionArg(expressionExpr);
+				expression == null || op == null ? null : expression + "." + op + "(" + printInlineExpr(valueExpr) + ")";
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordExpressionPredicateOp(name:String):Null<String> {
+		return switch (name) {
+			case "eq": "eq";
+			case "gt": "gt";
+			case "gte": "gteq";
+			case "lt": "lt";
+			case "lte": "lteq";
+			case _: null;
+		}
+	}
+
+	static function activeRecordExpressionArg(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordExpressionArg(inner);
+			case TCall(callee, [fieldExpr]) if (isActiveRecordExprFieldCall(callee)):
+				activeRecordArelField(fieldExpr);
+			case TCall(callee, [fieldExpr]) if (isActiveRecordExprLowerCall(callee)):
+				var field = activeRecordArelField(fieldExpr);
+				field == null ? null : field + ".lower";
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordArelField(fieldExpr:TypedExpr):Null<String> {
+		var fieldName = activeRecordFieldName(fieldExpr);
+		var model = activeRecordFieldModelRubyPath(fieldExpr);
+		return fieldName == null || model == null ? null : model + ".arel_table[:" + RubyNaming.toMethodName(fieldName) + "]";
+	}
+
+	static function isActiveRecordExprFieldCall(callee:TypedExpr):Bool {
+		var info = staticCallInfo(callee);
+		return info != null && info.name == "field" && isActiveRecordExprOwner(info.owner);
+	}
+
+	static function isActiveRecordExprLowerCall(callee:TypedExpr):Bool {
+		var info = staticCallInfo(callee);
+		return info != null && info.name == "lower" && (isActiveRecordExprOwner(info.owner) || isActiveRecordOrderOwner(info.owner));
+	}
+
+	static function isActiveRecordExprOrderCall(callee:TypedExpr):Bool {
+		var info = staticCallInfo(callee);
+		return info != null && isOrderDirection(info.name) && isActiveRecordExprOwner(info.owner);
+	}
+
+	static function isActiveRecordExprPredicateCall(callee:TypedExpr):Bool {
+		var info = staticCallInfo(callee);
+		return info != null && activeRecordExpressionPredicateOp(info.name) != null && isActiveRecordExprOwner(info.owner);
+	}
+
+	static function isActiveRecordExprOwner(owner:String):Bool {
+		return owner == "rails.active_record.Expr" || StringTools.endsWith(owner, ".Expr_Impl_");
+	}
+
+	static function isActiveRecordOrderOwner(owner:String):Bool {
+		return owner == "rails.active_record.Order" || StringTools.endsWith(owner, ".Order_Impl_");
 	}
 
 	static function activeRecordAssociationArg(expr:TypedExpr):Null<String> {

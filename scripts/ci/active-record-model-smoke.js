@@ -34,6 +34,18 @@ const invalidWhereComparisonTypeSourceDir = join(root, "test", ".generated", "ac
 const invalidWhereComparisonTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_type_out");
 const invalidWhereComparisonStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_string_src");
 const invalidWhereComparisonStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_string_out");
+const invalidOrderStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_order_string_src");
+const invalidOrderStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_order_string_out");
+const invalidExprOrderOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_expr_order_owner_src");
+const invalidExprOrderOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_expr_order_owner_out");
+const invalidExprLowerTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_expr_lower_type_src");
+const invalidExprLowerTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_expr_lower_type_out");
+const invalidWhereExprShapeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_shape_src");
+const invalidWhereExprShapeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_shape_out");
+const invalidWhereExprOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_owner_src");
+const invalidWhereExprOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_owner_out");
+const invalidWhereExprTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_type_src");
+const invalidWhereExprTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_type_out");
 const invalidWhereNullOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_src");
 const invalidWhereNullOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_out");
 const invalidWhereNotNullTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_not_null_type_src");
@@ -176,6 +188,18 @@ rmSync(invalidWhereComparisonTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereComparisonTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereComparisonStringSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereComparisonStringOutputDir, { force: true, recursive: true });
+rmSync(invalidOrderStringSourceDir, { force: true, recursive: true });
+rmSync(invalidOrderStringOutputDir, { force: true, recursive: true });
+rmSync(invalidExprOrderOwnerSourceDir, { force: true, recursive: true });
+rmSync(invalidExprOrderOwnerOutputDir, { force: true, recursive: true });
+rmSync(invalidExprLowerTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidExprLowerTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereExprShapeSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereExprShapeOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereExprOwnerSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereExprOwnerOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereExprTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereExprTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereNullOwnerSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereNullOwnerOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereNotNullTypeSourceDir, { force: true, recursive: true });
@@ -405,6 +429,11 @@ for (const expected of [
   ".where.not(id: 1..10).limit(2)",
   "Models::Todo.where(Models::Todo.arel_table[:id].gt(1)).order(id: :asc)",
   ".where.not(Models::Todo.arel_table[:id].lteq(10)).limit(2)",
+  "Models::Todo.order(Models::Todo.arel_table[:title].lower.asc).limit(3)",
+  'Models::Todo.where(Models::Todo.arel_table[:title].lower.eq("ship")).limit(2)',
+  'assigned__hx',
+  '.where.not(Models::Todo.arel_table[:title].lower.eq("ship")).limit(2)',
+  "Models::Todo.where(Models::Todo.arel_table[:id].gt(1)).limit(2)",
   "Models::Todo.where(notes: nil).limit(3)",
   ".where.not(notes: nil).limit(2)",
   '.distinct().limit(2)',
@@ -501,6 +530,8 @@ for (const expected of [
   "Models::Todo.where(status: [",
   "Models::Todo.where(id: 1..10)",
   "Models::Todo.where(Models::Todo.arel_table[:id].gt(1))",
+  "Expr.lower(Todo.f.title)",
+  "whereExpr(Expr.lower",
   "Models::Todo.where(notes: nil)",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
@@ -605,6 +636,12 @@ expectInvalidWhereBetweenStringFieldFailure();
 expectInvalidWhereComparisonOwnerFailure();
 expectInvalidWhereComparisonValueTypeFailure();
 expectInvalidWhereComparisonStringFieldFailure();
+expectInvalidOrderStringFailure();
+expectInvalidExprOrderOwnerFailure();
+expectInvalidExprLowerValueTypeFailure();
+expectInvalidWhereExprShapeFailure();
+expectInvalidWhereExprOwnerFailure();
+expectInvalidWhereExprValueTypeFailure();
 expectInvalidWhereNullOwnerFailure();
 expectInvalidWhereNotNullValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
@@ -1226,8 +1263,8 @@ function expectInvalidWhereComparisonValueTypeFailure() {
 }
 
 function expectInvalidWhereComparisonStringFieldFailure() {
-  mkdirSync(invalidWhereComparisonStringSourceDir, { recursive: true });
-  writeFileSync(join(invalidWhereComparisonStringSourceDir, "Main.hx"), [
+	mkdirSync(invalidWhereComparisonStringSourceDir, { recursive: true });
+	writeFileSync(join(invalidWhereComparisonStringSourceDir, "Main.hx"), [
     "import models.Todo;",
     "",
     "class Main {",
@@ -1242,13 +1279,146 @@ function expectInvalidWhereComparisonStringFieldFailure() {
     invalidWhereComparisonStringSourceDir,
     invalidWhereComparisonStringOutputDir,
     "Invalid ActiveRecord comparison string field compiled successfully.",
-    "String should be rails.active_record.Field<models.Todo"
-  );
+		"String should be rails.active_record.Field<models.Todo"
+	);
+}
+
+function expectInvalidOrderStringFailure() {
+	mkdirSync(invalidOrderStringSourceDir, { recursive: true });
+	writeFileSync(join(invalidOrderStringSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.order(\"LOWER(title) ASC\");",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidOrderStringSourceDir,
+		invalidOrderStringOutputDir,
+		"Invalid ActiveRecord raw string order compiled successfully.",
+		"String should be rails.active_record.Order<models.Todo>"
+	);
+}
+
+function expectInvalidExprOrderOwnerFailure() {
+	mkdirSync(invalidExprOrderOwnerSourceDir, { recursive: true });
+	writeFileSync(join(invalidExprOrderOwnerSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"import models.User;",
+		"import rails.active_record.Expr;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.order(Expr.lower(User.f.name).asc());",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidExprOrderOwnerSourceDir,
+		invalidExprOrderOwnerOutputDir,
+		"Invalid ActiveRecord Expr order owner compiled successfully.",
+		"models.User should be models.Todo"
+	);
+}
+
+function expectInvalidExprLowerValueTypeFailure() {
+	mkdirSync(invalidExprLowerTypeSourceDir, { recursive: true });
+	writeFileSync(join(invalidExprLowerTypeSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"import rails.active_record.Expr;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.order(Expr.lower(Todo.f.id).asc());",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidExprLowerTypeSourceDir,
+		invalidExprLowerTypeOutputDir,
+		"Invalid ActiveRecord Expr.lower non-string field compiled successfully.",
+		"Int should be String"
+	);
+}
+
+function expectInvalidWhereExprShapeFailure() {
+	mkdirSync(invalidWhereExprShapeSourceDir, { recursive: true });
+	writeFileSync(join(invalidWhereExprShapeSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"import rails.active_record.Expr;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.whereExpr(Expr.field(Todo.f.title));",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidWhereExprShapeSourceDir,
+		invalidWhereExprShapeOutputDir,
+		"Invalid ActiveRecord whereExpr non-predicate compiled successfully.",
+		"Expr<models.Todo, String> should be rails.active_record.Predicate<models.Todo>"
+	);
+}
+
+function expectInvalidWhereExprOwnerFailure() {
+	mkdirSync(invalidWhereExprOwnerSourceDir, { recursive: true });
+	writeFileSync(join(invalidWhereExprOwnerSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"import models.User;",
+		"import rails.active_record.Expr;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.whereExpr(Expr.lower(User.f.name).eq(\"owner\"));",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidWhereExprOwnerSourceDir,
+		invalidWhereExprOwnerOutputDir,
+		"Invalid ActiveRecord whereExpr owner compiled successfully.",
+		"models.User should be models.Todo"
+	);
+}
+
+function expectInvalidWhereExprValueTypeFailure() {
+	mkdirSync(invalidWhereExprTypeSourceDir, { recursive: true });
+	writeFileSync(join(invalidWhereExprTypeSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"import rails.active_record.Expr;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.whereExpr(Expr.field(Todo.f.id).gt(\"one\"));",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidWhereExprTypeSourceDir,
+		invalidWhereExprTypeOutputDir,
+		"Invalid ActiveRecord whereExpr value type compiled successfully.",
+		"String should be Int"
+	);
 }
 
 function expectInvalidWhereNullOwnerFailure() {
-  mkdirSync(invalidWhereNullOwnerSourceDir, { recursive: true });
-  writeFileSync(join(invalidWhereNullOwnerSourceDir, "Main.hx"), [
+	mkdirSync(invalidWhereNullOwnerSourceDir, { recursive: true });
+	writeFileSync(join(invalidWhereNullOwnerSourceDir, "Main.hx"), [
     "import models.Todo;",
     "import models.User;",
     "",

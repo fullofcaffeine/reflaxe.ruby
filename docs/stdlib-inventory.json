@@ -180,7 +180,23 @@
       "status": "implemented",
       "path": "std/rails/active_record/Order.hx",
       "surface": "rails.active_record.Order",
-      "reason": "Typed ActiveRecord order token produced from field refs, including multi-field Order.many lists, and lowered by the compiler into Rails-native order(column: :direction) arguments."
+      "reason": "Typed ActiveRecord order token produced from field refs and typed expressions such as Expr.lower(...), including multi-field Order.many lists, and lowered by the compiler into Rails-native order(column: :direction) or Arel expression order arguments."
+    },
+    {
+      "id": "std.rails.active_record_expr",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Expr.hx",
+      "surface": "rails.active_record.Expr",
+      "reason": "Typed ActiveRecord expression token for model-owned SQL functions and predicates, currently covering field refs, lower(...), order directions, and comparison predicate builders while lowering to generated Rails/Arel calls."
+    },
+    {
+      "id": "std.rails.active_record_predicate",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Predicate.hx",
+      "surface": "rails.active_record.Predicate",
+      "reason": "Typed ActiveRecord predicate token produced by Expr comparison builders and consumed by whereExpr/whereNotExpr so relation predicates preserve model ownership without raw SQL strings."
     },
     {
       "id": "std.rails.active_record_projection",

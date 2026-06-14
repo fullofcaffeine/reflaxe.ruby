@@ -23,8 +23,9 @@ fields.
 entrypoint when you want to start from a full model relation:
 
 ```haxe
-import rails.active_record.Group;
 import rails.active_record.Association;
+import rails.active_record.Expr;
+import rails.active_record.Group;
 import rails.active_record.Lock;
 import rails.active_record.Order;
 import rails.active_record.Projection;
@@ -80,6 +81,8 @@ var assignedNotSmall = Todo
 	.where({title: "assigned"})
 	.whereNotLte(Todo.f.id, 10)
 	.limit(2);
+var lowerTitleOrder = Todo.order(Expr.lower(Todo.f.title).asc()).limit(3);
+var lowerShip = Todo.whereExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
 
 var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
 var anyWithNotes = Todo.whereNotNull(Todo.f.notes).limit(3);
@@ -227,6 +230,11 @@ Type-safety features used here:
 - `whereGt(Todo.f.id, 1)` / `whereLte(...)` and their negated forms use typed
   field refs plus same-typed values while lowering to Rails/Arel comparison
   predicates, avoiding raw `id > ?` SQL fragments.
+- `Expr.lower(Todo.f.title).asc()` and
+  `whereExpr(Expr.lower(Todo.f.title).eq("ship"))` use the typed RailsHx
+  expression layer for SQL functions while lowering to Rails/Arel
+  `Models::Todo.arel_table[:title].lower...` calls. Raw strings such as
+  `Todo.order("LOWER(title) ASC")` are intentionally rejected.
 - `whereNull(Todo.f.notes)` and `whereNotNull(Todo.f.notes)` require nullable
   typed field refs and lower to Rails `nil` hash criteria, avoiding ad-hoc
   `IS NULL` / `IS NOT NULL` strings.

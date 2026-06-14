@@ -23,6 +23,8 @@ class ModelMacro {
 		addModelAttachmentRefs(fields, selfType, pos);
 		addStub(fields, "where", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "whereNot", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
+		addPlainStub(fields, "whereExpr", predicateComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "predicate", pos);
+		addPlainStub(fields, "whereNotExpr", predicateComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "predicate", pos);
 		addFieldArrayPredicateStub(fields, "whereIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldArrayPredicateStub(fields, "whereNotIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRangePredicateStub(fields, "whereBetween", selfType, relationComplexType(selfType, criteriaType, pos), pos);
@@ -1045,6 +1047,14 @@ class ModelMacro {
 		return TPath({
 			pack: ["rails", "active_record"],
 			name: "Order",
+			params: [TPType(selfType)]
+		});
+	}
+
+	static function predicateComplexType(selfType:ComplexType):ComplexType {
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "Predicate",
 			params: [TPType(selfType)]
 		});
 	}

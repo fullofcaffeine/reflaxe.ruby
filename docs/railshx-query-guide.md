@@ -436,6 +436,7 @@ Use generated field refs for query helpers that need a column identity:
 
 ```haxe
 import rails.active_record.Group;
+import rails.active_record.Expr;
 import rails.active_record.Order;
 import rails.active_record.Projection;
 
@@ -445,6 +446,8 @@ var recent = AuditLog
 
 var rewritten = Todo.reorder(Todo.f.title.desc()).limit(4);
 var stablePage = Todo.order(Order.many([Todo.f.title.asc(), Todo.f.id.desc()])).limit(20);
+var caseFolded = Todo.order(Expr.lower(Todo.f.title).asc()).limit(20);
+var lowerShip = Todo.whereExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
 var stableRewrite = Todo
 	.where({status: "open"})
 	.reorder(Order.many([Todo.f.id.desc(), Todo.f.title.asc()]));
@@ -473,6 +476,8 @@ Generated Ruby:
 Models::AuditLog.where(event_count: 1).order(event_count: :desc)
 Models::Todo.reorder(title: :desc).limit(4)
 Models::Todo.order(title: :asc, id: :desc).limit(20)
+Models::Todo.order(Models::Todo.arel_table[:title].lower.asc).limit(20)
+Models::Todo.where(Models::Todo.arel_table[:title].lower.eq("ship")).limit(2)
 Models::Todo.where(status: "open").reorder(id: :desc, title: :asc)
 Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
@@ -495,6 +500,34 @@ order from another model is rejected before Rails runs. Use `Order.many([...])`
 when a stable Rails order needs more than one column; every item in the array
 must be an `Order<TModel>`, so mixed-model order lists fail during Haxe
 compilation while generated Ruby remains `order(title: :asc, id: :desc)`.
+
+`Expr<TModel, TValue>` is the typed RailsHx expression layer for cases that
+need SQL functions or Arel predicates. It is intentionally narrower than Arel:
+app code uses builders such as `Expr.field(Todo.f.id)` and
+`Expr.lower(Todo.f.title)`, while the compiler lowers them to
+`Models::Todo.arel_table[:id]` and
+`Models::Todo.arel_table[:title].lower`. `Expr.lower(...)` only accepts
+`String` fields from the owning model, so `Expr.lower(Todo.f.id)` and
+`Todo.order(Expr.lower(User.f.name).asc())` fail during Haxe compilation.
+
+`whereExpr(predicate)` and `whereNotExpr(predicate)` accept
+`Predicate<TModel>` values produced by typed expression methods:
+
+```haxe
+Todo.whereExpr(Expr.field(Todo.f.id).gt(1));
+Todo.whereNotExpr(Expr.lower(Todo.f.title).eq("ship"));
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(Models::Todo.arel_table[:id].gt(1))
+Models::Todo.where.not(Models::Todo.arel_table[:title].lower.eq("ship"))
+```
+
+This is not a raw SQL escape hatch. Plain strings such as
+`Todo.order("LOWER(title) ASC")` remain rejected; future truly raw fragments
+must go through explicit `Sql.*` APIs covered by the SQL/string policy.
 
 `select(...)` uses generated field refs too. It returns a typed relation and
 lowers to Rails `select(:field)`, while fields from another model are rejected.

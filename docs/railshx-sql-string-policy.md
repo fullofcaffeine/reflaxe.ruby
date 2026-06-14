@@ -59,8 +59,8 @@ The approved path is:
 
 | Surface | Default class | Approved default | Escape hatch policy |
 | --- | --- | --- | --- |
-| ActiveRecord `where` / `rewhere` / `findBy` / `exists` | Typed default | Criteria object generated from `@:railsColumn` and association metadata. | Future raw SQL must go through an explicit `Sql.*` API, not string overloads. |
-| ActiveRecord `order` / `reorder` | Typed default | `Todo.f.title.asc()`, `Order.many([...])`. | Future SQL ordering functions should be typed builders first; raw fragments must be explicit. |
+| ActiveRecord `where` / `rewhere` / `findBy` / `exists` | Typed default | Criteria object generated from `@:railsColumn` and association metadata; expression predicates through `whereExpr(Expr.field(Todo.f.id).gt(1))` and `whereNotExpr(...)`. | Future raw SQL must go through an explicit `Sql.*` API, not string overloads. |
+| ActiveRecord `order` / `reorder` | Typed default | `Todo.f.title.asc()`, `Order.many([...])`, `Expr.lower(Todo.f.title).asc()`. | Additional SQL ordering functions should be typed builders first; raw fragments must be explicit. |
 | ActiveRecord `select` / `pluck` / projections | Typed default | `select(Todo.f.title)`, `Projection.pluck(...)`. | SQL aliases/functions need a typed projection/alias design before raw SQL. |
 | ActiveRecord `group` / `having` / aggregates | Typed default | `Group.count(source, Todo.f.status)`, typed aggregates. | `having` and SQL functions require a design bead and either builders or explicit raw fragments. |
 | ActiveRecord `joins` / `includes` / `preload` / `eager_load` | Typed default | `Todo.a.user`, `Association.nested(...)`. | Raw join strings are escape hatches only. Prefer association refs or future typed join builders. |
@@ -89,6 +89,8 @@ Any bead that adds or widens a string/SQL-bearing API must:
 ## Current Decision
 
 RailsHx currently forbids raw SQL/string query fragments in canonical examples.
-That is intentional. `haxe.ruby-bjv.10` should add typed ActiveRecord builders
-for common missing query shapes first, and only introduce explicit SQL escape
-hatches where typed builders cannot reasonably model Rails behavior.
+That is intentional. `haxe.ruby-bjv.10` should keep adding typed ActiveRecord
+builders such as `Expr.lower(...)`, `whereExpr(...)`, typed aggregates, and
+typed escape hatches for common missing query shapes first, and only introduce
+explicit SQL escape hatches where typed builders cannot reasonably model Rails
+behavior.
