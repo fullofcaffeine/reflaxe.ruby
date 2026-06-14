@@ -36,12 +36,12 @@ These lower to ordinary ActiveRecord calls such as `where(status: "open")`,
 Do not add these as casual string overloads:
 
 ```haxe
-Todo.where("status = 'open'");
-Todo.order("LOWER(title) ASC");
-Todo.select("todos.*, COUNT(*) AS count");
-Todo.group("DATE(created_at)");
-Todo.having("COUNT(*) > 1");
-Todo.joins("INNER JOIN users ...");
+Todo.where("status = 'open'"); // railshx:allow-raw-sql-example
+Todo.order("LOWER(title) ASC"); // railshx:allow-raw-sql-example
+Todo.select("todos.*, COUNT(*) AS count"); // railshx:allow-raw-sql-example
+Todo.group("DATE(created_at)"); // railshx:allow-raw-sql-example
+Todo.having("COUNT(*) > 1"); // railshx:allow-raw-sql-example
+Todo.joins("INNER JOIN users ..."); // railshx:allow-raw-sql-example
 ```
 
 The approved path is:

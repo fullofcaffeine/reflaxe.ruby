@@ -49,10 +49,29 @@ for (const file of hxFiles(canonicalRoots)) {
   const content = readFileSync(file, "utf8");
   const lines = content.split(/\r?\n/);
   lines.forEach((line, index) => {
-    if (rawQueryPattern.test(line) && !line.includes("railshx:allow-raw-sql-example")) {
-      fail(`${relativePath(file)}:${index + 1} uses a raw SQL/string query fragment. Use typed refs/builders or an explicit audited escape hatch.`);
-    }
+    rejectRawQueryLine(file, line, index + 1);
   });
+}
+
+for (const relative of [
+  "docs/railshx-sql-string-policy.md",
+  "docs/railshx-query-guide.md",
+  "examples/active_record_model/README.md",
+  "examples/todoapp_rails/README.md",
+]) {
+  scanMarkdownCodeFences(join(root, relative));
+}
+
+const audit = readFileSync(join(root, "docs", "railshx-escape-hatch-security-audit.md"), "utf8");
+for (const escapeName of [
+  "@:railsAllowRawErb",
+  "Template.external",
+  "Lock.custom",
+  "externalTables",
+]) {
+  if (!audit.includes(escapeName)) {
+    fail(`Escape hatch audit must document ${escapeName}.`);
+  }
 }
 
 function hxFiles(roots) {
@@ -71,6 +90,29 @@ function collect(dir, out) {
     } else if (entry.isFile() && entry.name.endsWith(".hx")) {
       out.push(path);
     }
+  }
+}
+
+function scanMarkdownCodeFences(file) {
+  const lines = readFileSync(file, "utf8").split(/\r?\n/);
+  let inFence = false;
+  let fenceLanguage = "";
+  lines.forEach((line, index) => {
+    const fence = line.match(/^```(\S*)/);
+    if (fence) {
+      inFence = !inFence;
+      fenceLanguage = inFence ? fence[1].toLowerCase() : "";
+      return;
+    }
+    if (inFence && ["haxe", "hx", "ruby", "rb"].includes(fenceLanguage)) {
+      rejectRawQueryLine(file, line, index + 1);
+    }
+  });
+}
+
+function rejectRawQueryLine(file, line, lineNumber) {
+  if (rawQueryPattern.test(line) && !line.includes("railshx:allow-raw-sql-example")) {
+    fail(`${relativePath(file)}:${lineNumber} uses a raw SQL/string query fragment. Use typed refs/builders or an explicit audited escape hatch.`);
   }
 }
 
