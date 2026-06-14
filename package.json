@@ -45,6 +45,7 @@
     "test:active-storage": "node scripts/ci/active-storage-smoke.js",
     "test:todoapp-rails": "node scripts/ci/todoapp-rails-smoke.js",
     "test:todoapp-playwright": "node scripts/ci/todoapp-playwright.js",
+    "test:todoapp-production": "node scripts/rails/todoapp.js production-smoke",
     "test:rails-integration": "node scripts/ci/rails-integration.js",
     "test:rails-interop": "node scripts/ci/rails-interop-smoke.js",
     "test:rails-runtime": "REQUIRE_RAILS=1 npm run test:rails-integration && REQUIRE_RAILS=1 npm run test:rails-interop",

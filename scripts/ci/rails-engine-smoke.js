@@ -53,6 +53,9 @@ try {
   const initializer = readFileSync(join(outputDir, "config", "initializers", "hxruby_autoload.rb"), "utf8");
   for (const expected of [
     'hxruby_root = Rails.root.join("engines/blog/app/haxe_gen")',
+    'hxruby_runtime_root = hxruby_root.join("hxruby")',
+    "Rails.autoloaders.main.ignore(hxruby_runtime_root)",
+    'Dir[hxruby_runtime_root.join("*.rb")].sort.each { |path| require path }',
     "Rails.application.config.autoload_paths << hxruby_root",
     "Rails.application.config.eager_load_paths << hxruby_root",
   ]) {

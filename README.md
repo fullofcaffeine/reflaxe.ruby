@@ -157,6 +157,14 @@ RAILS_ENV=production bundle exec rails zeitwerk:check
 RAILS_ENV=production bundle exec rails assets:precompile
 ```
 
+The canonical dogfood app has a production smoke that exercises the same shape end to end:
+
+```bash
+npm run test:todoapp-production
+```
+
+That command compiles Haxe/HHX, compiles Haxe-authored JS, materializes the generated Rails app, runs Rails migrations/tests, runs `zeitwerk:check`, precompiles production assets, creates `test/.generated/rails_integration_release.tgz`, and verifies the release artifact includes generated RailsHx files.
+
 The current Rails surface is an alpha with a credible production path, not yet a production-ready contract. Production readiness is tracked by the `haxe.ruby-bjv` bead epic and documented in [docs/railshx-production-readiness.md](docs/railshx-production-readiness.md).
 
 The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`. See [docs/railshx-controller-guide.md](docs/railshx-controller-guide.md) for typed controllers/params, [docs/railshx-action-mailer-guide.md](docs/railshx-action-mailer-guide.md) for typed ActionMailer classes and HHX mail templates, [docs/railshx-active-job-guide.md](docs/railshx-active-job-guide.md) for typed ActiveJob classes and enqueue helpers, [docs/railshx-active-storage-guide.md](docs/railshx-active-storage-guide.md) for typed ActiveStorage refs, [docs/railshx-turbo-guide.md](docs/railshx-turbo-guide.md) for typed Turbo client and server-side stream helpers, [docs/railshx-action-cable-guide.md](docs/railshx-action-cable-guide.md) for typed ActionCable channels/subscriptions, [docs/railshx-instrumentation-guide.md](docs/railshx-instrumentation-guide.md) for typed ActiveSupport instrumentation, [docs/railshx-components-guide.md](docs/railshx-components-guide.md) for typed Rails-native components, [docs/railshx-engines-plugins-guide.md](docs/railshx-engines-plugins-guide.md) for engine/plugin output roots and host-app consumption, and [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md) for mixed Ruby/ERB and Haxe adoption patterns.

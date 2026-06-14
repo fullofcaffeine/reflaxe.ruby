@@ -84,6 +84,7 @@ Before declaring production readiness, run and record:
 npm test
 npm run test:rails-runtime
 npm run test:todoapp-playwright
+npm run test:todoapp-production
 npm run test:snapshots
 npm run test:strict-boundaries
 npm run test:haxelib-package
@@ -98,6 +99,13 @@ runtime command and CI lane install those bundles and fail closed when Rails
 cannot boot. Runtime smoke logs must identify the failing boundary with staged
 labels such as `compiler`, `materialization`, `migration`, `request tests`, and
 browser stages.
+
+The dedicated CI production dogfood job runs `npm run test:todoapp-production`
+on the pinned Ruby lane. That command compiles server Haxe/HHX and Haxe-authored
+client JS, materializes the Rails app, runs migrations/tests, runs
+`zeitwerk:check`, precompiles production assets, creates
+`test/.generated/rails_integration_release.tgz`, and verifies the archive
+contains generated RailsHx Ruby, ERB, JS, migrations, and initializer files.
 
 For a generated or adopted Rails app, also run:
 

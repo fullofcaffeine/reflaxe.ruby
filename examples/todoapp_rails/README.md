@@ -94,6 +94,12 @@ npm run todoapp:test
 Compiles, materializes, prepares the test DB, and runs the generated Rails test suite.
 
 ```bash
+npm run test:todoapp-production
+```
+
+Runs the deployability dogfood lane for this sample: compile Haxe/HHX, compile Haxe-authored JS, materialize the Rails app, prepare the test database, run Rails tests, boot production for `zeitwerk:check`, precompile production assets, build `test/.generated/rails_integration_release.tgz`, and assert the archive contains generated `app/haxe_gen/**`, generated ERB views, generated Haxe JS, migrations, and the RailsHx initializer.
+
+```bash
 npm run test:todoapp-playwright
 ```
 
@@ -115,6 +121,8 @@ RAILS_ENV=production bundle exec rails assets:precompile
 ```
 
 The production artifact must include generated `app/haxe_gen/**`, generated ActionView templates under `app/views/**`, generated Haxe JS under `app/javascript/railshx/**`, and `config/initializers/hxruby_autoload.rb`. The canonical source remains Haxe/HHX/Haxe JS; generated Rails files are build output.
+
+This sample proves that contract with `npm run test:todoapp-production`, which is also wired into CI as the RailsHx production dogfood lane.
 
 ## App Generator
 
