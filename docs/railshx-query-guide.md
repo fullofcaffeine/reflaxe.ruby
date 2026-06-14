@@ -101,6 +101,16 @@ var distinctOpen = Todo.distinct()
 	.where({status: "open"})
 	.order(Todo.f.title.asc());
 
+var notDone = Todo
+	.whereNot({status: "done"})
+	.order(Todo.f.title.asc())
+	.limit(8);
+
+var assignedNotDone = Todo
+	.where({title: "assigned"})
+	.whereNot({status: "done"})
+	.limit(2);
+
 var emptyOpen = Todo.none()
 	.where({status: "open"});
 
@@ -186,6 +196,8 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
+Models::Todo.where.not(status: "done").order(title: :asc).limit(8)
+Models::Todo.where(title: "assigned").where.not(status: "done").limit(2)
 Models::Todo.none().where(status: "open")
 Models::Todo.where(title: "assigned").none().limit(1)
 Models::Todo.reverse_order().where(status: "open").limit(2)
@@ -210,6 +222,14 @@ assigned.find_by(external_id: "assigned-1")
 
 This is still a Rails relation chain. Haxe is only making the relation shape and
 field refs visible to the compiler.
+
+`whereNot({...})` is the typed RailsHx spelling for Rails `where.not(...)`.
+It reuses the same criteria object as `where({...})`, so common negative
+predicates do not need raw SQL strings:
+
+```haxe
+var notDone = Todo.whereNot({status: "done"});
+```
 
 `rewhere({...})` uses the same typed criteria object as `where({...})`, so field
 names and field value types are still checked while Rails receives a normal

@@ -41,6 +41,18 @@ var distinctOpen = Todo
 	.where({status: "open"})
 	.order(Todo.f.title.asc());
 
+var notDone = Todo
+	.whereNot({status: "done"})
+	.order(Todo.f.title.asc())
+	.limit(8);
+
+var notDoneCount = Todo.whereNot({status: "done"}).count();
+
+var assignedNotDone = Todo
+	.where({title: "assigned"})
+	.whereNot({status: "done"})
+	.limit(2);
+
 var emptyOpen = Todo.none().where({status: "open"});
 var emptyAssigned = Todo.where({title: "assigned"}).none().limit(1);
 var reverseOpen = Todo.reverseOrder().where({status: "open"}).limit(2);
@@ -119,6 +131,8 @@ Generated Ruby:
 ```ruby
 Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
+Models::Todo.where.not(status: "done").order(title: :asc).limit(8)
+Models::Todo.where(title: "assigned").order(title: :asc).limit(5).where.not(status: "done").limit(2)
 Models::Todo.none().where(status: "open")
 Models::Todo.where(title: "assigned").none().limit(1)
 Models::Todo.reverse_order().where(status: "open").limit(2)
@@ -164,6 +178,9 @@ Type-safety features used here:
 
 - `where({...})` object keys must be `@:railsColumn` fields.
 - `where({...})` values must match those field types.
+- `whereNot({...})` uses the same typed criteria object while lowering to
+  Rails `where.not(...)`, so common negative predicates do not need raw SQL
+  strings.
 - `rewhere({...})` uses the same typed criteria object while lowering to Rails `rewhere`.
 - `Todo.none()` and `relation.none()` keep a typed null relation that can still
   be chained before Rails runs.
