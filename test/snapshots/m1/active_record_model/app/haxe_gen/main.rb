@@ -67,6 +67,7 @@ class Main
     has_open_assigned__hx0 = assigned__hx0.exists?(status: "open")
     open_count__hx0 = Models::Todo.where(status: "open").count()
     total_count__hx0 = Models::Todo.count()
+    relation_loaded__hx0 = assigned__hx0.find(1)
     assigned_found_by__hx0 = assigned__hx0.find_by(external_id: "assigned-1")
     first__hx0 = found__hx0.first()
     last__hx0 = Models::Todo.last()

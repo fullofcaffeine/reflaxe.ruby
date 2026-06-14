@@ -642,6 +642,20 @@ because the association belongs to `User`, not `Todo`.
 var loaded:Todo = Todo.find(1);
 ```
 
+For relation values, `find(...)` accepts a typed scalar Rails ID:
+
+```haxe
+var relationLoaded:Todo = Todo.where({status: "open"}).find(1);
+```
+
+Static model `find(...)` remains the strongest path because the model macro can
+infer the primary-key field type. Relation-level `find(...)` intentionally uses
+`Int`/`String` overloads instead of `Dynamic`: it supports common Rails scalar
+IDs while rejecting accidental object-shaped arguments and still emits direct
+Rails `find(...)` calls without helper runtime. Carrying the exact primary-key
+type through
+`Relation<TModel, TCriteria>` is future work.
+
 `findBy({...})` uses typed criteria and returns `Null<Todo>`:
 
 ```haxe
@@ -653,6 +667,7 @@ Generated Ruby:
 
 ```ruby
 Models::Todo.find(1)
+Models::Todo.where(status: "open").find(1)
 Models::Todo.find_by(external_id: "ship-1")
 Models::Todo.where(title: "ship").find_by(completed: false)
 ```

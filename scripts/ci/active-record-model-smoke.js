@@ -112,6 +112,8 @@ const invalidCallbackFieldSourceDir = join(root, "test", ".generated", "active_r
 const invalidCallbackFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_callback_field_out");
 const invalidFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_src");
 const invalidFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_out");
+const invalidRelationFindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_relation_find_src");
+const invalidRelationFindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_relation_find_out");
 const invalidFindBySourceDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_src");
 const invalidFindByOutputDir = join(root, "test", ".generated", "active_record_model_invalid_find_by_out");
 const invalidExistsSourceDir = join(root, "test", ".generated", "active_record_model_invalid_exists_src");
@@ -272,6 +274,8 @@ rmSync(invalidCallbackFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidCallbackFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidFindSourceDir, { force: true, recursive: true });
 rmSync(invalidFindOutputDir, { force: true, recursive: true });
+rmSync(invalidRelationFindSourceDir, { force: true, recursive: true });
+rmSync(invalidRelationFindOutputDir, { force: true, recursive: true });
 rmSync(invalidFindBySourceDir, { force: true, recursive: true });
 rmSync(invalidFindByOutputDir, { force: true, recursive: true });
 rmSync(invalidExistsSourceDir, { force: true, recursive: true });
@@ -488,6 +492,8 @@ for (const expected of [
   'Models::Todo.where(status: "open").count()',
   'Models::Todo.count()',
   'assigned__hx',
+  '.find(1)',
+  'assigned__hx',
   'find_by(external_id: "assigned-1")',
   "first__hx",
   ".first()",
@@ -568,6 +574,7 @@ for (const expected of [
   "select(Todo.f.title)",
   "reorder(Todo.f.id.desc())",
   "findBy({externalId",
+  ".find(1)",
   "exists({externalId",
   ".count()",
   ".last()",
@@ -626,6 +633,7 @@ for (const expected of [
   "AuditLog.where({eventCount: 1})",
   "Todo.where({status: \"open\"}).offset(20).limit(10)",
   "Todo.exists({externalId",
+  "assigned.find(1)",
   "Todo.count()",
   "Todo.last()",
   "Todo.pluck(Todo.f.title)",
@@ -693,6 +701,7 @@ expectInvalidCallbackArgsFailure();
 expectInvalidCallbackNameFailure();
 expectInvalidCallbackFieldFailure();
 expectInvalidFindValueTypeFailure();
+expectInvalidRelationFindValueTypeFailure();
 expectInvalidFindByFieldFailure();
 expectInvalidExistsFieldFailure();
 expectInvalidOffsetValueTypeFailure();
@@ -2341,6 +2350,27 @@ function expectInvalidFindValueTypeFailure() {
     invalidFindOutputDir,
     "Invalid ActiveRecord find id type compiled successfully.",
     "String should be Int"
+  );
+}
+
+function expectInvalidRelationFindValueTypeFailure() {
+  mkdirSync(invalidRelationFindSourceDir, { recursive: true });
+  writeFileSync(join(invalidRelationFindSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.where({status: \"open\"}).find({id: 1});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidRelationFindSourceDir,
+    invalidRelationFindOutputDir,
+    "Invalid ActiveRecord relation find id type compiled successfully.",
+    "String"
   );
 }
 

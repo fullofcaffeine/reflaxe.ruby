@@ -381,7 +381,15 @@ Rails symbols and hash keys.
 
 ```haxe
 var loaded:Todo = Todo.find(1);
+var assigned = Todo.where({title: "assigned"});
+var relationLoaded:Todo = assigned.find(1);
 ```
+
+Static model `find(...)` is stricter because RailsHx infers the primary-key
+field type from `@:railsColumn`. Relation-level `find(...)` uses a typed
+`Int`/`String` overload instead of `Dynamic`, so common scalar IDs remain
+ergonomic while object-shaped accidental IDs are rejected and generated Ruby
+stays a direct `find(1)` call.
 
 `findBy` is criteria typed and returns `Null<Todo>`:
 
@@ -394,6 +402,7 @@ Generated Ruby:
 
 ```ruby
 Models::Todo.find(1)
+Models::Todo.where(title: "assigned").find(1)
 Models::Todo.find_by(external_id: "ship-1")
 Models::Todo.where(title: "ship").find_by(completed: false)
 ```
@@ -506,6 +515,7 @@ Todo.where({status: "open"}).or(User.where({name: "owner"}));
 Todo.where({status: "open"}).merge(User.where({name: "owner"}));
 Todo.includes(User.a.todos);
 Todo.find("nope");
+Todo.where({status: "open"}).find({id: 1});
 Todo.findBy({missing: "nope"});
 Todo.exists({missing: "nope"});
 Todo.where({status: "open"}).offset("nope");

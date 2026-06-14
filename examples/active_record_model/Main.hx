@@ -90,6 +90,7 @@ class Main {
 		var hasOpenAssigned:Bool = assigned.exists({status: "open"});
 		var openCount:Int = Todo.where({status: "open"}).count();
 		var totalCount:Int = Todo.count();
+		var relationLoaded:Todo = assigned.find(1);
 		var assignedFoundBy:Null<Todo> = assigned.findBy({externalId: "assigned-1"});
 		var first:Null<Todo> = found.first();
 		var last:Null<Todo> = Todo.last();
