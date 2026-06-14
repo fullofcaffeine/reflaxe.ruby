@@ -1451,6 +1451,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActiveRecordRelationCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
+			case TField(target, access) if (fieldAccessRawName(access) == "transaction" && (params.length == 1 || params.length == 2) && isFunctionExpr(params[0])):
+				var options = params.length == 2 ? activeRecordTransactionOptions(params[1]) : [];
+				RubyRawExpr(printInlineExpr(target) + ".transaction(" + options.join(", ") + ") " + renderRubyBlock(params[0]));
 			case TField(target, access) if ((fieldAccessRawName(access) == "where" || fieldAccessRawName(access) == "rewhere") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				criteria == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(criteria)]);
@@ -1479,6 +1482,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if ((fieldAccessRawName(access) == "includes" || fieldAccessRawName(access) == "joins") && params.length == 1):
 				var associationArg = activeRecordAssociationArg(params[0]);
 				associationArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(associationArg)]);
+			case TField(target, access) if (fieldAccessRawName(access) == "lock" && params.length <= 1):
+				if (params.length == 0) {
+					RubyCall(compileExpr(target), "lock", []);
+				} else {
+					RubyCall(compileExpr(target), "lock", [activeRecordLockArg(params[0])]);
+				}
 			case _:
 				null;
 		}
@@ -1893,6 +1902,38 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				null;
 		}
+	}
+
+	static function activeRecordLockArg(expr:TypedExpr):RubyExpr {
+		var value = staticString(expr);
+		return value == null ? compileExpr(expr) : RubyString(value);
+	}
+
+	static function activeRecordTransactionOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				[for (field in fields) activeRecordTransactionOption(field.name, field.expr)];
+			case _:
+				[printInlineExpr(expr)];
+		}
+	}
+
+	static function activeRecordTransactionOption(name:String, expr:TypedExpr):String {
+		return switch (name) {
+			case "requiresNew":
+				"requires_new: " + printInlineExpr(expr);
+			case "joinable":
+				"joinable: " + printInlineExpr(expr);
+			case "isolation":
+				"isolation: " + activeRecordIsolationArg(expr);
+			case _:
+				RubyNaming.toMethodName(name) + ": " + printInlineExpr(expr);
+		}
+	}
+
+	static function activeRecordIsolationArg(expr:TypedExpr):String {
+		var value = staticString(expr);
+		return value == null ? printInlineExpr(expr) : ":" + RubyNaming.toMethodName(value);
 	}
 
 	static function activeRecordFieldName(expr:TypedExpr):Null<String> {

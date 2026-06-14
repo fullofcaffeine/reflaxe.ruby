@@ -2,13 +2,15 @@ import models.AuditLog;
 import models.Todo;
 import models.User;
 import rails.active_record.Group;
+import rails.active_record.Lock;
 import rails.active_record.Order;
 import rails.active_record.Projection;
+import rails.active_record.TransactionIsolation;
 
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `distinct`, `none`, `reverseOrder`, `readOnly`, `select`, `where`, `rewhere`, `or`, `merge`, `order`, `reorder`, `limit`,
+// `all`, `distinct`, `none`, `reverseOrder`, `readOnly`, `lock`, `transaction`, `select`, `where`, `rewhere`, `or`, `merge`, `order`, `reorder`, `limit`,
 // `offset`, `pluck`, `minimum`, `maximum`, `sum`, `average`, `find`, `findBy`,
 // `exists`, `count`, `first`, and `last` authored as typed Haxe calls, plus
 // typed multi-field orders through `Order.many`, named multi-field projections
@@ -40,6 +42,9 @@ class Main {
 		var reverseAssigned = assigned.reverseOrder().limit(2);
 		var readonlyOpen = Todo.readOnly().where({status: "open"}).limit(2);
 		var readonlyAssigned = assigned.readOnly().limit(2);
+		var lockedOpen = Todo.lock().where({status: "open"}).limit(1);
+		var explicitLock = assigned.lock(Lock.forUpdate()).first();
+		var noWaitLock = Todo.where({status: "open"}).lock(Lock.noWait()).first();
 		var openOrDone = Todo.where({status: "open"}).or(Todo.where({status: "done"})).order(Todo.f.title.asc());
 		var mergedOpen = Todo.where({status: "open"}).merge(Todo.where({completed: false})).limit(7);
 		var selected = Todo.select(Todo.f.title).where({status: "open"});
@@ -80,6 +85,12 @@ class Main {
 		var averageUserId:Null<Float> = Todo.average(Todo.f.userId);
 		var assignedUserSum:Int = assigned.sum(Todo.f.userId);
 		var assignedAverageUserId:Null<Float> = assigned.average(Todo.f.userId);
+		var transactionCreated:Todo = Todo.transaction(function() {
+			return Todo.create({title: "inside transaction", userId: 1});
+		});
+		var transactionCount:Int = Todo.transaction(function() {
+			return Todo.where({status: "open"}).lock(Lock.share()).count();
+		}, {requiresNew: true, isolation: TransactionIsolation.serializable()});
 		Sys.println(found == null);
 		Sys.println(scoped == null);
 		Sys.println(users == null);
@@ -119,6 +130,9 @@ class Main {
 		Sys.println(reverseAssigned == null);
 		Sys.println(readonlyOpen == null);
 		Sys.println(readonlyAssigned == null);
+		Sys.println(lockedOpen == null);
+		Sys.println(explicitLock == null);
+		Sys.println(noWaitLock == null);
 		Sys.println(openOrDone == null);
 		Sys.println(mergedOpen == null);
 		Sys.println(selected == null);
@@ -131,5 +145,7 @@ class Main {
 		Sys.println(staticRewhere == null);
 		Sys.println(offsetRelation == null);
 		Sys.println(offsetFromModel == null);
+		Sys.println(transactionCreated == null);
+		Sys.println(transactionCount >= 0);
 	}
 }

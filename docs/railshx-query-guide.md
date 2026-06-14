@@ -7,7 +7,7 @@ field value types, primary-key types, and relation return shapes.
 The rule of thumb is simple:
 
 - Keep query chains Rails-shaped: `all`, `distinct`, `select`, `where`, `rewhere`, `includes`,
-  `joins`, `order`, `reorder`, `limit`, `offset`, `pluck`, `minimum`,
+  `joins`, `order`, `reorder`, `limit`, `offset`, `lock`, `pluck`, `minimum`,
   `maximum`, `sum`, `average`, `find`, `findBy`, `exists`, `count`, `first`,
   `last`, and `toArray`.
 - Use macro facades for query results whose Haxe return type depends on more
@@ -124,6 +124,20 @@ var readonlyAssigned = Todo.where({title: "assigned"})
 	.readOnly()
 	.limit(2);
 
+var lockedOpen = Todo.lock()
+	.where({status: "open"})
+	.limit(1);
+
+var lockedAssigned = Todo.where({title: "assigned"})
+	.lock(rails.active_record.Lock.forUpdate())
+	.first();
+
+var transactionCount:Int = Todo.transaction(function() {
+	return Todo.where({status: "open"})
+		.lock(rails.active_record.Lock.share())
+		.count();
+}, {requiresNew: true, isolation: rails.active_record.TransactionIsolation.serializable()});
+
 var openOrDone = Todo.where({status: "open"})
 	.or(Todo.where({status: "done"}))
 	.order(Todo.f.title.asc());
@@ -158,6 +172,9 @@ Models::Todo.reverse_order().where(status: "open").limit(2)
 Models::Todo.where(title: "assigned").reverse_order().limit(2)
 Models::Todo.readonly().where(status: "open").limit(2)
 Models::Todo.where(title: "assigned").readonly().limit(2)
+Models::Todo.lock().where(status: "open").limit(1)
+Models::Todo.where(title: "assigned").lock("FOR UPDATE").first()
+Models::Todo.transaction(requires_new: true, isolation: :serializable) { Models::Todo.where(status: "open").lock("FOR SHARE").count() }
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.select(:title).where(status: "open")

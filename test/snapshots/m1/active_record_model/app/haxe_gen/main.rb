@@ -23,6 +23,9 @@ class Main
     reverse_assigned__hx0 = assigned__hx0.reverse_order().limit(2)
     readonly_open__hx0 = Models::Todo.readonly().where(status: "open").limit(2)
     readonly_assigned__hx0 = assigned__hx0.readonly().limit(2)
+    locked_open__hx0 = Models::Todo.lock().where(status: "open").limit(1)
+    explicit_lock__hx0 = assigned__hx0.lock("FOR UPDATE").first()
+    no_wait_lock__hx0 = Models::Todo.where(status: "open").lock("FOR UPDATE NOWAIT").first()
     open_or_done__hx0 = Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
     merged_open__hx0 = Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
     selected__hx0 = Models::Todo.select(:title).where(status: "open")
@@ -57,6 +60,8 @@ class Main
     average_user_id__hx0 = Models::Todo.average(:user_id)
     assigned_user_sum__hx0 = assigned__hx0.sum(:user_id)
     assigned_average_user_id__hx0 = assigned__hx0.average(:user_id)
+    transaction_created__hx0 = Models::Todo.transaction() { Models::Todo.create(title: "inside transaction", user_id: 1) }
+    transaction_count__hx0 = Models::Todo.transaction(requires_new: true, isolation: :serializable) { Models::Todo.where(status: "open").lock("FOR SHARE").count() }
     puts(HXRuby.stringify((found__hx0 == nil)))
     puts(HXRuby.stringify((scoped__hx0 == nil)))
     puts(HXRuby.stringify((users__hx0 == nil)))
@@ -96,6 +101,9 @@ class Main
     puts(HXRuby.stringify((reverse_assigned__hx0 == nil)))
     puts(HXRuby.stringify((readonly_open__hx0 == nil)))
     puts(HXRuby.stringify((readonly_assigned__hx0 == nil)))
+    puts(HXRuby.stringify((locked_open__hx0 == nil)))
+    puts(HXRuby.stringify((explicit_lock__hx0 == nil)))
+    puts(HXRuby.stringify((no_wait_lock__hx0 == nil)))
     puts(HXRuby.stringify((open_or_done__hx0 == nil)))
     puts(HXRuby.stringify((merged_open__hx0 == nil)))
     puts(HXRuby.stringify((selected__hx0 == nil)))
@@ -108,6 +116,8 @@ class Main
     puts(HXRuby.stringify((static_rewhere__hx0 == nil)))
     puts(HXRuby.stringify((offset_relation__hx0 == nil)))
     puts(HXRuby.stringify((offset_from_model__hx0 == nil)))
+    puts(HXRuby.stringify((transaction_created__hx0 == nil)))
+    puts(HXRuby.stringify((transaction_count__hx0 >= 0)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

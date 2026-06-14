@@ -24,8 +24,10 @@ entrypoint when you want to start from a full model relation:
 
 ```haxe
 import rails.active_record.Group;
+import rails.active_record.Lock;
 import rails.active_record.Order;
 import rails.active_record.Projection;
+import rails.active_record.TransactionIsolation;
 
 var allOpen = Todo
 	.all()
@@ -44,6 +46,11 @@ var reverseOpen = Todo.reverseOrder().where({status: "open"}).limit(2);
 var reverseAssigned = Todo.where({title: "assigned"}).reverseOrder().limit(2);
 var readonlyOpen = Todo.readOnly().where({status: "open"}).limit(2);
 var readonlyAssigned = Todo.where({title: "assigned"}).readOnly().limit(2);
+var lockedOpen = Todo.lock().where({status: "open"}).limit(1);
+var explicitLock = Todo.where({title: "assigned"}).lock(Lock.forUpdate()).first();
+var transactionCount:Int = Todo.transaction(function() {
+	return Todo.where({status: "open"}).lock(Lock.share()).count();
+}, {requiresNew: true, isolation: TransactionIsolation.serializable()});
 
 var openOrDone = Todo
 	.where({status: "open"})
@@ -100,6 +107,9 @@ Models::Todo.reverse_order().where(status: "open").limit(2)
 Models::Todo.where(title: "assigned").reverse_order().limit(2)
 Models::Todo.readonly().where(status: "open").limit(2)
 Models::Todo.where(title: "assigned").readonly().limit(2)
+Models::Todo.lock().where(status: "open").limit(1)
+Models::Todo.where(title: "assigned").lock("FOR UPDATE").first()
+Models::Todo.transaction(requires_new: true, isolation: :serializable) { Models::Todo.where(status: "open").lock("FOR SHARE").count() }
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.reorder(title: :desc).limit(4)
@@ -137,6 +147,11 @@ Type-safety features used here:
   authoring layer and lower to Rails `reverse_order`.
 - `Todo.readOnly()` and `relation.readOnly()` keep the read-only relation
   intent typed and lower to Rails `readonly`.
+- `Todo.lock()` and `relation.lock(Lock.forUpdate())` keep pessimistic locking
+  Rails-shaped while avoiding ad-hoc lock strings in normal app code.
+- `Todo.transaction(function() return value, options)` preserves the block
+  return type and checks transaction options such as `requiresNew` and
+  `TransactionIsolation.serializable()` before lowering to Rails kwargs.
 - `relation.or(otherRelation)` requires another `Relation<Todo, ...>` operand
   and lowers to Rails-native `.or(...)`.
 - `relation.merge(otherRelation)` uses the same typed same-model operand rule

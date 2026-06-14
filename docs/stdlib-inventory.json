@@ -159,6 +159,14 @@
       "reason": "Internal compiler marker used by Group.count so app code stays typed while generated Ruby emits Rails-native group(:field).count plus HXRuby map shaping."
     },
     {
+      "id": "std.rails.active_record_lock",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Lock.hx",
+      "surface": "rails.active_record.Lock",
+      "reason": "Typed pessimistic lock token for ActiveRecord lock clauses, with named Rails/database lock strengths and an explicit custom-string escape hatch."
+    },
+    {
       "id": "std.rails.active_record_order",
       "owner": "std",
       "status": "implemented",
@@ -196,7 +204,23 @@
       "status": "implemented",
       "path": "std/rails/active_record/Relation.hx",
       "surface": "rails.active_record.Relation",
-      "reason": "Typed ActiveRecord::Relation facade for model query chains such as all/distinct/none/reverseOrder/readOnly/select/where/rewhere/or/merge/includes/joins/order/reorder/limit/offset/pluck/minimum/maximum/sum/average/find/findBy/exists/count/first/last/toArray."
+      "reason": "Typed ActiveRecord::Relation facade for model query chains such as all/distinct/none/reverseOrder/readOnly/lock/select/where/rewhere/or/merge/includes/joins/order/reorder/limit/offset/pluck/minimum/maximum/sum/average/find/findBy/exists/count/first/last/toArray."
+    },
+    {
+      "id": "std.rails.active_record_transaction_isolation",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/TransactionIsolation.hx",
+      "surface": "rails.active_record.TransactionIsolation",
+      "reason": "Typed transaction isolation tokens for Rails transaction options."
+    },
+    {
+      "id": "std.rails.active_record_transaction_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/TransactionOptions.hx",
+      "surface": "rails.active_record.TransactionOptions",
+      "reason": "Typed options object for ActiveRecord transaction blocks, including requiresNew, joinable, and isolation."
     },
     {
       "id": "std.rails.active_record_model_key",

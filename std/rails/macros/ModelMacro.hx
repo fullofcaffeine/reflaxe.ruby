@@ -28,6 +28,7 @@ class ModelMacro {
 		addNoArgStub(fields, "all", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "distinct", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "none", relationComplexType(selfType, criteriaType, pos), pos);
+		addLockStub(fields, selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgNativeStub(fields, "reverseOrder", "reverse_order", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgNativeStub(fields, "readOnly", "readonly", relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRelationStub(fields, "select", selfType, relationComplexType(selfType, criteriaType, pos), pos);
@@ -43,6 +44,7 @@ class ModelMacro {
 		addFieldProjectionStub(fields, "maximum", selfType, nullableGenericComplexType("TValue"), pos);
 		addIntFieldProjectionStub(fields, "sum", selfType, macro : Int, pos);
 		addIntFieldProjectionStub(fields, "average", selfType, macro : Null<Float>, pos);
+		addTransactionStub(fields, pos);
 		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
 		return fields;
 	}
@@ -908,6 +910,20 @@ class ModelMacro {
 		});
 	}
 
+	static function lockComplexType():ComplexType {
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "Lock"
+		});
+	}
+
+	static function transactionOptionsComplexType():ComplexType {
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "TransactionOptions"
+		});
+	}
+
 	static function arrayComplexType(itemType:ComplexType):ComplexType {
 		return TPath({
 			pack: [],
@@ -1076,6 +1092,26 @@ class ModelMacro {
 		});
 	}
 
+	static function addLockStub(fields:Array<Field>, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, "lock")) {
+			return;
+		}
+		fields.push({
+			name: "lock",
+			access: [APublic, AStatic],
+			kind: FFun({
+				args: [{name: "strength", type: lockComplexType(), opt: true}],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro "lock"], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
 	static function addPluckStub(fields:Array<Field>, selfType:ComplexType, pos:Position):Void {
 		var valueType:ComplexType = TPath({pack: [], name: "TValue"});
 		addFieldProjectionStub(fields, "pluck", selfType, arrayComplexType(valueType), pos);
@@ -1125,6 +1161,31 @@ class ModelMacro {
 			}),
 			meta: [
 				{name: ":native", params: [macro $v{name}], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addTransactionStub(fields:Array<Field>, pos:Position):Void {
+		if (hasFieldNamed(fields, "transaction")) {
+			return;
+		}
+		var resultType:ComplexType = TPath({pack: [], name: "TResult"});
+		fields.push({
+			name: "transaction",
+			access: [APublic, AStatic],
+			kind: FFun({
+				params: [{name: "TResult", constraints: [], params: [], meta: []}],
+				args: [
+					{name: "block", type: TFunction([], resultType)},
+					{name: "options", type: transactionOptionsComplexType(), opt: true}
+				],
+				ret: resultType,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro "transaction"], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos

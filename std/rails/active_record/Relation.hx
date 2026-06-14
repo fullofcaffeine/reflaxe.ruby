@@ -17,6 +17,7 @@ extern class Relation<TModel, TCriteria> {
 	public function offset(count:Int):Relation<TModel, TCriteria>;
 	public function distinct():Relation<TModel, TCriteria>;
 	public function none():Relation<TModel, TCriteria>;
+	public function lock(?strength:Lock):Relation<TModel, TCriteria>;
 	@:native("reverse_order")
 	public function reverseOrder():Relation<TModel, TCriteria>;
 	@:native("readonly")
