@@ -6,7 +6,7 @@ import models.User;
 //
 // Demonstrates: table naming, timestamps, typed columns, defaults, enum
 // metadata, nullable fields, indexes, uniqueness, associations, scopes, and
-// lifecycle callbacks.
+// lifecycle callbacks, and Rails-native typed scope declarations.
 // Type safety: `Base<Todo>` makes static query APIs return `Relation<Todo>`;
 // `@:railsColumn` generates field refs such as `Todo.f.title`; `@:belongsTo`
 // generates association refs such as `Todo.a.user`; callbacks reference typed
@@ -43,8 +43,19 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:belongsTo({optional: false, foreignKey: "userId", inverseOf: "todos"})
 	public var user:rails.ActiveRecord.BelongsTo<User>;
 
+	@:railsScope
 	public static function incomplete() {
 		return Todo.where({completed: false});
+	}
+
+	@:railsScope
+	public static function withStatus(status:String) {
+		return Todo.where({status: status});
+	}
+
+	@:railsDefaultScope
+	public static function orderedByTitle() {
+		return Todo.order(Todo.f.title.asc());
 	}
 
 	@:beforeValidation

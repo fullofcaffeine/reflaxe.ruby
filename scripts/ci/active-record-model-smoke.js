@@ -96,6 +96,10 @@ const invalidAggregateFieldSourceDir = join(root, "test", ".generated", "active_
 const invalidAggregateFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_out");
 const invalidAggregateNumericSourceDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_numeric_src");
 const invalidAggregateNumericOutputDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_numeric_out");
+const invalidScopeInstanceSourceDir = join(root, "test", ".generated", "active_record_model_invalid_scope_instance_src");
+const invalidScopeInstanceOutputDir = join(root, "test", ".generated", "active_record_model_invalid_scope_instance_out");
+const invalidDefaultScopeArgsSourceDir = join(root, "test", ".generated", "active_record_model_invalid_default_scope_args_src");
+const invalidDefaultScopeArgsOutputDir = join(root, "test", ".generated", "active_record_model_invalid_default_scope_args_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -208,6 +212,10 @@ rmSync(invalidAggregateFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidAggregateFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidAggregateNumericSourceDir, { force: true, recursive: true });
 rmSync(invalidAggregateNumericOutputDir, { force: true, recursive: true });
+rmSync(invalidScopeInstanceSourceDir, { force: true, recursive: true });
+rmSync(invalidScopeInstanceOutputDir, { force: true, recursive: true });
+rmSync(invalidDefaultScopeArgsSourceDir, { force: true, recursive: true });
+rmSync(invalidDefaultScopeArgsOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile active_record_model through Reflaxe.");
@@ -254,8 +262,9 @@ for (const expected of [
   "# haxe column notes: Null",
   "# haxe column external_id: String",
   "# haxe column user_id: Int",
-  "def self.incomplete()",
-  "Models::Todo.where(completed: false)",
+  "scope :incomplete, -> { where(completed: false) }",
+  "scope :with_status, ->(status__hx0) { where(status: status__hx0) }",
+  "default_scope -> { order(title: :asc) }",
   "before_validation :normalize_title",
   "after_commit :publish_lifecycle_event",
   "def normalize_title()",
@@ -294,6 +303,13 @@ for (const unexpected of ["def self.where", "def self.create"]) {
   }
 }
 
+for (const unexpected of ["def self.incomplete()", "def self.with_status("]) {
+  if (todoRuby.includes(unexpected)) {
+    console.error(`Rails scope should be emitted as a scope macro, not a static method: ${unexpected}`);
+    process.exit(1);
+  }
+}
+
 const auditLogRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "audit_log.rb"), "utf8");
 for (const expected of [
   "class AuditLog < ::ApplicationRecord",
@@ -319,6 +335,7 @@ for (const expected of [
   'Models::Todo.joins(:user).find_by(user: {name: "owner"})',
   'Models::Todo.joins(:user).exists?(user: {id: 1})',
   "Models::Todo.incomplete().includes(:user).limit(5)",
+  'Models::Todo.with_status("open").order(title: :asc).limit(4)',
   'Models::User.includes(:todos).joins(:todos).where(name: "owner")',
   'Models::Todo.create(title: "ship", user_id: 1)',
   "Models::AuditLog.where(event_count: 1).order(event_count: :desc)",
@@ -418,6 +435,9 @@ for (const expected of [
   "Lock.forUpdate()",
   "Todo.transaction(function()",
   "TransactionIsolation.serializable()",
+  "@:railsScope",
+  "@:railsDefaultScope",
+  "scope :with_status",
   ".or(Todo.where({status",
   ".merge(Todo.where({completed",
   "select(Todo.f.title)",
@@ -463,6 +483,9 @@ for (const expected of [
   "Todo.reorder(Todo.f.title.desc())",
   "Order.many([Todo.f.title.asc(), Todo.f.id.desc()])",
   "Todo.incomplete().includes(Todo.a.user)",
+  "Todo.withStatus(\"open\")",
+  "@:railsScope",
+  "@:railsDefaultScope",
   "AuditLog.where({eventCount: 1})",
   "Todo.where({status: \"open\"}).offset(20).limit(10)",
   "Todo.exists({externalId",
@@ -525,6 +548,8 @@ expectInvalidGroupFieldOwnerFailure();
 expectInvalidGroupUnsupportedFieldFailure();
 expectInvalidAggregateFieldOwnerFailure();
 expectInvalidAggregateNumericFieldFailure();
+expectInvalidScopeInstanceFailure();
+expectInvalidDefaultScopeArgsFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -1700,6 +1725,70 @@ function expectInvalidFindByFieldFailure() {
     invalidFindByOutputDir,
     "Invalid ActiveRecord findBy field compiled successfully.",
     "has extra field missing"
+  );
+}
+
+function expectInvalidScopeInstanceFailure() {
+  mkdirSync(join(invalidScopeInstanceSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidScopeInstanceSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidScopeInstanceSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var title:String;",
+    "\t@:railsScope public function badScope() {",
+    "\t\treturn BadTodo.where({title: \"bad\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidScopeInstanceSourceDir,
+    invalidScopeInstanceOutputDir,
+    "Invalid ActiveRecord instance scope compiled successfully.",
+    "@:railsScope must annotate a static model method."
+  );
+}
+
+function expectInvalidDefaultScopeArgsFailure() {
+  mkdirSync(join(invalidDefaultScopeArgsSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidDefaultScopeArgsSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidDefaultScopeArgsSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var title:String;",
+    "\t@:railsDefaultScope public static function badDefaultScope(title:String) {",
+    "\t\treturn BadTodo.where({title: title});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidDefaultScopeArgsSourceDir,
+    invalidDefaultScopeArgsOutputDir,
+    "Invalid ActiveRecord default scope with args compiled successfully.",
+    "@:railsDefaultScope methods cannot take arguments."
   );
 }
 

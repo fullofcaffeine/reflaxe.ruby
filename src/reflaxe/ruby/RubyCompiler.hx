@@ -526,6 +526,62 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return compileMethod(field);
 	}
 
+	static function compileRailsModelScope(field:ClassFuncData, classType:ClassType):String {
+		validateRailsModelScope(field, false);
+		var name = railsScopeName(field, ":railsScope");
+		var lambda = railsScopeLambda(field, classType);
+		return "scope :" + RubyNaming.toMethodName(name) + ", " + lambda;
+	}
+
+	static function compileRailsModelDefaultScope(field:ClassFuncData, classType:ClassType):String {
+		validateRailsModelScope(field, true);
+		return "default_scope " + railsScopeLambda(field, classType);
+	}
+
+	static function validateRailsModelScope(field:ClassFuncData, defaultScope:Bool):Void {
+		var label = defaultScope ? "@:railsDefaultScope" : "@:railsScope";
+		if (!field.isStatic) {
+			Context.error(label + " must annotate a static model method.", field.field.pos);
+		}
+		if (field.field.name == "new") {
+			Context.error(label + " cannot annotate a constructor.", field.field.pos);
+		}
+		if (field.expr == null) {
+			Context.error(label + " requires a typed method body.", field.field.pos);
+		}
+		if (defaultScope && field.args.length > 0) {
+			Context.error("@:railsDefaultScope methods cannot take arguments.", field.field.pos);
+		}
+	}
+
+	static function railsScopeName(field:ClassFuncData, metaName:String):String {
+		var explicit = metaStringValue(field.field.meta, metaName);
+		if (explicit != null) {
+			return explicit;
+		}
+		return field.field.name;
+	}
+
+	static function railsScopeLambda(field:ClassFuncData, classType:ClassType):String {
+		return withLocalNameScope([for (arg in field.args) if (arg.tvar != null) arg.tvar], () -> {
+			var args = [for (arg in field.args) arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)];
+			var body = [for (line in renderStatements(compileRubyBlockBody(field.expr))) normalizeRailsScopeBody(line, classType)];
+			if (canRenderInlineBlock(body)) {
+				var prefix = args.length == 0 ? " " : "(" + args.join(", ") + ") ";
+				return "->" + prefix + "{ " + body[0] + " }";
+			}
+			var lines = [args.length == 0 ? "lambda do" : "lambda do |" + args.join(", ") + "|"];
+			appendIndentedLines(lines, body, 1);
+			lines.push("end");
+			return lines.join("\n");
+		});
+	}
+
+	static function normalizeRailsScopeBody(line:String, classType:ClassType):String {
+		var prefix = rubyConstantPath(classType.pack, classType.name) + ".";
+		return StringTools.startsWith(line, prefix) ? line.substr(prefix.length) : line;
+	}
+
 	static function compileVarField(field:ClassVarData):RubyStatement {
 		return withLocalNameScope([], () -> {
 			var name = RubyNaming.toLocalName(field.field.name);
@@ -971,6 +1027,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				body.push("enum :" + RubyNaming.toMethodName(field.field.name) + ", " + railsEnumOptions(field.field.meta));
 			}
 		}
+		for (field in funcFields) {
+			if (hasMeta(field.field.meta, ":railsScope")) {
+				body.push(compileRailsModelScope(field, classType));
+			}
+			if (hasMeta(field.field.meta, ":railsDefaultScope")) {
+				body.push(compileRailsModelDefaultScope(field, classType));
+			}
+		}
 		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":railsColumn")) {
 				body.push("# haxe column " + RubyNaming.toMethodName(field.field.name) + ": " + typeLabel(field.field.type));
@@ -991,6 +1055,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		for (field in funcFields) {
 			if (field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
+				continue;
+			}
+			if (hasMeta(field.field.meta, ":railsScope") || hasMeta(field.field.meta, ":railsDefaultScope")) {
 				continue;
 			}
 			body = body.concat(renderStatements([compileRailsModelMethod(field)]));

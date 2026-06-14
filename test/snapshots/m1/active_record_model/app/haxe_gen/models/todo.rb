@@ -24,6 +24,9 @@ module Models
     end
     belongs_to :user, optional: false, foreign_key: "user_id", inverse_of: :todos
     enum :status, {open: "open", done: "done"}
+    scope :incomplete, -> { where(completed: false) }
+    scope :with_status, ->(status__hx0) { where(status: status__hx0) }
+    default_scope -> { order(title: :asc) }
     # haxe column id: Int
     # haxe column title: String
     # haxe column completed: Bool
@@ -42,9 +45,6 @@ module Models
     end
     def publish_lifecycle_event()
       nil
-    end
-    def self.incomplete()
-      return Models::Todo.where(completed: false)
     end
   end
 end

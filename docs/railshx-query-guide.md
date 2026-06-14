@@ -570,30 +570,55 @@ todos = Models::Todo.incomplete().includes(:user).order(title: :asc).offset(20).
 That boundary is intentional: query code stays ActiveRecord-shaped, while
 templates receive typed Haxe arrays.
 
-## Static Scopes
+## Typed Rails Scopes
 
-Model-owned static functions are the RailsHx equivalent of small typed scopes:
+Annotate a static model method with `@:railsScope` when it is part of the
+model's Rails query API:
 
 ```haxe
+@:railsScope
 public static function incomplete() {
 	return Todo.where({completed: false});
 }
 
+@:railsScope
+public static function withStatus(status:String) {
+	return Todo.where({status: status});
+}
+
 var scoped = Todo.incomplete().includes(Todo.a.user).limit(5);
+var statusScoped = Todo.withStatus("open").order(Todo.f.title.asc()).limit(4);
+```
+
+The Haxe method body is type-checked like any other query code. Generated model
+Ruby uses Rails-native scope macros:
+
+```ruby
+scope :incomplete, -> { where(completed: false) }
+scope :with_status, ->(status__hx0) { where(status: status__hx0) }
+
+Models::Todo.incomplete().includes(:user).limit(5)
+Models::Todo.with_status("open").order(title: :asc).limit(4)
+```
+
+Use `@:railsDefaultScope` only for deliberate Rails default scopes:
+
+```haxe
+@:railsDefaultScope
+public static function orderedByTitle() {
+	return Todo.order(Todo.f.title.asc());
+}
 ```
 
 Generated Ruby:
 
 ```ruby
-def self.incomplete()
-  return Models::Todo.where(completed: false)
-end
-
-Models::Todo.incomplete().includes(:user).limit(5)
+default_scope -> { order(title: :asc) }
 ```
 
-Keep these methods Rails-shaped: return relations, compose other relations, and
-avoid raw Ruby injection in app code.
+Use ordinary static methods for class helpers that should remain `def self.*`.
+Use `@:railsScope` for composable query scopes that Rails developers should see
+as `scope :name`.
 
 ## Current Limits
 

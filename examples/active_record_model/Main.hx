@@ -20,7 +20,8 @@ import rails.active_record.TransactionIsolation;
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
 // IntelliSense: editors should complete `Todo.f.title`, `Todo.a.user`,
-// relation methods, and model-owned scopes such as `Todo.incomplete()`.
+// relation methods, and model-owned Rails scopes such as `Todo.incomplete()`
+// and `Todo.withStatus(...)`.
 // Ruby output: ordinary ActiveRecord calls such as `where(...)`,
 // `includes(:user)`, `order(title: :asc)`, and `limit(10)`.
 class Main {
@@ -33,6 +34,7 @@ class Main {
 		var nestedFoundBy:Null<Todo> = Todo.joins(Todo.a.user).findBy({user: {name: "owner"}});
 		var nestedExists:Bool = Todo.joins(Todo.a.user).exists({user: {id: 1}});
 		var scoped = Todo.incomplete().includes(Todo.a.user).limit(5);
+		var statusScoped = Todo.withStatus("open").order(Todo.f.title.asc()).limit(4);
 		var users = User.includes(User.a.todos).joins(User.a.todos).where({name: "owner"});
 		var made:Todo = Todo.create({title: "ship", userId: 1});
 		var logs = AuditLog.where({eventCount: 1}).order(AuditLog.f.eventCount.desc());
@@ -106,6 +108,7 @@ class Main {
 		Sys.println(nestedFoundBy == null);
 		Sys.println(nestedExists);
 		Sys.println(scoped == null);
+		Sys.println(statusScoped == null);
 		Sys.println(users == null);
 		Sys.println(made == null);
 		Sys.println(logs == null);

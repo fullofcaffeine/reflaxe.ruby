@@ -218,15 +218,48 @@ Group.count(Todo, Todo.f.completed);
 
 ## Scopes
 
-`Todo.incomplete()` is a typed static scope:
+`Todo.incomplete()` and `Todo.withStatus(...)` are typed Rails scopes:
 
 ```haxe
+@:railsScope
 public static function incomplete() {
 	return Todo.where({completed: false});
 }
 
+@:railsScope
+public static function withStatus(status:String) {
+	return Todo.where({status: status});
+}
+
+@:railsDefaultScope
+public static function orderedByTitle() {
+	return Todo.order(Todo.f.title.asc());
+}
+
 var scoped = Todo.incomplete().includes(Todo.a.user).limit(5);
+var statusScoped = Todo.withStatus("open").order(Todo.f.title.asc()).limit(4);
 ```
+
+Generated model Ruby uses Rails-native scope macros:
+
+```ruby
+scope :incomplete, -> { where(completed: false) }
+scope :with_status, ->(status__hx0) { where(status: status__hx0) }
+default_scope -> { order(title: :asc) }
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.incomplete().includes(:user).limit(5)
+Models::Todo.with_status("open").order(title: :asc).limit(4)
+```
+
+Use `@:railsScope` when the method is part of the model's Rails query API and
+should appear as `scope :name, -> { ... }` in `app/models`. Use an ordinary
+static method when it is just a Ruby class helper. Both paths are typed in Haxe,
+but `@:railsScope` gives Rails tools and Rails developers the familiar scope
+shape.
 
 `offset` is typed as `Int` and preserves the relation shape for pagination:
 
@@ -241,19 +274,6 @@ Generated Ruby:
 Models::Todo.where(status: "open").offset(20).limit(10)
 Models::Todo.offset(5).where(completed: false)
 ```
-
-Generated Ruby:
-
-```ruby
-def self.incomplete()
-  return Models::Todo.where(completed: false)
-end
-
-Models::Todo.incomplete().includes(:user).limit(5)
-```
-
-Use static model methods for small Rails-shaped scopes. They keep IntelliSense
-on the Haxe side and still generate ordinary Ruby methods.
 
 ## Field And Association Aliases
 
