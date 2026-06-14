@@ -91,6 +91,14 @@ npm run test:gem-package
 npm run ci:release-contracts
 ```
 
+The dedicated CI Rails runtime job runs `npm run test:rails-runtime` across the
+supported Ruby matrix (`3.2`, `3.3`, `4.0`). The local `npm test` path may skip
+Rails runtime execution when generated-app bundles are absent, but the dedicated
+runtime command and CI lane install those bundles and fail closed when Rails
+cannot boot. Runtime smoke logs must identify the failing boundary with staged
+labels such as `compiler`, `materialization`, `migration`, `request tests`, and
+browser stages.
+
 For a generated or adopted Rails app, also run:
 
 ```bash

@@ -117,7 +117,7 @@ To force the generated Rails runtime apps to install their bundles and execute R
 npm run test:rails-runtime
 ```
 
-This is the mandatory CI lane for Rails runtime coverage. Plain `npm test` keeps the compiler loop fast and still syntax-checks generated Rails artifacts; the Rails runtime lanes skip only when Rails gems are unavailable in a local environment.
+This is the mandatory CI lane for Rails runtime coverage across the supported Ruby matrix (`3.2`, `3.3`, `4.0`). Plain `npm test` keeps the compiler loop fast and still syntax-checks generated Rails artifacts; the Rails runtime lanes skip only when Rails gems are unavailable in a local environment. CI runs `npm run test:rails-runtime`, so missing generated-app Rails gems become hard failures there.
 
 For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, and dev process files:
 
@@ -203,7 +203,7 @@ For mandatory Rails runtime integration, use the pinned Ruby and let the generat
 npm run test:rails-runtime
 ```
 
-`npm test` will run Rails runtime checks when generated app bundles are already available. `npm run test:rails-runtime` makes missing Rails gems a hard failure and installs the generated bundles first, matching the dedicated CI lane.
+`npm test` will run Rails runtime checks when generated app bundles are already available. `npm run test:rails-runtime` makes missing Rails gems a hard failure and installs the generated bundles first, matching the dedicated CI lane. Runtime logs are stage-labeled (`compiler`, `materialization`, `migration`, `request tests`, and browser stages) so CI failures point at the failing boundary.
 
 ## Quality Gates
 

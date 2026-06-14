@@ -19,6 +19,7 @@ const appDir = join(root, "test", ".generated", "rails_interop");
 const invalidSourceDir = join(root, "test", ".generated", "rails_interop_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "rails_interop_invalid_out");
 const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
+let currentStage = "startup";
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -31,11 +32,11 @@ rmSync(appDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 
-compileWithFirstAvailableReflaxe(exampleDir, compiledDir, "Main");
-assertCompiledArtifacts();
-expectInvalidExternalTemplateLocalsFailure();
-materializeRailsApp();
-syntaxCheck([
+stage("compiler", () => compileWithFirstAvailableReflaxe(exampleDir, compiledDir, "Main"));
+stage("compiler artifacts", assertCompiledArtifacts);
+stage("typed external template validation", expectInvalidExternalTemplateLocalsFailure);
+stage("materialization", materializeRailsApp);
+stage("ruby syntax", () => syntaxCheck([
   "app/controllers/legacy_controller.rb",
   "app/haxe_gen/controllers/mixed_controller.rb",
   "app/haxe_gen/services/typed_stats.rb",
@@ -46,26 +47,26 @@ syntaxCheck([
   "config/environment.rb",
   "config/routes.rb",
   "test/controllers/interop_test.rb",
-]);
-viewContentCheck("app/views/mixed/haxe_shell.html.erb", [
+]));
+stage("template materialization", () => viewContentCheck("app/views/mixed/haxe_shell.html.erb", [
   "<h1><%= title %></h1>",
   'render partial: "legacy/badge", locals: {label: legacy_badge_label, tone: "warm"}',
   'render partial: "typed_widgets/summary", locals: {title: "HHX island rendered from Haxe", count: 3, note: typed_summary}',
   "/legacy-shell",
-]);
-viewContentCheck("app/views/legacy/home.html.erb", [
+]));
+stage("template materialization", () => viewContentCheck("app/views/legacy/home.html.erb", [
   "Legacy ERB, typed Haxe inside.",
   'render partial: "typed_widgets/summary"',
   "Services::TypedStats.confidence_label",
   "Services::TypedStats.summary",
-]);
+]));
 
-const bundleProbe = run("bundle", ["check"], { cwd: appDir, allowFailure: true });
+const bundleProbe = stage("bundle probe", () => run("bundle", ["check"], { cwd: appDir, allowFailure: true }));
 if (bundleProbe.status !== 0) {
   const message = "Rails bundle is not available for the mixed interop app; skipped runtime Rails test pass.";
   if (requireRails) {
     process.stdout.write("[rails-interop] Rails bundle missing; running bundle install because REQUIRE_RAILS=1.\n");
-    run("bundle", ["install"], { cwd: appDir });
+    stage("bundle install", () => run("bundle", ["install"], { cwd: appDir }));
   } else {
     process.stdout.write(`[rails-interop] ${message}\n`);
     process.stdout.write("[rails-interop] Set REQUIRE_RAILS=1 after installing app gems to make this lane mandatory.\n");
@@ -73,10 +74,10 @@ if (bundleProbe.status !== 0) {
   }
 }
 
-run("bundle", ["exec", "rails", "test"], {
+stage("request tests", () => run("bundle", ["exec", "rails", "test"], {
   cwd: appDir,
   env: { ...process.env, RAILS_ENV: "test" },
-});
+}));
 
 function assertCompiledArtifacts() {
   for (const file of [
@@ -365,6 +366,12 @@ function writeFile(relativePath, content) {
   writeFileSync(fullPath, content);
 }
 
+function stage(name, callback) {
+  currentStage = name;
+  process.stdout.write(`[rails-interop] stage: ${name}\n`);
+  return callback();
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
@@ -373,6 +380,7 @@ function run(command, args, options = {}) {
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0 && !options.allowFailure) {
+    process.stderr.write(`[rails-interop] failed during ${currentStage}: ${command} ${args.join(" ")}\n`);
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);

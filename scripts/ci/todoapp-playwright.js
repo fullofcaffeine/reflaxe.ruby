@@ -14,6 +14,7 @@ const spec = process.env.RAILSHX_PLAYWRIGHT_SPEC ?? "examples/todoapp_rails/e2e"
 
 let server = null;
 let serverLog = "";
+let currentStage = "startup";
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => {
@@ -29,17 +30,19 @@ main().catch((error) => {
 });
 
 async function main() {
-  ensureSupportedRuby();
+  stage("browser ruby probe", ensureSupportedRuby);
 
-  const port = await resolvePort();
+  const port = await stageAsync("browser port allocation", resolvePort);
   const baseUrl = process.env.BASE_URL ?? `http://${bind}:${port}`;
 
-  run(process.execPath, [join(root, "scripts", "rails", "todoapp.js"), "prepare"], {
+  stage("browser app prepare", () => run(process.execPath, [join(root, "scripts", "rails", "todoapp.js"), "prepare"], {
     env: { ...process.env, PORT: port, BIND: bind },
-  });
+  }));
 
-  ensurePlaywrightBrowser();
+  stage("browser install", ensurePlaywrightBrowser);
 
+  currentStage = "browser server boot";
+  process.stdout.write(`[todoapp-playwright] stage: ${currentStage}\n`);
   server = spawn("bundle", ["exec", "ruby", "bin/rails", "server", "-b", bind, "-p", port], {
     cwd: appDir,
     env: process.env,
@@ -61,12 +64,12 @@ async function main() {
     }
   });
 
-  await waitForReady(`${baseUrl}/todos`, 45_000);
+  await stageAsync("browser readiness", () => waitForReady(`${baseUrl}/todos`, 45_000));
   const specArgs = spec.split(/\s+/).filter(Boolean);
-  const result = run("npx", ["playwright", "test", ...specArgs, "--workers=1"], {
+  const result = stage("browser specs", () => run("npx", ["playwright", "test", ...specArgs, "--workers=1"], {
     allowFailure: true,
     env: { ...process.env, BASE_URL: baseUrl },
-  });
+  }));
 
   cleanup();
   if (result.status !== 0) {
@@ -176,6 +179,18 @@ function sleep(ms) {
   return new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 }
 
+function stage(name, callback) {
+  currentStage = name;
+  process.stdout.write(`[todoapp-playwright] stage: ${name}\n`);
+  return callback();
+}
+
+async function stageAsync(name, callback) {
+  currentStage = name;
+  process.stdout.write(`[todoapp-playwright] stage: ${name}\n`);
+  return await callback();
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
@@ -188,6 +203,7 @@ function run(command, args, options = {}) {
     process.stderr.write(result.stderr ?? "");
   }
   if (result.status !== 0 && !options.allowFailure) {
+    process.stderr.write(`[todoapp-playwright] failed during ${currentStage}: ${command} ${args.join(" ")}\n`);
     process.exit(result.status ?? 1);
   }
   return result;

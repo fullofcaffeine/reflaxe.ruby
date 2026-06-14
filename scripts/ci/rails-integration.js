@@ -16,10 +16,11 @@ const root = resolve(__dirname, "..", "..");
 const compiledDir = join(root, "test", ".generated", "todoapp_rails");
 const appDir = join(root, "test", ".generated", "rails_integration");
 const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
+let currentStage = "startup";
 
-run(process.execPath, [join(root, "scripts", "ci", "todoapp-rails-smoke.js")]);
-materializeRailsApp();
-syntaxCheck([
+stage("compiler", () => run(process.execPath, [join(root, "scripts", "ci", "todoapp-rails-smoke.js")]));
+stage("materialization", materializeRailsApp);
+stage("ruby syntax", () => syntaxCheck([
   "app/models/application_record.rb",
   "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/views/todo_index_view.rb",
@@ -34,30 +35,30 @@ syntaxCheck([
   "db/migrate/20260101000001_update_todos.rb",
   "test/models/todo_test.rb",
   "test/controllers/todos_controller_test.rb",
-]);
-viewContentCheck("app/views/controllers/todos/index.html.erb", [
+]));
+stage("template materialization", () => viewContentCheck("app/views/controllers/todos/index.html.erb", [
   "RailsHx sample",
   "Typed Rails, polished Ruby.",
   'render partial: "controllers/todos/composer"',
   'render partial: "controllers/todos/dashboard"',
   "typed_column_count",
-]);
-viewContentCheck("app/views/controllers/todos/_composer.html.erb", [
+]));
+stage("template materialization", () => viewContentCheck("app/views/controllers/todos/_composer.html.erb", [
   "if sample_user != nil",
   'render partial: "controllers/todos/typed_form"',
   "sample_user_id",
-]);
+]));
 
-const railsProbe = run("bundle", ["exec", "ruby", "-e", "require 'rails'; puts Rails.version"], {
+const railsProbe = stage("bundle probe", () => run("bundle", ["exec", "ruby", "-e", "require 'rails'; puts Rails.version"], {
   cwd: appDir,
   allowFailure: true,
-});
+}));
 
 if (railsProbe.status !== 0) {
   const message = "Rails gems are not available for the generated integration app; skipped runtime Rails test pass.";
   if (requireRails) {
     process.stdout.write("[rails-integration] Rails gems missing; running bundle install because REQUIRE_RAILS=1.\n");
-    run("bundle", ["install"], { cwd: appDir });
+    stage("bundle install", () => run("bundle", ["install"], { cwd: appDir }));
   } else {
     process.stdout.write(`[rails-integration] ${message}\n`);
     process.stdout.write("[rails-integration] Set REQUIRE_RAILS=1 after installing app gems to make this lane mandatory.\n");
@@ -65,14 +66,14 @@ if (railsProbe.status !== 0) {
   }
 }
 
-run("bundle", ["exec", "rails", "db:migrate"], {
+stage("migration", () => run("bundle", ["exec", "rails", "db:migrate"], {
   cwd: appDir,
   env: { ...process.env, RAILS_ENV: "test" },
-});
-run("bundle", ["exec", "rails", "test"], {
+}));
+stage("request tests", () => run("bundle", ["exec", "rails", "test"], {
   cwd: appDir,
   env: { ...process.env, RAILS_ENV: "test" },
-});
+}));
 
 function materializeRailsApp() {
   rmSync(appDir, { force: true, recursive: true });
@@ -208,6 +209,12 @@ function writeFile(relativePath, content) {
   writeFileSync(fullPath, content);
 }
 
+function stage(name, callback) {
+  currentStage = name;
+  process.stdout.write(`[rails-integration] stage: ${name}\n`);
+  return callback();
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
@@ -216,6 +223,7 @@ function run(command, args, options = {}) {
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0 && !options.allowFailure) {
+    process.stderr.write(`[rails-integration] failed during ${currentStage}: ${command} ${args.join(" ")}\n`);
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
