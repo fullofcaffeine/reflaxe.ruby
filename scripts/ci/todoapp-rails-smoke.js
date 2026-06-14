@@ -17,6 +17,8 @@ const typedPartialInvalidSourceDir = join(root, "test", ".generated", "todoapp_r
 const typedPartialInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
+const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
+const typedRouteParamInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_out");
 const typedFormInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_src");
 const typedFormInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_out");
 const typedSlotInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_slot_invalid_src");
@@ -91,6 +93,8 @@ rmSync(typedPartialInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedPartialInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
+rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
+rmSync(typedRouteParamInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedFormInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedFormInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedSlotInvalidSourceDir, { force: true, recursive: true });
@@ -577,6 +581,7 @@ expectRawErbRequiresOptInFailure();
 expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
 expectTypedRouteHelperFailure();
+expectTypedRouteParamFailure();
 expectTypedFormFieldRequiresFormFailure();
 expectTypedSlotContentRequiresComponentFailure();
 expectTemplateOfRequiresRailsTemplateFailure();
@@ -1719,6 +1724,85 @@ function expectTypedRouteHelperFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid typed route helper check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectTypedRouteParamFailure() {
+  mkdirSync(join(typedRouteParamInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(typedRouteParamInvalidSourceDir, "InvalidTypedRouteParamMain.hx"), [
+    "import views.BadTypedRouteParamView;",
+    "",
+    "class InvalidTypedRouteParamMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTypedRouteParamView> = BadTypedRouteParamView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedRouteParamInvalidSourceDir, "views", "BadTypedRouteParamView.hx"), [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "import routes.Routes;",
+    "",
+    "@:railsTemplate(\"controllers/todos/bad_route_param\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTypedRouteParamView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.linkTo(\"Broken\", Routes.todoPath({id: 1}), []);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedRouteParamInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      join(exampleDir, "src_haxe"),
+      "-cp",
+      typedRouteParamInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTypedRouteParamMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Invalid typed route helper param compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("RouteParam") && !output.includes("should be rails.routing.RouteParam")) {
+      console.error("Invalid typed route helper param failed, but not with the expected RouteParam error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid typed route helper param check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

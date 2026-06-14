@@ -103,6 +103,7 @@ for (const required of [
   "std/rails/action_view/Template.hx",
   "std/rails/migration/Migration.hx",
   "std/rails/migration/MigrationOperation.hx",
+  "std/rails/routing/RouteParam.hx",
   "std/rails/turbo/StreamTarget.hx",
   "std/rails/turbo/StreamName.hx",
   "std/rails/turbo/Turbo.hx",

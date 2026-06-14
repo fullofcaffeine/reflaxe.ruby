@@ -108,7 +108,7 @@ begin
   routes = Hxruby::RoutesGenerator.new([], {"input" => routes_fixture, "output" => "src_haxe/routes/Routes.hx"})
   routes.destination_root = routes_root
   routes.generate_routes
-  assert(File.read(File.join(routes_root, "src_haxe", "routes", "Routes.hx")).include?("public static function todoPath(id:Dynamic):String;"), "routes generator did not emit route helpers")
+  assert(File.read(File.join(routes_root, "src_haxe", "routes", "Routes.hx")).include?("public static function todoPath(id:RouteParam):String;"), "routes generator did not emit typed route helpers")
 
   scaffold = Hxruby::ScaffoldGenerator.new(["Todo", "title:String", "isCompleted:Bool"], {"controller" => true, "output" => "scaffold"})
   scaffold.destination_root = temp

@@ -19,8 +19,10 @@ Generated Haxe shape:
 ```haxe
 package routes;
 
+import rails.routing.RouteParam;
+
 extern class Routes {
-	public static function todoPath(id:Dynamic):String;
+	public static function todoPath(id:RouteParam):String;
 	public static function todosPath():String;
 }
 ```
@@ -32,6 +34,16 @@ todo_path(id)
 todos_path
 ```
 
+Required route params use `RouteParam`, not `Dynamic`. `Int` and `String`
+coerce implicitly because those are the common Rails ID/glob values. Model-like
+objects cross the Rails `to_param` boundary explicitly:
+
+```haxe
+Routes.todoPath(1);
+Routes.todoPath("legacy-slug");
+Routes.todoPath(RouteParam.model(todo));
+```
+
 Why this is the right phase-1 contract:
 
 - Rails has many route naming rules that are easy to approximate badly.
@@ -39,6 +51,10 @@ Why this is the right phase-1 contract:
   rewrite.
 - Haxe route helper externs give Haxe authors typeable/completable route calls
   while preserving normal Rails runtime behavior.
+- Route helper params are typed enough for completion and ordinary compile-time
+  mistakes while still erasing to Rails' normal helper arguments. Explicit Haxe
+  `Dynamic` remains a language-level escape hatch and should not appear in
+  generated route helper signatures.
 
 ## Future Phase: Haxe-Owned Route Emission
 

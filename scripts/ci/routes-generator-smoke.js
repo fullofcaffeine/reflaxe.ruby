@@ -29,14 +29,15 @@ if (generated !== committed) {
 
 for (const expected of [
   "package routes;",
+  "import rails.routing.RouteParam;",
   '@:native("self")',
   "extern class Routes",
   '@:native("todos_path")',
   "public static function todosPath():String;",
   '@:native("todo_path")',
-  "public static function todoPath(id:Dynamic):String;",
+  "public static function todoPath(id:RouteParam):String;",
   '@:native("user_url")',
-  "public static function userUrl(id:Dynamic):String;",
+  "public static function userUrl(id:RouteParam):String;",
 ]) {
   if (!generated.includes(expected)) {
     console.error(`Routes generator output missing expected line: ${expected}`);
@@ -48,30 +49,31 @@ runGenerator(complexFixture, complexOutputFile, "ComplexRoutes");
 const complexGenerated = readFileSync(complexOutputFile, "utf8");
 for (const expected of [
   "extern class ComplexRoutes",
+  "import rails.routing.RouteParam;",
   '@:native("root_path")',
   "public static function rootPath():String;",
   '@:native("admin_posts_path")',
   "public static function adminPostsPath():String;",
   '@:native("edit_admin_post_path")',
-  "public static function editAdminPostPath(id:Dynamic):String;",
+  "public static function editAdminPostPath(id:RouteParam):String;",
   '@:native("publish_admin_post_path")',
-  "public static function publishAdminPostPath(id:Dynamic):String;",
+  "public static function publishAdminPostPath(id:RouteParam):String;",
   '@:native("search_admin_posts_path")',
   "public static function searchAdminPostsPath():String;",
   '@:native("post_comment_path")',
-  "public static function postCommentPath(postId:Dynamic, id:Dynamic):String;",
+  "public static function postCommentPath(postId:RouteParam, id:RouteParam):String;",
   '@:native("preview_post_path")',
-  "public static function previewPostPath(id:Dynamic):String;",
+  "public static function previewPostPath(id:RouteParam):String;",
   '@:native("optional_report_path")',
   "public static function optionalReportPath():String;",
   '@:native("asset_path")',
-  "public static function assetPath(path:Dynamic):String;",
+  "public static function assetPath(path:RouteParam):String;",
   '@:native("sidekiq_path")',
   "public static function sidekiqPath():String;",
   '@:native("legacy_redirect_path")',
   "public static function legacyRedirectPath():String;",
   '@:native("duplicate_path")',
-  "public static function duplicatePath(id:Dynamic):String;",
+  "public static function duplicatePath(id:RouteParam):String;",
 ]) {
   if (!complexGenerated.includes(expected)) {
     console.error(`Complex route generator output missing expected line: ${expected}`);

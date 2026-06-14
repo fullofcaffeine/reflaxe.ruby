@@ -727,6 +727,14 @@
       "reason": "Typed RailsHx migration operation DSL for alter/drop/index/foreign-key/reversible ActiveRecord migration statements."
     },
     {
+      "id": "std.rails.routing_route_param",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/routing/RouteParam.hx",
+      "surface": "rails.routing.RouteParam",
+      "reason": "Typed route-helper parameter token used by generated Rails route externs so required path/glob segments accept common scalar IDs while model/object IDs cross an explicit Rails to_param boundary."
+    },
+    {
       "id": "std.rails.params_macro",
       "owner": "std",
       "status": "implemented",
