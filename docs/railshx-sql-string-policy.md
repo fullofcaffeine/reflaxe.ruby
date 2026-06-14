@@ -67,7 +67,7 @@ The approved path is:
 | Migrations | Typed default plus checked literals | Known models, columns, indexes, FKs, reversible operations; `externalTables` for Rails-owned schema. | Raw SQL/data migrations need explicit operation names and rollback policy. |
 | Templates and partials | Typed default plus checked literals | HHX, `Template.of(...)`, `Template.layout(...)`, `Template.existing(...)`. | Raw ERB requires `@:railsAllowRawErb`; unchecked external paths use `Template.external(...)`. |
 | Routes | Checked literal source, typed generated output | Rails route dump/generator input, generated route helper externs. | Hand-authored route helper strings are not canonical. |
-| Turbo, streams, DOM hooks | Typed default | `StreamTarget.named(...)`, `StreamName.named(...)`, shared hook constants/abstracts. Plain strings do not satisfy server-side stream helper APIs. | Literal CSS classes are fine for local styling; behavior hooks should be typed when repeated. |
+| Turbo, ActionCable streams, DOM hooks | Typed default | `StreamTarget.named(...)`, `StreamName.named(...)`, `Stream.named(...)`, `SubscriptionParam.named(...)`, shared hook constants/abstracts. Plain strings do not satisfy server-side stream, broadcast, or channel-param APIs. | Literal CSS classes are fine for local styling; behavior hooks should be typed when repeated. |
 | Ruby/Rails extension interop | Typed default plus checked source | Externs, RBS/source-backed contracts, mixin/patch contracts. | `Dynamic`/raw Ruby only in explicit interop islands with strict-boundary coverage. |
 
 ## Implementation Requirements

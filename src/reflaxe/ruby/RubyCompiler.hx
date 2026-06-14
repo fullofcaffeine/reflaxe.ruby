@@ -1725,13 +1725,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch [info.owner, info.name] {
 			case ["rails.ActionCable", "broadcast"] if (params.length == 2):
 				RubyRawExpr("ActionCable.server.broadcast(" + printParam(params, 0) + ", " + printParam(params, 1) + ")");
-			case ["rails.action_cable.Stream", "named"] if (params.length == 1):
-				compileExpr(params[0]);
-			case ["rails.action_cable.SubscriptionParam", "named"] if (params.length == 1):
-				compileExpr(params[0]);
 			case _:
-				null;
+				if (info.name == "named" && params.length == 1
+					&& (isActionCableStreamOwner(info.owner) || isActionCableSubscriptionParamOwner(info.owner))) {
+					compileExpr(params[0]);
+				} else {
+					null;
+				}
 		}
+	}
+
+	static function isActionCableStreamOwner(owner:String):Bool {
+		return owner == "rails.action_cable.Stream" || StringTools.endsWith(owner, ".Stream_Impl_");
+	}
+
+	static function isActionCableSubscriptionParamOwner(owner:String):Bool {
+		return owner == "rails.action_cable.SubscriptionParam" || StringTools.endsWith(owner, ".SubscriptionParam_Impl_");
 	}
 
 	static function compileTurboStreamsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -1861,6 +1870,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TConst(TString(value)):
 				quoteRubyStringForCode(RubyNaming.toMethodName(value));
+			case TCall(callee, params) if (params.length == 1):
+				var info = staticCallInfo(callee);
+				var value = staticString(params[0]);
+				if (info != null && info.name == "named" && isActionCableSubscriptionParamOwner(info.owner) && value != null) {
+					quoteRubyStringForCode(RubyNaming.toMethodName(value));
+				} else {
+					printInlineExpr(expr);
+				}
 			case _:
 				printInlineExpr(expr);
 		}

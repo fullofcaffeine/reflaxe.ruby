@@ -15,7 +15,12 @@ typedef TodoBroadcast = {
 }
 
 class TodoCable {
-	public static inline var listId:SubscriptionParam<String> = "listId";
+	// Demonstrates: subscription params are explicit typed tokens. The value
+	// still lowers to Rails' normal `params["list_id"]`, but raw strings cannot
+	// satisfy `param(...)` elsewhere.
+	public static inline function listId():SubscriptionParam<String> {
+		return SubscriptionParam.named("listId");
+	}
 
 	public static inline function listStream(listId:String):Stream<TodoBroadcast> {
 		return Stream.named("todos:" + listId);
@@ -34,7 +39,7 @@ class TodoCable {
 @:railsChannel
 class TodosChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {
 	public function subscribed():Void {
-		var listId = param(TodoCable.listId);
+		var listId = param(TodoCable.listId());
 		streamFrom(TodoCable.listStream(listId));
 	}
 

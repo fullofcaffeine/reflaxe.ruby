@@ -9,6 +9,8 @@ const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "action_cable");
 const invalidSourceDir = join(root, "test", ".generated", "action_cable_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "action_cable_invalid_out");
+const invalidRawStringSourceDir = join(root, "test", ".generated", "action_cable_invalid_raw_string_src");
+const invalidRawStringOutputDir = join(root, "test", ".generated", "action_cable_invalid_raw_string_out");
 const jsWorkDir = mkdtempSync(join(tmpdir(), "railshx-action-cable."));
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
@@ -19,6 +21,8 @@ const reflaxeCandidates = [
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
+rmSync(invalidRawStringSourceDir, { force: true, recursive: true });
+rmSync(invalidRawStringOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -76,6 +80,7 @@ for (const file of ["app/haxe_gen/channels/todos_channel.rb", "app/haxe_gen/main
 
 compileClient();
 writeInvalidFixtures();
+writeInvalidRawStringFixtures();
 
 const invalidPayload = compileActionCable(invalidOutputDir, {
   classPath: invalidSourceDir,
@@ -117,6 +122,34 @@ if (!/@:railsChannel classes must define an instance subscribed\(\) method/.test
   process.stdout.write(invalidChannel.stdout);
   process.stderr.write(invalidChannel.stderr);
   fail("Invalid ActionCable channel failed for an unexpected reason.");
+}
+
+const invalidRawParam = compileActionCable(invalidRawStringOutputDir, {
+  classPath: invalidRawStringSourceDir,
+  main: "InvalidRawParamMain",
+  allowFailure: true,
+});
+if (invalidRawParam.status === 0) {
+  fail("Expected raw string ActionCable param compile to fail.");
+}
+if (!/String should be rails\.action_cable\.SubscriptionParam|SubscriptionParam|Cannot unify/.test(invalidRawParam.stderr + invalidRawParam.stdout)) {
+  process.stdout.write(invalidRawParam.stdout);
+  process.stderr.write(invalidRawParam.stderr);
+  fail("Raw string ActionCable param failed for an unexpected reason.");
+}
+
+const invalidRawStream = compileActionCable(invalidRawStringOutputDir, {
+  classPath: invalidRawStringSourceDir,
+  main: "InvalidRawStreamMain",
+  allowFailure: true,
+});
+if (invalidRawStream.status === 0) {
+  fail("Expected raw string ActionCable stream compile to fail.");
+}
+if (!/String should be rails\.action_cable\.Stream|Stream|Cannot unify/.test(invalidRawStream.stderr + invalidRawStream.stdout)) {
+  process.stdout.write(invalidRawStream.stdout);
+  process.stderr.write(invalidRawStream.stderr);
+  fail("Raw string ActionCable stream failed for an unexpected reason.");
 }
 
 console.log("[action-cable] OK");
@@ -206,7 +239,7 @@ function writeInvalidFixtures() {
     "@:railsChannel",
     "class BadParamChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {",
     "\tpublic function subscribed():Void {",
-    "\t\tvar wrong:Int = param(TodoCable.listId);",
+    "\t\tvar wrong:Int = param(TodoCable.listId());",
     "\t}",
     "}",
     "class InvalidParamMain { static function main():Void {} }",
@@ -219,6 +252,32 @@ function writeInvalidFixtures() {
     "@:railsChannel",
     "class MissingSubscribedChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {}",
     "class InvalidChannelMain { static function main():Void {} }",
+    "",
+  ].join("\n"));
+}
+
+function writeInvalidRawStringFixtures() {
+  mkdirSync(invalidRawStringSourceDir, { recursive: true });
+  writeFileSync(join(invalidRawStringSourceDir, "InvalidRawParamMain.hx"), [
+    "import rails.action_cable.Channel;",
+    "import channels.TodosChannel.TodoBroadcast;",
+    "import channels.TodosChannel.TodoSubscriptionParams;",
+    "@:railsChannel",
+    "class RawParamChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {",
+    "\tpublic function subscribed():Void {",
+    "\t\tvar listId = param(\"listId\");",
+    "\t}",
+    "}",
+    "class InvalidRawParamMain { static function main():Void {} }",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidRawStringSourceDir, "InvalidRawStreamMain.hx"), [
+    "import rails.ActionCable;",
+    "class InvalidRawStreamMain {",
+    "\tstatic function main():Void {",
+    "\t\tActionCable.broadcast(\"todos:open\", {title: \"raw\", completed: false});",
+    "\t}",
+    "}",
     "",
   ].join("\n"));
 }

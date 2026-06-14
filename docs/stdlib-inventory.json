@@ -444,7 +444,7 @@
       "status": "implemented",
       "path": "std/rails/action_cable/Stream.hx",
       "surface": "rails.action_cable.Stream",
-      "reason": "Typed stream name wrapper carrying the broadcast payload shape for ActionCable stream_from and server broadcasts."
+      "reason": "Typed stream name wrapper carrying the broadcast payload shape for ActionCable stream_from and server broadcasts; no implicit String conversion so channel stream names must use typed boundaries."
     },
     {
       "id": "std.rails.action_cable_subscription_param",
@@ -452,7 +452,7 @@
       "status": "implemented",
       "path": "std/rails/action_cable/SubscriptionParam.hx",
       "surface": "rails.action_cable.SubscriptionParam",
-      "reason": "Typed subscription parameter key wrapper lowered to Rails params access in generated channels."
+      "reason": "Typed subscription parameter key wrapper lowered to Rails params access in generated channels; no implicit String conversion so channel param names carry value types."
     },
     {
       "id": "std.rails.action_cable_subscription",

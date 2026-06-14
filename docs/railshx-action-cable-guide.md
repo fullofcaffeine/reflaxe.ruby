@@ -26,7 +26,9 @@ typedef TodoBroadcast = {
 }
 
 class TodoCable {
-	public static inline var listId:SubscriptionParam<String> = "listId";
+	public static inline function listId():SubscriptionParam<String> {
+		return SubscriptionParam.named("listId");
+	}
 
 	public static inline function listStream(listId:String):Stream<TodoBroadcast> {
 		return Stream.named("todos:" + listId);
@@ -36,7 +38,7 @@ class TodoCable {
 @:railsChannel
 class TodosChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {
 	public function subscribed():Void {
-		var listId = param(TodoCable.listId);
+		var listId = param(TodoCable.listId());
 		streamFrom(TodoCable.listStream(listId));
 	}
 
@@ -79,12 +81,15 @@ same: Rails owns channel runtime behavior.
 
 `SubscriptionParam<T>` keeps channel params typed at the Haxe boundary. A
 `SubscriptionParam<String>` cannot be assigned to an `Int` without a compile
-error.
+error. Plain strings do not satisfy `param(...)`; define shared keys with
+`SubscriptionParam.named(...)`.
 
 `Stream<TPayload>` carries the broadcast payload shape. If
 `TodoCable.listStream(...)` returns `Stream<TodoBroadcast>`, then
 `ActionCable.broadcast(...)` must receive a `TodoBroadcast` payload. Missing
-fields such as `completed` fail during Haxe compilation.
+fields such as `completed` fail during Haxe compilation. Plain strings do not
+satisfy `streamFrom(...)` or `ActionCable.broadcast(...)`; use
+`Stream.named(...)` at a typed boundary.
 
 `@:railsChannel` also requires an instance `subscribed()` method so an empty
 channel does not silently compile as a broken Rails channel.
