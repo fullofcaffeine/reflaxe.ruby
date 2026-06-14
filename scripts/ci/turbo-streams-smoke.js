@@ -8,6 +8,8 @@ const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "turbo_streams");
 const invalidSourceDir = join(root, "test", ".generated", "turbo_streams_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "turbo_streams_invalid_out");
+const invalidStringTargetSourceDir = join(root, "test", ".generated", "turbo_streams_invalid_string_target_src");
+const invalidStringTargetOutputDir = join(root, "test", ".generated", "turbo_streams_invalid_string_target_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -17,6 +19,8 @@ const reflaxeCandidates = [
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
+rmSync(invalidStringTargetSourceDir, { force: true, recursive: true });
+rmSync(invalidStringTargetOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -111,6 +115,22 @@ if (!/Int should be rails\.turbo\.StreamTarget|StreamTarget|Cannot unify/.test(i
   fail("Invalid Turbo Streams target failed for an unexpected reason.");
 }
 
+writeInvalidStringTargetFixture();
+
+const invalidStringTarget = compileTurboStreams(invalidStringTargetOutputDir, {
+  classPath: invalidStringTargetSourceDir,
+  main: "InvalidStringTargetMain",
+  allowFailure: true,
+});
+if (invalidStringTarget.status === 0) {
+  fail("Expected invalid Turbo Streams raw string target compile to fail.");
+}
+if (!/String should be rails\.turbo\.StreamTarget|StreamTarget|Cannot unify/.test(invalidStringTarget.stderr + invalidStringTarget.stdout)) {
+  process.stdout.write(invalidStringTarget.stdout);
+  process.stderr.write(invalidStringTarget.stderr);
+  fail("Invalid Turbo Streams raw string target failed for an unexpected reason.");
+}
+
 console.log("[turbo-streams] OK");
 
 function compileTurboStreams(targetDir, options = {}) {
@@ -143,12 +163,13 @@ function writeInvalidFixtures() {
   mkdirSync(invalidSourceDir, { recursive: true });
   writeFileSync(join(invalidSourceDir, "InvalidLocalsMain.hx"), [
     "import rails.action_view.Template;",
+    "import rails.turbo.StreamTarget;",
     "import rails.turbo.TurboStreams;",
     "import views.TodoRowView;",
     "import views.TodoRowView.TodoRowLocals;",
     "class InvalidLocalsMain {",
     "\tstatic function main():Void {",
-    "\t\tTurboStreams.append(\"todos\", (Template.of(TodoRowView) : Template<TodoRowLocals>), {domId: \"todo_1\", title: \"missing completion\"});",
+    "\t\tTurboStreams.append(StreamTarget.named(\"todos\"), (Template.of(TodoRowView) : Template<TodoRowLocals>), {domId: \"todo_1\", title: \"missing completion\"});",
     "\t}",
     "}",
     "",
@@ -161,6 +182,22 @@ function writeInvalidFixtures() {
     "class InvalidTargetMain {",
     "\tstatic function main():Void {",
     "\t\tTurboStreams.remove(42);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeInvalidStringTargetFixture() {
+  mkdirSync(invalidStringTargetSourceDir, { recursive: true });
+  writeFileSync(join(invalidStringTargetSourceDir, "InvalidStringTargetMain.hx"), [
+    "import rails.action_view.Template;",
+    "import rails.turbo.TurboStreams;",
+    "import views.TodoRowView;",
+    "import views.TodoRowView.TodoRowLocals;",
+    "class InvalidStringTargetMain {",
+    "\tstatic function main():Void {",
+    "\t\tTurboStreams.remove(\"todos\");",
     "\t}",
     "}",
     "",

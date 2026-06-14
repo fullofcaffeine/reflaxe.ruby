@@ -110,8 +110,13 @@ typedef TodoRowLocals = {
 }
 
 class TodoStreams {
-	public static inline var listTarget:StreamTarget = "todos";
-	public static inline var listStream:StreamName<TodoRowLocals> = "todos";
+	public static inline function listTarget():StreamTarget {
+		return StreamTarget.named("todos");
+	}
+
+	public static inline function listStream():StreamName<TodoRowLocals> {
+		return StreamName.named("todos");
+	}
 }
 
 var locals:TodoRowLocals = {
@@ -120,13 +125,13 @@ var locals:TodoRowLocals = {
 	completed: false
 };
 
-TurboStreams.append(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
-TurboStreams.before(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
-TurboStreams.after(TodoStreams.listTarget, (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+TurboStreams.append(TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+TurboStreams.before(TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+TurboStreams.after(TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 
-TurboStreams.broadcastAppendTo(TodoStreams.listStream, TodoStreams.listTarget,
+TurboStreams.broadcastAppendTo(TodoStreams.listStream(), TodoStreams.listTarget(),
 	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
-TurboStreams.broadcastReplaceTo(TodoStreams.listStream, TodoStreams.listTarget,
+TurboStreams.broadcastReplaceTo(TodoStreams.listStream(), TodoStreams.listTarget(),
 	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 ```
 
@@ -148,7 +153,10 @@ Turbo::StreamsChannel.broadcast_replace_to("todos", target: "todos",
   locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
 ```
 
-Use inline typed target/stream constants for app-level names. Use
+Use typed target/stream constants for app-level names. Plain strings do not
+implicitly satisfy server-side stream APIs; use `StreamTarget.named(...)` and
+`StreamName.named(...)` at the boundary, then pass the typed constants through
+the app. Use
 `Template.of(ViewClass) : Template<TLocals>` for RailsHx-owned HHX partials and
 `Template.existing("path") : Template<TLocals>` for Rails-owned ERB partials.
 The typed action set currently covers `append`, `prepend`, `before`, `after`,

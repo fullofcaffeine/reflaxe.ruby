@@ -564,7 +564,7 @@
       "status": "implemented",
       "path": "std/rails/turbo/StreamTarget.hx",
       "surface": "rails.turbo.StreamTarget",
-      "reason": "Typed DOM target token for server-side Rails Turbo stream helper calls."
+      "reason": "Typed DOM target token for server-side Rails Turbo stream helper calls; no implicit String conversion so behavior-bearing targets must use named/shared constants."
     },
     {
       "id": "std.rails.turbo_stream_name",
@@ -572,7 +572,7 @@
       "status": "implemented",
       "path": "std/rails/turbo/StreamName.hx",
       "surface": "rails.turbo.StreamName",
-      "reason": "Typed server-side Turbo stream name carrying the broadcast payload/locals shape."
+      "reason": "Typed server-side Turbo stream name carrying the broadcast payload/locals shape; no implicit String conversion so broadcast names stay explicit and searchable."
     },
     {
       "id": "std.rails.turbo_streams",
