@@ -32,6 +32,12 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 
 ## Rails Mode
 
+RailsHx is currently alpha for production Rails adoption. The supported surfaces
+below are tested and documented, but production readiness is tracked separately
+by `haxe.ruby-bjv`; see [RailsHx Production Readiness](railshx-production-readiness.md)
+for the mandatory runtime, deploy, security, API-completeness, generator, and
+support gates required before declaring production-ready status.
+
 | Feature | Define/tool | Status |
 | --- | --- | --- |
 | Rails output root | `-D reflaxe_ruby_rails` | Implemented |

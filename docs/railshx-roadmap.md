@@ -72,6 +72,13 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 
 The first implementation slice should prove the complete CRUD path: typed model, typed migration, typed params/controller, typed route helpers, generated Rails Ruby, `rails db:migrate`, and `rails test`.
 
+Production readiness is tracked separately by `haxe.ruby-bjv`; see
+[RailsHx Production Readiness](railshx-production-readiness.md). The production
+epic exists because compiler coverage and fixture breadth are not enough by
+themselves: RailsHx must also prove mandatory Rails runtime CI, deployable
+dogfood evidence, escape-hatch/security policy, generator UX, gradual adoption,
+and a public support/readiness contract.
+
 For the current query authoring contract, see [RailsHx Typed ActiveRecord Query Guide](railshx-query-guide.md). For the design rationale behind named multi-field projections and grouped counts, see [RailsHx Multi-Field Projection And Grouping Design](railshx-projections-grouping-design.md). The short version: keep chains Rails-shaped, use generated field/association refs for compile-time checks, use `Projection.pluck(...)`/`Group.count(...)` when result types depend on field refs, and cross from `Relation<T>` to loaded arrays with `toArray()` at controller/template boundaries.
 
 For typed controller and params authoring, see [RailsHx Controller And Params Guide](railshx-controller-guide.md). It covers `@:railsController`, `ParamsMacro.requirePermit(...)`, nested strong params, method-backed filters, flash/session/cookies, request/response facades, status tokens, and typed template rendering.
