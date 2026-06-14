@@ -23,7 +23,9 @@ class ModelMacro {
 		addPlainStub(fields, "order", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "reorder", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "includes", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
+		addPlainStub(fields, "preload", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
+		addPlainNativeStub(fields, "eagerLoad", "eager_load", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "offset", macro : Int, relationComplexType(selfType, criteriaType, pos), "count", pos);
 		addNoArgStub(fields, "all", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "distinct", relationComplexType(selfType, criteriaType, pos), pos);
@@ -1215,6 +1217,10 @@ class ModelMacro {
 	}
 
 	static function addPlainStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, pos:Position):Void {
+		addPlainNativeStub(fields, name, name, argType, ret, argName, pos);
+	}
+
+	static function addPlainNativeStub(fields:Array<Field>, name:String, nativeName:String, argType:ComplexType, ret:ComplexType, argName:String, pos:Position):Void {
 		for (field in fields) {
 			if (field.name == name) {
 				return;
@@ -1229,7 +1235,7 @@ class ModelMacro {
 				expr: macro return cast null
 			}),
 			meta: [
-				{name: ":native", params: [macro $v{name}], pos: pos},
+				{name: ":native", params: [macro $v{nativeName}], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos

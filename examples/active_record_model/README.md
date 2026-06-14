@@ -24,6 +24,7 @@ entrypoint when you want to start from a full model relation:
 
 ```haxe
 import rails.active_record.Group;
+import rails.active_record.Association;
 import rails.active_record.Lock;
 import rails.active_record.Order;
 import rails.active_record.Projection;
@@ -94,6 +95,16 @@ var found = Todo
 	.joins(Todo.associations.user)
 	.order(Todo.f.title.asc())
 	.limit(10);
+
+var nestedIncludes = Todo
+	.includes(Association.nested(Todo.a.user, User.a.todos))
+	.where({status: "open"});
+
+var nestedPreload = Todo.preload(Association.nested(Todo.a.user, User.a.todos)).limit(2);
+var nestedEagerLoad = Todo
+	.where({status: "open"})
+	.eagerLoad(Association.nested(Todo.a.user, User.a.todos))
+	.limit(2);
 ```
 
 Generated Ruby:
@@ -134,6 +145,9 @@ Models::Todo
   .joins(:user)
   .order(title: :asc)
   .limit(10)
+Models::Todo.includes({user: :todos}).where(status: "open")
+Models::Todo.preload({user: :todos}).limit(2)
+Models::Todo.where(status: "open").eager_load({user: :todos}).limit(2)
 ```
 
 Type-safety features used here:
@@ -157,6 +171,9 @@ Type-safety features used here:
 - `relation.merge(otherRelation)` uses the same typed same-model operand rule
   and lowers to Rails-native `.merge(...)`.
 - `Todo.associations.user` / `Todo.a.user` must belong to `Todo`.
+- `Association.nested(Todo.a.user, User.a.todos)` validates the chain from
+  `Todo` to `User` to `Todo` and lowers to Rails `{user: :todos}` for
+  `includes`, `preload`, `joins`, and `eagerLoad`.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
 - `Order.many([Todo.f.title.asc(), Todo.f.id.desc()])` produces one typed
   multi-field `Order<Todo>` and lowers to Rails `order(title: :asc, id: :desc)`.

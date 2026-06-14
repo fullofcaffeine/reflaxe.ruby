@@ -1479,9 +1479,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (fieldAccessRawName(access) == "select" && params.length == 1):
 				var fieldName = activeRecordFieldName(params[0]);
 				fieldName == null ? null : RubyCall(compileExpr(target), "select", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
-			case TField(target, access) if ((fieldAccessRawName(access) == "includes" || fieldAccessRawName(access) == "joins") && params.length == 1):
+			case TField(target, access) if (isActiveRecordAssociationRelationMethod(fieldAccessRawName(access)) && params.length == 1):
 				var associationArg = activeRecordAssociationArg(params[0]);
-				associationArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(associationArg)]);
+				associationArg == null ? null : RubyCall(compileExpr(target), activeRecordAssociationRelationMethodName(fieldAccessRawName(access)), [RubyRawExpr(associationArg)]);
 			case TField(target, access) if (fieldAccessRawName(access) == "lock" && params.length <= 1):
 				if (params.length == 0) {
 					RubyCall(compileExpr(target), "lock", []);
@@ -1891,6 +1891,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (expr.expr) {
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
 				activeRecordAssociationArg(inner);
+			case TCall(callee, [parent, child]) if (isActiveRecordAssociationNestedCall(callee)):
+				var parentName = activeRecordAssociationKey(parent);
+				var childArg = activeRecordAssociationArg(child);
+				parentName == null || childArg == null ? null : "{" + parentName + ": " + childArg + "}";
 			case TField(_, access):
 				var value = fieldAccessRailsAssociationName(access);
 				if (value == null) {
@@ -1901,6 +1905,52 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				":" + RubyNaming.toMethodName(value);
 			case _:
 				null;
+		}
+	}
+
+	static function activeRecordAssociationKey(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordAssociationKey(inner);
+			case TField(_, access):
+				var value = fieldAccessRailsAssociationName(access);
+				if (value == null) {
+					value = fieldAccessRawName(access);
+				}
+				RubyNaming.toMethodName(value);
+			case TConst(TString(value)):
+				RubyNaming.toMethodName(value);
+			case _:
+				null;
+		}
+	}
+
+	static function isActiveRecordAssociationNestedCall(callee:TypedExpr):Bool {
+		var info = staticCallInfo(callee);
+		if (info != null && info.owner == "rails.active_record.Association" && info.name == "nested") {
+			return true;
+		}
+		return switch (callee.expr) {
+			case TField(_, access):
+				fieldAccessRawName(access) == "nested";
+			case _:
+				false;
+		}
+	}
+
+	static function isActiveRecordAssociationRelationMethod(name:String):Bool {
+		return switch (name) {
+			case "includes" | "preload" | "joins" | "eagerLoad" | "eager_load":
+				true;
+			case _:
+				false;
+		}
+	}
+
+	static function activeRecordAssociationRelationMethodName(name:String):String {
+		return switch (name) {
+			case "eagerLoad": "eager_load";
+			case _: name;
 		}
 	}
 

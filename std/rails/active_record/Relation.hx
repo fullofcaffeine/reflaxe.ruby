@@ -24,7 +24,10 @@ extern class Relation<TModel, TCriteria> {
 	public function readOnly():Relation<TModel, TCriteria>;
 	public function select<TValue>(field:Field<TModel, TValue>):Relation<TModel, TCriteria>;
 	public function includes<TTarget>(association:Association<TModel, TTarget>):Relation<TModel, TCriteria>;
+	public function preload<TTarget>(association:Association<TModel, TTarget>):Relation<TModel, TCriteria>;
 	public function joins<TTarget>(association:Association<TModel, TTarget>):Relation<TModel, TCriteria>;
+	@:native("eager_load")
+	public function eagerLoad<TTarget>(association:Association<TModel, TTarget>):Relation<TModel, TCriteria>;
 	public function find(id:Dynamic):TModel;
 	@:native("find_by")
 	public function findBy(criteria:TCriteria):Null<TModel>;

@@ -20,6 +20,8 @@ const invalidAssignedRelationSourceDir = join(root, "test", ".generated", "activ
 const invalidAssignedRelationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_assigned_relation_out");
 const invalidAssociationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_association_src");
 const invalidAssociationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_out");
+const invalidNestedAssociationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_nested_association_src");
+const invalidNestedAssociationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_nested_association_out");
 const invalidMissingFkSourceDir = join(root, "test", ".generated", "active_record_model_invalid_missing_fk_src");
 const invalidMissingFkOutputDir = join(root, "test", ".generated", "active_record_model_invalid_missing_fk_out");
 const invalidFkTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_fk_type_src");
@@ -126,6 +128,8 @@ rmSync(invalidAssignedRelationSourceDir, { force: true, recursive: true });
 rmSync(invalidAssignedRelationOutputDir, { force: true, recursive: true });
 rmSync(invalidAssociationSourceDir, { force: true, recursive: true });
 rmSync(invalidAssociationOutputDir, { force: true, recursive: true });
+rmSync(invalidNestedAssociationSourceDir, { force: true, recursive: true });
+rmSync(invalidNestedAssociationOutputDir, { force: true, recursive: true });
 rmSync(invalidMissingFkSourceDir, { force: true, recursive: true });
 rmSync(invalidMissingFkOutputDir, { force: true, recursive: true });
 rmSync(invalidFkTypeSourceDir, { force: true, recursive: true });
@@ -300,6 +304,9 @@ for (const expected of [
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
 for (const expected of [
   'Models::Todo.includes(:user).where(title: "ship", status: "open").where(completed: false).joins(:user).order(title: :asc).limit(10)',
+  'Models::Todo.includes({user: :todos}).where(status: "open")',
+  'Models::Todo.preload({user: :todos}).limit(2)',
+  'Models::Todo.where(status: "open").eager_load({user: :todos}).limit(2)',
   "Models::Todo.incomplete().includes(:user).limit(5)",
   'Models::User.includes(:todos).joins(:todos).where(name: "owner")',
   'Models::Todo.create(title: "ship", user_id: 1)',
@@ -387,6 +394,9 @@ for (const expected of [
   "rewhere({status",
   "Todo.f.title.asc()",
   "Todo.a.user",
+  "Association.nested(",
+  ".preload(",
+  ".eagerLoad(",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
   "Todo.none()",
@@ -423,6 +433,7 @@ for (const expected of [
   "ActiveRecord Model And Query Example",
   "npm run test:active-record-model",
   "Todo.associations.user",
+  "Association.nested(Todo.a.user, User.a.todos)",
   "Todo.rewhere({completed: true})",
   "var allOpen = Todo",
   ".distinct()",
@@ -463,6 +474,7 @@ expectInvalidRelationWhereFieldFailure();
 expectInvalidRewhereFieldFailure();
 expectInvalidAssignedRelationFieldFailure();
 expectInvalidAssociationOwnerFailure();
+expectInvalidNestedAssociationOwnerFailure();
 expectInvalidMissingBelongsToForeignKeyFailure();
 expectInvalidBelongsToForeignKeyTypeFailure();
 expectInvalidAssociationTargetFailure();
@@ -942,6 +954,29 @@ function expectInvalidAssociationOwnerFailure() {
     invalidAssociationOutputDir,
     "Invalid ActiveRecord association owner compiled successfully.",
     "Association<models.User"
+  );
+}
+
+function expectInvalidNestedAssociationOwnerFailure() {
+  mkdirSync(invalidNestedAssociationSourceDir, { recursive: true });
+  writeFileSync(join(invalidNestedAssociationSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "import rails.active_record.Association;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.includes(Association.nested(Todo.a.user, Todo.a.user));",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidNestedAssociationSourceDir,
+    invalidNestedAssociationOutputDir,
+    "Invalid ActiveRecord nested association owner compiled successfully.",
+    "Association<models.Todo"
   );
 }
 

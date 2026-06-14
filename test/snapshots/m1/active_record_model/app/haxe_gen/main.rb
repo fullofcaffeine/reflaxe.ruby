@@ -6,6 +6,9 @@ class Main
   end
   def self.main()
     found__hx0 = Models::Todo.includes(:user).where(title: "ship", status: "open").where(completed: false).joins(:user).order(title: :asc).limit(10)
+    nested_includes__hx0 = Models::Todo.includes({user: :todos}).where(status: "open")
+    nested_preload__hx0 = Models::Todo.preload({user: :todos}).limit(2)
+    nested_eager_load__hx0 = Models::Todo.where(status: "open").eager_load({user: :todos}).limit(2)
     scoped__hx0 = Models::Todo.incomplete().includes(:user).limit(5)
     users__hx0 = Models::User.includes(:todos).joins(:todos).where(name: "owner")
     made__hx0 = Models::Todo.create(title: "ship", user_id: 1)
@@ -63,6 +66,9 @@ class Main
     transaction_created__hx0 = Models::Todo.transaction() { Models::Todo.create(title: "inside transaction", user_id: 1) }
     transaction_count__hx0 = Models::Todo.transaction(requires_new: true, isolation: :serializable) { Models::Todo.where(status: "open").lock("FOR SHARE").count() }
     puts(HXRuby.stringify((found__hx0 == nil)))
+    puts(HXRuby.stringify((nested_includes__hx0 == nil)))
+    puts(HXRuby.stringify((nested_preload__hx0 == nil)))
+    puts(HXRuby.stringify((nested_eager_load__hx0 == nil)))
     puts(HXRuby.stringify((scoped__hx0 == nil)))
     puts(HXRuby.stringify((users__hx0 == nil)))
     puts(HXRuby.stringify((made__hx0 == nil)))

@@ -1,6 +1,7 @@
 import models.AuditLog;
 import models.Todo;
 import models.User;
+import rails.active_record.Association;
 import rails.active_record.Group;
 import rails.active_record.Lock;
 import rails.active_record.Order;
@@ -10,7 +11,7 @@ import rails.active_record.TransactionIsolation;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `distinct`, `none`, `reverseOrder`, `readOnly`, `lock`, `transaction`, `select`, `where`, `rewhere`, `or`, `merge`, `order`, `reorder`, `limit`,
+// `all`, `distinct`, `none`, `reverseOrder`, `readOnly`, `lock`, `transaction`, `select`, `where`, `rewhere`, `or`, `merge`, `includes`, `preload`, `joins`, `eagerLoad`, `order`, `reorder`, `limit`,
 // `offset`, `pluck`, `minimum`, `maximum`, `sum`, `average`, `find`, `findBy`,
 // `exists`, `count`, `first`, and `last` authored as typed Haxe calls, plus
 // typed multi-field orders through `Order.many`, named multi-field projections
@@ -25,6 +26,9 @@ import rails.active_record.TransactionIsolation;
 class Main {
 	static function main() {
 		var found = Todo.includes(Todo.associations.user).where({title: "ship", status: "open"}).where({completed: false}).joins(Todo.associations.user).order(Todo.f.title.asc()).limit(10);
+		var nestedIncludes = Todo.includes(Association.nested(Todo.a.user, User.a.todos)).where({status: "open"});
+		var nestedPreload = Todo.preload(Association.nested(Todo.a.user, User.a.todos)).limit(2);
+		var nestedEagerLoad = Todo.where({status: "open"}).eagerLoad(Association.nested(Todo.a.user, User.a.todos)).limit(2);
 		var scoped = Todo.incomplete().includes(Todo.a.user).limit(5);
 		var users = User.includes(User.a.todos).joins(User.a.todos).where({name: "owner"});
 		var made:Todo = Todo.create({title: "ship", userId: 1});
@@ -92,6 +96,9 @@ class Main {
 			return Todo.where({status: "open"}).lock(Lock.share()).count();
 		}, {requiresNew: true, isolation: TransactionIsolation.serializable()});
 		Sys.println(found == null);
+		Sys.println(nestedIncludes == null);
+		Sys.println(nestedPreload == null);
+		Sys.println(nestedEagerLoad == null);
 		Sys.println(scoped == null);
 		Sys.println(users == null);
 		Sys.println(made == null);

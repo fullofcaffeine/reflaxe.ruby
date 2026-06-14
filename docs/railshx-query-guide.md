@@ -7,7 +7,7 @@ field value types, primary-key types, and relation return shapes.
 The rule of thumb is simple:
 
 - Keep query chains Rails-shaped: `all`, `distinct`, `select`, `where`, `rewhere`, `includes`,
-  `joins`, `order`, `reorder`, `limit`, `offset`, `lock`, `pluck`, `minimum`,
+  `preload`, `joins`, `eagerLoad`, `order`, `reorder`, `limit`, `offset`, `lock`, `pluck`, `minimum`,
   `maximum`, `sum`, `average`, `find`, `findBy`, `exists`, `count`, `first`,
   `last`, and `toArray`.
 - Use macro facades for query results whose Haxe return type depends on more
@@ -138,6 +138,19 @@ var transactionCount:Int = Todo.transaction(function() {
 		.count();
 }, {requiresNew: true, isolation: rails.active_record.TransactionIsolation.serializable()});
 
+var nestedIncludes = Todo
+	.includes(rails.active_record.Association.nested(Todo.a.user, User.a.todos))
+	.where({status: "open"});
+
+var nestedPreload = Todo
+	.preload(rails.active_record.Association.nested(Todo.a.user, User.a.todos))
+	.limit(2);
+
+var nestedEagerLoad = Todo
+	.where({status: "open"})
+	.eagerLoad(rails.active_record.Association.nested(Todo.a.user, User.a.todos))
+	.limit(2);
+
 var openOrDone = Todo.where({status: "open"})
 	.or(Todo.where({status: "done"}))
 	.order(Todo.f.title.asc());
@@ -175,6 +188,9 @@ Models::Todo.where(title: "assigned").readonly().limit(2)
 Models::Todo.lock().where(status: "open").limit(1)
 Models::Todo.where(title: "assigned").lock("FOR UPDATE").first()
 Models::Todo.transaction(requires_new: true, isolation: :serializable) { Models::Todo.where(status: "open").lock("FOR SHARE").count() }
+Models::Todo.includes({user: :todos}).where(status: "open")
+Models::Todo.preload({user: :todos}).limit(2)
+Models::Todo.where(status: "open").eager_load({user: :todos}).limit(2)
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.select(:title).where(status: "open")

@@ -196,7 +196,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/Association.hx",
       "surface": "rails.active_record.Association",
-      "reason": "Typed ActiveRecord association token generated from model metadata and lowered by the compiler into Rails-native includes(:association) and joins(:association) arguments."
+      "reason": "Typed ActiveRecord association token generated from model metadata and lowered by the compiler into Rails-native includes/preload/joins/eager_load symbols and nested association hashes such as {user: :todos}."
     },
     {
       "id": "std.rails.active_record_relation",
@@ -204,7 +204,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/Relation.hx",
       "surface": "rails.active_record.Relation",
-      "reason": "Typed ActiveRecord::Relation facade for model query chains such as all/distinct/none/reverseOrder/readOnly/lock/select/where/rewhere/or/merge/includes/joins/order/reorder/limit/offset/pluck/minimum/maximum/sum/average/find/findBy/exists/count/first/last/toArray."
+      "reason": "Typed ActiveRecord::Relation facade for model query chains such as all/distinct/none/reverseOrder/readOnly/lock/select/where/rewhere/or/merge/includes/preload/joins/eagerLoad/order/reorder/limit/offset/pluck/minimum/maximum/sum/average/find/findBy/exists/count/first/last/toArray."
     },
     {
       "id": "std.rails.active_record_transaction_isolation",
