@@ -105,6 +105,13 @@ var nestedEagerLoad = Todo
 	.where({status: "open"})
 	.eagerLoad(Association.nested(Todo.a.user, User.a.todos))
 	.limit(2);
+
+var nestedCriteria = Todo
+	.joins(Todo.a.user)
+	.where({user: {name: "owner"}})
+	.limit(3);
+var nestedFoundBy:Null<Todo> = Todo.joins(Todo.a.user).findBy({user: {name: "owner"}});
+var nestedExists:Bool = Todo.joins(Todo.a.user).exists({user: {id: 1}});
 ```
 
 Generated Ruby:
@@ -148,6 +155,9 @@ Models::Todo
 Models::Todo.includes({user: :todos}).where(status: "open")
 Models::Todo.preload({user: :todos}).limit(2)
 Models::Todo.where(status: "open").eager_load({user: :todos}).limit(2)
+Models::Todo.joins(:user).where(user: {name: "owner"}).limit(3)
+Models::Todo.joins(:user).find_by(user: {name: "owner"})
+Models::Todo.joins(:user).exists?(user: {id: 1})
 ```
 
 Type-safety features used here:
@@ -174,6 +184,9 @@ Type-safety features used here:
 - `Association.nested(Todo.a.user, User.a.todos)` validates the chain from
   `Todo` to `User` to `Todo` and lowers to Rails `{user: :todos}` for
   `includes`, `preload`, `joins`, and `eagerLoad`.
+- Nested criteria such as `{user: {name: "owner"}}` validate both the `Todo`
+  association key and the target `User` column keys/types before lowering to
+  Rails nested hash criteria.
 - `Todo.f.title.asc()` produces a typed `Order<Todo>`.
 - `Order.many([Todo.f.title.asc(), Todo.f.id.desc()])` produces one typed
   multi-field `Order<Todo>` and lowers to Rails `order(title: :asc, id: :desc)`.

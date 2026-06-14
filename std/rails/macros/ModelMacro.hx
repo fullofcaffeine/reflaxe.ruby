@@ -3,7 +3,10 @@ package rails.macros;
 #if macro
 import haxe.macro.Context;
 import haxe.macro.Expr;
+import haxe.macro.TypeTools;
 import reflaxe.ruby.naming.RubyNaming;
+import sys.FileSystem;
+import sys.io.File;
 
 class ModelMacro {
 	public static function build():Array<Field> {
@@ -866,11 +869,68 @@ class ModelMacro {
 	}
 
 	static function criteriaComplexType(fields:Array<Field>):ComplexType {
+		return criteriaComplexTypeForFields(fields, true);
+	}
+
+	static function criteriaComplexTypeForFields(fields:Array<Field>, includeAssociations:Bool):ComplexType {
 		var criteriaFields:Array<Field> = [];
 		for (field in fields) {
-			if (!isRailsColumn(field)) {
-				continue;
+			if (isRailsColumn(field)) {
+				criteriaFields.push({
+					name: field.name,
+					access: [],
+					kind: FVar(fieldValueType(field), null),
+					meta: [{name: ":optional", pos: field.pos}],
+					pos: field.pos
+				});
+			} else if (includeAssociations && isRailsAssociation(field)) {
+				var targetCriteria = associationTargetCriteriaType(field);
+				if (targetCriteria != null) {
+					criteriaFields.push({
+						name: field.name,
+						access: [],
+						kind: FVar(targetCriteria, null),
+						meta: [{name: ":optional", pos: field.pos}],
+						pos: field.pos
+					});
+				}
 			}
+		}
+		return criteriaFields.length == 0 ? macro : Dynamic : TAnonymous(criteriaFields);
+	}
+
+	static function associationTargetCriteriaType(field:Field):Null<ComplexType> {
+		return switch (associationTargetType(field)) {
+			case TPath(path) if (path.name != "Dynamic"):
+				var fullName = path.pack.concat([path.name]).join(".");
+				switch (Context.getType(fullName)) {
+					case TInst(ref, _):
+						var targetFields:Array<Field> = [];
+						for (classField in ref.get().fields.get()) {
+							if (classFieldHasMeta(classField, ":railsColumn")) {
+								targetFields.push({
+									name: classField.name,
+									access: [],
+									kind: FVar(TypeTools.toComplexType(classField.type), null),
+									pos: classField.pos
+								});
+							}
+						}
+						if (targetFields.length == 0) {
+							targetFields = railsColumnFieldsFromSource(ref.get(), field.pos);
+						}
+						criteriaColumnsComplexType(targetFields);
+					case _:
+						null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function criteriaColumnsComplexType(columnFields:Array<Field>):ComplexType {
+		var criteriaFields:Array<Field> = [];
+		for (field in columnFields) {
 			criteriaFields.push({
 				name: field.name,
 				access: [],
@@ -880,6 +940,59 @@ class ModelMacro {
 			});
 		}
 		return criteriaFields.length == 0 ? macro : Dynamic : TAnonymous(criteriaFields);
+	}
+
+	static function classFieldHasMeta(field:haxe.macro.Type.ClassField, name:String):Bool {
+		return field.meta != null && field.meta.has != null && (field.meta.has(name) || (StringTools.startsWith(name, ":") && field.meta.has(name.substr(1))));
+	}
+
+	static function railsColumnFieldsFromSource(classType:haxe.macro.Type.ClassType, pos:Position):Array<Field> {
+		var source = Context.getPosInfos(classType.pos).file;
+		if (source == null || source == "" || !FileSystem.exists(source)) {
+			Context.error("RailsHx nested criteria could not inspect target model source for " + classType.name + ".", pos);
+			return [];
+		}
+		var out:Array<Field> = [];
+		var pendingColumn = false;
+		var varPattern = ~/public\s+var\s+([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([^;]+)\s*;/;
+		for (line in File.getContent(source).split("\n")) {
+			if (line.indexOf("@:railsColumn") >= 0) {
+				pendingColumn = true;
+				continue;
+			}
+			if (pendingColumn && varPattern.match(line)) {
+				out.push({
+					name: varPattern.matched(1),
+					access: [],
+					kind: FVar(complexTypeFromSourceType(varPattern.matched(2)), null),
+					pos: pos
+				});
+				pendingColumn = false;
+			} else if (pendingColumn && line.indexOf("@:") < 0 && StringTools.trim(line) != "") {
+				pendingColumn = false;
+			}
+		}
+		return out;
+	}
+
+	static function complexTypeFromSourceType(raw:String):ComplexType {
+		var normalized = StringTools.trim(raw);
+		if (StringTools.startsWith(normalized, "Null<") && StringTools.endsWith(normalized, ">")) {
+			var inner = normalized.substr(5, normalized.length - 6);
+			return TPath({pack: [], name: "Null", params: [TPType(complexTypeFromSourceType(inner))]});
+		}
+		return switch (normalized) {
+			case "String":
+				macro : String;
+			case "Int":
+				macro : Int;
+			case "Float":
+				macro : Float;
+			case "Bool":
+				macro : Bool;
+			case _:
+				macro : Dynamic;
+		}
 	}
 
 	static function primaryKeyComplexType(fields:Array<Field>):ComplexType {

@@ -22,6 +22,10 @@ const invalidAssociationSourceDir = join(root, "test", ".generated", "active_rec
 const invalidAssociationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_association_out");
 const invalidNestedAssociationSourceDir = join(root, "test", ".generated", "active_record_model_invalid_nested_association_src");
 const invalidNestedAssociationOutputDir = join(root, "test", ".generated", "active_record_model_invalid_nested_association_out");
+const invalidNestedCriteriaFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_nested_criteria_field_src");
+const invalidNestedCriteriaFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_nested_criteria_field_out");
+const invalidNestedCriteriaTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_nested_criteria_type_src");
+const invalidNestedCriteriaTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_nested_criteria_type_out");
 const invalidMissingFkSourceDir = join(root, "test", ".generated", "active_record_model_invalid_missing_fk_src");
 const invalidMissingFkOutputDir = join(root, "test", ".generated", "active_record_model_invalid_missing_fk_out");
 const invalidFkTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_fk_type_src");
@@ -130,6 +134,10 @@ rmSync(invalidAssociationSourceDir, { force: true, recursive: true });
 rmSync(invalidAssociationOutputDir, { force: true, recursive: true });
 rmSync(invalidNestedAssociationSourceDir, { force: true, recursive: true });
 rmSync(invalidNestedAssociationOutputDir, { force: true, recursive: true });
+rmSync(invalidNestedCriteriaFieldSourceDir, { force: true, recursive: true });
+rmSync(invalidNestedCriteriaFieldOutputDir, { force: true, recursive: true });
+rmSync(invalidNestedCriteriaTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidNestedCriteriaTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidMissingFkSourceDir, { force: true, recursive: true });
 rmSync(invalidMissingFkOutputDir, { force: true, recursive: true });
 rmSync(invalidFkTypeSourceDir, { force: true, recursive: true });
@@ -307,6 +315,9 @@ for (const expected of [
   'Models::Todo.includes({user: :todos}).where(status: "open")',
   'Models::Todo.preload({user: :todos}).limit(2)',
   'Models::Todo.where(status: "open").eager_load({user: :todos}).limit(2)',
+  'Models::Todo.joins(:user).where(user: {name: "owner"}).limit(3)',
+  'Models::Todo.joins(:user).find_by(user: {name: "owner"})',
+  'Models::Todo.joins(:user).exists?(user: {id: 1})',
   "Models::Todo.incomplete().includes(:user).limit(5)",
   'Models::User.includes(:todos).joins(:todos).where(name: "owner")',
   'Models::Todo.create(title: "ship", user_id: 1)',
@@ -397,6 +408,7 @@ for (const expected of [
   "Association.nested(",
   ".preload(",
   ".eagerLoad(",
+  "where({user:",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
   "Todo.none()",
@@ -434,6 +446,7 @@ for (const expected of [
   "npm run test:active-record-model",
   "Todo.associations.user",
   "Association.nested(Todo.a.user, User.a.todos)",
+  "where({user: {name:",
   "Todo.rewhere({completed: true})",
   "var allOpen = Todo",
   ".distinct()",
@@ -475,6 +488,8 @@ expectInvalidRewhereFieldFailure();
 expectInvalidAssignedRelationFieldFailure();
 expectInvalidAssociationOwnerFailure();
 expectInvalidNestedAssociationOwnerFailure();
+expectInvalidNestedCriteriaFieldFailure();
+expectInvalidNestedCriteriaTypeFailure();
 expectInvalidMissingBelongsToForeignKeyFailure();
 expectInvalidBelongsToForeignKeyTypeFailure();
 expectInvalidAssociationTargetFailure();
@@ -977,6 +992,48 @@ function expectInvalidNestedAssociationOwnerFailure() {
     invalidNestedAssociationOutputDir,
     "Invalid ActiveRecord nested association owner compiled successfully.",
     "Association<models.Todo"
+  );
+}
+
+function expectInvalidNestedCriteriaFieldFailure() {
+  mkdirSync(invalidNestedCriteriaFieldSourceDir, { recursive: true });
+  writeFileSync(join(invalidNestedCriteriaFieldSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.joins(Todo.a.user).where({user: {missing: \"nope\"}});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidNestedCriteriaFieldSourceDir,
+    invalidNestedCriteriaFieldOutputDir,
+    "Invalid ActiveRecord nested criteria field compiled successfully.",
+    "has extra field missing"
+  );
+}
+
+function expectInvalidNestedCriteriaTypeFailure() {
+  mkdirSync(invalidNestedCriteriaTypeSourceDir, { recursive: true });
+  writeFileSync(join(invalidNestedCriteriaTypeSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.joins(Todo.a.user).where({user: {id: \"nope\"}});",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidNestedCriteriaTypeSourceDir,
+    invalidNestedCriteriaTypeOutputDir,
+    "Invalid ActiveRecord nested criteria value type compiled successfully.",
+    "String should be Null<Int>"
   );
 }
 

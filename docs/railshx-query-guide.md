@@ -151,6 +151,13 @@ var nestedEagerLoad = Todo
 	.eagerLoad(rails.active_record.Association.nested(Todo.a.user, User.a.todos))
 	.limit(2);
 
+var nestedCriteria = Todo
+	.joins(Todo.a.user)
+	.where({user: {name: "owner"}})
+	.limit(3);
+var nestedFoundBy:Null<Todo> = Todo.joins(Todo.a.user).findBy({user: {name: "owner"}});
+var nestedExists:Bool = Todo.joins(Todo.a.user).exists({user: {id: 1}});
+
 var openOrDone = Todo.where({status: "open"})
 	.or(Todo.where({status: "done"}))
 	.order(Todo.f.title.asc());
@@ -191,6 +198,9 @@ Models::Todo.transaction(requires_new: true, isolation: :serializable) { Models:
 Models::Todo.includes({user: :todos}).where(status: "open")
 Models::Todo.preload({user: :todos}).limit(2)
 Models::Todo.where(status: "open").eager_load({user: :todos}).limit(2)
+Models::Todo.joins(:user).where(user: {name: "owner"}).limit(3)
+Models::Todo.joins(:user).find_by(user: {name: "owner"})
+Models::Todo.joins(:user).exists?(user: {id: 1})
 Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)
 Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)
 Models::Todo.select(:title).where(status: "open")

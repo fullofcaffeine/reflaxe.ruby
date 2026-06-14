@@ -29,6 +29,9 @@ class Main {
 		var nestedIncludes = Todo.includes(Association.nested(Todo.a.user, User.a.todos)).where({status: "open"});
 		var nestedPreload = Todo.preload(Association.nested(Todo.a.user, User.a.todos)).limit(2);
 		var nestedEagerLoad = Todo.where({status: "open"}).eagerLoad(Association.nested(Todo.a.user, User.a.todos)).limit(2);
+		var nestedCriteria = Todo.joins(Todo.a.user).where({user: {name: "owner"}}).limit(3);
+		var nestedFoundBy:Null<Todo> = Todo.joins(Todo.a.user).findBy({user: {name: "owner"}});
+		var nestedExists:Bool = Todo.joins(Todo.a.user).exists({user: {id: 1}});
 		var scoped = Todo.incomplete().includes(Todo.a.user).limit(5);
 		var users = User.includes(User.a.todos).joins(User.a.todos).where({name: "owner"});
 		var made:Todo = Todo.create({title: "ship", userId: 1});
@@ -99,6 +102,9 @@ class Main {
 		Sys.println(nestedIncludes == null);
 		Sys.println(nestedPreload == null);
 		Sys.println(nestedEagerLoad == null);
+		Sys.println(nestedCriteria == null);
+		Sys.println(nestedFoundBy == null);
+		Sys.println(nestedExists);
 		Sys.println(scoped == null);
 		Sys.println(users == null);
 		Sys.println(made == null);

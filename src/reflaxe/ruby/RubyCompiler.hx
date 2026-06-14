@@ -1836,9 +1836,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
 				activeRecordCriteriaArg(inner);
 			case TObjectDecl(fields):
-				[for (field in fields) RubyNaming.toMethodName(field.name) + ": " + printInlineExpr(field.expr)].join(", ");
+				[for (field in fields) activeRecordCriteriaField(field.name, field.expr)].join(", ");
 			case _:
 				null;
+		}
+	}
+
+	static function activeRecordCriteriaField(name:String, expr:TypedExpr):String {
+		return RubyNaming.toMethodName(name) + ": " + activeRecordCriteriaValue(expr);
+	}
+
+	static function activeRecordCriteriaValue(expr:TypedExpr):String {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordCriteriaValue(inner);
+			case TObjectDecl(fields):
+				"{" + [for (field in fields) activeRecordCriteriaField(field.name, field.expr)].join(", ") + "}";
+			case _:
+				printInlineExpr(expr);
 		}
 	}
 
