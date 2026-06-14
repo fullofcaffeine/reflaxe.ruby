@@ -300,7 +300,7 @@
       "status": "implemented",
       "path": "std/rails/action_controller/Base.hx",
       "surface": "rails.action_controller.Base",
-      "reason": "Typed ActionController base, render, redirect, and params access helpers."
+      "reason": "Typed ActionController base, render, redirect, and params access helpers, with typed render/redirect option surfaces."
     },
     {
       "id": "std.rails.action_controller_params",
@@ -348,7 +348,23 @@
       "status": "implemented",
       "path": "std/rails/action_controller/Status.hx",
       "surface": "rails.action_controller.Status",
-      "reason": "Typed Rails response status tokens lowered to Rails-native symbols for controller response helpers."
+      "reason": "Typed Rails response status tokens lowered to Rails-native symbols for response helpers without implicit raw string construction."
+    },
+    {
+      "id": "std.rails.action_controller_render_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/RenderOptions.hx",
+      "surface": "rails.action_controller.RenderOptions",
+      "reason": "Typed direct render kwargs for ActionController helpers, including Status-typed response status."
+    },
+    {
+      "id": "std.rails.action_controller_redirect_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/RedirectOptions.hx",
+      "surface": "rails.action_controller.RedirectOptions",
+      "reason": "Typed option-hash redirect kwargs for redirectToOptions, including Status-typed response status."
     },
     {
       "id": "std.rails.action_mailer",

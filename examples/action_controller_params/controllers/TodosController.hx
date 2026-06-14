@@ -52,7 +52,7 @@ class TodosController extends rails.action_controller.Base {
 		cookies().set("todoFilter", "open");
 		cookies().delete("staleFilter");
 		render({json: attrs, status: Status.created});
-		redirectTo({action: "index"});
+		redirectToOptions({action: "index"});
 		head(Status.noContent);
 	}
 }

@@ -2462,7 +2462,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (useKwargs && remaining.length > 0 && isObjectDeclExpr(remaining[remaining.length - 1])) {
 			keywordSource = remaining.pop();
 		}
-		var args = [for (param in remaining) printInlineExpr(param)];
+		var args = [for (param in remaining) simplifyRubyIdentityBegin(printInlineExpr(param))];
 		if (keywordSource != null) {
 			args = args.concat(renderKeywordArgs(keywordSource));
 		}
@@ -2583,6 +2583,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function abstractIdentityBlockValue(expr:TypedExpr):Null<TypedExpr> {
 		return switch (unwrapTypedExpr(expr).expr) {
+			case TBlock([
+				{expr: TVar(valueLocal, valueInit)},
+				{expr: TVar(boxLocal, _)},
+				{expr: TBinop(OpAssign, {expr: TLocal(assignLocal)}, {expr: TLocal(sourceLocal)})},
+				{expr: TLocal(retLocal)}
+			]) if (valueInit != null && boxLocal.name == assignLocal.name && boxLocal.name == retLocal.name && valueLocal.name == sourceLocal.name):
+				valueInit;
 			case TBlock([decl, assign, ret]):
 				switch [decl.expr, assign.expr, ret.expr] {
 					case [TVar(local, _), TBinop(OpAssign, {expr: TLocal(assignLocal)}, value), TLocal(retLocal)]

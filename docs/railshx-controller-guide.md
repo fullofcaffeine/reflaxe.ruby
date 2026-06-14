@@ -64,7 +64,7 @@ class TodosController extends rails.action_controller.Base {
 
 		Todo.create(attrs);
 		flash().set("notice", "Todo queued");
-		redirectTo({action: "index", status: Status.seeOther});
+		redirectToOptions({action: "index", status: Status.seeOther});
 	}
 }
 ```
@@ -222,6 +222,11 @@ Generated Ruby:
 self.render(json: attrs__hx0, status: :created)
 self.head(:no_content)
 ```
+
+Use `redirectTo("/path")` for location redirects and
+`redirectToOptions({action: "index", status: Status.seeOther})` for Rails
+option-hash redirects. Raw string status values are rejected; use `Status.*` or
+`Status.named("custom_status")` at the typed boundary.
 
 ## Rendering Typed Templates
 

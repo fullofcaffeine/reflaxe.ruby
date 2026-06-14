@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
-const { existsSync, readFileSync, rmSync } = require("node:fs");
+const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "action_controller_params");
+const invalidSourceDir = join(root, "test", ".generated", "action_controller_params_invalid_src");
+const invalidOutputDir = join(root, "test", ".generated", "action_controller_params_invalid_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -28,6 +30,8 @@ function run(command, args, options = {}) {
 }
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(invalidSourceDir, { force: true, recursive: true });
+rmSync(invalidOutputDir, { force: true, recursive: true });
 
 if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile action_controller_params through Reflaxe.");
@@ -77,14 +81,49 @@ for (const expected of [
   }
 }
 
-function compileWithFirstAvailableReflaxe() {
+writeInvalidFixtures();
+const invalidRender = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidRenderMain",
+  allowFailure: true,
+});
+if (invalidRender == null || invalidRender.status === 0) {
+  console.error("Expected invalid ActionController render options compile to fail.");
+  process.exit(1);
+}
+if (!/Status|RenderOptions|Cannot unify|String should be rails\.action_controller\.Status/.test(invalidRender.stderr + invalidRender.stdout)) {
+  process.stdout.write(invalidRender.stdout);
+  process.stderr.write(invalidRender.stderr);
+  console.error("Invalid ActionController render options failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidRedirect = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidRedirectMain",
+  allowFailure: true,
+});
+if (invalidRedirect == null || invalidRedirect.status === 0) {
+  console.error("Expected invalid ActionController redirect options compile to fail.");
+  process.exit(1);
+}
+if (!/Status|RedirectOptions|Cannot unify|String should be rails\.action_controller\.Status/.test(invalidRedirect.stderr + invalidRedirect.stdout)) {
+  process.stdout.write(invalidRedirect.stdout);
+  process.stderr.write(invalidRedirect.stderr);
+  console.error("Invalid ActionController redirect options failed for an unexpected reason.");
+  process.exit(1);
+}
+
+function compileWithFirstAvailableReflaxe(options = {}) {
   for (const reflaxeSrc of reflaxeCandidates) {
     if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
       continue;
     }
     const result = run("haxe", [
       "-D",
-      `ruby_output=${outputDir}`,
+      `ruby_output=${options.outputDir ?? outputDir}`,
       "-D",
       "reflaxe_runtime",
       "-D",
@@ -92,7 +131,11 @@ function compileWithFirstAvailableReflaxe() {
       "-cp",
       join(root, "src"),
       "-cp",
+      options.classPath ?? join(root, "examples", "action_controller_params"),
+      "-cp",
       join(root, "examples", "action_controller_params"),
+      "-cp",
+      join(root, "std"),
       "-cp",
       reflaxeSrc,
       "--macro",
@@ -100,11 +143,33 @@ function compileWithFirstAvailableReflaxe() {
       "--macro",
       "reflaxe.ruby.CompilerInit.Start()",
       "-main",
-      "Main",
+      options.main ?? "Main",
     ], { allowFailure: true });
-    if (result.status === 0) {
+    if (result.status === 0 || options.allowFailure) {
       return result;
     }
   }
   return null;
+}
+
+function writeInvalidFixtures() {
+  mkdirSync(invalidSourceDir, { recursive: true });
+  writeFileSync(join(invalidSourceDir, "InvalidRenderMain.hx"), [
+    "class InvalidRenderMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tcontroller.render({plain: \"bad\", status: \"created\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidRedirectMain.hx"), [
+    "class InvalidRedirectMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tcontroller.redirectToOptions({action: \"index\", status: \"see_other\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
 }

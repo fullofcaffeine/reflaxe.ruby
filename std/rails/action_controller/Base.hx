@@ -28,11 +28,15 @@ class Base {
 	}
 
 	@:rubyKwargs
-	public function render(options:Dynamic):Void {}
+	public function render(options:RenderOptions):Void {}
 
 	@:native("redirect_to")
 	@:rubyKwargs
-	public function redirectTo(options:Dynamic):Void {}
+	public function redirectTo(location:String):Void {}
+
+	@:native("redirect_to")
+	@:rubyKwargs
+	public function redirectToOptions(options:RedirectOptions):Void {}
 
 	@:native("head")
 	public function head(status:Status):Void {}
