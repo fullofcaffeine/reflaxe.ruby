@@ -8,6 +8,8 @@ const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "instrumentation");
 const invalidSourceDir = join(root, "test", ".generated", "instrumentation_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "instrumentation_invalid_out");
+const invalidSubscriptionSourceDir = join(root, "test", ".generated", "instrumentation_invalid_subscription_src");
+const invalidSubscriptionOutputDir = join(root, "test", ".generated", "instrumentation_invalid_subscription_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -17,6 +19,8 @@ const reflaxeCandidates = [
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
+rmSync(invalidSubscriptionSourceDir, { force: true, recursive: true });
+rmSync(invalidSubscriptionOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -65,6 +69,7 @@ for (const file of ["app/haxe_gen/main.rb", "run.rb"]) {
 }
 
 writeInvalidFixtures();
+writeInvalidSubscriptionFixtures();
 
 const invalidPayload = compileInstrumentation(invalidOutputDir, {
   classPath: invalidSourceDir,
@@ -92,6 +97,20 @@ if (!/String should be Int|Cannot unify|Int should be String/.test(invalidSubscr
   process.stdout.write(invalidSubscriber.stdout);
   process.stderr.write(invalidSubscriber.stderr);
   fail("Invalid instrumentation subscriber failed for an unexpected reason.");
+}
+
+const invalidSubscription = compileInstrumentation(invalidSubscriptionOutputDir, {
+  classPath: invalidSubscriptionSourceDir,
+  main: "InvalidSubscriptionMain",
+  allowFailure: true,
+});
+if (invalidSubscription.status === 0) {
+  fail("Expected invalid instrumentation subscription handle compile to fail.");
+}
+if (!/rails\.active_support\.Subscription|Subscription|Cannot unify/.test(invalidSubscription.stderr + invalidSubscription.stdout)) {
+  process.stdout.write(invalidSubscription.stdout);
+  process.stderr.write(invalidSubscription.stderr);
+  fail("Invalid instrumentation subscription handle failed for an unexpected reason.");
 }
 
 const activeSupportCheck = run("ruby", ["-e", 'require "active_support/notifications"'], { allowFailure: true });
@@ -179,6 +198,19 @@ function writeInvalidFixtures() {
     "\t\tNotifications.subscribe(TodoEvents.shipped, function(event:NotificationEvent<TodoShipPayload>):Void {",
     "\t\t\tvar wrong:Int = event.payload.listId;",
     "\t\t});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeInvalidSubscriptionFixtures() {
+  mkdirSync(invalidSubscriptionSourceDir, { recursive: true });
+  writeFileSync(join(invalidSubscriptionSourceDir, "InvalidSubscriptionMain.hx"), [
+    "import rails.active_support.Notifications;",
+    "class InvalidSubscriptionMain {",
+    "\tstatic function main():Void {",
+    "\t\tNotifications.unsubscribe({});",
     "\t}",
     "}",
     "",

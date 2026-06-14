@@ -78,6 +78,9 @@ Type safety used here:
 - Reading a payload field with the wrong Haxe type fails before Ruby runs.
 - `subscribe` and `instrument` share the same `EventName<TPayload>`, so the
   publisher/subscriber payload contract cannot drift silently.
+- `Subscription` is an opaque Rails handle. It is returned by `subscribe` /
+  `monotonicSubscribe` and accepted by `unsubscribe`; raw objects such as `{}`
+  do not satisfy the handle type.
 
 ## Monotonic Subscriptions
 
@@ -106,6 +109,8 @@ The CI smoke for this surface is static-first:
 - Assert payload field reads lower to `event.payload[:snake_case_key]`.
 - Compile negative fixtures that prove missing payload fields and wrong
   subscriber field types fail at Haxe compile time.
+- Compile a negative fixture that proves raw subscription handles cannot be
+  passed to `unsubscribe`.
 - Run Ruby syntax checks.
 - If local Ruby has `active_support/notifications`, run the generated Ruby and
   verify publish/subscribe behavior. If ActiveSupport is not installed, the
@@ -116,4 +121,3 @@ Run it directly:
 ```bash
 npm run test:instrumentation
 ```
-

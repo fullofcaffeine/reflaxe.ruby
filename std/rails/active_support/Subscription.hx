@@ -1,3 +1,12 @@
 package rails.active_support;
 
-abstract Subscription(Dynamic) from Dynamic to Dynamic {}
+/**
+	Opaque handle returned by `ActiveSupport::Notifications.subscribe`.
+
+	The handle erases back to Rails' runtime subscription object via `to Dynamic`
+	so generated Ruby can call `ActiveSupport::Notifications.unsubscribe(...)`
+	directly. There is intentionally no `from Dynamic`: app code should obtain
+	handles from `Notifications.subscribe(...)` / `monotonicSubscribe(...)`, not
+	manufacture fake subscription tokens.
+**/
+abstract Subscription(Dynamic) to Dynamic {}

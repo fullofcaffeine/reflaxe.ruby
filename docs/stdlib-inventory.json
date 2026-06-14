@@ -796,7 +796,7 @@
       "status": "implemented",
       "path": "std/rails/active_support/Subscription.hx",
       "surface": "rails.active_support.Subscription",
-      "reason": "Typed subscription handle returned by ActiveSupport::Notifications subscribe helpers and accepted by unsubscribe."
+      "reason": "Opaque typed subscription handle returned by ActiveSupport::Notifications subscribe helpers and accepted by unsubscribe, without implicit Dynamic construction."
     },
     {
       "id": "std.math",
