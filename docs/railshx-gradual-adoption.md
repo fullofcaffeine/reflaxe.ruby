@@ -9,6 +9,7 @@ RailsHx-authored UI is HHX-first. Existing Rails UI is external Rails source.
 - Use HHX and `@:railsTemplateAst(...)` for new Haxe-owned templates, partials, and layouts.
 - Use `Template.existing("path") : Template<TLocals>` when Haxe renders an existing ERB partial/template that is discoverable under `app/views` or `rails/app/views`.
 - Reserve lower-level `Template.external("path") : Template<TLocals>` for unusual/test layouts where the macro cannot discover the file, and document why the filesystem check cannot apply.
+- Missing `Template.existing(...)` / `Component.existing(...)` files fail during Haxe compilation; use this as the default for gradual conversion from Rails-owned ERB to typed HHX.
 - Use `@:native("RubyConstant") extern class ...` for existing Ruby services, helpers, components, and framework objects.
 - Let Ruby consume generated Haxe through normal Rails constants and normal `render partial:` calls.
 

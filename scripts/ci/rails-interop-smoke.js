@@ -35,6 +35,7 @@ rmSync(invalidOutputDir, { force: true, recursive: true });
 stage("compiler", () => compileWithFirstAvailableReflaxe(exampleDir, compiledDir, "Main"));
 stage("compiler artifacts", assertCompiledArtifacts);
 stage("typed external template validation", expectInvalidExternalTemplateLocalsFailure);
+stage("missing existing template validation", expectMissingExistingTemplateFailure);
 stage("materialization", materializeRailsApp);
 stage("ruby syntax", () => syntaxCheck([
   "app/controllers/legacy_controller.rb",
@@ -199,6 +200,80 @@ function expectInvalidExternalTemplateLocalsFailure() {
     return;
   }
   console.error("Unable to run invalid Template.external locals check; no Reflaxe candidate found.");
+  process.exit(1);
+}
+
+function expectMissingExistingTemplateFailure() {
+  mkdirSync(join(invalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(invalidSourceDir, "MissingExistingTemplateMain.hx"), [
+    "import views.MissingExistingPartialUse;",
+    "",
+    "class MissingExistingTemplateMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<MissingExistingPartialUse> = MissingExistingPartialUse;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "views", "MissingExistingPartialUse.hx"), [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "import rails.action_view.Template;",
+    "import views.HaxeShellView.LegacyBadgeLocals;",
+    "",
+    "@:railsTemplate(\"mixed/missing_existing_partial\")",
+    "@:railsTemplateAst(\"render\")",
+    "class MissingExistingPartialUse {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.partial((Template.existing(\"legacy/does_not_exist\") : Template<LegacyBadgeLocals>), {label: \"Missing\", tone: \"warm\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${invalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      invalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "MissingExistingTemplateMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Missing Template.existing file compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("Template.existing could not find a Rails ERB template")) {
+      console.error("Missing Template.existing file failed, but not with the expected filesystem error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  console.error("Unable to run missing Template.existing file check; no Reflaxe candidate found.");
   process.exit(1);
 }
 

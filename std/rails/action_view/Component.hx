@@ -36,7 +36,9 @@ class Component<TLocals> {
 	public static macro function of(view:Expr, slotName:ExprOf<String>):Expr {
 		#if macro
 		var path = ownedTemplatePath(view);
-		return macro rails.action_view.Component.named($v{path}, $slotName);
+		var slot = extractString(slotName, "Component.of expects a string literal slot name.");
+		validateComponentSlotName(slot, slotName.pos, "Component.of");
+		return macro rails.action_view.Component.named($v{path}, $v{slot});
 		#else
 		return macro null;
 		#end
@@ -49,9 +51,11 @@ class Component<TLocals> {
 	public static macro function existing<TLocals>(path:ExprOf<String>, slotName:ExprOf<String>):Expr {
 		#if macro
 		var value = extractString(path, "Component.existing expects a string literal path.");
+		var slot = extractString(slotName, "Component.existing expects a string literal slot name.");
 		validateTemplatePath(value, path.pos, "Component.existing");
+		validateComponentSlotName(slot, slotName.pos, "Component.existing");
 		validateExternalTemplateExists(value, path.pos);
-		return macro rails.action_view.Component.external($v{normalizeRenderPath(value)}, $slotName);
+		return macro rails.action_view.Component.external($v{normalizeRenderPath(value)}, $v{slot});
 		#else
 		return macro null;
 		#end
@@ -90,7 +94,7 @@ class Component<TLocals> {
 		return switch (expr.expr) {
 			case EConst(CString(value, _)): value;
 			case _:
-				var typedValue = extractTypedStaticString(expr);
+				var typedValue = typedStaticString(Context.typeExpr(expr));
 				if (typedValue != null) {
 					typedValue;
 				} else {
@@ -149,6 +153,12 @@ class Component<TLocals> {
 			if (segment == "" || segment == "." || segment == "..") {
 				Context.error(context + " path must not contain empty, '.', or '..' segments.", pos);
 			}
+		}
+	}
+
+	static function validateComponentSlotName(slotName:String, pos:Position, context:String):Void {
+		if (!~/^[A-Za-z_][A-Za-z0-9_]*$/.match(slotName)) {
+			Context.error(context + " slot name must be a safe Haxe/Ruby local identifier.", pos);
 		}
 	}
 

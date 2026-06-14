@@ -82,7 +82,9 @@ This lowers to Rails-native ERB:
 ## Existing Rails Partials
 
 For existing Rails-owned partials, use `Component.existing(...)` so the macro
-checks the ERB file before compile succeeds:
+checks the ERB file before compile succeeds. The slot name is also checked as a
+safe Haxe/Ruby local identifier, so use a shared typed constant where the slot is
+part of a reusable component contract:
 
 ```haxe
 var card = (RailsComponent.existing("legacy/card", "body") : RailsComponent<CardLocals>);
@@ -106,5 +108,5 @@ npm run test:components
 ```
 
 It verifies generated Rails output, Ruby syntax for generated support files,
-wrong slot names, wrong local types, and `Component.of` on non-template classes.
-
+wrong slot names, wrong local types, `Component.of` on non-template classes,
+missing `Component.existing(...)` files, and unsafe component slot identifiers.

@@ -113,6 +113,34 @@ if (!/Component\.of expects a class annotated with @:railsTemplate/.test(invalid
   fail("Invalid Component.of view failed for an unexpected reason.");
 }
 
+const invalidExisting = compileComponents(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidExistingComponentMain",
+  allowFailure: true,
+});
+if (invalidExisting.status === 0) {
+  fail("Expected missing Component.existing file compile to fail.");
+}
+if (!/Component\.existing could not find a Rails ERB template/.test(invalidExisting.stderr + invalidExisting.stdout)) {
+  process.stdout.write(invalidExisting.stdout);
+  process.stderr.write(invalidExisting.stderr);
+  fail("Missing Component.existing file failed for an unexpected reason.");
+}
+
+const invalidSlotName = compileComponents(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidSlotNameMain",
+  allowFailure: true,
+});
+if (invalidSlotName.status === 0) {
+  fail("Expected unsafe Component.of slot name compile to fail.");
+}
+if (!/Component\.of slot name must be a safe Haxe\/Ruby local identifier/.test(invalidSlotName.stderr + invalidSlotName.stdout)) {
+  process.stdout.write(invalidSlotName.stdout);
+  process.stderr.write(invalidSlotName.stderr);
+  fail("Unsafe Component.of slot name failed for an unexpected reason.");
+}
+
 console.log("[components] OK");
 
 function compileComponents(targetDir, options = {}) {
@@ -223,6 +251,57 @@ function writeInvalidFixtures() {
     "\t\t\ttone: \"warm\",",
     "\t\t\tbody: Slot.content()",
     "\t\t}}>Bad template</component>;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  writeFileSync(join(invalidSourceDir, "InvalidExistingComponentMain.hx"), [
+    "import views.BadExistingComponentShellView;",
+    "class InvalidExistingComponentMain { static function main():Void { Sys.println(BadExistingComponentShellView != null); } }",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "views", "BadExistingComponentShellView.hx"), [
+    "package views;",
+    "import rails.action_view.Component as RailsComponent;",
+    "import rails.action_view.HtmlNode;",
+    "import rails.action_view.Slot;",
+    "import views.ComponentCardView.ComponentCardLocals;",
+    "@:railsTemplate(\"components/bad_existing_component\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadExistingComponentShellView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <component component=${(RailsComponent.existing(\"legacy/missing_card\", \"body\") : RailsComponent<ComponentCardLocals>)} locals=${{",
+    "\t\t\ttitle: \"Missing component\",",
+    "\t\t\ttone: \"warm\",",
+    "\t\t\tbody: Slot.content()",
+    "\t\t}}>Missing component</component>;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  writeFileSync(join(invalidSourceDir, "InvalidSlotNameMain.hx"), [
+    "import views.BadSlotNameShellView;",
+    "class InvalidSlotNameMain { static function main():Void { Sys.println(BadSlotNameShellView != null); } }",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "views", "BadSlotNameShellView.hx"), [
+    "package views;",
+    "import rails.action_view.Component as RailsComponent;",
+    "import rails.action_view.HtmlNode;",
+    "import rails.action_view.Slot;",
+    "import views.ComponentCardView;",
+    "import views.ComponentCardView.ComponentCardLocals;",
+    "@:railsTemplate(\"components/bad_slot_name\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadSlotNameShellView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <component component=${(RailsComponent.of(ComponentCardView, \"bad-slot\") : RailsComponent<ComponentCardLocals>)} locals=${{",
+    "\t\t\ttitle: \"Bad slot name\",",
+    "\t\t\ttone: \"warm\",",
+    "\t\t\tbody: Slot.content()",
+    "\t\t}}>Bad slot name</component>;",
     "\t}",
     "}",
     "",
