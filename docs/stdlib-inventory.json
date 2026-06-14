@@ -359,12 +359,28 @@
       "reason": "Top-level ActionMailer marker module for Rails interop."
     },
     {
+      "id": "std.rails.action_mailer_attachments",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/Attachments.hx",
+      "surface": "rails.action_mailer.Attachments",
+      "reason": "Typed ActionMailer attachments proxy facade with add(name, content) for common string attachments and explicit addUnchecked for raw Rails attachment shapes."
+    },
+    {
       "id": "std.rails.action_mailer_base",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/action_mailer/Base.hx",
       "surface": "rails.action_mailer.Base",
-      "reason": "Typed ActionMailer base surface for Rails mailer classes, including Rails-native render and mail helpers."
+      "reason": "Typed ActionMailer base surface for Rails mailer classes, including typed render options, attachments, and mail helpers."
+    },
+    {
+      "id": "std.rails.action_mailer_mail_address",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/MailAddress.hx",
+      "surface": "rails.action_mailer.MailAddress",
+      "reason": "Typed ActionMailer recipient value accepting String or Array<String> while rejecting arbitrary object-shaped recipients by default."
     },
     {
       "id": "std.rails.action_mailer_mail_format",
@@ -375,12 +391,28 @@
       "reason": "Typed ActionMailer format block facade for multipart html/text mail rendering."
     },
     {
+      "id": "std.rails.action_mailer_mail_layout",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/MailLayout.hx",
+      "surface": "rails.action_mailer.MailLayout",
+      "reason": "Typed ActionMailer layout option supporting named layouts, layout false, and explicit unchecked interop."
+    },
+    {
       "id": "std.rails.action_mailer_mail_options",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/action_mailer/MailOptions.hx",
       "surface": "rails.action_mailer.MailOptions",
-      "reason": "Typed mail kwargs surface for common ActionMailer mail options lowered to Rails-native keyword args."
+      "reason": "Typed mail kwargs surface for common ActionMailer mail options lowered to Rails-native keyword args; recipient and layout fields use typed wrappers instead of Dynamic."
+    },
+    {
+      "id": "std.rails.action_mailer_mail_render_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/MailRenderOptions.hx",
+      "surface": "rails.action_mailer.MailRenderOptions",
+      "reason": "Typed render kwargs surface for ActionMailer template rendering used by mailer macros."
     },
     {
       "id": "std.rails.mailer_macro",

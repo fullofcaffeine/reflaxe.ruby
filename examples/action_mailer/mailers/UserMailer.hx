@@ -1,5 +1,7 @@
 package mailers;
 
+import rails.action_mailer.MailAddress;
+import rails.action_mailer.MailLayout;
 import rails.action_view.Template;
 import rails.macros.MailerMacro;
 import views.WelcomeEmailHtmlView;
@@ -12,6 +14,8 @@ import views.WelcomeEmailView.WelcomeEmailLocals;
 // `ActionMailer::Base` subclass and sends multipart mail through Rails'
 // `mail(...) do |format| ... end` API.
 // Type safety: `MailOptions` gives editor completion for common mail kwargs,
+// accepts single or array recipient values through `MailAddress`, and rejects
+// arbitrary object-shaped recipients unless `MailAddress.unchecked(...)` is used.
 // `Template.of(...) : Template<WelcomeEmailLocals>` binds each HHX template to
 // a locals typedef, and `MailerMacro.mailMultipart(...)` validates the locals
 // object before Ruby is generated.
@@ -23,6 +27,7 @@ import views.WelcomeEmailView.WelcomeEmailLocals;
 @:railsMailer
 class UserMailer extends rails.action_mailer.Base {
 	public function welcome(email:String, name:String, message:String):Void {
+		attachments().add("welcome.txt", message);
 		var locals:WelcomeEmailLocals = {
 			name: name,
 			message: message,
@@ -31,7 +36,10 @@ class UserMailer extends rails.action_mailer.Base {
 		MailerMacro.mailMultipart(this, {
 			to: email,
 			from: "team@example.test",
-			subject: "Welcome to typed RailsHx mail"
+			cc: ["ops@example.test"],
+			replyTo: MailAddress.one("reply@example.test"),
+			subject: "Welcome to typed RailsHx mail",
+			layout: MailLayout.none()
 		}, (Template.of(WelcomeEmailHtmlView) : Template<WelcomeEmailLocals>), locals,
 			(Template.of(WelcomeEmailTextView) : Template<WelcomeEmailLocals>), locals);
 	}

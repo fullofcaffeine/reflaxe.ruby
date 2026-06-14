@@ -8,13 +8,14 @@ module Mailers
     end
     def welcome(email__hx0, name__hx0, message__hx0)
       gthis__hx0 = self
+      self.attachments()["welcome.txt"] = message__hx0
       locals_product_name__hx0 = nil
       locals_name__hx0 = nil
       locals_message__hx0 = nil
       locals_name__hx0 = name__hx0
       locals_message__hx0 = message__hx0
       locals_product_name__hx0 = "RailsHx"
-      self.mail(to: email__hx0, from: "team@example.test", subject: "Welcome to typed RailsHx mail") do |format__hx0|
+      self.mail(to: email__hx0, from: "team@example.test", cc: ["ops@example.test"], reply_to: "reply@example.test", subject: "Welcome to typed RailsHx mail", layout: false) do |format__hx0|
         format__hx0.html() { gthis__hx0.render(template: "mailers/user_mailer/welcome", locals: {message: locals_message__hx0, name: locals_name__hx0, product_name: locals_product_name__hx0}) }
         format__hx0.text() { gthis__hx0.render(template: "mailers/user_mailer/welcome.text", locals: {message: locals_message__hx0, name: locals_name__hx0, product_name: locals_product_name__hx0}) }
       end

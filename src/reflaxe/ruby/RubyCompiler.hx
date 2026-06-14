@@ -1392,6 +1392,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (actionCableCall != null) {
 			return actionCableCall;
 		}
+		var actionMailerCall = compileActionMailerCall(callee, params);
+		if (actionMailerCall != null) {
+			return actionMailerCall;
+		}
 		var info = staticCallInfo(callee);
 		if (info == null) {
 			return null;
@@ -1411,6 +1415,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var activeStorageStaticCall = compileActiveStorageStaticCall(info, params);
 		if (activeStorageStaticCall != null) {
 			return activeStorageStaticCall;
+		}
+		var actionMailerStaticCall = compileActionMailerStaticCall(info, params);
+		if (actionMailerStaticCall != null) {
+			return actionMailerStaticCall;
 		}
 		if ((info.owner == "ruby.Symbol" || StringTools.endsWith(info.owner, ".Symbol_Impl_")) && info.name == "of") {
 			return compileRubySymbol(params);
@@ -1733,6 +1741,44 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					null;
 				}
 		}
+	}
+
+	static function compileActionMailerCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (callee.expr) {
+			case TField(target, access)
+				if ((fieldAccessRawName(access) == "add" || fieldAccessRawName(access) == "addUnchecked")
+					&& params.length == 2
+					&& isActionMailerAttachmentsType(target.t)):
+				compileActionMailerAttachmentAssign(target, params[0], params[1]);
+			case _:
+				null;
+		}
+	}
+
+	static function compileActionMailerStaticCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch [info.owner, info.name] {
+			case [owner, "add" | "addUnchecked"] if (params.length == 3 && isActionMailerAttachmentsOwner(owner)):
+				compileActionMailerAttachmentAssign(params[0], params[1], params[2]);
+			case _:
+				null;
+		}
+	}
+
+	static function compileActionMailerAttachmentAssign(target:TypedExpr, name:TypedExpr, value:TypedExpr):RubyExpr {
+		return RubyRawExpr(printInlineExpr(target) + "[" + printInlineExpr(name) + "] = " + printInlineExpr(value));
+	}
+
+	static function isActionMailerAttachmentsType(type:haxe.macro.Type):Bool {
+		return switch (TypeTools.follow(type)) {
+			case TAbstract(ref, _):
+				isActionMailerAttachmentsOwner(fullTypeName(ref.get().pack, ref.get().name));
+			case _:
+				false;
+		}
+	}
+
+	static function isActionMailerAttachmentsOwner(owner:String):Bool {
+		return owner == "rails.action_mailer.Attachments" || StringTools.endsWith(owner, ".Attachments_Impl_");
 	}
 
 	static function isActionCableStreamOwner(owner:String):Bool {
@@ -2516,6 +2562,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function printKeywordArgValue(fieldName:String, expr:TypedExpr):String {
+		var abstractValue = abstractIdentityBlockValue(expr);
+		if (abstractValue != null) {
+			return printKeywordArgValue(fieldName, abstractValue);
+		}
 		if (fieldName == "locals") {
 			var locals = printRailsLocalsHash(expr);
 			if (locals != null) {
@@ -2528,7 +2578,40 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				return status;
 			}
 		}
-		return printInlineExpr(expr);
+		return simplifyRubyIdentityBegin(printInlineExpr(expr));
+	}
+
+	static function abstractIdentityBlockValue(expr:TypedExpr):Null<TypedExpr> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TBlock([decl, assign, ret]):
+				switch [decl.expr, assign.expr, ret.expr] {
+					case [TVar(local, _), TBinop(OpAssign, {expr: TLocal(assignLocal)}, value), TLocal(retLocal)]
+						if (local.name == assignLocal.name && local.name == retLocal.name):
+						value;
+					case _:
+						null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function simplifyRubyIdentityBegin(code:String):String {
+		var lines = code.split("\n");
+		if (lines.length != 5 || lines[0] != "begin" || lines[4] != "end") {
+			return code;
+		}
+		var prefix = "  ";
+		var nilSuffix = " = nil";
+		if (!StringTools.startsWith(lines[1], prefix) || !StringTools.endsWith(lines[1], nilSuffix)) {
+			return code;
+		}
+		var local = lines[1].substr(prefix.length, lines[1].length - prefix.length - nilSuffix.length);
+		var assignPrefix = prefix + local + " = ";
+		if (local == "" || !StringTools.startsWith(lines[2], assignPrefix) || lines[3] != prefix + local) {
+			return code;
+		}
+		return lines[2].substr(assignPrefix.length);
 	}
 
 	static function printRailsLocalsHash(expr:TypedExpr):Null<String> {

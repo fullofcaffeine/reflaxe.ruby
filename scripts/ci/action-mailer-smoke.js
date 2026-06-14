@@ -64,7 +64,9 @@ for (const expected of [
   /module Mailers/,
   /class UserMailer < ActionMailer::Base/,
   /def welcome\(email__hx\d+, name__hx\d+, message__hx\d+\)/,
-  /self\.mail\(to: email__hx\d+, from: "team@example.test", subject: "Welcome to typed RailsHx mail"\) do \|format__hx\d+\|/,
+  /self\.attachments\(\)/,
+  /self\.attachments\(\)\["welcome\.txt"\] = message__hx\d+/,
+  /self\.mail\(to: email__hx\d+, from: "team@example.test", cc: \["ops@example.test"\], reply_to: "reply@example.test", subject: "Welcome to typed RailsHx mail", layout: false\) do \|format__hx\d+\|/,
   /format__hx\d+\.html\(\) \{/,
   /render\(template: "mailers\/user_mailer\/welcome", locals: \{message: locals_message__hx\d+, name: locals_name__hx\d+, product_name: locals_product_name__hx\d+\}\)/,
   /format__hx\d+\.text\(\) \{/,
@@ -129,6 +131,38 @@ if (!/locals do not match the Template<TLocals> contract|has no field message|ha
   process.exit(1);
 }
 
+const invalidOptions = compileActionMailer(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidMailOptionsMain",
+  allowFailure: true,
+});
+if (invalidOptions.status === 0) {
+  console.error("Expected invalid ActionMailer mail options compile to fail.");
+  process.exit(1);
+}
+if (!/MailAddress|Cannot unify|should be rails\.action_mailer\.MailAddress/.test(invalidOptions.stderr + invalidOptions.stdout)) {
+  process.stdout.write(invalidOptions.stdout);
+  process.stderr.write(invalidOptions.stderr);
+  console.error("Invalid ActionMailer mail options compile failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidAttachment = compileActionMailer(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidAttachmentMain",
+  allowFailure: true,
+});
+if (invalidAttachment.status === 0) {
+  console.error("Expected invalid ActionMailer attachment compile to fail.");
+  process.exit(1);
+}
+if (!/String|Cannot unify/.test(invalidAttachment.stderr + invalidAttachment.stdout)) {
+  process.stdout.write(invalidAttachment.stdout);
+  process.stderr.write(invalidAttachment.stderr);
+  console.error("Invalid ActionMailer attachment compile failed for an unexpected reason.");
+  process.exit(1);
+}
+
 function compileActionMailer(targetDir, options = {}) {
   const args = [
     "-D",
@@ -170,6 +204,39 @@ function writeInvalidFixture() {
       "\tstatic function main():Void {",
       "\t\tMailerMacro.mailHtml(new UserMailer(), {to: \"reader@example.test\", subject: \"Broken\"},",
       "\t\t\t(Template.of(WelcomeEmailHtmlView) : Template<WelcomeEmailLocals>), {name: \"Ada\"});",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(invalidSourceDir, "InvalidMailOptionsMain.hx"),
+    [
+      "import mailers.UserMailer;",
+      "import rails.action_view.Template;",
+      "import rails.macros.MailerMacro;",
+      "import views.WelcomeEmailHtmlView;",
+      "import views.WelcomeEmailView.WelcomeEmailLocals;",
+      "",
+      "class InvalidMailOptionsMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar locals:WelcomeEmailLocals = {name: \"Ada\", message: \"Hi\", productName: \"RailsHx\"};",
+      "\t\tMailerMacro.mailHtml(new UserMailer(), {to: {address: \"reader@example.test\"}, subject: \"Broken\"},",
+      "\t\t\t(Template.of(WelcomeEmailHtmlView) : Template<WelcomeEmailLocals>), locals);",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(invalidSourceDir, "InvalidAttachmentMain.hx"),
+    [
+      "import mailers.UserMailer;",
+      "",
+      "class InvalidAttachmentMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar mailer = new UserMailer();",
+      "\t\tmailer.attachments().add(\"bad.txt\", {raw: \"bad\"});",
       "\t}",
       "}",
       "",
