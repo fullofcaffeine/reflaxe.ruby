@@ -129,6 +129,14 @@ var assignedOutsideFirstTen = Todo
 	.whereNotBetween(Todo.f.id, 1, 10)
 	.limit(2);
 
+var afterFirst = Todo.whereGt(Todo.f.id, 1)
+	.order(Todo.f.id.asc());
+
+var assignedNotSmall = Todo
+	.where({title: "assigned"})
+	.whereNotLte(Todo.f.id, 10)
+	.limit(2);
+
 var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
 var assignedWithNotes = Todo
 	.where({title: "assigned"})
@@ -280,6 +288,23 @@ Generated Ruby:
 ```ruby
 Models::Todo.where(id: 1..10)
 Models::Todo.where.not(id: 1..10)
+```
+
+`whereGt`, `whereGte`, `whereLt`, and `whereLte` cover strict and inclusive
+comparisons. Their `whereNot*` forms keep negation typed. These lower through
+Rails/Arel predicates because strict `>` / `<` comparisons cannot be expressed
+faithfully with ordinary Rails hash equality:
+
+```haxe
+Todo.whereGt(Todo.f.id, 1);
+Todo.whereNotLte(Todo.f.id, 10);
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(Models::Todo.arel_table[:id].gt(1))
+Models::Todo.where.not(Models::Todo.arel_table[:id].lteq(10))
 ```
 
 `whereNull(field)` and `whereNotNull(field)` cover Rails `nil` predicates

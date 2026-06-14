@@ -1539,6 +1539,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (fieldAccessRawName(access) == "whereNotBetween" && params.length == 3):
 				var criteria = activeRecordFieldRangeCriteriaArg(params[0], params[1], params[2]);
 				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
+			case TField(target, access) if (isActiveRecordComparisonPredicate(fieldAccessRawName(access)) && params.length == 2):
+				var predicate = activeRecordComparisonPredicateArg(params[0], activeRecordComparisonOp(fieldAccessRawName(access)), params[1]);
+				predicate == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(predicate)]);
+			case TField(target, access) if (isActiveRecordNegatedComparisonPredicate(fieldAccessRawName(access)) && params.length == 2):
+				var predicate = activeRecordComparisonPredicateArg(params[0], activeRecordComparisonOp(fieldAccessRawName(access)), params[1]);
+				predicate == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + predicate + ")");
 			case TField(target, access) if (fieldAccessRawName(access) == "whereNull" && params.length == 1):
 				var criteria = activeRecordFieldNilCriteriaArg(params[0]);
 				criteria == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(criteria)]);
@@ -1944,9 +1950,36 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": " + printInlineExpr(minExpr) + ".." + printInlineExpr(maxExpr);
 	}
 
+	static function activeRecordComparisonPredicateArg(fieldExpr:TypedExpr, op:Null<String>, valueExpr:TypedExpr):Null<String> {
+		var fieldName = activeRecordFieldName(fieldExpr);
+		var model = activeRecordFieldModelRubyPath(fieldExpr);
+		if (fieldName == null || model == null || op == null) {
+			return null;
+		}
+		return model + ".arel_table[:" + RubyNaming.toMethodName(fieldName) + "]." + op + "(" + printInlineExpr(valueExpr) + ")";
+	}
+
 	static function activeRecordFieldNilCriteriaArg(fieldExpr:TypedExpr):Null<String> {
 		var fieldName = activeRecordFieldName(fieldExpr);
 		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": nil";
+	}
+
+	static function isActiveRecordComparisonPredicate(name:String):Bool {
+		return ["whereGt", "whereGte", "whereLt", "whereLte"].indexOf(name) >= 0;
+	}
+
+	static function isActiveRecordNegatedComparisonPredicate(name:String):Bool {
+		return ["whereNotGt", "whereNotGte", "whereNotLt", "whereNotLte"].indexOf(name) >= 0;
+	}
+
+	static function activeRecordComparisonOp(name:String):Null<String> {
+		return switch (name) {
+			case "whereGt" | "whereNotGt": "gt";
+			case "whereGte" | "whereNotGte": "gteq";
+			case "whereLt" | "whereNotLt": "lt";
+			case "whereLte" | "whereNotLte": "lteq";
+			case _: null;
+		}
 	}
 
 	static function activeRecordCriteriaValue(expr:TypedExpr):String {
@@ -2117,6 +2150,44 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				value;
 			case TConst(TString(value)):
 				value;
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordFieldModelRubyPath(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				activeRecordFieldModelRubyPath(inner);
+			case _:
+				activeRecordFieldModelRubyPathFromType(expr.t);
+		}
+	}
+
+	static function activeRecordFieldModelRubyPathFromType(type:haxe.macro.Type):Null<String> {
+		// Field refs are Haxe abstracts whose first type parameter is the owning
+		// model. Reading that parameter lets relation calls such as
+		// `assigned.whereGt(Todo.f.id, 1)` still lower to the correct
+		// `Models::Todo.arel_table[...]` expression without a stringly model name.
+		return switch (TypeTools.follow(type)) {
+			case TAbstract(ref, params):
+				var abstractType = ref.get();
+				var name = fullTypeName(abstractType.pack, abstractType.name);
+				if ((name == "rails.active_record.Field" || name == "rails.active_record.NullableField") && params.length > 0) {
+					activeRecordModelRubyPathFromType(params[0]);
+				} else {
+					null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordModelRubyPathFromType(type:haxe.macro.Type):Null<String> {
+		return switch (TypeTools.follow(type)) {
+			case TInst(ref, _):
+				var classType = ref.get();
+				rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name);
 			case _:
 				null;
 		}

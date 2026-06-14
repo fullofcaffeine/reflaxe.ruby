@@ -27,6 +27,9 @@ class ModelMacro {
 		addFieldArrayPredicateStub(fields, "whereNotIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRangePredicateStub(fields, "whereBetween", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRangePredicateStub(fields, "whereNotBetween", selfType, relationComplexType(selfType, criteriaType, pos), pos);
+		for (name in ["whereGt", "whereGte", "whereLt", "whereLte", "whereNotGt", "whereNotGte", "whereNotLt", "whereNotLte"]) {
+			addFieldValuePredicateStub(fields, name, selfType, relationComplexType(selfType, criteriaType, pos), pos);
+		}
 		addNullableFieldPredicateStub(fields, "whereNull", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addNullableFieldPredicateStub(fields, "whereNotNull", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "rewhere", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
@@ -1316,6 +1319,31 @@ class ModelMacro {
 				args: [
 					{name: "field", type: typedFieldComplexType(selfType, valueType)},
 					{name: "values", type: arrayComplexType(valueType)}
+				],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{name}], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addFieldValuePredicateStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, name)) {
+			return;
+		}
+		var valueType:ComplexType = TPath({pack: [], name: "TValue"});
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				params: [{name: "TValue", constraints: [], params: [], meta: []}],
+				args: [
+					{name: "field", type: typedFieldComplexType(selfType, valueType)},
+					{name: "value", type: valueType}
 				],
 				ret: ret,
 				expr: macro return cast null

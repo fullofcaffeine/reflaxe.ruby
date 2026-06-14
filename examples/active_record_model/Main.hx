@@ -11,7 +11,7 @@ import rails.active_record.TransactionIsolation;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `distinct`, `none`, `reverseOrder`, `readOnly`, `lock`, `transaction`, `select`, `where`, `whereNot`, `whereIn`, `whereNotIn`, `whereBetween`, `whereNotBetween`, `whereNull`, `whereNotNull`, `rewhere`, `or`, `merge`, `includes`, `preload`, `joins`, `eagerLoad`, `order`, `reorder`, `limit`,
+// `all`, `distinct`, `none`, `reverseOrder`, `readOnly`, `lock`, `transaction`, `select`, `where`, `whereNot`, `whereIn`, `whereNotIn`, `whereBetween`, `whereNotBetween`, `whereGt`, `whereLte`, `whereNull`, `whereNotNull`, `rewhere`, `or`, `merge`, `includes`, `preload`, `joins`, `eagerLoad`, `order`, `reorder`, `limit`,
 // `offset`, `pluck`, `minimum`, `maximum`, `sum`, `average`, `find`, `findBy`,
 // `exists`, `count`, `first`, and `last` authored as typed Haxe calls, plus
 // typed multi-field orders through `Order.many`, named multi-field projections
@@ -50,6 +50,8 @@ class Main {
 		var assignedNotArchived = assigned.whereNotIn(Todo.f.status, ["archived"]).limit(2);
 		var firstTen = Todo.whereBetween(Todo.f.id, 1, 10).order(Todo.f.id.asc());
 		var assignedOutsideFirstTen = assigned.whereNotBetween(Todo.f.id, 1, 10).limit(2);
+		var afterFirst = Todo.whereGt(Todo.f.id, 1).order(Todo.f.id.asc());
+		var assignedNotSmall = assigned.whereNotLte(Todo.f.id, 10).limit(2);
 		var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
 		var assignedWithNotes = assigned.whereNotNull(Todo.f.notes).limit(2);
 		var relationDistinct = assigned.distinct().limit(2);
@@ -153,6 +155,8 @@ class Main {
 		Sys.println(assignedNotArchived == null);
 		Sys.println(firstTen == null);
 		Sys.println(assignedOutsideFirstTen == null);
+		Sys.println(afterFirst == null);
+		Sys.println(assignedNotSmall == null);
 		Sys.println(missingNotes == null);
 		Sys.println(assignedWithNotes == null);
 		Sys.println(relationDistinct == null);

@@ -74,6 +74,13 @@ var assignedOutsideFirstTen = Todo
 	.whereNotBetween(Todo.f.id, 1, 10)
 	.limit(2);
 
+var afterFirst = Todo.whereGt(Todo.f.id, 1).order(Todo.f.id.asc());
+var notSmall = Todo.whereNotLte(Todo.f.id, 10).limit(3);
+var assignedNotSmall = Todo
+	.where({title: "assigned"})
+	.whereNotLte(Todo.f.id, 10)
+	.limit(2);
+
 var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
 var anyWithNotes = Todo.whereNotNull(Todo.f.notes).limit(3);
 var assignedWithNotes = Todo
@@ -217,6 +224,9 @@ Type-safety features used here:
 - `whereBetween(Todo.f.id, 1, 10)` and `whereNotBetween(...)` use typed field
   refs plus same-typed range endpoints while lowering to Rails hash range
   criteria such as `where(id: 1..10)`.
+- `whereGt(Todo.f.id, 1)` / `whereLte(...)` and their negated forms use typed
+  field refs plus same-typed values while lowering to Rails/Arel comparison
+  predicates, avoiding raw `id > ?` SQL fragments.
 - `whereNull(Todo.f.notes)` and `whereNotNull(Todo.f.notes)` require nullable
   typed field refs and lower to Rails `nil` hash criteria, avoiding ad-hoc
   `IS NULL` / `IS NOT NULL` strings.

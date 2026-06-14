@@ -12,6 +12,14 @@ extern class Relation<TModel, TCriteria> {
 	public function whereNotIn<TValue>(field:Field<TModel, TValue>, values:Array<TValue>):Relation<TModel, TCriteria>;
 	public function whereBetween<TValue>(field:Field<TModel, TValue>, min:TValue, max:TValue):Relation<TModel, TCriteria>;
 	public function whereNotBetween<TValue>(field:Field<TModel, TValue>, min:TValue, max:TValue):Relation<TModel, TCriteria>;
+	public function whereGt<TValue>(field:Field<TModel, TValue>, value:TValue):Relation<TModel, TCriteria>;
+	public function whereGte<TValue>(field:Field<TModel, TValue>, value:TValue):Relation<TModel, TCriteria>;
+	public function whereLt<TValue>(field:Field<TModel, TValue>, value:TValue):Relation<TModel, TCriteria>;
+	public function whereLte<TValue>(field:Field<TModel, TValue>, value:TValue):Relation<TModel, TCriteria>;
+	public function whereNotGt<TValue>(field:Field<TModel, TValue>, value:TValue):Relation<TModel, TCriteria>;
+	public function whereNotGte<TValue>(field:Field<TModel, TValue>, value:TValue):Relation<TModel, TCriteria>;
+	public function whereNotLt<TValue>(field:Field<TModel, TValue>, value:TValue):Relation<TModel, TCriteria>;
+	public function whereNotLte<TValue>(field:Field<TModel, TValue>, value:TValue):Relation<TModel, TCriteria>;
 	public function whereNull<TValue>(field:NullableField<TModel, TValue>):Relation<TModel, TCriteria>;
 	public function whereNotNull<TValue>(field:NullableField<TModel, TValue>):Relation<TModel, TCriteria>;
 	public function rewhere(criteria:TCriteria):Relation<TModel, TCriteria>;

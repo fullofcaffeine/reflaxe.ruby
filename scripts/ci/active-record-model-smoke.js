@@ -28,6 +28,12 @@ const invalidWhereBetweenTypeSourceDir = join(root, "test", ".generated", "activ
 const invalidWhereBetweenTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_type_out");
 const invalidWhereBetweenStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_string_src");
 const invalidWhereBetweenStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_between_string_out");
+const invalidWhereComparisonOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_owner_src");
+const invalidWhereComparisonOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_owner_out");
+const invalidWhereComparisonTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_type_src");
+const invalidWhereComparisonTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_type_out");
+const invalidWhereComparisonStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_string_src");
+const invalidWhereComparisonStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_comparison_string_out");
 const invalidWhereNullOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_src");
 const invalidWhereNullOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_out");
 const invalidWhereNotNullTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_not_null_type_src");
@@ -164,6 +170,12 @@ rmSync(invalidWhereBetweenTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereBetweenTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereBetweenStringSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereBetweenStringOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereComparisonOwnerSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereComparisonOwnerOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereComparisonTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereComparisonTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereComparisonStringSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereComparisonStringOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereNullOwnerSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereNullOwnerOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereNotNullTypeSourceDir, { force: true, recursive: true });
@@ -391,6 +403,8 @@ for (const expected of [
   '.where.not(status: ["archived"]).limit(2)',
   "Models::Todo.where(id: 1..10).order(id: :asc)",
   ".where.not(id: 1..10).limit(2)",
+  "Models::Todo.where(Models::Todo.arel_table[:id].gt(1)).order(id: :asc)",
+  ".where.not(Models::Todo.arel_table[:id].lteq(10)).limit(2)",
   "Models::Todo.where(notes: nil).limit(3)",
   ".where.not(notes: nil).limit(2)",
   '.distinct().limit(2)',
@@ -472,6 +486,8 @@ for (const expected of [
   "whereNotIn(Todo.f.status",
   "whereBetween(Todo.f.id",
   "whereNotBetween(Todo.f.id",
+  "whereGt(Todo.f.id",
+  "whereNotLte(Todo.f.id",
   "whereNull(Todo.f.notes",
   "whereNotNull(Todo.f.notes",
   "rewhere({status",
@@ -484,6 +500,7 @@ for (const expected of [
   "Models::Todo.where.not(status:",
   "Models::Todo.where(status: [",
   "Models::Todo.where(id: 1..10)",
+  "Models::Todo.where(Models::Todo.arel_table[:id].gt(1))",
   "Models::Todo.where(notes: nil)",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
@@ -531,6 +548,8 @@ for (const expected of [
   "Todo.whereNotIn(Todo.f.status",
   "Todo.whereBetween(Todo.f.id",
   "Todo.whereNotBetween(Todo.f.id",
+  "Todo.whereGt(Todo.f.id",
+  "Todo.whereNotLte(Todo.f.id",
   "Todo.whereNull(Todo.f.notes",
   "Todo.whereNotNull(Todo.f.notes",
   "Todo.rewhere({completed: true})",
@@ -583,6 +602,9 @@ expectInvalidWhereInStringFieldFailure();
 expectInvalidWhereBetweenOwnerFailure();
 expectInvalidWhereBetweenValueTypeFailure();
 expectInvalidWhereBetweenStringFieldFailure();
+expectInvalidWhereComparisonOwnerFailure();
+expectInvalidWhereComparisonValueTypeFailure();
+expectInvalidWhereComparisonStringFieldFailure();
 expectInvalidWhereNullOwnerFailure();
 expectInvalidWhereNotNullValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
@@ -1156,6 +1178,70 @@ function expectInvalidWhereBetweenStringFieldFailure() {
     invalidWhereBetweenStringSourceDir,
     invalidWhereBetweenStringOutputDir,
     "Invalid ActiveRecord whereBetween string field compiled successfully.",
+    "String should be rails.active_record.Field<models.Todo"
+  );
+}
+
+function expectInvalidWhereComparisonOwnerFailure() {
+  mkdirSync(invalidWhereComparisonOwnerSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereComparisonOwnerSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereGt(User.f.id, 1);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereComparisonOwnerSourceDir,
+    invalidWhereComparisonOwnerOutputDir,
+    "Invalid ActiveRecord comparison field owner compiled successfully.",
+    "models.User should be models.Todo"
+  );
+}
+
+function expectInvalidWhereComparisonValueTypeFailure() {
+  mkdirSync(invalidWhereComparisonTypeSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereComparisonTypeSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereLte(Todo.f.id, \"ten\");",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereComparisonTypeSourceDir,
+    invalidWhereComparisonTypeOutputDir,
+    "Invalid ActiveRecord comparison value type compiled successfully.",
+    "String should be Int"
+  );
+}
+
+function expectInvalidWhereComparisonStringFieldFailure() {
+  mkdirSync(invalidWhereComparisonStringSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereComparisonStringSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereGt(\"id\", 1);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereComparisonStringSourceDir,
+    invalidWhereComparisonStringOutputDir,
+    "Invalid ActiveRecord comparison string field compiled successfully.",
     "String should be rails.active_record.Field<models.Todo"
   );
 }
