@@ -1,14 +1,14 @@
 package rails.action_cable;
 
 class Consumer {
-	public static function create(?url:String):Dynamic {
+	public static function create(?url:String):Consumer {
 		return url == null
 			? js.Syntax.code("ActionCable.createConsumer()")
 			: js.Syntax.code("ActionCable.createConsumer({0})", url);
 	}
 
 	public static function subscribe<TParams, TPayload>(
-		consumer:Dynamic,
+		consumer:Consumer,
 		channel:String,
 		params:TParams,
 		callbacks:SubscriptionCallbacks<TPayload>

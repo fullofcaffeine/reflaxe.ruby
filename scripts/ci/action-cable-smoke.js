@@ -11,6 +11,8 @@ const invalidSourceDir = join(root, "test", ".generated", "action_cable_invalid_
 const invalidOutputDir = join(root, "test", ".generated", "action_cable_invalid_out");
 const invalidRawStringSourceDir = join(root, "test", ".generated", "action_cable_invalid_raw_string_src");
 const invalidRawStringOutputDir = join(root, "test", ".generated", "action_cable_invalid_raw_string_out");
+const invalidConsumerSourceDir = join(root, "test", ".generated", "action_cable_invalid_consumer_src");
+const invalidConsumerOutputDir = join(root, "test", ".generated", "action_cable_invalid_consumer_out");
 const jsWorkDir = mkdtempSync(join(tmpdir(), "railshx-action-cable."));
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
@@ -23,6 +25,8 @@ rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 rmSync(invalidRawStringSourceDir, { force: true, recursive: true });
 rmSync(invalidRawStringOutputDir, { force: true, recursive: true });
+rmSync(invalidConsumerSourceDir, { force: true, recursive: true });
+rmSync(invalidConsumerOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -81,6 +85,7 @@ for (const file of ["app/haxe_gen/channels/todos_channel.rb", "app/haxe_gen/main
 compileClient();
 writeInvalidFixtures();
 writeInvalidRawStringFixtures();
+writeInvalidConsumerFixtures();
 
 const invalidPayload = compileActionCable(invalidOutputDir, {
   classPath: invalidSourceDir,
@@ -152,6 +157,20 @@ if (!/String should be rails\.action_cable\.Stream|Stream|Cannot unify/.test(inv
   fail("Raw string ActionCable stream failed for an unexpected reason.");
 }
 
+const invalidConsumer = compileClient({
+  classPath: invalidConsumerSourceDir,
+  main: "InvalidConsumerMain",
+  allowFailure: true,
+});
+if (invalidConsumer.status === 0) {
+  fail("Expected raw object ActionCable consumer compile to fail.");
+}
+if (!/rails\.action_cable\.Consumer|Consumer|Cannot unify/.test(invalidConsumer.stderr + invalidConsumer.stdout)) {
+  process.stdout.write(invalidConsumer.stdout);
+  process.stderr.write(invalidConsumer.stderr);
+  fail("Raw object ActionCable consumer failed for an unexpected reason.");
+}
+
 console.log("[action-cable] OK");
 
 function compileActionCable(targetDir, options = {}) {
@@ -180,20 +199,24 @@ function compileActionCable(targetDir, options = {}) {
   return run("haxe", args, { allowFailure: options.allowFailure });
 }
 
-function compileClient() {
-  const srcDir = join(jsWorkDir, "src");
-  const outFile = join(jsWorkDir, "cable_client.js");
+function compileClient(options = {}) {
+  const srcDir = options.classPath ?? join(jsWorkDir, "src");
+  const outFile = join(jsWorkDir, `${options.main ?? "cable_client"}.js`);
   mkdirSync(srcDir, { recursive: true });
-  writeFileSync(join(srcDir, "CableClientMain.hx"), [
-    "import client.TodosCableClient;",
-    "class CableClientMain {",
-    "\tstatic function main():Void {",
-    "\t\tTodosCableClient.subscribe({}, \"open\", function(title) {});",
-    "\t}",
-    "}",
-    "",
-  ].join("\n"));
-  run("haxe", [
+  if (!options.classPath) {
+    writeFileSync(join(srcDir, "CableClientMain.hx"), [
+      "import client.TodosCableClient;",
+      "import rails.action_cable.Consumer;",
+      "class CableClientMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar consumer = Consumer.create();",
+      "\t\tTodosCableClient.subscribe(consumer, \"open\", function(title) {});",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"));
+  }
+  const result = run("haxe", [
     "-cp",
     join(root, "std"),
     "-cp",
@@ -201,13 +224,17 @@ function compileClient() {
     "-cp",
     srcDir,
     "-main",
-    "CableClientMain",
+    options.main ?? "CableClientMain",
     "-js",
     outFile,
     "--dce=full",
-  ]);
+  ], { allowFailure: options.allowFailure });
+  if (options.allowFailure) {
+    return result;
+  }
   const js = readFileSync(outFile, "utf8");
   for (const expected of [
+    "ActionCable.createConsumer()",
     "Object.assign({ channel: channel }, params)",
     "consumer.subscriptions.create(identifier, callbacks)",
     "Channels::TodosChannel",
@@ -217,6 +244,7 @@ function compileClient() {
       fail(`ActionCable JS client output missing ${expected}`);
     }
   }
+  return result;
 }
 
 function writeInvalidFixtures() {
@@ -276,6 +304,19 @@ function writeInvalidRawStringFixtures() {
     "class InvalidRawStreamMain {",
     "\tstatic function main():Void {",
     "\t\tActionCable.broadcast(\"todos:open\", {title: \"raw\", completed: false});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeInvalidConsumerFixtures() {
+  mkdirSync(invalidConsumerSourceDir, { recursive: true });
+  writeFileSync(join(invalidConsumerSourceDir, "InvalidConsumerMain.hx"), [
+    "import client.TodosCableClient;",
+    "class InvalidConsumerMain {",
+    "\tstatic function main():Void {",
+    "\t\tTodosCableClient.subscribe({}, \"open\", function(title) {});",
     "\t}",
     "}",
     "",

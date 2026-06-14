@@ -436,7 +436,7 @@
       "status": "implemented",
       "path": "std/rails/action_cable/Consumer.hx",
       "surface": "rails.action_cable.Consumer",
-      "reason": "Typed Haxe JavaScript facade for Rails ActionCable consumer creation and subscriptions."
+      "reason": "Typed Haxe JavaScript facade for Rails ActionCable consumer creation and subscriptions; create() returns a nominal Consumer handle so subscribe(...) no longer accepts raw Dynamic consumer objects."
     },
     {
       "id": "std.rails.action_cable_stream",

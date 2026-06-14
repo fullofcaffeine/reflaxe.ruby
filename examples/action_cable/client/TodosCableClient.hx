@@ -13,7 +13,7 @@ import channels.TodosChannel.TodoSubscriptionParams;
 // JS output: this lowers to `consumer.subscriptions.create(...)`, which is the
 // Rails ActionCable client API.
 class TodosCableClient {
-	public static function subscribe(consumer:Dynamic, listId:String, onTitle:String->Void):Void {
+	public static function subscribe(consumer:Consumer, listId:String, onTitle:String->Void):Void {
 		var params:TodoSubscriptionParams = {listId: listId};
 		Consumer.subscribe(consumer, "Channels::TodosChannel", params, {
 			connected: function():Void {},
