@@ -25,6 +25,8 @@ class ModelMacro {
 		addStub(fields, "whereNot", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldArrayPredicateStub(fields, "whereIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldArrayPredicateStub(fields, "whereNotIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
+		addNullableFieldPredicateStub(fields, "whereNull", selfType, relationComplexType(selfType, criteriaType, pos), pos);
+		addNullableFieldPredicateStub(fields, "whereNotNull", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "rewhere", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addPlainStub(fields, "order", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "reorder", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
@@ -85,16 +87,11 @@ class ModelMacro {
 			if (hasFieldNamed(fields, refName)) {
 				continue;
 			}
-			var fieldType = fieldValueType(field);
-			var refType:ComplexType = TPath({
-				pack: ["rails", "active_record"],
-				name: "Field",
-				params: [TPType(selfType), TPType(fieldType)]
-			});
+			var refType = modelFieldRefComplexType(selfType, fieldValueType(field));
 			fields.push({
 				name: refName,
 				access: [APublic, AStatic, AInline, AFinal],
-				kind: FVar(refType, macro rails.active_record.Field.named($v{field.name})),
+				kind: FVar(refType, modelFieldRefConstructorExpr(field.name, fieldValueType(field))),
 				meta: [{name: ":railsField", params: [macro $v{field.name}], pos: pos}],
 				pos: pos
 			});
@@ -185,7 +182,7 @@ class ModelMacro {
 		var objectFields:Array<Field> = [];
 		var values:Array<ObjectField> = [];
 		for (field in columnFields) {
-			var fieldType = typedFieldComplexType(selfType, fieldValueType(field));
+			var fieldType = modelFieldRefComplexType(selfType, fieldValueType(field));
 			objectFields.push({
 				name: field.name,
 				access: [],
@@ -195,7 +192,7 @@ class ModelMacro {
 			});
 			values.push({
 				field: field.name,
-				expr: macro rails.active_record.Field.named($v{field.name})
+				expr: modelFieldRefConstructorExpr(field.name, fieldValueType(field))
 			});
 		}
 		fields.push({
@@ -212,6 +209,25 @@ class ModelMacro {
 			name: "Field",
 			params: [TPType(selfType), TPType(fieldType)]
 		});
+	}
+
+	static function nullableFieldComplexType(selfType:ComplexType, innerType:ComplexType):ComplexType {
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "NullableField",
+			params: [TPType(selfType), TPType(innerType)]
+		});
+	}
+
+	static function modelFieldRefComplexType(selfType:ComplexType, fieldType:ComplexType):ComplexType {
+		var innerType = nullableInnerComplexType(fieldType);
+		return innerType == null ? typedFieldComplexType(selfType, fieldType) : nullableFieldComplexType(selfType, innerType);
+	}
+
+	static function modelFieldRefConstructorExpr(name:String, fieldType:ComplexType):Expr {
+		return nullableInnerComplexType(fieldType) == null
+			? macro rails.active_record.Field.named($v{name})
+			: macro rails.active_record.NullableField.named($v{name});
 	}
 
 	static function validateModelMetadata(fields:Array<Field>):Void {
@@ -1308,6 +1324,39 @@ class ModelMacro {
 			],
 			pos: pos
 		});
+	}
+
+	static function addNullableFieldPredicateStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, name)) {
+			return;
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				params: [{name: "TValue", constraints: [], params: [], meta: []}],
+				args: [{name: "field", type: nullableFieldComplexType(selfType, TPath({pack: [], name: "TValue"}))}],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{name}], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function nullableInnerComplexType(type:ComplexType):Null<ComplexType> {
+		return switch (type) {
+			case TPath(path) if (path.name == "Null" && path.params != null && path.params.length == 1):
+				switch (path.params[0]) {
+					case TPType(inner): inner;
+					case _: null;
+				}
+			case _:
+				null;
+		}
 	}
 
 	static function addTransactionStub(fields:Array<Field>, pos:Position):Void {

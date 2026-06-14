@@ -143,6 +143,14 @@
       "reason": "Typed ActiveRecord model field reference that lets RailsHx forms, params, and order expressions share one checked field source while lowering to Rails-native names/symbols."
     },
     {
+      "id": "std.rails.active_record_nullable_field",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/NullableField.hx",
+      "surface": "rails.active_record.NullableField",
+      "reason": "Typed ActiveRecord nullable field reference used by null-aware query builders such as whereNull and whereNotNull while still coercing to normal field refs for projection and ordering."
+    },
+    {
       "id": "std.rails.active_record_group",
       "owner": "std",
       "status": "implemented",

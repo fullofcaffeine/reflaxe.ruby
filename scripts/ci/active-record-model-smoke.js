@@ -20,6 +20,10 @@ const invalidWhereInOwnerSourceDir = join(root, "test", ".generated", "active_re
 const invalidWhereInOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_in_owner_out");
 const invalidWhereInTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_in_type_src");
 const invalidWhereInTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_in_type_out");
+const invalidWhereNullOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_src");
+const invalidWhereNullOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_out");
+const invalidWhereNotNullTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_not_null_type_src");
+const invalidWhereNotNullTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_not_null_type_out");
 const invalidRelationWhereSourceDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_src");
 const invalidRelationWhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_relation_where_out");
 const invalidRewhereSourceDir = join(root, "test", ".generated", "active_record_model_invalid_rewhere_src");
@@ -144,6 +148,10 @@ rmSync(invalidWhereInOwnerSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereInOwnerOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereInTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereInTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereNullOwnerSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereNullOwnerOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereNotNullTypeSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereNotNullTypeOutputDir, { force: true, recursive: true });
 rmSync(invalidRelationWhereSourceDir, { force: true, recursive: true });
 rmSync(invalidRelationWhereOutputDir, { force: true, recursive: true });
 rmSync(invalidRewhereSourceDir, { force: true, recursive: true });
@@ -365,6 +373,8 @@ for (const expected of [
   '.where.not(status: "done").limit(2)',
   'Models::Todo.where(status: ["open", "done"]).order(title: :asc).limit(9)',
   '.where.not(status: ["archived"]).limit(2)',
+  "Models::Todo.where(notes: nil).limit(3)",
+  ".where.not(notes: nil).limit(2)",
   '.distinct().limit(2)',
   'Models::Todo.none().where(status: "open")',
   'assigned__hx',
@@ -442,6 +452,8 @@ for (const expected of [
   "whereNot({status",
   "whereIn(Todo.f.status",
   "whereNotIn(Todo.f.status",
+  "whereNull(Todo.f.notes",
+  "whereNotNull(Todo.f.notes",
   "rewhere({status",
   "Todo.f.title.asc()",
   "Todo.a.user",
@@ -451,6 +463,7 @@ for (const expected of [
   "where({user:",
   "Models::Todo.where.not(status:",
   "Models::Todo.where(status: [",
+  "Models::Todo.where(notes: nil)",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
   "Todo.none()",
@@ -495,9 +508,12 @@ for (const expected of [
   "Todo.whereNot({status",
   "Todo.whereIn(Todo.f.status",
   "Todo.whereNotIn(Todo.f.status",
+  "Todo.whereNull(Todo.f.notes",
+  "Todo.whereNotNull(Todo.f.notes",
   "Todo.rewhere({completed: true})",
   "Todo.whereNot({status",
   "Models::Todo.where.not(status:",
+  "whereNull(Todo.f.notes)",
   "var allOpen = Todo",
   ".distinct()",
   "Todo.none()",
@@ -540,6 +556,8 @@ expectInvalidWhereNotFieldFailure();
 expectInvalidWhereNotValueTypeFailure();
 expectInvalidWhereInOwnerFailure();
 expectInvalidWhereInValueTypeFailure();
+expectInvalidWhereNullOwnerFailure();
+expectInvalidWhereNotNullValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
 expectInvalidRewhereFieldFailure();
 expectInvalidAssignedRelationFieldFailure();
@@ -1027,6 +1045,49 @@ function expectInvalidWhereInValueTypeFailure() {
     invalidWhereInTypeOutputDir,
     "Invalid ActiveRecord whereIn value type compiled successfully.",
     "String should be Int"
+  );
+}
+
+function expectInvalidWhereNullOwnerFailure() {
+  mkdirSync(invalidWhereNullOwnerSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereNullOwnerSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereNull(User.f.name);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereNullOwnerSourceDir,
+    invalidWhereNullOwnerOutputDir,
+    "Invalid ActiveRecord whereNull field owner compiled successfully.",
+    "Field<models.User, String> should be rails.active_record.NullableField<models.Todo"
+  );
+}
+
+function expectInvalidWhereNotNullValueTypeFailure() {
+  mkdirSync(invalidWhereNotNullTypeSourceDir, { recursive: true });
+  writeFileSync(join(invalidWhereNotNullTypeSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Todo.whereNotNull(Todo.f.status);",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidWhereNotNullTypeSourceDir,
+    invalidWhereNotNullTypeOutputDir,
+    "Invalid ActiveRecord whereNotNull non-nullable field compiled successfully.",
+    "Field<models.Todo, String> should be rails.active_record.NullableField<models.Todo"
   );
 }
 

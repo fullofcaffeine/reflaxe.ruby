@@ -121,6 +121,12 @@ var assignedNotArchived = Todo
 	.whereNotIn(Todo.f.status, ["archived"])
 	.limit(2);
 
+var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
+var assignedWithNotes = Todo
+	.where({title: "assigned"})
+	.whereNotNull(Todo.f.notes)
+	.limit(2);
+
 var emptyOpen = Todo.none()
 	.where({status: "open"});
 
@@ -250,6 +256,22 @@ type are checked by Haxe:
 ```haxe
 Todo.whereIn(Todo.f.status, ["open", "done"]);
 Todo.whereNotIn(Todo.f.status, ["archived"]);
+```
+
+`whereNull(field)` and `whereNotNull(field)` cover Rails `nil` predicates
+without raw `IS NULL` strings. The field must be typed as `Null<T>`, so
+non-nullable fields are rejected by Haxe before Ruby is generated:
+
+```haxe
+Todo.whereNull(Todo.f.notes);
+Todo.whereNotNull(Todo.f.notes);
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where(notes: nil)
+Models::Todo.where.not(notes: nil)
 ```
 
 `rewhere({...})` uses the same typed criteria object as `where({...})`, so field

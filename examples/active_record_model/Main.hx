@@ -11,7 +11,7 @@ import rails.active_record.TransactionIsolation;
 // Typed ActiveRecord query smoke.
 //
 // Demonstrates: Rails-native query chains (`where`, `includes`, `joins`,
-// `all`, `distinct`, `none`, `reverseOrder`, `readOnly`, `lock`, `transaction`, `select`, `where`, `whereNot`, `whereIn`, `whereNotIn`, `rewhere`, `or`, `merge`, `includes`, `preload`, `joins`, `eagerLoad`, `order`, `reorder`, `limit`,
+// `all`, `distinct`, `none`, `reverseOrder`, `readOnly`, `lock`, `transaction`, `select`, `where`, `whereNot`, `whereIn`, `whereNotIn`, `whereNull`, `whereNotNull`, `rewhere`, `or`, `merge`, `includes`, `preload`, `joins`, `eagerLoad`, `order`, `reorder`, `limit`,
 // `offset`, `pluck`, `minimum`, `maximum`, `sum`, `average`, `find`, `findBy`,
 // `exists`, `count`, `first`, and `last` authored as typed Haxe calls, plus
 // typed multi-field orders through `Order.many`, named multi-field projections
@@ -48,6 +48,8 @@ class Main {
 		var assignedNotDone = assigned.whereNot({status: "done"}).limit(2);
 		var openOrDoneByField = Todo.whereIn(Todo.f.status, ["open", "done"]).order(Todo.f.title.asc()).limit(9);
 		var assignedNotArchived = assigned.whereNotIn(Todo.f.status, ["archived"]).limit(2);
+		var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
+		var assignedWithNotes = assigned.whereNotNull(Todo.f.notes).limit(2);
 		var relationDistinct = assigned.distinct().limit(2);
 		var emptyOpen = Todo.none().where({status: "open"});
 		var emptyAssigned = assigned.none().limit(1);
@@ -147,6 +149,8 @@ class Main {
 		Sys.println(assignedNotDone == null);
 		Sys.println(openOrDoneByField == null);
 		Sys.println(assignedNotArchived == null);
+		Sys.println(missingNotes == null);
+		Sys.println(assignedWithNotes == null);
 		Sys.println(relationDistinct == null);
 		Sys.println(emptyOpen == null);
 		Sys.println(emptyAssigned == null);

@@ -67,6 +67,13 @@ var assignedNotArchived = Todo
 
 var notArchivedCount = Todo.whereNotIn(Todo.f.status, ["archived"]).count();
 
+var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
+var anyWithNotes = Todo.whereNotNull(Todo.f.notes).limit(3);
+var assignedWithNotes = Todo
+	.where({title: "assigned"})
+	.whereNotNull(Todo.f.notes)
+	.limit(2);
+
 var emptyOpen = Todo.none().where({status: "open"});
 var emptyAssigned = Todo.where({title: "assigned"}).none().limit(1);
 var reverseOpen = Todo.reverseOrder().where({status: "open"}).limit(2);
@@ -200,6 +207,9 @@ Type-safety features used here:
 - `whereIn(Todo.f.status, ["open", "done"])` and `whereNotIn(...)` use typed
   field refs and `Array<TValue>` values while lowering to Rails array-valued
   hash criteria, avoiding raw `IN (...)` SQL fragments.
+- `whereNull(Todo.f.notes)` and `whereNotNull(Todo.f.notes)` require nullable
+  typed field refs and lower to Rails `nil` hash criteria, avoiding ad-hoc
+  `IS NULL` / `IS NOT NULL` strings.
 - `rewhere({...})` uses the same typed criteria object while lowering to Rails `rewhere`.
 - `Todo.none()` and `relation.none()` keep a typed null relation that can still
   be chained before Rails runs.
