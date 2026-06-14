@@ -1958,10 +1958,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function activeRecordComparisonPredicateArg(fieldExpr:TypedExpr, op:Null<String>, valueExpr:TypedExpr):Null<String> {
 		var field = activeRecordArelField(fieldExpr);
-		if (field == null || op == null) {
-			return null;
-		}
-		return field + "." + op + "(" + printInlineExpr(valueExpr) + ")";
+		return field == null ? null : activeRecordExpressionPredicateArg(field, op, valueExpr);
 	}
 
 	static function activeRecordFieldNilCriteriaArg(fieldExpr:TypedExpr):Null<String> {
@@ -2057,14 +2054,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall(callee, [expressionExpr, valueExpr]) if (isActiveRecordExprPredicateCall(callee)):
 				var op = activeRecordExpressionPredicateOp(staticCallInfo(callee).name);
 				var expression = activeRecordExpressionArg(expressionExpr);
-				expression == null || op == null ? null : expression + "." + op + "(" + printInlineExpr(valueExpr) + ")";
+				expression == null ? null : activeRecordExpressionPredicateArg(expression, op, valueExpr);
 			case TCall({expr: TField(expressionExpr, access)}, [valueExpr]):
 				var op = activeRecordExpressionPredicateOp(fieldAccessRawName(access));
 				var expression = activeRecordExpressionArg(expressionExpr);
-				expression == null || op == null ? null : expression + "." + op + "(" + printInlineExpr(valueExpr) + ")";
+				expression == null ? null : activeRecordExpressionPredicateArg(expression, op, valueExpr);
 			case _:
 				null;
 		}
+	}
+
+	static function activeRecordExpressionPredicateArg(expression:String, op:Null<String>, valueExpr:TypedExpr):Null<String> {
+		// Keep RailsHx's two authoring surfaces on one backend:
+		// `whereGt(Todo.f.id, 1)` and
+		// `whereExpr(Expr.field(Todo.f.id).gt(1))` both lower through this
+		// Arel predicate printer. That makes future typed predicate builders
+		// additive instead of creating parallel SQL-lowering paths.
+		return op == null ? null : expression + "." + op + "(" + printInlineExpr(valueExpr) + ")";
 	}
 
 	static function activeRecordExpressionPredicateOp(name:String):Null<String> {

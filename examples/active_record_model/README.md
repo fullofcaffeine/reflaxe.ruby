@@ -229,7 +229,8 @@ Type-safety features used here:
   criteria such as `where(id: 1..10)`.
 - `whereGt(Todo.f.id, 1)` / `whereLte(...)` and their negated forms use typed
   field refs plus same-typed values while lowering to Rails/Arel comparison
-  predicates, avoiding raw `id > ?` SQL fragments.
+  predicates, avoiding raw `id > ?` SQL fragments. They share the same compiler
+  lowering backend as `whereExpr(Expr.field(Todo.f.id).gt(1))`.
 - `Expr.lower(Todo.f.title).asc()` and
   `whereExpr(Expr.lower(Todo.f.title).eq("ship"))` use the typed RailsHx
   expression layer for SQL functions while lowering to Rails/Arel

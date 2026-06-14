@@ -307,6 +307,11 @@ Models::Todo.where(Models::Todo.arel_table[:id].gt(1))
 Models::Todo.where.not(Models::Todo.arel_table[:id].lteq(10))
 ```
 
+These convenience methods use the same compiler predicate backend as
+`whereExpr(Expr.field(Todo.f.id).gt(1))`. Use the Rails-shaped helpers for
+common single-field comparisons and `Expr` when you need expression functions
+such as `Expr.lower(Todo.f.title).eq("ship")`.
+
 `whereNull(field)` and `whereNotNull(field)` cover Rails `nil` predicates
 without raw `IS NULL` strings. The field must be typed as `Null<T>`, so
 non-nullable fields are rejected by Haxe before Ruby is generated:
