@@ -36,7 +36,9 @@ RailsHx is currently alpha for production Rails adoption. The supported surfaces
 below are tested and documented, but production readiness is tracked separately
 by `haxe.ruby-bjv`; see [RailsHx Production Readiness](railshx-production-readiness.md)
 for the mandatory runtime, deploy, security, API-completeness, generator, and
-support gates required before declaring production-ready status.
+support gates required before declaring production-ready status. The current
+typed API production blockers are inventoried in
+[RailsHx Typed API Production Gap Audit](railshx-typed-api-production-gap-audit.md).
 
 | Feature | Define/tool | Status |
 | --- | --- | --- |
