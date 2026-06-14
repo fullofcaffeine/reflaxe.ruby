@@ -47,18 +47,14 @@ Turbo.onSubmitEnd(function(event) {
 });
 
 Turbo.onBeforeFetchRequest(function(event) {
-	if (event.detail.fetchOptions != null) {
-		js.Syntax.code(
-			"{0}.headers = Object.assign({}, {0}.headers || {}, {'X-RailsHx': 'typed'})",
-			event.detail.fetchOptions
-		);
-	}
+	Turbo.addFetchRequestHeader(event, "X-RailsHx", "typed");
 });
 ```
 
-`fetchOptions` and `fetchResponse` remain `Dynamic` because Turbo forwards
-browser/Rails runtime objects there. Keep raw JavaScript at the smallest possible
-boundary and wrap repeated behavior in typed helpers.
+`Turbo.addFetchRequestHeader(...)` is the preferred typed helper for common
+header mutation. `fetchOptions` and `fetchResponse` remain runtime-owned
+browser/Rails objects inside the lower-level detail typedefs, so repeated behavior
+should live in typed helpers instead of app code touching those objects directly.
 
 ## Frames And Streams
 

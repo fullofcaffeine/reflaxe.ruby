@@ -40,6 +40,12 @@ class Turbo {
 		onTyped(BeforeFetchRequest, handler);
 	}
 
+	public static function addFetchRequestHeader(event:TurboTypedEvent<TurboFetchRequestDetail>, name:String, value:String):Void {
+		if (event.detail.fetchOptions != null) {
+			js.Syntax.code("{0}.headers = Object.assign({}, {0}.headers || {}, {1})", event.detail.fetchOptions, headerObject(name, value));
+		}
+	}
+
 	public static function onBeforeFetchResponse(handler:TurboTypedEvent<TurboFetchResponseDetail>->Void):Void {
 		onTyped(BeforeFetchResponse, handler);
 	}
@@ -126,5 +132,9 @@ class Turbo {
 
 	public static function isAvailable():Bool {
 		return js.Syntax.code("typeof window.Turbo !== 'undefined' && typeof window.Turbo.visit === 'function'");
+	}
+
+	static function headerObject(name:String, value:String):{} {
+		return js.Syntax.code("({ [{0}]: {1} })", name, value);
 	}
 }

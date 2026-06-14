@@ -3,6 +3,7 @@ package client;
 import js.Browser;
 import js.html.Element;
 import js.html.Event;
+import js.html.EventTarget;
 import rails.turbo.Turbo;
 import shared.TodoHooks;
 
@@ -29,9 +30,7 @@ class TodoClient {
 			captureTodoSubmit(form == null ? event.target : form);
 		});
 		Turbo.onBeforeFetchRequest(function(event):Void {
-			if (event.detail.fetchOptions != null) {
-				js.Syntax.code("{0}.headers = Object.assign({}, {0}.headers || {}, {'X-RailsHx-Client': 'todoapp'})", event.detail.fetchOptions);
-			}
+			Turbo.addFetchRequestHeader(event, "X-RailsHx-Client", "todoapp");
 		});
 	}
 
@@ -52,15 +51,15 @@ class TodoClient {
 		});
 	}
 
-	static function captureTodoSubmit(target:Dynamic):Void {
-		var form:Element = cast target;
+	static function captureTodoSubmit(target:Null<EventTarget>):Void {
+		var form = elementTarget(target);
 		if (form == null || !form.classList.contains(TodoHooks.formClass)) {
 			return;
 		}
 		try {
 			Browser.window.sessionStorage.setItem(TodoHooks.submitStorageKey, "1");
 			Browser.window.sessionStorage.setItem(TodoHooks.submitScrollStorageKey, Std.string(currentScrollY()));
-		} catch (_:Dynamic) {}
+		} catch (_:js.lib.Error) {}
 	}
 
 	static function bindScrollLinks():Void {
@@ -94,7 +93,7 @@ class TodoClient {
 			savedScrollY = Std.parseFloat(Browser.window.sessionStorage.getItem(TodoHooks.submitScrollStorageKey));
 			Browser.window.sessionStorage.removeItem(TodoHooks.submitStorageKey);
 			Browser.window.sessionStorage.removeItem(TodoHooks.submitScrollStorageKey);
-		} catch (_:Dynamic) {}
+		} catch (_:js.lib.Error) {}
 		if (!shouldAnnounce) {
 			return;
 		}
@@ -116,8 +115,12 @@ class TodoClient {
 	static function focusAndScroll(target:Element):Void {
 		try {
 			target.focus();
-		} catch (_:Dynamic) {}
+		} catch (_:js.lib.Error) {}
 		js.Syntax.code("{0}.scrollIntoView({ behavior: 'smooth', block: 'start' })", target);
+	}
+
+	static function elementTarget(target:Null<EventTarget>):Null<Element> {
+		return target == null ? null : (Std.isOfType(target, Element) ? cast target : null);
 	}
 
 	static function currentScrollY():Float {

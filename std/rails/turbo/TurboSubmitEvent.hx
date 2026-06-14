@@ -1,7 +1,9 @@
 package rails.turbo;
 
+import js.html.EventTarget;
+
 typedef TurboSubmitEvent = {
-	var target:Dynamic;
+	var target:EventTarget;
 	var detail:{
 		var ?formSubmission:TurboFormSubmission;
 		var ?success:Bool;

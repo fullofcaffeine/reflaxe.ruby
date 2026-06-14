@@ -740,7 +740,7 @@
       "status": "implemented",
       "path": "std/rails/turbo/TurboSubmitEvent.hx",
       "surface": "rails.turbo.TurboSubmitEvent",
-      "reason": "Typed structural event for Turbo submit-start and submit-end handlers."
+      "reason": "Typed structural event for Turbo submit-start and submit-end handlers, including an EventTarget-typed event target."
     },
     {
       "id": "std.rails.turbo_typed_event",
@@ -748,7 +748,7 @@
       "status": "implemented",
       "path": "std/rails/turbo/TurboTypedEvent.hx",
       "surface": "rails.turbo.TurboTypedEvent",
-      "reason": "Generic typed Turbo event shape for event detail payloads and preventDefault support."
+      "reason": "Generic typed Turbo event shape for event detail payloads, EventTarget-typed targets, and preventDefault support."
     },
     {
       "id": "std.rails.migration",
