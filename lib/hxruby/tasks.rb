@@ -41,6 +41,14 @@ module HXRuby
           end
         end
 
+        desc "Compile RailsHx server/client artifacts and run production Rails checks"
+        task :production do
+          compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+          compile_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+          rails(["zeitwerk:check"], env: production_env)
+          rails(["assets:precompile"], env: production_env)
+        end
+
         namespace :gen do
           desc "Generate RailsHx app/adoption files in a Rails app"
           task :app do
@@ -105,6 +113,16 @@ module HXRuby
 
     def compile_haxe(hxml)
       sh(["haxe", hxml].map(&:shellescape).join(" "))
+    end
+
+    def rails(args, env: {})
+      sh(env.map { |key, value| "#{key}=#{value.to_s.shellescape}" }.concat([rails_command.shellescape, *args.map(&:shellescape)]).join(" "))
+    end
+
+    def production_env
+      env = { "RAILS_ENV" => ENV.fetch("RAILS_ENV", "production") }
+      env["SECRET_KEY_BASE_DUMMY"] = ENV.fetch("SECRET_KEY_BASE_DUMMY", "1")
+      env
     end
 
     def watch_task(task_name)

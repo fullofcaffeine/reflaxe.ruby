@@ -115,8 +115,10 @@ bundle exec rake hxruby:compile:client
 bundle exec rails db:migrate
 bundle exec rails test
 bundle exec rails zeitwerk:check
-RAILS_ENV=production bundle exec rails assets:precompile
+RAILS_ENV=production bundle exec rake hxruby:production
 ```
+
+Generated apps expose the same production lane as `bin/railshx-prod`. The rake task is the CI/buildpack entrypoint; the bin script is the app-author convenience wrapper. Both must compile RailsHx server output and Haxe-authored client JS before Rails production checks run.
 
 ## Design Rules While Closing The Gap
 

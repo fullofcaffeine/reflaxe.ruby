@@ -55,12 +55,14 @@ module HXRuby
         write("lib/tasks/hxruby.rake", render_rake_task)
         write("Procfile.railshx.dev", render_procfile)
         write("bin/railshx-dev", render_dev_runner, executable: true)
+        write("bin/railshx-prod", render_prod_runner, executable: true)
 
         puts "[rails:app] Generated RailsHx app files in #{@output_dir}"
         puts "[rails:app] Next:"
         puts "  bundle exec rake hxruby:compile"
         puts "  bundle exec rake hxruby:compile:client"
         puts "  bin/railshx-dev"
+        puts "  bin/railshx-prod"
       end
 
       private
@@ -209,6 +211,19 @@ module HXRuby
           "echo \"  bundle exec rails server\"",
           "echo \"  bundle exec rake hxruby:watch\"",
           "echo \"  bundle exec rake hxruby:watch:client\"",
+          "",
+        ].join("\n")
+      end
+
+      def render_prod_runner
+        [
+          "#!/usr/bin/env bash",
+          "set -euo pipefail",
+          "",
+          "export RAILS_ENV=\"${RAILS_ENV:-production}\"",
+          "export SECRET_KEY_BASE_DUMMY=\"${SECRET_KEY_BASE_DUMMY:-1}\"",
+          "",
+          "exec bundle exec rake hxruby:production",
           "",
         ].join("\n")
       end

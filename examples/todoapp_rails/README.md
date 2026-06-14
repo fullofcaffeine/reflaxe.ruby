@@ -114,11 +114,12 @@ RAILSHX_PLAYWRIGHT_PORT=3101 RAILSHX_PLAYWRIGHT_SPEC=examples/todoapp_rails/e2e/
 For a real RailsHx app, Haxe/HHX compilation is a build step before the normal Rails production bundle is finalized:
 
 ```bash
-RAILS_ENV=production bundle exec rake hxruby:compile
-RAILS_ENV=production bundle exec rake hxruby:compile:client
-RAILS_ENV=production bundle exec rails zeitwerk:check
-RAILS_ENV=production bundle exec rails assets:precompile
+bin/railshx-prod
+# or:
+RAILS_ENV=production bundle exec rake hxruby:production
 ```
+
+The generated production runner delegates to `hxruby:production`, which compiles server Haxe/HHX, compiles Haxe-authored JavaScript, runs `zeitwerk:check`, and precompiles assets before a release artifact is finalized.
 
 The production artifact must include generated `app/haxe_gen/**`, generated ActionView templates under `app/views/**`, generated Haxe JS under `app/javascript/railshx/**`, and `config/initializers/hxruby_autoload.rb`. The canonical source remains Haxe/HHX/Haxe JS; generated Rails files are build output.
 

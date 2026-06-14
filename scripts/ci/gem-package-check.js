@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdtempSync, readFileSync, rmSync } = require("node:fs");
+const { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { delimiter, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
@@ -77,12 +77,13 @@ try {
   const tasksCheck = [
     "require 'rake'",
     "require 'hxruby/tasks'",
-    "expected = %w[hxruby:compile hxruby:compile:client hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+    "expected = %w[hxruby:compile hxruby:compile:client hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
     "names = Rake::Task.tasks.map(&:name)",
     "missing = expected - names",
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
   ].join("; ");
   run("ruby", ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
+  smokeProductionTask(unpackedRoot);
 
   if (rubySupportsGemInstallCheck()) {
     const gemHome = join(tempRoot, "gems");
@@ -115,7 +116,7 @@ try {
       "require 'rubygems'",
       `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
       "require 'hxruby/tasks'",
-      "expected = %w[hxruby:compile hxruby:compile:client hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+      "expected = %w[hxruby:compile hxruby:compile:client hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
       "names = Rake::Task.tasks.map(&:name)",
       "missing = expected - names",
       "abort \"installed gem missing tasks: #{missing.join(', ')}\" unless missing.empty?",
@@ -131,3 +132,49 @@ try {
 }
 
 console.log(`[gem-package] OK: ${gemName}`);
+
+function smokeProductionTask(unpackedRoot) {
+  const appRoot = join(tempRoot, "production-smoke-app");
+  const fakeBin = join(appRoot, "fake-bin");
+  const railsBin = join(appRoot, "bin");
+  const logPath = join(appRoot, "task.log");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(railsBin, { recursive: true });
+  writeFileSync(join(appRoot, "build.hxml"), "# fake server build\n");
+  writeFileSync(join(appRoot, "build-client.hxml"), "# fake client build\n");
+  writeExecutable(join(fakeBin, "haxe"), [
+    "#!/usr/bin/env ruby",
+    `File.open(ENV.fetch("HXRUBY_TASK_LOG"), "a") { |file| file.puts("haxe #{ARGV.join(' ')}") }`,
+  ]);
+  writeExecutable(join(railsBin, "rails"), [
+    "#!/usr/bin/env ruby",
+    `File.open(ENV.fetch("HXRUBY_TASK_LOG"), "a") { |file| file.puts("rails #{ENV.fetch('RAILS_ENV', '')} #{ENV.fetch('SECRET_KEY_BASE_DUMMY', '')} #{ARGV.join(' ')}") }`,
+  ]);
+  writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
+
+  run("rake", ["hxruby:production"], {
+    cwd: appRoot,
+    env: {
+      ...process.env,
+      HXRUBY_TASK_LOG: logPath,
+      RUBYLIB: [join(unpackedRoot, "lib"), process.env.RUBYLIB].filter(Boolean).join(delimiter),
+      PATH: [fakeBin, process.env.PATH].filter(Boolean).join(delimiter),
+    },
+  });
+
+  const expected = [
+    "haxe build.hxml",
+    "haxe build-client.hxml",
+    "rails production 1 zeitwerk:check",
+    "rails production 1 assets:precompile",
+  ].join("\n") + "\n";
+  const actual = readFileSync(logPath, "utf8");
+  if (actual !== expected) {
+    fail(`hxruby:production task order mismatch:\nexpected:\n${expected}\nactual:\n${actual}`);
+  }
+}
+
+function writeExecutable(path, lines) {
+  writeFileSync(path, `${lines.join("\n")}\n`);
+  chmodSync(path, 0o755);
+}

@@ -36,6 +36,7 @@ const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const hxrubyGemspec = readFileSync("hxruby.gemspec", "utf8");
 const hxrubyTasks = readFileSync("lib/hxruby/tasks.rb", "utf8");
+const railsAppGenerator = readFileSync("lib/hxruby/generators/app.rb", "utf8");
 const rubyHxml = readFileSync("haxe_libraries/reflaxe.ruby.hxml", "utf8");
 
 if (packageJson.name !== "reflaxe-ruby") {
@@ -153,10 +154,15 @@ expectIncludes(haxelibPackageCheck, "TODO: lower", "Haxelib package check");
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");
+expectIncludes(gemPackageCheck, "hxruby:production", "Ruby gem package check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.2"', "hxruby.gemspec");
 expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");
 expectIncludes(hxrubyTasks, 'require "rake"', "hxruby tasks");
+expectIncludes(hxrubyTasks, "task :production", "hxruby tasks");
+expectIncludes(hxrubyTasks, "assets:precompile", "hxruby tasks");
+expectIncludes(railsAppGenerator, "bin/railshx-prod", "RailsHx app generator");
+expectIncludes(railsAppGenerator, "hxruby:production", "RailsHx app generator");
 expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "assets:precompile", "todoapp production smoke");
 expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "zeitwerk:check", "todoapp production smoke");
 expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "rails_integration_release.tgz", "todoapp production smoke");

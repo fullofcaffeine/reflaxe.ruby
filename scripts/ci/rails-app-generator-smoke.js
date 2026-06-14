@@ -74,6 +74,11 @@ try {
     "bundle exec rake hxruby:watch",
     "bundle exec rake hxruby:watch:client",
   ]);
+  expectFile("bin/railshx-prod", [
+    'export RAILS_ENV="${RAILS_ENV:-production}"',
+    'export SECRET_KEY_BASE_DUMMY="${SECRET_KEY_BASE_DUMMY:-1}"',
+    "bundle exec rake hxruby:production",
+  ]);
 
   const overwrite = spawnSync("ruby", [
     "-I",

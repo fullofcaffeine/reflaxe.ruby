@@ -148,14 +148,17 @@ bundle exec rake hxruby:watch # in another terminal, or use bin/railshx-dev with
 bundle exec rake hxruby:watch:client # if not using bin/railshx-dev
 ```
 
+Generated apps also include `bin/railshx-dev`, which starts Rails, the server Haxe watcher, and the client Haxe watcher through `foreman` or `overmind` when either tool is installed. Without those tools it prints the equivalent explicit commands.
+
 For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, generated `db/migrate/**` files, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
 
 ```bash
-RAILS_ENV=production bundle exec rake hxruby:compile
-RAILS_ENV=production bundle exec rake hxruby:compile:client
-RAILS_ENV=production bundle exec rails zeitwerk:check
-RAILS_ENV=production bundle exec rails assets:precompile
+bin/railshx-prod
+# or, in CI/buildpacks:
+RAILS_ENV=production bundle exec rake hxruby:production
 ```
+
+`hxruby:production` runs the server Haxe compile, client Haxe compile, `rails zeitwerk:check`, and `rails assets:precompile` with production defaults. It intentionally fails closed if required Haxe build files are missing, so releases do not accidentally ship stale generated Ruby, ERB, migrations, or JavaScript.
 
 The canonical dogfood app has a production smoke that exercises the same shape end to end:
 
@@ -267,6 +270,7 @@ bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 rake hxruby:compile
 rake hxruby:compile:client
+rake hxruby:production
 rake hxruby:watch
 rake hxruby:watch:client
 rake hxruby:gen:app
