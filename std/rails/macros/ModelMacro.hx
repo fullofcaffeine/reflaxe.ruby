@@ -23,6 +23,8 @@ class ModelMacro {
 		addModelAttachmentRefs(fields, selfType, pos);
 		addStub(fields, "where", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "whereNot", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
+		addFieldArrayPredicateStub(fields, "whereIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
+		addFieldArrayPredicateStub(fields, "whereNotIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "rewhere", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addPlainStub(fields, "order", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "reorder", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
@@ -1272,6 +1274,31 @@ class ModelMacro {
 			kind: FFun({
 				params: [{name: "TValue", constraints: [], params: [], meta: []}],
 				args: [{name: "field", type: typedFieldComplexType(selfType, valueType)}],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{name}], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addFieldArrayPredicateStub(fields:Array<Field>, name:String, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		if (hasFieldNamed(fields, name)) {
+			return;
+		}
+		var valueType:ComplexType = TPath({pack: [], name: "TValue"});
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				params: [{name: "TValue", constraints: [], params: [], meta: []}],
+				args: [
+					{name: "field", type: typedFieldComplexType(selfType, valueType)},
+					{name: "values", type: arrayComplexType(valueType)}
+				],
 				ret: ret,
 				expr: macro return cast null
 			}),

@@ -1527,6 +1527,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if ((fieldAccessRawName(access) == "whereNot" || fieldAccessRawName(access) == "where_not") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
+			case TField(target, access) if (fieldAccessRawName(access) == "whereIn" && params.length == 2):
+				var criteria = activeRecordFieldCriteriaArg(params[0], params[1]);
+				criteria == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(criteria)]);
+			case TField(target, access) if (fieldAccessRawName(access) == "whereNotIn" && params.length == 2):
+				var criteria = activeRecordFieldCriteriaArg(params[0], params[1]);
+				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
 			case TField(target, access) if ((fieldAccessRawName(access) == "findBy" || fieldAccessRawName(access) == "find_by") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				criteria == null ? null : RubyCall(compileExpr(target), "find_by", [RubyRawExpr(criteria)]);
@@ -1914,6 +1920,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function activeRecordCriteriaField(name:String, expr:TypedExpr):String {
 		return RubyNaming.toMethodName(name) + ": " + activeRecordCriteriaValue(expr);
+	}
+
+	static function activeRecordFieldCriteriaArg(fieldExpr:TypedExpr, valueExpr:TypedExpr):Null<String> {
+		var fieldName = activeRecordFieldName(fieldExpr);
+		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": " + printInlineExpr(valueExpr);
 	}
 
 	static function activeRecordCriteriaValue(expr:TypedExpr):String {

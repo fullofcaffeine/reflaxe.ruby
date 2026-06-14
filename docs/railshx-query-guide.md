@@ -111,6 +111,16 @@ var assignedNotDone = Todo
 	.whereNot({status: "done"})
 	.limit(2);
 
+var openOrDoneByField = Todo
+	.whereIn(Todo.f.status, ["open", "done"])
+	.order(Todo.f.title.asc())
+	.limit(9);
+
+var assignedNotArchived = Todo
+	.where({title: "assigned"})
+	.whereNotIn(Todo.f.status, ["archived"])
+	.limit(2);
+
 var emptyOpen = Todo.none()
 	.where({status: "open"});
 
@@ -198,6 +208,8 @@ Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo.where.not(status: "done").order(title: :asc).limit(8)
 Models::Todo.where(title: "assigned").where.not(status: "done").limit(2)
+Models::Todo.where(status: ["open", "done"]).order(title: :asc).limit(9)
+Models::Todo.where(title: "assigned").where.not(status: ["archived"]).limit(2)
 Models::Todo.none().where(status: "open")
 Models::Todo.where(title: "assigned").none().limit(1)
 Models::Todo.reverse_order().where(status: "open").limit(2)
@@ -229,6 +241,15 @@ predicates do not need raw SQL strings:
 
 ```haxe
 var notDone = Todo.whereNot({status: "done"});
+```
+
+`whereIn(field, values)` and `whereNotIn(field, values)` cover Rails `IN` /
+`NOT IN` predicates without raw SQL strings. The field owner and array element
+type are checked by Haxe:
+
+```haxe
+Todo.whereIn(Todo.f.status, ["open", "done"]);
+Todo.whereNotIn(Todo.f.status, ["archived"]);
 ```
 
 `rewhere({...})` uses the same typed criteria object as `where({...})`, so field

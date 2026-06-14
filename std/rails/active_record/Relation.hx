@@ -8,6 +8,8 @@ package rails.active_record;
 extern class Relation<TModel, TCriteria> {
 	public function where(criteria:TCriteria):Relation<TModel, TCriteria>;
 	public function whereNot(criteria:TCriteria):Relation<TModel, TCriteria>;
+	public function whereIn<TValue>(field:Field<TModel, TValue>, values:Array<TValue>):Relation<TModel, TCriteria>;
+	public function whereNotIn<TValue>(field:Field<TModel, TValue>, values:Array<TValue>):Relation<TModel, TCriteria>;
 	public function rewhere(criteria:TCriteria):Relation<TModel, TCriteria>;
 	@:native("or")
 	public function or(other:Relation<TModel, TCriteria>):Relation<TModel, TCriteria>;

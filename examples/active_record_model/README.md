@@ -53,6 +53,20 @@ var assignedNotDone = Todo
 	.whereNot({status: "done"})
 	.limit(2);
 
+var openOrDoneByField = Todo
+	.whereIn(Todo.f.status, ["open", "done"])
+	.order(Todo.f.title.asc())
+	.limit(9);
+
+var openOrDoneCount = Todo.whereIn(Todo.f.status, ["open", "done"]).count();
+
+var assignedNotArchived = Todo
+	.where({title: "assigned"})
+	.whereNotIn(Todo.f.status, ["archived"])
+	.limit(2);
+
+var notArchivedCount = Todo.whereNotIn(Todo.f.status, ["archived"]).count();
+
 var emptyOpen = Todo.none().where({status: "open"});
 var emptyAssigned = Todo.where({title: "assigned"}).none().limit(1);
 var reverseOpen = Todo.reverseOrder().where({status: "open"}).limit(2);
@@ -133,6 +147,8 @@ Models::Todo.all().where(status: "open").order(title: :asc).limit(3)
 Models::Todo.distinct().where(status: "open").order(title: :asc)
 Models::Todo.where.not(status: "done").order(title: :asc).limit(8)
 Models::Todo.where(title: "assigned").order(title: :asc).limit(5).where.not(status: "done").limit(2)
+Models::Todo.where(status: ["open", "done"]).order(title: :asc).limit(9)
+Models::Todo.where(title: "assigned").where.not(status: ["archived"]).limit(2)
 Models::Todo.none().where(status: "open")
 Models::Todo.where(title: "assigned").none().limit(1)
 Models::Todo.reverse_order().where(status: "open").limit(2)
@@ -181,6 +197,9 @@ Type-safety features used here:
 - `whereNot({...})` uses the same typed criteria object while lowering to
   Rails `where.not(...)`, so common negative predicates do not need raw SQL
   strings.
+- `whereIn(Todo.f.status, ["open", "done"])` and `whereNotIn(...)` use typed
+  field refs and `Array<TValue>` values while lowering to Rails array-valued
+  hash criteria, avoiding raw `IN (...)` SQL fragments.
 - `rewhere({...})` uses the same typed criteria object while lowering to Rails `rewhere`.
 - `Todo.none()` and `relation.none()` keep a typed null relation that can still
   be chained before Rails runs.
