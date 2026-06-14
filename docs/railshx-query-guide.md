@@ -534,6 +534,40 @@ This is not a raw SQL escape hatch. Plain strings such as
 `Todo.order("LOWER(title) ASC")` remain rejected; future truly raw fragments
 must go through explicit `Sql.*` APIs covered by the SQL/string policy.
 
+## Explicit SQL Escape Hatches
+
+Prefer typed builders first. When Rails needs a fragment RailsHx cannot model
+yet, use the explicit, searchable `Sql.unsafe*` APIs plus matching relation
+methods:
+
+```haxe
+import rails.active_record.Sql;
+
+var active = Todo.whereSql(Sql.unsafeWhere("status <> 'archived'")).limit(2);
+var notDone = Todo
+	.where({title: "assigned"})
+	.whereNotSql(Sql.unsafeWhere("status = 'done'"));
+var legacyOrder = Todo.orderSql(Sql.unsafeOrder("LOWER(title) ASC")).limit(2);
+```
+
+Generated Ruby:
+
+```ruby
+Models::Todo.where("status <> 'archived'").limit(2) # railshx:allow-raw-sql-example
+Models::Todo.where(title: "assigned").where.not("status = 'done'") # railshx:allow-raw-sql-example
+Models::Todo.order("LOWER(title) ASC").limit(2) # railshx:allow-raw-sql-example
+```
+
+The escape hatch is still typed around the risky string:
+
+- `whereSql(...)` requires `Sql<Todo, SqlWhere>`.
+- `orderSql(...)` requires `Sql<Todo, SqlOrder>`.
+- Fragments from another model, the wrong SQL kind, or plain strings such as
+  `Todo.whereSql("status = 'open'")` fail during Haxe compilation.
+
+Use this for migration/interop gaps and file a bead for the missing typed
+builder when a fragment appears in application code.
+
 `select(...)` uses generated field refs too. It returns a typed relation and
 lowers to Rails `select(:field)`, while fields from another model are rejected.
 

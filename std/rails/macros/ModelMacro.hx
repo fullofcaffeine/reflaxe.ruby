@@ -25,6 +25,8 @@ class ModelMacro {
 		addStub(fields, "whereNot", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addPlainStub(fields, "whereExpr", predicateComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "predicate", pos);
 		addPlainStub(fields, "whereNotExpr", predicateComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "predicate", pos);
+		addPlainStub(fields, "whereSql", sqlComplexType(selfType, "SqlWhere"), relationComplexType(selfType, criteriaType, pos), "fragment", pos);
+		addPlainStub(fields, "whereNotSql", sqlComplexType(selfType, "SqlWhere"), relationComplexType(selfType, criteriaType, pos), "fragment", pos);
 		addFieldArrayPredicateStub(fields, "whereIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldArrayPredicateStub(fields, "whereNotIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRangePredicateStub(fields, "whereBetween", selfType, relationComplexType(selfType, criteriaType, pos), pos);
@@ -37,6 +39,8 @@ class ModelMacro {
 		addStub(fields, "rewhere", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
 		addPlainStub(fields, "order", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "reorder", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
+		addPlainStub(fields, "orderSql", sqlComplexType(selfType, "SqlOrder"), relationComplexType(selfType, criteriaType, pos), "fragment", pos);
+		addPlainStub(fields, "reorderSql", sqlComplexType(selfType, "SqlOrder"), relationComplexType(selfType, criteriaType, pos), "fragment", pos);
 		addPlainStub(fields, "includes", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "preload", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
 		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
@@ -1056,6 +1060,17 @@ class ModelMacro {
 			pack: ["rails", "active_record"],
 			name: "Predicate",
 			params: [TPType(selfType)]
+		});
+	}
+
+	static function sqlComplexType(selfType:ComplexType, kindName:String):ComplexType {
+		return TPath({
+			pack: ["rails", "active_record"],
+			name: "Sql",
+			params: [
+				TPType(selfType),
+				TPType(TPath({pack: ["rails", "active_record"], name: kindName}))
+			]
 		});
 	}
 

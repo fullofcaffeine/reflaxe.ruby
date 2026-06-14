@@ -1368,6 +1368,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (activeRecordGroupCall != null) {
 			return activeRecordGroupCall;
 		}
+		var activeRecordSqlCall = compileActiveRecordSqlStaticCall(callee, params);
+		if (activeRecordSqlCall != null) {
+			return activeRecordSqlCall;
+		}
 		var arrayCall = compileArrayCall(callee, params);
 		if (arrayCall != null) {
 			return arrayCall;
@@ -1533,6 +1537,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (fieldAccessRawName(access) == "whereNotExpr" && params.length == 1):
 				var predicate = activeRecordPredicateArg(params[0]);
 				predicate == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + predicate + ")");
+			case TField(target, access) if (fieldAccessRawName(access) == "whereSql" && params.length == 1):
+				RubyCall(compileExpr(target), "where", [RubyRawExpr(activeRecordSqlArg(params[0]))]);
+			case TField(target, access) if (fieldAccessRawName(access) == "whereNotSql" && params.length == 1):
+				RubyRawExpr(printInlineExpr(target) + ".where.not(" + activeRecordSqlArg(params[0]) + ")");
 			case TField(target, access) if (fieldAccessRawName(access) == "whereIn" && params.length == 2):
 				var criteria = activeRecordFieldCriteriaArg(params[0], params[1]);
 				criteria == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(criteria)]);
@@ -1570,6 +1578,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if ((fieldAccessRawName(access) == "order" || fieldAccessRawName(access) == "reorder") && params.length == 1):
 				var orderArg = activeRecordOrderArg(params[0]);
 				orderArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(orderArg)]);
+			case TField(target, access) if ((fieldAccessRawName(access) == "orderSql" || fieldAccessRawName(access) == "reorderSql") && params.length == 1):
+				var methodName = fieldAccessRawName(access) == "orderSql" ? "order" : "reorder";
+				RubyCall(compileExpr(target), methodName, [RubyRawExpr(activeRecordSqlArg(params[0]))]);
 			case TField(target, access) if (fieldAccessRawName(access) == "pluck" && params.length == 1):
 				var fieldName = activeRecordFieldName(params[0]);
 				fieldName == null ? null : RubyCall(compileExpr(target), "pluck", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
@@ -1620,6 +1631,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var groupedCount = RubyCall(RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]), "count", []);
 		return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [groupedCount, RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))]);
+	}
+
+	static function compileActiveRecordSqlStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		var info = staticCallInfo(callee);
+		if (info == null || !isActiveRecordSqlOwner(info.owner) || !isActiveRecordSqlUnsafeCall(info.name) || params.length != 1) {
+			return null;
+		}
+		return compileExpr(params[0]);
 	}
 
 	static function staticString(expr:TypedExpr):Null<String> {
@@ -2047,6 +2066,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return expression == null ? activeRecordOrderArgForField(expr, direction) : expression + "." + direction;
 	}
 
+	static function activeRecordSqlArg(expr:TypedExpr):String {
+		return printInlineExpr(expr);
+	}
+
 	static function activeRecordPredicateArg(expr:TypedExpr):Null<String> {
 		return switch (expr.expr) {
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
@@ -2130,6 +2153,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActiveRecordOrderOwner(owner:String):Bool {
 		return owner == "rails.active_record.Order" || StringTools.endsWith(owner, ".Order_Impl_");
+	}
+
+	static function isActiveRecordSqlOwner(owner:String):Bool {
+		return owner == "rails.active_record.Sql" || StringTools.endsWith(owner, ".Sql_Impl_");
+	}
+
+	static function isActiveRecordSqlUnsafeCall(name:String):Bool {
+		return switch (name) {
+			case "unsafeWhere" | "unsafe_where" | "unsafeOrder" | "unsafe_order":
+				true;
+			case _:
+				false;
+		}
 	}
 
 	static function activeRecordAssociationArg(expr:TypedExpr):Null<String> {

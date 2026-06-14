@@ -199,6 +199,30 @@
       "reason": "Typed ActiveRecord predicate token produced by Expr comparison builders and consumed by whereExpr/whereNotExpr so relation predicates preserve model ownership without raw SQL strings."
     },
     {
+      "id": "std.rails.active_record_sql",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Sql.hx",
+      "surface": "rails.active_record.Sql",
+      "reason": "Explicit typed SQL escape-hatch token for whereSql/whereNotSql/orderSql/reorderSql, keeping raw fragments searchable, model-scoped, and kind-scoped instead of accepting casual query strings."
+    },
+    {
+      "id": "std.rails.active_record_sql_where",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/SqlWhere.hx",
+      "surface": "rails.active_record.SqlWhere",
+      "reason": "Phantom kind marker for explicit whereSql SQL fragments."
+    },
+    {
+      "id": "std.rails.active_record_sql_order",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/SqlOrder.hx",
+      "surface": "rails.active_record.SqlOrder",
+      "reason": "Phantom kind marker for explicit orderSql SQL fragments."
+    },
+    {
       "id": "std.rails.active_record_projection",
       "owner": "std",
       "status": "implemented",

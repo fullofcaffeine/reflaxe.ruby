@@ -29,6 +29,7 @@ import rails.active_record.Group;
 import rails.active_record.Lock;
 import rails.active_record.Order;
 import rails.active_record.Projection;
+import rails.active_record.Sql;
 import rails.active_record.TransactionIsolation;
 
 var allOpen = Todo
@@ -83,6 +84,8 @@ var assignedNotSmall = Todo
 	.limit(2);
 var lowerTitleOrder = Todo.order(Expr.lower(Todo.f.title).asc()).limit(3);
 var lowerShip = Todo.whereExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
+var unsafeSqlOpen = Todo.whereSql(Sql.unsafeWhere("status <> 'archived'")).limit(2);
+var unsafeSqlOrder = Todo.orderSql(Sql.unsafeOrder("LOWER(title) ASC")).limit(2);
 
 var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
 var anyWithNotes = Todo.whereNotNull(Todo.f.notes).limit(3);
@@ -236,6 +239,10 @@ Type-safety features used here:
   expression layer for SQL functions while lowering to Rails/Arel
   `Models::Todo.arel_table[:title].lower...` calls. Raw strings such as
   `Todo.order("LOWER(title) ASC")` are intentionally rejected.
+- `whereSql(Sql.unsafeWhere(...))` and `orderSql(Sql.unsafeOrder(...))` are the
+  explicit raw SQL escape hatches. They remain model/kind typed and searchable,
+  so plain strings, wrong model owners, and wrong SQL fragment kinds fail before
+  Rails runs.
 - `whereNull(Todo.f.notes)` and `whereNotNull(Todo.f.notes)` require nullable
   typed field refs and lower to Rails `nil` hash criteria, avoiding ad-hoc
   `IS NULL` / `IS NOT NULL` strings.

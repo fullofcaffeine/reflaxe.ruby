@@ -68,6 +68,8 @@ for (const escapeName of [
   "Template.external",
   "Lock.custom",
   "externalTables",
+  "Sql.unsafeWhere",
+  "Sql.unsafeOrder",
 ]) {
   if (!audit.includes(escapeName)) {
     fail(`Escape hatch audit must document ${escapeName}.`);

@@ -10,6 +10,8 @@ extern class Relation<TModel, TCriteria> {
 	public function whereNot(criteria:TCriteria):Relation<TModel, TCriteria>;
 	public function whereExpr(predicate:Predicate<TModel>):Relation<TModel, TCriteria>;
 	public function whereNotExpr(predicate:Predicate<TModel>):Relation<TModel, TCriteria>;
+	public function whereSql(fragment:Sql<TModel, SqlWhere>):Relation<TModel, TCriteria>;
+	public function whereNotSql(fragment:Sql<TModel, SqlWhere>):Relation<TModel, TCriteria>;
 	public function whereIn<TValue>(field:Field<TModel, TValue>, values:Array<TValue>):Relation<TModel, TCriteria>;
 	public function whereNotIn<TValue>(field:Field<TModel, TValue>, values:Array<TValue>):Relation<TModel, TCriteria>;
 	public function whereBetween<TValue>(field:Field<TModel, TValue>, min:TValue, max:TValue):Relation<TModel, TCriteria>;
@@ -30,6 +32,8 @@ extern class Relation<TModel, TCriteria> {
 	public function merge(other:Relation<TModel, TCriteria>):Relation<TModel, TCriteria>;
 	public function order(order:Order<TModel>):Relation<TModel, TCriteria>;
 	public function reorder(order:Order<TModel>):Relation<TModel, TCriteria>;
+	public function orderSql(fragment:Sql<TModel, SqlOrder>):Relation<TModel, TCriteria>;
+	public function reorderSql(fragment:Sql<TModel, SqlOrder>):Relation<TModel, TCriteria>;
 	public function limit(count:Int):Relation<TModel, TCriteria>;
 	public function offset(count:Int):Relation<TModel, TCriteria>;
 	public function distinct():Relation<TModel, TCriteria>;

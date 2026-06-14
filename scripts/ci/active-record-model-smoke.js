@@ -46,6 +46,12 @@ const invalidWhereExprOwnerSourceDir = join(root, "test", ".generated", "active_
 const invalidWhereExprOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_owner_out");
 const invalidWhereExprTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_type_src");
 const invalidWhereExprTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_type_out");
+const invalidWhereSqlStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_sql_string_src");
+const invalidWhereSqlStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_sql_string_out");
+const invalidWhereSqlOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_sql_owner_src");
+const invalidWhereSqlOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_sql_owner_out");
+const invalidOrderSqlKindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_order_sql_kind_src");
+const invalidOrderSqlKindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_order_sql_kind_out");
 const invalidWhereNullOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_src");
 const invalidWhereNullOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_null_owner_out");
 const invalidWhereNotNullTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_not_null_type_src");
@@ -200,6 +206,12 @@ rmSync(invalidWhereExprOwnerSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereExprOwnerOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereExprTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereExprTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereSqlStringSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereSqlStringOutputDir, { force: true, recursive: true });
+rmSync(invalidWhereSqlOwnerSourceDir, { force: true, recursive: true });
+rmSync(invalidWhereSqlOwnerOutputDir, { force: true, recursive: true });
+rmSync(invalidOrderSqlKindSourceDir, { force: true, recursive: true });
+rmSync(invalidOrderSqlKindOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereNullOwnerSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereNullOwnerOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereNotNullTypeSourceDir, { force: true, recursive: true });
@@ -434,6 +446,10 @@ for (const expected of [
   'assigned__hx',
   '.where.not(Models::Todo.arel_table[:title].lower.eq("ship")).limit(2)',
   "Models::Todo.where(Models::Todo.arel_table[:id].gt(1)).limit(2)",
+  "Models::Todo.where(\"status <> 'archived'\").limit(2)",
+  'assigned__hx',
+  ".where.not(\"status = 'done'\").limit(2)",
+  'Models::Todo.order("LOWER(title) ASC").limit(2)',
   "Models::Todo.where(notes: nil).limit(3)",
   ".where.not(notes: nil).limit(2)",
   '.distinct().limit(2)',
@@ -532,6 +548,8 @@ for (const expected of [
   "Models::Todo.where(Models::Todo.arel_table[:id].gt(1))",
   "Expr.lower(Todo.f.title)",
   "whereExpr(Expr.lower",
+  "whereSql(Sql.unsafeWhere",
+  "orderSql(Sql.unsafeOrder",
   "Models::Todo.where(notes: nil)",
   "var allOpen = Todo.all()",
   "Todo.distinct()",
@@ -642,6 +660,9 @@ expectInvalidExprLowerValueTypeFailure();
 expectInvalidWhereExprShapeFailure();
 expectInvalidWhereExprOwnerFailure();
 expectInvalidWhereExprValueTypeFailure();
+expectInvalidWhereSqlStringFailure();
+expectInvalidWhereSqlOwnerFailure();
+expectInvalidOrderSqlKindFailure();
 expectInvalidWhereNullOwnerFailure();
 expectInvalidWhereNotNullValueTypeFailure();
 expectInvalidRelationWhereFieldFailure();
@@ -1413,6 +1434,74 @@ function expectInvalidWhereExprValueTypeFailure() {
 		invalidWhereExprTypeOutputDir,
 		"Invalid ActiveRecord whereExpr value type compiled successfully.",
 		"String should be Int"
+	);
+}
+
+function expectInvalidWhereSqlStringFailure() {
+	mkdirSync(invalidWhereSqlStringSourceDir, { recursive: true });
+	writeFileSync(join(invalidWhereSqlStringSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.whereSql(\"status = 'open'\");",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidWhereSqlStringSourceDir,
+		invalidWhereSqlStringOutputDir,
+		"Invalid ActiveRecord whereSql raw string compiled successfully.",
+		"String should be rails.active_record.Sql<models.Todo"
+	);
+}
+
+function expectInvalidWhereSqlOwnerFailure() {
+	mkdirSync(invalidWhereSqlOwnerSourceDir, { recursive: true });
+	writeFileSync(join(invalidWhereSqlOwnerSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"import models.User;",
+		"import rails.active_record.Sql;",
+		"import rails.active_record.SqlWhere;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar userFragment:Sql<User, SqlWhere> = Sql.unsafeWhere(\"name = 'owner'\");",
+		"\t\tvar bad = Todo.whereSql(userFragment);",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidWhereSqlOwnerSourceDir,
+		invalidWhereSqlOwnerOutputDir,
+		"Invalid ActiveRecord whereSql owner compiled successfully.",
+		"models.User should be models.Todo"
+	);
+}
+
+function expectInvalidOrderSqlKindFailure() {
+	mkdirSync(invalidOrderSqlKindSourceDir, { recursive: true });
+	writeFileSync(join(invalidOrderSqlKindSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"import rails.active_record.Sql;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.orderSql(Sql.unsafeWhere(\"status = 'open'\"));",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidOrderSqlKindSourceDir,
+		invalidOrderSqlKindOutputDir,
+		"Invalid ActiveRecord orderSql where-fragment kind compiled successfully.",
+		"SqlWhere should be rails.active_record.SqlOrder"
 	);
 }
 

@@ -7,6 +7,7 @@ import rails.active_record.Group;
 import rails.active_record.Lock;
 import rails.active_record.Order;
 import rails.active_record.Projection;
+import rails.active_record.Sql;
 import rails.active_record.TransactionIsolation;
 
 // Typed ActiveRecord query smoke.
@@ -58,6 +59,9 @@ class Main {
 		var lowerShip = Todo.whereExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
 		var relationLowerNotShip = assigned.whereNotExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
 		var exprAfterFirst = Todo.whereExpr(Expr.field(Todo.f.id).gt(1)).limit(2);
+		var unsafeSqlOpen = Todo.whereSql(Sql.unsafeWhere("status <> 'archived'")).limit(2);
+		var unsafeSqlNotDone = assigned.whereNotSql(Sql.unsafeWhere("status = 'done'")).limit(2);
+		var unsafeSqlOrder = Todo.orderSql(Sql.unsafeOrder("LOWER(title) ASC")).limit(2);
 		var missingNotes = Todo.whereNull(Todo.f.notes).limit(3);
 		var assignedWithNotes = assigned.whereNotNull(Todo.f.notes).limit(2);
 		var relationDistinct = assigned.distinct().limit(2);
@@ -168,6 +172,9 @@ class Main {
 		Sys.println(lowerShip == null);
 		Sys.println(relationLowerNotShip == null);
 		Sys.println(exprAfterFirst == null);
+		Sys.println(unsafeSqlOpen == null);
+		Sys.println(unsafeSqlNotDone == null);
+		Sys.println(unsafeSqlOrder == null);
 		Sys.println(missingNotes == null);
 		Sys.println(assignedWithNotes == null);
 		Sys.println(relationDistinct == null);
