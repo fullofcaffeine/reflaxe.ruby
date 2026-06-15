@@ -1,13 +1,24 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
-const { join, resolve } = require("node:path");
+const {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} = require("node:fs");
+const { dirname, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "action_mailer");
+const runtimeAppDir = join(root, "test", ".generated", "action_mailer_runtime");
 const invalidSourceDir = join(root, "test", ".generated", "action_mailer_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "action_mailer_invalid_out");
+const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
+let currentStage = "startup";
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -18,10 +29,12 @@ const reflaxeCandidates = [
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
+    env: options.env ?? process.env,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0 && !options.allowFailure) {
+    process.stderr.write(`[action-mailer] failed during ${currentStage}: ${command} ${args.join(" ")}\n`);
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
@@ -30,6 +43,7 @@ function run(command, args, options = {}) {
 }
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(runtimeAppDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 
@@ -163,6 +177,37 @@ if (!/String|Cannot unify/.test(invalidAttachment.stderr + invalidAttachment.std
   process.exit(1);
 }
 
+stage("runtime materialization", materializeRuntimeRailsApp);
+stage("runtime ruby syntax", () => syntaxCheck([
+  "app/haxe_gen/mailers/user_mailer.rb",
+  "app/haxe_gen/views/welcome_email_html_view.rb",
+  "app/haxe_gen/views/welcome_email_text_view.rb",
+  "config/application.rb",
+  "config/environment.rb",
+  "test/mailers/user_mailer_test.rb",
+]));
+
+const bundleProbe = stage("runtime bundle probe", () => run("bundle", ["check"], {
+  cwd: runtimeAppDir,
+  allowFailure: true,
+}));
+if (bundleProbe.status !== 0) {
+  if (requireRails) {
+    assertRuntimeRubySupportsRails();
+    process.stdout.write("[action-mailer] Rails bundle missing; running bundle install because REQUIRE_RAILS=1.\n");
+    stage("runtime bundle install", () => run("bundle", ["install"], { cwd: runtimeAppDir }));
+  } else {
+    process.stdout.write("[action-mailer] Rails bundle is not available for the generated ActionMailer app; skipped runtime Rails test pass.\n");
+    process.stdout.write("[action-mailer] Set REQUIRE_RAILS=1 to install app gems and make this lane mandatory.\n");
+    process.exit(0);
+  }
+}
+
+stage("runtime mailer tests", () => run("bundle", ["exec", "rails", "test"], {
+  cwd: runtimeAppDir,
+  env: { ...process.env, RAILS_ENV: "test" },
+}));
+
 function compileActionMailer(targetDir, options = {}) {
   const args = [
     "-D",
@@ -242,4 +287,151 @@ function writeInvalidFixture() {
       "",
     ].join("\n"),
   );
+}
+
+function materializeRuntimeRailsApp() {
+  mkdirSync(runtimeAppDir, { recursive: true });
+  copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
+  copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
+  copyGeneratedSupportIntoHaxeGen();
+
+  writeFile("Gemfile", `source "https://rubygems.org"
+
+gem "rails", "7.2.3.1"
+`);
+
+  writeFile("config/application.rb", `require "rails"
+require "action_mailer/railtie"
+
+module HXRubyActionMailer
+  class Application < Rails::Application
+    config.load_defaults 7.0
+    config.eager_load = false
+    config.root = File.expand_path("..", __dir__)
+    config.action_mailer.delivery_method = :test
+    config.action_mailer.perform_deliveries = true
+  end
+end
+`);
+
+  writeFile("config/environment.rb", `require_relative "application"
+
+Rails.application.initialize!
+`);
+
+  writeFile("test/test_helper.rb", `ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
+require "rails/test_help"
+`);
+
+  writeFile("test/mailers/user_mailer_test.rb", `require "test_helper"
+require Rails.root.join("app/haxe_gen/mailers/user_mailer")
+
+class UserMailerTest < ActiveSupport::TestCase
+  setup do
+    ActionMailer::Base.deliveries.clear
+  end
+
+  test "builds typed multipart mail with headers and attachment" do
+    mail = Mailers::UserMailer.welcome("reader@example.test", "Ada", "Typed RailsHx mailers are ready.")
+
+    assert_equal "Welcome to typed RailsHx mail", mail.subject
+    assert_equal ["reader@example.test"], mail.to
+    assert_equal ["team@example.test"], mail.from
+    assert_equal ["ops@example.test"], mail.cc
+    assert_equal ["reply@example.test"], mail.reply_to
+    assert mail.multipart?
+    assert_includes mail.html_part.body.decoded, "Hello Ada"
+    assert_includes mail.html_part.body.decoded, "RailsHx mailers are typed."
+    assert_includes mail.html_part.body.decoded, "Typed RailsHx mailers are ready."
+    assert_includes mail.text_part.body.decoded, "Hello Ada"
+    assert_includes mail.text_part.body.decoded, "RailsHx mailers are typed."
+    assert_includes mail.text_part.body.decoded, "Typed RailsHx mailers are ready."
+
+    attachment = mail.attachments["welcome.txt"]
+    assert attachment
+    assert_equal "Typed RailsHx mailers are ready.", attachment.body.decoded
+  end
+
+  test "deliver_now uses the Rails test delivery collection" do
+    assert_difference -> { ActionMailer::Base.deliveries.size }, 1 do
+      Mailers::UserMailer.welcome("reader@example.test", "Ada", "Typed RailsHx mailers are ready.").deliver_now
+    end
+
+    delivered = ActionMailer::Base.deliveries.last
+    assert_equal "Welcome to typed RailsHx mail", delivered.subject
+    assert_equal ["reader@example.test"], delivered.to
+  end
+end
+`);
+}
+
+function copyGeneratedSupportIntoHaxeGen() {
+  const haxeGenDir = join(runtimeAppDir, "app", "haxe_gen");
+  for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
+    if (["app", "config", "run.rb", "_GeneratedFiles.json"].includes(entry.name)) {
+      continue;
+    }
+    const sourcePath = join(outputDir, entry.name);
+    const targetPath = join(haxeGenDir, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(sourcePath, targetPath);
+    } else if (entry.isFile()) {
+      mkdirSync(dirname(targetPath), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
+function syntaxCheck(relativeFiles) {
+  for (const relativeFile of relativeFiles) {
+    run("ruby", ["-c", join(runtimeAppDir, relativeFile)]);
+  }
+}
+
+function copyTree(source, target) {
+  mkdirSync(target, { recursive: true });
+  for (const entry of readdirSync(source, { withFileTypes: true })) {
+    const sourcePath = join(source, entry.name);
+    const targetPath = join(target, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(sourcePath, targetPath);
+    } else if (entry.isFile()) {
+      mkdirSync(dirname(targetPath), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
+function writeFile(relativePath, content) {
+  const fullPath = join(runtimeAppDir, relativePath);
+  mkdirSync(dirname(fullPath), { recursive: true });
+  writeFileSync(fullPath, content);
+}
+
+function stage(name, callback) {
+  currentStage = name;
+  process.stdout.write(`[action-mailer] stage: ${name}\n`);
+  return callback();
+}
+
+function assertRuntimeRubySupportsRails() {
+  const rubyVersion = run("ruby", ["-e", "print RUBY_VERSION"], { allowFailure: true }).stdout.trim();
+  if (!rubyAtLeast(rubyVersion, "3.1.0")) {
+    console.error(`[action-mailer] REQUIRE_RAILS=1 requires Ruby >= 3.1.0 for Rails 7.2.3.1; current ruby is ${rubyVersion || "unknown"}.`);
+    console.error("[action-mailer] Activate the repo .ruby-version Ruby before running npm run test:rails-runtime.");
+    process.exit(1);
+  }
+}
+
+function rubyAtLeast(actual, minimum) {
+  const actualParts = actual.split(".").map((part) => Number.parseInt(part, 10));
+  const minimumParts = minimum.split(".").map((part) => Number.parseInt(part, 10));
+  for (let i = 0; i < minimumParts.length; i += 1) {
+    const actualPart = Number.isFinite(actualParts[i]) ? actualParts[i] : 0;
+    const minimumPart = minimumParts[i];
+    if (actualPart > minimumPart) return true;
+    if (actualPart < minimumPart) return false;
+  }
+  return true;
 }

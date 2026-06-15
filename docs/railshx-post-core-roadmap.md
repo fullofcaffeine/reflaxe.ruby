@@ -63,16 +63,19 @@ Lowering strategy:
 
 Integration strategy:
 
-- Generated Rails app runs a mailer preview/test.
+- Generated Rails app runs an ActionMailer delivery test.
 - Static smoke checks generated `mail(to:, subject:)` and template paths.
-- Runtime lane checks `deliver_now` or test delivery collection when Rails gems
-  are available.
+- Runtime lane checks multipart body rendering, mail headers, attachments, and
+  `deliver_now` through the Rails test delivery collection when Rails gems are
+  available.
 
 Graduation criteria:
 
 - Typed locals render both HTML and text templates.
 - Missing template/locals failures happen at Haxe compile time.
 - Generated mailer tests run under `REQUIRE_RAILS=1`.
+- Parameterized mailers and previews are either implemented with typed APIs or
+  explicitly deferred behind tracked beads.
 
 ## ActiveJob
 

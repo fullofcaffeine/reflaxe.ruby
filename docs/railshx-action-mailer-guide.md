@@ -101,7 +101,9 @@ complex Rails attachment hashes should use
 
 ## Runtime Strategy
 
-`npm run test:action-mailer` is the fast compiler/static lane. It checks:
+`npm run test:action-mailer` is both the fast compiler/static lane and, when a
+Rails bundle is available, a generated Rails runtime lane. The static pass
+checks:
 
 - `@:railsMailer` emits an `ActionMailer::Base` subclass.
 - `mail(...)` object literals lower to Ruby keyword args.
@@ -113,6 +115,30 @@ complex Rails attachment hashes should use
 - generated HTML and text ERB files exist.
 - bad template locals fail during Haxe compilation.
 
-Rails runtime delivery remains part of the Rails runtime lane. When Rails gems
-are installed, `REQUIRE_RAILS=1 npm run test:rails-runtime` must make missing
-Rails runtime dependencies fail instead of silently skipping.
+The runtime pass materializes a tiny Rails app, requires the generated mailer,
+and runs Rails tests against the real `ActionMailer::Base` behavior:
+
+- `Mailers::UserMailer.welcome(...)` builds a multipart message.
+- `to`, `from`, `cc`, `reply_to`, and `subject` are asserted through the Rails
+  mail object.
+- HTML and text bodies render the HHX-authored ERB templates with checked
+  locals.
+- `attachments().add(...)` produces a real ActionMailer attachment.
+- `deliver_now` writes to the Rails test delivery collection.
+
+If the generated app bundle is unavailable, the local fast lane prints a staged
+skip so compiler work stays lightweight. `REQUIRE_RAILS=1 npm run
+test:rails-runtime` includes `test:action-mailer` and makes missing Rails
+runtime dependencies fail instead of silently skipping.
+
+## Current Production Boundary
+
+The supported production path today is ordinary Rails mailer delivery from a
+Haxe-authored `@:railsMailer`, typed mail kwargs, typed HHX HTML/text templates,
+and string attachments through `attachments().add(...)`.
+
+Parameterized mailers, preview generation, richer attachment hashes,
+mailer/job integration, and preview/test-helper generators are intentionally
+deferred until their API shape is designed. They should not be represented as
+supported just because the lower-level Rails API can be reached with unchecked
+interop.
