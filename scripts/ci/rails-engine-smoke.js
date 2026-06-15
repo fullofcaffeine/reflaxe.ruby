@@ -25,6 +25,10 @@ try {
 
   compileEngine(outputDir, reflaxeSrc);
 
+  // Generated engine-local Ruby, autoload initializer, and run.rb require shape
+  // are covered by committed snapshots. This smoke keeps the non-snapshot
+  // checks: required files, Ruby syntax, executable output, unsafe path
+  // rejection, and generator CLI behavior.
   for (const file of [
     "engines/blog/app/haxe_gen/blog_engine/services/engine_greeting.rb",
     "engines/blog/app/haxe_gen/hxruby/core.rb",
@@ -37,39 +41,6 @@ try {
       fail(`Expected engine/plugin output file missing: ${fullPath}`);
     }
   }
-
-  const greetingRuby = readFileSync(join(outputDir, "engines", "blog", "app", "haxe_gen", "blog_engine", "services", "engine_greeting.rb"), "utf8");
-  for (const expected of [
-    "module BlogEngine",
-    "module Services",
-    "class EngineGreeting",
-    "def self.message",
-  ]) {
-    if (!greetingRuby.includes(expected)) {
-      fail(`Engine service output missing expected constant shape: ${expected}`);
-    }
-  }
-
-  const initializer = readFileSync(join(outputDir, "config", "initializers", "hxruby_autoload.rb"), "utf8");
-  for (const expected of [
-    'hxruby_root = Rails.root.join("engines/blog/app/haxe_gen")',
-    'hxruby_runtime_root = hxruby_root.join("hxruby")',
-    "Rails.autoloaders.main.ignore(hxruby_runtime_root)",
-    'Dir[hxruby_runtime_root.join("*.rb")].sort.each { |path| require path }',
-    "Rails.application.config.autoload_paths << hxruby_root",
-    "Rails.application.config.eager_load_paths << hxruby_root",
-  ]) {
-    if (!initializer.includes(expected)) {
-      fail(`Engine autoload initializer missing expected line: ${expected}`);
-    }
-  }
-
-  const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
-  assertOrdered(runRuby, [
-    'require_relative "engines/blog/app/haxe_gen/hxruby/core"',
-    'require_relative "engines/blog/app/haxe_gen/blog_engine/services/engine_greeting"',
-    'require_relative "engines/blog/app/haxe_gen/main"',
-  ]);
 
   for (const file of [
     "engines/blog/app/haxe_gen/blog_engine/services/engine_greeting.rb",
@@ -178,20 +149,6 @@ function compileEngine(targetDir, reflaxeSrc, options = {}) {
     "Main",
   ];
   return run("haxe", args, { allowFailure: options.allowFailure });
-}
-
-function assertOrdered(haystack, needles) {
-  let lastIndex = -1;
-  for (const needle of needles) {
-    const index = haystack.indexOf(needle);
-    if (index === -1) {
-      fail(`Missing expected run.rb require: ${needle}`);
-    }
-    if (index <= lastIndex) {
-      fail(`run.rb require out of order: ${needle}`);
-    }
-    lastIndex = index;
-  }
 }
 
 function run(command, args, options = {}) {

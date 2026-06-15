@@ -28,7 +28,7 @@ load/render/migrate/deliver/subscribe/asset paths.
 | Turbo Streams | Snapshot-backed plus focused smoke. | Healthy after Turbo Streams snapshots. | Keep smoke limited to file presence, Ruby syntax, and negative stream target/locals checks. |
 | ActiveSupport instrumentation | Snapshot-backed plus focused smoke/runtime-if-available. | Healthy after instrumentation snapshots. | Keep smoke limited to file presence, Ruby syntax, negative event/payload typing, and optional ActiveSupport consumption. |
 | Rails interop/adoption | Runtime/request smoke plus negative external-template checks, no committed mixed-app snapshot. | Needs a snapshot contract for generated Haxe-owned Ruby/ERB while keeping Rails-owned legacy files out of snapshots unless explicitly fixture-owned. | Add rails interop snapshots for generated controller/service/view/template output. |
-| Rails engine/plugin | Smoke-heavy, no committed engine-local output snapshot. | Needs snapshot coverage because engine-local autoload and output-root shape are compiler output. | Add engine/plugin snapshots for engine-local generated files and initializer. |
+| Rails engine/plugin | Snapshot-backed plus focused smoke/generator checks. | Healthy after engine/plugin snapshots. | Keep smoke limited to syntax, executable output, unsafe output-root rejection, and generator CLI checks. |
 | Generators and package/release checks | Smoke/check scripts only. | Appropriate. These are command/product-shape checks more than compiler-output snapshots. | Keep smoke/check style; add golden fixture snapshots only if generator output becomes complex or unstable. |
 | Browser/production dogfood | Playwright and production smoke. | Appropriate. These prove UX and deployable app seams, not compiler output. | Keep thin and user-visible. |
 
@@ -64,8 +64,8 @@ Use this checklist when adding or reviewing a smoke test:
 
 ## Immediate Follow-Ups
 
-- Add snapshots for remaining smoke-heavy output surfaces: Rails interop and
-  Rails engine/plugin output.
+- Add snapshots for the remaining smoke-heavy output surface: Rails
+  interop/adoption.
 - After those snapshots exist, trim duplicated output-shape regex assertions in
   the corresponding smoke scripts. Keep syntax checks, negative compile tests,
   unsafe-path checks, generator checks, and Rails runtime seams.

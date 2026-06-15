@@ -152,6 +152,17 @@ const cases = [
     ],
   },
   {
+    name: "engine_plugin",
+    defines: ["reflaxe_ruby_rails", "reflaxe_ruby_rails_output_root=engines/blog/app/haxe_gen"],
+    files: [
+      "engines/blog/app/haxe_gen/blog_engine/services/engine_greeting.rb",
+      "engines/blog/app/haxe_gen/hxruby/core.rb",
+      "engines/blog/app/haxe_gen/main.rb",
+      "config/initializers/hxruby_autoload.rb",
+      "run.rb",
+    ],
+  },
+  {
     name: "todoapp_rails",
     defines: ["reflaxe_ruby_rails"],
     extraClassPaths: ["examples/todoapp_rails/src_haxe"],
