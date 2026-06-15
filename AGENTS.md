@@ -84,6 +84,15 @@ Rails work should follow `docs/railshx-roadmap.md`.
 - Keep Rails apps `ruby_first` by default while allowing portable Haxe domain code to compile cleanly into idiomatic Ruby.
 - Do not introduce raw app-level `__ruby__` to paper over missing Rails APIs; add typed `std/rails/**` or runtime wrappers instead.
 
+## Testing Strategy
+
+- Snapshot tests are the primary compiler/codegen contract. For RailsHx and RubyHx surfaces, prefer committed snapshots that show the exact generated Ruby, ERB, JS, migrations, initializers, and package-relevant artifacts users will review and run. If a change affects output shape or idiom, add/update snapshots first.
+- Smoke tests are supporting contract tests, not a replacement for snapshots. Use them for targeted invariants: required files exist, key output snippets remain present, generated Ruby syntax-checks, invalid Haxe fixtures fail with useful diagnostics, strict-boundary rules hold, and package/generator commands produce expected structure.
+- Every smoke test must have a clear reason to exist. If a smoke assertion only proves exact generated output shape, replace it with a snapshot or add snapshot coverage and reduce the smoke to the remaining non-snapshot checks. Keep the justification visible in docs or in a short script comment when the purpose is not obvious.
+- Rails runtime tests should stay thin and seam-focused. Use them only where Rails must consume generated artifacts: Zeitwerk/autoload paths, Rails boot/load order, ERB render locations and locals, migrations, route/request wiring, ActionMailer delivery/template lookup, ActiveStorage service/table integration, ActionCable channel test harness, importmap/assets, and production boot checks. Do not write broad tests that retest Rails behavior unless RailsHx adds custom runtime logic.
+- When a surface currently relies mostly on smoke/runtime checks for generated-output confidence, add snapshot coverage or file a bead explaining why the output cannot be snapshotted yet. ActionCable, Turbo, generators, and adoption surfaces should be audited with this rule as they harden.
+- Keep the testing pyramid aligned with `../haxe.elixir.codex`: snapshots first for compiler output, negative compile tests for type-safety boundaries, smoke tests for focused invariants, and runtime/browser/dogfood gates for target-framework consumption seams.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.

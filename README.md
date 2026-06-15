@@ -230,6 +230,17 @@ npm run test:gem-package
 
 Snapshot tests compile with `reflaxe_ruby_strict_examples`, compare committed Ruby output, reject CRLF/trailing-newline/path leaks, and compile each snapshot case twice to catch non-deterministic output.
 
+Snapshots are the primary compiler/codegen contract: they show the exact Ruby,
+ERB, JS, migration, initializer, and runtime-support artifacts that Rails/Ruby
+users should be able to review as hand-written-looking output. Smoke tests are
+supporting gates for focused invariants such as required files, syntax checks,
+negative Haxe compile failures, package/generator flows, and thin Rails
+consumption seams. Runtime Rails tests should prove that Rails can load/render/
+migrate/deliver/subscribe to generated artifacts; they should not broadly
+retest Rails itself unless RailsHx adds custom runtime behavior. See
+[RailsHx Testing Strategy](docs/railshx-testing-strategy.md) for the
+snapshot-vs-smoke decision rules.
+
 ## Haxelib Package
 
 Build the release zip locally with:

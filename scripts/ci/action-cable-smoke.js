@@ -71,6 +71,8 @@ for (const expected of [
   /class TodosChannel < ActionCable::Channel::Base/,
   /def subscribed\(\)/,
   /params\["list_id"\]/,
+  /if \(list_id__hx\d+ == "reject"\)/,
+  /self\.reject\(\)/,
   /self\.stream_from/,
   /def unsubscribed\(\)/,
   /self\.stop_all_streams\(\)/,
@@ -469,6 +471,32 @@ class TodosChannelTest < ActionCable::Channel::TestCase
 
     assert subscription.confirmed?
     assert_has_stream "todos:open"
+  end
+
+  test "uses Rails connection stubs for identifier-backed channels" do
+    stub_connection current_user_id: 42
+
+    subscribe list_id: "open"
+
+    assert_equal 42, connection.current_user_id
+    assert_includes connection.identifiers, :current_user_id
+    assert_has_stream "todos:open"
+  end
+
+  test "rejects typed subscription params through Rails rejection semantics" do
+    subscribe list_id: "reject"
+
+    assert subscription.rejected?
+    assert_no_streams
+  end
+
+  test "unsubscribe clears typed streams through Rails lifecycle" do
+    subscribe list_id: "open"
+    assert_has_stream "todos:open"
+
+    unsubscribe
+
+    assert_no_streams
   end
 
   test "performs typed ping action and transmits payload" do

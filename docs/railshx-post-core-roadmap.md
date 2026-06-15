@@ -179,7 +179,7 @@ Integration strategy:
 
 - Playwright tests for Turbo UX.
 - Rails channel tests use `ActionCable::Channel::TestCase` in a generated Rails
-  app for subscribe/stream/perform/broadcast behavior.
+  app for subscribe/stream/reject/unsubscribe/perform/broadcast behavior.
 - Static smoke checks generated JS importmap pins and channel Ruby.
 
 Graduation criteria:
@@ -188,6 +188,8 @@ Graduation criteria:
 - Browser sentinel proves progressive enhancement remains Rails/Turbo-native.
 - Channel params are typed and runtime-tested under
   `REQUIRE_RAILS=1 npm run test:action-cable`.
+- Channel rejection and unsubscribe cleanup use Rails-native ActionCable
+  lifecycle helpers and are covered by generated Rails channel tests.
 
 ## ActiveSupport Instrumentation
 

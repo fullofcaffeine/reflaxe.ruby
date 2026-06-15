@@ -39,6 +39,10 @@ class TodoCable {
 class TodosChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {
 	public function subscribed():Void {
 		var listId = param(TodoCable.listId());
+		if (listId == "reject") {
+			reject();
+			return;
+		}
 		streamFrom(TodoCable.listStream(listId));
 	}
 
@@ -93,6 +97,12 @@ satisfy `streamFrom(...)` or `ActionCable.broadcast(...)`; use
 
 `@:railsChannel` also requires an instance `subscribed()` method so an empty
 channel does not silently compile as a broken Rails channel.
+
+Channel lifecycle helpers stay Rails-native. `reject()` lowers to Rails'
+subscription rejection, and `stopAllStreams()` lowers to `stop_all_streams`.
+Runtime tests use Rails' own `ActionCable::Channel::TestCase` helpers to assert
+`subscription.rejected?`, stream confirmation, and unsubscribe cleanup; Rails
+still owns the underlying channel lifecycle semantics.
 
 ## Client Subscriptions
 
@@ -160,7 +170,8 @@ perform payloads, and missing `subscribed()`.
 When Rails gems are available, the same smoke materializes a generated Rails app
 and runs `ActionCable::Channel::TestCase` against the generated channel. The
 runtime pass asserts subscription confirmation, typed stream subscription,
-`perform :ping` transmissions, and broadcast payloads. Local
+subscription rejection, unsubscribe stream cleanup, `perform :ping`
+transmissions, and broadcast payloads. Local
 `npm run test:action-cable` skips this runtime pass if the generated app bundle
 is unavailable; `npm run test:rails-runtime` includes
 `REQUIRE_RAILS=1 npm run test:action-cable` and makes missing runtime

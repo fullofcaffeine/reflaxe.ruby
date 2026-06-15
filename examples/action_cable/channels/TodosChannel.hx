@@ -42,14 +42,21 @@ class TodoCable {
 // their broadcast payload type, and `ActionCable.broadcast(...)` rejects payloads
 // that do not match `TodoBroadcast`. Client action tokens such as
 // `TodoCable.pingAction()` keep `subscription.perform(...)` payloads typed too.
+// Runtime seam: the `"reject"` list id demonstrates Rails-native subscription
+// rejection via the typed `reject()` helper; `unsubscribed()` demonstrates
+// stream cleanup through `stop_all_streams`.
 // IntelliSense: editors should complete `param`, `streamFrom`, `transmit`,
 // `stopAllStreams`, and the typed `TodoCable` refs.
 // Rails output: generated Ruby calls `stream_from`, `transmit`,
-// `stop_all_streams`, and `ActionCable.server.broadcast`.
+// `reject`, `stop_all_streams`, and `ActionCable.server.broadcast`.
 @:railsChannel
 class TodosChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {
 	public function subscribed():Void {
 		var listId = param(TodoCable.listId());
+		if (listId == "reject") {
+			reject();
+			return;
+		}
 		streamFrom(TodoCable.listStream(listId));
 	}
 

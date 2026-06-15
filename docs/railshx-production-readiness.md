@@ -102,6 +102,15 @@ cannot boot. Runtime smoke logs must identify the failing boundary with staged
 labels such as `compiler`, `materialization`, `migration`, `request tests`, and
 browser stages.
 
+Snapshot tests are the primary RailsHx compiler-output contract. A production
+surface should have committed snapshots for the generated Ruby/Rails artifacts
+that define its public shape; smoke tests should only add targeted invariants,
+negative compile failures, syntax checks, and thin Rails consumption seams that
+snapshots cannot prove. Runtime Rails tests must stay focused on generated app
+integration points such as autoloading, rendering, migrations, mail delivery,
+storage services, ActionCable channels, assets, and production boot. Broad Rails
+behavior belongs to Rails unless RailsHx introduces custom runtime logic.
+
 The dedicated CI production dogfood job runs `npm run test:todoapp-production`
 on the pinned Ruby lane. That command compiles server Haxe/HHX and Haxe-authored
 client JS, materializes the Rails app, runs migrations/tests, runs
