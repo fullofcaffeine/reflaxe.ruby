@@ -90,6 +90,7 @@ const cases = [
     name: "active_job",
     defines: ["reflaxe_ruby_rails"],
     files: [
+      "app/haxe_gen/jobs/retry_probe_job.rb",
       "app/haxe_gen/jobs/send_welcome_email_job.rb",
       "app/haxe_gen/main.rb",
       "config/initializers/hxruby_autoload.rb",

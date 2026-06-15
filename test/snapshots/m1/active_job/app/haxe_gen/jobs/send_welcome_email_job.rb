@@ -11,7 +11,7 @@ module Jobs
     end
     def perform(user_id__hx0, email__hx0)
       payload__hx0 = ("welcome:" + email__hx0)
-      Haxe::Log.trace(payload__hx0, {"fileName" => "jobs/SendWelcomeEmailJob.hx", "lineNumber" => 21, "className" => "jobs.SendWelcomeEmailJob", "methodName" => "perform"})
+      Haxe::Log.trace(payload__hx0, {"fileName" => "jobs/SendWelcomeEmailJob.hx", "lineNumber" => 32, "className" => "jobs.SendWelcomeEmailJob", "methodName" => "perform"})
     end
   end
 end

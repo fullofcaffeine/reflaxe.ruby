@@ -73,6 +73,37 @@ job whose `perform` returns `String` can be assigned to `String` and will fail
 if assigned to `Int`. `performLater(...)` returns a typed
 `rails.active_job.Base` enqueue handle instead of `Dynamic`.
 
+The generated Rails runtime lane also checks ActiveJob serialization for typed
+perform arguments. A generated job instance serializes `(42,
+"reader@example.test")` into Rails' normal `"arguments"` payload and
+`ActiveJob::Base.deserialize(...)` restores the same generated job class and
+typed argument values.
+
+## Retry And Discard Runtime Coverage
+
+Lifecycle declarations lower to Rails' own retry/discard class macros. The
+canonical runtime fixture includes a `RetryProbeJob` that raises a generated
+`HxException` from typed Haxe code:
+
+```haxe
+@:railsJob
+class RetryProbeJob extends rails.active_job.Base {
+	static final lifecycle = {
+		queueAs("critical");
+		retryOn(StandardError, {waitSeconds: 5, attempts: 2, queue: "retries"});
+	}
+
+	public function perform(attempt:Int):Void {
+		throw "retry:" + Std.string(attempt);
+	}
+}
+```
+
+Because `HxException` is a Ruby `StandardError`, Rails' `retry_on
+StandardError` handles it normally. The generated Rails test performs the job
+through `ActiveJob::TestHelper` and asserts that the failed work is re-enqueued
+on the typed retry queue.
+
 ## Runtime Strategy
 
 `npm run test:active-job` is the fast compiler/static lane. It checks:
@@ -85,12 +116,39 @@ if assigned to `Int`. `performLater(...)` returns a typed
 - `performNow(...)` preserves the `perform(...)` return type and rejects wrong
   assignments during Haxe compilation.
 - unsafe named exception constants fail during Haxe compilation.
+- generated Rails serialization/deserialization preserves the generated job
+  class and typed perform arguments.
+- generated Rails retry behavior re-enqueues a failed typed Haxe job on the
+  configured retry queue.
 - when Rails gems are available, a generated Rails app uses
-  `ActiveJob::TestHelper` to assert queue name, enqueue behavior, and
-  `perform_enqueued_jobs` execution.
+  `ActiveJob::TestHelper` to assert queue name, enqueue behavior,
+  serialization/deserialization, retry behavior, and `perform_enqueued_jobs`
+  execution.
 
 Local `npm run test:active-job` skips the runtime Rails pass if the generated
 app bundle is unavailable. `npm run test:rails-runtime` includes
 `REQUIRE_RAILS=1 npm run test:active-job`, installs the generated app bundle
 when needed, and makes missing Rails runtime dependencies fail instead of
 silently skipping.
+
+## Production Support Notes
+
+The supported production path is Rails-native ActiveJob output plus typed Haxe
+authoring. RailsHx does not wrap adapters; generated jobs use whichever
+`config.active_job.queue_adapter` the Rails app configures.
+
+Current runtime coverage uses Rails' test adapter because it is deterministic
+and available in a generated app. Adapter-specific behavior for Sidekiq,
+Solid Queue, Delayed Job, GoodJob, or custom adapters is intentionally deferred
+to app/runtime integration tests unless a future RailsHx API needs adapter-aware
+typing.
+
+Queue names are checked non-empty literals in `queueAs(...)` and retry `queue`
+options, then lowered to Rails symbols. If an app wants centralized queue names,
+prefer a shared Haxe constant or typed wrapper consumed by `queueAs(...)`; a
+future RailsHx queue-token API should preserve the same literal validation and
+generated Rails `queue_as :name` output.
+
+`discardOn(...)` is compiler-lowered and statically checked today. Runtime
+coverage currently proves retry behavior; richer discard assertions and
+adapter-specific failure diagnostics remain follow-up production-hardening work.

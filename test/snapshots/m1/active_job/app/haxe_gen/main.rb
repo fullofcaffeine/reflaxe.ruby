@@ -7,6 +7,7 @@ class Main
   def self.main()
     Jobs::SendWelcomeEmailJob.perform_later(42, "reader@example.test")
     Jobs::SendWelcomeEmailJob.perform_now(7, "now@example.test")
+    Jobs::RetryProbeJob.perform_later(1)
   end
 end
 if __FILE__ == $PROGRAM_NAME

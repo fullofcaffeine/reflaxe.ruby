@@ -98,7 +98,8 @@ Integration strategy:
 
 - Static smoke checks `queue_as`, `retry_on`, `discard_on`, and `perform`.
 - Runtime lane uses `ActiveJob::TestHelper` in a generated Rails app to assert
-  queue name, enqueued args, and performed jobs.
+  queue name, enqueued args, serialized/deserialized typed arguments, performed
+  jobs, and retry re-enqueue behavior.
 
 Graduation criteria:
 
@@ -106,6 +107,8 @@ Graduation criteria:
 - Enqueue helpers preserve typed args.
 - Generated Rails test proves job enqueue and perform flow under
   `REQUIRE_RAILS=1 npm run test:active-job`.
+- Generated Rails test proves ActiveJob serialization/deserialization and at
+  least one retry path through Rails' native `retry_on` machinery.
 
 ## ActiveStorage
 

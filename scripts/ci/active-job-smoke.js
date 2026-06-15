@@ -67,6 +67,7 @@ if (!reflaxeSrc) {
 compileActiveJob(outputDir);
 
 for (const file of [
+  "app/haxe_gen/jobs/retry_probe_job.rb",
   "app/haxe_gen/jobs/send_welcome_email_job.rb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
@@ -96,10 +97,25 @@ for (const expected of [
   }
 }
 
+const retryJobRuby = readFileSync(join(outputDir, "app", "haxe_gen", "jobs", "retry_probe_job.rb"), "utf8");
+for (const expected of [
+  /class RetryProbeJob < ActiveJob::Base/,
+  /queue_as :critical/,
+  /retry_on StandardError, wait: 5\.seconds, attempts: 2, queue: :retries/,
+  /def perform\(attempt__hx\d+\)/,
+  /raise HxException\.new\(\("retry:" \+ HXRuby\.stringify\(attempt__hx\d+\)\)\)/,
+]) {
+  if (!expected.test(retryJobRuby)) {
+    console.error(`ActiveJob retry output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
 for (const expected of [
   /Jobs::SendWelcomeEmailJob\.perform_later\(42, "reader@example.test"\)/,
   /Jobs::SendWelcomeEmailJob\.perform_now\(7, "now@example.test"\)/,
+  /Jobs::RetryProbeJob\.perform_later\(1\)/,
 ]) {
   if (!expected.test(mainRuby)) {
     console.error(`ActiveJob enqueue output missing expected call: ${expected}`);
@@ -107,7 +123,7 @@ for (const expected of [
   }
 }
 
-for (const file of ["app/haxe_gen/jobs/send_welcome_email_job.rb", "app/haxe_gen/main.rb", "run.rb"]) {
+for (const file of ["app/haxe_gen/jobs/send_welcome_email_job.rb", "app/haxe_gen/jobs/retry_probe_job.rb", "app/haxe_gen/main.rb", "run.rb"]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
@@ -176,6 +192,7 @@ if (!/retryOnNamed exception "not a constant" is not a safe Ruby constant path/.
 stage("runtime materialization", materializeRuntimeRailsApp);
 stage("runtime ruby syntax", () => syntaxCheck([
   "app/haxe_gen/jobs/send_welcome_email_job.rb",
+  "app/haxe_gen/jobs/retry_probe_job.rb",
   "config/application.rb",
   "config/environment.rb",
   "test/jobs/send_welcome_email_job_test.rb",
@@ -341,6 +358,7 @@ require "active_job/test_helper"
 
   writeFile("test/jobs/send_welcome_email_job_test.rb", `require "test_helper"
 require Rails.root.join("app/haxe_gen/jobs/send_welcome_email_job")
+require Rails.root.join("app/haxe_gen/jobs/retry_probe_job")
 
 class SendWelcomeEmailJobTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
@@ -361,10 +379,29 @@ class SendWelcomeEmailJobTest < ActiveSupport::TestCase
     end
   end
 
+  test "serializes and deserializes typed perform arguments" do
+    job = Jobs::SendWelcomeEmailJob.new(42, "reader@example.test")
+    payload = job.serialize
+
+    assert_equal [42, "reader@example.test"], payload["arguments"]
+
+    restored = ActiveJob::Base.deserialize(payload)
+    assert_instance_of Jobs::SendWelcomeEmailJob, restored
+    assert_equal [42, "reader@example.test"], restored.arguments
+  end
+
   test "performs enqueued work through Rails test helper" do
     assert_performed_jobs 1 do
       perform_enqueued_jobs do
         Jobs::SendWelcomeEmailJob.perform_later(7, "now@example.test")
+      end
+    end
+  end
+
+  test "retry_on re-enqueues failed work on the typed retry queue" do
+    assert_enqueued_with(job: Jobs::RetryProbeJob, args: [1], queue: "retries") do
+      perform_enqueued_jobs(only: Jobs::RetryProbeJob) do
+        Jobs::RetryProbeJob.perform_later(1)
       end
     end
   end
