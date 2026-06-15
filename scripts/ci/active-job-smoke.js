@@ -1,15 +1,26 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
-const { join, resolve } = require("node:path");
+const {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} = require("node:fs");
+const { dirname, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "active_job");
+const runtimeAppDir = join(root, "test", ".generated", "active_job_runtime");
 const invalidSourceDir = join(root, "test", ".generated", "active_job_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "active_job_invalid_out");
 const invalidLifecycleSourceDir = join(root, "test", ".generated", "active_job_invalid_lifecycle_src");
 const invalidLifecycleOutputDir = join(root, "test", ".generated", "active_job_invalid_lifecycle_out");
+const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
+let currentStage = "startup";
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -24,6 +35,7 @@ function run(command, args, options = {}) {
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0 && !options.allowFailure) {
+    process.stderr.write(`[active-job] failed during ${currentStage}: ${command} ${args.join(" ")}\n`);
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
@@ -32,6 +44,7 @@ function run(command, args, options = {}) {
 }
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(runtimeAppDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 rmSync(invalidLifecycleSourceDir, { force: true, recursive: true });
@@ -129,6 +142,35 @@ if (!/retryOnNamed exception "not a constant" is not a safe Ruby constant path/.
   process.exit(1);
 }
 
+stage("runtime materialization", materializeRuntimeRailsApp);
+stage("runtime ruby syntax", () => syntaxCheck([
+  "app/haxe_gen/jobs/send_welcome_email_job.rb",
+  "config/application.rb",
+  "config/environment.rb",
+  "test/jobs/send_welcome_email_job_test.rb",
+]));
+
+const bundleProbe = stage("runtime bundle probe", () => run("bundle", ["check"], {
+  cwd: runtimeAppDir,
+  allowFailure: true,
+}));
+if (bundleProbe.status !== 0) {
+  if (requireRails) {
+    assertRuntimeRubySupportsRails();
+    process.stdout.write("[active-job] Rails bundle missing; running bundle install because REQUIRE_RAILS=1.\n");
+    stage("runtime bundle install", () => run("bundle", ["install"], { cwd: runtimeAppDir }));
+  } else {
+    process.stdout.write("[active-job] Rails bundle is not available for the generated ActiveJob app; skipped runtime Rails test pass.\n");
+    process.stdout.write("[active-job] Set REQUIRE_RAILS=1 to install app gems and make this lane mandatory.\n");
+    process.exit(0);
+  }
+}
+
+stage("runtime job tests", () => run("bundle", ["exec", "rails", "test"], {
+  cwd: runtimeAppDir,
+  env: { ...process.env, RAILS_ENV: "test" },
+}));
+
 function compileActiveJob(targetDir, options = {}) {
   const args = [
     "-D",
@@ -196,4 +238,141 @@ function writeInvalidLifecycleFixture() {
       "",
     ].join("\n"),
   );
+}
+
+function materializeRuntimeRailsApp() {
+  mkdirSync(runtimeAppDir, { recursive: true });
+  copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
+  copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
+  copyGeneratedSupportIntoHaxeGen();
+
+  writeFile("Gemfile", `source "https://rubygems.org"
+
+gem "rails", "7.2.3.1"
+`);
+
+  writeFile("config/application.rb", `require "rails"
+require "active_job/railtie"
+
+module HXRubyActiveJob
+  class Application < Rails::Application
+    config.load_defaults 7.0
+    config.eager_load = false
+    config.root = File.expand_path("..", __dir__)
+  end
+end
+`);
+
+  writeFile("config/environment.rb", `require_relative "application"
+
+Rails.application.initialize!
+`);
+
+  writeFile("test/test_helper.rb", `ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
+require "rails/test_help"
+require "active_job/test_helper"
+`);
+
+  writeFile("test/jobs/send_welcome_email_job_test.rb", `require "test_helper"
+require Rails.root.join("app/haxe_gen/jobs/send_welcome_email_job")
+
+class SendWelcomeEmailJobTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
+  setup do
+    ActiveJob::Base.queue_adapter = :test
+    clear_enqueued_jobs
+    clear_performed_jobs
+  end
+
+  test "uses the typed lifecycle queue" do
+    assert_equal "mailers", Jobs::SendWelcomeEmailJob.queue_name
+  end
+
+  test "enqueues with typed perform arguments" do
+    assert_enqueued_with(job: Jobs::SendWelcomeEmailJob, args: [42, "reader@example.test"], queue: "mailers") do
+      Jobs::SendWelcomeEmailJob.perform_later(42, "reader@example.test")
+    end
+  end
+
+  test "performs enqueued work through Rails test helper" do
+    assert_performed_jobs 1 do
+      perform_enqueued_jobs do
+        Jobs::SendWelcomeEmailJob.perform_later(7, "now@example.test")
+      end
+    end
+  end
+end
+`);
+}
+
+function copyGeneratedSupportIntoHaxeGen() {
+  const haxeGenDir = join(runtimeAppDir, "app", "haxe_gen");
+  for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
+    if (["app", "config", "run.rb", "_GeneratedFiles.json"].includes(entry.name)) {
+      continue;
+    }
+    const sourcePath = join(outputDir, entry.name);
+    const targetPath = join(haxeGenDir, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(sourcePath, targetPath);
+    } else if (entry.isFile()) {
+      mkdirSync(dirname(targetPath), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
+function syntaxCheck(relativeFiles) {
+  for (const relativeFile of relativeFiles) {
+    run("ruby", ["-c", join(runtimeAppDir, relativeFile)]);
+  }
+}
+
+function copyTree(source, target) {
+  mkdirSync(target, { recursive: true });
+  for (const entry of readdirSync(source, { withFileTypes: true })) {
+    const sourcePath = join(source, entry.name);
+    const targetPath = join(target, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(sourcePath, targetPath);
+    } else if (entry.isFile()) {
+      mkdirSync(dirname(targetPath), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
+function writeFile(relativePath, content) {
+  const fullPath = join(runtimeAppDir, relativePath);
+  mkdirSync(dirname(fullPath), { recursive: true });
+  writeFileSync(fullPath, content);
+}
+
+function stage(name, callback) {
+  currentStage = name;
+  process.stdout.write(`[active-job] stage: ${name}\n`);
+  return callback();
+}
+
+function assertRuntimeRubySupportsRails() {
+  const rubyVersion = run("ruby", ["-e", "print RUBY_VERSION"], { allowFailure: true }).stdout.trim();
+  if (!rubyAtLeast(rubyVersion, "3.1.0")) {
+    console.error(`[active-job] REQUIRE_RAILS=1 requires Ruby >= 3.1.0 for Rails 7.2.3.1; current ruby is ${rubyVersion || "unknown"}.`);
+    console.error("[active-job] Activate the repo .ruby-version Ruby before running npm run test:rails-runtime.");
+    process.exit(1);
+  }
+}
+
+function rubyAtLeast(actual, minimum) {
+  const actualParts = actual.split(".").map((part) => Number.parseInt(part, 10));
+  const minimumParts = minimum.split(".").map((part) => Number.parseInt(part, 10));
+  for (let i = 0; i < minimumParts.length; i += 1) {
+    const actualPart = Number.isFinite(actualParts[i]) ? actualParts[i] : 0;
+    const minimumPart = minimumParts[i];
+    if (actualPart > minimumPart) return true;
+    if (actualPart < minimumPart) return false;
+  }
+  return true;
 }

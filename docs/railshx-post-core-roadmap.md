@@ -97,13 +97,15 @@ Lowering strategy:
 Integration strategy:
 
 - Static smoke checks `queue_as`, `retry_on`, `discard_on`, and `perform`.
-- Runtime lane uses the Rails test adapter to assert enqueued/performed jobs.
+- Runtime lane uses `ActiveJob::TestHelper` in a generated Rails app to assert
+  queue name, enqueued args, and performed jobs.
 
 Graduation criteria:
 
 - Wrong job args fail in Haxe.
 - Enqueue helpers preserve typed args.
-- Generated Rails test proves job enqueue and perform flow.
+- Generated Rails test proves job enqueue and perform flow under
+  `REQUIRE_RAILS=1 npm run test:active-job`.
 
 ## ActiveStorage
 

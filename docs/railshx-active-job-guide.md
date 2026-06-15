@@ -79,7 +79,12 @@ If `perform` expects `(userId:Int, email:String)`, then
 - generated `performLater`/`performNow` calls lower to Rails enqueue APIs.
 - bad enqueue args fail during Haxe compilation.
 - unsafe named exception constants fail during Haxe compilation.
+- when Rails gems are available, a generated Rails app uses
+  `ActiveJob::TestHelper` to assert queue name, enqueue behavior, and
+  `perform_enqueued_jobs` execution.
 
-Rails runtime execution should use the Rails test adapter in the generated app
-lane. When Rails gems are installed, `REQUIRE_RAILS=1 npm run test:rails-runtime`
-must make missing Rails runtime dependencies fail instead of silently skipping.
+Local `npm run test:active-job` skips the runtime Rails pass if the generated
+app bundle is unavailable. `npm run test:rails-runtime` includes
+`REQUIRE_RAILS=1 npm run test:active-job`, installs the generated app bundle
+when needed, and makes missing Rails runtime dependencies fail instead of
+silently skipping.
