@@ -16,6 +16,8 @@ mkdirSync(join(outputDir, "sig"), { recursive: true });
 writeFileSync(existingErb, "<strong><%= label %></strong>\n");
 const serviceSource = join(outputDir, "app", "services", "legacy_price_formatter.rb");
 writeFileSync(serviceSource, [
+  "raise \"service source was executed\"",
+  "",
   "class LegacyPriceFormatter",
   "  def initialize(currency = \"USD\")",
   "    @currency = currency",
@@ -249,6 +251,63 @@ if (missingRbs.status === 0 || !missingRbs.stderr.includes("RBS source does not 
   fail("adoption generator did not fail closed for missing RBS source");
 }
 
+expectGeneratorFailure("unsafe package", [
+  "--output",
+  outputDir,
+  "--package",
+  "interop;bad",
+  "--template",
+  "legacy/badge",
+], "--package must be a safe Haxe package path");
+
+expectGeneratorFailure("unsafe local name", [
+  "--output",
+  outputDir,
+  "--template",
+  "legacy/badge",
+  "--locals",
+  "class:String",
+], "Invalid local name");
+
+expectGeneratorFailure("unsafe local type", [
+  "--output",
+  outputDir,
+  "--template",
+  "legacy/badge",
+  "--locals",
+  "label:String);trace('bad')",
+], "Invalid local type");
+
+expectGeneratorFailure("unsafe template path", [
+  "--output",
+  outputDir,
+  "--template",
+  "../legacy/badge",
+], "--template must be a safe relative path");
+
+expectGeneratorFailure("backslash template path", [
+  "--output",
+  outputDir,
+  "--template",
+  "legacy\\badge",
+], "--template must use forward-slash relative paths");
+
+expectGeneratorFailure("unsafe service constant", [
+  "--output",
+  outputDir,
+  "--service",
+  "legacy_price_formatter",
+], "--service must be a safe Ruby constant path");
+
+expectGeneratorFailure("source outside app root", [
+  "--output",
+  outputDir,
+  "--service",
+  "LegacyPriceFormatter",
+  "--service-source",
+  join(root, "README.md"),
+], "--service-source must stay inside the generator output/app root");
+
 console.log("[rails-adopt-generator] OK");
 
 function assertIncludes(relativeFile, expectedLines) {
@@ -276,6 +335,24 @@ function run(command, args) {
     process.exit(result.status ?? 1);
   }
   return result;
+}
+
+function expectGeneratorFailure(label, args, expectedMessage) {
+  const result = spawnSync("ruby", [
+    "-I",
+    join(root, "lib"),
+    join(root, "scripts", "rails", "adopt.rb"),
+    ...args,
+  ], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (result.status === 0 || !(`${result.stdout}\n${result.stderr}`).includes(expectedMessage)) {
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    fail(`adoption generator did not fail closed for ${label}`);
+  }
 }
 
 function fail(message) {

@@ -65,7 +65,12 @@ module HXRuby
       end
 
       def safe_relative_path(value, label:)
-        normalized = value.to_s.strip.tr("\\", "/").sub(%r{/+\z}, "")
+        raw = value.to_s.strip
+        if raw.include?("\\")
+          raise Error, "#{label} must use forward-slash relative paths"
+        end
+
+        normalized = raw.sub(%r{/+\z}, "")
         if normalized.empty? || normalized.start_with?("/") || normalized.include?("//") || normalized.include?("..")
           raise Error, "#{label} must be a safe relative path"
         end

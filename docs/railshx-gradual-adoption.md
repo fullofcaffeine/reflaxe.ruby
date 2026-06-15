@@ -93,7 +93,7 @@ npm run rails:adopt -- \
   --service-source app/services/legacy_price_formatter.rb
 ```
 
-The service source path is checked and parsed with `Ripper`; app code is not executed. The generator emits constructors from `initialize`, instance methods from `def method`, and static methods from `def self.method`. Required arguments default to `Dynamic`; optional arguments with obvious scalar defaults become `String`, `Int`, `Float`, or `Bool`. Ambiguous splats, keyword-heavy signatures, and blocks are marked as TODO comments instead of guessed unsafely.
+The service source path is checked to stay inside the app/output root and parsed with `Ripper`; app code is not executed. The generator emits constructors from `initialize`, instance methods from `def method`, and static methods from `def self.method`. Required arguments default to `Dynamic`; optional arguments with obvious scalar defaults become `String`, `Int`, `Float`, or `Bool`. Ambiguous splats, keyword-heavy signatures, and blocks are marked as TODO comments instead of guessed unsafely.
 
 If a service already has RBS, prefer that as the deterministic type source:
 
@@ -111,7 +111,7 @@ bundle exec rake hxruby:gen:adopt \
   RBS=sig/rbs_price_formatter.rbs
 ```
 
-RBS-backed adoption is file-backed and fail-closed: a missing `--rbs` path is a generator error. The first deterministic subset supports class declarations, `initialize`, instance methods, and `self.method` signatures with simple required and optional positional arguments. Known scalar types lower to Haxe types, while unsupported or application-specific RBS types lower to `Dynamic` with TODO/review comments in the generated extern. LLM-generated suggestions may help draft contracts later, but they must remain advisory patches; they do not bypass generator validation, Haxe compilation, Ruby syntax checks, or Rails runtime gates.
+RBS-backed adoption is file-backed and fail-closed: a missing `--rbs` path is a generator error, and the path must stay inside the app/output root. The first deterministic subset supports class declarations, `initialize`, instance methods, and `self.method` signatures with simple required and optional positional arguments. Known scalar types lower to Haxe types, while unsupported or application-specific RBS types lower to `Dynamic` with TODO/review comments in the generated extern. LLM-generated suggestions may help draft contracts later, but they must remain advisory patches; they do not bypass generator validation, Haxe compilation, Ruby syntax checks, or Rails runtime gates.
 
 Add or tighten method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
 
@@ -131,7 +131,14 @@ bundle exec rake hxruby:gen:adopt \
   EXTENSION_MODULE=Sluggable
 ```
 
-This reads Ruby source through `Ripper`; it does not execute app code. It emits instance and class-method contracts such as `SluggableInstance` and `SluggableClassMethods`, using `Dynamic` placeholders plus review comments when Ruby source has no type metadata. Simple required/optional arguments are emitted; splats, keyword-heavy signatures, and blocks are skipped with a comment so the generated Haxe remains compileable. Missing source files fail closed.
+This reads Ruby source through `Ripper`; it does not execute app code. Source paths must stay inside the app/output root. It emits instance and class-method contracts such as `SluggableInstance` and `SluggableClassMethods`, using `Dynamic` placeholders plus review comments when Ruby source has no type metadata. Simple required/optional arguments are emitted; splats, keyword-heavy signatures, and blocks are skipped with a comment so the generated Haxe remains compileable. Missing source files fail closed.
+
+Generator inputs that become Haxe source are validated before files are written:
+`--package` must be a safe Haxe package path, `--service` and
+`--extension-module` must be Ruby constant paths, `--template` must be a safe
+forward-slash relative Rails template path, and `--locals` entries must use safe
+Haxe field names and type references. Existing generated wrappers are not
+overwritten unless `--force` is explicit.
 
 Use discovery as an advisory report before choosing wrappers:
 

@@ -53,13 +53,13 @@ module HXRuby
 
       def initialize(options)
         @output_dir = File.expand_path(options.fetch(:output))
-        @package_name = options.fetch(:package)
-        @services = options.fetch(:services)
+        @package_name = checked_package_name(options.fetch(:package))
+        @services = options.fetch(:services).map { |service| checked_constant_path(service, "--service") }
         @service_sources = options.fetch(:service_sources)
         @rbs_sources = options.fetch(:rbs_sources)
-        @templates = options.fetch(:templates)
+        @templates = options.fetch(:templates).map { |template| checked_template_path(template) }
         @extension_sources = options.fetch(:extension_sources)
-        @extension_modules = options.fetch(:extension_modules)
+        @extension_modules = options.fetch(:extension_modules).map { |mod| checked_constant_path(mod, "--extension-module") }
         @locals = parse_locals(options.fetch(:locals))
         @force = options.fetch(:force)
         @discover = options.fetch(:discover)
@@ -110,6 +110,8 @@ module HXRuby
         Common.split_csv(raw).map do |entry|
           name, type = entry.split(":", 2).map(&:strip)
           raise Error, "Invalid local #{entry.inspect}. Expected name:Type." if name.to_s.empty? || type.to_s.empty?
+          raise Error, "Invalid local name #{name.inspect}. Expected a safe Haxe field identifier." unless safe_haxe_identifier?(name)
+          raise Error, "Invalid local type #{type.inspect}. Expected a safe Haxe type reference." unless safe_haxe_type?(type)
 
           { name: name, type: type }
         end
@@ -179,7 +181,7 @@ module HXRuby
 
       def service_source_contracts
         @service_source_contracts ||= @service_sources.flat_map do |source|
-          source_path = File.expand_path(source, @output_dir)
+          source_path = checked_input_file(source, "--service-source")
           raise Error, "Service source does not exist: #{source}" unless File.file?(source_path)
 
           ServiceSourceParser.new(source_path, relative_output_path(source_path)).contracts
@@ -188,7 +190,7 @@ module HXRuby
 
       def rbs_contracts
         @rbs_contracts ||= @rbs_sources.flat_map do |source|
-          source_path = File.expand_path(source, @output_dir)
+          source_path = checked_input_file(source, "--rbs")
           raise Error, "RBS source does not exist: #{source}" unless File.file?(source_path)
 
           RbsSourceParser.new(source_path, relative_output_path(source_path)).contracts
@@ -232,11 +234,12 @@ module HXRuby
       end
 
       def write_template(template_path)
-        haxe_class = "#{Common.class_name_from_path(template_path)}Template"
-        locals_name = "#{Common.class_name_from_path(template_path)}Locals"
+        safe_template_path = checked_template_path(template_path)
+        haxe_class = "#{Common.class_name_from_path(safe_template_path)}Template"
+        locals_name = "#{Common.class_name_from_path(safe_template_path)}Locals"
         package = "#{@package_name}.templates"
         path = File.join(@output_dir, "src_haxe", Common.package_path(package), "#{haxe_class}.hx")
-        Common.write_file(path, render_template(package, haxe_class, locals_name, template_path), force: @force)
+        Common.write_file(path, render_template(package, haxe_class, locals_name, safe_template_path), force: @force)
       end
 
       def render_template(package, haxe_class, locals_name, template_path)
@@ -264,7 +267,7 @@ module HXRuby
       end
 
       def write_extension_contracts(source)
-        source_path = File.expand_path(source, @output_dir)
+        source_path = checked_input_file(source, "--extension-source")
         raise Error, "Extension source does not exist: #{source}" unless File.file?(source_path)
 
         contracts = ExtensionSourceParser.new(source_path).contracts
@@ -285,6 +288,44 @@ module HXRuby
 
       def relative_output_path(path)
         path.delete_prefix("#{@output_dir}/")
+      end
+
+      def checked_package_name(value)
+        package = value.to_s.strip
+        unless package.match?(/\A[a-z_][A-Za-z0-9_]*(?:\.[a-z_][A-Za-z0-9_]*)*\z/)
+          raise Error, "--package must be a safe Haxe package path"
+        end
+        package
+      end
+
+      def checked_constant_path(value, label)
+        constant = value.to_s.strip
+        unless constant.match?(/\A[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*\z/)
+          raise Error, "#{label} must be a safe Ruby constant path"
+        end
+        constant
+      end
+
+      def checked_template_path(value)
+        Common.safe_relative_path(value, label: "--template")
+      end
+
+      def checked_input_file(value, label)
+        path = File.expand_path(value, @output_dir)
+        unless path == @output_dir || path.start_with?("#{@output_dir}#{File::SEPARATOR}")
+          raise Error, "#{label} must stay inside the generator output/app root"
+        end
+        path
+      end
+
+      def safe_haxe_identifier?(value)
+        name = value.to_s
+        name.match?(/\A[A-Za-z_][A-Za-z0-9_]*\z/) && !Common.haxe_keywords.include?(name)
+      end
+
+      def safe_haxe_type?(value)
+        type = value.to_s
+        type.match?(/\A[A-Za-z_][A-Za-z0-9_.]*(?:<\s*[A-Za-z_][A-Za-z0-9_.]*(?:\s*,\s*[A-Za-z_][A-Za-z0-9_.]*)*\s*>)?\z/)
       end
 
       def write_extension_contract(package, source_label, contract, kind)
