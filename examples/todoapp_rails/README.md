@@ -96,6 +96,9 @@ The generated suite is intentionally Rails-shaped: model tests cover
 validations, scopes, and associations; controller/request tests cover route
 wiring, typed strong params, invalid submissions, redirects, ordered open-work
 rendering, and ActionView consumption.
+Those Ruby tests live as ordinary Rails files under `rails/test/**`; the
+materializer copies them into the disposable generated Rails app instead of
+embedding Ruby test bodies inside build scripts.
 
 ```bash
 npm run test:todoapp-production
