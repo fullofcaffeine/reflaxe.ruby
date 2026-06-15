@@ -89,6 +89,11 @@ When the todoapp grows to illustrate a new RailsHx compiler or framework
 feature, add the corresponding Rails-style test layer in the same change. The
 todoapp is allowed to be a broad dogfood sentinel; focused compiler details
 still belong in snapshots, negative compile tests, and narrow smoke scripts.
+Current generated Rails tests cover model validations, scopes, associations,
+controller/request rendering, ordered open-work filtering, typed strong params,
+invalid submissions, and redirects. Keep extending those ordinary Rails tests
+when the todoapp demonstrates new ActiveRecord, controller, params, migration,
+template, or route behavior.
 
 ## Haxe-Authored Test Layers
 

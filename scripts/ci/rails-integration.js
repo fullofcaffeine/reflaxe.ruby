@@ -34,6 +34,7 @@ stage("ruby syntax", () => syntaxCheck([
   "db/migrate/20260101000000_create_todos.rb",
   "db/migrate/20260101000001_update_todos.rb",
   "test/models/todo_test.rb",
+  "test/models/user_test.rb",
   "test/controllers/todos_controller_test.rb",
 ]));
 stage("template materialization", () => viewContentCheck("app/views/controllers/todos/index.html.erb", [
@@ -137,32 +138,81 @@ class TodoTest < ActiveSupport::TestCase
 
     assert_equal ["ship ruby"], Models::Todo.incomplete.map(&:title)
   end
+
+  test "validates required title" do
+    user = Models::User.create!(name: "owner")
+    todo = Models::Todo.new(user: user, notes: "missing title", is_completed: false)
+
+    assert_not todo.valid?
+    assert_includes todo.errors[:title], "can't be blank"
+  end
+
+  test "belongs to a user and user has many todos" do
+    user = Models::User.create!(name: "owner")
+    todo = Models::Todo.create!(title: "owned task", user: user)
+
+    assert_equal user, todo.user
+    assert_includes user.todos, todo
+  end
+end
+`);
+
+  writeFile("test/models/user_test.rb", `require "test_helper"
+
+class UserTest < ActiveSupport::TestCase
+  test "validates required name" do
+    user = Models::User.new
+
+    assert_not user.valid?
+    assert_includes user.errors[:name], "can't be blank"
+  end
 end
 `);
 
   writeFile("test/controllers/todos_controller_test.rb", `require "test_helper"
 
 class TodosControllerTest < ActionDispatch::IntegrationTest
-  test "index renders the polished RailsHx todo page" do
+  test "index renders the polished RailsHx todo page with ordered open work" do
     user = Models::User.create!(name: "owner")
-    Models::Todo.create!(title: "ship rails", is_completed: false, user: user)
+    Models::Todo.create!(title: "zed open task", is_completed: false, user: user)
+    Models::Todo.create!(title: "alpha open task", is_completed: false, user: user)
+    Models::Todo.create!(title: "completed hidden task", is_completed: true, user: user)
 
     get "/todos"
 
     assert_response :success
     assert_includes @response.body, "Typed Rails, polished Ruby."
     assert_includes @response.body, "RailsHx sample"
-    assert_includes @response.body, "ship rails"
+    assert_includes @response.body, "alpha open task"
+    assert_includes @response.body, "zed open task"
+    assert_not_includes @response.body, "completed hidden task"
+    assert_operator @response.body.index("alpha open task"), :<, @response.body.index("zed open task")
     assert_includes @response.body, "typed columns"
   end
 
-  test "create permits haxe-authored params and redirects through route helper" do
+  test "create permits haxe-authored params and ignores unpermitted fields" do
     user = Models::User.create!(name: "owner")
 
-    post "/todos", params: { todo: { title: "from params", is_completed: false, user_id: user.id, ignored: "nope" } }
+    assert_difference "Models::Todo.count", 1 do
+      post "/todos", params: { todo: { title: "from params", notes: "typed notes", is_completed: true, user_id: user.id, ignored: "nope" } }
+    end
 
     assert_redirected_to "/todos"
-    assert_equal "from params", Models::Todo.order(:id).last.title
+    todo = Models::Todo.order(:id).last
+    assert_equal "from params", todo.title
+    assert_equal "typed notes", todo.notes
+    assert_not todo.is_completed
+    assert_equal user, todo.user
+  end
+
+  test "create redirects without persisting invalid records" do
+    user = Models::User.create!(name: "owner")
+
+    assert_no_difference "Models::Todo.count" do
+      post "/todos", params: { todo: { title: "", notes: "missing title", user_id: user.id } }
+    end
+
+    assert_redirected_to "/todos"
   end
 end
 `);

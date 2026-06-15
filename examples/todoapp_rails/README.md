@@ -92,6 +92,10 @@ npm run todoapp:test
 ```
 
 Compiles, materializes, prepares the test DB, and runs the generated Rails test suite.
+The generated suite is intentionally Rails-shaped: model tests cover
+validations, scopes, and associations; controller/request tests cover route
+wiring, typed strong params, invalid submissions, redirects, ordered open-work
+rendering, and ActionView consumption.
 
 ```bash
 npm run test:todoapp-production
@@ -183,6 +187,18 @@ npm run test:todoapp-playwright
 `test:rails-integration` always syntax-checks generated Ruby. It runs `rails db:migrate` and `rails test` when the generated Rails app bundle is available. `test:rails-runtime` is the mandatory runtime lane: it sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and runs both the todoapp Rails integration tests and the mixed Rails/RailsHx interop runtime tests.
 
 `test:todoapp-playwright` is the real-browser layer, modeled after the PhoenixHx sentinel approach but Rails-native: Playwright validates browser-rendered ActionView, importmap/Turbo/Haxe-client behavior, form submission, and same-page link enhancement against a running generated Rails app.
+
+The todoapp is the canonical RailsHx dogfood app. When a RailsHx feature is
+demonstrated here, add coverage at the Rails layer that would catch a real app
+regression:
+
+| Layer | Command | What it owns |
+| --- | --- | --- |
+| Compiler/static | `npm run test:todoapp-rails` | Haxe/HHX compiles, generated Ruby/ERB/JS shape, negative type-safety checks, strict-boundary policy. |
+| Rails model/request | `npm run todoapp:test` or `npm run test:rails-integration` | ActiveRecord validations/scopes/associations, strong params, redirects, rendered templates, migrations, Rails test harness consumption. |
+| Mandatory runtime | `npm run test:rails-runtime` | Rails gems present, generated app can migrate and run Rails tests under the required runtime lane. |
+| Browser UX | `npm run test:todoapp-playwright` | Real browser rendering, Turbo/importmap/Haxe-client behavior, form submission, same-page navigation, visible UX regressions. |
+| Production | `npm run test:todoapp-production` | Zeitwerk, production boot, asset precompile, release archive contents. |
 
 ## Current Boundary
 
