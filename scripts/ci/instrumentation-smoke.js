@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -29,6 +29,10 @@ if (!reflaxeSrc) {
 
 compileInstrumentation(outputDir);
 
+// Generated ActiveSupport::Notifications Ruby shape is covered by committed
+// snapshots. This smoke keeps the non-snapshot checks: required files, Ruby
+// syntax, negative payload/subscription typing, and optional ActiveSupport
+// runtime consumption when the gem is available.
 for (const file of [
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
@@ -37,25 +41,6 @@ for (const file of [
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     fail(`Expected instrumentation output file missing: ${fullPath}`);
-  }
-}
-
-const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
-if (!runRuby.includes('require "active_support/notifications"')) {
-  fail("Expected active_support/notifications require missing from run.rb.");
-}
-
-const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
-for (const expected of [
-  /require "active_support\/notifications"/,
-  /ActiveSupport::Notifications\.subscribe\("todo\.shipped"\)/,
-  /event__hx\d+\.payload\[:list_id\]/,
-  /event__hx\d+\.payload\[:count\]/,
-  /ActiveSupport::Notifications\.instrument\("todo\.shipped", \{list_id: "open", count: 2\}\) \{ "instrumented" \}/,
-  /ActiveSupport::Notifications\.unsubscribe\(subscription__hx\d+\)/,
-]) {
-  if (!expected.test(mainRuby)) {
-    fail(`Instrumentation output missing expected Ruby shape: ${expected}`);
   }
 }
 
@@ -116,7 +101,7 @@ if (!/rails\.active_support\.Subscription|Subscription|Cannot unify/.test(invali
 const activeSupportCheck = run("ruby", ["-e", 'require "active_support/notifications"'], { allowFailure: true });
 if (activeSupportCheck.status !== 0) {
   console.log("[instrumentation] ActiveSupport is unavailable; skipped runtime notification pass.");
-  console.log("[instrumentation] Static compile, generated Ruby shape, and negative type checks passed.");
+  console.log("[instrumentation] Static compile, Ruby syntax, and negative type checks passed.");
   process.exit(0);
 }
 
