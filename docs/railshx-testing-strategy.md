@@ -118,3 +118,6 @@ improves developer experience:
 Use `../haxe.elixir.codex` as inspiration for the ergonomics, but adapt the
 output to Rails and modern Ruby/JS testing conventions rather than copying
 Phoenix-specific shapes.
+
+See [RailsHx Haxe-Authored Testing Design](railshx-haxe-authored-testing-design.md)
+for the proposed Minitest/RSpec and Playwright/Vitest output contracts.
