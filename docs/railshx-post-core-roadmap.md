@@ -168,14 +168,16 @@ Lowering strategy:
 Integration strategy:
 
 - Playwright tests for Turbo UX.
-- Rails channel tests where local Rails supports ActionCable test helpers.
+- Rails channel tests use `ActionCable::Channel::TestCase` in a generated Rails
+  app for subscribe/stream/perform/broadcast behavior.
 - Static smoke checks generated JS importmap pins and channel Ruby.
 
 Graduation criteria:
 
 - Typed stream targets/actions avoid behavior-bearing string drift.
 - Browser sentinel proves progressive enhancement remains Rails/Turbo-native.
-- Channel params are typed and runtime-tested.
+- Channel params are typed and runtime-tested under
+  `REQUIRE_RAILS=1 npm run test:action-cable`.
 
 ## ActiveSupport Instrumentation
 

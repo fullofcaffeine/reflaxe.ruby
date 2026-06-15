@@ -157,8 +157,11 @@ the Haxe JS client, and verifies negative Haxe typing cases for invalid payloads
 wrong param assignment, raw consumer objects, raw perform action strings, invalid
 perform payloads, and missing `subscribed()`.
 
-Runtime ActionCable tests should use Rails' own `ActionCable::Channel::TestCase`
-or browser/system tests in generated Rails apps when the local Ruby/Rails bundle
-is available. The initial RailsHx slice defines that runtime strategy but keeps
-the mandatory local lane static so Ruby 2.6 development shells can still run the
-compiler suite.
+When Rails gems are available, the same smoke materializes a generated Rails app
+and runs `ActionCable::Channel::TestCase` against the generated channel. The
+runtime pass asserts subscription confirmation, typed stream subscription,
+`perform :ping` transmissions, and broadcast payloads. Local
+`npm run test:action-cable` skips this runtime pass if the generated app bundle
+is unavailable; `npm run test:rails-runtime` includes
+`REQUIRE_RAILS=1 npm run test:action-cable` and makes missing runtime
+dependencies fail closed.

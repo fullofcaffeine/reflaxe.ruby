@@ -82,7 +82,7 @@ Unsafe boundary policy is tracked in
 | Typed RailsHx components | `Component<TLocals>`, `<component component=${...}>`, `Slot.content()` | Initial ActionView capture/render partial slice |
 | Typed Turbo client helpers | `rails.turbo.Turbo`, `TurboVisitAction`, `TurboStreamAction` | Initial Haxe JS/importmap-friendly slice |
 | Typed server-side Turbo streams | `TurboStreams.append/prepend/before/after/replace/update/remove`, `broadcast*To`, `StreamTarget`, `StreamName<TPayload>`, `Template<TLocals>` | Rails-native `turbo_stream.*`/`Turbo::StreamsChannel` slice |
-| Typed ActionCable channels/subscriptions | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, `SubscriptionParam<T>` | Initial ActionCable channel/client static smoke slice |
+| Typed ActionCable channels/subscriptions | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, `SubscriptionParam<T>` | Channel/client static smoke plus generated Rails `ActionCable::Channel::TestCase` runtime lane |
 | Typed ActiveSupport instrumentation | `EventName<TPayload>`, `Notifications.instrument/subscribe`, `NotificationEvent<TPayload>` | Initial ActiveSupport::Notifications static/runtime-if-available slice |
 | Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented for migration/interop only |
 | Mixed Rails/RailsHx adoption sample | `examples/rails_interop_app` + `npm run test:rails-interop` | Initial compile/static smoke |

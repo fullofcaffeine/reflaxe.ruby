@@ -136,9 +136,11 @@ expectIncludes(packageJson.scripts["test:todoapp-playwright"] ?? "", "todoapp-pl
 expectIncludes(packageJson.scripts["test:todoapp-production"] ?? "", "production-smoke", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:active-job", "package.json scripts");
+expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:action-cable", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:rails-integration", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:rails-interop", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:active-job", "package.json scripts");
+expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:action-cable", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:rails-integration", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:rails-interop", "package.json scripts");
 expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-package-check.js", "package.json scripts");

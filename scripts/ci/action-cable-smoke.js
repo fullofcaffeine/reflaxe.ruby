@@ -1,12 +1,22 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, mkdtempSync } = require("node:fs");
-const { join, resolve } = require("node:path");
+const {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+  mkdtempSync,
+} = require("node:fs");
+const { dirname, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "action_cable");
+const runtimeAppDir = join(root, "test", ".generated", "action_cable_runtime");
 const invalidSourceDir = join(root, "test", ".generated", "action_cable_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "action_cable_invalid_out");
 const invalidRawStringSourceDir = join(root, "test", ".generated", "action_cable_invalid_raw_string_src");
@@ -16,6 +26,8 @@ const invalidConsumerOutputDir = join(root, "test", ".generated", "action_cable_
 const invalidPerformSourceDir = join(root, "test", ".generated", "action_cable_invalid_perform_src");
 const invalidPerformOutputDir = join(root, "test", ".generated", "action_cable_invalid_perform_out");
 const jsWorkDir = mkdtempSync(join(tmpdir(), "railshx-action-cable."));
+const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
+let currentStage = "startup";
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -23,6 +35,7 @@ const reflaxeCandidates = [
 ];
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(runtimeAppDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 rmSync(invalidRawStringSourceDir, { force: true, recursive: true });
@@ -204,6 +217,35 @@ if (!/has no field title|title|Cannot unify/.test(invalidPerformPayload.stderr +
   fail("Invalid ActionCable perform payload failed for an unexpected reason.");
 }
 
+stage("runtime materialization", materializeRuntimeRailsApp);
+stage("runtime ruby syntax", () => syntaxCheck([
+  "app/haxe_gen/channels/todos_channel.rb",
+  "config/application.rb",
+  "config/environment.rb",
+  "test/channels/todos_channel_test.rb",
+]));
+
+const bundleProbe = stage("runtime bundle probe", () => run("bundle", ["check"], {
+  cwd: runtimeAppDir,
+  allowFailure: true,
+}));
+if (bundleProbe.status !== 0) {
+  if (requireRails) {
+    assertRuntimeRubySupportsRails();
+    process.stdout.write("[action-cable] Rails bundle missing; running bundle install because REQUIRE_RAILS=1.\n");
+    stage("runtime bundle install", () => run("bundle", ["install"], { cwd: runtimeAppDir }));
+  } else {
+    process.stdout.write("[action-cable] Rails bundle is not available for the generated ActionCable app; skipped runtime Rails test pass.\n");
+    process.stdout.write("[action-cable] Set REQUIRE_RAILS=1 to install app gems and make this lane mandatory.\n");
+    process.exit(0);
+  }
+}
+
+stage("runtime channel tests", () => run("bundle", ["exec", "rails", "test"], {
+  cwd: runtimeAppDir,
+  env: { ...process.env, RAILS_ENV: "test" },
+}));
+
 console.log("[action-cable] OK");
 
 function compileActionCable(targetDir, options = {}) {
@@ -382,6 +424,140 @@ function writeInvalidPerformFixtures() {
   ].join("\n"));
 }
 
+function materializeRuntimeRailsApp() {
+  mkdirSync(runtimeAppDir, { recursive: true });
+  copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
+  copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
+  copyGeneratedSupportIntoHaxeGen();
+
+  writeFile("Gemfile", `source "https://rubygems.org"
+
+gem "rails", "7.2.3.1"
+`);
+
+  writeFile("config/application.rb", `require "rails"
+require "action_cable/engine"
+
+module HXRubyActionCable
+  class Application < Rails::Application
+    config.load_defaults 7.0
+    config.eager_load = false
+    config.root = File.expand_path("..", __dir__)
+  end
+end
+`);
+
+  writeFile("config/environment.rb", `require_relative "application"
+
+Rails.application.initialize!
+`);
+
+  writeFile("test/test_helper.rb", `ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
+require "rails/test_help"
+require "action_cable/channel/test_case"
+`);
+
+  writeFile("test/channels/todos_channel_test.rb", `require "test_helper"
+require Rails.root.join("app/haxe_gen/channels/todos_channel")
+
+class TodosChannelTest < ActionCable::Channel::TestCase
+  tests Channels::TodosChannel
+
+  test "subscribes to the typed stream" do
+    subscribe list_id: "open"
+
+    assert subscription.confirmed?
+    assert_has_stream "todos:open"
+  end
+
+  test "performs typed ping action and transmits payload" do
+    subscribe list_id: "open"
+
+    perform :ping
+
+    assert_equal({"title" => "pong", "completed" => false}, transmissions.last)
+  end
+
+  test "broadcasts typed payload to stream" do
+    assert_broadcast_on("todos:open", {"title" => "Typed cable payload", "completed" => false}) do
+      Channels::TodosChannel.announce("open", "Typed cable payload")
+    end
+  end
+end
+`);
+}
+
+function copyGeneratedSupportIntoHaxeGen() {
+  const haxeGenDir = join(runtimeAppDir, "app", "haxe_gen");
+  for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
+    if (["app", "config", "run.rb", "_GeneratedFiles.json"].includes(entry.name)) {
+      continue;
+    }
+    const sourcePath = join(outputDir, entry.name);
+    const targetPath = join(haxeGenDir, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(sourcePath, targetPath);
+    } else if (entry.isFile()) {
+      mkdirSync(dirname(targetPath), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
+function syntaxCheck(relativeFiles) {
+  for (const relativeFile of relativeFiles) {
+    run("ruby", ["-c", join(runtimeAppDir, relativeFile)]);
+  }
+}
+
+function copyTree(source, target) {
+  mkdirSync(target, { recursive: true });
+  for (const entry of readdirSync(source, { withFileTypes: true })) {
+    const sourcePath = join(source, entry.name);
+    const targetPath = join(target, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(sourcePath, targetPath);
+    } else if (entry.isFile()) {
+      mkdirSync(dirname(targetPath), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
+function writeFile(relativePath, content) {
+  const fullPath = join(runtimeAppDir, relativePath);
+  mkdirSync(dirname(fullPath), { recursive: true });
+  writeFileSync(fullPath, content);
+}
+
+function stage(name, callback) {
+  currentStage = name;
+  process.stdout.write(`[action-cable] stage: ${name}\n`);
+  return callback();
+}
+
+function assertRuntimeRubySupportsRails() {
+  const rubyVersion = run("ruby", ["-e", "print RUBY_VERSION"], { allowFailure: true }).stdout.trim();
+  if (!rubyAtLeast(rubyVersion, "3.1.0")) {
+    console.error(`[action-cable] REQUIRE_RAILS=1 requires Ruby >= 3.1.0 for Rails 7.2.3.1; current ruby is ${rubyVersion || "unknown"}.`);
+    console.error("[action-cable] Activate the repo .ruby-version Ruby before running npm run test:action-cable with REQUIRE_RAILS=1.");
+    process.exit(1);
+  }
+}
+
+function rubyAtLeast(actual, minimum) {
+  const actualParts = actual.split(".").map((part) => Number.parseInt(part, 10));
+  const minimumParts = minimum.split(".").map((part) => Number.parseInt(part, 10));
+  for (let i = 0; i < minimumParts.length; i += 1) {
+    const actualPart = Number.isFinite(actualParts[i]) ? actualParts[i] : 0;
+    const minimumPart = minimumParts[i];
+    if (actualPart > minimumPart) return true;
+    if (actualPart < minimumPart) return false;
+  }
+  return true;
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
@@ -389,6 +565,7 @@ function run(command, args, options = {}) {
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0 && !options.allowFailure) {
+    process.stderr.write(`[action-cable] failed during ${currentStage}: ${command} ${args.join(" ")}\n`);
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
