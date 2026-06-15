@@ -3228,7 +3228,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "knownModels":
 							knownModelPaths = metadataStringArray(field.expr, "knownModels");
 						case "externalTables":
-							externalTables = [for (table in metadataStringArray(field.expr, "externalTables")) RubyNaming.toMethodName(table)];
+							externalTables = [for (table in metadataStringArray(field.expr, "externalTables")) safeRailsMigrationExternalTable(table, field.expr.pos)];
 						case other:
 							Context.error('@:railsMigration unknown option $other.', field.expr.pos);
 					}
@@ -3254,6 +3254,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return null;
 		}
 		return {timestamp: timestamp, className: className, models: models, knownModels: knownModels, externalTables: externalTables, operations: operations};
+	}
+
+	static function safeRailsMigrationExternalTable(table:String, pos:haxe.macro.Expr.Position):String {
+		var normalized = RubyNaming.toMethodName(table);
+		if (table == null || table == "" || table.indexOf("/") != -1 || table.indexOf("\\") != -1 || table.indexOf(".") != -1 || !~/^[a-z][a-z0-9_]*$/.match(normalized)) {
+			Context.error('@:railsMigration externalTables entries must be safe Rails table identifiers such as "legacy_events".', pos);
+		}
+		return normalized;
 	}
 
 	static function railsMigrationResolveModels(modelPaths:Array<String>, tableNames:Map<String, String>, classType:ClassType, validationOnly:Bool):Array<ClassType> {

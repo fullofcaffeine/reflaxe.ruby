@@ -61,6 +61,8 @@ const migrationUnknownColumnSourceDir = join(root, "test", ".generated", "todoap
 const migrationUnknownColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_out");
 const migrationExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_src");
 const migrationExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_out");
+const migrationUnsafeExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_external_table_src");
+const migrationUnsafeExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_external_table_out");
 const migrationDropTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_src");
 const migrationDropTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_out");
 const reflaxeCandidates = [
@@ -139,6 +141,8 @@ rmSync(migrationUnknownColumnSourceDir, { force: true, recursive: true });
 rmSync(migrationUnknownColumnOutputDir, { force: true, recursive: true });
 rmSync(migrationExternalTableSourceDir, { force: true, recursive: true });
 rmSync(migrationExternalTableOutputDir, { force: true, recursive: true });
+rmSync(migrationUnsafeExternalTableSourceDir, { force: true, recursive: true });
+rmSync(migrationUnsafeExternalTableOutputDir, { force: true, recursive: true });
 rmSync(migrationDropTableSourceDir, { force: true, recursive: true });
 rmSync(migrationDropTableOutputDir, { force: true, recursive: true });
 
@@ -607,6 +611,7 @@ expectMigrationIrreversibleOperationFailure();
 expectMigrationUnknownTableFailure();
 expectMigrationUnknownColumnFailure();
 expectMigrationExternalTableAllowed();
+expectMigrationUnsafeExternalTableFailure();
 expectMigrationDropTableReversibleOutput();
 
 function compileWithFirstAvailableReflaxe() {
@@ -1292,6 +1297,48 @@ function expectMigrationExternalTableAllowed() {
     console.error("External-table migration did not emit the expected unchecked Rails index.");
     process.exit(1);
   }
+}
+
+function expectMigrationUnsafeExternalTableFailure() {
+  mkdirSync(join(migrationUnsafeExternalTableSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationUnsafeExternalTableSourceDir, "UnsafeExternalTableMigrationMain.hx"), [
+    "import migrations.UnsafeExternalTableMigration;",
+    "",
+    "class UnsafeExternalTableMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<UnsafeExternalTableMigration> = UnsafeExternalTableMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationUnsafeExternalTableSourceDir, "migrations", "UnsafeExternalTableMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000013\",",
+    "\tclassName: \"UnsafeExternalTableMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"],",
+    "\texternalTables: [\"../legacy/events\"]",
+    "})",
+    "class UnsafeExternalTableMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddIndex(\"legacy_events\", \"external_id\", {unique: true})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationUnsafeExternalTableSourceDir,
+    migrationUnsafeExternalTableOutputDir,
+    "UnsafeExternalTableMigrationMain",
+    "Unsafe externalTables RailsHx migration compiled successfully.",
+    "@:railsMigration externalTables entries must be safe Rails table identifiers"
+  );
 }
 
 function expectMigrationDropTableReversibleOutput() {
