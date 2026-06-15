@@ -24,8 +24,8 @@ load/render/migrate/deliver/subscribe/asset paths.
 | Core Ruby output | Smoke plus snapshots for core subset, class members, lambdas, enums, switches, exceptions, stdlib MVP, native mapping, call shapes, interop, and extensions. | Healthy. Smokes mostly execute or sanity-check focused behavior while snapshots own output shape. | Keep as-is unless a smoke grows large enough to duplicate snapshots. |
 | Rails ActiveRecord/model/controller/mail/job/storage/todoapp | Smoke plus committed snapshots and runtime seams where needed. | Mostly healthy. Some smokes still contain duplicated output-shape regexes, but snapshots now carry the canonical output contract. | Gradually trim duplicate shape assertions from snapshot-backed smokes, keeping negative compile and runtime seam checks. |
 | ActionCable | Smoke/runtime plus committed snapshots added for generated channel output. | Healthy after the ActionCable snapshot addition. | Keep runtime tests seam-focused: connection stubs, reject, unsubscribe, perform, broadcast. |
-| Components | Smoke-heavy, no committed component snapshot yet. | Too smoke-heavy for a compiler-output surface. | Add component snapshots for generated partials, captured slot output, and main/run shape. |
-| Turbo Streams | Smoke-heavy, no committed Turbo Streams snapshot yet. | Too smoke-heavy; generated stream helper calls are exactly the kind of output snapshots should review. | Add Turbo Streams snapshots for generated Ruby and ERB partials. |
+| Components | Snapshot-backed plus focused smoke. | Healthy after component snapshots. | Keep smoke limited to file presence, Ruby syntax, and negative slot/locals/template checks. |
+| Turbo Streams | Snapshot-backed plus focused smoke. | Healthy after Turbo Streams snapshots. | Keep smoke limited to file presence, Ruby syntax, and negative stream target/locals checks. |
 | ActiveSupport instrumentation | Smoke-heavy, no committed instrumentation snapshot yet. | Borderline. Runtime notification execution is useful, but generated notification Ruby should be snapshotted. | Add instrumentation snapshots; keep runtime smoke as the ActiveSupport consumption seam. |
 | Rails interop/adoption | Runtime/request smoke plus negative external-template checks, no committed mixed-app snapshot. | Needs a snapshot contract for generated Haxe-owned Ruby/ERB while keeping Rails-owned legacy files out of snapshots unless explicitly fixture-owned. | Add rails interop snapshots for generated controller/service/view/template output. |
 | Rails engine/plugin | Smoke-heavy, no committed engine-local output snapshot. | Needs snapshot coverage because engine-local autoload and output-root shape are compiler output. | Add engine/plugin snapshots for engine-local generated files and initializer. |
@@ -64,10 +64,55 @@ Use this checklist when adding or reviewing a smoke test:
 
 ## Immediate Follow-Ups
 
-- Add snapshots for smoke-heavy output surfaces: components, Turbo Streams,
-  instrumentation, Rails interop, and Rails engine/plugin output.
+- Add snapshots for remaining smoke-heavy output surfaces: instrumentation,
+  Rails interop, and Rails engine/plugin output.
 - After those snapshots exist, trim duplicated output-shape regex assertions in
   the corresponding smoke scripts. Keep syntax checks, negative compile tests,
   unsafe-path checks, generator checks, and Rails runtime seams.
 - Keep package/release/generator checks as smoke/check scripts unless their
   generated output becomes complex enough to need golden fixtures.
+
+## Todoapp Dogfood Coverage
+
+`examples/todoapp_rails` is the canonical RailsHx dogfood app and should be
+tested like a small production Rails app, not just like a compiler fixture:
+
+- Generated Rails model/unit tests cover model behavior exposed by Haxe-authored
+  ActiveRecord models and scopes.
+- Generated controller/request tests cover route wiring, strong params,
+  rendering, redirects, and generated ActionView consumption.
+- Rails integration/runtime gates cover migrations, Zeitwerk/autoload,
+  template materialization, app-local Bundler/Rails execution, and assets.
+- Production smoke covers deployable boot, asset precompile, and release archive
+  shape.
+- Playwright covers user-visible browser behavior: ActionView output, Turbo,
+  importmap, Haxe-authored JavaScript, form submission, and UX regressions.
+
+When the todoapp grows to illustrate a new RailsHx compiler or framework
+feature, add the corresponding Rails-style test layer in the same change. The
+todoapp is allowed to be a broad dogfood sentinel; focused compiler details
+still belong in snapshots, negative compile tests, and narrow smoke scripts.
+
+## Haxe-Authored Test Layers
+
+Vanilla Ruby/Rails tests remain first-class. Generated RailsHx output should be
+ordinary idiomatic Ruby, so teams can use Minitest, RSpec, Rails request tests,
+system tests, and normal JavaScript/browser tooling without RailsHx-specific
+runtime requirements.
+
+RailsHx should also grow optional typed Haxe-authored test layers where that
+improves developer experience:
+
+- Haxe-authored Ruby/Rails tests can reuse typed model fields, route helpers,
+  params contracts, template refs, and generated constants before lowering to
+  ordinary Ruby/Rails test files.
+- Haxe-authored JS/browser tests can reuse shared Haxe DOM hooks, Turbo event
+  contracts, route constants, and typed client payloads before lowering to
+  Playwright/Vitest-compatible JavaScript or TypeScript.
+- The typed test layers should be additive, not mandatory. If a user prefers
+  vanilla Rails tests, those tests should keep working against generated RailsHx
+  code as if it had been hand-written.
+
+Use `../haxe.elixir.codex` as inspiration for the ergonomics, but adapt the
+output to Rails and modern Ruby/JS testing conventions rather than copying
+Phoenix-specific shapes.

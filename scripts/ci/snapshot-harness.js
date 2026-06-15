@@ -118,6 +118,31 @@ const cases = [
     ],
   },
   {
+    name: "components",
+    defines: ["reflaxe_ruby_rails"],
+    files: [
+      "app/haxe_gen/main.rb",
+      "app/haxe_gen/shared/card_slots.rb",
+      "app/haxe_gen/views/component_card_view.rb",
+      "app/haxe_gen/views/component_shell_view.rb",
+      "app/views/components/_card.html.erb",
+      "app/views/components/show.html.erb",
+      "config/initializers/hxruby_autoload.rb",
+      "run.rb",
+    ],
+  },
+  {
+    name: "turbo_streams",
+    defines: ["reflaxe_ruby_rails"],
+    files: [
+      "app/haxe_gen/main.rb",
+      "app/haxe_gen/views/todo_row_view.rb",
+      "app/views/todos/_todo.html.erb",
+      "config/initializers/hxruby_autoload.rb",
+      "run.rb",
+    ],
+  },
+  {
     name: "todoapp_rails",
     defines: ["reflaxe_ruby_rails"],
     extraClassPaths: ["examples/todoapp_rails/src_haxe"],

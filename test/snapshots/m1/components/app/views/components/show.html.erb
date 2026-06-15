@@ -1,0 +1,4 @@
+<% railshx_component_body = capture do %>
+			<p>Children stay HHX and are captured into an ActionView buffer.</p>
+			<strong>Rails still receives a normal partial local.</strong>
+		<% end %><%= render partial: "components/card", locals: {title: "Typed components, Rails output", tone: "warm", body: railshx_component_body} %>

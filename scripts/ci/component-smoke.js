@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -25,6 +25,9 @@ if (!reflaxeSrc) {
 
 compileComponents(outputDir);
 
+// Generated ERB/Ruby shape is covered by committed snapshots. This smoke keeps
+// the non-snapshot checks: required files, Ruby syntax, and negative typing
+// diagnostics for slots, locals, template ownership, and filesystem-backed refs.
 for (const file of [
   "app/views/components/_card.html.erb",
   "app/views/components/show.html.erb",
@@ -34,29 +37,6 @@ for (const file of [
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     fail(`Expected component output file missing: ${fullPath}`);
-  }
-}
-
-const card = readFileSync(join(outputDir, "app", "views", "components", "_card.html.erb"), "utf8");
-for (const expected of [
-  '<article class="<%= "component-card component-card--" + tone %>">',
-  '<h2><%= title %></h2>',
-  '<%= body %>',
-]) {
-  if (!card.includes(expected)) {
-    fail(`Component card partial missing expected ERB: ${expected}`);
-  }
-}
-
-const shell = readFileSync(join(outputDir, "app", "views", "components", "show.html.erb"), "utf8");
-for (const expected of [
-  "<% railshx_component_body = capture do %>",
-  "Children stay HHX and are captured into an ActionView buffer.",
-  "Rails still receives a normal partial local.",
-  '<%= render partial: "components/card", locals: {title: "Typed components, Rails output", tone: "warm", body: railshx_component_body} %>',
-]) {
-  if (!shell.includes(expected)) {
-    fail(`Component shell missing expected Rails output: ${expected}`);
   }
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -29,6 +29,9 @@ if (!reflaxeSrc) {
 
 compileTurboStreams(outputDir);
 
+// Generated stream helper Ruby and ERB partial shape is covered by committed
+// snapshots. This smoke keeps the non-snapshot checks: required files, Ruby
+// syntax, and negative typing diagnostics for locals and stream targets.
 for (const file of [
   "app/haxe_gen/main.rb",
   "app/haxe_gen/views/todo_row_view.rb",
@@ -39,40 +42,6 @@ for (const file of [
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     fail(`Expected Turbo Streams output file missing: ${fullPath}`);
-  }
-}
-
-const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
-for (const expected of [
-  /turbo_stream\.append\("todos", partial: "todos\/todo", locals: \{completed: \(append_locals__hx\d+\)\["completed"\], dom_id: \(append_locals__hx\d+\)\["domId"\], title: \(append_locals__hx\d+\)\["title"\]\}\)/,
-  /turbo_stream\.replace\("todos", partial: "todos\/todo", locals: \{completed: \(replace_locals__hx\d+\)\["completed"\], dom_id: \(replace_locals__hx\d+\)\["domId"\], title: \(replace_locals__hx\d+\)\["title"\]\}\)/,
-  /turbo_stream\.update\("todos", partial: "todos\/todo", locals: \{dom_id: "todo_2", title: "Inline locals still work", completed: false\}\)/,
-  /turbo_stream\.prepend\("todos", partial: "todos\/todo", locals: dynamic_locals__hx\d+\)/,
-  /turbo_stream\.before\("todos", partial: "todos\/todo", locals: \{dom_id: "todo_before", title: "Inserted before the list", completed: false\}\)/,
-  /turbo_stream\.after\("todos", partial: "todos\/todo", locals: \{dom_id: "todo_after", title: "Inserted after the list", completed: false\}\)/,
-  /turbo_stream\.remove\("todos"\)/,
-  /Turbo::StreamsChannel\.broadcast_append_to\("todos", target: "todos", partial: "todos\/todo", locals: \{completed: \(append_locals__hx\d+\)\["completed"\], dom_id: \(append_locals__hx\d+\)\["domId"\], title: \(append_locals__hx\d+\)\["title"\]\}\)/,
-  /Turbo::StreamsChannel\.broadcast_prepend_to\("todos", target: "todos", partial: "todos\/todo", locals: \{completed: \(append_locals__hx\d+\)\["completed"\], dom_id: \(append_locals__hx\d+\)\["domId"\], title: \(append_locals__hx\d+\)\["title"\]\}\)/,
-  /Turbo::StreamsChannel\.broadcast_before_to\("todos", target: "todos", partial: "todos\/todo", locals: \{completed: \(append_locals__hx\d+\)\["completed"\], dom_id: \(append_locals__hx\d+\)\["domId"\], title: \(append_locals__hx\d+\)\["title"\]\}\)/,
-  /Turbo::StreamsChannel\.broadcast_after_to\("todos", target: "todos", partial: "todos\/todo", locals: \{completed: \(append_locals__hx\d+\)\["completed"\], dom_id: \(append_locals__hx\d+\)\["domId"\], title: \(append_locals__hx\d+\)\["title"\]\}\)/,
-  /Turbo::StreamsChannel\.broadcast_replace_to\("todos", target: "todos", partial: "todos\/todo", locals: \{completed: \(replace_locals__hx\d+\)\["completed"\], dom_id: \(replace_locals__hx\d+\)\["domId"\], title: \(replace_locals__hx\d+\)\["title"\]\}\)/,
-  /Turbo::StreamsChannel\.broadcast_update_to\("todos", target: "todos", partial: "todos\/todo", locals: \{completed: \(replace_locals__hx\d+\)\["completed"\], dom_id: \(replace_locals__hx\d+\)\["domId"\], title: \(replace_locals__hx\d+\)\["title"\]\}\)/,
-  /Turbo::StreamsChannel\.broadcast_remove_to\("todos", target: "todos"\)/,
-]) {
-  if (!expected.test(mainRuby)) {
-    fail(`Turbo Streams output missing expected line: ${expected}`);
-  }
-}
-
-const erb = readFileSync(join(outputDir, "app", "views", "todos", "_todo.html.erb"), "utf8");
-for (const expected of [
-  "<li",
-  "<%= dom_id %>",
-  "<%= title %>",
-  "completed",
-]) {
-  if (!erb.includes(expected)) {
-    fail(`Turbo Streams partial missing expected ERB output: ${expected}`);
   }
 }
 
