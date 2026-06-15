@@ -130,7 +130,7 @@ class Template<TLocals> {
 	static function validateTemplatePath(path:String, pos:Position, context:String):Void {
 		var normalized = normalizePathSlashes(path);
 		if (normalized == "" || StringTools.startsWith(normalized, "/") || normalized.indexOf("..") != -1 || normalized.indexOf("//") != -1
-			|| normalized.indexOf("\\") != -1) {
+			|| path.indexOf("\\") != -1) {
 			Context.error(context + " path must be a safe Rails template path relative to app/views.", pos);
 		}
 		for (segment in normalized.split("/")) {

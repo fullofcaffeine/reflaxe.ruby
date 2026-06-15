@@ -27,6 +27,8 @@ const templateRefInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const templateRefInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_ref_invalid_out");
 const templatePathInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_src");
 const templatePathInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_out");
+const templateBackslashPathInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_backslash_path_invalid_src");
+const templateBackslashPathInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_backslash_path_invalid_out");
 const rawLayoutInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_raw_layout_invalid_src");
 const rawLayoutInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_raw_layout_invalid_out");
 const typedFieldInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_field_invalid_src");
@@ -103,6 +105,8 @@ rmSync(templateRefInvalidSourceDir, { force: true, recursive: true });
 rmSync(templateRefInvalidOutputDir, { force: true, recursive: true });
 rmSync(templatePathInvalidSourceDir, { force: true, recursive: true });
 rmSync(templatePathInvalidOutputDir, { force: true, recursive: true });
+rmSync(templateBackslashPathInvalidSourceDir, { force: true, recursive: true });
+rmSync(templateBackslashPathInvalidOutputDir, { force: true, recursive: true });
 rmSync(rawLayoutInvalidSourceDir, { force: true, recursive: true });
 rmSync(rawLayoutInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedFieldInvalidSourceDir, { force: true, recursive: true });
@@ -586,6 +590,7 @@ expectTypedFormFieldRequiresFormFailure();
 expectTypedSlotContentRequiresComponentFailure();
 expectTemplateOfRequiresRailsTemplateFailure();
 expectUnsafeRailsTemplatePathFailure();
+expectBackslashRailsTemplatePathFailure();
 expectRawLayoutStringFailure();
 expectUnknownTypedFormFieldFailure();
 expectUnknownStrongParamsFieldFailure();
@@ -2112,6 +2117,79 @@ function expectUnsafeRailsTemplatePathFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid @:railsTemplate path check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectBackslashRailsTemplatePathFailure() {
+  mkdirSync(join(templateBackslashPathInvalidSourceDir, "views"), { recursive: true });
+  writeFileSync(join(templateBackslashPathInvalidSourceDir, "InvalidTemplateBackslashPathMain.hx"), [
+    "import views.BadTemplateBackslashPathView;",
+    "",
+    "class InvalidTemplateBackslashPathMain {",
+    "\tstatic function main() {",
+    "\t\tvar view:Class<BadTemplateBackslashPathView> = BadTemplateBackslashPathView;",
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(templateBackslashPathInvalidSourceDir, "views", "BadTemplateBackslashPathView.hx"), [
+    "package views;",
+    "",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers\\\\todos\\\\bad\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadTemplateBackslashPathView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <div>bad</div>;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${templateBackslashPathInvalidOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      templateBackslashPathInvalidSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidTemplateBackslashPathMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Backslash @:railsTemplate path compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes("@:railsTemplate path must be a safe Rails template path relative to app/views")) {
+      console.error("Backslash @:railsTemplate path failed, but not with the expected path safety error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid backslash @:railsTemplate path check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }
