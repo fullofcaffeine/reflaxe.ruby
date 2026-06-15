@@ -132,6 +132,18 @@ var projected:Array<{id:Int, title:String}> = Projection.pluck(
 	Todo.where({status: "open"}),
 	{id: Todo.f.id, title: Todo.f.title}
 );
+var groupedProjection:Array<{status:String, todoCount:Int, userIdSum:Int, averageUserId:Float, minId:Int, maxTitle:String}> = Projection.group(
+	Todo.where({status: "open"}),
+	Todo.f.status,
+	{
+		status: Todo.f.status,
+		todoCount: Aggregate.count(Todo.f.id),
+		userIdSum: Aggregate.sum(Todo.f.userId),
+		averageUserId: Aggregate.average(Todo.f.userId),
+		minId: Aggregate.minimum(Todo.f.id),
+		maxTitle: Aggregate.maximum(Todo.f.title)
+	}
+);
 var statusCounts:haxe.ds.StringMap<Int> = Group.count(
 	Todo.where({status: "open"}),
 	Todo.f.status
@@ -202,6 +214,7 @@ Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(title: "assigned").pluck(:id)
 HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
+HXRuby.active_record_projection(Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum), ["status", "todoCount", "userIdSum", "averageUserId", "minId", "maxTitle"])
 HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)
 HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)
 HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
@@ -285,6 +298,11 @@ Type-safety features used here:
 - `Projection.pluck(Todo.where(...), {id: Todo.f.id, title: Todo.f.title})`
   returns named rows such as `Array<{id:Int, title:String}>`, rejects empty
   specs, and rejects fields from another model before Rails runs.
+- `Projection.group(Todo.where(...), Todo.f.status, {status: Todo.f.status, todoCount: Aggregate.count(Todo.f.id)})`
+  returns selected grouped aggregate rows such as
+  `Array<{status:String, todoCount:Int}>`, rejects raw string aliases, rejects
+  aggregate expressions from another model, and rejects non-grouped field
+  selections before Rails runs.
 - `Group.count(Todo.where(...), Todo.f.status)` returns `StringMap<Int>` for
   string keys, `Group.count(Todo, Todo.f.userId)` returns `IntMap<Int>` for
   integer keys, and unsupported key types fail during Haxe compilation.
@@ -304,6 +322,9 @@ Invalid projection/grouping examples fail during Haxe compilation:
 Projection.pluck(Todo, {id: User.f.id});
 Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name});
 Projection.pluck(Todo, {});
+Projection.group(Todo, Todo.f.status, {status: Todo.f.status, userCount: Aggregate.count(User.f.id)});
+Projection.group(Todo, Todo.f.status, {status: Todo.f.status, todoCount: "COUNT(*)"});
+Projection.group(Todo, Todo.f.status, {title: Todo.f.title, todoCount: Aggregate.count(Todo.f.id)});
 Group.count(Todo, User.f.name);
 Group.count(Todo, Todo.f.completed);
 Group.countHaving(Todo, Todo.f.status, Aggregate.count(User.f.id).gt(1));

@@ -465,6 +465,18 @@ var rows:Array<{id:Int, title:String}> = Projection.pluck(
 	Todo.where({status: "open"}),
 	{id: Todo.f.id, title: Todo.f.title}
 );
+var groupedRows:Array<{status:String, todoCount:Int, userIdSum:Int, averageUserId:Float, minId:Int, maxTitle:String}> = Projection.group(
+	Todo.where({status: "open"}),
+	Todo.f.status,
+	{
+		status: Todo.f.status,
+		todoCount: Aggregate.count(Todo.f.id),
+		userIdSum: Aggregate.sum(Todo.f.userId),
+		averageUserId: Aggregate.average(Todo.f.userId),
+		minId: Aggregate.minimum(Todo.f.id),
+		maxTitle: Aggregate.maximum(Todo.f.title)
+	}
+);
 var statusCounts:haxe.ds.StringMap<Int> = Group.count(
 	Todo.where({status: "open"}),
 	Todo.f.status
@@ -494,6 +506,7 @@ Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
 HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
+HXRuby.active_record_projection(Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum), ["status", "todoCount", "userIdSum", "averageUserId", "minId", "maxTitle"])
 HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)
 HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)
 HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
@@ -591,6 +604,16 @@ return type is inferred from the object keys and field value types, such as
 :title)` and a small `HXRuby` row shaper so app code sees named rows instead of
 positional arrays.
 
+`Projection.group(...)` is for selected grouped aggregate result rows. The spec
+must be a non-empty object literal made from the grouped field and typed
+`Aggregate.*` expressions from the same model. The object keys become the Haxe
+row field names and the aggregate expression types become the row value types,
+so editors can complete `row.todoCount` as `Int` and `row.maxTitle` as
+`String`. Generated Ruby remains Rails-shaped:
+`group(:status).pluck(:status, Model.arel_table[:id].count, ...)` plus the same
+small row shaper. v1 rejects arbitrary non-grouped fields to avoid generating
+invalid SQL.
+
 `Group.count(...)` is for typed grouped counts. `String` fields return
 `haxe.ds.StringMap<Int>`, `Int` fields return `haxe.ds.IntMap<Int>`, and fields
 from another model are rejected before Rails runs. v1 deliberately rejects other
@@ -610,6 +633,9 @@ Invalid projection/grouping examples fail during Haxe compilation:
 Projection.pluck(Todo, {id: User.f.id});
 Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name});
 Projection.pluck(Todo, {});
+Projection.group(Todo, Todo.f.status, {status: Todo.f.status, userCount: Aggregate.count(User.f.id)});
+Projection.group(Todo, Todo.f.status, {status: Todo.f.status, todoCount: "COUNT(*)"});
+Projection.group(Todo, Todo.f.status, {title: Todo.f.title, todoCount: Aggregate.count(Todo.f.id)});
 Group.count(Todo, User.f.name);
 Group.count(Todo, Todo.f.completed);
 Group.countHaving(Todo, Todo.f.status, Aggregate.count(User.f.id).gt(1));

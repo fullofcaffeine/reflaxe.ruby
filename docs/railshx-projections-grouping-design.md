@@ -1,9 +1,10 @@
 # RailsHx Multi-Field Projection And Grouping Design
 
 This design locks the v1 direction for typed ActiveRecord multi-field
-projection and grouped counts. It follows the existing RailsHx query contract:
-Haxe authoring stays typed, generated Ruby stays Rails-shaped, and field
-identity flows through generated `Field<TModel, TValue>` refs.
+projection, selected grouped aggregate projections, and grouped counts. It
+follows the existing RailsHx query contract: Haxe authoring stays typed,
+generated Ruby stays Rails-shaped, and field identity flows through generated
+`Field<TModel, TValue>` refs plus typed `Aggregate.*` expressions.
 For the underlying expression/predicate/Arel boundary, see
 [RailsHx Query Expression Design](railshx-query-expression-design.md).
 
@@ -12,11 +13,13 @@ For the underlying expression/predicate/Arel boundary, see
 - Keep app code Rails-shaped, but replace string/symbol column lists with typed
   field refs.
 - Preserve Haxe IntelliSense and compile-time owner checks for projection and
-  grouping fields.
-- Emit normal ActiveRecord query calls such as `pluck(:id, :title)` and
+  grouping fields and aggregate expressions.
+- Emit normal ActiveRecord query calls such as `pluck(:id, :title)`,
+  `group(:status).pluck(:status, arel_table[:id].count)`, and
   `group(:status).count`.
-- Keep v1 narrow: one model owner, generated field refs only, no arbitrary SQL
-  expression DSL, no joins-across-models projection typing.
+- Keep v1 narrow: one model owner, generated field refs and typed aggregate
+  expressions only, no arbitrary SQL expression DSL, no joins-across-models
+  projection typing.
 
 ## Chosen Public API
 
@@ -24,6 +27,7 @@ Use macro facades instead of relation methods for multi-field features whose
 return types depend on object-literal keys or field value types.
 
 ```haxe
+import rails.active_record.Aggregate;
 import rails.active_record.Group;
 import rails.active_record.Projection;
 
@@ -38,6 +42,12 @@ var rowsFromModel:Array<{id:Int, title:String}> = Projection.pluck(
 );
 
 var counts:haxe.ds.StringMap<Int> = Group.count(Todo.all(), Todo.f.status);
+
+var groupedRows:Array<{status:String, todoCount:Int}> = Projection.group(
+	Todo.where({status: "open"}),
+	Todo.f.status,
+	{status: Todo.f.status, todoCount: Aggregate.count(Todo.f.id)}
+);
 ```
 
 ### Projection API
@@ -64,6 +74,31 @@ HXRuby.active_record_projection(
 The runtime helper returns Ruby hashes with string keys so generated Haxe
 anonymous-object field access stays compatible with the existing Ruby target
 object representation.
+
+### Grouped Aggregate Projection API
+
+`Projection.group(source, field, spec)` is the v1 selected grouped aggregate
+row API.
+
+- `source` accepts either a `@:railsModel` class expression or
+  `Relation<TModel, TCriteria>`.
+- `field` is the grouped field and must be owned by the same model as the
+  source.
+- `spec` must be a non-empty object literal whose values are the grouped field
+  or typed `Aggregate.*` expressions from the same model.
+- The returned row type is an anonymous object matching the spec keys and value
+  types, for example `Array<{status:String, todoCount:Int}>`.
+- v1 rejects arbitrary non-grouped field refs so RailsHx does not emit invalid
+  SQL behind a nice-looking Haxe type.
+
+Generated Ruby keeps ActiveRecord and Arel visible:
+
+```ruby
+HXRuby.active_record_projection(
+  Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count),
+  ["status", "todoCount"]
+)
+```
 
 ### Grouped Count API
 
@@ -98,6 +133,9 @@ These must fail during Haxe compilation:
 Projection.pluck(Todo, {id: User.f.id});
 Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name});
 Projection.pluck(Todo, {});
+Projection.group(Todo, Todo.f.status, {status: Todo.f.status, userCount: Aggregate.count(User.f.id)});
+Projection.group(Todo, Todo.f.status, {status: Todo.f.status, todoCount: "COUNT(*)"});
+Projection.group(Todo, Todo.f.status, {title: Todo.f.title, todoCount: Aggregate.count(Todo.f.id)});
 Group.count(Todo, User.f.name);
 Group.count(Todo, Todo.f.completed); // deferred until Bool map support exists
 ```
@@ -106,6 +144,8 @@ Implementation should produce clear macro errors:
 
 - Projection specs must be non-empty object literals.
 - Projection fields must be generated RailsHx model field refs.
+- Grouped projection specs must use the grouped field or typed aggregate
+  expressions.
 - Every projection/group field must belong to the source model.
 - Group count only supports key types with an implemented Haxe map target.
 

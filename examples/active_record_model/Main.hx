@@ -107,6 +107,18 @@ class Main {
 			Todo,
 			{id: Todo.f.id, externalId: Todo.f.externalId}
 		);
+		var groupedProjection:Array<{status:String, todoCount:Int, userIdSum:Int, averageUserId:Float, minId:Int, maxTitle:String}> = Projection.group(
+			Todo.where({status: "open"}),
+			Todo.f.status,
+			{
+				status: Todo.f.status,
+				todoCount: Aggregate.count(Todo.f.id),
+				userIdSum: Aggregate.sum(Todo.f.userId),
+				averageUserId: Aggregate.average(Todo.f.userId),
+				minId: Aggregate.minimum(Todo.f.id),
+				maxTitle: Aggregate.maximum(Todo.f.title)
+			}
+		);
 		var statusCounts:haxe.ds.StringMap<Int> = Group.count(Todo.where({status: "open"}), Todo.f.status);
 		var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(
 			Todo.where({status: "open"}),
@@ -155,6 +167,7 @@ class Main {
 		Sys.println(assignedIds.length >= 0);
 		Sys.println(projected.length >= 0);
 		Sys.println(projectedFromModel.length >= 0);
+		Sys.println(groupedProjection.length >= 0);
 		Sys.println(statusCounts.get("open") == null);
 		Sys.println(busyStatusCounts.get("open") == null);
 		Sys.println(userCounts.get(1) == null);

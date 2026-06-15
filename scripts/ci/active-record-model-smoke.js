@@ -134,6 +134,12 @@ const invalidProjectionFieldSourceDir = join(root, "test", ".generated", "active
 const invalidProjectionFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_projection_field_out");
 const invalidProjectionEmptySourceDir = join(root, "test", ".generated", "active_record_model_invalid_projection_empty_src");
 const invalidProjectionEmptyOutputDir = join(root, "test", ".generated", "active_record_model_invalid_projection_empty_out");
+const invalidProjectionGroupOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_projection_group_owner_src");
+const invalidProjectionGroupOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_projection_group_owner_out");
+const invalidProjectionGroupStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_projection_group_string_src");
+const invalidProjectionGroupStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_projection_group_string_out");
+const invalidProjectionGroupFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_projection_group_field_src");
+const invalidProjectionGroupFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_projection_group_field_out");
 const invalidGroupFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_field_src");
 const invalidGroupFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_field_out");
 const invalidGroupUnsupportedSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_unsupported_src");
@@ -300,6 +306,12 @@ rmSync(invalidProjectionFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidProjectionFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidProjectionEmptySourceDir, { force: true, recursive: true });
 rmSync(invalidProjectionEmptyOutputDir, { force: true, recursive: true });
+rmSync(invalidProjectionGroupOwnerSourceDir, { force: true, recursive: true });
+rmSync(invalidProjectionGroupOwnerOutputDir, { force: true, recursive: true });
+rmSync(invalidProjectionGroupStringSourceDir, { force: true, recursive: true });
+rmSync(invalidProjectionGroupStringOutputDir, { force: true, recursive: true });
+rmSync(invalidProjectionGroupFieldSourceDir, { force: true, recursive: true });
+rmSync(invalidProjectionGroupFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidGroupFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidGroupFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidGroupUnsupportedSourceDir, { force: true, recursive: true });
@@ -514,6 +526,7 @@ for (const expected of [
   ".pluck(:id)",
   'HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])',
   'HXRuby.active_record_projection(Models::Todo.pluck(:id, :external_id), ["id", "externalId"])',
+  'HXRuby.active_record_projection(Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum), ["status", "todoCount", "userIdSum", "averageUserId", "minId", "maxTitle"])',
   'HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)',
   'HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)',
   "HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)",
@@ -589,6 +602,7 @@ for (const expected of [
   ".last()",
   "pluck(Todo.f.title)",
   "Projection.pluck(",
+  "Projection.group(",
   "Group.count(",
   "Group.countHaving(",
   "minimum(Todo.f.id)",
@@ -648,6 +662,7 @@ for (const expected of [
   "Todo.last()",
   "Todo.pluck(Todo.f.title)",
   "Projection.pluck(Todo.where",
+  "Projection.group(Todo.where",
   "Group.count(Todo.where",
   "Group.countHaving(Todo.where",
   "Todo.minimum(Todo.f.id)",
@@ -723,6 +738,9 @@ expectInvalidSelectFieldOwnerFailure();
 expectInvalidPluckFieldOwnerFailure();
 expectInvalidProjectionFieldOwnerFailure();
 expectInvalidProjectionEmptySpecFailure();
+expectInvalidProjectionGroupOwnerFailure();
+expectInvalidProjectionGroupStringFailure();
+expectInvalidProjectionGroupFieldFailure();
 expectInvalidGroupFieldOwnerFailure();
 expectInvalidGroupUnsupportedFieldFailure();
 expectInvalidGroupHavingOwnerFailure();
@@ -980,6 +998,75 @@ function expectInvalidProjectionEmptySpecFailure() {
     invalidProjectionEmptyOutputDir,
     "Invalid ActiveRecord empty projection spec compiled successfully.",
     "Projection.pluck spec must be a non-empty object literal"
+  );
+}
+
+function expectInvalidProjectionGroupOwnerFailure() {
+  mkdirSync(invalidProjectionGroupOwnerSourceDir, { recursive: true });
+  writeFileSync(join(invalidProjectionGroupOwnerSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "import rails.active_record.Aggregate;",
+    "import rails.active_record.Projection;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Projection.group(Todo, Todo.f.status, {status: Todo.f.status, userCount: Aggregate.count(User.f.id)});",
+    "\t\tSys.println(bad.length);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidProjectionGroupOwnerSourceDir,
+    invalidProjectionGroupOwnerOutputDir,
+    "Invalid ActiveRecord grouped projection owner compiled successfully.",
+    "Projection.group specs must belong to the same model as the source"
+  );
+}
+
+function expectInvalidProjectionGroupStringFailure() {
+  mkdirSync(invalidProjectionGroupStringSourceDir, { recursive: true });
+  writeFileSync(join(invalidProjectionGroupStringSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import rails.active_record.Projection;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Projection.group(Todo, Todo.f.status, {status: Todo.f.status, todoCount: \"COUNT(*)\"});",
+    "\t\tSys.println(bad.length);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidProjectionGroupStringSourceDir,
+    invalidProjectionGroupStringOutputDir,
+    "Invalid ActiveRecord grouped projection string aggregate compiled successfully.",
+    "Projection.group specs must use generated RailsHx field refs or typed aggregate expressions"
+  );
+}
+
+function expectInvalidProjectionGroupFieldFailure() {
+  mkdirSync(invalidProjectionGroupFieldSourceDir, { recursive: true });
+  writeFileSync(join(invalidProjectionGroupFieldSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import rails.active_record.Aggregate;",
+    "import rails.active_record.Projection;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Projection.group(Todo, Todo.f.status, {title: Todo.f.title, todoCount: Aggregate.count(Todo.f.id)});",
+    "\t\tSys.println(bad.length);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidProjectionGroupFieldSourceDir,
+    invalidProjectionGroupFieldOutputDir,
+    "Invalid ActiveRecord grouped projection non-grouped field compiled successfully.",
+    "Projection.group field specs must use the grouped field"
   );
 }
 

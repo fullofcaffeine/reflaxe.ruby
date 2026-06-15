@@ -38,6 +38,10 @@ Expression values can become predicates:
 Todo.whereExpr(Expr.field(Todo.f.id).gt(1));
 Todo.whereNotExpr(Expr.lower(Todo.f.title).eq("ship"));
 Group.countHaving(Todo, Todo.f.status, Aggregate.count(Todo.f.id).gt(1));
+Projection.group(Todo, Todo.f.status, {
+	status: Todo.f.status,
+	todoCount: Aggregate.count(Todo.f.id)
+});
 ```
 
 Expression values can also become typed order tokens:
@@ -53,6 +57,7 @@ Generated Ruby stays Rails/Arel-shaped:
 Models::Todo.where(Models::Todo.arel_table[:id].gt(1))
 Models::Todo.where.not(Models::Todo.arel_table[:title].lower.eq("ship"))
 HXRuby.active_record_group_count(Models::Todo.group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)
+HXRuby.active_record_projection(Models::Todo.group(:status).pluck(:status, Models::Todo.arel_table[:id].count), ["status", "todoCount"])
 Models::Todo.order(Models::Todo.arel_table[:title].lower.asc)
 ```
 
@@ -122,10 +127,13 @@ facades, not arbitrary expression strings:
 - `Group.count(source, Todo.f.status)` owns grouped count map typing.
 - `Group.countHaving(source, Todo.f.status, Aggregate.count(Todo.f.id).gt(1))`
   owns v1 aggregate `having` predicates.
-- Future selected aggregate aliases should be typed projection builders with an
-  inferred result shape, not raw `select("COUNT(*) AS todo_count")` strings.
+- `Projection.group(source, Todo.f.status, {status: Todo.f.status, todoCount:
+  Aggregate.count(Todo.f.id)})` owns v1 selected aggregate result row shapes.
+- Future selected aggregate work should extend the typed projection builders
+  rather than introducing raw `select("COUNT(*) AS todo_count")` strings.
 
-Follow-up work should focus on named selected aggregate row shapes.
+Follow-up work should focus on richer grouped keys, joins, and aggregate
+expression breadth.
 
 ## Implementation Rules
 

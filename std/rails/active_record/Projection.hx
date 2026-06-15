@@ -15,6 +15,16 @@ private typedef ProjectionFieldInfo = {
 	valueType:Type,
 	pos:Position
 }
+
+private typedef ProjectionItemInfo = {
+	name:String,
+	expr:Expr,
+	model:Null<String>,
+	valueType:Type,
+	pos:Position,
+	kind:String,
+	sourceName:Null<String>
+}
 #end
 
 class Projection {
@@ -63,6 +73,54 @@ class Projection {
 		#end
 	}
 
+	public static macro function group(source:Expr, field:Expr, spec:Expr):Expr {
+		#if macro
+		var sourceModel = sourceModelName(source);
+		if (sourceModel == null) {
+			Context.error("Projection.group source must be a @:railsModel class or Relation<TModel, TCriteria>.", source.pos);
+		}
+		var groupInfo = fieldInfo(field);
+		if (groupInfo == null || groupInfo.model == null) {
+			Context.error("Projection.group field must be a generated RailsHx model field ref such as Todo.f.status.", field.pos);
+		}
+		if (!sameModelName(groupInfo.model, sourceModel)) {
+			Context.error("Projection.group field refs must belong to the same model as the source.", field.pos);
+		}
+
+		var items = projectionItems("Projection.group", spec);
+		for (item in items) {
+			if (item.model == null) {
+				Context.error("Projection.group specs must use the grouped field or typed aggregate expressions such as Aggregate.count(Todo.f.id).", item.pos);
+			}
+			if (!sameModelName(item.model, sourceModel)) {
+				Context.error("Projection.group specs must belong to the same model as the source.", item.pos);
+			}
+			if (item.kind == "field" && item.sourceName != groupInfo.name) {
+				Context.error("Projection.group field specs must use the grouped field; use Aggregate.* for selected values.", item.pos);
+			}
+		}
+
+		var rowType = projectionRowType(items);
+		var arrayType:ComplexType = TPath({
+			pack: [],
+			name: "Array",
+			params: [TPType(rowType)]
+		});
+		var keys = [for (item in items) item.name];
+		var expressions = {
+			expr: EArrayDecl([for (item in items) macro (cast $e{item.expr} : Dynamic)]),
+			pos: spec.pos
+		};
+		var call = macro rails.active_record.ProjectionRuntime.group($source, $v{groupInfo.name}, $e{stringArrayExpr(keys)}, $expressions);
+		return {
+			expr: ECheckType({expr: ECast(call, null), pos: spec.pos}, arrayType),
+			pos: spec.pos
+		};
+		#else
+		return macro null;
+		#end
+	}
+
 	#if macro
 	static function projectionFields(spec:Expr):Array<{name:String, expr:Expr, model:Null<String>, valueType:Type, pos:Position}> {
 		return switch (spec.expr) {
@@ -91,6 +149,66 @@ class Projection {
 		}
 	}
 
+	static function projectionItems(label:String, spec:Expr):Array<ProjectionItemInfo> {
+		return switch (spec.expr) {
+			case EObjectDecl(values):
+				if (values.length == 0) {
+					Context.error(label + " spec must be a non-empty object literal.", spec.pos);
+				}
+				[
+					for (value in values) {
+						var info = projectionItemInfo(value.expr);
+						if (info == null) {
+							Context.error(label + " specs must use generated RailsHx field refs or typed aggregate expressions.", value.expr.pos);
+						}
+						{
+							name: value.field,
+							expr: value.expr,
+							model: info.model,
+							valueType: info.valueType,
+							pos: value.expr.pos,
+							kind: info.kind,
+							sourceName: info.sourceName
+						};
+					}
+				];
+			case _:
+				Context.error(label + " spec must be a non-empty object literal.", spec.pos);
+				[];
+		}
+	}
+
+	static function projectionItemInfo(expr:Expr):Null<{model:Null<String>, valueType:Type, kind:String, sourceName:Null<String>}> {
+		var field = fieldInfo(expr);
+		if (field != null) {
+			return {
+				model: field.model,
+				valueType: field.valueType,
+				kind: "field",
+				sourceName: field.name
+			};
+		}
+		var aggregate = aggregateExprInfo(expr);
+		return aggregate == null ? null : {
+			model: aggregate.model,
+			valueType: aggregate.valueType,
+			kind: "aggregate",
+			sourceName: null
+		};
+	}
+
+	static function projectionRowType(items:Array<ProjectionItemInfo>):ComplexType {
+		return TAnonymous([
+			for (item in items)
+				{
+					name: item.name,
+					access: [],
+					kind: FVar(TypeTools.toComplexType(item.valueType), null),
+					pos: item.pos
+				}
+		]);
+	}
+
 	static function fieldInfo(expr:Expr):Null<ProjectionFieldInfo> {
 		var typed = try {
 			Context.typeExpr(expr);
@@ -98,6 +216,31 @@ class Projection {
 			return null;
 		}
 		return extractRailsFieldInfo(typed);
+	}
+
+	static function aggregateExprInfo(expr:Expr):Null<{model:Null<String>, valueType:Type}> {
+		var type = try {
+			Context.typeof(expr);
+		} catch (_:Dynamic) {
+			return null;
+		}
+		return exprTypeParams(type);
+	}
+
+	static function exprTypeParams(type:Type):Null<{model:Null<String>, valueType:Type}> {
+		return switch (type) {
+			case TAbstract(absRef, params):
+				var abs = absRef.get();
+				if (abs.pack.join(".") == "rails.active_record" && abs.name == "Expr" && params.length == 2) {
+					{model: typeName(params[0]), valueType: params[1]};
+				} else {
+					exprTypeParams(Context.follow(type));
+				}
+			case TType(_, _) | TLazy(_):
+				exprTypeParams(Context.follow(type));
+			case _:
+				null;
+		}
 	}
 
 	static function extractRailsFieldInfo(expr:TypedExpr):Null<ProjectionFieldInfo> {

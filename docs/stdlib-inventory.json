@@ -244,7 +244,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/Projection.hx",
       "surface": "rails.active_record.Projection",
-      "reason": "Macro facade for named multi-field ActiveRecord projections that infers Array<{...}> row shapes from typed model field refs."
+      "reason": "Macro facade for named multi-field ActiveRecord projections and grouped aggregate projections that infer Array<{...}> row shapes from typed model field refs and Aggregate expressions."
     },
     {
       "id": "std.rails.active_record_projection_runtime",
@@ -252,7 +252,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/ProjectionRuntime.hx",
       "surface": "rails.active_record.ProjectionRuntime",
-      "reason": "Internal compiler marker used by Projection.pluck so app code stays typed while generated Ruby emits Rails-native pluck plus HXRuby row shaping."
+      "reason": "Internal compiler marker used by Projection.pluck and Projection.group so app code stays typed while generated Ruby emits Rails-native pluck/group/pluck plus HXRuby row shaping."
     },
     {
       "id": "std.rails.active_record_association",

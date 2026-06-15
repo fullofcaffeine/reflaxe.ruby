@@ -1895,17 +1895,39 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActiveRecordProjectionStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		var info = staticCallInfo(callee);
-		if (info == null || info.owner != "rails.active_record.ProjectionRuntime" || info.name != "pluck" || params.length != 3) {
+		if (info == null || info.owner != "rails.active_record.ProjectionRuntime") {
 			return null;
 		}
-		var fieldNames = staticStringArray(params[1]);
-		var keys = staticStringArray(params[2]);
-		if (fieldNames == null || keys == null || fieldNames.length == 0 || fieldNames.length != keys.length) {
-			Context.error("ProjectionRuntime.pluck expects matching static field and key arrays emitted by Projection.pluck.", callee.pos);
+		if (info.name == "pluck" && params.length == 3) {
+			var fieldNames = staticStringArray(params[1]);
+			var keys = staticStringArray(params[2]);
+			if (fieldNames == null || keys == null || fieldNames.length == 0 || fieldNames.length != keys.length) {
+				Context.error("ProjectionRuntime.pluck expects matching static field and key arrays emitted by Projection.pluck.", callee.pos);
+			}
+			var pluckArgs = [for (fieldName in fieldNames) RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))];
+			var keyArray = RubyRawExpr("[" + [for (key in keys) quoteRubyStringForCode(key)].join(", ") + "]");
+			return RubyCall(RubyLocal("HXRuby"), "active_record_projection", [RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keyArray]);
 		}
-		var pluckArgs = [for (fieldName in fieldNames) RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))];
-		var keyArray = RubyRawExpr("[" + [for (key in keys) quoteRubyStringForCode(key)].join(", ") + "]");
-		return RubyCall(RubyLocal("HXRuby"), "active_record_projection", [RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keyArray]);
+		if (info.name == "group" && params.length == 4) {
+			var groupField = staticString(params[1]);
+			var keys = staticStringArray(params[2]);
+			var values = staticArrayElements(params[3]);
+			if (groupField == null || keys == null || values == null || keys.length == 0 || keys.length != values.length) {
+				Context.error("ProjectionRuntime.group expects a static group field, matching keys, and expression array emitted by Projection.group.", callee.pos);
+			}
+			var pluckArgs = [];
+			for (value in values) {
+				var arg = activeRecordProjectionArg(value);
+				if (arg == null) {
+					Context.error("ProjectionRuntime.group expects field refs or typed aggregate expressions emitted by Projection.group.", value.pos);
+				}
+				pluckArgs.push(RubyRawExpr(arg));
+			}
+			var grouped = RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(groupField))]);
+			var keyArray = RubyRawExpr("[" + [for (key in keys) quoteRubyStringForCode(key)].join(", ") + "]");
+			return RubyCall(RubyLocal("HXRuby"), "active_record_projection", [RubyCall(grouped, "pluck", pluckArgs), keyArray]);
+		}
+		return null;
 	}
 
 	static function compileActiveRecordGroupStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -1967,6 +1989,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				out;
 			case _:
 				null;
+		}
+	}
+
+	static function staticArrayElements(expr:TypedExpr):Null<Array<TypedExpr>> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values): values;
+			case _: null;
 		}
 	}
 
@@ -2481,6 +2510,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				null;
 		}
+	}
+
+	static function activeRecordProjectionArg(expr:TypedExpr):Null<String> {
+		var fieldName = activeRecordFieldName(expr);
+		if (fieldName != null) {
+			return ":" + RubyNaming.toMethodName(fieldName);
+		}
+		return activeRecordExpressionArg(expr);
 	}
 
 	static function activeRecordArelField(fieldExpr:TypedExpr):Null<String> {
