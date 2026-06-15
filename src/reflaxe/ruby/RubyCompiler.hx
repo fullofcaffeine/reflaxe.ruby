@@ -1910,16 +1910,30 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActiveRecordGroupStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		var info = staticCallInfo(callee);
-		if (info == null || info.owner != "rails.active_record.GroupRuntime" || info.name != "count" || params.length != 3) {
+		if (info == null || info.owner != "rails.active_record.GroupRuntime") {
 			return null;
 		}
-		var fieldName = staticString(params[1]);
-		var keyKind = staticString(params[2]);
-		if (fieldName == null || keyKind == null) {
-			Context.error("GroupRuntime.count expects static field and key-kind strings emitted by Group.count.", callee.pos);
+		if (info.name == "count" && params.length == 3) {
+			var fieldName = staticString(params[1]);
+			var keyKind = staticString(params[2]);
+			if (fieldName == null || keyKind == null) {
+				Context.error("GroupRuntime.count expects static field and key-kind strings emitted by Group.count.", callee.pos);
+			}
+			var groupedCount = RubyCall(RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]), "count", []);
+			return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [groupedCount, RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))]);
 		}
-		var groupedCount = RubyCall(RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]), "count", []);
-		return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [groupedCount, RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))]);
+		if (info.name == "countHaving" && params.length == 4) {
+			var fieldName = staticString(params[1]);
+			var keyKind = staticString(params[2]);
+			var predicate = activeRecordPredicateArg(params[3]);
+			if (fieldName == null || keyKind == null || predicate == null) {
+				Context.error("GroupRuntime.countHaving expects static field/key strings and a typed predicate emitted by Group.countHaving.", callee.pos);
+			}
+			var grouped = RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
+			var having = RubyCall(grouped, "having", [RubyRawExpr(predicate)]);
+			return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [RubyCall(having, "count", []), RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))]);
+		}
+		return null;
 	}
 
 	static function compileActiveRecordSqlStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -2460,6 +2474,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall(callee, [fieldExpr]) if (isActiveRecordExprLowerCall(callee)):
 				var field = activeRecordArelField(fieldExpr);
 				field == null ? null : field + ".lower";
+			case TCall(callee, [fieldExpr]) if (isActiveRecordAggregateCall(callee)):
+				var field = activeRecordArelField(fieldExpr);
+				var method = activeRecordAggregateMethod(staticCallInfo(callee).name);
+				field == null || method == null ? null : field + "." + method;
 			case _:
 				null;
 		}
@@ -2489,6 +2507,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function isActiveRecordExprPredicateCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
 		return info != null && activeRecordExpressionPredicateOp(info.name) != null && isActiveRecordExprOwner(info.owner);
+	}
+
+	static function isActiveRecordAggregateCall(callee:TypedExpr):Bool {
+		var info = staticCallInfo(callee);
+		return info != null && activeRecordAggregateMethod(info.name) != null && info.owner == "rails.active_record.Aggregate";
+	}
+
+	static function activeRecordAggregateMethod(name:String):Null<String> {
+		return switch (name) {
+			case "count" | "sum" | "average" | "minimum" | "maximum":
+				name;
+			case _:
+				null;
+		}
 	}
 
 	static function isActiveRecordExprOwner(owner:String):Bool {

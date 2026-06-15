@@ -42,6 +42,38 @@ class Group {
 		#end
 	}
 
+	public static macro function countHaving(source:Expr, field:Expr, predicate:Expr):Expr {
+		#if macro
+		var sourceModel = sourceModelName(source);
+		if (sourceModel == null) {
+			Context.error("Group.countHaving source must be a @:railsModel class or Relation<TModel, TCriteria>.", source.pos);
+		}
+		var info = fieldInfo(field);
+		if (info == null || info.model == null) {
+			Context.error("Group.countHaving field must be a generated RailsHx model field ref such as Todo.f.status.", field.pos);
+		}
+		if (!sameModelName(info.model, sourceModel)) {
+			Context.error("Group.countHaving field refs must belong to the same model as the source.", field.pos);
+		}
+		var predicateModel = predicateModelName(predicate);
+		if (predicateModel == null) {
+			Context.error("Group.countHaving predicate must be a typed Predicate<TModel>, usually produced by Aggregate.count(...).gt(...).", predicate.pos);
+		}
+		if (!sameModelName(predicateModel, sourceModel)) {
+			Context.error("Group.countHaving predicate refs must belong to the same model as the source.", predicate.pos);
+		}
+		var keyKind = groupKeyKind(info.valueType, field.pos);
+		var ret = groupReturnType(keyKind);
+		var call = macro rails.active_record.GroupRuntime.countHaving($source, $v{info.name}, $v{keyKind}, $predicate);
+		return {
+			expr: ECheckType({expr: ECast(call, null), pos: field.pos}, ret),
+			pos: field.pos
+		};
+		#else
+		return macro null;
+		#end
+	}
+
 	#if macro
 	static function groupKeyKind(type:Type, pos:Position):String {
 		return switch (typeName(type)) {
@@ -127,6 +159,41 @@ class Group {
 				relationModelName(Context.follow(type));
 			case TLazy(lazy):
 				relationModelName(lazy());
+			case _:
+				null;
+		}
+	}
+
+	static function predicateModelName(expr:Expr):Null<String> {
+		var type = try {
+			Context.typeof(expr);
+		} catch (_:Dynamic) {
+			return null;
+		}
+		return switch (type) {
+			case TAbstract(absRef, params):
+				var abs = absRef.get();
+				if (abs.pack.join(".") == "rails.active_record" && abs.name == "Predicate" && params.length == 1) {
+					typeName(params[0]);
+				} else {
+					predicateModelNameFromType(Context.follow(type));
+				}
+			case _:
+				predicateModelNameFromType(type);
+		}
+	}
+
+	static function predicateModelNameFromType(type:Type):Null<String> {
+		return switch (type) {
+			case TAbstract(absRef, params):
+				var abs = absRef.get();
+				if (abs.pack.join(".") == "rails.active_record" && abs.name == "Predicate" && params.length == 1) {
+					typeName(params[0]);
+				} else {
+					predicateModelNameFromType(Context.follow(type));
+				}
+			case TType(_, _) | TLazy(_):
+				predicateModelNameFromType(Context.follow(type));
 			case _:
 				null;
 		}

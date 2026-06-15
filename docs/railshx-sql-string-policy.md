@@ -50,7 +50,7 @@ The approved path is:
 - Use `Field<TModel, TValue>` refs for order/select/pluck/group/aggregate APIs.
 - Add typed builders for common predicates before adding raw SQL. Examples:
   `Predicate.not(...)`, `Predicate.inList(...)`, `Predicate.range(...)`,
-  `Order.lower(Todo.f.title).asc()`, or typed aggregate aliases.
+  `Order.lower(Todo.f.title).asc()`, or `Aggregate.count(Todo.f.id).gt(1)`.
 - If Rails needs a true SQL fragment, add a named escape hatch such as
   `Sql.raw(...)` or `Sql.fragment(...)`, document why a typed builder is not
   sufficient, and cover it with strict-boundary tests.
@@ -65,7 +65,7 @@ For the typed expression/Arel lowering contract, see
 | ActiveRecord `where` / `rewhere` / `findBy` / `exists` | Typed default | Criteria object generated from `@:railsColumn` and association metadata; expression predicates through `whereExpr(Expr.field(Todo.f.id).gt(1))` and `whereNotExpr(...)`. | Raw SQL uses explicit `whereSql(Sql.unsafeWhere(...))` / `whereNotSql(...)`, not string overloads. |
 | ActiveRecord `order` / `reorder` | Typed default | `Todo.f.title.asc()`, `Order.many([...])`, `Expr.lower(Todo.f.title).asc()`. | Raw ordering uses explicit `orderSql(Sql.unsafeOrder(...))` / `reorderSql(...)`. Additional SQL ordering functions should be typed builders first. |
 | ActiveRecord `select` / `pluck` / projections | Typed default | `select(Todo.f.title)`, `Projection.pluck(...)`. | SQL aliases/functions need a typed projection/alias design before raw SQL. |
-| ActiveRecord `group` / `having` / aggregates | Typed default | `Group.count(source, Todo.f.status)`, typed aggregates. | `having` and SQL functions require a design bead and either builders or explicit raw fragments. |
+| ActiveRecord `group` / `having` / aggregates | Typed default | `Group.count(source, Todo.f.status)`, `Group.countHaving(source, Todo.f.status, Aggregate.count(Todo.f.id).gt(1))`, typed aggregate builders. | Selected aggregate aliases/result objects still need typed projection builders before raw SQL. |
 | ActiveRecord `joins` / `includes` / `preload` / `eager_load` | Typed default | `Todo.a.user`, `Association.nested(...)`. | Raw join strings are escape hatches only. Prefer association refs or future typed join builders. |
 | Migrations | Typed default plus checked literals | Known models, columns, indexes, FKs, reversible operations; `externalTables` for Rails-owned schema, with safe Rails table identifiers required. | Raw SQL/data migrations need explicit operation names and rollback policy. |
 | Templates, layouts, and partials | Typed default plus checked literals | HHX, `Template.of(...)`, `Template.layout(...)`, `Template.existing(...)`, `Layout.named(...)` for explicit lower-level layout literals. | Raw ERB requires `@:railsAllowRawErb`; unchecked external paths use `Template.external(...)`. |

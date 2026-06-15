@@ -1,6 +1,7 @@
 import models.AuditLog;
 import models.Todo;
 import models.User;
+import rails.active_record.Aggregate;
 import rails.active_record.Association;
 import rails.active_record.Expr;
 import rails.active_record.Group;
@@ -17,7 +18,8 @@ import rails.active_record.TransactionIsolation;
 // `offset`, `pluck`, `minimum`, `maximum`, `sum`, `average`, `find`, `findBy`,
 // `exists`, `count`, `first`, and `last` authored as typed Haxe calls, plus
 // typed multi-field orders through `Order.many`, named multi-field projections
-// through `Projection.pluck`, and typed grouped counts through `Group.count`.
+// through `Projection.pluck`, typed grouped counts through `Group.count`, and
+// aggregate `having` predicates through `Group.countHaving`.
 // Type safety: criteria objects are checked against model fields, `Todo.f.*`
 // exposes typed field refs for ordering, and `Todo.a.*` exposes typed
 // association refs for `includes`/`joins`.
@@ -106,6 +108,11 @@ class Main {
 			{id: Todo.f.id, externalId: Todo.f.externalId}
 		);
 		var statusCounts:haxe.ds.StringMap<Int> = Group.count(Todo.where({status: "open"}), Todo.f.status);
+		var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(
+			Todo.where({status: "open"}),
+			Todo.f.status,
+			Aggregate.count(Todo.f.id).gt(1)
+		);
 		var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 		var eventCounts:haxe.ds.IntMap<Int> = Group.count(AuditLog.where({eventCount: 1}), AuditLog.f.eventCount);
 		var minId:Null<Int> = Todo.minimum(Todo.f.id);
@@ -149,6 +156,7 @@ class Main {
 		Sys.println(projected.length >= 0);
 		Sys.println(projectedFromModel.length >= 0);
 		Sys.println(statusCounts.get("open") == null);
+		Sys.println(busyStatusCounts.get("open") == null);
 		Sys.println(userCounts.get(1) == null);
 		Sys.println(eventCounts.get(1) == null);
 		Sys.println(minId == null);

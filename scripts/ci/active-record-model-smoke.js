@@ -138,6 +138,10 @@ const invalidGroupFieldSourceDir = join(root, "test", ".generated", "active_reco
 const invalidGroupFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_field_out");
 const invalidGroupUnsupportedSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_unsupported_src");
 const invalidGroupUnsupportedOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_unsupported_out");
+const invalidGroupHavingOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_having_owner_src");
+const invalidGroupHavingOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_having_owner_out");
+const invalidGroupHavingStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_having_string_src");
+const invalidGroupHavingStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_having_string_out");
 const invalidAggregateFieldSourceDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_src");
 const invalidAggregateFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_field_out");
 const invalidAggregateNumericSourceDir = join(root, "test", ".generated", "active_record_model_invalid_aggregate_numeric_src");
@@ -300,6 +304,10 @@ rmSync(invalidGroupFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidGroupFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidGroupUnsupportedSourceDir, { force: true, recursive: true });
 rmSync(invalidGroupUnsupportedOutputDir, { force: true, recursive: true });
+rmSync(invalidGroupHavingOwnerSourceDir, { force: true, recursive: true });
+rmSync(invalidGroupHavingOwnerOutputDir, { force: true, recursive: true });
+rmSync(invalidGroupHavingStringSourceDir, { force: true, recursive: true });
+rmSync(invalidGroupHavingStringOutputDir, { force: true, recursive: true });
 rmSync(invalidAggregateFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidAggregateFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidAggregateNumericSourceDir, { force: true, recursive: true });
@@ -507,6 +515,7 @@ for (const expected of [
   'HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])',
   'HXRuby.active_record_projection(Models::Todo.pluck(:id, :external_id), ["id", "externalId"])',
   'HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)',
+  'HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)',
   "HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)",
   "HXRuby.active_record_group_count(Models::AuditLog.where(event_count: 1).group(:event_count).count(), :int)",
   "Models::Todo.minimum(:id)",
@@ -581,6 +590,7 @@ for (const expected of [
   "pluck(Todo.f.title)",
   "Projection.pluck(",
   "Group.count(",
+  "Group.countHaving(",
   "minimum(Todo.f.id)",
   ".offset(",
   ".toArray()",
@@ -639,6 +649,7 @@ for (const expected of [
   "Todo.pluck(Todo.f.title)",
   "Projection.pluck(Todo.where",
   "Group.count(Todo.where",
+  "Group.countHaving(Todo.where",
   "Todo.minimum(Todo.f.id)",
   "Todo.includes(User.a.todos)",
 ]) {
@@ -714,6 +725,8 @@ expectInvalidProjectionFieldOwnerFailure();
 expectInvalidProjectionEmptySpecFailure();
 expectInvalidGroupFieldOwnerFailure();
 expectInvalidGroupUnsupportedFieldFailure();
+expectInvalidGroupHavingOwnerFailure();
+expectInvalidGroupHavingStringFailure();
 expectInvalidAggregateFieldOwnerFailure();
 expectInvalidAggregateNumericFieldFailure();
 expectInvalidScopeInstanceFailure();
@@ -1012,6 +1025,52 @@ function expectInvalidGroupUnsupportedFieldFailure() {
     invalidGroupUnsupportedOutputDir,
     "Invalid ActiveRecord unsupported group field compiled successfully.",
     "Group.count only supports String and Int fields in v1"
+  );
+}
+
+function expectInvalidGroupHavingOwnerFailure() {
+  mkdirSync(invalidGroupHavingOwnerSourceDir, { recursive: true });
+  writeFileSync(join(invalidGroupHavingOwnerSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import models.User;",
+    "import rails.active_record.Aggregate;",
+    "import rails.active_record.Group;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Group.countHaving(Todo, Todo.f.status, Aggregate.count(User.f.id).gt(1));",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidGroupHavingOwnerSourceDir,
+    invalidGroupHavingOwnerOutputDir,
+    "Invalid ActiveRecord group having predicate owner compiled successfully.",
+    "Group.countHaving predicate refs must belong to the same model as the source"
+  );
+}
+
+function expectInvalidGroupHavingStringFailure() {
+  mkdirSync(invalidGroupHavingStringSourceDir, { recursive: true });
+  writeFileSync(join(invalidGroupHavingStringSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import rails.active_record.Group;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = Group.countHaving(Todo, Todo.f.status, \"COUNT(*) > 1\");",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidGroupHavingStringSourceDir,
+    invalidGroupHavingStringOutputDir,
+    "Invalid ActiveRecord group having string predicate compiled successfully.",
+    "Group.countHaving predicate must be a typed Predicate"
   );
 }
 

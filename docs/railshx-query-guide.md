@@ -440,6 +440,7 @@ Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false))
 Use generated field refs for query helpers that need a column identity:
 
 ```haxe
+import rails.active_record.Aggregate;
 import rails.active_record.Group;
 import rails.active_record.Expr;
 import rails.active_record.Order;
@@ -468,6 +469,11 @@ var statusCounts:haxe.ds.StringMap<Int> = Group.count(
 	Todo.where({status: "open"}),
 	Todo.f.status
 );
+var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(
+	Todo.where({status: "open"}),
+	Todo.f.status,
+	Aggregate.count(Todo.f.id).gt(1)
+);
 var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
 var latestTitle:Null<String> = Todo.where({status: "open"}).maximum(Todo.f.title);
@@ -489,6 +495,7 @@ Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
 HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
 HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)
+HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)
 HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
 Models::Todo.minimum(:id)
 Models::Todo.where(status: "open").maximum(:title)
@@ -514,7 +521,7 @@ app code uses builders such as `Expr.field(Todo.f.id)` and
 `Models::Todo.arel_table[:title].lower`. `Expr.lower(...)` only accepts
 `String` fields from the owning model, so `Expr.lower(Todo.f.id)` and
 `Todo.order(Expr.lower(User.f.name).asc())` fail during Haxe compilation.
-For the design contract and future aggregate/having direction, see
+For the expression, aggregate, and having design contract, see
 [RailsHx Query Expression Design](railshx-query-expression-design.md).
 
 `whereExpr(predicate)` and `whereNotExpr(predicate)` accept
@@ -590,6 +597,13 @@ from another model are rejected before Rails runs. v1 deliberately rejects other
 key types, such as `Bool`, until the target has a clear map representation for
 those keys.
 
+`Group.countHaving(...)` adds a typed aggregate `having` predicate to grouped
+counts. The predicate must be a `Predicate<TModel>` produced by typed expression
+builders such as `Aggregate.count(Todo.f.id).gt(1)`, so raw strings like
+`"COUNT(*) > 1"` and predicates from another model are rejected before Ruby is
+emitted. The generated Ruby remains ordinary Rails/Arel:
+`group(:status).having(Model.arel_table[:id].count.gt(1)).count()`.
+
 Invalid projection/grouping examples fail during Haxe compilation:
 
 ```haxe
@@ -598,6 +612,8 @@ Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name
 Projection.pluck(Todo, {});
 Group.count(Todo, User.f.name);
 Group.count(Todo, Todo.f.completed);
+Group.countHaving(Todo, Todo.f.status, Aggregate.count(User.f.id).gt(1));
+Group.countHaving(Todo, Todo.f.status, "COUNT(*) > 1");
 ```
 
 `minimum(...)` and `maximum(...)` use the same field refs and return nullable

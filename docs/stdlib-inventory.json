@@ -159,12 +159,20 @@
       "reason": "Typed ActiveRecord nullable field reference used by null-aware query builders such as whereNull and whereNotNull while still coercing to normal field refs for projection and ordering."
     },
     {
+      "id": "std.rails.active_record_aggregate",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/Aggregate.hx",
+      "surface": "rails.active_record.Aggregate",
+      "reason": "Typed ActiveRecord aggregate expression builders such as Aggregate.count(Todo.f.id), preserving model/value typing while lowering to Rails/Arel aggregate calls."
+    },
+    {
       "id": "std.rails.active_record_group",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/active_record/Group.hx",
       "surface": "rails.active_record.Group",
-      "reason": "Macro facade for typed ActiveRecord grouped counts that returns StringMap<Int> or IntMap<Int> from generated model field refs."
+      "reason": "Macro facade for typed ActiveRecord grouped counts and grouped count having predicates that return StringMap<Int> or IntMap<Int> from generated model field refs."
     },
     {
       "id": "std.rails.active_record_group_runtime",
@@ -172,7 +180,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/GroupRuntime.hx",
       "surface": "rails.active_record.GroupRuntime",
-      "reason": "Internal compiler marker used by Group.count so app code stays typed while generated Ruby emits Rails-native group(:field).count plus HXRuby map shaping."
+      "reason": "Internal compiler marker used by Group.count and Group.countHaving so app code stays typed while generated Ruby emits Rails-native group(:field).count / having(...) plus HXRuby map shaping."
     },
     {
       "id": "std.rails.active_record_lock",

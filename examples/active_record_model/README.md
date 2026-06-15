@@ -23,6 +23,7 @@ fields.
 entrypoint when you want to start from a full model relation:
 
 ```haxe
+import rails.active_record.Aggregate;
 import rails.active_record.Association;
 import rails.active_record.Expr;
 import rails.active_record.Group;
@@ -135,6 +136,11 @@ var statusCounts:haxe.ds.StringMap<Int> = Group.count(
 	Todo.where({status: "open"}),
 	Todo.f.status
 );
+var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(
+	Todo.where({status: "open"}),
+	Todo.f.status,
+	Aggregate.count(Todo.f.id).gt(1)
+);
 var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
 var maxTitle:Null<String> = Todo.maximum(Todo.f.title);
@@ -197,6 +203,7 @@ Models::Todo.pluck(:title)
 Models::Todo.where(title: "assigned").pluck(:id)
 HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
 HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)
+HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)
 HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
 Models::Todo.minimum(:id)
 Models::Todo.maximum(:title)
@@ -281,6 +288,9 @@ Type-safety features used here:
 - `Group.count(Todo.where(...), Todo.f.status)` returns `StringMap<Int>` for
   string keys, `Group.count(Todo, Todo.f.userId)` returns `IntMap<Int>` for
   integer keys, and unsupported key types fail during Haxe compilation.
+- `Group.countHaving(Todo.where(...), Todo.f.status, Aggregate.count(Todo.f.id).gt(1))`
+  adds a typed aggregate `having` predicate and rejects raw strings or
+  predicates from another model before Rails runs.
 - `Todo.maximum(Todo.f.id)` returns `Null<Int>` and rejects fields from other models.
 - `Todo.sum(Todo.f.userId)` returns `Int`, `Todo.average(Todo.f.userId)`
   returns `Null<Float>`, and non-`Int` fields fail during Haxe compilation.
@@ -296,6 +306,8 @@ Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name
 Projection.pluck(Todo, {});
 Group.count(Todo, User.f.name);
 Group.count(Todo, Todo.f.completed);
+Group.countHaving(Todo, Todo.f.status, Aggregate.count(User.f.id).gt(1));
+Group.countHaving(Todo, Todo.f.status, "COUNT(*) > 1");
 ```
 
 ## Scopes

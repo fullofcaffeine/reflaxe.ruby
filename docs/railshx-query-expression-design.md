@@ -7,6 +7,8 @@ DSL.
 
 Tracking bead: `haxe.ruby-deg`.
 
+Aggregate/having implementation bead: `haxe.ruby-6ri`.
+
 Policy class: this layer is a typed default. It may consume checked field refs,
 but it is not an escape hatch; raw SQL remains behind explicit `Sql.unsafe*`
 APIs.
@@ -27,6 +29,7 @@ Field refs remain the starting point:
 ```haxe
 Expr.field(Todo.f.id);      // Expr<Todo, Int>
 Expr.lower(Todo.f.title);   // Expr<Todo, String>
+Aggregate.count(Todo.f.id); // Expr<Todo, Int>
 ```
 
 Expression values can become predicates:
@@ -34,6 +37,7 @@ Expression values can become predicates:
 ```haxe
 Todo.whereExpr(Expr.field(Todo.f.id).gt(1));
 Todo.whereNotExpr(Expr.lower(Todo.f.title).eq("ship"));
+Group.countHaving(Todo, Todo.f.status, Aggregate.count(Todo.f.id).gt(1));
 ```
 
 Expression values can also become typed order tokens:
@@ -48,6 +52,7 @@ Generated Ruby stays Rails/Arel-shaped:
 ```ruby
 Models::Todo.where(Models::Todo.arel_table[:id].gt(1))
 Models::Todo.where.not(Models::Todo.arel_table[:title].lower.eq("ship"))
+HXRuby.active_record_group_count(Models::Todo.group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)
 Models::Todo.order(Models::Todo.arel_table[:title].lower.asc)
 ```
 
@@ -77,6 +82,8 @@ API should stay small and typed:
 
 - Add narrow builders such as `Expr.lower(field)` before adding generic Arel
   access.
+- Add aggregate builders such as `Aggregate.count(field)` before allowing raw
+  `having` strings.
 - Keep builder inputs as generated `Field<TModel, TValue>` refs or typed
   RailsHx expressions.
 - Lower builders in the compiler to Rails/Arel calls such as
@@ -113,12 +120,12 @@ facades, not arbitrary expression strings:
 - `Projection.pluck(source, {id: Todo.f.id, title: Todo.f.title})` owns
   multi-field result typing.
 - `Group.count(source, Todo.f.status)` owns grouped count map typing.
-- Future aggregate aliases should be typed expression builders, for example an
-  `Aggregate.count(Todo.f.id).as("todoCount")`-style token, not raw
-  `select("COUNT(*) AS todo_count")`.
-- Future `having` should accept typed aggregate predicates, not strings.
+- `Group.countHaving(source, Todo.f.status, Aggregate.count(Todo.f.id).gt(1))`
+  owns v1 aggregate `having` predicates.
+- Future selected aggregate aliases should be typed projection builders with an
+  inferred result shape, not raw `select("COUNT(*) AS todo_count")` strings.
 
-The next design/implementation bead is `haxe.ruby-6ri`.
+Follow-up work should focus on named selected aggregate row shapes.
 
 ## Implementation Rules
 
