@@ -12,8 +12,9 @@ class JobMacro {
 		if (perform == null) {
 			throw "@:railsJob classes must define an instance perform(...) method.";
 		}
-		addEnqueueStub(fields, "performLater", "perform_later", perform, pos);
-		addEnqueueStub(fields, "performNow", "perform_now", perform, pos);
+		addEnqueueStub(fields, "performLater", "perform_later", perform, macro : rails.active_job.Base, false, pos);
+		var performNowReturn = performReturnType(perform);
+		addEnqueueStub(fields, "performNow", "perform_now", perform, performNowReturn, isVoidReturn(performNowReturn), pos);
 		return fields;
 	}
 
@@ -30,7 +31,7 @@ class JobMacro {
 		return null;
 	}
 
-	static function addEnqueueStub(fields:Array<Field>, haxeName:String, rubyName:String, perform:Function, pos:Position):Void {
+	static function addEnqueueStub(fields:Array<Field>, haxeName:String, rubyName:String, perform:Function, ret:ComplexType, returnsVoid:Bool, pos:Position):Void {
 		if (hasFieldNamed(fields, haxeName)) {
 			return;
 		}
@@ -45,8 +46,8 @@ class JobMacro {
 					value: null,
 					meta: arg.meta
 				}],
-				ret: macro : Dynamic,
-				expr: macro return null
+				ret: ret,
+				expr: returnsVoid ? macro {} : macro return cast null
 			}),
 			meta: [
 				{name: ":native", params: [macro $v{rubyName}], pos: pos},
@@ -54,6 +55,17 @@ class JobMacro {
 			],
 			pos: pos
 		});
+	}
+
+	static function performReturnType(perform:Function):ComplexType {
+		return perform.ret == null ? macro : Void : perform.ret;
+	}
+
+	static function isVoidReturn(ret:ComplexType):Bool {
+		return switch (ret) {
+			case TPath({pack: [], name: "Void"}): true;
+			case _: false;
+		}
 	}
 
 	static function hasFieldNamed(fields:Array<Field>, name:String):Bool {

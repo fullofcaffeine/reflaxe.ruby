@@ -68,6 +68,10 @@ Jobs::SendWelcomeEmailJob.perform_now(7, "now@example.test")
 
 If `perform` expects `(userId:Int, email:String)`, then
 `performLater("not-an-int", 42)` fails during Haxe compilation.
+`performNow(...)` preserves the declared return type of `perform(...)`, so a
+job whose `perform` returns `String` can be assigned to `String` and will fail
+if assigned to `Int`. `performLater(...)` returns a typed
+`rails.active_job.Base` enqueue handle instead of `Dynamic`.
 
 ## Runtime Strategy
 
@@ -78,6 +82,8 @@ If `perform` expects `(userId:Int, email:String)`, then
 - `perform(...)` args lower to Ruby method args.
 - generated `performLater`/`performNow` calls lower to Rails enqueue APIs.
 - bad enqueue args fail during Haxe compilation.
+- `performNow(...)` preserves the `perform(...)` return type and rejects wrong
+  assignments during Haxe compilation.
 - unsafe named exception constants fail during Haxe compilation.
 - when Rails gems are available, a generated Rails app uses
   `ActiveJob::TestHelper` to assert queue name, enqueue behavior, and

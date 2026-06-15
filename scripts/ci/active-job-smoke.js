@@ -19,6 +19,10 @@ const invalidSourceDir = join(root, "test", ".generated", "active_job_invalid_sr
 const invalidOutputDir = join(root, "test", ".generated", "active_job_invalid_out");
 const invalidLifecycleSourceDir = join(root, "test", ".generated", "active_job_invalid_lifecycle_src");
 const invalidLifecycleOutputDir = join(root, "test", ".generated", "active_job_invalid_lifecycle_out");
+const returnSourceDir = join(root, "test", ".generated", "active_job_return_src");
+const returnOutputDir = join(root, "test", ".generated", "active_job_return_out");
+const invalidReturnSourceDir = join(root, "test", ".generated", "active_job_invalid_return_src");
+const invalidReturnOutputDir = join(root, "test", ".generated", "active_job_invalid_return_out");
 const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
 let currentStage = "startup";
 const reflaxeCandidates = [
@@ -49,6 +53,10 @@ rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 rmSync(invalidLifecycleSourceDir, { force: true, recursive: true });
 rmSync(invalidLifecycleOutputDir, { force: true, recursive: true });
+rmSync(returnSourceDir, { force: true, recursive: true });
+rmSync(returnOutputDir, { force: true, recursive: true });
+rmSync(invalidReturnSourceDir, { force: true, recursive: true });
+rmSync(invalidReturnOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -122,6 +130,29 @@ if (!/String should be Int|Int should be String|Cannot unify|Float should be Int
   process.stdout.write(invalid.stdout);
   process.stderr.write(invalid.stderr);
   console.error("Invalid ActiveJob enqueue compile failed for an unexpected reason.");
+  process.exit(1);
+}
+
+writeReturnFixture(returnSourceDir, "ReturnMain", false);
+compileActiveJob(returnOutputDir, {
+  classPath: returnSourceDir,
+  main: "ReturnMain",
+});
+
+writeReturnFixture(invalidReturnSourceDir, "InvalidReturnMain", true);
+const invalidReturn = compileActiveJob(invalidReturnOutputDir, {
+  classPath: invalidReturnSourceDir,
+  main: "InvalidReturnMain",
+  allowFailure: true,
+});
+if (invalidReturn.status === 0) {
+  console.error("Expected invalid ActiveJob performNow return compile to fail.");
+  process.exit(1);
+}
+if (!/String should be Int|Int should be String|Cannot unify/.test(invalidReturn.stderr + invalidReturn.stdout)) {
+  process.stdout.write(invalidReturn.stdout);
+  process.stderr.write(invalidReturn.stderr);
+  console.error("Invalid ActiveJob return compile failed for an unexpected reason.");
   process.exit(1);
 }
 
@@ -207,6 +238,40 @@ function writeInvalidFixture() {
       "class InvalidMain {",
       "\tstatic function main():Void {",
       "\t\tSendWelcomeEmailJob.performLater(\"not-an-int\", 42);",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+}
+
+function writeReturnFixture(sourceDir, mainName, invalid) {
+  mkdirSync(join(sourceDir, "jobs"), { recursive: true });
+  writeFileSync(
+    join(sourceDir, "jobs", "ReturnValueJob.hx"),
+    [
+      "package jobs;",
+      "",
+      "@:railsJob",
+      "class ReturnValueJob extends rails.active_job.Base {",
+      "\tpublic function perform(userId:Int):String {",
+      "\t\treturn \"job:\" + Std.string(userId);",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(sourceDir, `${mainName}.hx`),
+    [
+      "import jobs.ReturnValueJob;",
+      "",
+      `class ${mainName} {`,
+      "\tstatic function main():Void {",
+      invalid
+        ? "\t\tvar result:Int = ReturnValueJob.performNow(1);"
+        : "\t\tvar result:String = ReturnValueJob.performNow(1);",
+      "\t\tvar enqueued:rails.active_job.Base = ReturnValueJob.performLater(1);",
       "\t}",
       "}",
       "",
