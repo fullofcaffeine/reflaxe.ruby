@@ -48,7 +48,7 @@
     "test:todoapp-production": "node scripts/rails/todoapp.js production-smoke",
     "test:rails-integration": "node scripts/ci/rails-integration.js",
     "test:rails-interop": "node scripts/ci/rails-interop-smoke.js",
-    "test:rails-runtime": "REQUIRE_RAILS=1 npm run test:action-mailer && REQUIRE_RAILS=1 npm run test:active-job && REQUIRE_RAILS=1 npm run test:action-cable && REQUIRE_RAILS=1 npm run test:rails-integration && REQUIRE_RAILS=1 npm run test:rails-interop",
+    "test:rails-runtime": "REQUIRE_RAILS=1 npm run test:action-mailer && REQUIRE_RAILS=1 npm run test:active-job && REQUIRE_RAILS=1 npm run test:active-storage && REQUIRE_RAILS=1 npm run test:action-cable && REQUIRE_RAILS=1 npm run test:rails-integration && REQUIRE_RAILS=1 npm run test:rails-interop",
     "test:routes-generator": "node scripts/ci/routes-generator-smoke.js",
     "test:scaffold-cli": "node scripts/ci/scaffold-cli-smoke.js",
     "test:rails-app-generator": "node scripts/ci/rails-app-generator-smoke.js",

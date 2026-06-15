@@ -60,9 +60,11 @@ Unknown refs such as `Profile.attachments.missing` fail in Haxe before Rails
 runs.
 
 The default `attach(...)` path is intentionally typed: single attachments accept
-a `String`, and many attachments accept `Array<String>`. This keeps common
-signed-id/path-like attachables easy while preventing accidental object-shaped
-`Dynamic` values from flowing into Rails.
+a `String`, and many attachments accept `Array<String>`. In Rails runtime use,
+that string path is primarily for signed blob IDs such as `blob.signed_id`; it
+is not a promise that arbitrary filenames are valid attachables. Keeping this
+path typed prevents accidental object-shaped `Dynamic` values from flowing into
+Rails while preserving the common direct-upload/signed-id handoff.
 
 For Rails attachable shapes RailsHx has not modeled yet, use the explicit escape
 hatch:
@@ -82,7 +84,9 @@ attachable builders should replace common unchecked hash shapes.
 
 ## Runtime Strategy
 
-`npm run test:active-storage` is the fast compiler/static lane. It checks:
+`npm run test:active-storage` is both the fast compiler/static lane and, when a
+Rails bundle is available, a generated Rails runtime lane. The static pass
+checks:
 
 - `has_one_attached` and `has_many_attached` generation.
 - generated model-owned attachment refs.
@@ -92,7 +96,28 @@ attachable builders should replace common unchecked hash shapes.
 - object-shaped values failing on typed `attach(...)`, with
   `attachUnchecked(...)` reserved as the explicit raw Rails attachable escape.
 
-Rails runtime execution should use the Rails test storage service in the
-generated app lane. When Rails gems are installed,
-`REQUIRE_RAILS=1 npm run test:rails-runtime` must make missing Rails runtime
-dependencies fail instead of silently skipping.
+The runtime pass materializes a tiny Rails app with ActiveRecord, ActiveStorage,
+SQLite, and the Rails test disk service. It installs the ActiveStorage tables,
+migrates the generated `Profile` model, and asserts:
+
+- `has_one_attached :avatar` can attach a real blob by `signed_id`.
+- `avatar.download` reads the stored body.
+- `avatar.purge` removes the single attachment.
+- `has_many_attached :gallery` can attach an array of real blob signed IDs.
+- each gallery attachment can be read back and the collection can be purged.
+
+If the generated app bundle is unavailable, the local fast lane prints a staged
+skip so compiler work stays lightweight. `REQUIRE_RAILS=1 npm run
+test:rails-runtime` includes `test:active-storage` and makes missing Rails
+runtime dependencies fail instead of silently skipping.
+
+## Current Production Boundary
+
+The supported production path today is model metadata for one/many attachments,
+typed attachment refs, `attached`, signed-ID `attach`, and `purge` over the
+normal Rails ActiveStorage receiver API.
+
+Direct-upload helper generation, variants/previews, blob metadata facades,
+attachment validations, analyzer hooks, and typed builders for common hash
+attachables remain production follow-up work. Use `attachUnchecked(...)` only at
+reviewed Rails interop boundaries until those typed builders exist.

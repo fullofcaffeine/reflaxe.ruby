@@ -134,13 +134,17 @@ Lowering strategy:
 Integration strategy:
 
 - Static smoke checks generated model declarations and typed refs.
-- Runtime lane uses Rails test storage service and fixture upload.
+- Runtime lane uses Rails test disk storage, ActiveStorage tables, real blobs,
+  signed-ID attachment, download/read assertions, and purge assertions.
 
 Graduation criteria:
 
 - Unknown attachment refs fail at compile time.
 - Single vs many attachment helpers have distinct Haxe types.
 - Runtime test proves attach/read/purge in generated Rails app.
+- Direct-upload helpers, variants/previews, blob metadata facades, validations,
+  and common attachable hash builders are either implemented with typed APIs or
+  explicitly deferred behind tracked beads.
 
 ## Hotwire, Turbo, And ActionCable
 

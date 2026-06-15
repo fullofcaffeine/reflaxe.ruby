@@ -137,11 +137,13 @@ expectIncludes(packageJson.scripts["test:todoapp-production"] ?? "", "production
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:action-mailer", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:active-job", "package.json scripts");
+expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:active-storage", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:action-cable", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:rails-integration", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:rails-interop", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:action-mailer", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:active-job", "package.json scripts");
+expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:active-storage", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:action-cable", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:rails-integration", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:rails-interop", "package.json scripts");
