@@ -49,13 +49,7 @@ stage("ruby syntax", () => syntaxCheck([
   "config/routes.rb",
   "test/controllers/interop_test.rb",
 ]));
-stage("template materialization", () => viewContentCheck("app/views/mixed/haxe_shell.html.erb", [
-  "<h1><%= title %></h1>",
-  'render partial: "legacy/badge", locals: {label: legacy_badge_label, tone: "warm"}',
-  'render partial: "typed_widgets/summary", locals: {title: "HHX island rendered from Haxe", count: 3, note: typed_summary}',
-  "/legacy-shell",
-]));
-stage("template materialization", () => viewContentCheck("app/views/legacy/home.html.erb", [
+stage("legacy fixture materialization", () => viewContentCheck("app/views/legacy/home.html.erb", [
   "Legacy ERB, typed Haxe inside.",
   'render partial: "typed_widgets/summary"',
   "Services::TypedStats.confidence_label",
@@ -81,6 +75,9 @@ stage("request tests", () => run("bundle", ["exec", "rails", "test"], {
 }));
 
 function assertCompiledArtifacts() {
+  // Generated RailsHx-owned output shape is covered by committed snapshots.
+  // This smoke keeps the interop-specific checks: required generated files and
+  // proof that Template.external does not emit or overwrite Rails-owned ERB.
   for (const file of [
     "app/haxe_gen/controllers/mixed_controller.rb",
     "app/haxe_gen/services/typed_stats.rb",
@@ -100,32 +97,6 @@ function assertCompiledArtifacts() {
   if (existsSync(join(compiledDir, "app", "views", "legacy", "_badge.html.erb"))) {
     console.error("Template.external must not emit or overwrite the external legacy ERB partial.");
     process.exit(1);
-  }
-
-  const controller = readFileSync(join(compiledDir, "app", "haxe_gen", "controllers", "mixed_controller.rb"), "utf8");
-  for (const expected of [
-    "LegacyPriceFormatter.badge_label",
-    "LegacyPriceFormatter.call",
-    "Services::TypedStats.summary",
-    'self.render(template: "mixed/haxe_shell"',
-  ]) {
-    if (!controller.includes(expected)) {
-      console.error(`Rails interop controller missing expected content: ${expected}`);
-      process.exit(1);
-    }
-  }
-
-  const typedPartial = readFileSync(join(compiledDir, "app", "views", "typed_widgets", "_summary.html.erb"), "utf8");
-  for (const expected of [
-    "RailsHx generated partial",
-    "<%= title %>",
-    "<%= note %>",
-    "<%= count %>",
-  ]) {
-    if (!typedPartial.includes(expected)) {
-      console.error(`Rails interop typed partial missing expected content: ${expected}`);
-      process.exit(1);
-    }
   }
 }
 

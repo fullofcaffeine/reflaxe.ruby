@@ -163,6 +163,22 @@ const cases = [
     ],
   },
   {
+    name: "rails_interop_app",
+    defines: ["reflaxe_ruby_rails"],
+    files: [
+      "app/haxe_gen/controllers/mixed_controller.rb",
+      "app/haxe_gen/services/typed_stats.rb",
+      "app/haxe_gen/views/application_layout_view.rb",
+      "app/haxe_gen/views/haxe_shell_view.rb",
+      "app/haxe_gen/views/typed_widget_view.rb",
+      "app/views/layouts/application.html.erb",
+      "app/views/mixed/haxe_shell.html.erb",
+      "app/views/typed_widgets/_summary.html.erb",
+      "config/initializers/hxruby_autoload.rb",
+      "run.rb",
+    ],
+  },
+  {
     name: "todoapp_rails",
     defines: ["reflaxe_ruby_rails"],
     extraClassPaths: ["examples/todoapp_rails/src_haxe"],

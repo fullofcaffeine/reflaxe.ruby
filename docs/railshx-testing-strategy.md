@@ -27,7 +27,7 @@ load/render/migrate/deliver/subscribe/asset paths.
 | Components | Snapshot-backed plus focused smoke. | Healthy after component snapshots. | Keep smoke limited to file presence, Ruby syntax, and negative slot/locals/template checks. |
 | Turbo Streams | Snapshot-backed plus focused smoke. | Healthy after Turbo Streams snapshots. | Keep smoke limited to file presence, Ruby syntax, and negative stream target/locals checks. |
 | ActiveSupport instrumentation | Snapshot-backed plus focused smoke/runtime-if-available. | Healthy after instrumentation snapshots. | Keep smoke limited to file presence, Ruby syntax, negative event/payload typing, and optional ActiveSupport consumption. |
-| Rails interop/adoption | Runtime/request smoke plus negative external-template checks, no committed mixed-app snapshot. | Needs a snapshot contract for generated Haxe-owned Ruby/ERB while keeping Rails-owned legacy files out of snapshots unless explicitly fixture-owned. | Add rails interop snapshots for generated controller/service/view/template output. |
+| Rails interop/adoption | Snapshot-backed for RailsHx-owned output plus focused interop smoke/runtime-if-available. | Healthy after mixed-app snapshots. | Keep smoke focused on external ERB not being overwritten, checked locals/path failures, materialization, syntax, and request tests. |
 | Rails engine/plugin | Snapshot-backed plus focused smoke/generator checks. | Healthy after engine/plugin snapshots. | Keep smoke limited to syntax, executable output, unsafe output-root rejection, and generator CLI checks. |
 | Generators and package/release checks | Smoke/check scripts only. | Appropriate. These are command/product-shape checks more than compiler-output snapshots. | Keep smoke/check style; add golden fixture snapshots only if generator output becomes complex or unstable. |
 | Browser/production dogfood | Playwright and production smoke. | Appropriate. These prove UX and deployable app seams, not compiler output. | Keep thin and user-visible. |
@@ -64,13 +64,10 @@ Use this checklist when adding or reviewing a smoke test:
 
 ## Immediate Follow-Ups
 
-- Add snapshots for the remaining smoke-heavy output surface: Rails
-  interop/adoption.
-- After those snapshots exist, trim duplicated output-shape regex assertions in
-  the corresponding smoke scripts. Keep syntax checks, negative compile tests,
-  unsafe-path checks, generator checks, and Rails runtime seams.
 - Keep package/release/generator checks as smoke/check scripts unless their
   generated output becomes complex enough to need golden fixtures.
+- When a smoke grows new generated-output text assertions, first ask whether the
+  output belongs in `scripts/ci/snapshot-harness.js` instead.
 
 ## Todoapp Dogfood Coverage
 
