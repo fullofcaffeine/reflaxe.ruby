@@ -103,6 +103,14 @@
       "reason": "Typed Kernel externs for direct Ruby interop."
     },
     {
+      "id": "std.ruby.standard_error",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/StandardError.hx",
+      "surface": "ruby.StandardError",
+      "reason": "Typed extern for Ruby StandardError used by lifecycle DSL exception references."
+    },
+    {
       "id": "std.ruby.native_hash",
       "owner": "std",
       "status": "implemented",
@@ -511,12 +519,36 @@
       "reason": "Typed ActiveJob base surface for Rails job classes."
     },
     {
+      "id": "std.rails.active_job_deserialization_error",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_job/DeserializationError.hx",
+      "surface": "rails.active_job.DeserializationError",
+      "reason": "Typed extern for ActiveJob::DeserializationError used by retry/discard lifecycle declarations."
+    },
+    {
+      "id": "std.rails.active_job_lifecycle_decl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_job/LifecycleDecl.hx",
+      "surface": "rails.active_job.LifecycleDecl",
+      "reason": "Compiler-owned marker surface for contextual ActiveJob lifecycle declarations."
+    },
+    {
       "id": "std.rails.job_macro",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/macros/JobMacro.hx",
       "surface": "rails.macros.JobMacro",
       "reason": "Build macro for railsJob classes that injects typed performLater/performNow enqueue helpers from the perform signature."
+    },
+    {
+      "id": "std.rails.job_dsl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/JobDsl.hx",
+      "surface": "rails.macros.JobDsl",
+      "reason": "Contextual ActiveJob lifecycle DSL that validates queue/retry/discard declarations before compiler lowering."
     },
     {
       "id": "std.rails.action_cable",

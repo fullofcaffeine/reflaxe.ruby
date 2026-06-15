@@ -87,6 +87,9 @@ Typed Rails templates are part of the RailsHx destination. `haxe.ruby-wpi.12` no
 
 For post-core Rails surfaces, see [RailsHx Post-Core Roadmap](railshx-post-core-roadmap.md). ActionMailer now has an initial typed mailer/template slice; see [RailsHx ActionMailer Guide](railshx-action-mailer-guide.md). ActiveJob now has an initial typed job/enqueue slice; see [RailsHx ActiveJob Guide](railshx-active-job-guide.md). ActiveStorage now has initial typed attachment refs; see [RailsHx ActiveStorage Guide](railshx-active-storage-guide.md). Turbo now has initial typed Haxe client helpers and server-side typed stream helpers; see [RailsHx Turbo Guide](railshx-turbo-guide.md). ActionCable now has an initial typed channel/subscription slice; see [RailsHx ActionCable Guide](railshx-action-cable-guide.md). ActiveSupport instrumentation now has an initial typed event/payload slice; see [RailsHx ActiveSupport Instrumentation Guide](railshx-instrumentation-guide.md). RailsHx components now have an initial typed ActionView capture/render slice; see [RailsHx Components Guide](railshx-components-guide.md). Rails engine/plugin affordances now have an initial engine-local output-root and generator slice; see [RailsHx Engines And Plugins Guide](railshx-engines-plugins-guide.md). Broader Turbo stream helper coverage and Rails runtime assertions remain post-core follow-up work.
 
+For the current RailsHx DSL ergonomics audit and compatibility policy, see
+[RailsHx DSL Ergonomics Audit](railshx-dsl-ergonomics-audit.md).
+
 ## Acceptance Bar
 
 RailsHx work is ready when:

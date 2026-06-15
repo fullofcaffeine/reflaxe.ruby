@@ -8,6 +8,8 @@ const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "active_job");
 const invalidSourceDir = join(root, "test", ".generated", "active_job_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "active_job_invalid_out");
+const invalidLifecycleSourceDir = join(root, "test", ".generated", "active_job_invalid_lifecycle_src");
+const invalidLifecycleOutputDir = join(root, "test", ".generated", "active_job_invalid_lifecycle_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -32,6 +34,8 @@ function run(command, args, options = {}) {
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
+rmSync(invalidLifecycleSourceDir, { force: true, recursive: true });
+rmSync(invalidLifecycleOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -108,6 +112,23 @@ if (!/String should be Int|Int should be String|Cannot unify|Float should be Int
   process.exit(1);
 }
 
+writeInvalidLifecycleFixture();
+const invalidLifecycle = compileActiveJob(invalidLifecycleOutputDir, {
+  classPath: invalidLifecycleSourceDir,
+  main: "InvalidLifecycleMain",
+  allowFailure: true,
+});
+if (invalidLifecycle.status === 0) {
+  console.error("Expected invalid ActiveJob lifecycle compile to fail.");
+  process.exit(1);
+}
+if (!/retryOnNamed exception "not a constant" is not a safe Ruby constant path/.test(invalidLifecycle.stderr + invalidLifecycle.stdout)) {
+  process.stdout.write(invalidLifecycle.stdout);
+  process.stderr.write(invalidLifecycle.stderr);
+  console.error("Invalid ActiveJob lifecycle compile failed for an unexpected reason.");
+  process.exit(1);
+}
+
 function compileActiveJob(targetDir, options = {}) {
   const args = [
     "-D",
@@ -144,6 +165,32 @@ function writeInvalidFixture() {
       "class InvalidMain {",
       "\tstatic function main():Void {",
       "\t\tSendWelcomeEmailJob.performLater(\"not-an-int\", 42);",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+}
+
+function writeInvalidLifecycleFixture() {
+  mkdirSync(invalidLifecycleSourceDir, { recursive: true });
+  writeFileSync(
+    join(invalidLifecycleSourceDir, "InvalidLifecycleMain.hx"),
+    [
+      "import rails.macros.JobDsl.*;",
+      "",
+      "@:railsJob",
+      "class BadLifecycleJob extends rails.active_job.Base {",
+      "\tstatic final lifecycle = {",
+      "\t\tretryOnNamed(\"not a constant\", {attempts: 1});",
+      "\t}",
+      "",
+      "\tpublic function perform():Void {}",
+      "}",
+      "",
+      "class InvalidLifecycleMain {",
+      "\tstatic function main():Void {",
+      "\t\tBadLifecycleJob.performLater();",
       "\t}",
       "}",
       "",

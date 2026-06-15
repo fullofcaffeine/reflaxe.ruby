@@ -737,8 +737,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	function compileRailsJobImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
+		body = body.concat(railsJobLifecycleLines(varFields));
 		body = body.concat(railsJobMetadataLines(classType));
 		for (field in varFields) {
+			if (isRailsJobLifecycleField(field)) {
+				continue;
+			}
 			body = body.concat(renderStatements([compileVarField(field)]));
 		}
 		for (field in funcFields) {
@@ -818,6 +822,141 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 		}
 		return lines;
+	}
+
+	static function railsJobLifecycleLines(varFields:Array<ClassVarData>):Array<String> {
+		var lifecycle = railsJobLifecycleField(varFields);
+		if (lifecycle == null) {
+			return [];
+		}
+		if (!lifecycle.isStatic) {
+			Context.error("Rails job lifecycle must be static: `static final lifecycle = { ... }`.", lifecycle.field.pos);
+			return [];
+		}
+		var expr = lifecycle.field.expr();
+		if (expr == null) {
+			Context.error("Rails job lifecycle must have a block initializer: `static final lifecycle = { ... }`.", lifecycle.field.pos);
+			return [];
+		}
+		var lines:Array<String> = [];
+		for (entry in railsJobLifecycleEntries(expr)) {
+			var decl = railsJobLifecycleDecl(entry);
+			switch (decl.kind) {
+				case "queue_as":
+					lines.push("queue_as " + rubySymbolLiteral(RubyNaming.toMethodName(decl.queue)));
+				case "retry_on":
+					lines.push("retry_on " + decl.exception + railsJobLifecycleOptions(decl));
+				case "discard_on":
+					lines.push("discard_on " + decl.exception);
+				case other:
+					Context.error('Unsupported Rails job lifecycle declaration "$other". Use queueAs, retryOn, or discardOn.', entry.pos);
+			}
+		}
+		return lines;
+	}
+
+	static function railsJobLifecycleField(varFields:Array<ClassVarData>):Null<ClassVarData> {
+		var found:Null<ClassVarData> = null;
+		for (field in varFields) {
+			if (field.field.name == "lifecycle") {
+				found = field;
+			}
+		}
+		return found;
+	}
+
+	static function isRailsJobLifecycleField(field:ClassVarData):Bool {
+		return field.field.name == "lifecycle";
+	}
+
+	static function railsJobLifecycleEntries(expr:TypedExpr):Array<TypedExpr> {
+		var unwrapped = unwrapTypedExpr(expr);
+		return switch (unwrapped.expr) {
+			case TBlock(entries):
+				entries;
+			case TArrayDecl(values) if (values.length == 0):
+				[];
+			case _:
+				Context.error("Rails job lifecycle must be a Haxe block: `static final lifecycle = { queueAs(...); retryOn(...); }`.", unwrapped.pos);
+				[];
+		}
+	}
+
+	static function railsJobLifecycleDecl(expr:TypedExpr):{kind:String, queue:String, exception:String, waitSeconds:Int, attempts:Int, retryQueue:String} {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall(callee, params) if (isRailsJobLifecycleMarker(callee, "queue") && params.length == 1):
+				{
+					kind: "queue_as",
+					queue: railsJobLifecycleStringValue(params[0], "queue"),
+					exception: "",
+					waitSeconds: -1,
+					attempts: -1,
+					retryQueue: ""
+				};
+			case TCall(callee, params) if (isRailsJobLifecycleMarker(callee, "retry") && params.length == 4):
+				{
+					kind: "retry_on",
+					queue: "",
+					exception: railsJobLifecycleStringValue(params[0], "retry exception"),
+					waitSeconds: railsJobLifecycleIntValue(params[1], "retry waitSeconds"),
+					attempts: railsJobLifecycleIntValue(params[2], "retry attempts"),
+					retryQueue: railsJobLifecycleStringValue(params[3], "retry queue")
+				};
+			case TCall(callee, params) if (isRailsJobLifecycleMarker(callee, "discard") && params.length == 1):
+				{
+					kind: "discard_on",
+					queue: "",
+					exception: railsJobLifecycleStringValue(params[0], "discard exception"),
+					waitSeconds: -1,
+					attempts: -1,
+					retryQueue: ""
+				};
+			case _:
+				Context.error("Rails job lifecycle entries must be produced by rails.macros.JobDsl declarations.", expr.pos);
+				{kind: "", queue: "", exception: "", waitSeconds: -1, attempts: -1, retryQueue: ""};
+		}
+	}
+
+	static function isRailsJobLifecycleMarker(expr:TypedExpr, name:String):Bool {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FStatic(classRef, fieldRef)):
+				fullTypeName(classRef.get().pack, classRef.get().name) == "rails.active_job.LifecycleDecl"
+					&& fieldRef.get().name == name;
+			case _:
+				false;
+		}
+	}
+
+	static function railsJobLifecycleOptions(decl:{kind:String, queue:String, exception:String, waitSeconds:Int, attempts:Int, retryQueue:String}):String {
+		var options:Array<String> = [];
+		if (decl.waitSeconds >= 0) {
+			options.push("wait: " + decl.waitSeconds + ".seconds");
+		}
+		if (decl.attempts >= 0) {
+			options.push("attempts: " + decl.attempts);
+		}
+		if (decl.retryQueue.length > 0) {
+			options.push("queue: " + rubySymbolLiteral(RubyNaming.toMethodName(decl.retryQueue)));
+		}
+		return options.length == 0 ? "" : ", " + options.join(", ");
+	}
+
+	static function railsJobLifecycleStringValue(expr:TypedExpr, name:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)): value;
+			case _:
+				Context.error('Rails job lifecycle "$name" must be a string marker value.', expr.pos);
+				"";
+		}
+	}
+
+	static function railsJobLifecycleIntValue(expr:TypedExpr, name:String):Int {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TInt(value)): value;
+			case _:
+				Context.error('Rails job lifecycle "$name" must be an int marker value.', expr.pos);
+				-1;
+		}
 	}
 
 	static function railsJobExceptionConstant(params:Null<Array<haxe.macro.Expr>>, index:Int, metaName:String):String {
