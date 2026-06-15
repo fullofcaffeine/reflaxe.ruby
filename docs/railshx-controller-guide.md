@@ -198,6 +198,8 @@ Request/response facades stay Rails-native:
 ```haxe
 var method = request().requestMethod();
 var path = request().path();
+var wantsJson = request().format().json();
+var formatName = request().format().toString();
 var status = response().status();
 ```
 
@@ -206,8 +208,14 @@ Generated Ruby:
 ```ruby
 method__hx0 = self.request().request_method()
 path__hx0 = self.request().path()
+wants_json__hx0 = self.request().format().json?()
+format_name__hx0 = self.request().format().to_s()
 status__hx0 = self.response().status()
 ```
+
+`request().format()` returns `RequestFormat`, not `Dynamic`, so common MIME
+checks such as `html()`, `json()`, `turboStream()`, `xml()`, and `any()` are
+completed and type-checked while still lowering to Rails' normal MIME object.
 
 Use typed status tokens where Rails expects symbols:
 

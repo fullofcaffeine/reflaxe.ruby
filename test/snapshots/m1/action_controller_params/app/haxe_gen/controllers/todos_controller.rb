@@ -23,6 +23,9 @@ module Controllers
       attrs__hx0 = self.params().require("todo").permit([:title, :is_completed, {metadata: [:source, :priority]}, {tags: []}])
       request_method__hx0 = self.request().request_method()
       request_path__hx0 = self.request().path()
+      request_format__hx0 = self.request().format()
+      wants_json__hx0 = request_format__hx0.json?()
+      request_format_name__hx0 = request_format__hx0.to_s()
       current_status__hx0 = self.response().status()
       self.flash()[:notice] = "Todo queued"
       self.session()[:last_todo_title] = attrs__hx0

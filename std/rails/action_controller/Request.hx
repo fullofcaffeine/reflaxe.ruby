@@ -15,7 +15,7 @@ extern class Request {
 	@:native("fullpath")
 	public function fullPath():String;
 
-	public function format():Dynamic;
+	public function format():RequestFormat;
 
 	@:native("xhr?")
 	public function xhr():Bool;

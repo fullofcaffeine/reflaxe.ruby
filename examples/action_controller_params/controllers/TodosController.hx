@@ -14,14 +14,15 @@ import rails.macros.ParamsMacro;
 // specs use Rails-shaped Haxe object literals, e.g. `{metadata: ["source"]}`.
 // `flash`, `session`, and `cookies` expose typed store helpers instead of raw
 // Dynamic bracket access. `request()` and `response()` expose typed facades
-// over the Rails runtime objects without wrapping them. `respondTo(...)` exposes
+// over the Rails runtime objects without wrapping them, including the
+// `RequestFormat` MIME facade returned by `request().format()`. `respondTo(...)` exposes
 // Rails' `respond_to do |format|` collector as typed format methods. `@:beforeAction`,
 // `@:afterAction`, and `@:railsFilter(...)` annotate real Haxe methods, so the
 // callback method exists at compile time and Rails receives normal symbols.
 // IntelliSense: editors should complete `params`, `render`, `redirectTo`,
 // `respondTo`, and the `ParamsMacro` entrypoint, plus store methods `get`,
 // `set`, and `delete` and request/response helpers such as `requestMethod`,
-// `path`, and `status`.
+// `path`, `format().json`, and `status`.
 // Ruby output: an `ActionController::Base` subclass with normal Rails
 // `params.require(...).permit(...)`, `flash[:key]`, `session[:key]`,
 // `cookies[:key]`, `render(..., status: :status)`, `redirect_to`,
@@ -47,6 +48,9 @@ class TodosController extends rails.action_controller.Base {
 		var attrs = ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"], {metadata: ["source", "priority"], tags: []});
 		var requestMethod = request().requestMethod();
 		var requestPath = request().path();
+		var requestFormat = request().format();
+		var wantsJson = requestFormat.json();
+		var requestFormatName = requestFormat.toString();
 		var currentStatus = response().status();
 		flash().set("notice", "Todo queued");
 		session().set("lastTodoTitle", attrs);

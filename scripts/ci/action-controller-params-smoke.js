@@ -65,6 +65,9 @@ for (const expected of [
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, \{metadata: \[:source, :priority\]\}, \{tags: \[\]\}\]\)/,
   /request_method__hx\d+ = self\.request\(\)\.request_method\(\)/,
   /request_path__hx\d+ = self\.request\(\)\.path\(\)/,
+  /request_format__hx\d+ = self\.request\(\)\.format\(\)/,
+  /wants_json__hx\d+ = request_format__hx\d+\.json\?\(\)/,
+  /request_format_name__hx\d+ = request_format__hx\d+\.to_s\(\)/,
   /current_status__hx\d+ = self\.response\(\)\.status\(\)/,
   /self\.flash\(\)\[:notice\] = "Todo queued"/,
   /self\.session\(\)\[:last_todo_title\] = attrs__hx\d+/,
@@ -134,6 +137,23 @@ if (!/Void -> Void|Responder|String should be/.test(invalidResponder.stderr + in
   process.exit(1);
 }
 
+const invalidRequestFormat = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidRequestFormatMain",
+  allowFailure: true,
+});
+if (invalidRequestFormat == null || invalidRequestFormat.status === 0) {
+  console.error("Expected invalid ActionController request format compile to fail.");
+  process.exit(1);
+}
+if (!/RequestFormat|String|Cannot unify/.test(invalidRequestFormat.stderr + invalidRequestFormat.stdout)) {
+  process.stdout.write(invalidRequestFormat.stdout);
+  process.stderr.write(invalidRequestFormat.stderr);
+  console.error("Invalid ActionController request format failed for an unexpected reason.");
+  process.exit(1);
+}
+
 function compileWithFirstAvailableReflaxe(options = {}) {
   for (const reflaxeSrc of reflaxeCandidates) {
     if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
@@ -197,6 +217,15 @@ function writeInvalidFixtures() {
     "\t\tcontroller.respondTo(function(format) {",
     "\t\t\tformat.json(\"bad\");",
     "\t\t});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidRequestFormatMain.hx"), [
+    "class InvalidRequestFormatMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tvar format:String = controller.request().format();",
     "\t}",
     "}",
     "",

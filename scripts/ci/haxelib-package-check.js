@@ -99,6 +99,7 @@ for (const required of [
   "std/rails/action_controller/RedirectOptions.hx",
   "std/rails/action_controller/RenderOptions.hx",
   "std/rails/action_controller/Responder.hx",
+  "std/rails/action_controller/RequestFormat.hx",
   "std/rails/action_controller/Request.hx",
   "std/rails/action_controller/Response.hx",
   "std/rails/action_controller/Status.hx",

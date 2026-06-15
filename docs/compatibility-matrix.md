@@ -60,7 +60,7 @@ Unsafe boundary policy is tracked in
 | Typed Rails migrations | `@:railsMigration({models: [...], knownModels: [...], externalTables: [...]})` + `MigrationOperation` | Create-table generation plus known table/column/index/FK validation |
 | ActionController surface | `rails.action_controller.Base` | Implemented |
 | Strong params macro | `ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title], {metadata: ["source"], tags: []})` | Typed field-ref validation and nested permit specs implemented |
-| Controller request/response facades | `request().requestMethod()`, `response().status()` | Initial typed extern facade slice |
+| Controller request/response facades | `request().requestMethod()`, `request().format().json()`, `response().status()` | Initial typed extern facade slice |
 | Controller filters | `@:beforeAction({only: ["create"]}) function authenticateUser()` | Initial typed method-backed filter slice |
 | Controller stores | `flash().set("notice", "...")`, `session().get("key")`, `cookies().delete("key")` | Initial typed flash/session/cookies store slice |
 | Controller response statuses | `head(Status.noContent)`, `render({json: data, status: Status.created})` | Initial typed status-token slice lowering to Rails symbols |

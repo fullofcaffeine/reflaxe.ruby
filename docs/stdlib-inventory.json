@@ -324,7 +324,15 @@
       "status": "implemented",
       "path": "std/rails/action_controller/Request.hx",
       "surface": "rails.action_controller.Request",
-      "reason": "Typed extern facade over Rails request objects for request_method/path/fullpath/format/xhr access."
+      "reason": "Typed extern facade over Rails request objects for request_method/path/fullpath/typed format/xhr access."
+    },
+    {
+      "id": "std.rails.action_controller_request_format",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/RequestFormat.hx",
+      "surface": "rails.action_controller.RequestFormat",
+      "reason": "Typed facade over Rails request.format MIME objects so common predicates such as json/html/turbo_stream do not require Dynamic."
     },
     {
       "id": "std.rails.action_controller_response",
