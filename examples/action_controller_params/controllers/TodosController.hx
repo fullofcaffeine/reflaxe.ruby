@@ -1,6 +1,8 @@
 package controllers;
 
 import rails.action_controller.Status;
+import rails.active_record.RecordNotFound;
+import rails.macros.ControllerDsl.*;
 import rails.macros.ParamsMacro;
 
 // Typed ActionController params fixture.
@@ -16,9 +18,11 @@ import rails.macros.ParamsMacro;
 // Dynamic bracket access. `request()` and `response()` expose typed facades
 // over the Rails runtime objects without wrapping them, including the
 // `RequestFormat` MIME facade returned by `request().format()`. `respondTo(...)` exposes
-// Rails' `respond_to do |format|` collector as typed format methods. `@:beforeAction`,
-// `@:afterAction`, and `@:railsFilter(...)` annotate real Haxe methods, so the
-// callback method exists at compile time and Rails receives normal symbols.
+// Rails' `respond_to do |format|` collector as typed format methods.
+// `lifecycle` is a contextual RailsHx controller block: the calls are valid
+// Haxe expressions, validated against real controller methods/actions, and
+// erased to normal Rails class macros such as `before_action` and
+// `rescue_from`.
 // IntelliSense: editors should complete `params`, `render`, `redirectTo`,
 // `respondTo`, and the `ParamsMacro` entrypoint, plus store methods `get`,
 // `set`, and `delete` and request/response helpers such as `requestMethod`,
@@ -29,19 +33,27 @@ import rails.macros.ParamsMacro;
 // `head(:status)`, `respond_to do |format|`, and Rails filter declarations.
 @:railsController
 class TodosController extends rails.action_controller.Base {
-	@:beforeAction({only: ["create"]})
+	static final lifecycle = {
+		beforeAction(authenticateUser, {only: [create]});
+		afterAction(auditResponse, {only: [create]});
+		beforeAction(loadTenant, {except: [index]});
+		rescueFrom(RecordNotFound, notFound);
+	}
+
 	function authenticateUser() {
 		var method = request().requestMethod();
 	}
 
-	@:afterAction({only: ["create"]})
 	function auditResponse() {
 		var status = response().status();
 	}
 
-	@:railsFilter("before_action", {except: ["index"]})
 	function loadTenant() {
 		var path = request().path();
+	}
+
+	function notFound(e:RecordNotFound) {
+		render({plain: "Todo not found", status: Status.notFound});
 	}
 
 	public function create() {
@@ -67,4 +79,6 @@ class TodosController extends rails.action_controller.Base {
 		});
 		head(Status.noContent);
 	}
+
+	public function index() {}
 }

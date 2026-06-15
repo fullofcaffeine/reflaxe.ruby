@@ -31,6 +31,8 @@ import reflaxe.ruby.RequireRegistry;
 import sys.FileSystem;
 import sys.io.File;
 
+using reflaxe.helpers.ClassFieldHelper;
+
 typedef RailsColumnInfo = {
 	haxeName:String,
 	rubyName:String,
@@ -662,8 +664,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	function compileRailsControllerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
+		body = body.concat(railsControllerLifecycleLines(classType, varFields));
 		body = body.concat(railsControllerFilterLines(funcFields));
 		for (field in varFields) {
+			if (isRailsControllerLifecycleField(field)) {
+				continue;
+			}
 			body = body.concat(renderStatements([compileVarField(field)]));
 		}
 		for (field in funcFields) {
@@ -877,6 +883,142 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isSafeRubyConstantPath(value:String):Bool {
 		return ~/^[A-Z][A-Za-z0-9_]*(::[A-Z][A-Za-z0-9_]*)*$/.match(value);
+	}
+
+	static function railsControllerLifecycleLines(classType:ClassType, varFields:Array<ClassVarData>):Array<String> {
+		var lifecycle = railsControllerLifecycleField(varFields);
+		if (lifecycle == null) {
+			Context.error('@:railsController class ${classType.name} must declare `static final lifecycle = { ... }`. Use `[]` when the controller has no filters or rescues.', classType.pos);
+			return [];
+		}
+		if (!lifecycle.isStatic) {
+			Context.error("Rails controller lifecycle must be static: `static final lifecycle = { ... }`.", lifecycle.field.pos);
+			return [];
+		}
+		var expr = lifecycle.field.expr();
+		if (expr == null) {
+			Context.error("Rails controller lifecycle must have a block initializer: `static final lifecycle = { ... }`.", lifecycle.field.pos);
+			return [];
+		}
+		var lines:Array<String> = [];
+		for (entry in railsControllerLifecycleEntries(expr)) {
+			var decl = railsControllerLifecycleDecl(entry);
+			switch (decl.kind) {
+				case "before_action" | "after_action" | "around_action":
+					lines.push(decl.kind + " " + rubySymbolLiteral(RubyNaming.toMethodName(decl.method)) + railsControllerLifecycleOptions(decl));
+				case "rescue_from":
+					if (decl.exceptions.length == 0) {
+						Context.error("rescueFrom lifecycle declaration must include at least one exception.", entry.pos);
+					} else {
+						lines.push("rescue_from " + decl.exceptions.join(", ") + ", with: " + rubySymbolLiteral(RubyNaming.toMethodName(decl.method)));
+					}
+				case other:
+					Context.error('Unsupported Rails controller lifecycle declaration "$other". Use beforeAction, afterAction, aroundAction, or rescueFrom.', entry.pos);
+			}
+		}
+		return lines;
+	}
+
+	static function railsControllerLifecycleField(varFields:Array<ClassVarData>):Null<ClassVarData> {
+		var found:Null<ClassVarData> = null;
+		for (field in varFields) {
+			if (field.field.name == "lifecycle") {
+				found = field;
+			}
+		}
+		return found;
+	}
+
+	static function isRailsControllerLifecycleField(field:ClassVarData):Bool {
+		return field.field.name == "lifecycle";
+	}
+
+	static function railsControllerLifecycleEntries(expr:TypedExpr):Array<TypedExpr> {
+		var unwrapped = unwrapTypedExpr(expr);
+		return switch (unwrapped.expr) {
+			case TBlock(entries):
+				entries;
+			case TArrayDecl(values) if (values.length == 0):
+				[];
+			case _:
+				Context.error("Rails controller lifecycle must be a Haxe block: `static final lifecycle = { beforeAction(...); rescueFrom(...); }`.", unwrapped.pos);
+				[];
+		}
+	}
+
+	static function railsControllerLifecycleDecl(expr:TypedExpr):{kind:String, method:String, only:Array<String>, except:Array<String>, exceptions:Array<String>} {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall(callee, params) if (isRailsControllerLifecycleMarker(callee, "filter") && params.length == 4):
+				var kind = railsControllerLifecycleStringValue(params[0], "filter kind");
+				var method = railsControllerLifecycleStringValue(params[1], "filter method");
+				{
+					kind: kind,
+					method: method,
+					only: railsControllerLifecycleStringArray(params[2], "only"),
+					except: railsControllerLifecycleStringArray(params[3], "except"),
+					exceptions: []
+				};
+			case TCall(callee, params) if (isRailsControllerLifecycleMarker(callee, "rescue") && params.length == 2):
+				{
+					kind: "rescue_from",
+					method: railsControllerLifecycleStringValue(params[0], "rescue method"),
+					only: [],
+					except: [],
+					exceptions: railsControllerLifecycleStringArray(params[1], "exceptions")
+				};
+			case _:
+				Context.error("Rails controller lifecycle entries must be produced by rails.macros.ControllerDsl declarations.", expr.pos);
+				{kind: "", method: "", only: [], except: [], exceptions: []};
+		}
+	}
+
+	static function isRailsControllerLifecycleMarker(expr:TypedExpr, name:String):Bool {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FStatic(classRef, fieldRef)):
+				fullTypeName(classRef.get().pack, classRef.get().name) == "rails.action_controller.LifecycleDecl"
+					&& fieldRef.get().name == name;
+			case _:
+				false;
+		}
+	}
+
+	static function railsControllerLifecycleOptions(decl:{kind:String, method:String, only:Array<String>, except:Array<String>, exceptions:Array<String>}):String {
+		var options:Array<String> = [];
+		if (decl.only.length > 0) {
+			options.push("only: [" + [for (action in decl.only) rubySymbolLiteral(RubyNaming.toMethodName(action))].join(", ") + "]");
+		}
+		if (decl.except.length > 0) {
+			options.push("except: [" + [for (action in decl.except) rubySymbolLiteral(RubyNaming.toMethodName(action))].join(", ") + "]");
+		}
+		return options.length == 0 ? "" : ", " + options.join(", ");
+	}
+
+	static function railsControllerLifecycleStringValue(expr:TypedExpr, name:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)): value;
+			case _:
+				Context.error('Rails controller lifecycle "$name" must be a string marker value.', expr.pos);
+				"";
+		}
+	}
+
+	static function railsControllerLifecycleStringArray(expr:TypedExpr, name:String):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				[for (value in values) railsControllerLifecycleStringArrayValue(value, name)];
+			case _:
+				Context.error('Rails controller lifecycle "$name" must be an array marker value.', expr.pos);
+				[];
+		}
+	}
+
+	static function railsControllerLifecycleStringArrayValue(expr:TypedExpr, name:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)): value;
+			case _:
+				Context.error('Rails controller lifecycle field "$name" must contain only string carrier values.', expr.pos);
+				"";
+		}
 	}
 
 	static function railsControllerFilterLines(funcFields:Array<ClassFuncData>):Array<String> {

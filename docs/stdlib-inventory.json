@@ -279,6 +279,14 @@
       "reason": "Typed Rails params/form scope key generated from model metadata so strong params can validate field refs against the intended ActiveRecord model."
     },
     {
+      "id": "std.rails.active_record_record_not_found",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/RecordNotFound.hx",
+      "surface": "rails.active_record.RecordNotFound",
+      "reason": "Typed extern for ActiveRecord::RecordNotFound usable from the controller lifecycle rescue DSL."
+    },
+    {
       "id": "std.rails.model_macro",
       "owner": "std",
       "status": "implemented",
@@ -381,6 +389,38 @@
       "path": "std/rails/action_controller/Responder.hx",
       "surface": "rails.action_controller.Responder",
       "reason": "Typed Rails respond_to format collector with block-checked html/json/turbo_stream/xml/any responders."
+    },
+    {
+      "id": "std.rails.action_controller_lifecycle_decl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/LifecycleDecl.hx",
+      "surface": "rails.action_controller.LifecycleDecl",
+      "reason": "Typed marker calls emitted by ControllerDsl macros and erased by the Ruby compiler into Rails class macros."
+    },
+    {
+      "id": "std.rails.action_controller_parameter_missing",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/ParameterMissing.hx",
+      "surface": "rails.action_controller.ParameterMissing",
+      "reason": "Typed extern for ActionController::ParameterMissing usable from the controller lifecycle rescue DSL."
+    },
+    {
+      "id": "std.rails.action_controller_invalid_authenticity_token",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/InvalidAuthenticityToken.hx",
+      "surface": "rails.action_controller.InvalidAuthenticityToken",
+      "reason": "Typed extern for ActionController::InvalidAuthenticityToken usable from the controller lifecycle rescue DSL."
+    },
+    {
+      "id": "std.rails.controller_dsl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/ControllerDsl.hx",
+      "surface": "rails.macros.ControllerDsl",
+      "reason": "Expression macros for contextual Rails controller lifecycle declarations using typed method/action/exception references."
     },
     {
       "id": "std.rails.action_mailer",

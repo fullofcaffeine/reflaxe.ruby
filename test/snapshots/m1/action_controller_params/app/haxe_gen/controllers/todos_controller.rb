@@ -6,6 +6,7 @@ module Controllers
     before_action :authenticate_user, only: [:create]
     after_action :audit_response, only: [:create]
     before_action :load_tenant, except: [:index]
+    rescue_from ActiveRecord::RecordNotFound, with: :not_found
     def initialize()
       super()
     end
@@ -17,6 +18,9 @@ module Controllers
     end
     def load_tenant()
       path__hx0 = self.request().path()
+    end
+    def not_found(e__hx0)
+      self.render(plain: "Todo not found", status: :not_found)
     end
     def create()
       gthis__hx0 = self
@@ -37,6 +41,9 @@ module Controllers
         format__hx0.json() { gthis__hx0.render(json: attrs__hx0, status: :created) }
       end
       self.head(:no_content)
+    end
+    def index()
+      nil
     end
   end
 end

@@ -61,7 +61,7 @@ Unsafe boundary policy is tracked in
 | ActionController surface | `rails.action_controller.Base` | Implemented |
 | Strong params macro | `ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title], {metadata: ["source"], tags: []})` | Typed field-ref validation and nested permit specs implemented |
 | Controller request/response facades | `request().requestMethod()`, `request().format().json()`, `response().status()` | Initial typed extern facade slice |
-| Controller filters | `@:beforeAction({only: ["create"]}) function authenticateUser()` | Initial typed method-backed filter slice |
+| Controller lifecycle | `static final lifecycle = { beforeAction(authenticateUser, {only: [create]}); rescueFrom(RecordNotFound, notFound); }` | Initial contextual lifecycle DSL for filters and `rescue_from`; legacy method metadata remains compatibility-only |
 | Controller stores | `flash().set("notice", "...")`, `session().get("key")`, `cookies().delete("key")` | Initial typed flash/session/cookies store slice |
 | Controller response statuses | `head(Status.noContent)`, `render({json: data, status: Status.created})` | Initial typed status-token slice lowering to Rails symbols |
 | Controller respond_to | `respondTo(function(format) { format.html(...); format.json(...); })` | Initial typed format collector slice |

@@ -99,6 +99,8 @@ module HXRuby
           "",
           "@:railsController",
           "class #{@controller_name} extends rails.action_controller.Base {",
+          "\tstatic final lifecycle = [];",
+          "",
           "\tpublic function index() {",
           "\t\tvar #{@table_name} = #{@model_name}.where({});",
           "\t\trender({json: #{@table_name}});",

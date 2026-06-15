@@ -29,6 +29,8 @@ typedef TodoIndexLocals = {
 // params, route helpers, and `render`/`redirect_to`.
 @:railsController
 class TodosController extends rails.action_controller.Base {
+	static final lifecycle = [];
+
 	public function index() {
 		var todos = Todo.incomplete().includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray();
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {

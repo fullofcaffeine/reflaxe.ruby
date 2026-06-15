@@ -59,9 +59,11 @@ for (const expected of [
   /before_action :authenticate_user, only: \[:create\]/,
   /after_action :audit_response, only: \[:create\]/,
   /before_action :load_tenant, except: \[:index\]/,
+  /rescue_from ActiveRecord::RecordNotFound, with: :not_found/,
   /def authenticate_user\(\)/,
   /def audit_response\(\)/,
   /def load_tenant\(\)/,
+  /def not_found\(e__hx\d+\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, \{metadata: \[:source, :priority\]\}, \{tags: \[\]\}\]\)/,
   /request_method__hx\d+ = self\.request\(\)\.request_method\(\)/,
   /request_path__hx\d+ = self\.request\(\)\.path\(\)/,
@@ -147,6 +149,74 @@ if (invalidRequestFormat == null || invalidRequestFormat.status === 0) {
   console.error("Expected invalid ActionController request format compile to fail.");
   process.exit(1);
 }
+
+const invalidLifecycleMissing = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidLifecycleMissingMain",
+  allowFailure: true,
+});
+if (invalidLifecycleMissing == null || invalidLifecycleMissing.status === 0) {
+  console.error("Expected missing ActionController lifecycle compile to fail.");
+  process.exit(1);
+}
+if (!/must declare `static final lifecycle/.test(invalidLifecycleMissing.stderr + invalidLifecycleMissing.stdout)) {
+  process.stdout.write(invalidLifecycleMissing.stdout);
+  process.stderr.write(invalidLifecycleMissing.stderr);
+  console.error("Missing ActionController lifecycle failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidLifecycleHandler = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidLifecycleHandlerMain",
+  allowFailure: true,
+});
+if (invalidLifecycleHandler == null || invalidLifecycleHandler.status === 0) {
+  console.error("Expected invalid ActionController lifecycle handler compile to fail.");
+  process.exit(1);
+}
+if (!/missing controller method|before_action references/.test(invalidLifecycleHandler.stderr + invalidLifecycleHandler.stdout)) {
+  process.stdout.write(invalidLifecycleHandler.stdout);
+  process.stderr.write(invalidLifecycleHandler.stderr);
+  console.error("Invalid ActionController lifecycle handler failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidLifecycleAction = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidLifecycleActionMain",
+  allowFailure: true,
+});
+if (invalidLifecycleAction == null || invalidLifecycleAction.status === 0) {
+  console.error("Expected invalid ActionController lifecycle action compile to fail.");
+  process.exit(1);
+}
+if (!/missing controller action/.test(invalidLifecycleAction.stderr + invalidLifecycleAction.stdout)) {
+  process.stdout.write(invalidLifecycleAction.stdout);
+  process.stderr.write(invalidLifecycleAction.stderr);
+  console.error("Invalid ActionController lifecycle action failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidLifecycleContents = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidLifecycleContentsMain",
+  allowFailure: true,
+});
+if (invalidLifecycleContents == null || invalidLifecycleContents.status === 0) {
+  console.error("Expected malformed ActionController lifecycle contents compile to fail.");
+  process.exit(1);
+}
+if (!/lifecycle entries must be produced|lifecycle must be a Haxe block/.test(invalidLifecycleContents.stderr + invalidLifecycleContents.stdout)) {
+  process.stdout.write(invalidLifecycleContents.stdout);
+  process.stderr.write(invalidLifecycleContents.stderr);
+  console.error("Malformed ActionController lifecycle contents failed for an unexpected reason.");
+  process.exit(1);
+}
 if (!/RequestFormat|String|Cannot unify/.test(invalidRequestFormat.stderr + invalidRequestFormat.stdout)) {
   process.stdout.write(invalidRequestFormat.stdout);
   process.stderr.write(invalidRequestFormat.stderr);
@@ -227,6 +297,100 @@ function writeInvalidFixtures() {
     "\t\tvar controller = new controllers.TodosController();",
     "\t\tvar format:String = controller.request().format();",
     "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidLifecycleMissingMain.hx"), [
+    "import invalid_controllers.MissingLifecycleController;",
+    "class InvalidLifecycleMissingMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller:MissingLifecycleController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidLifecycleHandlerMain.hx"), [
+    "import invalid_controllers.BadLifecycleHandlerController;",
+    "class InvalidLifecycleHandlerMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller:BadLifecycleHandlerController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidLifecycleActionMain.hx"), [
+    "import invalid_controllers.BadLifecycleActionController;",
+    "class InvalidLifecycleActionMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller:BadLifecycleActionController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidLifecycleContentsMain.hx"), [
+    "import invalid_controllers.BadLifecycleContentsController;",
+    "class InvalidLifecycleContentsMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller:BadLifecycleContentsController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  mkdirSync(join(invalidSourceDir, "invalid_controllers"), { recursive: true });
+  writeFileSync(join(invalidSourceDir, "invalid_controllers", "MissingLifecycleController.hx"), [
+    "package invalid_controllers;",
+    "",
+    "@:railsController",
+    "class MissingLifecycleController extends rails.action_controller.Base {",
+    "\tpublic function index() {}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "invalid_controllers", "BadLifecycleHandlerController.hx"), [
+    "package invalid_controllers;",
+    "",
+    "import rails.macros.ControllerDsl.*;",
+    "",
+    "@:railsController",
+    "class BadLifecycleHandlerController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = {",
+    "\t\tbeforeAction(missingHandler);",
+    "\t}",
+    "",
+    "\tpublic function index() {}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "invalid_controllers", "BadLifecycleActionController.hx"), [
+    "package invalid_controllers;",
+    "",
+    "import rails.macros.ControllerDsl.*;",
+    "",
+    "@:railsController",
+    "class BadLifecycleActionController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = {",
+    "\t\tbeforeAction(authenticateUser, {only: [missingAction]});",
+    "\t}",
+    "",
+    "\tfunction authenticateUser() {}",
+    "\tpublic function index() {}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "invalid_controllers", "BadLifecycleContentsController.hx"), [
+    "package invalid_controllers;",
+    "",
+    "@:railsController",
+    "class BadLifecycleContentsController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = {",
+    "\t\t\"not a lifecycle declaration\";",
+    "\t}",
+    "",
+    "\tpublic function index() {}",
     "}",
     "",
   ].join("\n"));

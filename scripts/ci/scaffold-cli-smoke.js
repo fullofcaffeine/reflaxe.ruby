@@ -61,6 +61,7 @@ assertIncludes("src_haxe/migrations/CreateTodos.hx", [
 ]);
 assertIncludes("src_haxe/controllers/TodosController.hx", [
   "class TodosController extends rails.action_controller.Base",
+  "static final lifecycle = [];",
   'ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"])',
   "redirectTo(Routes.todosPath())",
 ]);

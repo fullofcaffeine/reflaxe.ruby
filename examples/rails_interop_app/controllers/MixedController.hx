@@ -20,6 +20,8 @@ import views.HaxeShellView.HaxeShellLocals;
 // renders a Rails template/layout.
 @:railsController
 class MixedController extends rails.action_controller.Base {
+	static final lifecycle = [];
+
 	public function haxeShell() {
 		var surfaces = ["legacy ERB partial", "typed Haxe service", "RailsHx HHX partial"];
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(HaxeShellView) : Template<HaxeShellLocals>), {

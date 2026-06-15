@@ -37,6 +37,8 @@ import views.TodoIndexLocals;
 
 @:railsController
 class TodosController extends rails.action_controller.Base {
+	static final lifecycle = [];
+
 	public function index() {
 		var todos = Todo.incomplete()
 			.includes(Todo.a.user)
@@ -138,20 +140,50 @@ ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [User.f.name]);
 The first fails because the model has no such field. The second fails because
 the permitted field belongs to a different model than the typed params root.
 
-## Filters
+## Lifecycle
 
-Annotate the real Haxe callback method:
+Every `@:railsController` class must declare a static `lifecycle` field. Use an
+empty declaration list when the controller has no filters or rescues:
 
 ```haxe
-@:beforeAction({only: ["create"]})
+static final lifecycle = [];
+```
+
+Lifecycle declarations are contextual to `@:railsController`. Haxe does not
+allow arbitrary function calls directly in a class body, so RailsHx uses the
+closest valid-Haxe shape: a static block containing macro calls. The macro calls
+validate method, action, and exception references, then the Ruby compiler erases
+the field into Rails class macros.
+
+```haxe
+import rails.active_record.RecordNotFound;
+import rails.macros.ControllerDsl.*;
+
+static final lifecycle = {
+	beforeAction(authenticateUser, {only: [create]});
+	afterAction(auditResponse, {only: [create]});
+	beforeAction(loadTenant, {except: [index]});
+	rescueFrom(RecordNotFound, notFound);
+}
+
 function authenticateUser() {
 	var method = request().requestMethod();
 }
 
-@:afterAction({only: ["create"]})
 function auditResponse() {
 	var status = response().status();
 }
+
+function loadTenant() {
+	var path = request().path();
+}
+
+function notFound(e:RecordNotFound) {
+	render({plain: "Todo not found", status: Status.notFound});
+}
+
+public function create() {}
+public function index() {}
 ```
 
 Generated Ruby:
@@ -159,19 +191,23 @@ Generated Ruby:
 ```ruby
 before_action :authenticate_user, only: [:create]
 after_action :audit_response, only: [:create]
+before_action :load_tenant, except: [:index]
+rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
 def authenticate_user()
   method__hx0 = self.request().request_method()
 end
 ```
 
-This avoids stale callback strings: the callback method must exist because it is
-the annotated method. The compiler also rejects static filters, constructor
-filters, and filter methods with Haxe arguments.
+This avoids stale lifecycle strings. `authenticateUser`, `create`, and
+`RecordNotFound` are Haxe references, not unchecked strings. The compiler
+rejects missing callback methods, missing action names in `only`/`except`, and
+malformed lifecycle block contents. `rescueFromNamed("Ruby::Constant", handler)`
+exists as a checked interop escape when no typed exception extern exists yet.
 
 For lower-level Rails parity, `@:railsFilter("before_action", {except:
-["index"]})` is available, but prefer `@:beforeAction`, `@:afterAction`, and
-`@:aroundAction` when possible.
+["index"]})` and method metadata such as `@:beforeAction` remain available for
+compatibility, but new RailsHx examples and docs should prefer `lifecycle`.
 
 ## Stores, Request, Response, And Status
 
