@@ -6,6 +6,7 @@ class Main
   end
   def self.main()
     todo__hx0 = nil
+    haxe_authored_test__hx0 = TestHaxe::Models::TodoHaxeTest
     migration__hx0 = Migrations::CreateTodos
     update_migration__hx0 = Migrations::UpdateTodos
     controller__hx0 = nil
@@ -18,6 +19,7 @@ class Main
     view__hx0 = Views::TodoIndexView
     summary_view__hx0 = Views::TodoSummaryView
     puts(HXRuby.stringify((todo__hx0 == nil)))
+    puts(HXRuby.stringify((haxe_authored_test__hx0 != nil)))
     puts(HXRuby.stringify((migration__hx0 != nil)))
     puts(HXRuby.stringify((update_migration__hx0 != nil)))
     puts(HXRuby.stringify((controller__hx0 == nil)))

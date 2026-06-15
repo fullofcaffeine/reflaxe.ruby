@@ -68,27 +68,29 @@ package test.models;
 
 import rails.test.ModelTestCase;
 import rails.test.Assert.*;
+import rails.test.Dsl.*;
 import models.Todo;
 import models.User;
 
 @:railsTest("models/todo_test")
 class TodoTest extends ModelTestCase {
-	@:test("incomplete returns incomplete todos")
-	public function incompleteReturnsIncompleteTodos():Void {
-		var user = User.create({name: "owner"});
-		Todo.create({title: "ship ruby", isCompleted: false, user: user});
-		Todo.create({title: "done", isCompleted: true, user: user});
+	@:railsTests
+	static function define():Void {
+		test("incomplete returns incomplete todos", () -> {
+			var user = User.create({name: "owner"});
+			Todo.create({title: "ship ruby", isCompleted: false, user: user});
+			Todo.create({title: "done", isCompleted: true, user: user});
 
-		assertEqual(["ship ruby"], Todo.incomplete().pluck(Todo.f.title));
-	}
+			assertEqual(["ship ruby"], Todo.incomplete().pluck(Todo.f.title));
+		});
 
-	@:test("validates required title")
-	public function validatesRequiredTitle():Void {
-		var user = User.create({name: "owner"});
-		var todo = Todo.build({user: user, notes: "missing title", isCompleted: false});
+		test("validates required title", () -> {
+			var user = User.create({name: "owner"});
+			var todo = Todo.build({user: user, notes: "missing title", isCompleted: false});
 
-		assertFalse(todo.valid());
-		assertIncludes(todo.errors().get(Todo.f.title), "can't be blank");
+			assertFalse(todo.valid());
+			assertIncludes(todo.errors().get(Todo.f.title), "can't be blank");
+		});
 	}
 }
 ```
@@ -117,6 +119,27 @@ class TodoTest < ActiveSupport::TestCase
 end
 ```
 
+`@:railsTests static function define():Void` is the canonical RailsHx test
+declaration host. It is legal Haxe, editor-friendly, and compiler-erased: the
+function itself is never emitted. Top-level `rails.test.Dsl.test/setup/teardown`
+calls inside it become Rails-native Minitest blocks.
+
+The older method form remains supported for compatibility and for users who
+prefer one Haxe function per test:
+
+```haxe
+@:railsTest("models/todo_test")
+class TodoTest extends ModelTestCase {
+	@:test("validates required title")
+	public function validatesRequiredTitle():Void {
+		// typed Haxe body
+	}
+}
+```
+
+Helper methods in `@:railsTest` classes are not tests unless explicitly marked
+with `@:test`; this keeps ordinary helper extraction safe.
+
 The Haxe API should prefer Rails-shaped concepts but typed RailsHx refs:
 
 - `Todo.f.title` instead of `:title` where the field is model-owned.
@@ -139,25 +162,27 @@ import routes.Routes;
 
 @:railsTest("controllers/todos_controller_test")
 class TodosControllerTest extends RequestTestCase {
-	@:test("create permits typed params and redirects")
-	public function createPermitsTypedParams():Void {
-		var user = User.create({name: "owner"});
+	@:railsTests
+	static function define():Void {
+		test("create permits typed params and redirects", () -> {
+			var user = User.create({name: "owner"});
 
-		assertDifference(function() return Todo.count(), 1, function() {
-			post(Routes.todosPath(), {
-				todo: Todo.params({
-					title: "from params",
-					notes: "typed notes",
-					isCompleted: true,
-					userId: user.id
-				})
+			assertDifference(function() return Todo.count(), 1, function() {
+				post(Routes.todosPath(), {
+					todo: Todo.params({
+						title: "from params",
+						notes: "typed notes",
+						isCompleted: true,
+						userId: user.id
+					})
+				});
 			});
-		});
 
-		assertRedirectedTo(Routes.todosPath());
-		var todo = Todo.order(Todo.f.id.asc()).last();
-		assertEqual("from params", todo.title);
-		assertFalse(todo.isCompleted);
+			assertRedirectedTo(Routes.todosPath());
+			var todo = Todo.order(Todo.f.id.asc()).last();
+			assertEqual("from params", todo.title);
+			assertFalse(todo.isCompleted);
+		});
 	}
 }
 ```
@@ -276,9 +301,12 @@ forms while Rails still executes ordinary test files.
 ## Implementation Plan
 
 1. Add design-only examples and snapshots for Haxe-authored Rails test output.
-2. Implement minimal `rails.test.Assert` and `rails.test.ModelTestCase`.
+2. Implement minimal `rails.test.Assert`, `rails.test.Dsl`, and
+   `rails.test.ModelTestCase`.
 3. Implement `@:railsTest("path")` lowering to Minitest files under
-   `test/generated`.
+   `test/generated`, with `@:railsTests static function define():Void` as the
+   canonical compiler-erased declaration host and explicit `@:test` methods as
+   compatibility.
 4. Add request-test helpers: `get`, `post`, `assertResponse`,
    `assertRedirectedTo`, `assertDifference`, and `assertNoDifference`.
 5. Add todoapp Haxe-authored tests in parallel with the existing Ruby fixtures.

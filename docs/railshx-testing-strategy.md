@@ -108,6 +108,11 @@ improves developer experience:
 - Haxe-authored Ruby/Rails tests can reuse typed model fields, route helpers,
   params contracts, template refs, and generated constants before lowering to
   ordinary Ruby/Rails test files.
+- The canonical Rails test authoring shape is a compiler-erased
+  `@:railsTests static function define():Void` declaration host with top-level
+  `test("...", () -> { ... })` calls. `@:test` methods remain a compatibility
+  form, but helper methods must not be emitted as tests unless explicitly
+  annotated.
 - Haxe-authored JS/browser tests can reuse shared Haxe DOM hooks, Turbo event
   contracts, route constants, and typed client payloads before lowering to
   Playwright/Vitest-compatible JavaScript or TypeScript.

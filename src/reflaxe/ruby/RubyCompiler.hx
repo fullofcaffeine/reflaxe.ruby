@@ -86,6 +86,13 @@ typedef RailsEmittedMigration = {
 	foreignKeys:Array<RailsMigrationForeignKeyRef>
 }
 
+typedef RailsTestDecl = {
+	kind:String,
+	description:Null<String>,
+	body:TypedExpr,
+	pos:Position
+}
+
 typedef RubyMetadataField = {
 	field:String,
 	expr:haxe.macro.Expr
@@ -112,6 +119,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	var emittedRubyPaths:Array<String> = [];
 	var emittedAppRubyPaths:Array<String> = [];
 	var emittedRailsMigrationPaths:Map<String, String> = [];
+	var emittedRailsTestPaths:Map<String, String> = [];
 	var emittedRailsMigrations:Array<RailsEmittedMigration> = [];
 	var requireRegistry:RequireRegistry = new RequireRegistry();
 	var buildContext:RubyBuildContext;
@@ -137,6 +145,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		buildContext = RubyBuildContextResolver.resolve();
 		emittedRubyPaths = [];
 		emittedAppRubyPaths = [];
+		emittedRailsMigrationPaths = [];
+		emittedRailsTestPaths = [];
+		emittedRailsMigrations = [];
 		requireRegistry = new RequireRegistry();
 		didEmitMain = false;
 		needsDataDefine = false;
@@ -188,6 +199,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	public function compileClassImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Null<RubyFile> {
+		if (hasMeta(classType.meta, ":railsTest")) {
+			emitRailsTestArtifact(classType, funcFields);
+			return null;
+		}
 		setRubyOutputPath(classType.pack, classType.name);
 		var moduleRequires = collectModuleRequires(classType.meta);
 		if (hasMeta(classType.meta, ":railsMigration")) {
@@ -526,6 +541,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return RubyRawStatement("def initialize(*args, **kwargs)\n  args = args + [kwargs] unless kwargs.empty?\n  super(*args)\nend");
 		}
 		return compileMethod(field);
+	}
+
+	static function compileRailsTestMethod(field:ClassFuncData):RubyStatement {
+		return withLocalNameScope([for (arg in field.args) if (arg.tvar != null) arg.tvar], () -> {
+			return RubyRawStatement(renderRailsTestBlock("test", railsTestDescription(field), field.expr));
+		});
+	}
+
+	static function railsTestDescription(field:ClassFuncData):String {
+		var label = metaStringValue(field.field.meta, ":test");
+		if (label != null) {
+			return label;
+		}
+		var name = RubyNaming.toMethodName(field.field.name);
+		if (StringTools.startsWith(name, "test_")) {
+			name = name.substr("test_".length);
+		}
+		return StringTools.replace(name, "_", " ");
 	}
 
 	static function compileRailsModelScope(field:ClassFuncData, classType:ClassType):String {
@@ -1681,6 +1714,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (info == null) {
 			return null;
 		}
+		var railsTestAssertion = compileRailsTestAssertionCall(info, params);
+		if (railsTestAssertion != null) {
+			return railsTestAssertion;
+		}
+		if (info.owner == "rails.test.Dsl" && (info.name == "test" || info.name == "setup" || info.name == "teardown")) {
+			Context.error('rails.test.Dsl.${info.name} is a compiler-erased RailsHx test declaration and can only be used at top level inside @:railsTests.',
+				callee.pos);
+			return RubyNil;
+		}
 		var actionCableStaticCall = compileActionCableStaticCall(info, params);
 		if (actionCableStaticCall != null) {
 			return actionCableStaticCall;
@@ -1757,6 +1799,49 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(RubyLocal("HXRuby"), "url_encode", [compileParam(params, 0)]);
 			case ["StringTools", "urlDecode"]:
 				RubyCall(RubyLocal("HXRuby"), "url_decode", [compileParam(params, 0)]);
+			case _:
+				null;
+		}
+	}
+
+	static function compileRailsTestAssertionCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (info.owner != "rails.test.Assert") {
+			return null;
+		}
+		var args = [for (param in params) compileExpr(param)];
+		return switch (info.name) {
+			case "equal":
+				RubyCall(null, "assert_equal", args);
+			case "assertEqual":
+				RubyCall(null, "assert_equal", args);
+			case "notEqual":
+				RubyCall(null, "assert_not_equal", args);
+			case "assertNotEqual":
+				RubyCall(null, "assert_not_equal", args);
+			case "truthy":
+				RubyCall(null, "assert", args);
+			case "assertTrue":
+				RubyCall(null, "assert", args);
+			case "falsy":
+				RubyCall(null, "assert_not", args);
+			case "assertFalse":
+				RubyCall(null, "assert_not", args);
+			case "includes":
+				RubyCall(null, "assert_includes", args);
+			case "assertIncludes":
+				RubyCall(null, "assert_includes", args);
+			case "notIncludes":
+				RubyCall(null, "assert_not_includes", args);
+			case "assertNotIncludes":
+				RubyCall(null, "assert_not_includes", args);
+			case "nilValue":
+				RubyCall(null, "assert_nil", args);
+			case "assertNil":
+				RubyCall(null, "assert_nil", args);
+			case "notNil":
+				RubyCall(null, "assert_not_nil", args);
+			case "assertNotNil":
+				RubyCall(null, "assert_not_nil", args);
 			case _:
 				null;
 		}
@@ -1854,6 +1939,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (fieldAccessRawName(access) == "whereNotNull" && params.length == 1):
 				var criteria = activeRecordFieldNilCriteriaArg(params[0]);
 				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
+			case TField(target, access) if ((fieldAccessRawName(access) == "create" || fieldAccessRawName(access) == "createBang" || fieldAccessRawName(access) == "build") && params.length == 1):
+				var attrs = activeRecordCriteriaArg(params[0]);
+				if (attrs == null) {
+					null;
+				} else {
+					var methodName = switch (fieldAccessRawName(access)) {
+						case "createBang": "create!";
+						case "build": "new";
+						case _: "create";
+					}
+					RubyCall(compileExpr(target), methodName, [RubyRawExpr(attrs)]);
+				}
 			case TField(target, access) if ((fieldAccessRawName(access) == "findBy" || fieldAccessRawName(access) == "find_by") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				criteria == null ? null : RubyCall(compileExpr(target), "find_by", [RubyRawExpr(criteria)]);
@@ -3887,6 +3984,204 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		setExtraFile(OutputPath.fromStr(railsTemplateOutputPath(templatePath)), normalizeGeneratedText(body));
 	}
 
+	function emitRailsTestArtifact(classType:ClassType, funcFields:Array<ClassFuncData>):Void {
+		if (!buildContext.railsMode) {
+			Context.error("@:railsTest requires -D reflaxe_ruby_rails.", classType.pos);
+			return;
+		}
+		var testPath = metaStringParam(classType.meta, ":railsTest", 0);
+		if (testPath == null) {
+			Context.error("@:railsTest expects a Rails test path string such as \"models/todo_haxe_test\".", classType.pos);
+			return;
+		}
+		validateRailsTestPath(testPath, classType.pos, "@:railsTest");
+		var outputPath = railsTestOutputPath(testPath);
+		if (emittedRailsTestPaths.exists(outputPath)) {
+			Context.error('@:railsTest emits duplicate test file ${outputPath}; first emitted by ${emittedRailsTestPaths.get(outputPath)}.', classType.pos);
+			return;
+		}
+		emittedRailsTestPaths.set(outputPath, fullTypeName(classType.pack, classType.name));
+
+		var body:Array<String> = [];
+		var testDescriptions = new Map<String, Position>();
+		var defineFields = [for (field in funcFields) if (hasMeta(field.field.meta, ":railsTests")) field];
+		if (defineFields.length > 1) {
+			Context.error("@:railsTest classes may define at most one @:railsTests declaration function.", defineFields[1].field.pos);
+			return;
+		}
+		if (defineFields.length == 1) {
+			for (decl in railsTestDeclsFromDefine(defineFields[0])) {
+				if (decl.kind == "test") {
+					validateRailsTestDescription(decl.description, decl.pos, testDescriptions);
+				}
+				body = body.concat(renderStatements([compileRailsTestDecl(decl)]));
+			}
+		}
+		for (field in funcFields) {
+			if (field.expr == null || field.isStatic || hasMeta(field.field.meta, ":rubyExternStub") || hasMeta(field.field.meta, ":railsTests")) {
+				continue;
+			}
+			if (!hasMeta(field.field.meta, ":test")) {
+				continue;
+			}
+			validateRailsTestMethod(field);
+			validateRailsTestDescription(railsTestDescription(field), field.field.pos, testDescriptions);
+			body = body.concat(renderStatements([compileRailsTestMethod(field)]));
+		}
+		if (body.length == 0) {
+			Context.error("@:railsTest classes must define at least one @:railsTests declaration function or @:test method.", classType.pos);
+			return;
+		}
+
+		var lines = [
+			"# Generated by RailsHx from @:railsTest.",
+			"require \"test_helper\"",
+			"",
+			"class " + RubyNaming.toConstantName(classType.name) + " < ActiveSupport::TestCase"
+		];
+		for (line in body) {
+			lines.push("  " + line);
+		}
+		lines.push("end");
+		setExtraFile(OutputPath.fromStr(outputPath), normalizeGeneratedText(lines.join("\n")));
+	}
+
+	static function validateRailsTestMethod(field:ClassFuncData):Void {
+		if (field.isStatic) {
+			Context.error("@:test methods inside @:railsTest must be instance methods. Use @:railsTests static function define():Void for the canonical DSL.",
+				field.field.pos);
+		}
+		if (field.args.length > 0) {
+			Context.error("@:test methods inside @:railsTest must not declare parameters.", field.field.pos);
+		}
+	}
+
+	static function railsTestDeclsFromDefine(field:ClassFuncData):Array<RailsTestDecl> {
+		if (field.field.name != "define") {
+			Context.error("@:railsTests must annotate `static function define():Void`. Use the canonical `define` host so RailsHx test declarations are easy to recognize.",
+				field.field.pos);
+			return [];
+		}
+		if (!field.isStatic) {
+			Context.error("@:railsTests must annotate a static declaration function.", field.field.pos);
+			return [];
+		}
+		if (field.args.length > 0) {
+			Context.error("@:railsTests declaration functions must not declare parameters.", field.field.pos);
+			return [];
+		}
+		if (field.expr == null) {
+			Context.error("@:railsTests declaration functions must have a body.", field.field.pos);
+			return [];
+		}
+		var entries = switch (unwrapTypedExpr(field.expr).expr) {
+			case TBlock(exprs): exprs;
+			case _: [field.expr];
+		}
+		var out:Array<RailsTestDecl> = [];
+		for (entry in entries) {
+			var decl = railsTestDeclFromExpr(entry);
+			if (decl == null) {
+				Context.error("@:railsTests functions may only contain top-level rails.test.Dsl.test/setup/teardown declarations. Move shared code into helpers or test bodies.",
+					entry.pos);
+			} else {
+				out.push(decl);
+			}
+		}
+		return out;
+	}
+
+	static function railsTestDeclFromExpr(expr:TypedExpr):Null<RailsTestDecl> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall(callee, params):
+				var info = staticCallInfo(callee);
+				if (info == null || info.owner != "rails.test.Dsl") {
+					null;
+				} else switch (info.name) {
+					case "test" if (params.length == 2):
+						var body = railsTestBodyParam(params[1], "test");
+						body == null ? null : {
+							kind: "test",
+							description: railsTestDescriptionParam(params[0], "test"),
+							body: body,
+							pos: expr.pos
+						};
+					case "setup" | "teardown" if (params.length == 1):
+						var body = railsTestBodyParam(params[0], info.name);
+						body == null ? null : {kind: info.name, description: null, body: body, pos: expr.pos};
+					case _:
+						Context.error('rails.test.Dsl.${info.name} has an invalid argument shape for @:railsTests.', expr.pos);
+						null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function railsTestDescriptionParam(expr:TypedExpr, name:String):Null<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)): value;
+			case _:
+				Context.error('rails.test.Dsl.$name description must be a literal string so RailsHx can generate deterministic Rails tests.', expr.pos);
+				null;
+		}
+	}
+
+	static function railsTestBodyParam(expr:TypedExpr, name:String):Null<TypedExpr> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TFunction(fn):
+				if (fn.args.length != 0) {
+					Context.error('rails.test.Dsl.$name body must be a zero-argument lambda.', expr.pos);
+					null;
+				} else {
+					fn.expr;
+				}
+			case _:
+				Context.error('rails.test.Dsl.$name body must be an inline zero-argument lambda, for example () -> { ... }.', expr.pos);
+				null;
+		}
+	}
+
+	static function validateRailsTestDescription(description:Null<String>, pos:Position, seen:Map<String, Position>):Void {
+		if (description == null) {
+			return;
+		}
+		if (description.length == 0 || StringTools.trim(description) != description) {
+			Context.error("RailsHx test descriptions must be non-empty strings without leading or trailing whitespace.", pos);
+			return;
+		}
+		if (description.indexOf("\n") != -1 || description.indexOf("\r") != -1 || description.indexOf("\t") != -1) {
+			Context.error("RailsHx test descriptions must stay on one line.", pos);
+			return;
+		}
+		if (seen.exists(description)) {
+			Context.error('Duplicate RailsHx test description "$description" in the same @:railsTest class.', pos);
+			return;
+		}
+		seen.set(description, pos);
+	}
+
+	static function compileRailsTestDecl(decl:RailsTestDecl):RubyStatement {
+		return withLocalNameScope([], () -> {
+			return RubyRawStatement(renderRailsTestBlock(decl.kind, decl.description, decl.body));
+		});
+	}
+
+	static function renderRailsTestBlock(kind:String, description:Null<String>, bodyExpr:TypedExpr):String {
+		var body = renderStatements(compileRubyBlockBody(bodyExpr));
+		var lines = switch (kind) {
+			case "test":
+				["test " + quoteRubyStringForCode(description == null ? "unnamed test" : description) + " do"];
+			case "setup" | "teardown":
+				[kind + " do"];
+			case _:
+				[kind + " do"];
+		}
+		appendIndentedLines(lines, body, 1);
+		lines.push("end");
+		return lines.join("\n");
+	}
+
 	function railsTemplateSourceBody(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Null<String> {
 		var source = metaStringParam(classType.meta, ":railsTemplate", 1);
 		if (source != null) {
@@ -4739,6 +5034,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "app/views/" + normalized;
 	}
 
+	static function railsTestOutputPath(path:String):String {
+		var normalized = normalizeRailsTestPath(path);
+		while (StringTools.startsWith(normalized, "/")) {
+			normalized = normalized.substr(1);
+		}
+		if (!StringTools.endsWith(normalized, ".rb")) {
+			normalized += ".rb";
+		}
+		return "test/generated/" + normalized;
+	}
+
 	static function normalizeRailsRenderPath(path:String):String {
 		var normalized = normalizeRailsTemplatePath(path);
 		if (StringTools.endsWith(normalized, ".html.erb")) {
@@ -4772,6 +5078,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function validateRailsTestPath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
+		var normalized = normalizeRailsTestPath(path);
+		if (normalized == "" || StringTools.startsWith(normalized, "/") || normalized.indexOf("..") != -1 || normalized.indexOf("//") != -1
+			|| path.indexOf("\\") != -1) {
+			Context.error(context + " path must be a safe Rails test path relative to test/generated.", pos);
+			return;
+		}
+		if (!StringTools.endsWith(normalized, "_test") && !StringTools.endsWith(normalized, "_test.rb")) {
+			Context.error(context + " path must end with _test or _test.rb so Rails/Minitest discovers it.", pos);
+			return;
+		}
+		for (segment in normalized.split("/")) {
+			if (segment == "" || segment == "." || segment == "..") {
+				Context.error(context + " path must not contain empty, '.', or '..' segments.", pos);
+				return;
+			}
+		}
+	}
+
 	static function validateTemplateComponentSlotName(slotName:String, pos:haxe.macro.Expr.Position, context:String):Void {
 		if (!~/^[A-Za-z_][A-Za-z0-9_]*$/.match(slotName)) {
 			Context.error(context + " slot name must be a safe Haxe/Ruby local identifier.", pos);
@@ -4779,6 +5104,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function normalizeRailsTemplatePath(path:String):String {
+		return StringTools.replace(path == null ? "" : StringTools.trim(path), "\\", "/");
+	}
+
+	static function normalizeRailsTestPath(path:String):String {
 		return StringTools.replace(path == null ? "" : StringTools.trim(path), "\\", "/");
 	}
 

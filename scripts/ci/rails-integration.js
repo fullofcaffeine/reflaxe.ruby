@@ -33,6 +33,7 @@ stage("ruby syntax", () => syntaxCheck([
   "config/initializers/hxruby_autoload.rb",
   "db/migrate/20260101000000_create_todos.rb",
   "db/migrate/20260101000001_update_todos.rb",
+  "test/generated/models/todo_haxe_test.rb",
   "test/models/todo_test.rb",
   "test/models/user_test.rb",
   "test/controllers/todos_controller_test.rb",
@@ -81,6 +82,9 @@ function materializeRailsApp() {
   copyTree(join(compiledDir, "app"), join(appDir, "app"));
   copyTree(join(compiledDir, "config"), join(appDir, "config"));
   copyTree(join(compiledDir, "db", "migrate"), join(appDir, "db", "migrate"));
+  if (existsSync(join(compiledDir, "test"))) {
+    copyTree(join(compiledDir, "test"), join(appDir, "test"));
+  }
 
   writeFile("Gemfile", `source "https://rubygems.org"
 

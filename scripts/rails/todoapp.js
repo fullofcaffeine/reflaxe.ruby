@@ -132,6 +132,7 @@ function materializeRailsApp() {
     join(appDir, "app", "javascript"),
     join(appDir, "app", "views", "controllers", "todos"),
     join(appDir, "config", "initializers", "hxruby_autoload.rb"),
+    join(appDir, "test", "generated"),
   ]) {
     rmSync(path, { force: true, recursive: true });
   }
@@ -140,6 +141,9 @@ function materializeRailsApp() {
   copyTree(join(compiledDir, "config"), join(appDir, "config"));
 
   copyTree(join(compiledDir, "db", "migrate"), join(appDir, "db", "migrate"));
+  if (existsSync(join(compiledDir, "test"))) {
+    copyTree(join(compiledDir, "test"), join(appDir, "test"));
+  }
 
   writeFile("Gemfile", `source "https://rubygems.org"
 

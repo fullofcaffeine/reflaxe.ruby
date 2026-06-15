@@ -58,6 +58,8 @@ class ModelMacro {
 		addOptionalStub(fields, "exists", criteriaType, macro : Bool, "criteria", "exists?", pos);
 		addNoArgStub(fields, "count", macro : Int, pos);
 		addStub(fields, "create", macro : Dynamic, selfType, pos);
+		addStub(fields, "createBang", macro : Dynamic, selfType, pos);
+		addStub(fields, "build", macro : Dynamic, selfType, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "last", nullableSelf, pos);
 		addPluckStub(fields, selfType, pos);
