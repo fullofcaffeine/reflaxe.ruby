@@ -4,6 +4,8 @@ This design locks the v1 direction for typed ActiveRecord multi-field
 projection and grouped counts. It follows the existing RailsHx query contract:
 Haxe authoring stays typed, generated Ruby stays Rails-shaped, and field
 identity flows through generated `Field<TModel, TValue>` refs.
+For the underlying expression/predicate/Arel boundary, see
+[RailsHx Query Expression Design](railshx-query-expression-design.md).
 
 ## Goals
 

@@ -9,6 +9,7 @@ const requiredDocs = [
   "docs/railshx-sql-string-policy.md",
   "docs/railshx-typed-api-production-gap-audit.md",
   "docs/railshx-escape-hatch-security-audit.md",
+  "docs/railshx-query-expression-design.md",
   "AGENTS.md",
 ];
 
@@ -36,6 +37,19 @@ for (const expected of [
 ]) {
   if (!policy.includes(expected)) {
     fail(`SQL/string policy doc missing required content: ${expected}`);
+  }
+}
+
+const expressionDesign = readFileSync(join(root, "docs", "railshx-query-expression-design.md"), "utf8");
+for (const expected of [
+  "Expr<TModel, TValue>",
+  "Predicate<TModel>",
+  "Arel is a generated Ruby backend detail",
+  "Sql.unsafe",
+  "haxe.ruby-6ri",
+]) {
+  if (!expressionDesign.includes(expected)) {
+    fail(`Query expression design doc missing required content: ${expected}`);
   }
 }
 

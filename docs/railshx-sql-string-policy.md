@@ -55,6 +55,9 @@ The approved path is:
   `Sql.raw(...)` or `Sql.fragment(...)`, document why a typed builder is not
   sufficient, and cover it with strict-boundary tests.
 
+For the typed expression/Arel lowering contract, see
+[RailsHx Query Expression Design](railshx-query-expression-design.md).
+
 ## Surface Classification
 
 | Surface | Default class | Approved default | Escape hatch policy |

@@ -514,6 +514,8 @@ app code uses builders such as `Expr.field(Todo.f.id)` and
 `Models::Todo.arel_table[:title].lower`. `Expr.lower(...)` only accepts
 `String` fields from the owning model, so `Expr.lower(Todo.f.id)` and
 `Todo.order(Expr.lower(User.f.name).asc())` fail during Haxe compilation.
+For the design contract and future aggregate/having direction, see
+[RailsHx Query Expression Design](railshx-query-expression-design.md).
 
 `whereExpr(predicate)` and `whereNotExpr(predicate)` accept
 `Predicate<TModel>` values produced by typed expression methods:
