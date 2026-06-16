@@ -3,10 +3,29 @@ package rails.migration;
 typedef ColumnOptions<T> = {
 	@:optional var nullable:Bool;
 	@:optional var defaultValue:T;
+	@:optional var limit:Int;
+}
+
+typedef DecimalColumnOptions = {
+	@:optional var nullable:Bool;
+	@:optional var defaultValue:Float;
+	@:optional var precision:Int;
+	@:optional var scale:Int;
 }
 
 typedef IndexOptions = {
 	@:optional var unique:Bool;
+}
+
+typedef ReferenceOptions = {
+	@:optional var nullable:Bool;
+	@:optional var foreignKey:Bool;
+	@:optional var index:Bool;
+	@:optional var polymorphic:Bool;
+}
+
+typedef CheckConstraintOptions = {
+	var name:String;
 }
 
 typedef ForeignKeyOptions = {
@@ -28,6 +47,13 @@ enum MigrationColumn {
 	IntegerColumn(options:ColumnOptions<Int>);
 	BooleanColumn(options:ColumnOptions<Bool>);
 	FloatColumn(options:ColumnOptions<Float>);
+	DecimalColumn(options:DecimalColumnOptions);
+}
+
+enum CreateTableItem {
+	Column(name:String, column:MigrationColumn);
+	Reference(name:String, options:ReferenceOptions);
+	Index(columns:Array<String>, options:IndexOptions);
 }
 
 enum MigrationOperation {
@@ -39,13 +65,27 @@ enum MigrationOperation {
 		the referenced `@:railsModel` metadata. Use `externalTables` for deliberate
 		interop with Rails-owned tables that Haxe does not own.
 	**/
+	CreateTable(table:String, options:{
+		var columns:Array<CreateTableItem>;
+		@:optional var timestamps:Bool;
+	});
 	AddColumn(table:String, name:String, column:MigrationColumn);
 	RemoveColumn(table:String, name:String);
 	ChangeColumn(table:String, name:String, column:MigrationColumn);
 	AddIndex(table:String, column:String, options:IndexOptions);
+	AddCompositeIndex(table:String, columns:Array<String>, options:IndexOptions);
 	RemoveIndex(table:String, column:String);
+	AddReference(table:String, name:String, options:ReferenceOptions);
+	RemoveReference(table:String, name:String, options:ReferenceOptions);
 	AddForeignKey(fromTable:String, toTable:String, options:ForeignKeyOptions);
 	RemoveForeignKey(fromTable:String, toTable:String);
+	RenameColumn(table:String, from:String, to:String);
+	RenameTable(from:String, to:String);
+	ChangeNull(table:String, name:String, nullable:Bool);
+	AddCheckConstraint(table:String, expression:String, options:CheckConstraintOptions);
+	RemoveCheckConstraint(table:String, name:String);
 	DropTable(table:String);
+	ExecuteSql(sql:String, rollback:String);
+	DataMigration(up:String, down:String);
 	Reversible(up:Array<MigrationOperation>, down:Array<MigrationOperation>);
 }

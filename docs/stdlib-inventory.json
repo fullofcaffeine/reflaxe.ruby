@@ -916,7 +916,7 @@
       "status": "implemented",
       "path": "std/rails/migration/MigrationOperation.hx",
       "surface": "rails.migration.MigrationOperation",
-      "reason": "Typed RailsHx migration operation DSL for alter/drop/index/foreign-key/reversible ActiveRecord migration statements."
+      "reason": "Typed RailsHx migration operation DSL for production snapshot, alter/drop/index/reference/check-constraint/rename/change-null/foreign-key/reversible ActiveRecord migration statements."
     },
     {
       "id": "std.rails.routing_route_param",

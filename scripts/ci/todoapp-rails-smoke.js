@@ -49,6 +49,8 @@ const migrationUnknownOptionSourceDir = join(root, "test", ".generated", "todoap
 const migrationUnknownOptionOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_option_out");
 const migrationBadOperationSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_operation_src");
 const migrationBadOperationOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_operation_out");
+const migrationUnsafeSqlSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_sql_src");
+const migrationUnsafeSqlOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_sql_out");
 const migrationDuplicateTimestampSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_timestamp_src");
 const migrationDuplicateTimestampOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_timestamp_out");
 const migrationForeignKeyOrderSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_foreign_key_order_src");
@@ -65,6 +67,8 @@ const migrationUnsafeExternalTableSourceDir = join(root, "test", ".generated", "
 const migrationUnsafeExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_external_table_out");
 const migrationDropTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_src");
 const migrationDropTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_out");
+const migrationSnapshotOpsSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_snapshot_ops_src");
+const migrationSnapshotOpsOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_snapshot_ops_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -129,6 +133,8 @@ rmSync(migrationUnknownOptionSourceDir, { force: true, recursive: true });
 rmSync(migrationUnknownOptionOutputDir, { force: true, recursive: true });
 rmSync(migrationBadOperationSourceDir, { force: true, recursive: true });
 rmSync(migrationBadOperationOutputDir, { force: true, recursive: true });
+rmSync(migrationUnsafeSqlSourceDir, { force: true, recursive: true });
+rmSync(migrationUnsafeSqlOutputDir, { force: true, recursive: true });
 rmSync(migrationDuplicateTimestampSourceDir, { force: true, recursive: true });
 rmSync(migrationDuplicateTimestampOutputDir, { force: true, recursive: true });
 rmSync(migrationForeignKeyOrderSourceDir, { force: true, recursive: true });
@@ -145,6 +151,8 @@ rmSync(migrationUnsafeExternalTableSourceDir, { force: true, recursive: true });
 rmSync(migrationUnsafeExternalTableOutputDir, { force: true, recursive: true });
 rmSync(migrationDropTableSourceDir, { force: true, recursive: true });
 rmSync(migrationDropTableOutputDir, { force: true, recursive: true });
+rmSync(migrationSnapshotOpsSourceDir, { force: true, recursive: true });
+rmSync(migrationSnapshotOpsOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
 
@@ -623,6 +631,7 @@ expectMigrationNonModelFailure();
 expectMigrationBadTimestampFailure();
 expectMigrationUnknownOptionFailure();
 expectMigrationBadOperationFailure();
+expectMigrationUnsafeSqlFailure();
 expectMigrationDuplicateTimestampFailure();
 expectMigrationForeignKeyOrderFailure();
 expectMigrationIrreversibleOperationFailure();
@@ -631,6 +640,7 @@ expectMigrationUnknownColumnFailure();
 expectMigrationExternalTableAllowed();
 expectMigrationUnsafeExternalTableFailure();
 expectMigrationDropTableReversibleOutput();
+expectMigrationSnapshotOperationsOutput();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -965,7 +975,7 @@ function expectMigrationUnknownOptionFailure() {
 }
 
 function expectMigrationBadOperationFailure() {
-  mkdirSync(join(migrationBadOperationSourceDir, "migrations"), { recursive: true });
+	mkdirSync(join(migrationBadOperationSourceDir, "migrations"), { recursive: true });
   writeFileSync(join(migrationBadOperationSourceDir, "InvalidBadOperationMigrationMain.hx"), [
     "import migrations.BadOperationMigration;",
     "",
@@ -1002,11 +1012,51 @@ function expectMigrationBadOperationFailure() {
     "InvalidBadOperationMigrationMain",
     "Bad-operation RailsHx migration compiled successfully.",
     "@:railsMigration AddColumn table must be a non-empty String literal"
-  );
+	);
+}
+
+function expectMigrationUnsafeSqlFailure() {
+	mkdirSync(join(migrationUnsafeSqlSourceDir, "migrations"), { recursive: true });
+	writeFileSync(join(migrationUnsafeSqlSourceDir, "InvalidUnsafeSqlMigrationMain.hx"), [
+		"import migrations.BadUnsafeSqlMigration;",
+		"",
+		"class InvalidUnsafeSqlMigrationMain {",
+		"\tstatic function main() {",
+		"\t\tvar migration:Class<BadUnsafeSqlMigration> = BadUnsafeSqlMigration;",
+		"\t\tSys.println(migration != null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	writeFileSync(join(migrationUnsafeSqlSourceDir, "migrations", "BadUnsafeSqlMigration.hx"), [
+		"package migrations;",
+		"",
+		"import rails.migration.Migration;",
+		"import rails.migration.MigrationOperation;",
+		"",
+		"@:railsMigration({",
+		"\ttimestamp: \"20260101000015\",",
+		"\tclassName: \"BadUnsafeSqlMigration\",",
+		"\tmodels: []",
+		"})",
+		"class BadUnsafeSqlMigration extends Migration {",
+		"\tpublic static final operations:Array<MigrationOperation> = [",
+		"\t\tExecuteSql(\"UPDATE todos SET title = 'x'\", \"\")",
+		"\t];",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidMigrationCompile(
+		migrationUnsafeSqlSourceDir,
+		migrationUnsafeSqlOutputDir,
+		"InvalidUnsafeSqlMigrationMain",
+		"Unsafe-SQL RailsHx migration compiled successfully.",
+		"@:railsMigration ExecuteSql expects non-empty literal up and rollback SQL strings."
+	);
 }
 
 function expectMigrationDuplicateTimestampFailure() {
-  mkdirSync(join(migrationDuplicateTimestampSourceDir, "migrations"), { recursive: true });
+	mkdirSync(join(migrationDuplicateTimestampSourceDir, "migrations"), { recursive: true });
   writeFileSync(join(migrationDuplicateTimestampSourceDir, "InvalidDuplicateTimestampMigrationMain.hx"), [
     "import migrations.BadDuplicateTimestampA;",
     "import migrations.BadDuplicateTimestampB;",
@@ -1403,6 +1453,101 @@ function expectMigrationDropTableReversibleOutput() {
   if (!migrationRuby.includes("drop_table :todos")) {
     console.error("Drop-table migration did not emit the expected reversible drop_table statement.");
     process.exit(1);
+  }
+}
+
+function expectMigrationSnapshotOperationsOutput() {
+  mkdirSync(join(migrationSnapshotOpsSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationSnapshotOpsSourceDir, "SnapshotOperationsMigrationMain.hx"), [
+    "import migrations.SnapshotOperationsMigration;",
+    "",
+    "class SnapshotOperationsMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<SnapshotOperationsMigration> = SnapshotOperationsMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationSnapshotOpsSourceDir, "migrations", "SnapshotOperationsMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "import rails.migration.MigrationOperation.CreateTableItem;",
+    "",
+    "// Demonstrates production snapshot migration operations. The migration owns",
+    "// explicit historical operations instead of deriving from mutable model",
+    "// metadata, which keeps old migrations stable as models evolve.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000014\",",
+    "\tclassName: \"SnapshotOperationsMigration\",",
+    "\tversion: \"8.1\",",
+    "\tmodels: []",
+    "})",
+    "class SnapshotOperationsMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tCreateTable(\"audit_events\", {",
+    "\t\t\tcolumns: [",
+    "\t\t\t\tColumn(\"title\", StringColumn({nullable: false, limit: 120})),",
+    "\t\t\t\tColumn(\"amount\", DecimalColumn({precision: 10, scale: 2})),",
+    "\t\t\t\tReference(\"user\", {nullable: false, foreignKey: true}),",
+    "\t\t\t\tIndex([\"user_id\", \"title\"], {unique: true})",
+    "\t\t\t],",
+    "\t\t\ttimestamps: true",
+    "\t\t}),",
+    "\t\tAddReference(\"audit_events\", \"account\", {index: false}),",
+    "\t\tAddCompositeIndex(\"audit_events\", [\"account_id\", \"title\"], {}),",
+    "\t\tChangeNull(\"audit_events\", \"title\", false),",
+    "\t\tAddCheckConstraint(\"audit_events\", \"amount >= 0\", {name: \"amount_non_negative\"}),",
+    "\t\tExecuteSql(\"UPDATE audit_events SET title = 'untitled' WHERE title IS NULL\", \"UPDATE audit_events SET title = NULL WHERE title = 'untitled'\"),",
+    "\t\tDataMigration(\"UPDATE audit_events SET amount = 0 WHERE amount IS NULL\", \"UPDATE audit_events SET amount = NULL WHERE amount = 0\"),",
+    "\t\tReversible([",
+    "\t\t\tRenameColumn(\"audit_events\", \"title\", \"headline\"),",
+    "\t\t\tRenameTable(\"audit_events\", \"audit_entries\"),",
+    "\t\t\tRemoveCheckConstraint(\"audit_entries\", \"amount_non_negative\"),",
+    "\t\t\tRemoveReference(\"audit_entries\", \"account\", {})",
+    "\t\t], [",
+    "\t\t\tAddReference(\"audit_entries\", \"account\", {}),",
+    "\t\t\tAddCheckConstraint(\"audit_entries\", \"amount >= 0\", {name: \"amount_non_negative\"}),",
+    "\t\t\tRenameTable(\"audit_entries\", \"audit_events\"),",
+    "\t\t\tRenameColumn(\"audit_events\", \"headline\", \"title\")",
+    "\t\t])",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  compileValidMigration(
+    migrationSnapshotOpsSourceDir,
+    migrationSnapshotOpsOutputDir,
+    "SnapshotOperationsMigrationMain"
+  );
+  const migrationRuby = readFileSync(join(migrationSnapshotOpsOutputDir, "db", "migrate", "20260101000014_snapshot_operations_migration.rb"), "utf8");
+  for (const expected of [
+    "class SnapshotOperationsMigration < ActiveRecord::Migration[8.1]",
+    "create_table :audit_events do |t|",
+    "t.string :title, null: false, limit: 120",
+    "t.decimal :amount, precision: 10, scale: 2",
+    "t.references :user, null: false, foreign_key: true",
+    "t.index [:user_id, :title], unique: true",
+    "t.timestamps",
+    "add_reference :audit_events, :account, index: false",
+    "add_index :audit_events, [:account_id, :title]",
+    "change_column_null :audit_events, :title, false",
+    "add_check_constraint :audit_events, \"amount >= 0\", name: \"amount_non_negative\"",
+    "execute \"UPDATE audit_events SET title = 'untitled' WHERE title IS NULL\"",
+    "execute \"UPDATE audit_events SET title = NULL WHERE title = 'untitled'\"",
+    "execute \"UPDATE audit_events SET amount = 0 WHERE amount IS NULL\"",
+    "execute \"UPDATE audit_events SET amount = NULL WHERE amount = 0\"",
+    "rename_column :audit_events, :title, :headline",
+    "rename_table :audit_events, :audit_entries",
+    "remove_check_constraint :audit_entries, name: \"amount_non_negative\"",
+    "remove_reference :audit_entries, :account",
+  ]) {
+    if (!migrationRuby.includes(expected)) {
+      console.error(`Snapshot operation migration missing expected line: ${expected}`);
+      process.exit(1);
+    }
   }
 }
 
