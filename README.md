@@ -4,7 +4,7 @@
 
 The current `0.1.0-beta.1` baseline supports executable Ruby smoke fixtures, shared `hxruby` runtime files and gem packaging, Ruby interop metadata, and a Rails MVP with typed ActiveRecord models, ActionController helpers, params macros, routes generation, and scaffold tooling.
 
-The project intentionally uses `0.x` beta versioning until the compiler and RailsHx framework layer are production-ready. Earlier `v1.x` GitHub releases/tags were an internal cadence and are retired from the public release line.
+The project intentionally uses `0.x` beta versioning until the compiler and RailsHx framework layer are production-ready.
 
 There are two first-class layers:
 
