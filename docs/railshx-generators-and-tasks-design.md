@@ -97,6 +97,82 @@ default. A future explicit install profile may configure Rails generator
 fallbacks, but gradual adoption depends on vanilla Rails generators remaining
 valid.
 
+## Model Generator Contract
+
+`hxruby:model` creates typed Haxe ActiveRecord source and, by default, delegates
+to `hxruby:migration` to create a production-safe create-table snapshot:
+
+```bash
+bin/rails generate hxruby:model Todo \
+  title:string! completed:boolean:index price:decimal{10,2} user:references! \
+  --validate title,presence \
+  --timestamp 20260616012000 \
+  --migration-version 8.1
+```
+
+The generated model is current API:
+
+```haxe
+package models;
+
+@:railsModel("todos")
+@:railsTimestamps
+class Todo extends rails.active_record.Base<Todo> {
+	@:railsColumn({nullable: false})
+	public var title:String;
+
+	@:railsColumn({index: true})
+	public var completed:Null<Bool>;
+
+	@:railsColumn({dbType: "decimal"})
+	public var price:Null<Float>;
+
+	@:railsColumn({nullable: false})
+	public var userId:Int;
+
+	@:belongsTo({foreignKey: "userId", optional: false})
+	public var user:rails.ActiveRecord.BelongsTo<User>;
+
+	@:validates({presence: true})
+	public var titleValidation:rails.ActiveRecord.Validation<String>;
+}
+```
+
+The generated migration is history:
+
+```haxe
+class CreateTodos extends Migration {
+	public static final operations:Array<MigrationOperation> = [
+		CreateTable("todos", {
+			columns: [
+				Column("title", StringColumn({nullable: false})),
+				Column("completed", BooleanColumn({})),
+				Index(["completed"], {}),
+				Column("price", DecimalColumn({precision: 10, scale: 2})),
+				Reference("user", {nullable: false, foreignKey: true})
+			],
+			timestamps: true
+		})
+	];
+}
+```
+
+This split is deliberate: users get a current typed model contract for
+relations, params, templates, and IntelliSense, while migration history remains
+an explicit snapshot that does not drift when the model later changes.
+
+Options:
+
+- `--skip-migration` writes only the typed model.
+- `--validate field,presence` and `--validate field,uniqueness` emit typed
+  `@:validates(...)` metadata against generated fields.
+- `--known-models models.User` is passed to the migration generator for
+  validation context when useful.
+- `--haxe-dir`, `--migration-dir`, `--package`, and `--migration-package`
+  customize source layout.
+- `--pretend` prints generated Haxe without writing.
+- `--force` follows the manifest/header-backed ownership rules.
+
 ## Migration Generator Contract
 
 Migrations are history. Models are current API.

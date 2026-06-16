@@ -87,6 +87,7 @@ end
 require "generators/hxruby/install/install_generator"
 require "generators/hxruby/routes/routes_generator"
 require "generators/hxruby/migration/migration_generator"
+require "generators/hxruby/model/model_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
 
@@ -120,6 +121,11 @@ begin
   migration.destination_root = temp
   migration.generate_migration
   assert(File.read(File.join(temp, "migration", "src_haxe", "migrations", "AddStatusToTodos.hx")).include?("AddColumn"), "migration generator did not write snapshot operation")
+
+  model = Hxruby::ModelGenerator.new(["Todo", "title:string!"], {"timestamp" => "20260101010300", "output" => "model", "validate" => ["title,presence"]})
+  model.destination_root = temp
+  model.generate_model
+  assert(File.read(File.join(temp, "model", "src_haxe", "models", "Todo.hx")).include?("@:validates({presence: true})"), "model generator did not write typed validation")
 
   adopt_root = File.join(temp, "adopt")
   FileUtils.mkdir_p(File.join(adopt_root, "app", "services"))
@@ -155,6 +161,7 @@ require "rails/generators"
 require "generators/hxruby/install/install_generator"
 require "generators/hxruby/routes/routes_generator"
 require "generators/hxruby/migration/migration_generator"
+require "generators/hxruby/model/model_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
 
@@ -162,6 +169,7 @@ expected = {
   Hxruby::InstallGenerator => "hxruby:install",
   Hxruby::RoutesGenerator => "hxruby:routes",
   Hxruby::MigrationGenerator => "hxruby:migration",
+  Hxruby::ModelGenerator => "hxruby:model",
   Hxruby::ScaffoldGenerator => "hxruby:scaffold",
   Hxruby::AdoptGenerator => "hxruby:adopt"
 }
