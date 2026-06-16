@@ -60,6 +60,9 @@ RailsHx can be called production-ready when all of these are true:
   follow [RailsHx SQL And String-Bearing API Policy](railshx-sql-string-policy.md).
 - Rails-facing generators and dev/prod workflows feel Rails-native and better
   than hand-written boilerplate, with actionable diagnostics.
+- Rails-owned runtime tasks stay Rails-owned: RailsHx compiles first, then
+  `bin/rails db:migrate`, `bin/rails test`, `zeitwerk:check`, and
+  `assets:precompile` consume the generated artifacts.
 - Existing Ruby/ERB/Rails apps can adopt RailsHx incrementally without losing
   type safety at every boundary.
 - Docs tell users what is supported, what is still alpha, what commands prove
@@ -76,6 +79,13 @@ RailsHx can be called production-ready when all of these are true:
 | `haxe.ruby-bjv.5` | Generator and workflow hardening | Install/scaffold/adopt/route generators, watch loops, client compilation, test flow, and production build flow are Rails-native and documented. |
 | `haxe.ruby-bjv.6` | Gradual adoption hardening | Existing Ruby/ERB/Rails code can consume Haxe output and Haxe can consume existing app code through typed, checked contracts. |
 | `haxe.ruby-bjv.7` | Public readiness checklist | User-facing docs state maturity, commands, versions, support expectations, known blockers, and release criteria. |
+
+Generator/task ownership details are tracked in
+[RailsHx Generators And Rails Tasks Design](railshx-generators-and-tasks-design.md).
+Follow-up beads under `haxe.ruby-bjv` cover manifest-backed generated artifact
+ownership, production migration snapshots, namespaced Rails generator hardening,
+schema adoption, migration-history collision checks, and `hxruby:doctor` /
+`hxruby:check`.
 
 ## Graduation Gates
 
