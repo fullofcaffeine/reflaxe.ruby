@@ -35,10 +35,11 @@ if [ "$MODE" = "staged" ]; then
 fi
 
 echo "[gitleaks] Scanning repository history"
-if printf '%s' "$GITLEAKS_HELP" | grep -q '\<detect\>'; then
+echo "[gitleaks] Git commits in scope: $(git -C "$ROOT_DIR" rev-list --all --count)"
+if printf '%s' "$GITLEAKS_HELP" | grep -q '\<git\>'; then
+  gitleaks git "$ROOT_DIR" --redact --log-opts="--all" "${CONFIG_ARGS[@]}"
+elif printf '%s' "$GITLEAKS_HELP" | grep -q '\<detect\>'; then
   gitleaks detect --source "$ROOT_DIR" --redact --log-opts="--all" "${CONFIG_ARGS[@]}"
-elif printf '%s' "$GITLEAKS_HELP" | grep -q '\<git\>'; then
-  (cd "$ROOT_DIR" && gitleaks git --redact "${CONFIG_ARGS[@]}")
 else
   echo "[gitleaks] ERROR: unsupported gitleaks CLI; expected 'detect' or 'git' command." >&2
   exit 1
