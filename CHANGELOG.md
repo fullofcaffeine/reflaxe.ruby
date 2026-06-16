@@ -1,3 +1,10 @@
+# [0.1.0-beta.1](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.37.0...v0.1.0-beta.1) (2026-06-16)
+
+
+### Notes
+
+* reset public versioning from the historical internal `1.x` cadence to `0.x` beta while haxe.ruby and RailsHx remain experimental
+
 # [1.37.0](https://github.com/fullofcaffeine/reflaxe.ruby/compare/v1.36.0...v1.37.0) (2026-06-12)
 
 
