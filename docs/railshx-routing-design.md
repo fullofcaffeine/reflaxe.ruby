@@ -1,14 +1,22 @@
 # RailsHx Routing Design
 
-Rails routing is currently Rails-owned. RailsHx consumes `rails routes` output
-and generates typed Haxe route-helper externs. Haxe-owned route emission is a
-future phase and must not land until route-helper parity is deterministic.
+RailsHx should support two route ownership modes:
 
-## Current Phase: Route Helper Sync
+- **Haxe-owned routes** for greenfield RailsHx apps. Haxe route declarations are
+  the source of truth, and RailsHx emits normal `config/routes.rb`.
+- **Rails-owned routes** for existing Rails apps and gradual adoption. The
+  existing `config/routes.rb` remains the source of truth, and RailsHx consumes
+  it without rewriting it.
+
+Both modes must converge through Rails itself. Rails remains the route-helper
+naming oracle: RailsHx runs `rails routes` and generates typed Haxe route-helper
+externs from Rails output even when Haxe emitted the route file.
+
+## Implemented Mode: Rails-Owned Route Helper Sync
 
 Source of truth:
 
-- `config/routes.rb` remains the source of truth.
+- `config/routes.rb` remains the source of truth for Rails-owned/adopted apps.
 - Rails computes route names, path helpers, optional segments, glob params,
   namespaces, mounted routes, and resource/member/collection helper names.
 - RailsHx runs `rails routes` and generates Haxe externs such as
@@ -44,7 +52,7 @@ Routes.todoPath("legacy-slug");
 Routes.todoPath(RouteParam.model(todo));
 ```
 
-Why this is the right phase-1 contract:
+Why this mode stays first-class:
 
 - Rails has many route naming rules that are easy to approximate badly.
 - Existing Rails apps already have `config/routes.rb`; adoption must not force a
@@ -56,12 +64,13 @@ Why this is the right phase-1 contract:
   `Dynamic` remains a language-level escape hatch and should not appear in
   generated route helper signatures.
 
-## Future Phase: Haxe-Owned Route Emission
+## Target Mode: Haxe-Owned Route Emission
 
-Haxe-owned routes should only exist after route-helper sync proves parity. The
-future shape should be a typed Haxe declaration layer that emits normal
-`config/routes.rb`, then immediately runs the same route-helper generator from
-Rails output.
+For greenfield RailsHx apps, Haxe-owned routes should become the preferred
+source of truth once parity gates exist. The shape should be a typed Haxe
+declaration layer that feels close to Rails' routing DSL, removes avoidable
+strings through typed refs where possible, emits normal `config/routes.rb`, then
+immediately runs the same route-helper generator from Rails output.
 
 Possible Haxe source:
 
@@ -99,14 +108,16 @@ bin/rails test
 
 ## Source-Of-Truth Rules
 
-- A project must choose one route source of truth per app: Rails-owned
-  `config/routes.rb` or Haxe-owned `@:railsRoutes`.
-- The default and migration-safe mode is Rails-owned.
+- A project must choose one route source of truth per app or explicit route
+  ownership boundary: Rails-owned `config/routes.rb` or Haxe-owned
+  `@:railsRoutes`.
+- The greenfield RailsHx default should be Haxe-owned after implementation.
+- The adoption/migration-safe mode is Rails-owned and must remain supported.
 - Haxe-owned route emission must refuse to overwrite an existing non-generated
   `config/routes.rb` unless an explicit force/adopt flag is used.
-- Mixed route ownership in one app is not allowed in the first Haxe-owned phase.
-  If engines need local routing later, each engine/app boundary needs its own
-  explicit source-of-truth declaration.
+- Mixed route ownership in one file is not allowed until marker/manifest block
+  ownership is designed and tested. If engines need local routing, each
+  engine/app boundary needs its own explicit source-of-truth declaration.
 - Route helper externs are always generated from Rails output, even when Haxe
   emitted the route file. Rails remains the naming oracle.
 
@@ -139,8 +150,8 @@ No Haxe-owned routing implementation should land without tests that:
   Haxe-emitted route fixture, proving both paths converge to the same extern
   shape.
 
-Until that exists, RailsHx must continue to improve route-helper sync and
-generator ergonomics rather than emitting routes.
+Until that exists, RailsHx must continue to support Rails-owned route helper
+sync and generator ergonomics rather than emitting greenfield routes by default.
 
 ## Near-Term Work
 
@@ -150,5 +161,5 @@ generator ergonomics rather than emitting routes.
   Haxe-owned route emission.
 - Keep `Template`/HHX examples using generated route externs, not literal route
   strings.
-- Add an explicit bead before implementing `@:railsRoutes`; the bead must name
-  the parity fixtures and runtime Rails tests it will add.
+- Implement the `@:railsRoutes` bead with parity fixtures and runtime Rails
+  tests before switching greenfield generators/templates to Haxe-owned routes.
