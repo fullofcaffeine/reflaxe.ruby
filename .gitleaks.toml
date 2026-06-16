@@ -1,0 +1,18 @@
+title = "reflaxe.ruby gitleaks config"
+
+[allowlist]
+description = "Allow deterministic non-secret fixtures and generated test output"
+paths = [
+  '''^test/\.generated/''',
+  '''^test/snapshots/''',
+  '''^dist/''',
+  '''^node_modules/''',
+]
+regexes = [
+  '''secret123''',
+  '''SECRET_KEY_BASE''',
+  '''String\.duplicate\("a",[[:space:]]*[0-9]+\)''',
+  '''POSTGRES_PASSWORD=postgres''',
+  '''POSTGRES_PASSWORD:[[:space:]]+postgres''',
+  '''PGPASSWORD:[[:space:]]+postgres''',
+]

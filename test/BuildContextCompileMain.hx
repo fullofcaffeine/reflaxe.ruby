@@ -9,4 +9,3 @@ class BuildContextCompileMain {
 		RubyBuildContextResolver.resolve();
 	}
 }
-

@@ -69,13 +69,21 @@ class RubyASTPrinter {
 			case RubyString(value): quoteRubyString(value);
 			case RubyLocal(name): name;
 			case RubyArray(values): "[" + [for (value in values) printExpr(value)].join(", ") + "]";
-			case RubyHash(fields): "{" + [for (field in fields) quoteRubyString(field.key) + " => " + printExpr(field.value)].join(", ") + "}";
+			case RubyHash(fields): "{" + [
+					for (field in fields)
+						quoteRubyString(field.key) + " => " + printExpr(field.value)
+				].join(", ") + "}";
 			case RubyBinary(op, left, right): "(" + printExpr(left) + " " + op + " " + printExpr(right) + ")";
 			case RubyUnary(op, value): "(" + op + printExpr(value) + ")";
 			case RubyLambda(args, body): "->(" + (args == null ? "" : args.join(", ")) + ") { " + body + " }";
 			case RubyCall(receiver, name, args):
 				var printedArgs = args == null ? "" : [for (arg in args) printExpr(arg)].join(", ");
-				receiver == null ? name + "(" + printedArgs + ")" : printExpr(receiver) + "." + name + "(" + printedArgs + ")";
+				receiver == null ? name + "(" + printedArgs + ")" : printExpr(receiver)
+				+ "."
+				+ name
+				+ "("
+				+ printedArgs
+				+ ")";
 			case RubyRawExpr(code): code;
 		}
 	}

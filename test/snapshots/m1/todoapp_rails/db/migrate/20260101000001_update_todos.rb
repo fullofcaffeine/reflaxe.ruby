@@ -13,5 +13,14 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
     end
     add_column :todos, :priority, :integer, null: false, default: 0
     add_index :todos, :priority
+    add_index :todos, [:user_id, :priority]
+    reversible do |dir|
+      dir.up do
+        execute "UPDATE todos SET priority = 0 WHERE priority IS NULL"
+      end
+      dir.down do
+        execute "UPDATE todos SET priority = NULL WHERE priority = 0"
+      end
+    end
   end
 end

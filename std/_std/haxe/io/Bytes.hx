@@ -2,6 +2,7 @@ package haxe.io;
 
 class Bytes {
 	public var length(default, null):Int;
+
 	final data:Array<Int>;
 
 	public function new(length:Int, data:Array<Int>) {

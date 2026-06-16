@@ -9,7 +9,7 @@ package rails.action_cable;
 	shape. `from Dynamic` is intentional here because Rails owns the runtime
 	handle. App code receives it from `Consumer.subscribe(...)`, then calls typed
 	methods on this abstract.
-*/
+ */
 abstract Subscription<TPayload>(Dynamic) from Dynamic to Dynamic {
 	public inline function perform<TData>(action:Action<TData>, data:TData):Void {
 		js.Syntax.code("{0}.perform({1}, {2})", this, action, data);

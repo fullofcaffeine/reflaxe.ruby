@@ -136,7 +136,8 @@ class MailerMacro {
 
 	static function validateLocalsType(template:Expr, locals:Expr, context:String):Void {
 		var expected = switch (Context.typeof(template)) {
-			case TInst(classRef, [localsType]) if (classRef.get().pack.join(".") == "rails.action_view" && classRef.get().name == "Template"):
+			case TInst(classRef, [localsType]) if (classRef.get().pack.join(".") == "rails.action_view"
+				&& classRef.get().name == "Template"):
 				localsType;
 			case _:
 				Context.error(context + " template argument must be rails.action_view.Template<TLocals>.", template.pos);
@@ -153,22 +154,24 @@ class MailerMacro {
 			case EObjectDecl(fields):
 				{
 					expr: EObjectDecl([
-						for (field in fields) {
-							field: RubyNaming.toLocalName(field.field),
-							expr: field.expr,
-							quotes: field.quotes
-						}
+						for (field in fields)
+							{
+								field: RubyNaming.toLocalName(field.field),
+								expr: field.expr,
+								quotes: field.quotes
+							}
 					]),
 					pos: locals.pos
 				};
 			case _:
 				{
 					expr: EObjectDecl([
-						for (field in localsFields(locals)) {
-							field: RubyNaming.toLocalName(field),
-							expr: {expr: EField(locals, field), pos: locals.pos},
-							quotes: null
-						}
+						for (field in localsFields(locals))
+							{
+								field: RubyNaming.toLocalName(field),
+								expr: {expr: EField(locals, field), pos: locals.pos},
+								quotes: null
+							}
 					]),
 					pos: locals.pos
 				};
@@ -231,7 +234,10 @@ class MailerMacro {
 
 	static function validateTemplatePath(path:String, pos:Position, context:String):Void {
 		var normalized = normalizePathSlashes(path);
-		if (normalized == "" || StringTools.startsWith(normalized, "/") || normalized.indexOf("..") != -1 || normalized.indexOf("//") != -1
+		if (normalized == ""
+			|| StringTools.startsWith(normalized, "/")
+			|| normalized.indexOf("..") != -1
+			|| normalized.indexOf("//") != -1
 			|| path.indexOf("\\") != -1) {
 			Context.error(context + " path must be a safe Rails template path relative to app/views.", pos);
 		}

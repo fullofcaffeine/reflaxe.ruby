@@ -2,7 +2,6 @@ package reflaxe.ruby.compiler;
 
 import reflaxe.ruby.ProfileResolver;
 import reflaxe.ruby.RubyProfile;
-
 #if macro
 import haxe.macro.Context;
 #end
@@ -66,13 +65,17 @@ class RubyBuildContextResolver {
 			return null;
 		}
 		if (StringTools.startsWith(normalized, "/") || normalized.indexOf("//") != -1 || normalized.indexOf("..") != -1) {
-			Context.fatalError('Unsafe `' + RAILS_OUTPUT_ROOT_DEFINE + '` value "' + raw
-				+ '" (expected a safe relative Rails path such as app/haxe_gen or engines/blog/app/haxe_gen)', Context.currentPos());
+			Context.fatalError('Unsafe `'
+				+ RAILS_OUTPUT_ROOT_DEFINE
+				+ '` value "'
+				+ raw
+				+ '" (expected a safe relative Rails path such as app/haxe_gen or engines/blog/app/haxe_gen)',
+				Context.currentPos());
 		}
 		for (segment in normalized.split("/")) {
 			if (segment == "" || segment == "." || segment == "..") {
-				Context.fatalError('Unsafe `' + RAILS_OUTPUT_ROOT_DEFINE + '` value "' + raw
-					+ '" (path segments must not be empty, ".", or "..")', Context.currentPos());
+				Context.fatalError('Unsafe `' + RAILS_OUTPUT_ROOT_DEFINE + '` value "' + raw + '" (path segments must not be empty, ".", or "..")',
+					Context.currentPos());
 			}
 		}
 		return normalized;

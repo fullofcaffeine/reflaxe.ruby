@@ -14,9 +14,8 @@ class RubyBuildContext {
 	public final railsMode:Bool;
 	public final railsOutputRoot:String;
 
-	public function new(profile:RubyProfile, outputDirDefineName:String, targetCodeInjectionName:String, strictExamples:Bool,
-			strictUserBoundaryPolicy:String, strictUserBoundaries:Bool, runtimePlanReportEnabled:Bool, gapReportEnabled:Bool, railsMode:Bool,
-			railsOutputRoot:String) {
+	public function new(profile:RubyProfile, outputDirDefineName:String, targetCodeInjectionName:String, strictExamples:Bool, strictUserBoundaryPolicy:String,
+			strictUserBoundaries:Bool, runtimePlanReportEnabled:Bool, gapReportEnabled:Bool, railsMode:Bool, railsOutputRoot:String) {
 		this.profile = profile == null ? RubyProfile.Idiomatic : profile;
 		this.outputDirDefineName = normalizeDefineName(outputDirDefineName, "ruby_output");
 		this.targetCodeInjectionName = normalizeDefineName(targetCodeInjectionName, "__ruby__");

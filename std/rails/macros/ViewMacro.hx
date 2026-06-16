@@ -23,8 +23,8 @@ class ViewMacro {
 		#end
 	}
 
-	public static macro function renderTemplateWithLayout<TLocals>(controller:Expr, template:ExprOf<rails.action_view.Template<TLocals>>, locals:ExprOf<TLocals>,
-			layout:ExprOf<rails.action_view.Layout>):Expr {
+	public static macro function renderTemplateWithLayout<TLocals>(controller:Expr, template:ExprOf<rails.action_view.Template<TLocals>>,
+			locals:ExprOf<TLocals>, layout:ExprOf<rails.action_view.Layout>):Expr {
 		#if macro
 		var templatePath = extractTemplatePath(template);
 		var layoutPath = extractLayoutPath(layout);
@@ -132,7 +132,8 @@ class ViewMacro {
 
 	static function validateLocalsType(template:Expr, locals:Expr):Void {
 		var expected = switch (Context.typeof(template)) {
-			case TInst(classRef, [localsType]) if (classRef.get().pack.join(".") == "rails.action_view" && classRef.get().name == "Template"):
+			case TInst(classRef, [localsType]) if (classRef.get().pack.join(".") == "rails.action_view"
+				&& classRef.get().name == "Template"):
 				localsType;
 			case _:
 				Context.error("ViewMacro.renderTemplate template argument must be rails.action_view.Template<TLocals>.", template.pos);
@@ -149,11 +150,12 @@ class ViewMacro {
 			case EObjectDecl(fields):
 				{
 					expr: EObjectDecl([
-						for (field in fields) {
-							field: RubyNaming.toLocalName(field.field),
-							expr: field.expr,
-							quotes: field.quotes
-						}
+						for (field in fields)
+							{
+								field: RubyNaming.toLocalName(field.field),
+								expr: field.expr,
+								quotes: field.quotes
+							}
 					]),
 					pos: locals.pos
 				};
@@ -208,7 +210,10 @@ class ViewMacro {
 
 	static function validateTemplatePath(path:String, pos:Position, context:String):Void {
 		var normalized = normalizePathSlashes(path);
-		if (normalized == "" || StringTools.startsWith(normalized, "/") || normalized.indexOf("..") != -1 || normalized.indexOf("//") != -1
+		if (normalized == ""
+			|| StringTools.startsWith(normalized, "/")
+			|| normalized.indexOf("..") != -1
+			|| normalized.indexOf("//") != -1
 			|| path.indexOf("\\") != -1) {
 			Context.error(context + " path must be a safe Rails template path relative to app/views.", pos);
 		}

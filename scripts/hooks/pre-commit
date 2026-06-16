@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+
+echo "[pre-commit] Running gitleaks on staged changes..."
+bash "$ROOT_DIR/scripts/security/run-gitleaks.sh" --staged
+
+if ! haxelib run formatter --help >/dev/null 2>&1; then
+  echo "[pre-commit] ERROR: haxelib formatter is required but not installed."
+  echo "[pre-commit] Install: haxelib install formatter"
+  exit 1
+fi
+
+STAGED_HX_FILES=()
+while IFS= read -r staged_file; do
+  if [ -n "$staged_file" ]; then
+    STAGED_HX_FILES+=("$staged_file")
+  fi
+done < <(
+  git diff --cached --name-only --diff-filter=ACMR \
+    | rg '\.hx$' \
+    || true
+)
+
+if [ "${#STAGED_HX_FILES[@]}" -gt 0 ]; then
+  echo "[pre-commit] Formatting staged Haxe files..."
+  FORMAT_ARGS=()
+  FORMATTED_HX_FILES=()
+  for hx_file in "${STAGED_HX_FILES[@]}"; do
+    if [ -f "$ROOT_DIR/$hx_file" ]; then
+      if grep -q '@:railsTemplateAst' "$ROOT_DIR/$hx_file"; then
+        echo "[pre-commit] Skipping HHX template source: $hx_file"
+        continue
+      fi
+      if grep -q '@:railsMigration' "$ROOT_DIR/$hx_file"; then
+        echo "[pre-commit] Skipping Rails migration source: $hx_file"
+        continue
+      fi
+      if [[ "$hx_file" == examples/*/src_haxe/routes/Routes.hx ]]; then
+        echo "[pre-commit] Skipping generated Rails route extern: $hx_file"
+        continue
+      fi
+      FORMAT_ARGS+=("-s" "$ROOT_DIR/$hx_file")
+      FORMATTED_HX_FILES+=("$hx_file")
+    fi
+  done
+
+  if [ "${#FORMAT_ARGS[@]}" -gt 0 ]; then
+    haxelib run formatter "${FORMAT_ARGS[@]}"
+    git add -- "${FORMATTED_HX_FILES[@]}"
+  fi
+fi
+
+echo "[pre-commit] OK"

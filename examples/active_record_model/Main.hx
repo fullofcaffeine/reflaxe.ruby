@@ -29,7 +29,12 @@ import rails.active_record.TransactionIsolation;
 // `includes(:user)`, `order(title: :asc)`, and `limit(10)`.
 class Main {
 	static function main() {
-		var found = Todo.includes(Todo.associations.user).where({title: "ship", status: "open"}).where({completed: false}).joins(Todo.associations.user).order(Todo.f.title.asc()).limit(10);
+		var found = Todo.includes(Todo.associations.user)
+			.where({title: "ship", status: "open"})
+			.where({completed: false})
+			.joins(Todo.associations.user)
+			.order(Todo.f.title.asc())
+			.limit(10);
 		var nestedIncludes = Todo.includes(Association.nested(Todo.a.user, User.a.todos)).where({status: "open"});
 		var nestedPreload = Todo.preload(Association.nested(Todo.a.user, User.a.todos)).limit(2);
 		var nestedEagerLoad = Todo.where({status: "open"}).eagerLoad(Association.nested(Todo.a.user, User.a.todos)).limit(2);
@@ -102,32 +107,25 @@ class Main {
 		var relationLast:Null<Todo> = assigned.last();
 		var titles:Array<String> = Todo.pluck(Todo.f.title);
 		var assignedIds:Array<Int> = assigned.pluck(Todo.f.id);
-		var projected:Array<{id:Int, title:String}> = Projection.pluck(
-			Todo.where({status: "open"}),
-			{id: Todo.f.id, title: Todo.f.title}
-		);
-		var projectedFromModel:Array<{id:Int, externalId:String}> = Projection.pluck(
-			Todo,
-			{id: Todo.f.id, externalId: Todo.f.externalId}
-		);
-		var groupedProjection:Array<{status:String, todoCount:Int, userIdSum:Int, averageUserId:Float, minId:Int, maxTitle:String}> = Projection.group(
-			Todo.where({status: "open"}),
-			Todo.f.status,
-			{
-				status: Todo.f.status,
-				todoCount: Todo.f.id.count(),
-				userIdSum: Todo.f.userId.sum(),
-				averageUserId: Todo.f.userId.average(),
-				minId: Todo.f.id.minimum(),
-				maxTitle: Todo.f.title.maximum()
-			}
-		);
+		var projected:Array<{id:Int, title:String}> = Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, title: Todo.f.title});
+		var projectedFromModel:Array<{id:Int, externalId:String}> = Projection.pluck(Todo, {id: Todo.f.id, externalId: Todo.f.externalId});
+		var groupedProjection:Array<{
+			status:String,
+			todoCount:Int,
+			userIdSum:Int,
+			averageUserId:Float,
+			minId:Int,
+			maxTitle:String
+		}> = Projection.group(Todo.where({status: "open"}), Todo.f.status, {
+			status: Todo.f.status,
+			todoCount: Todo.f.id.count(),
+			userIdSum: Todo.f.userId.sum(),
+			averageUserId: Todo.f.userId.average(),
+			minId: Todo.f.id.minimum(),
+			maxTitle: Todo.f.title.maximum()
+		});
 		var statusCounts:haxe.ds.StringMap<Int> = Group.count(Todo.where({status: "open"}), Todo.f.status);
-		var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(
-			Todo.where({status: "open"}),
-			Todo.f.status,
-			Todo.f.id.count().gt(1)
-		);
+		var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(Todo.where({status: "open"}), Todo.f.status, Todo.f.id.count().gt(1));
 		var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 		var eventCounts:haxe.ds.IntMap<Int> = Group.count(AuditLog.where({eventCount: 1}), AuditLog.f.eventCount);
 		var minId:Null<Int> = Todo.minimum(Todo.f.id);

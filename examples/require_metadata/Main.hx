@@ -8,6 +8,7 @@
 // IntelliSense: editors should complete `NativeJson.parse` and
 // `NativeDate.today` from the extern declarations.
 // Ruby output: generated `require` / `require_relative` lines in `run.rb`.
+
 @:rubyRequire("set")
 @:rubyRequire("json")
 @:rubyRequire("json")

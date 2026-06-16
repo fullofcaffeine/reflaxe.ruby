@@ -7,7 +7,7 @@ package rails.action_cable;
 	string for generated JavaScript, but it does not allow implicit construction
 	from String. That lets app code write Rails-native action names while Haxe
 	keeps the payload type attached to the action at compile time.
-*/
+ */
 abstract Action<TData>(String) to String {
 	inline function new(name:String) {
 		this = name;

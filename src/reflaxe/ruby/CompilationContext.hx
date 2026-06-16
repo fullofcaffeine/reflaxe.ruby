@@ -1,7 +1,6 @@
 package reflaxe.ruby;
 
 import reflaxe.ruby.compiler.RubyBuildContext;
-
 #if (macro || reflaxe_runtime)
 import haxe.macro.Expr.Position;
 #else
@@ -11,6 +10,7 @@ private typedef Position = Dynamic;
 class CompilationContext {
 	public final build:RubyBuildContext;
 	public var currentModuleLabel:Null<String>;
+
 	var modulePosByLabel:Map<String, Position>;
 
 	public var profile(get, never):RubyProfile;

@@ -78,7 +78,8 @@ class Main {
 		TurboStreams.broadcastPrependTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
 		TurboStreams.broadcastBeforeTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
 		TurboStreams.broadcastAfterTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
-		TurboStreams.broadcastReplaceTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), replaceLocals);
+		TurboStreams.broadcastReplaceTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>),
+			replaceLocals);
 		TurboStreams.broadcastUpdateTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), replaceLocals);
 		TurboStreams.broadcastRemoveTo(TodoStreams.listStream(), TodoStreams.listTarget());
 	}

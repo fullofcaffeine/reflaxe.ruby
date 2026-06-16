@@ -96,21 +96,27 @@ class RequireRegistry {
 		switch (type) {
 			case TInst(classRef, params):
 				collectMeta(classRef.get().meta);
-				for (param in params) collectType(param);
+				for (param in params)
+					collectType(param);
 			case TEnum(enumRef, params):
 				collectMeta(enumRef.get().meta);
-				for (param in params) collectType(param);
+				for (param in params)
+					collectType(param);
 			case TType(typeRef, params):
 				collectMeta(typeRef.get().meta);
-				for (param in params) collectType(param);
+				for (param in params)
+					collectType(param);
 			case TAbstract(abstractRef, params):
 				collectMeta(abstractRef.get().meta);
-				for (param in params) collectType(param);
+				for (param in params)
+					collectType(param);
 			case TFun(args, ret):
-				for (arg in args) collectType(arg.t);
+				for (arg in args)
+					collectType(arg.t);
 				collectType(ret);
 			case TAnonymous(anonRef):
-				for (field in anonRef.get().fields) collectType(field.type);
+				for (field in anonRef.get().fields)
+					collectType(field.type);
 			case TDynamic(inner):
 				collectType(inner);
 			case TLazy(lazy):

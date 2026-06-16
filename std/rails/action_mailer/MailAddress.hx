@@ -7,7 +7,7 @@ package rails.action_mailer;
 	`from`, `cc`, `bcc`, and `reply_to`. The abstract keeps that Rails-native
 	shape while preventing arbitrary object-shaped Dynamic values from becoming
 	the default mail boundary.
-*/
+ */
 abstract MailAddress(Dynamic) to Dynamic {
 	inline function new(value:Dynamic) {
 		this = value;

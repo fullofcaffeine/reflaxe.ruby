@@ -6,7 +6,7 @@ package rails.action_mailer;
 	`layout: "mailer"` and `layout: false` are common Rails shapes. The abstract
 	lets those stay Rails-shaped without exposing `Dynamic` as the ordinary field
 	type. Use `unchecked(...)` only for legacy/custom Rails layout values.
-*/
+ */
 abstract MailLayout(Dynamic) to Dynamic {
 	inline function new(value:Dynamic) {
 		this = value;

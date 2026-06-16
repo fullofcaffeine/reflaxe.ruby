@@ -21,10 +21,8 @@ abstract Association<TModel, TTarget>(String) from String to String {
 		return new Association(name);
 	}
 
-	public static function nested<TModel, TMiddle, TTarget>(
-		parent:Association<TModel, TMiddle>,
-		child:Association<TMiddle, TTarget>
-	):Association<TModel, TTarget> {
+	public static function nested<TModel, TMiddle, TTarget>(parent:Association<TModel, TMiddle>,
+			child:Association<TMiddle, TTarget>):Association<TModel, TTarget> {
 		return cast "";
 	}
 }

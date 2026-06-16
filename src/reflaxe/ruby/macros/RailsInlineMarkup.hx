@@ -48,7 +48,9 @@ class RailsInlineMarkup {
 		if (cls.meta.has(":rails_hxx_no_inline_markup") || cls.meta.has("rails_hxx_no_inline_markup")) {
 			return false;
 		}
-		return cls.meta.has(":railsTemplate") || cls.meta.has("railsTemplate") || cls.meta.has(":rails_hxx_inline_markup")
+		return cls.meta.has(":railsTemplate")
+			|| cls.meta.has("railsTemplate")
+			|| cls.meta.has(":rails_hxx_inline_markup")
 			|| cls.meta.has("rails_hxx_inline_markup");
 	}
 
@@ -293,8 +295,7 @@ private class RailsMarkupParser {
 		var start = i;
 		while (!eof()) {
 			var c = ch(i);
-			var ok = (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || (c >= "0" && c <= "9") || c == "_" || c == "-"
-				|| c == ":" || c == ".";
+			var ok = (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || (c >= "0" && c <= "9") || c == "_" || c == "-" || c == ":" || c == ".";
 			if (!ok) {
 				break;
 			}
@@ -428,7 +429,9 @@ private class RailsMarkupParser {
 			expr: {expr: EReturn(body), pos: pos},
 			params: []
 		};
-		return macro @:pos(pos) rails.action_view.HtmlNode.For($items, ${{expr: EFunction(FArrow, fn), pos: pos}});
+		return macro @:pos(pos) rails.action_view.HtmlNode.For($items, ${
+			{expr: EFunction(FArrow, fn), pos: pos}
+		});
 	}
 
 	function mkIf(cond:Expr, thenNode:Expr, elseNode:Null<Expr>, pos:Position):Expr {
@@ -637,7 +640,12 @@ private class RailsMarkupParser {
 		skipWs();
 		if (!startsWith("=")) {
 			var pos = makeSubPos(attrStart, i);
-			return {name: name, kind: Bool, expr: macro @:pos(pos) rails.action_view.HtmlAttr.Bool($v{name}), pos: pos};
+			return {
+				name: name,
+				kind: Bool,
+				expr: macro @:pos(pos) rails.action_view.HtmlAttr.Bool($v{name}),
+				pos: pos
+			};
 		}
 		i++;
 		skipWs();
@@ -654,12 +662,22 @@ private class RailsMarkupParser {
 			var value = src.substr(valueStart, i - valueStart);
 			i++;
 			var pos2 = makeSubPos(attrStart, i);
-			return {name: name, kind: Static(value), expr: macro @:pos(pos2) rails.action_view.HtmlAttr.Static($v{name}, $v{value}), pos: pos2};
+			return {
+				name: name,
+				kind: Static(value),
+				expr: macro @:pos(pos2) rails.action_view.HtmlAttr.Static($v{name}, $v{value}),
+				pos: pos2
+			};
 		}
 		if (startsWith("${") || startsWith("{")) {
 			var expr = parseExprInBraces();
 			var pos3 = makeSubPos(attrStart, i);
-			return {name: name, kind: ExprValue(expr), expr: macro @:pos(pos3) rails.action_view.HtmlAttr.Expr($v{name}, $expr), pos: pos3};
+			return {
+				name: name,
+				kind: ExprValue(expr),
+				expr: macro @:pos(pos3) rails.action_view.HtmlAttr.Expr($v{name}, $expr),
+				pos: pos3
+			};
 		}
 		failHere("Expected quoted string or ${...} attribute value");
 		return null;

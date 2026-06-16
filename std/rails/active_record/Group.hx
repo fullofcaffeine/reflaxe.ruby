@@ -90,7 +90,7 @@ class Group {
 		return TPath({
 			pack: ["haxe", "ds"],
 			name: mapName,
-			params: [TPType(macro : Int)]
+			params: [TPType(macro :Int)]
 		});
 	}
 

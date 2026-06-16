@@ -7,6 +7,7 @@
 // IntelliSense: editors should complete `encode`/`baseName`; generated Ruby
 // still calls `JSON.generate` and `File.basename`.
 // Ruby output: direct calls to existing Ruby constants, not generated wrappers.
+
 @:rubyRequire("json")
 @:native("JSON")
 extern class RubyJSON {

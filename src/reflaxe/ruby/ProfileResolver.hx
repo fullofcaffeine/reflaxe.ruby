@@ -16,8 +16,7 @@ class ProfileResolver {
 		var selected = new Array<{source:String, profile:RubyProfile}>();
 
 		if (raw != null && raw == "") {
-			Context.fatalError('`-D ' + DEFINE_NAME + '` requires a value: ruby_first|portable (legacy alias: idiomatic)',
-				Context.currentPos());
+			Context.fatalError('`-D ' + DEFINE_NAME + '` requires a value: ruby_first|portable (legacy alias: idiomatic)', Context.currentPos());
 		}
 
 		if (raw != null && raw != "") {
@@ -59,8 +58,8 @@ class ProfileResolver {
 			case "ruby_first", "idiomatic": RubyProfile.Idiomatic;
 			case "portable": RubyProfile.Portable;
 			case _:
-				Context.fatalError('Invalid profile "' + raw + '" for -D ' + DEFINE_NAME
-					+ ' (expected ruby_first|portable; legacy alias: idiomatic)', Context.currentPos());
+				Context.fatalError('Invalid profile "' + raw + '" for -D ' + DEFINE_NAME + ' (expected ruby_first|portable; legacy alias: idiomatic)',
+					Context.currentPos());
 				RubyProfile.Idiomatic;
 		}
 	}

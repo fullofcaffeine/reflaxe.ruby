@@ -6,12 +6,8 @@ module Migrations
       "migrations.CreateTodos"
     end
     class << self
-      attr_accessor :user_model
+      attr_accessor :operations
     end
-    @user_model = nil
-    class << self
-      attr_accessor :todo_model
-    end
-    @todo_model = nil
+    @operations = nil
   end
 end

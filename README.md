@@ -4,6 +4,13 @@
 
 The current `1.37.0` baseline supports executable Ruby smoke fixtures, shared `hxruby` runtime files and gem packaging, Ruby interop metadata, and a Rails MVP with typed ActiveRecord models, ActionController helpers, params macros, routes generation, and scaffold tooling.
 
+There are two first-class layers:
+
+- **RubyHx / pure Ruby**: compile Haxe to normal Ruby, consume Ruby gems through typed externs/contracts, author Ruby modules/concerns from Haxe, and keep generated Ruby readable to Ruby developers.
+- **RailsHx**: a Rails-native typed authoring layer on top of the same Ruby compiler. Haxe/HHX is source of truth; Rails still owns runtime tasks such as `db:migrate`, `test`, Zeitwerk, and assets.
+
+Rails is the flagship framework target because it is the dominant Ruby framework, but it is not the only intended use of `haxe.ruby`. Other framework layers can live in this monorepo or in separate repos that consume the published haxelib/gem and add their own typed std/macros/generators.
+
 ## Quick Start
 
 ```bash
@@ -26,6 +33,12 @@ haxe \
 
 ruby out/ruby/run.rb
 ```
+
+For a guided public entrypoint, start with:
+
+- Pure Ruby: [examples/hello_world](examples/hello_world), [Ruby Extension Interop](docs/ruby-extension-interop.md), and [examples/ruby_extensions](examples/ruby_extensions).
+- RailsHx: [examples/todoapp_rails](examples/todoapp_rails) for a full app, and [examples/rails_interop_app](examples/rails_interop_app) for gradual adoption from existing Ruby/ERB.
+- Documentation map: [docs/README.md](docs/README.md).
 
 ## Target Defines
 
@@ -220,6 +233,8 @@ npm run test:rails-runtime
 
 ```bash
 npm test
+npm run format:haxe:check
+npm run security:gitleaks
 npm run test:snapshots
 npm run test:strict-boundaries
 npm run test:rails-runtime
@@ -240,6 +255,18 @@ migrate/deliver/subscribe to generated artifacts; they should not broadly
 retest Rails itself unless RailsHx adds custom runtime behavior. See
 [RailsHx Testing Strategy](docs/railshx-testing-strategy.md) for the
 snapshot-vs-smoke decision rules.
+
+### Local Hooks
+
+Install the repo-managed pre-commit hook:
+
+```bash
+haxelib install formatter
+brew install gitleaks # or use another gitleaks install method
+npm run hooks:install
+```
+
+The hook runs a staged `gitleaks` scan and formats staged `.hx` files with [haxe-formatter](https://github.com/HaxeCheckstyle/haxe-formatter). CI runs the full Haxe formatter check and a dedicated gitleaks workflow, so local hooks catch the same class of issues before review.
 
 ## Haxelib Package
 
@@ -315,4 +342,5 @@ See [docs/gap-report-guidance.md](docs/gap-report-guidance.md) for how to update
 - `examples`: executable compiler/Rails fixtures.
 - `scripts/ci`: smoke, snapshot, inventory, release, and hardening checks.
 - `scripts/rails`: Rails-oriented generators.
+- `scripts/hooks`, `scripts/lint`, `scripts/security`: local hook installer, Haxe formatter guard, and secret scanning wrapper.
 - `test/snapshots`: committed generated Ruby contracts.

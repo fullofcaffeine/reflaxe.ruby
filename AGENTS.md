@@ -29,6 +29,7 @@ See `docs/profiles.md` before changing profile behavior.
 
 Rails work should follow `docs/railshx-roadmap.md`.
 
+- Keep the product layering clear: `haxe.ruby`/RubyHx must remain a first-class pure Ruby compiler/runtime/interop target, and RailsHx is the first-class Rails layer built on top of it. Do not design APIs, docs, packaging, or examples as if Rails is the only consumer of generated Ruby. New Ruby framework layers should be able to reuse the compiler/std/runtime and add their own typed macros/generators either in this monorepo or in a separate repo that consumes `reflaxe.ruby`/`hxruby`.
 - Treat RailsHx as the Rails-first layer on the existing Ruby compiler pipeline, not a separate backend.
 - Treat production readiness as an explicit tracked contract, not an informal vibe. Any gap that blocks real production Rails adoption must be filed under the `haxe.ruby-bjv` production-readiness epic or linked from `docs/railshx-production-readiness.md`; update that doc when adding, closing, or reclassifying production gates.
 - Treat escape hatches as a production security surface. Before adding or widening raw Ruby, raw ERB, raw SQL/string fragments, unchecked template paths, app-facing `Dynamic`, or generator/LLM inference, update `docs/railshx-escape-hatch-security-audit.md`, add tests, and file/link the follow-up bead.

@@ -108,7 +108,7 @@ class Projection {
 		});
 		var keys = [for (item in items) item.name];
 		var expressions = {
-			expr: EArrayDecl([for (item in items) macro (cast $e{item.expr} : Dynamic)]),
+			expr: EArrayDecl([for (item in items) macro(cast $e{item.expr} : Dynamic)]),
 			pos: spec.pos
 		};
 		var call = macro rails.active_record.ProjectionRuntime.group($source, $v{groupInfo.name}, $e{stringArrayExpr(keys)}, $expressions);
@@ -122,7 +122,13 @@ class Projection {
 	}
 
 	#if macro
-	static function projectionFields(spec:Expr):Array<{name:String, expr:Expr, model:Null<String>, valueType:Type, pos:Position}> {
+	static function projectionFields(spec:Expr):Array<{
+		name:String,
+		expr:Expr,
+		model:Null<String>,
+		valueType:Type,
+		pos:Position
+	}> {
 		return switch (spec.expr) {
 			case EObjectDecl(values):
 				if (values.length == 0) {
@@ -178,7 +184,12 @@ class Projection {
 		}
 	}
 
-	static function projectionItemInfo(expr:Expr):Null<{model:Null<String>, valueType:Type, kind:String, sourceName:Null<String>}> {
+	static function projectionItemInfo(expr:Expr):Null<{
+		model:Null<String>,
+		valueType:Type,
+		kind:String,
+		sourceName:Null<String>
+	}> {
 		var field = fieldInfo(expr);
 		if (field != null) {
 			return {

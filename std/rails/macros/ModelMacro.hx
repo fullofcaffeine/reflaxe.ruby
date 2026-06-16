@@ -31,7 +31,16 @@ class ModelMacro {
 		addFieldArrayPredicateStub(fields, "whereNotIn", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRangePredicateStub(fields, "whereBetween", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRangePredicateStub(fields, "whereNotBetween", selfType, relationComplexType(selfType, criteriaType, pos), pos);
-		for (name in ["whereGt", "whereGte", "whereLt", "whereLte", "whereNotGt", "whereNotGte", "whereNotLt", "whereNotLte"]) {
+		for (name in [
+			"whereGt",
+			"whereGte",
+			"whereLt",
+			"whereLte",
+			"whereNotGt",
+			"whereNotGte",
+			"whereNotLt",
+			"whereNotLte"
+		]) {
 			addFieldValuePredicateStub(fields, name, selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		}
 		addNullableFieldPredicateStub(fields, "whereNull", selfType, relationComplexType(selfType, criteriaType, pos), pos);
@@ -41,11 +50,13 @@ class ModelMacro {
 		addPlainStub(fields, "reorder", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "orderSql", sqlComplexType(selfType, "SqlOrder"), relationComplexType(selfType, criteriaType, pos), "fragment", pos);
 		addPlainStub(fields, "reorderSql", sqlComplexType(selfType, "SqlOrder"), relationComplexType(selfType, criteriaType, pos), "fragment", pos);
-		addPlainStub(fields, "includes", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
-		addPlainStub(fields, "preload", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
-		addPlainStub(fields, "joins", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
-		addPlainNativeStub(fields, "eagerLoad", "eager_load", associationComplexType(selfType, macro : Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
-		addPlainStub(fields, "offset", macro : Int, relationComplexType(selfType, criteriaType, pos), "count", pos);
+		addPlainStub(fields, "includes", associationComplexType(selfType, macro :Dynamic), relationComplexType(selfType, criteriaType, pos), "association",
+			pos);
+		addPlainStub(fields, "preload", associationComplexType(selfType, macro :Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
+		addPlainStub(fields, "joins", associationComplexType(selfType, macro :Dynamic), relationComplexType(selfType, criteriaType, pos), "association", pos);
+		addPlainNativeStub(fields, "eagerLoad", "eager_load", associationComplexType(selfType, macro :Dynamic),
+			relationComplexType(selfType, criteriaType, pos), "association", pos);
+		addPlainStub(fields, "offset", macro :Int, relationComplexType(selfType, criteriaType, pos), "count", pos);
 		addNoArgStub(fields, "all", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "distinct", relationComplexType(selfType, criteriaType, pos), pos);
 		addNoArgStub(fields, "none", relationComplexType(selfType, criteriaType, pos), pos);
@@ -55,20 +66,20 @@ class ModelMacro {
 		addFieldRelationStub(fields, "select", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
 		addStub(fields, "findBy", criteriaType, nullableSelf, pos);
-		addOptionalStub(fields, "exists", criteriaType, macro : Bool, "criteria", "exists?", pos);
-		addNoArgStub(fields, "count", macro : Int, pos);
-		addStub(fields, "create", macro : Dynamic, selfType, pos);
-		addStub(fields, "createBang", macro : Dynamic, selfType, pos);
-		addStub(fields, "build", macro : Dynamic, selfType, pos);
+		addOptionalStub(fields, "exists", criteriaType, macro :Bool, "criteria", "exists?", pos);
+		addNoArgStub(fields, "count", macro :Int, pos);
+		addStub(fields, "create", macro :Dynamic, selfType, pos);
+		addStub(fields, "createBang", macro :Dynamic, selfType, pos);
+		addStub(fields, "build", macro :Dynamic, selfType, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "last", nullableSelf, pos);
 		addPluckStub(fields, selfType, pos);
 		addFieldProjectionStub(fields, "minimum", selfType, nullableGenericComplexType("TValue"), pos);
 		addFieldProjectionStub(fields, "maximum", selfType, nullableGenericComplexType("TValue"), pos);
-		addIntFieldProjectionStub(fields, "sum", selfType, macro : Int, pos);
-		addIntFieldProjectionStub(fields, "average", selfType, macro : Null<Float>, pos);
+		addIntFieldProjectionStub(fields, "sum", selfType, macro :Int, pos);
+		addIntFieldProjectionStub(fields, "average", selfType, macro :Null<Float>, pos);
 		addTransactionStub(fields, pos);
-		addNoArgStub(fields, "typedColumnCount", macro : Int, pos);
+		addNoArgStub(fields, "typedColumnCount", macro :Int, pos);
 		return fields;
 	}
 
@@ -105,7 +116,13 @@ class ModelMacro {
 				name: refName,
 				access: [APublic, AStatic, AInline, AFinal],
 				kind: FVar(refType, modelFieldRefConstructorExpr(field.name, fieldValueType(field))),
-				meta: [{name: ":railsField", params: [macro $v{field.name}], pos: pos}],
+				meta: [
+					{
+						name: ":railsField",
+						params: [macro $v{field.name}],
+						pos: pos
+					}
+				],
 				pos: pos
 			});
 		}
@@ -238,9 +255,8 @@ class ModelMacro {
 	}
 
 	static function modelFieldRefConstructorExpr(name:String, fieldType:ComplexType):Expr {
-		return nullableInnerComplexType(fieldType) == null
-			? macro rails.active_record.Field.named($v{name})
-			: macro rails.active_record.NullableField.named($v{name});
+		return
+			nullableInnerComplexType(fieldType) == null ? macro rails.active_record.Field.named($v{name}) : macro rails.active_record.NullableField.named($v{name});
 	}
 
 	static function validateModelMetadata(fields:Array<Field>):Void {
@@ -281,7 +297,8 @@ class ModelMacro {
 							throw "@:validates expects an options object, or a field name followed by an options object.";
 						}
 						validateValidationMetadata(field, fields, meta);
-					case ":beforeValidation" | ":afterValidation" | ":beforeSave" | ":afterSave" | ":beforeCreate" | ":afterCreate" | ":beforeUpdate" | ":afterUpdate" | ":beforeDestroy" | ":afterDestroy" | ":afterCommit" | ":afterRollback" | ":railsCallback":
+					case ":beforeValidation" | ":afterValidation" | ":beforeSave" | ":afterSave" | ":beforeCreate" | ":afterCreate" | ":beforeUpdate" |
+						":afterUpdate" | ":beforeDestroy" | ":afterDestroy" | ":afterCommit" | ":afterRollback" | ":railsCallback":
 						validateCallbackMetadata(field, meta);
 					case _:
 				}
@@ -539,7 +556,8 @@ class ModelMacro {
 
 	static function isAllowedCallbackName(name:String):Bool {
 		return switch (name) {
-			case "before_validation" | "after_validation" | "before_save" | "after_save" | "before_create" | "after_create" | "before_update" | "after_update" | "before_destroy" | "after_destroy" | "after_commit" | "after_rollback":
+			case "before_validation" | "after_validation" | "before_save" | "after_save" | "before_create" | "after_create" | "before_update" |
+				"after_update" | "before_destroy" | "after_destroy" | "after_commit" | "after_rollback":
 				true;
 			case _:
 				false;
@@ -811,8 +829,9 @@ class ModelMacro {
 	static function validateAttachmentType(field:Field, metaName:String):Void {
 		var expected = metaName == ":hasManyAttached" ? "Many" : "One";
 		switch (fieldValueType(field)) {
-			case TPath(path) if (attachmentTypePathName(path) == "rails.active_storage." + expected
-				|| attachmentTypePathName(path) == "rails.ActiveStorage." + expected):
+			case TPath(path)
+				if (attachmentTypePathName(path) == "rails.active_storage." + expected
+					|| attachmentTypePathName(path) == "rails.ActiveStorage." + expected):
 			case TPath(path):
 				throw metaName + ' field ${field.name} must be typed as rails.ActiveStorage.$expected<ThisModel>.';
 			case _:
@@ -862,9 +881,9 @@ class ModelMacro {
 	static function fieldValueType(field:Field):ComplexType {
 		return switch (field.kind) {
 			case FVar(t, _) | FProp(_, _, t, _):
-				t == null ? macro : Dynamic : t;
+				t == null ? macro :Dynamic : t;
 			case _:
-				macro : Dynamic;
+				macro :Dynamic;
 		}
 	}
 
@@ -873,10 +892,10 @@ class ModelMacro {
 			case TPath(path) if (path.params != null && path.params.length == 1):
 				switch (path.params[0]) {
 					case TPType(inner): inner;
-					case _: macro : Dynamic;
+					case _: macro :Dynamic;
 				}
 			case _:
-				macro : Dynamic;
+				macro :Dynamic;
 		}
 	}
 
@@ -885,10 +904,10 @@ class ModelMacro {
 			case TPath(path) if (path.params != null && path.params.length == 1):
 				switch (path.params[0]) {
 					case TPType(inner): inner;
-					case _: macro : Dynamic;
+					case _: macro :Dynamic;
 				}
 			case _:
-				macro : Dynamic;
+				macro :Dynamic;
 		}
 	}
 
@@ -928,7 +947,7 @@ class ModelMacro {
 				}
 			}
 		}
-		return criteriaFields.length == 0 ? macro : Dynamic : TAnonymous(criteriaFields);
+		return criteriaFields.length == 0 ? macro :Dynamic : TAnonymous(criteriaFields);
 	}
 
 	static function associationTargetCriteriaType(field:Field):Null<ComplexType> {
@@ -971,11 +990,13 @@ class ModelMacro {
 				pos: field.pos
 			});
 		}
-		return criteriaFields.length == 0 ? macro : Dynamic : TAnonymous(criteriaFields);
+		return criteriaFields.length == 0 ? macro :Dynamic : TAnonymous(criteriaFields);
 	}
 
 	static function classFieldHasMeta(field:haxe.macro.Type.ClassField, name:String):Bool {
-		return field.meta != null && field.meta.has != null && (field.meta.has(name) || (StringTools.startsWith(name, ":") && field.meta.has(name.substr(1))));
+		return field.meta != null
+			&& field.meta.has != null
+			&& (field.meta.has(name) || (StringTools.startsWith(name, ":") && field.meta.has(name.substr(1))));
 	}
 
 	static function railsColumnFieldsFromSource(classType:haxe.macro.Type.ClassType, pos:Position):Array<Field> {
@@ -1015,15 +1036,15 @@ class ModelMacro {
 		}
 		return switch (normalized) {
 			case "String":
-				macro : String;
+				macro :String;
 			case "Int":
-				macro : Int;
+				macro :Int;
 			case "Float":
-				macro : Float;
+				macro :Float;
 			case "Bool":
-				macro : Bool;
+				macro :Bool;
 			case _:
-				macro : Dynamic;
+				macro :Dynamic;
 		}
 	}
 
@@ -1038,7 +1059,7 @@ class ModelMacro {
 				return fieldValueType(field);
 			}
 		}
-		return macro : Int;
+		return macro :Int;
 	}
 
 	static function relationComplexType(selfType:ComplexType, criteriaType:ComplexType, pos:Position):ComplexType {
@@ -1215,7 +1236,8 @@ class ModelMacro {
 		});
 	}
 
-	static function addCriteriaOrPredicateStub(fields:Array<Field>, name:String, criteriaType:ComplexType, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+	static function addCriteriaOrPredicateStub(fields:Array<Field>, name:String, criteriaType:ComplexType, selfType:ComplexType, ret:ComplexType,
+			pos:Position):Void {
 		for (field in fields) {
 			if (field.name == name) {
 				return;
@@ -1235,14 +1257,16 @@ class ModelMacro {
 				{name: ":rubyExternStub", params: [], pos: pos},
 				{
 					name: ":overload",
-					params: [{
-						expr: EFunction(null, {
-							args: [{name: "predicate", type: predicateComplexType(selfType)}],
-							ret: ret,
-							expr: macro {}
-						}),
-						pos: pos
-					}],
+					params: [
+						{
+							expr: EFunction(null, {
+								args: [{name: "predicate", type: predicateComplexType(selfType)}],
+								ret: ret,
+								expr: macro {}
+							}),
+							pos: pos
+						}
+					],
 					pos: pos
 				}
 			],
@@ -1264,9 +1288,7 @@ class ModelMacro {
 				ret: ret,
 				expr: macro return cast null
 			}),
-			meta: [
-				{name: ":rubyExternStub", params: [], pos: pos}
-			],
+			meta: [{name: ":rubyExternStub", params: [], pos: pos}],
 			pos: pos
 		});
 	}
@@ -1330,7 +1352,7 @@ class ModelMacro {
 			name: name,
 			access: [APublic, AStatic],
 			kind: FFun({
-				args: [{name: "field", type: typedFieldComplexType(selfType, macro : Int)}],
+				args: [{name: "field", type: typedFieldComplexType(selfType, macro :Int)}],
 				ret: ret,
 				expr: macro return cast null
 			}),
@@ -1355,7 +1377,14 @@ class ModelMacro {
 			name: name,
 			access: [APublic, AStatic],
 			kind: FFun({
-				params: [{name: "TValue", constraints: [], params: [], meta: []}],
+				params: [
+					{
+						name: "TValue",
+						constraints: [],
+						params: [],
+						meta: []
+					}
+				],
 				args: [{name: "field", type: typedFieldComplexType(selfType, valueType)}],
 				ret: ret,
 				expr: macro return cast null
@@ -1377,7 +1406,14 @@ class ModelMacro {
 			name: name,
 			access: [APublic, AStatic],
 			kind: FFun({
-				params: [{name: "TValue", constraints: [], params: [], meta: []}],
+				params: [
+					{
+						name: "TValue",
+						constraints: [],
+						params: [],
+						meta: []
+					}
+				],
 				args: [
 					{name: "field", type: typedFieldComplexType(selfType, valueType)},
 					{name: "values", type: arrayComplexType(valueType)}
@@ -1402,7 +1438,14 @@ class ModelMacro {
 			name: name,
 			access: [APublic, AStatic],
 			kind: FFun({
-				params: [{name: "TValue", constraints: [], params: [], meta: []}],
+				params: [
+					{
+						name: "TValue",
+						constraints: [],
+						params: [],
+						meta: []
+					}
+				],
 				args: [
 					{name: "field", type: typedFieldComplexType(selfType, valueType)},
 					{name: "value", type: valueType}
@@ -1427,7 +1470,14 @@ class ModelMacro {
 			name: name,
 			access: [APublic, AStatic],
 			kind: FFun({
-				params: [{name: "TValue", constraints: [], params: [], meta: []}],
+				params: [
+					{
+						name: "TValue",
+						constraints: [],
+						params: [],
+						meta: []
+					}
+				],
 				args: [
 					{name: "field", type: typedFieldComplexType(selfType, valueType)},
 					{name: "min", type: valueType},
@@ -1452,8 +1502,17 @@ class ModelMacro {
 			name: name,
 			access: [APublic, AStatic],
 			kind: FFun({
-				params: [{name: "TValue", constraints: [], params: [], meta: []}],
-				args: [{name: "field", type: nullableFieldComplexType(selfType, TPath({pack: [], name: "TValue"}))}],
+				params: [
+					{
+						name: "TValue",
+						constraints: [],
+						params: [],
+						meta: []
+					}
+				],
+				args: [
+					{name: "field", type: nullableFieldComplexType(selfType, TPath({pack: [], name: "TValue"}))}
+				],
 				ret: ret,
 				expr: macro return cast null
 			}),
@@ -1486,7 +1545,14 @@ class ModelMacro {
 			name: "transaction",
 			access: [APublic, AStatic],
 			kind: FFun({
-				params: [{name: "TResult", constraints: [], params: [], meta: []}],
+				params: [
+					{
+						name: "TResult",
+						constraints: [],
+						params: [],
+						meta: []
+					}
+				],
 				args: [
 					{name: "block", type: TFunction([], resultType)},
 					{name: "options", type: transactionOptionsComplexType(), opt: true}
@@ -1502,7 +1568,8 @@ class ModelMacro {
 		});
 	}
 
-	static function addOptionalStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, nativeName:String, pos:Position):Void {
+	static function addOptionalStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, nativeName:String,
+			pos:Position):Void {
 		for (field in fields) {
 			if (field.name == name) {
 				return;
@@ -1528,7 +1595,8 @@ class ModelMacro {
 		addPlainNativeStub(fields, name, name, argType, ret, argName, pos);
 	}
 
-	static function addPlainNativeStub(fields:Array<Field>, name:String, nativeName:String, argType:ComplexType, ret:ComplexType, argName:String, pos:Position):Void {
+	static function addPlainNativeStub(fields:Array<Field>, name:String, nativeName:String, argType:ComplexType, ret:ComplexType, argName:String,
+			pos:Position):Void {
 		for (field in fields) {
 			if (field.name == name) {
 				return;

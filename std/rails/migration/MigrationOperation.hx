@@ -69,6 +69,7 @@ enum MigrationOperation {
 		var columns:Array<CreateTableItem>;
 		@:optional var timestamps:Bool;
 	});
+
 	AddColumn(table:String, name:String, column:MigrationColumn);
 	RemoveColumn(table:String, name:String);
 	ChangeColumn(table:String, name:String, column:MigrationColumn);

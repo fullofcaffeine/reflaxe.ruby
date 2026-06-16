@@ -49,6 +49,7 @@ class TodoCable {
 // `stopAllStreams`, and the typed `TodoCable` refs.
 // Rails output: generated Ruby calls `stream_from`, `transmit`,
 // `reject`, `stop_all_streams`, and `ActionCable.server.broadcast`.
+
 @:railsChannel
 class TodosChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {
 	public function subscribed():Void {

@@ -12,7 +12,6 @@
 // typed public APIs even when implementation is Ruby-owned.
 // Ruby output: externs remain type-only, Haxe-owned classes emit normal
 // `include`/`extend`, and injected type stubs do not leak into generated Ruby.
-
 using StringMonkeyPatch;
 
 // Scenario 1: consume an existing Ruby module that adds instance methods.
@@ -22,6 +21,7 @@ using StringMonkeyPatch;
 // adds to a receiver. The compiler copies this method shape into any class that
 // uses `@:rubyInclude(SluggableInstance)`, so Haxe can type-check `post.slug()`
 // while generated Ruby still calls the normal Ruby method.
+
 @:rubyRequireRelative("./support/extensions")
 @:rubyMixin({module: "Sluggable"})
 extern interface SluggableInstance {
@@ -35,6 +35,7 @@ extern interface SluggableInstance {
 // methods on the contract model that class-method surface. `@:native` keeps the
 // Haxe API Haxe-friendly (`findBySlug`) while emitting the Ruby method name
 // (`find_by_slug`).
+
 @:rubyRequireRelative("./support/extensions")
 @:rubyMixin({module: "SlugSearch"})
 extern class SlugSearchClassMethods {
@@ -48,6 +49,7 @@ extern class SlugSearchClassMethods {
 // `Sluggable` and extends `SlugSearch`. This extern adds typed knowledge of that
 // Ruby behavior to Haxe. No `legacy_post.rb` is generated; Haxe only verifies
 // constructor/method calls and lowers them to direct Ruby calls.
+
 @:rubyRequireRelative("./support/extensions")
 @:native("LegacyPost")
 @:rubyInclude(SluggableInstance)
@@ -62,6 +64,7 @@ extern class LegacyPost {
 // the receiving class below is Haxe-owned. These contracts give Haxe typed
 // access to the mixed-in members while telling the Ruby compiler which module
 // constant to emit in `include Decorated` and `extend Decorated`.
+
 @:rubyMixin({module: "Decorated"})
 extern interface PureHaxeDecoratedInstance {
 	public function decorated():String;
@@ -70,6 +73,7 @@ extern interface PureHaxeDecoratedInstance {
 // Class-method contract for the same Ruby module. Ruby allows one module to be
 // used for both instance and class methods; Haxe keeps those surfaces separate
 // because instance and static typing are different.
+
 @:rubyMixin({module: "Decorated"})
 extern class PureHaxeDecoratedClassMethods {
 	@:native("build_label")
@@ -83,6 +87,7 @@ extern class PureHaxeDecoratedClassMethods {
 // type stubs only; they are erased from the class body so Ruby dispatch uses the
 // real module methods. Ruby callers can consume `HaxeOwnedPost` as if it had
 // been hand-written.
+
 @:rubyInclude(PureHaxeDecoratedInstance)
 @:rubyExtend(PureHaxeDecoratedClassMethods)
 class HaxeOwnedPost {
@@ -104,6 +109,7 @@ class HaxeOwnedPost {
 // receiver can use them through `include DecoratedFromHaxe`.
 // Type safety/IntelliSense: `HaxeModulePost` receives a typed `haxeBadge(...)`
 // instance method through `@:rubyInclude(HaxeAuthoredDecorated)`.
+
 @:rubyModule("DecoratedFromHaxe")
 class HaxeAuthoredDecorated {
 	@:native("haxe_badge")
@@ -119,6 +125,7 @@ class HaxeAuthoredDecorated {
 // `@:rubyExtend(HaxeAuthoredClassMethods)` exposes `haxeClassBadge(...)` as a
 // typed static method on `HaxeModulePost` while the emitted Ruby remains
 // `extend ClassMethodsFromHaxe`.
+
 @:rubyModule("ClassMethodsFromHaxe")
 class HaxeAuthoredClassMethods {
 	@:native("haxe_class_badge")
@@ -138,6 +145,7 @@ class HaxeModulePost {
 // `RawDecorated` is still typed as a normal mixin contract. The raw Ruby below
 // is intentionally separate from the mixin: it demonstrates how to keep a small
 // target-specific metaprogramming operation behind a typed public method.
+
 @:rubyMixin({module: "RawDecorated"})
 extern interface RawDecoratedInstance {
 	public function rawDecorated():String;
@@ -149,6 +157,7 @@ extern interface RawDecoratedInstance {
 // raw authority. This is the escape-hatch shape for Ruby-specific behavior that
 // is not yet covered by typed std/compiler APIs. The public method remains
 // typed, so callers do not need to know raw Ruby exists internally.
+
 @:rubyAllowRaw
 @:rubyInclude(RawDecoratedInstance)
 class HaxeRawBackedPost {
@@ -170,7 +179,6 @@ class HaxeRawBackedPost {
 // by reopening the class. Haxe gets completion/type-checking for
 // `"value".headline()` and `"value".surround(...)`; generated Ruby calls those
 // patched receiver methods directly, without a wrapper class or helper object.
-
 // Scenario 11: create and consume a pure Haxe library with no Ruby support file.
 //
 // This class does not wrap Ruby and does not use `__ruby__`. It proves that the

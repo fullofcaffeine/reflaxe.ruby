@@ -31,6 +31,7 @@ abstract NullableField<TModel, TValue>(String) to String {
 	// ordering, projection, or generic field-ref helpers. The stricter
 	// `NullableField` type is still required at the `whereNull`/`whereNotNull`
 	// boundary, so non-nullable fields fail before Ruby is emitted.
+
 	@:to
 	public inline function toField():Field<TModel, Null<TValue>> {
 		return Field.named(this);

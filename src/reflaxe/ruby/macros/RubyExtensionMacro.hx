@@ -39,7 +39,8 @@ class RubyExtensionMacro {
 				continue;
 			}
 			if (!isStatic(field.access)) {
-				Context.error("@:rubyPatch contract field " + field.name + " must be static so Haxe `using` can type-check it as an extension method.", field.pos);
+				Context.error("@:rubyPatch contract field " + field.name + " must be static so Haxe `using` can type-check it as an extension method.",
+					field.pos);
 				continue;
 			}
 			switch (field.kind) {
@@ -53,7 +54,8 @@ class RubyExtensionMacro {
 		}
 	}
 
-	static function applyContracts(fields:Array<Field>, owner:ClassType, entries:Array<MetadataEntry>, staticOnly:Bool, targetIsExtern:Bool, pos:Position):Void {
+	static function applyContracts(fields:Array<Field>, owner:ClassType, entries:Array<MetadataEntry>, staticOnly:Bool, targetIsExtern:Bool,
+			pos:Position):Void {
 		for (entry in entries) {
 			if (entry.params == null || entry.params.length == 0) {
 				Context.error(entry.name + " expects an extension contract type.", entry.pos);
@@ -107,7 +109,11 @@ class RubyExtensionMacro {
 		var existing = findField(fields, source.name);
 		if (existing != null) {
 			if (!hasMeta(existing.meta, ":rubyExtensionOverride") && !hasMeta(existing.meta, ":rubyInjectedExtension")) {
-				Context.error(metaName + " cannot inject " + source.name + " because the target already defines it. Add @:rubyExtensionOverride to the target field if this is intentional.", existing.pos);
+				Context.error(metaName
+					+ " cannot inject "
+					+ source.name
+					+ " because the target already defines it. Add @:rubyExtensionOverride to the target field if this is intentional.",
+					existing.pos);
 			}
 			return;
 		}
@@ -117,7 +123,10 @@ class RubyExtensionMacro {
 					name: source.name,
 					access: isStatic ? [APublic, AStatic] : [APublic],
 					kind: FFun({
-						args: [for (arg in args) {name: arg.name, opt: arg.opt, type: Context.toComplexType(arg.t)}],
+						args: [
+							for (arg in args)
+								{name: arg.name, opt: arg.opt, type: Context.toComplexType(arg.t)}
+						],
 						ret: Context.toComplexType(ret),
 						expr: targetIsExtern ? null : macro return cast null
 					}),

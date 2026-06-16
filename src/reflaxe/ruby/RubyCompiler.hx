@@ -117,6 +117,7 @@ typedef LocalNameScope = {
 
 class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFile, RubyFile> {
 	public var currentCompilationContext:Null<CompilationContext>;
+
 	var emittedRubyPaths:Array<String> = [];
 	var emittedAppRubyPaths:Array<String> = [];
 	var emittedRailsMigrationPaths:Map<String, String> = [];
@@ -125,6 +126,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	var requireRegistry:RequireRegistry = new RequireRegistry();
 	var buildContext:RubyBuildContext;
 	var didEmitMain:Bool = false;
+
 	static var needsDataDefine:Bool = false;
 	static var needsHxException:Bool = false;
 	static var localNameScope:Null<LocalNameScope> = null;
@@ -179,8 +181,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var generatedPaths = emittedRubyPaths.copy();
 		generatedPaths.sort((a, b) -> {
-			if (a == "main.rb") return 1;
-			if (b == "main.rb") return -1;
+			if (a == "main.rb")
+				return 1;
+			if (b == "main.rb")
+				return -1;
 			return Reflect.compare(a, b);
 		});
 		paths = paths.concat(generatedPaths);
@@ -266,7 +270,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				continue;
 			}
 			if ((isRubyModule || isRubyConcern) && !field.isStatic && field.field.name == "new") {
-				Context.error("@:rubyModule/@:rubyConcern types cannot define constructors; Ruby modules are included or extended, not instantiated.", field.field.pos);
+				Context.error("@:rubyModule/@:rubyConcern types cannot define constructors; Ruby modules are included or extended, not instantiated.",
+					field.field.pos);
 				continue;
 			}
 			if (isRubyConcern && field.isStatic) {
@@ -405,7 +410,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return lines;
 	}
 
-	static function appendRubyExtensionLines(lines:Array<String>, meta:Null<haxe.macro.Type.MetaAccess>, metaName:String, rubyKeyword:String, ?owner:ClassType):Void {
+	static function appendRubyExtensionLines(lines:Array<String>, meta:Null<haxe.macro.Type.MetaAccess>, metaName:String, rubyKeyword:String,
+			?owner:ClassType):Void {
 		if (meta == null || meta.extract == null) {
 			return;
 		}
@@ -532,7 +538,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (emitStatic) {
 				name = "self." + name;
 			}
-			var args = [for (arg in field.args) arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)];
+			var args = [
+				for (arg in field.args)
+					arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)
+			];
 			return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
 		});
 	}
@@ -600,8 +609,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsScopeLambda(field:ClassFuncData, classType:ClassType):String {
 		return withLocalNameScope([for (arg in field.args) if (arg.tvar != null) arg.tvar], () -> {
-			var args = [for (arg in field.args) arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)];
-			var body = [for (line in renderStatements(compileRubyBlockBody(field.expr))) normalizeRailsScopeBody(line, classType)];
+			var args = [
+				for (arg in field.args)
+					arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)
+			];
+			var body = [
+				for (line in renderStatements(compileRubyBlockBody(field.expr)))
+					normalizeRailsScopeBody(line, classType)
+			];
 			if (canRenderInlineBlock(body)) {
 				var prefix = args.length == 0 ? " " : "(" + args.join(", ") + ") ";
 				return "->" + prefix + "{ " + body[0] + " }";
@@ -626,8 +641,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			var init = field.findDefaultExpr();
 			var initExpr = init == null ? compileUntypedConst(field.getDefaultUntypedExpr()) : compileExpr(init);
-			return RubyRawStatement("class << self\n  attr_accessor :" + name + "\nend\n@" + name + " = "
-				+ reflaxe.ruby.ast.RubyASTPrinter.printExpr(initExpr));
+			return RubyRawStatement("class << self\n  attr_accessor :" + name + "\nend\n@" + name + " = " +
+				reflaxe.ruby.ast.RubyASTPrinter.printExpr(initExpr));
 		});
 	}
 
@@ -695,7 +710,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	function compileRailsControllerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
+	function compileRailsControllerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
+			moduleRequires:RequireRegistry):RubyFile {
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		body = body.concat(railsControllerLifecycleLines(classType, varFields));
@@ -716,7 +732,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			body.push("# Rails controller generated by reflaxe.ruby");
 		}
 
-		var lines = ["class " + RubyNaming.toConstantName(classType.name) + " < ActionController::Base"];
+		var lines = [
+			"class " + RubyNaming.toConstantName(classType.name) + " < ActionController::Base"
+		];
 		for (line in body) {
 			lines.push("  " + line);
 		}
@@ -734,7 +752,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		};
 	}
 
-	function compileRailsMailerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
+	function compileRailsMailerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
+			moduleRequires:RequireRegistry):RubyFile {
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		for (field in varFields) {
@@ -807,7 +826,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		};
 	}
 
-	function compileRailsChannelImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
+	function compileRailsChannelImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
+			moduleRequires:RequireRegistry):RubyFile {
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		for (field in varFields) {
@@ -823,7 +843,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			body.push("# Rails ActionCable channel generated by reflaxe.ruby");
 		}
 
-		var lines = ["class " + RubyNaming.toConstantName(classType.name) + " < ActionCable::Channel::Base"];
+		var lines = [
+			"class " + RubyNaming.toConstantName(classType.name) + " < ActionCable::Channel::Base"
+		];
 		for (line in body) {
 			lines.push("  " + line);
 		}
@@ -916,7 +938,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsJobLifecycleDecl(expr:TypedExpr):{kind:String, queue:String, exception:String, waitSeconds:Int, attempts:Int, retryQueue:String} {
+	static function railsJobLifecycleDecl(expr:TypedExpr):{
+		kind:String,
+		queue:String,
+		exception:String,
+		waitSeconds:Int,
+		attempts:Int,
+		retryQueue:String
+	} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall(callee, params) if (isRailsJobLifecycleMarker(callee, "queue") && params.length == 1):
 				{
@@ -947,21 +976,34 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				};
 			case _:
 				Context.error("Rails job lifecycle entries must be produced by rails.macros.JobDsl declarations.", expr.pos);
-				{kind: "", queue: "", exception: "", waitSeconds: -1, attempts: -1, retryQueue: ""};
+				{
+					kind: "",
+					queue: "",
+					exception: "",
+					waitSeconds: -1,
+					attempts: -1,
+					retryQueue: ""
+				};
 		}
 	}
 
 	static function isRailsJobLifecycleMarker(expr:TypedExpr, name:String):Bool {
 		return switch (unwrapTypedExpr(expr).expr) {
-			case TField(_, FStatic(classRef, fieldRef)):
-				fullTypeName(classRef.get().pack, classRef.get().name) == "rails.active_job.LifecycleDecl"
-					&& fieldRef.get().name == name;
+			case TField(_, FStatic(classRef, fieldRef)): fullTypeName(classRef.get().pack,
+					classRef.get().name) == "rails.active_job.LifecycleDecl" && fieldRef.get().name == name;
 			case _:
 				false;
 		}
 	}
 
-	static function railsJobLifecycleOptions(decl:{kind:String, queue:String, exception:String, waitSeconds:Int, attempts:Int, retryQueue:String}):String {
+	static function railsJobLifecycleOptions(decl:{
+		kind:String,
+		queue:String,
+		exception:String,
+		waitSeconds:Int,
+		attempts:Int,
+		retryQueue:String
+	}):String {
 		var options:Array<String> = [];
 		if (decl.waitSeconds >= 0) {
 			options.push("wait: " + decl.waitSeconds + ".seconds");
@@ -1061,7 +1103,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function railsControllerLifecycleLines(classType:ClassType, varFields:Array<ClassVarData>):Array<String> {
 		var lifecycle = railsControllerLifecycleField(varFields);
 		if (lifecycle == null) {
-			Context.error('@:railsController class ${classType.name} must declare `static final lifecycle = { ... }`. Use `[]` when the controller has no filters or rescues.', classType.pos);
+			Context.error('@:railsController class ${classType.name} must declare `static final lifecycle = { ... }`. Use `[]` when the controller has no filters or rescues.',
+				classType.pos);
 			return [];
 		}
 		if (!lifecycle.isStatic) {
@@ -1086,7 +1129,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						lines.push("rescue_from " + decl.exceptions.join(", ") + ", with: " + rubySymbolLiteral(RubyNaming.toMethodName(decl.method)));
 					}
 				case other:
-					Context.error('Unsupported Rails controller lifecycle declaration "$other". Use beforeAction, afterAction, aroundAction, or rescueFrom.', entry.pos);
+					Context.error('Unsupported Rails controller lifecycle declaration "$other". Use beforeAction, afterAction, aroundAction, or rescueFrom.',
+						entry.pos);
 			}
 		}
 		return lines;
@@ -1114,12 +1158,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TArrayDecl(values) if (values.length == 0):
 				[];
 			case _:
-				Context.error("Rails controller lifecycle must be a Haxe block: `static final lifecycle = { beforeAction(...); rescueFrom(...); }`.", unwrapped.pos);
+				Context.error("Rails controller lifecycle must be a Haxe block: `static final lifecycle = { beforeAction(...); rescueFrom(...); }`.",
+					unwrapped.pos);
 				[];
 		}
 	}
 
-	static function railsControllerLifecycleDecl(expr:TypedExpr):{kind:String, method:String, only:Array<String>, except:Array<String>, exceptions:Array<String>} {
+	static function railsControllerLifecycleDecl(expr:TypedExpr):{
+		kind:String,
+		method:String,
+		only:Array<String>,
+		except:Array<String>,
+		exceptions:Array<String>
+	} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall(callee, params) if (isRailsControllerLifecycleMarker(callee, "filter") && params.length == 4):
 				var kind = railsControllerLifecycleStringValue(params[0], "filter kind");
@@ -1141,21 +1192,32 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				};
 			case _:
 				Context.error("Rails controller lifecycle entries must be produced by rails.macros.ControllerDsl declarations.", expr.pos);
-				{kind: "", method: "", only: [], except: [], exceptions: []};
+				{
+					kind: "",
+					method: "",
+					only: [],
+					except: [],
+					exceptions: []
+				};
 		}
 	}
 
 	static function isRailsControllerLifecycleMarker(expr:TypedExpr, name:String):Bool {
 		return switch (unwrapTypedExpr(expr).expr) {
-			case TField(_, FStatic(classRef, fieldRef)):
-				fullTypeName(classRef.get().pack, classRef.get().name) == "rails.action_controller.LifecycleDecl"
-					&& fieldRef.get().name == name;
+			case TField(_, FStatic(classRef, fieldRef)): fullTypeName(classRef.get().pack,
+					classRef.get().name) == "rails.action_controller.LifecycleDecl" && fieldRef.get().name == name;
 			case _:
 				false;
 		}
 	}
 
-	static function railsControllerLifecycleOptions(decl:{kind:String, method:String, only:Array<String>, except:Array<String>, exceptions:Array<String>}):String {
+	static function railsControllerLifecycleOptions(decl:{
+		kind:String,
+		method:String,
+		only:Array<String>,
+		except:Array<String>,
+		exceptions:Array<String>
+	}):String {
 		var options:Array<String> = [];
 		if (decl.only.length > 0) {
 			options.push("only: [" + [for (action in decl.only) rubySymbolLiteral(RubyNaming.toMethodName(action))].join(", ") + "]");
@@ -1258,7 +1320,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error(metaName + " cannot annotate a constructor.", field.field.pos);
 		}
 		if (field.args.length > 0) {
-			Context.error(metaName + " callback method must not declare Haxe arguments; Rails calls controller filters without Haxe parameters.", field.field.pos);
+			Context.error(metaName + " callback method must not declare Haxe arguments; Rails calls controller filters without Haxe parameters.",
+				field.field.pos);
 		}
 	}
 
@@ -1312,7 +1375,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	function compileRailsModelImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
+	function compileRailsModelImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
+			moduleRequires:RequireRegistry):RubyFile {
 		var body:Array<String> = [];
 		var tableName = railsModelTableName(classType);
 		if (tableName != null) {
@@ -1400,7 +1464,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsSchemaRegistryLines(tableName:Null<String>, varFields:Array<ClassVarData>, classType:ClassType):Array<String> {
-		var columns = [for (field in varFields) if (hasMeta(field.field.meta, ":railsColumn")) railsColumnInfo(field)];
+		var columns = [
+			for (field in varFields)
+				if (hasMeta(field.field.meta, ":railsColumn")) railsColumnInfo(field)
+		];
 		var lines = [
 			"def self.__hx_rails_schema()",
 			"  {",
@@ -1467,8 +1534,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return pack[0] == "haxe" || pack[0] == "sys" || pack[0] == "ruby" || pack[0] == "rails";
 		}
 		return [
-			"Any", "Bool", "Class", "Dynamic", "EReg", "Enum", "EnumValue", "Float", "IMap", "Int", "IntIterator", "Iterable", "Iterator",
-			"KeyValueIterable", "KeyValueIterator", "Map", "Null", "StringBuf", "StringTools", "Std", "Sys", "Date", "Lambda", "ValueType", "Void"
+			"Any",
+			"Bool",
+			"Class",
+			"Dynamic",
+			"EReg",
+			"Enum",
+			"EnumValue",
+			"Float",
+			"IMap",
+			"Int",
+			"IntIterator",
+			"Iterable",
+			"Iterator",
+			"KeyValueIterable",
+			"KeyValueIterator",
+			"Map",
+			"Null",
+			"StringBuf",
+			"StringTools",
+			"Std",
+			"Sys",
+			"Date",
+			"Lambda",
+			"ValueType",
+			"Void"
 		].indexOf(typeName) != -1;
 	}
 
@@ -1570,11 +1660,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyLambda([for (arg in fn.args) localName(arg.v)], lambdaBody(fn.expr));
 			case TNew(classRef, _, params):
 				var classType = classRef.get();
-				RubyCall(RubyLocal(rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name)), "new", [for (param in params) compileExpr(param)]);
+				RubyCall(RubyLocal(rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name)), "new",
+					[for (param in params) compileExpr(param)]);
 			case TBlock(exprs):
 				RubyRawExpr("begin\n" + [for (stmt in compileStatementList(exprs)) "  " + statementToInlineRuby(stmt)].join("\n") + "\nend");
 			case TIf(cond, eThen, eElse):
-				RubyRawExpr("(if " + printInlineExpr(cond) + " then " + printInlineExpr(eThen) + " else " + (eElse == null ? "nil" : printInlineExpr(eElse)) + " end)");
+				RubyRawExpr("(if " + printInlineExpr(cond) + " then " + printInlineExpr(eThen) + " else " + (eElse == null ? "nil" : printInlineExpr(eElse))
+					+ " end)");
 			case TSwitch(switchExpr, cases, edef):
 				RubyRawExpr(renderSwitch(switchExpr, cases, edef));
 			case TTry(tryExpr, catches):
@@ -1586,7 +1678,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TEnumIndex(enumExpr):
 				RubyRawExpr(printInlineExpr(enumExpr) + ".__hx_index");
 			case TCall({expr: TField(_, FEnum(enumRef, field))}, params):
-				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name), [for (param in params) compileExpr(param)]);
+				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name),
+					[for (param in params) compileExpr(param)]);
 			case TCall({expr: TField(target, access)}, params) if (isRubyInteropCall(access)):
 				compileRubyInteropCall(target, access, params);
 			case TCall({expr: TField(target, access)}, params):
@@ -1600,9 +1693,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
 				var constant = mathConstantValue(classType.pack, classType.name, fieldRef.get().name);
-				constant == null
-					? RubyRawExpr((rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name)) + "." + rubyFieldName(fieldRef.get().name, fieldRef.get().meta))
-					: RubyRawExpr(constant);
+				constant == null ? RubyRawExpr((rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name))
+					+ "."
+					+ rubyFieldName(fieldRef.get().name, fieldRef.get().meta)) : RubyRawExpr(constant);
 			case TField(target, access):
 				RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case TTypeExpr(moduleType):
@@ -1862,7 +1955,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "reverse":
 						RubyCall(RubyLocal("HXRuby"), "array_reverse", [receiver]);
 					case "slice":
-						RubyCall(RubyLocal("HXRuby"), "array_slice", [receiver, compileParam(params, 0), params.length > 1 ? compileExpr(params[1]) : RubyNil]);
+						RubyCall(RubyLocal("HXRuby"), "array_slice", [
+							receiver,
+							compileParam(params, 0),
+							params.length > 1 ? compileExpr(params[1]) : RubyNil
+						]);
 					case "sort":
 						RubyCall(RubyLocal("HXRuby"), "array_sort", [receiver, compileParam(params, 0)]);
 					case "splice":
@@ -1876,9 +1973,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "contains":
 						RubyCall(RubyLocal("HXRuby"), "array_contains", [receiver, compileParam(params, 0)]);
 					case "indexOf":
-						RubyCall(RubyLocal("HXRuby"), "array_index_of", [receiver, compileParam(params, 0), params.length > 1 ? compileExpr(params[1]) : RubyNil]);
+						RubyCall(RubyLocal("HXRuby"), "array_index_of", [
+							receiver,
+							compileParam(params, 0),
+							params.length > 1 ? compileExpr(params[1]) : RubyNil
+						]);
 					case "lastIndexOf":
-						RubyCall(RubyLocal("HXRuby"), "array_last_index_of", [receiver, compileParam(params, 0), params.length > 1 ? compileExpr(params[1]) : RubyNil]);
+						RubyCall(RubyLocal("HXRuby"), "array_last_index_of", [
+							receiver,
+							compileParam(params, 0),
+							params.length > 1 ? compileExpr(params[1]) : RubyNil
+						]);
 					case "copy":
 						RubyCall(RubyLocal("HXRuby"), "array_copy", [receiver]);
 					case "map":
@@ -1897,10 +2002,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActiveRecordRelationCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
-			case TField(target, access) if (fieldAccessRawName(access) == "transaction" && (params.length == 1 || params.length == 2) && isFunctionExpr(params[0])):
+			case TField(target, access)
+				if (fieldAccessRawName(access) == "transaction"
+					&& (params.length == 1 || params.length == 2)
+					&& isFunctionExpr(params[0])):
 				var options = params.length == 2 ? activeRecordTransactionOptions(params[1]) : [];
 				RubyRawExpr(printInlineExpr(target) + ".transaction(" + options.join(", ") + ") " + renderRubyBlock(params[0]));
-			case TField(target, access) if ((fieldAccessRawName(access) == "where" || fieldAccessRawName(access) == "rewhere") && params.length == 1):
+			case TField(target, access) if ((fieldAccessRawName(access) == "where" || fieldAccessRawName(access) == "rewhere")
+				&& params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				if (criteria != null) {
 					RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(criteria)]);
@@ -1910,7 +2019,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				} else {
 					null;
 				}
-			case TField(target, access) if ((fieldAccessRawName(access) == "whereNot" || fieldAccessRawName(access) == "where_not") && params.length == 1):
+			case TField(target, access) if ((fieldAccessRawName(access) == "whereNot" || fieldAccessRawName(access) == "where_not")
+				&& params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				if (criteria != null) {
 					RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
@@ -1952,7 +2062,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (fieldAccessRawName(access) == "whereNotNull" && params.length == 1):
 				var criteria = activeRecordFieldNilCriteriaArg(params[0]);
 				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
-			case TField(target, access) if ((fieldAccessRawName(access) == "create" || fieldAccessRawName(access) == "createBang" || fieldAccessRawName(access) == "build") && params.length == 1):
+			case TField(target, access)
+				if ((fieldAccessRawName(access) == "create"
+					|| fieldAccessRawName(access) == "createBang"
+					|| fieldAccessRawName(access) == "build")
+					&& params.length == 1):
 				var attrs = activeRecordCriteriaArg(params[0]);
 				if (attrs == null) {
 					null;
@@ -1964,26 +2078,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					}
 					RubyCall(compileExpr(target), methodName, [RubyRawExpr(attrs)]);
 				}
-			case TField(target, access) if ((fieldAccessRawName(access) == "findBy" || fieldAccessRawName(access) == "find_by") && params.length == 1):
+			case TField(target, access) if ((fieldAccessRawName(access) == "findBy" || fieldAccessRawName(access) == "find_by")
+				&& params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
 				criteria == null ? null : RubyCall(compileExpr(target), "find_by", [RubyRawExpr(criteria)]);
-			case TField(target, access) if ((fieldAccessRawName(access) == "exists" || fieldAccessRawName(access) == "exists?") && params.length <= 1):
+			case TField(target, access) if ((fieldAccessRawName(access) == "exists" || fieldAccessRawName(access) == "exists?")
+				&& params.length <= 1):
 				if (params.length == 0) {
 					RubyCall(compileExpr(target), "exists?", []);
 				} else {
 					var criteria = activeRecordCriteriaArg(params[0]);
 					criteria == null ? null : RubyCall(compileExpr(target), "exists?", [RubyRawExpr(criteria)]);
 				}
-			case TField(target, access) if ((fieldAccessRawName(access) == "order" || fieldAccessRawName(access) == "reorder") && params.length == 1):
+			case TField(target, access) if ((fieldAccessRawName(access) == "order" || fieldAccessRawName(access) == "reorder")
+				&& params.length == 1):
 				var orderArg = activeRecordOrderArg(params[0]);
 				orderArg == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(orderArg)]);
-			case TField(target, access) if ((fieldAccessRawName(access) == "orderSql" || fieldAccessRawName(access) == "reorderSql") && params.length == 1):
+			case TField(target, access) if ((fieldAccessRawName(access) == "orderSql" || fieldAccessRawName(access) == "reorderSql")
+				&& params.length == 1):
 				var methodName = fieldAccessRawName(access) == "orderSql" ? "order" : "reorder";
 				RubyCall(compileExpr(target), methodName, [RubyRawExpr(activeRecordSqlArg(params[0]))]);
 			case TField(target, access) if (fieldAccessRawName(access) == "pluck" && params.length == 1):
 				var fieldName = activeRecordFieldName(params[0]);
 				fieldName == null ? null : RubyCall(compileExpr(target), "pluck", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
-			case TField(target, access) if ((fieldAccessRawName(access) == "minimum" || fieldAccessRawName(access) == "maximum" || fieldAccessRawName(access) == "sum" || fieldAccessRawName(access) == "average") && params.length == 1):
+			case TField(target, access)
+				if ((fieldAccessRawName(access) == "minimum"
+					|| fieldAccessRawName(access) == "maximum"
+					|| fieldAccessRawName(access) == "sum"
+					|| fieldAccessRawName(access) == "average")
+					&& params.length == 1):
 				var fieldName = activeRecordFieldName(params[0]);
 				fieldName == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
 			case TField(target, access) if (fieldAccessRawName(access) == "select" && params.length == 1):
@@ -1991,7 +2114,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				fieldName == null ? null : RubyCall(compileExpr(target), "select", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
 			case TField(target, access) if (isActiveRecordAssociationRelationMethod(fieldAccessRawName(access)) && params.length == 1):
 				var associationArg = activeRecordAssociationArg(params[0]);
-				associationArg == null ? null : RubyCall(compileExpr(target), activeRecordAssociationRelationMethodName(fieldAccessRawName(access)), [RubyRawExpr(associationArg)]);
+				associationArg == null ? null : RubyCall(compileExpr(target), activeRecordAssociationRelationMethodName(fieldAccessRawName(access)),
+					[RubyRawExpr(associationArg)]);
 			case TField(target, access) if (fieldAccessRawName(access) == "lock" && params.length <= 1):
 				if (params.length == 0) {
 					RubyCall(compileExpr(target), "lock", []);
@@ -2014,7 +2138,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (fieldNames == null || keys == null || fieldNames.length == 0 || fieldNames.length != keys.length) {
 				Context.error("ProjectionRuntime.pluck expects matching static field and key arrays emitted by Projection.pluck.", callee.pos);
 			}
-			var pluckArgs = [for (fieldName in fieldNames) RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))];
+			var pluckArgs = [
+				for (fieldName in fieldNames)
+					RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))
+			];
 			var keyArray = RubyRawExpr("[" + [for (key in keys) quoteRubyStringForCode(key)].join(", ") + "]");
 			return RubyCall(RubyLocal("HXRuby"), "active_record_projection", [RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keyArray]);
 		}
@@ -2023,7 +2150,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			var keys = staticStringArray(params[2]);
 			var values = staticArrayElements(params[3]);
 			if (groupField == null || keys == null || values == null || keys.length == 0 || keys.length != values.length) {
-				Context.error("ProjectionRuntime.group expects a static group field, matching keys, and expression array emitted by Projection.group.", callee.pos);
+				Context.error("ProjectionRuntime.group expects a static group field, matching keys, and expression array emitted by Projection.group.",
+					callee.pos);
 			}
 			var pluckArgs = [];
 			for (value in values) {
@@ -2063,7 +2191,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			var grouped = RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
 			var having = RubyCall(grouped, "having", [RubyRawExpr(predicate)]);
-			return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [RubyCall(having, "count", []), RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))]);
+			return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [
+				RubyCall(having, "count", []),
+				RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))
+			]);
 		}
 		return null;
 	}
@@ -2168,7 +2299,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case ["rails.ActionCable", "broadcast"] if (params.length == 2):
 				RubyRawExpr("ActionCable.server.broadcast(" + printParam(params, 0) + ", " + printParam(params, 1) + ")");
 			case _:
-				if (info.name == "named" && params.length == 1
+				if (info.name == "named"
+					&& params.length == 1
 					&& (isActionCableStreamOwner(info.owner) || isActionCableSubscriptionParamOwner(info.owner))) {
 					compileExpr(params[0]);
 				} else {
@@ -2224,8 +2356,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileTurboStreamsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
-		if (info.name == "named" && (info.owner == "rails.turbo.StreamTarget" || StringTools.endsWith(info.owner, ".StreamTarget_Impl_")
-			|| info.owner == "rails.turbo.StreamName" || StringTools.endsWith(info.owner, ".StreamName_Impl_")) && params.length == 1) {
+		if (info.name == "named"
+			&& (info.owner == "rails.turbo.StreamTarget"
+				|| StringTools.endsWith(info.owner, ".StreamTarget_Impl_")
+				|| info.owner == "rails.turbo.StreamName"
+				|| StringTools.endsWith(info.owner, ".StreamName_Impl_"))
+			&& params.length == 1) {
 			return compileExpr(params[0]);
 		}
 		if (info.owner != "rails.turbo.TurboStreams") {
@@ -2293,8 +2429,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function compileActiveSupportNotificationsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch [info.owner, info.name] {
 			case ["rails.active_support.Notifications", "instrument"] if (params.length == 3 && isFunctionExpr(params[2])):
-				RubyRawExpr("ActiveSupport::Notifications.instrument(" + printParam(params, 0) + ", "
-					+ activeSupportNotificationPayload(params[1]) + ") " + renderRubyBlock(params[2]));
+				RubyRawExpr("ActiveSupport::Notifications.instrument(" + printParam(params, 0) + ", " + activeSupportNotificationPayload(params[1]) + ") "
+					+ renderRubyBlock(params[2]));
 			case ["rails.active_support.Notifications", "subscribe"] if (params.length == 2 && isFunctionExpr(params[1])):
 				RubyRawExpr("ActiveSupport::Notifications.subscribe(" + printParam(params, 0) + ") " + renderRubyBlock(params[1]));
 			case ["rails.active_support.Notifications", "monotonicSubscribe"] if (params.length == 2 && isFunctionExpr(params[1])):
@@ -2340,7 +2476,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function activeSupportNotificationPayload(expr:TypedExpr):String {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
-				"{" + [for (field in fields) RubyNaming.toMethodName(field.name) + ": " + printInlineExpr(field.expr)].join(", ") + "}";
+				"{" + [
+					for (field in fields)
+						RubyNaming.toMethodName(field.name) + ": " + printInlineExpr(field.expr)
+				].join(", ") + "}";
 			case _:
 				printInlineExpr(expr);
 		}
@@ -2392,9 +2531,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActionControllerKeyValueStore(expr:TypedExpr):Bool {
 		return switch (expr.t) {
-			case TInst(classRef, _):
-				var classType = classRef.get();
-				classType.pack.join(".") == "rails.action_controller" && classType.name == "KeyValueStore";
+			case TInst(classRef, _): var classType = classRef.get(); classType.pack.join(".") == "rails.action_controller" && classType.name == "KeyValueStore";
 			case _:
 				false;
 		}
@@ -2439,7 +2576,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActionControllerStatusNamedCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
-		return info != null && info.name == "named" && (info.owner == "rails.action_controller.Status" || StringTools.endsWith(info.owner, ".Status_Impl_"));
+		return info != null
+			&& info.name == "named"
+			&& (info.owner == "rails.action_controller.Status" || StringTools.endsWith(info.owner, ".Status_Impl_"));
 	}
 
 	static function isActionControllerStatusType(classType:ClassType):Bool {
@@ -2469,7 +2608,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function activeRecordFieldRangeCriteriaArg(fieldExpr:TypedExpr, minExpr:TypedExpr, maxExpr:TypedExpr):Null<String> {
 		var fieldName = activeRecordFieldName(fieldExpr);
-		return fieldName == null ? null : RubyNaming.toMethodName(fieldName) + ": " + printInlineExpr(minExpr) + ".." + printInlineExpr(maxExpr);
+		return fieldName == null ? null : RubyNaming.toMethodName(fieldName)
+			+ ": "
+			+ printInlineExpr(minExpr)
+			+ ".."
+			+ printInlineExpr(maxExpr);
 	}
 
 	static function activeRecordComparisonPredicateArg(fieldExpr:TypedExpr, op:Null<String>, valueExpr:TypedExpr):Null<String> {
@@ -2521,10 +2664,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				activeRecordOrderArgForExpressionOrField(fieldExpr, fieldAccessRawName(access));
 			case TCall({expr: TField(_, access)}, [fieldExpr]) if (isOrderDirection(fieldAccessRawName(access))):
 				activeRecordOrderArgForField(fieldExpr, fieldAccessRawName(access));
-			case TCall({expr: TField(_, access)}, [fieldExpr, directionExpr]) if (fieldAccessRawName(access) == "named"):
-				var fieldName = activeRecordFieldName(fieldExpr);
-				var direction = activeRecordDirectionName(directionExpr);
-				fieldName == null || direction == null ? null : RubyNaming.toMethodName(fieldName) + ": :" + direction;
+			case TCall({expr: TField(_, access)}, [fieldExpr, directionExpr]) if (fieldAccessRawName(access) == "named"): var fieldName = activeRecordFieldName(fieldExpr); var direction = activeRecordDirectionName(directionExpr); fieldName == null || direction == null ? null : RubyNaming.toMethodName(fieldName) + ": :" + direction;
 			case TCall({expr: TField(_, access)}, [ordersExpr]) if (fieldAccessRawName(access) == "many"):
 				activeRecordOrderManyArg(ordersExpr);
 			case _:
@@ -2615,19 +2755,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall({expr: TField(fieldExpr, access)}, []) if (fieldAccessRawName(access) == "lower"):
 				var field = activeRecordArelField(fieldExpr);
 				field == null ? null : field + ".lower";
-			case TCall({expr: TField(fieldExpr, access)}, []) if (activeRecordAggregateMethod(fieldAccessRawName(access)) != null):
-				var field = activeRecordArelField(fieldExpr);
-				var method = activeRecordAggregateMethod(fieldAccessRawName(access));
-				field == null || method == null ? null : field + "." + method;
+			case TCall({expr: TField(fieldExpr, access)}, []) if (activeRecordAggregateMethod(fieldAccessRawName(access)) != null): var field = activeRecordArelField(fieldExpr); var method = activeRecordAggregateMethod(fieldAccessRawName(access)); field == null || method == null ? null : field + "." + method;
 			case TCall(callee, [fieldExpr]) if (isActiveRecordExprFieldCall(callee)):
 				activeRecordArelField(fieldExpr);
 			case TCall(callee, [fieldExpr]) if (isActiveRecordExprLowerCall(callee)):
 				var field = activeRecordArelField(fieldExpr);
 				field == null ? null : field + ".lower";
-			case TCall(callee, [fieldExpr]) if (isActiveRecordAggregateCall(callee)):
-				var field = activeRecordArelField(fieldExpr);
-				var method = activeRecordAggregateMethod(staticCallInfo(callee).name);
-				field == null || method == null ? null : field + "." + method;
+			case TCall(callee, [fieldExpr]) if (isActiveRecordAggregateCall(callee)): var field = activeRecordArelField(fieldExpr); var method = activeRecordAggregateMethod(staticCallInfo(callee)
+					.name); field == null || method == null ? null : field + "." + method;
 			case _:
 				null;
 		}
@@ -2654,7 +2789,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActiveRecordExprLowerCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
-		return info != null && info.name == "lower" && (isActiveRecordExprOwner(info.owner) || isActiveRecordOrderOwner(info.owner) || isActiveRecordFieldToolsOwner(info.owner));
+		return info != null
+			&& info.name == "lower"
+			&& (isActiveRecordExprOwner(info.owner) || isActiveRecordOrderOwner(info.owner) || isActiveRecordFieldToolsOwner(info.owner));
 	}
 
 	static function isActiveRecordExprOrderCall(callee:TypedExpr):Bool {
@@ -2664,12 +2801,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActiveRecordExprPredicateCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
-		return info != null && activeRecordExpressionPredicateOp(info.name) != null && (isActiveRecordExprOwner(info.owner) || isActiveRecordFieldToolsOwner(info.owner));
+		return info != null
+			&& activeRecordExpressionPredicateOp(info.name) != null
+			&& (isActiveRecordExprOwner(info.owner) || isActiveRecordFieldToolsOwner(info.owner));
 	}
 
 	static function isActiveRecordAggregateCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
-		return info != null && activeRecordAggregateMethod(info.name) != null && (info.owner == "rails.active_record.Aggregate" || isActiveRecordFieldToolsOwner(info.owner));
+		return info != null
+			&& activeRecordAggregateMethod(info.name) != null
+			&& (info.owner == "rails.active_record.Aggregate" || isActiveRecordFieldToolsOwner(info.owner));
 	}
 
 	static function activeRecordAggregateMethod(name:String):Null<String> {
@@ -2710,10 +2851,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (expr.expr) {
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
 				activeRecordAssociationArg(inner);
-			case TCall(callee, [parent, child]) if (isActiveRecordAssociationNestedCall(callee)):
-				var parentName = activeRecordAssociationKey(parent);
-				var childArg = activeRecordAssociationArg(child);
-				parentName == null || childArg == null ? null : "{" + parentName + ": " + childArg + "}";
+			case TCall(callee, [parent, child]) if (isActiveRecordAssociationNestedCall(callee)): var parentName = activeRecordAssociationKey(parent); var childArg = activeRecordAssociationArg(child); parentName == null || childArg == null ? null : "{" + parentName + ": " + childArg + "}";
 			case TField(_, access):
 				var value = fieldAccessRailsAssociationName(access);
 				if (value == null) {
@@ -2895,7 +3033,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyInteropCall(target:TypedExpr, access:haxe.macro.Type.FieldAccess, params:Array<TypedExpr>):RubyExpr {
-		return compileRubyReceiverCall(target, fieldAccessName(access), params, hasFieldAccessMeta(access, ":rubyKwargs"), hasFieldAccessMeta(access, ":rubyBlockArg"));
+		return compileRubyReceiverCall(target, fieldAccessName(access), params, hasFieldAccessMeta(access, ":rubyKwargs"),
+			hasFieldAccessMeta(access, ":rubyBlockArg"));
 	}
 
 	static function compileRubyPatchCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -2909,7 +3048,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var receiver = params[0];
 		var remaining = params.slice(1);
-		return compileRubyReceiverCall(receiver, rubyFieldName(info.field.name, info.field.meta), remaining, hasMeta(info.field.meta, ":rubyKwargs"), hasMeta(info.field.meta, ":rubyBlockArg"));
+		return compileRubyReceiverCall(receiver, rubyFieldName(info.field.name, info.field.meta), remaining, hasMeta(info.field.meta, ":rubyKwargs"),
+			hasMeta(info.field.meta, ":rubyBlockArg"));
 	}
 
 	static function rubyPatchCallInfo(callee:TypedExpr):Null<{className:String, field:ClassField}> {
@@ -2983,9 +3123,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				null;
 		}
 		var children = printParam(params, 1);
-		return key == null
-			? RubyRawExpr("{(" + printParam(params, 0) + ").to_sym => " + children + "}")
-			: RubyRawExpr("{" + key + ": " + children + "}");
+		return key == null ? RubyRawExpr("{(" + printParam(params, 0) + ").to_sym => " + children + "}") : RubyRawExpr("{" + key + ": " + children + "}");
 	}
 
 	static function compileRubyInjection(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -3030,7 +3168,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function renderKeywordArgs(expr:TypedExpr):Array<String> {
 		return switch (expr.expr) {
 			case TObjectDecl(fields):
-				[for (field in fields) RubyNaming.toMethodName(field.name) + ": " + printKeywordArgValue(field.name, field.expr)];
+				[
+					for (field in fields)
+						RubyNaming.toMethodName(field.name) + ": " + printKeywordArgValue(field.name, field.expr)
+				];
 			case _:
 				[printInlineExpr(expr)];
 		}
@@ -3067,8 +3208,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				valueInit;
 			case TBlock([decl, assign, ret]):
 				switch [decl.expr, assign.expr, ret.expr] {
-					case [TVar(local, _), TBinop(OpAssign, {expr: TLocal(assignLocal)}, value), TLocal(retLocal)]
-						if (local.name == assignLocal.name && local.name == retLocal.name):
+					case [
+						TVar(local, _),
+						TBinop(OpAssign, {expr: TLocal(assignLocal)}, value),
+						TLocal(retLocal)
+					] if (local.name == assignLocal.name && local.name == retLocal.name):
 						value;
 					case _:
 						null;
@@ -3099,7 +3243,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function printRailsLocalsHash(expr:TypedExpr):Null<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
-				"{" + [for (field in fields) RubyNaming.toLocalName(field.name) + ": " + printInlineExpr(field.expr)].join(", ") + "}";
+				"{" + [
+					for (field in fields)
+						RubyNaming.toLocalName(field.name) + ": " + printInlineExpr(field.expr)
+				].join(", ") + "}";
 			case _:
 				printRailsLocalsHashFromTypedValue(expr);
 		}
@@ -3147,7 +3294,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					lines.join("\n");
 				}
 			case _:
-			"{ |value| " + printInlineExpr(expr) + ".call(value) }";
+				"{ |value| " + printInlineExpr(expr) + ".call(value) }";
 		}
 	}
 
@@ -3333,7 +3480,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var fileName = config.timestamp + "_" + RubyNaming.fileName(config.className) + ".rb";
 		var outputPath = "db/migrate/" + fileName;
 		if (emittedRailsMigrationPaths.exists(outputPath)) {
-			Context.error('@:railsMigration emits duplicate migration file ${outputPath}; first emitted by ${emittedRailsMigrationPaths.get(outputPath)}.', classType.pos);
+			Context.error('@:railsMigration emits duplicate migration file ${outputPath}; first emitted by ${emittedRailsMigrationPaths.get(outputPath)}.',
+				classType.pos);
 			return;
 		}
 		var source = fullTypeName(classType.pack, classType.name);
@@ -3360,7 +3508,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		for (migration in emittedRailsMigrations) {
 			if (timestamps.exists(migration.timestamp)) {
 				var first = timestamps.get(migration.timestamp);
-				Context.error('@:railsMigration timestamp ${migration.timestamp} is already used by ${first.source}; migration timestamps must be unique for deterministic Rails ordering.', migration.pos);
+				Context.error('@:railsMigration timestamp ${migration.timestamp} is already used by ${first.source}; migration timestamps must be unique for deterministic Rails ordering.',
+					migration.pos);
 			}
 			timestamps.set(migration.timestamp, migration);
 			for (table in migration.createdTables) {
@@ -3377,10 +3526,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	function validateRailsMigrationForeignKeyTable(tableCreators:Map<String, RailsEmittedMigration>, migration:RailsEmittedMigration, table:String, label:String):Void {
+	function validateRailsMigrationForeignKeyTable(tableCreators:Map<String, RailsEmittedMigration>, migration:RailsEmittedMigration, table:String,
+			label:String):Void {
 		var creator = tableCreators.get(table);
 		if (creator != null && creator.timestamp > migration.timestamp) {
-			Context.error('@:railsMigration foreign key ${label} table "$table" is created by ${creator.source} at ${creator.timestamp}, after ${migration.source} at ${migration.timestamp}. Move the foreign key to a later migration or adjust timestamps.', migration.pos);
+			Context.error('@:railsMigration foreign key ${label} table "$table" is created by ${creator.source} at ${creator.timestamp}, after ${migration.source} at ${migration.timestamp}. Move the foreign key to a later migration or adjust timestamps.',
+				migration.pos);
 		}
 	}
 
@@ -3425,7 +3576,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "knownModels":
 							knownModelPaths = metadataStringArray(field.expr, "knownModels");
 						case "externalTables":
-							externalTables = [for (table in metadataStringArray(field.expr, "externalTables")) safeRailsMigrationExternalTable(table, field.expr.pos)];
+							externalTables = [
+								for (table in metadataStringArray(field.expr, "externalTables"))
+									safeRailsMigrationExternalTable(table, field.expr.pos)
+							];
 						case other:
 							Context.error('@:railsMigration unknown option $other.', field.expr.pos);
 					}
@@ -3454,18 +3608,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsMigration models must include at least one model path unless typed operations are provided.", classType.pos);
 			return null;
 		}
-		return {timestamp: timestamp, className: className, version: version, models: models, knownModels: knownModels, externalTables: externalTables, operations: operations};
+		return {
+			timestamp: timestamp,
+			className: className,
+			version: version,
+			models: models,
+			knownModels: knownModels,
+			externalTables: externalTables,
+			operations: operations
+		};
 	}
 
 	static function safeRailsMigrationExternalTable(table:String, pos:haxe.macro.Expr.Position):String {
 		var normalized = RubyNaming.toMethodName(table);
-		if (table == null || table == "" || table.indexOf("/") != -1 || table.indexOf("\\") != -1 || table.indexOf(".") != -1 || !~/^[a-z][a-z0-9_]*$/.match(normalized)) {
+		if (table == null || table == "" || table.indexOf("/") != -1 || table.indexOf("\\") != -1 || table.indexOf(".") != -1
+			|| !~/^[a-z][a-z0-9_]*$/.match(normalized)) {
 			Context.error('@:railsMigration externalTables entries must be safe Rails table identifiers such as "legacy_events".', pos);
 		}
 		return normalized;
 	}
 
-	static function railsMigrationResolveModels(modelPaths:Array<String>, tableNames:Map<String, String>, classType:ClassType, validationOnly:Bool):Array<ClassType> {
+	static function railsMigrationResolveModels(modelPaths:Array<String>, tableNames:Map<String, String>, classType:ClassType,
+			validationOnly:Bool):Array<ClassType> {
 		var models:Array<ClassType> = [];
 		for (path in modelPaths) {
 			switch (Context.getType(path)) {
@@ -3476,7 +3640,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					}
 					var tableName = railsModelTableName(model);
 					if (!validationOnly && tableNames.exists(tableName)) {
-						Context.error('@:railsMigration cannot create table "$tableName" more than once; already provided by ${tableNames.get(tableName)}.', classType.pos);
+						Context.error('@:railsMigration cannot create table "$tableName" more than once; already provided by ${tableNames.get(tableName)}.',
+							classType.pos);
 					}
 					if (!validationOnly) {
 						tableNames.set(tableName, path);
@@ -3515,9 +3680,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationBody(config:RailsMigrationConfig):String {
-		var lines = [
-			"# Generated by RailsHx from @:railsMigration.",
-			"class " + RubyNaming.toConstantName(config.className) + " < ActiveRecord::Migration[" + config.version + "]",
+		var lines = ["# Generated by RailsHx from @:railsMigration.",
+			"class "
+			+ RubyNaming.toConstantName(config.className)
+			+ " < ActiveRecord::Migration["
+			+ config.version
+			+ "]",
 			"  def change"
 		];
 		for (index in 0...config.models.length) {
@@ -3532,7 +3700,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			for (operation in config.operations) {
 				for (line in operation.lines) {
-					lines.push("    " + line);
+					lines.push(line == "" ? "" : "    " + line);
 				}
 			}
 		}
@@ -3576,7 +3744,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		lines.push("    end");
 	}
 
-	static function railsMigrationOperations(varFields:Array<ClassVarData>, classType:ClassType, validation:Null<RailsMigrationValidationContext>):Array<RailsMigrationOperationInfo> {
+	static function railsMigrationOperations(varFields:Array<ClassVarData>, classType:ClassType,
+			validation:Null<RailsMigrationValidationContext>):Array<RailsMigrationOperationInfo> {
 		var operationField:Null<ClassVarData> = null;
 		for (field in varFields) {
 			if (field.isStatic && field.field.name == "operations") {
@@ -3595,7 +3764,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return railsMigrationOperationArray(expr, "@:railsMigration operations", false, validation);
 	}
 
-	static function railsMigrationOperationArray(expr:TypedExpr, label:String, allowIrreversible:Bool, validation:Null<RailsMigrationValidationContext>):Array<RailsMigrationOperationInfo> {
+	static function railsMigrationOperationArray(expr:TypedExpr, label:String, allowIrreversible:Bool,
+			validation:Null<RailsMigrationValidationContext>):Array<RailsMigrationOperationInfo> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var operations:Array<RailsMigrationOperationInfo> = [];
@@ -3609,7 +3779,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationOperationInfo(expr:TypedExpr, allowIrreversible:Bool, validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
+	static function railsMigrationOperationInfo(expr:TypedExpr, allowIrreversible:Bool,
+			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args):
 				switch (field.name) {
@@ -3623,7 +3794,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateNewColumn(validation, table, name, "AddColumn name", args[1]);
 						var column = railsMigrationColumnDsl(args[2]);
 						railsMigrationRegisterColumn(validation, table, name);
-						railsMigrationOperation(["add_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)]);
+						railsMigrationOperation([
+							"add_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)
+						]);
 					case "RemoveColumn" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumn table");
@@ -3638,7 +3811,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "ChangeColumn table", args[0]);
 						railsMigrationValidateColumn(validation, table, name, "ChangeColumn name", args[1]);
 						var column = railsMigrationColumnDsl(args[2]);
-						railsMigrationOperation(["change_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)]);
+						railsMigrationOperation([
+							"change_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)
+						]);
 					case "AddIndex" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddIndex table");
 						var columnName = railsMigrationSymbolArg(args[1], "AddIndex column");
@@ -3654,8 +3829,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							railsMigrationValidateColumn(validation, table, columnName, "AddCompositeIndex column", args[1]);
 						}
 						var options = railsMigrationIndexDslOptions(args[2]);
-						railsMigrationOperation(["add_index :" + table + ", [" + [for (column in columns) ":" + column].join(", ") + "]"
-							+ railsMigrationOptionSuffix(options)]);
+						railsMigrationOperation(["add_index :"
+							+ table
+							+ ", ["
+							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)]);
 					case "RemoveIndex" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndex table");
 						var columnName = railsMigrationSymbolArg(args[1], "RemoveIndex column");
@@ -3677,14 +3854,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "RemoveReference table", args[0]);
 						railsMigrationValidateColumn(validation, table, name + "_id", "RemoveReference column", args[1]);
 						var options = railsMigrationReferenceDslOptions(args[2]);
-						railsMigrationOperation(["remove_reference :" + table + ", :" + name + railsMigrationOptionSuffix(options)]);
+						railsMigrationOperation([
+							"remove_reference :" + table + ", :" + name + railsMigrationOptionSuffix(options)
+						]);
 					case "AddForeignKey" if (args.length == 3):
 						var fromTable = railsMigrationSymbolArg(args[0], "AddForeignKey fromTable");
 						var toTable = railsMigrationSymbolArg(args[1], "AddForeignKey toTable");
 						railsMigrationValidateTable(validation, fromTable, "AddForeignKey fromTable", args[0]);
 						railsMigrationValidateTable(validation, toTable, "AddForeignKey toTable", args[1]);
 						var options = railsMigrationForeignKeyDslOptions(args[2], validation, fromTable);
-						railsMigrationOperation(["add_foreign_key :" + fromTable + ", :" + toTable + railsMigrationOptionSuffix(options)], [{fromTable: fromTable, toTable: toTable}]);
+						railsMigrationOperation([
+							"add_foreign_key :" + fromTable + ", :" + toTable + railsMigrationOptionSuffix(options)
+						], [{fromTable: fromTable, toTable: toTable}]);
 					case "RemoveForeignKey" if (args.length == 2):
 						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKey fromTable");
 						var toTable = railsMigrationSymbolArg(args[1], "RemoveForeignKey toTable");
@@ -3712,7 +3893,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var nullable = typedBoolLiteral(args[2], "ChangeNull nullable");
 						railsMigrationValidateTable(validation, table, "ChangeNull table", args[0]);
 						railsMigrationValidateColumn(validation, table, name, "ChangeNull name", args[1]);
-						railsMigrationOperation(["change_column_null :" + table + ", :" + name + ", " + (nullable ? "true" : "false")]);
+						railsMigrationOperation([
+							"change_column_null :" + table + ", :" + name + ", " + (nullable ? "true" : "false")
+						]);
 					case "AddCheckConstraint" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddCheckConstraint table");
 						var expression = typedStringLiteral(args[1]);
@@ -3721,9 +3904,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						}
 						var options = railsMigrationCheckConstraintDslOptions(args[2]);
 						railsMigrationValidateTable(validation, table, "AddCheckConstraint table", args[0]);
-						railsMigrationOperation([
-							"add_check_constraint :" + table + ", " + quoteRubyStringForCode(expression == null ? "" : expression) + railsMigrationOptionSuffix(options)
-						]);
+						railsMigrationOperation(["add_check_constraint :"
+							+ table
+							+ ", "
+							+ quoteRubyStringForCode(expression == null ? "" : expression)
+							+ railsMigrationOptionSuffix(options)]);
 					case "RemoveCheckConstraint" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveCheckConstraint", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveCheckConstraint table");
@@ -3757,7 +3942,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationCreateTableOperation(table:String, optionsExpr:TypedExpr, validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
+	static function railsMigrationCreateTableOperation(table:String, optionsExpr:TypedExpr,
+			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
 		var lines = ["create_table :" + table + " do |t|"];
 		var timestamps = false;
 		switch (unwrapTypedExpr(optionsExpr).expr) {
@@ -3811,11 +3997,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "Reference" if (args.length == 2):
 						var name = railsMigrationSymbolArg(args[0], "CreateTable Reference name");
 						railsMigrationRegisterColumn(validation, table, name + "_id");
-						["t.references :" + name + railsMigrationOptionSuffix(railsMigrationReferenceDslOptions(args[1]))];
+						[
+							"t.references :" + name + railsMigrationOptionSuffix(railsMigrationReferenceDslOptions(args[1]))
+						];
 					case "Index" if (args.length == 2):
 						var columns = railsMigrationSymbolArrayArg(args[0], "CreateTable Index columns");
 						var options = railsMigrationIndexDslOptions(args[1]);
-						["t.index [" + [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)];
+						[
+							"t.index [" + [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)
+						];
 					case _:
 						Context.error('@:railsMigration unsupported CreateTableItem ${field.name}.', expr.pos);
 						["# unsupported RailsHx create table item"];
@@ -3849,28 +4039,33 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return true;
 		}
 		if (validation.strictTables) {
-			Context.error('@:railsMigration ${label} references unknown table "$table". Add the model to knownModels/models or list the Rails-owned table in externalTables.', expr.pos);
+			Context.error('@:railsMigration ${label} references unknown table "$table". Add the model to knownModels/models or list the Rails-owned table in externalTables.',
+				expr.pos);
 		}
 		return false;
 	}
 
-	static function railsMigrationValidateColumn(validation:Null<RailsMigrationValidationContext>, table:String, column:String, label:String, expr:TypedExpr):Void {
+	static function railsMigrationValidateColumn(validation:Null<RailsMigrationValidationContext>, table:String, column:String, label:String,
+			expr:TypedExpr):Void {
 		if (validation == null || validation.externalTables.exists(table)) {
 			return;
 		}
 		var columns = validation.columnsByTable.get(table);
 		if (columns != null && !columns.exists(column)) {
-			Context.error('@:railsMigration ${label} references unknown column "$column" on table "$table". Add/update known model metadata or list the table in externalTables if Rails owns it.', expr.pos);
+			Context.error('@:railsMigration ${label} references unknown column "$column" on table "$table". Add/update known model metadata or list the table in externalTables if Rails owns it.',
+				expr.pos);
 		}
 	}
 
-	static function railsMigrationValidateNewColumn(validation:Null<RailsMigrationValidationContext>, table:String, column:String, label:String, expr:TypedExpr):Void {
+	static function railsMigrationValidateNewColumn(validation:Null<RailsMigrationValidationContext>, table:String, column:String, label:String,
+			expr:TypedExpr):Void {
 		if (validation == null || validation.externalTables.exists(table)) {
 			return;
 		}
 		var columns = validation.columnsByTable.get(table);
 		if (columns != null && columns.exists(column)) {
-			Context.error('@:railsMigration ${label} references existing column "$column" on table "$table". Use ChangeColumn for existing known columns.', expr.pos);
+			Context.error('@:railsMigration ${label} references existing column "$column" on table "$table". Use ChangeColumn for existing known columns.',
+				expr.pos);
 		}
 	}
 
@@ -3892,7 +4087,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return {lines: lines, foreignKeys: foreignKeys == null ? [] : foreignKeys};
 	}
 
-	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr, validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
+	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr,
+			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
 		var lines = ["reversible do |dir|", "  dir.up do"];
 		var foreignKeys:Array<RailsMigrationForeignKeyRef> = [];
 		for (operation in railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up", true, validation)) {
@@ -4307,7 +4503,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 		}
 		for (field in funcFields) {
-			if (field.expr == null || field.isStatic || hasMeta(field.field.meta, ":rubyExternStub") || hasMeta(field.field.meta, ":railsTests")) {
+			if (field.expr == null
+				|| field.isStatic
+				|| hasMeta(field.field.meta, ":rubyExternStub")
+				|| hasMeta(field.field.meta, ":railsTests")) {
 				continue;
 			}
 			if (!hasMeta(field.field.meta, ":test")) {
@@ -4356,7 +4555,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function railsGeneratedFile(path:String):Bool {
 		try {
 			var content = File.getContent(path);
-			return StringTools.startsWith(content, "# Generated by RailsHx") || StringTools.startsWith(content, "# Generated by reflaxe.ruby");
+			return StringTools.startsWith(content, "# Generated by RailsHx")
+				|| StringTools.startsWith(content, "# Generated by reflaxe.ruby");
 		} catch (_:Dynamic) {
 			return false;
 		}
@@ -4437,7 +4637,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						};
 					case "setup" | "teardown" if (params.length == 1):
 						var body = railsTestBodyParam(params[0], info.name);
-						body == null ? null : {kind: info.name, description: null, body: body, pos: expr.pos};
+						body == null ? null : {
+							kind: info.name,
+							description: null,
+							body: body,
+							pos: expr.pos
+						};
 					case _:
 						Context.error('rails.test.Dsl.${info.name} has an invalid argument shape for @:railsTests.', expr.pos);
 						null;
@@ -4500,7 +4705,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var body = renderStatements(compileRubyBlockBody(bodyExpr));
 		var lines = switch (kind) {
 			case "test":
-				["test " + quoteRubyStringForCode(description == null ? "unnamed test" : description) + " do"];
+				[
+					"test " + quoteRubyStringForCode(description == null ? "unnamed test" : description) + " do"
+				];
 			case "setup" | "teardown":
 				[kind + " do"];
 			case _:
@@ -4851,9 +5058,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						if (params.length != 2) {
 							Context.error("HtmlAttr.Static expects name and value arguments.", attr.pos);
 							"";
-						} else {
-							" " + expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal.") + "="
-								+ quoteHtmlAttr(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal."));
+						} else {" "
+							+ expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal.")
+							+ "="
+							+ quoteHtmlAttr(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal."));
 						}
 					case "Bool":
 						if (params.length != 1) {
@@ -4911,9 +5119,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					if (body == null) {
 						Context.error("HtmlNode.For render function must return a HtmlNode.", fn.pos);
 						"";
-					} else {
-						"<% " + printTemplateExpr(items, scope) + ".each do |" + RubyNaming.toLocalName(binder.name) + "| %>"
-							+ lowerTemplateNode(body, nextScope) + "<% end %>";
+					} else {"<% "
+						+ printTemplateExpr(items, scope)
+						+ ".each do |"
+						+ RubyNaming.toLocalName(binder.name)
+						+ "| %>"
+						+ lowerTemplateNode(body, nextScope)
+						+ "<% end %>";
 					}
 				}
 			case _:
@@ -4924,8 +5136,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function lowerTemplateFormWith(url:TypedExpr, scopeExpr:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
 		var formVar = "form";
-		var helperArgs = ["url: " + printTemplateExpr(url, scope),
-			"scope: " + rubySymbolLiteral(expectTemplateString(scopeExpr, "HtmlNode.FormWith scope must be a string literal."))];
+		var helperArgs = [
+			"url: " + printTemplateExpr(url, scope),
+			"scope: " + rubySymbolLiteral(expectTemplateString(scopeExpr, "HtmlNode.FormWith scope must be a string literal."))
+		];
 		helperArgs = helperArgs.concat(lowerTemplateHelperAttrs(attrs, scope));
 		var formScope = cloneTemplateScope(scope);
 		formScope.formBuilderName = formVar;
@@ -4938,35 +5152,47 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function lowerTemplateFormHiddenField(name:TypedExpr, value:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		return "<%= " + form + ".hidden_field "
+		return "<%= "
+			+ form
+			+ ".hidden_field "
 			+ rubySymbolLiteral(expectTemplateFieldName(name, "H.hiddenField name must be a string literal or RailsHx model field ref."))
-			+ ", value: " + printTemplateExpr(value, scope) + " %>";
+			+ ", value: "
+			+ printTemplateExpr(value, scope)
+			+ " %>";
 	}
 
 	static function lowerTemplateFormLabel(name:TypedExpr, text:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		return "<%= " + form + ".label " + rubySymbolLiteral(expectTemplateFieldName(name, "H.label name must be a string literal or RailsHx model field ref."))
-			+ ", " + printTemplateExpr(text, scope) + " %>";
+		return "<%= "
+			+ form
+			+ ".label "
+			+ rubySymbolLiteral(expectTemplateFieldName(name, "H.label name must be a string literal or RailsHx model field ref."))
+			+ ", "
+			+ printTemplateExpr(text, scope)
+			+ " %>";
 	}
 
 	static function lowerTemplateFormTextField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		var args = [rubySymbolLiteral(expectTemplateFieldName(name, "H.textField name must be a string literal or RailsHx model field ref."))]
-			.concat(lowerTemplateHelperAttrs(attrs, scope));
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.textField name must be a string literal or RailsHx model field ref."))
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".text_field " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormTextArea(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		var args = [rubySymbolLiteral(expectTemplateFieldName(name, "H.textArea name must be a string literal or RailsHx model field ref."))]
-			.concat(lowerTemplateHelperAttrs(attrs, scope));
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.textArea name must be a string literal or RailsHx model field ref."))
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".text_area " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormCheckBox(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		var args = [rubySymbolLiteral(expectTemplateFieldName(name, "H.checkBox name must be a string literal or RailsHx model field ref."))]
-			.concat(lowerTemplateHelperAttrs(attrs, scope));
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.checkBox name must be a string literal or RailsHx model field ref."))
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".check_box " + args.join(", ") + " %>";
 	}
 
@@ -5012,8 +5238,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function lowerTemplateStylesheetLinkTag(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
-		var args = [quoteRubyStringForCode(expectTemplateString(name, "HtmlNode.StylesheetLinkTag name must be a string literal."))]
-			.concat(lowerTemplateHelperAttrs(attrs, scope));
+		var args = [
+			quoteRubyStringForCode(expectTemplateString(name, "HtmlNode.StylesheetLinkTag name must be a string literal."))
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= stylesheet_link_tag " + args.join(", ") + " %>";
 	}
 
@@ -5029,7 +5256,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								Context.error("HtmlAttr.Static expects name and value arguments.", unwrapped.pos);
 							} else {
 								out.push(helperKwargName(expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal."))
-									+ ": " + quoteRubyStringForCode(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal.")));
+									+ ": "
+									+ quoteRubyStringForCode(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal.")));
 							}
 						case "Bool":
 							if (params.length != 1) {
@@ -5042,7 +5270,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								Context.error("HtmlAttr.Expr expects name and value arguments.", unwrapped.pos);
 							} else {
 								out.push(helperKwargName(expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal."))
-									+ ": " + printTemplateExpr(params[1], scope));
+									+ ": "
+									+ printTemplateExpr(params[1], scope));
 							}
 						case other:
 							Context.error('Unsupported HtmlAttr constructor "$other" for HtmlNode.LinkTo.', unwrapped.pos);
@@ -5065,7 +5294,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "<%= render partial: " + quoteRubyStringForCode(path) + ", locals: " + localsHash + " %>";
 	}
 
-	static function lowerTemplateComponent(template:TypedExpr, locals:TypedExpr, slotNameExpr:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
+	static function lowerTemplateComponent(template:TypedExpr, locals:TypedExpr, slotNameExpr:TypedExpr, childrenExpr:TypedExpr,
+			scope:RailsTemplateScope):String {
 		var path = extractTypedTemplatePath(template);
 		if (path == null) {
 			Context.error("HtmlNode.Component expects Template.of(ViewClass), Template.existing(\"path\"), Template.named(\"path\"), or Template.external(\"path\") as the template argument.",
@@ -5106,15 +5336,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					"{}";
 				} else {
 					var foundSlot = slotName == null;
-					var out = [for (field in fields) {
-						var value = if (slotName != null && field.name == slotName) {
-							foundSlot = true;
-							slotBuffer == null ? "nil" : slotBuffer;
-						} else {
-							printTemplateExpr(field.expr, scope);
+					var out = [
+						for (field in fields) {
+							var value = if (slotName != null && field.name == slotName) {
+								foundSlot = true;
+								slotBuffer == null ? "nil" : slotBuffer;
+							} else {
+								printTemplateExpr(field.expr, scope);
+							}
+							RubyNaming.toLocalName(field.name) + ": " + value;
 						}
-						RubyNaming.toLocalName(field.name) + ": " + value;
-					}];
+					];
 					if (!foundSlot) {
 						Context.error('HtmlNode.Component locals must include a "$slotName" slot local.', locals.pos);
 					}
@@ -5154,9 +5386,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isTemplatePathCall(callee:TypedExpr):Bool {
 		return switch (unwrapTemplateExpr(callee).expr) {
-			case TField(_, access):
-				var name = fieldAccessName(access);
-				name == "named" || name == "external";
+			case TField(_, access): var name = fieldAccessName(access); name == "named" || name == "external";
 			case _:
 				false;
 		}
@@ -5164,10 +5394,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isComponentPathCall(callee:TypedExpr):Bool {
 		return switch (unwrapTemplateExpr(callee).expr) {
-			case TField(_, FStatic(classRef, fieldRef)):
-				var classType = classRef.get();
-				fullTypeName(classType.pack, classType.name) == "rails.action_view.Component"
-					&& ["named", "external"].indexOf(fieldRef.get().name) != -1;
+			case TField(_, FStatic(classRef, fieldRef)): var classType = classRef.get(); fullTypeName(classType.pack,
+					classType.name) == "rails.action_view.Component" && ["named", "external"].indexOf(fieldRef.get().name) != -1;
 			case _:
 				false;
 		}
@@ -5324,20 +5552,30 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var args = [for (param in params) printTemplateExpr(param, scope)].join(", ");
 				(receiver == "self" ? method : receiver + "." + method) + "(" + args + ")";
 			case TCall({expr: TField(target, access)}, params):
-				printTemplateExpr(target, scope) + "." + fieldAccessName(access) + "(" + [for (param in params) printTemplateExpr(param, scope)].join(", ") + ")";
+				printTemplateExpr(target, scope)
+				+ "."
+				+ fieldAccessName(access)
+				+ "("
+				+ [for (param in params) printTemplateExpr(param, scope)].join(", ") + ")";
 			case TCall(callee, params):
 				printTemplateExpr(callee, scope) + ".call(" + [for (param in params) printTemplateExpr(param, scope)].join(", ") + ")";
 			case TIf(cond, eThen, eElse):
-				"(if " + printTemplateExpr(cond, scope) + " then " + printTemplateExpr(eThen, scope) + " else "
-					+ (eElse == null ? "nil" : printTemplateExpr(eElse, scope)) + " end)";
+				"(if "
+				+ printTemplateExpr(cond, scope)
+				+ " then "
+				+ printTemplateExpr(eThen, scope)
+				+ " else "
+				+ (eElse == null ? "nil" : printTemplateExpr(eElse, scope))
+				+ " end)";
 			case _:
 				reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped));
 		}
 	}
 
 	static function isSlotContentCall(classType:ClassType, field:haxe.macro.Type.ClassField):Bool {
-		return field.name == "content" && ((classType.pack.join(".") == "rails.action_view" && classType.name == "Slot")
-			|| (classType.pack.join(".") == "rails.action_view._Slot" && classType.name == "Slot_Impl_"));
+		return field.name == "content"
+			&& ((classType.pack.join(".") == "rails.action_view" && classType.name == "Slot")
+				|| (classType.pack.join(".") == "rails.action_view._Slot" && classType.name == "Slot_Impl_"));
 	}
 
 	static function quoteHtmlAttr(value:String):String {
@@ -5349,7 +5587,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function isVoidHtmlElement(name:String):Bool {
-		return ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].indexOf(name) != -1;
+		return [
+			"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"
+		].indexOf(name) != -1;
 	}
 
 	static function railsTemplateOutputPath(path:String):String {
@@ -5394,7 +5634,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function validateRailsTemplatePath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
 		var normalized = normalizeRailsTemplatePath(path);
-		if (normalized == "" || StringTools.startsWith(normalized, "/") || normalized.indexOf("..") != -1 || normalized.indexOf("//") != -1
+		if (normalized == ""
+			|| StringTools.startsWith(normalized, "/")
+			|| normalized.indexOf("..") != -1
+			|| normalized.indexOf("//") != -1
 			|| path.indexOf("\\") != -1) {
 			Context.error(context + " path must be a safe Rails template path relative to app/views.", pos);
 			return;
@@ -5409,7 +5652,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function validateRailsTestPath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
 		var normalized = normalizeRailsTestPath(path);
-		if (normalized == "" || StringTools.startsWith(normalized, "/") || normalized.indexOf("..") != -1 || normalized.indexOf("//") != -1
+		if (normalized == ""
+			|| StringTools.startsWith(normalized, "/")
+			|| normalized.indexOf("..") != -1
+			|| normalized.indexOf("//") != -1
 			|| path.indexOf("\\") != -1) {
 			Context.error(context + " path must be a safe Rails test path relative to test/generated.", pos);
 			return;
@@ -5479,12 +5725,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isSysPrintCall(callee:TypedExpr):Bool {
 		return switch (callee.expr) {
-			case TField(_, FStatic(_, field)) | TField(_, FInstance(_, _, field)):
-				var name = field.get().name;
-				name == "print" || name == "println";
-			case TField(_, FAnon(fieldRef)) | TField(_, FClosure(_, fieldRef)):
-				var field = fieldRef.get();
-				field.name == "print" || field.name == "println";
+			case TField(_, FStatic(_, field)) | TField(_, FInstance(_, _, field)): var name = field.get().name; name == "print" || name == "println";
+			case TField(_, FAnon(fieldRef)) | TField(_, FClosure(_, fieldRef)): var field = fieldRef.get(); field.name == "print" || field.name == "println";
 			case _:
 				false;
 		}
@@ -5755,7 +5997,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function metadataObjectOptions(expr:haxe.macro.Expr):Array<String> {
 		return switch (expr.expr) {
 			case EObjectDecl(fields):
-				[for (field in fields) RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr)];
+				[
+					for (field in fields)
+						RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr)
+				];
 			case _:
 				[];
 		}
@@ -5770,7 +6015,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case EConst(CInt(value, _)): value;
 			case EConst(CFloat(value, _)): value;
 			case EArrayDecl(values): "[" + [for (value in values) metadataValueCode(value)].join(", ") + "]";
-			case EObjectDecl(fields): "{" + [for (field in fields) RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr)].join(", ") + "}";
+			case EObjectDecl(fields): "{" + [
+					for (field in fields)
+						RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr)
+				].join(", ") + "}";
 			case _: "nil";
 		}
 	}

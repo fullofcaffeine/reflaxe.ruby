@@ -1,0 +1,24 @@
+{
+  "excludes": [
+    "\\.git",
+    "\\.haxelib",
+    "node_modules",
+    "dist",
+    "examples/.*/migrations/.*\\.hx",
+    "examples/.*/src_haxe/routes/Routes\\.hx",
+    "examples/.*/views/.*\\.hx",
+    "test/\\.generated",
+    "vendor/reflaxe"
+  ],
+  "indentation": {
+    "character": "tab",
+    "tabWidth": 4,
+    "trailingWhitespace": false
+  },
+  "lineEnds": {
+    "lineEndCharacter": "lf"
+  },
+  "emptyLines": {
+    "finalNewline": true
+  }
+}

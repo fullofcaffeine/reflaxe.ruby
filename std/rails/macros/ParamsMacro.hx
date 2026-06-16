@@ -62,11 +62,14 @@ class ParamsMacro {
 	static function permitSpecValue(expr:Expr):Array<PermitSpec> {
 		return switch (expr.expr) {
 			case EObjectDecl(fields):
-				[for (field in fields) {
-					name: field.field,
-					model: null,
-					children: nestedPermitSpecs(field.expr)
-				}];
+				[
+					for (field in fields)
+						{
+							name: field.field,
+							model: null,
+							children: nestedPermitSpecs(field.expr)
+						}
+				];
 			case _:
 				var info = fieldInfo(expr);
 				[{name: info.name, model: info.model, children: null}];
@@ -90,11 +93,14 @@ class ParamsMacro {
 	static function nestedPermitRootSpecs(expr:Expr):Array<PermitSpec> {
 		return switch (expr.expr) {
 			case EObjectDecl(fields):
-				[for (field in fields) {
-					name: field.field,
-					model: null,
-					children: nestedPermitSpecs(field.expr)
-				}];
+				[
+					for (field in fields)
+						{
+							name: field.field,
+							model: null,
+							children: nestedPermitSpecs(field.expr)
+						}
+				];
 			case _:
 				Context.error("ParamsMacro.requirePermit nested root specs must use an object literal.", expr.pos);
 				[];
@@ -102,7 +108,10 @@ class ParamsMacro {
 	}
 
 	static function topLevelFieldInfos(specs:Array<PermitSpec>):Array<FieldInfo> {
-		return [for (spec in specs) if (spec.children == null) {name: spec.name, model: spec.model}];
+		return [
+			for (spec in specs)
+				if (spec.children == null) {name: spec.name, model: spec.model}
+		];
 	}
 
 	static function permitArrayExpr(specs:Array<PermitSpec>):Expr {

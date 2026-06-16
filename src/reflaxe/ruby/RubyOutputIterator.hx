@@ -34,7 +34,9 @@ class RubyOutputIterator {
 		} else if (index < compiler.classes.length + compiler.enums.length + compiler.typedefs.length) {
 			compiler.typedefs[index - compiler.classes.length - compiler.enums.length];
 		} else {
-			compiler.abstracts[index - compiler.classes.length - compiler.enums.length - compiler.typedefs.length];
+			compiler.abstracts[
+				index - compiler.classes.length - compiler.enums.length - compiler.typedefs.length
+			];
 		}
 		index++;
 		context.setCurrentModule(moduleLabel(astData.baseType), astData.baseType == null ? null : astData.baseType.pos);

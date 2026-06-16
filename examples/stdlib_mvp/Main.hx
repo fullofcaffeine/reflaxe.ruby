@@ -64,7 +64,13 @@ class Main {
 		Sys.println(Type.enumConstructor(rgb));
 		Sys.println(Type.enumIndex(rgb));
 		var rgbParams = Type.enumParameters(rgb);
-		Sys.println(Std.string(rgbParams.length) + ":" + Std.string(rgbParams[0]) + ":" + Std.string(rgbParams[1]) + ":" + Std.string(rgbParams[2]));
+		Sys.println(Std.string(rgbParams.length)
+			+ ":"
+			+ Std.string(rgbParams[0])
+			+ ":"
+			+ Std.string(rgbParams[1])
+			+ ":"
+			+ Std.string(rgbParams[2]));
 		Sys.println(Type.enumEq(rgb, StdTypeColor.Rgb(1, 2, 3)));
 		Sys.println(Type.enumEq(rgb, StdTypeColor.Rgb(1, 2, 4)));
 		Sys.println(Type.enumConstructor(Type.allEnums(colorEnum)[0]));

@@ -27,6 +27,7 @@ typedef TodoIndexLocals = {
 // `Routes.todosPath`, locals fields, and controller helper methods.
 // Ruby/Rails output: a normal Rails controller using ActiveRecord, strong
 // params, route helpers, and `render`/`redirect_to`.
+
 @:railsController
 class TodosController extends rails.action_controller.Base {
 	static final lifecycle = [];

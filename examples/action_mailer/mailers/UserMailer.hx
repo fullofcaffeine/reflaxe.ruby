@@ -40,7 +40,8 @@ class UserMailer extends rails.action_mailer.Base {
 			replyTo: MailAddress.one("reply@example.test"),
 			subject: "Welcome to typed RailsHx mail",
 			layout: MailLayout.none()
-		}, (Template.of(WelcomeEmailHtmlView) : Template<WelcomeEmailLocals>), locals,
-			(Template.of(WelcomeEmailTextView) : Template<WelcomeEmailLocals>), locals);
+		},
+			(Template.of(WelcomeEmailHtmlView) : Template<WelcomeEmailLocals>), locals, (Template.of(WelcomeEmailTextView) : Template<WelcomeEmailLocals>),
+			locals);
 	}
 }

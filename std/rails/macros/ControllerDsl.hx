@@ -178,7 +178,8 @@ class ControllerDsl {
 			case TTypeExpr(TClassDecl(classRef)):
 				rubyClassConstant(classRef.get());
 			case _:
-				Context.error("rescueFrom expects an exception type reference. Use rescueFromNamed(\"Ruby::Constant\", handler) for explicit interop.", expr.pos);
+				Context.error("rescueFrom expects an exception type reference. Use rescueFromNamed(\"Ruby::Constant\", handler) for explicit interop.",
+					expr.pos);
 				"StandardError";
 		}
 	}

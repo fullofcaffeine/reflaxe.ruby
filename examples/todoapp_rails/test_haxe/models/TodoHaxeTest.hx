@@ -26,8 +26,18 @@ class TodoHaxeTest extends ModelTestCase {
 	static function define():Void {
 		test("typed incomplete scope returns typed titles", () -> {
 			var user = User.create({name: "haxe test owner"});
-			Todo.create({title: "ship haxe tests", notes: "generated Minitest", isCompleted: false, userId: user.id});
-			Todo.create({title: "hide completed work", notes: "done", isCompleted: true, userId: user.id});
+			Todo.create({
+				title: "ship haxe tests",
+				notes: "generated Minitest",
+				isCompleted: false,
+				userId: user.id
+			});
+			Todo.create({
+				title: "hide completed work",
+				notes: "done",
+				isCompleted: true,
+				userId: user.id
+			});
 
 			equal(["ship haxe tests"], Todo.incomplete().pluck(Todo.f.title));
 		});
