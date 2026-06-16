@@ -318,13 +318,13 @@ for (const expected of [
   "class CreateTodos < ActiveRecord::Migration[7.1]",
   "create_table :users do |t|",
   "t.string :name, null: false",
-  "t.index :name",
+  "t.index [:name]",
   "create_table :todos do |t|",
   "t.string :title, null: false",
   't.text :notes, null: false, default: ""',
   "t.boolean :is_completed, null: false, default: false",
   "t.references :user, null: false, foreign_key: true",
-  "t.index :title",
+  "t.index [:title]",
 ]) {
   if (!migrationRuby.includes(expected)) {
     console.error(`todoapp_rails generated migration missing expected line: ${expected}`);
@@ -345,6 +345,9 @@ for (const expected of [
   "change_column :todos, :title, :string",
   "add_column :todos, :priority, :integer, null: false, default: 0",
   "add_index :todos, :priority",
+  "add_index :todos, [:user_id, :priority]",
+  "execute \"UPDATE todos SET priority = 0 WHERE priority IS NULL\"",
+  "execute \"UPDATE todos SET priority = NULL WHERE priority = 0\"",
 ]) {
   if (!updateMigrationRuby.includes(expected)) {
     console.error(`todoapp_rails generated update migration missing expected line: ${expected}`);

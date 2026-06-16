@@ -6,7 +6,8 @@ import rails.migration.MigrationOperation;
 // Typed migration operation fixture.
 //
 // Demonstrates: explicit reversible operations, column changes, foreign keys,
-// added columns, and indexes authored as Haxe enum values.
+// added columns, composite indexes, and data migrations authored as Haxe enum
+// values.
 // Type safety: `MigrationOperation` constructors constrain operation shapes and
 // option objects; `knownModels` lets the compiler validate table/column/index
 // references without re-emitting create-table migrations; irreversible
@@ -17,6 +18,7 @@ import rails.migration.MigrationOperation;
 @:railsMigration({
 	timestamp: "20260101000001",
 	className: "UpdateTodos",
+	version: "7.1",
 	models: [],
 	knownModels: ["models.Todo", "models.User"]
 })
@@ -30,6 +32,8 @@ class UpdateTodos extends Migration {
 			ChangeColumn("todos", "title", StringColumn({nullable: true}))
 		]),
 		AddColumn("todos", "priority", IntegerColumn({nullable: false, defaultValue: 0})),
-		AddIndex("todos", "priority", {unique: false})
+		AddIndex("todos", "priority", {unique: false}),
+		AddCompositeIndex("todos", ["user_id", "priority"], {}),
+		DataMigration("UPDATE todos SET priority = 0 WHERE priority IS NULL", "UPDATE todos SET priority = NULL WHERE priority = 0")
 	];
 }

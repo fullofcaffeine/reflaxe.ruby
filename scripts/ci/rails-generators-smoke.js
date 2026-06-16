@@ -86,6 +86,7 @@ end
 
 require "generators/hxruby/install/install_generator"
 require "generators/hxruby/routes/routes_generator"
+require "generators/hxruby/migration/migration_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
 
@@ -114,6 +115,11 @@ begin
   scaffold.destination_root = temp
   scaffold.generate_scaffold
   assert(File.exist?(File.join(temp, "scaffold", "src_haxe", "controllers", "TodosController.hx")), "scaffold generator did not write controller")
+
+  migration = Hxruby::MigrationGenerator.new(["AddStatusToTodos", "status:string"], {"timestamp" => "20260101010200", "output" => "migration"})
+  migration.destination_root = temp
+  migration.generate_migration
+  assert(File.read(File.join(temp, "migration", "src_haxe", "migrations", "AddStatusToTodos.hx")).include?("AddColumn"), "migration generator did not write snapshot operation")
 
   adopt_root = File.join(temp, "adopt")
   FileUtils.mkdir_p(File.join(adopt_root, "app", "services"))
@@ -148,12 +154,14 @@ function realRailsLoadSmokeSource() {
 require "rails/generators"
 require "generators/hxruby/install/install_generator"
 require "generators/hxruby/routes/routes_generator"
+require "generators/hxruby/migration/migration_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
 
 expected = {
   Hxruby::InstallGenerator => "hxruby:install",
   Hxruby::RoutesGenerator => "hxruby:routes",
+  Hxruby::MigrationGenerator => "hxruby:migration",
   Hxruby::ScaffoldGenerator => "hxruby:scaffold",
   Hxruby::AdoptGenerator => "hxruby:adopt"
 }

@@ -106,6 +106,43 @@ live references to mutable model metadata. A model generator may infer the first
 migration from attributes, but the migration source must contain explicit
 operations so later edits to `models.Todo` do not rewrite old migration history.
 
+Implemented command:
+
+```bash
+bin/rails generate hxruby:migration AddStatusToTodos status:string:index \
+  --timestamp 20260616013000 \
+  --known-models models.Todo \
+  --migration-version 8.1
+```
+
+The same implementation is available outside Rails for smoke tests and bootstrap
+scripts:
+
+```bash
+ruby -I lib scripts/rails/migration.rb AddStatusToTodos status:string:index \
+  --timestamp 20260616013000 \
+  --known-models models.Todo \
+  --output .
+```
+
+Supported first-line attribute shapes mirror common Rails generator input:
+
+- `title:string` emits `StringColumn({})`.
+- `title:string!` emits `StringColumn({nullable: false})`.
+- `completed:boolean:index` emits a boolean column plus an index.
+- `email:string:uniq` emits a unique index.
+- `price:decimal{10,2}` emits decimal precision/scale.
+- `user:references` and `user:belongs_to` emit typed reference operations.
+- `supplier:references{polymorphic}` emits a polymorphic reference option.
+
+The generator supports `CreateTodos`, `AddStatusToTodos`,
+`RemoveStatusFromTodos`, and `AddUserRefToTodos` naming patterns. Alter-table
+migrations use `knownModels: [...]` when supplied; otherwise the inferred target
+table is recorded in `externalTables: [...]`, making the Rails-owned table
+boundary explicit for gradual adoption. `--from-schema db/schema.rb` is accepted
+as a fail-closed checked input boundary and reserved for richer schema-backed
+validation.
+
 Example Haxe source:
 
 ```haxe
