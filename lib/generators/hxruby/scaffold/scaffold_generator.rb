@@ -13,6 +13,7 @@ if defined?(Rails::Generators::Base)
       class_option :validate, type: :string, default: "", desc: "Comma-separated fields with presence validation"
       class_option :controller, type: :boolean, default: false, desc: "Generate a typed controller scaffold"
       class_option :output, type: :string, default: ".", desc: "Output root"
+      class_option :force, type: :boolean, default: false, desc: "Overwrite non-owned files and take RailsHx ownership"
 
       def generate_scaffold
         args = [
@@ -22,6 +23,7 @@ if defined?(Rails::Generators::Base)
         ]
         args += ["--validate", hxruby_option(:validate, "")] unless hxruby_option(:validate, "").to_s.empty?
         args << "--controller" if hxruby_flag?(:controller)
+        args << "--force" if hxruby_flag?(:force)
         HXRuby::Generators::Scaffold.run(args)
       end
     end

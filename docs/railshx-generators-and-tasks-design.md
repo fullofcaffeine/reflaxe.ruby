@@ -160,7 +160,9 @@ RailsHx generators and the compiler should fail closed:
   name.
 
 The manifest should record source/output pairs, generated kind, and checksum so
-`hxruby:clean`, collision checks, and drift diagnostics are deterministic.
+`hxruby:clean`, collision checks, and drift diagnostics are deterministic. See
+[RailsHx Generated Artifact Ownership](railshx-generated-artifact-ownership.md)
+for the concrete manifest and overwrite policy.
 
 ## Rails Tasks
 

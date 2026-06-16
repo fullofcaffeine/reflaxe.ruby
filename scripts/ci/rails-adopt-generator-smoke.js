@@ -143,6 +143,13 @@ assertIncludes("src_haxe/interop/extensions/SluggableClassMethods.hx", [
   "extern class SluggableClassMethods",
   "public static function findBySlug(slug:Dynamic):Dynamic;",
 ]);
+assertManifest([
+  ["src_haxe/interop/LegacyPriceFormatter.hx", "haxe_adopted_service"],
+  ["src_haxe/interop/RbsPriceFormatter.hx", "haxe_adopted_service"],
+  ["src_haxe/interop/templates/LegacyBadgeTemplate.hx", "haxe_adopted_template"],
+  ["src_haxe/interop/extensions/SluggableInstance.hx", "haxe_adopted_extension"],
+  ["src_haxe/interop/extensions/SluggableClassMethods.hx", "haxe_adopted_extension"],
+]);
 
 const erbAfter = readFileSync(existingErb, "utf8");
 if (erbAfter !== "<strong><%= label %></strong>\n") {
@@ -192,7 +199,7 @@ run("haxe", [
   "--interp",
 ]);
 
-const overwrite = spawnSync("ruby", [
+run("ruby", [
   "-I",
   join(root, "lib"),
   join(root, "scripts", "rails", "adopt.rb"),
@@ -200,15 +207,29 @@ const overwrite = spawnSync("ruby", [
   outputDir,
   "--service",
   "LegacyPriceFormatter",
+]);
+
+const collisionOutput = join(root, "test", ".generated", "rails_adopt_generator_collision");
+rmSync(collisionOutput, { force: true, recursive: true });
+mkdirSync(join(collisionOutput, "src_haxe", "interop"), { recursive: true });
+writeFileSync(join(collisionOutput, "src_haxe", "interop", "LegacyPriceFormatter.hx"), "// hand-written wrapper\n");
+const overwrite = spawnSync("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  collisionOutput,
+  "--service",
+  "LegacyPriceFormatter",
 ], {
   cwd: root,
   encoding: "utf8",
   stdio: ["ignore", "pipe", "pipe"],
 });
-if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite")) {
+if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite non-RailsHx-owned file")) {
   process.stdout.write(overwrite.stdout);
   process.stderr.write(overwrite.stderr);
-  fail("adoption generator did not protect existing wrapper files");
+  fail("adoption generator did not protect non-owned wrapper files");
 }
 
 const missingSource = spawnSync("ruby", [
@@ -319,6 +340,19 @@ function assertIncludes(relativeFile, expectedLines) {
   for (const expected of expectedLines) {
     if (!content.includes(expected)) {
       fail(`${relativeFile} missing expected line: ${expected}`);
+    }
+  }
+}
+
+function assertManifest(entries) {
+  const manifest = JSON.parse(readFileSync(join(outputDir, ".railshx", "manifest.json"), "utf8"));
+  if (manifest.version !== 1) {
+    fail(`unexpected manifest version: ${manifest.version}`);
+  }
+  for (const [output, kind] of entries) {
+    const entry = manifest.outputs.find((candidate) => candidate.output === output);
+    if (!entry || entry.kind !== kind || entry.source !== "hxruby:adopt" || !entry.sha256) {
+      fail(`manifest missing expected ${output} ${kind} entry`);
     }
   }
 }

@@ -68,7 +68,34 @@ module HXRuby
       private
 
       def write(relative_path, content, executable: false)
-        Common.write_file(File.join(@output_dir, relative_path), content, force: @force, executable: executable)
+        Common.write_file(
+          File.join(@output_dir, relative_path),
+          content,
+          force: @force,
+          executable: executable,
+          root: @output_dir,
+          kind: generator_kind(relative_path),
+          source: "hxruby:install"
+        )
+      end
+
+      def generator_kind(relative_path)
+        case relative_path
+        when /\A#{Regexp.escape(@source_dir)}\//
+          "haxe_source"
+        when /\Aapp\/javascript\//
+          "client_js"
+        when /\Aapp\/assets\//
+          "asset"
+        when /\Aconfig\//
+          "rails_config"
+        when /\Alib\/tasks\//
+          "rake_task"
+        when /\Abin\//
+          "bin_script"
+        else
+          "app_scaffold"
+        end
       end
 
       def render_build

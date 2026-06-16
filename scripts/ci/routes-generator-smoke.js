@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, readFileSync, rmSync } = require("node:fs");
+const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -14,9 +14,17 @@ const complexFixture = join(root, "test", "fixtures", "rails_routes", "complex_r
 rmSync(outputDir, { force: true, recursive: true });
 
 runGenerator(fixture, outputFile);
+runGenerator(fixture, outputFile);
 
 if (!existsSync(outputFile)) {
   console.error(`Routes generator did not write ${outputFile}`);
+  process.exit(1);
+}
+
+const manifest = JSON.parse(readFileSync(join(outputDir, ".railshx", "manifest.json"), "utf8"));
+const routeEntry = manifest.outputs.find((entry) => entry.output === "src_haxe/routes/Routes.hx");
+if (!routeEntry || routeEntry.kind !== "route_extern" || routeEntry.source !== "hxruby:routes" || !routeEntry.sha256) {
+  console.error("Routes generator manifest did not record the generated route extern.");
   process.exit(1);
 }
 
@@ -91,6 +99,30 @@ for (const unexpected of [
     console.error(`Complex route generator output included unexpected content: ${unexpected}`);
     process.exit(1);
   }
+}
+
+const collisionRoot = join(outputDir, "collision");
+const collisionOutput = join(collisionRoot, "src_haxe", "routes", "Routes.hx");
+mkdirSync(join(collisionRoot, "src_haxe", "routes"), { recursive: true });
+writeFileSync(collisionOutput, "// hand-written route extern\n");
+const collision = spawnSync("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "generate-routes.rb"),
+  "--input",
+  fixture,
+  "--output",
+  collisionOutput,
+], {
+  cwd: root,
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"],
+});
+if (collision.status === 0 || !collision.stderr.includes("Refusing to overwrite non-RailsHx-owned file")) {
+  process.stdout.write(collision.stdout);
+  process.stderr.write(collision.stderr);
+  console.error("Routes generator did not protect a non-owned route extern.");
+  process.exit(1);
 }
 
 function runGenerator(input, output, className = "Routes") {

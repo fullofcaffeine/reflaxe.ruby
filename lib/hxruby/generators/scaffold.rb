@@ -17,6 +17,7 @@ module HXRuby
           fields: "",
           validate: "",
           controller: false,
+          force: false,
         }
         OptionParser.new do |parser|
           parser.on("--model NAME") { |value| options[:model] = value }
@@ -24,6 +25,7 @@ module HXRuby
           parser.on("--fields FIELDS") { |value| options[:fields] = value }
           parser.on("--validate FIELDS") { |value| options[:validate] = value }
           parser.on("--controller") { options[:controller] = true }
+          parser.on("--force") { options[:force] = true }
         end.parse!(argv)
         raise Error, "Missing required argument --model" unless options[:model]
 
@@ -36,6 +38,7 @@ module HXRuby
         @fields = parse_fields(options.fetch(:fields))
         @validations = Common.split_csv(options.fetch(:validate))
         @with_controller = options.fetch(:controller)
+        @force = options.fetch(:force)
         @table_name = Common.pluralize(Common.file_name(@model_name))
         @controller_name = "#{Common.pluralize(@model_name)}Controller"
         @migration_name = "Create#{Common.pluralize(@model_name)}"
@@ -64,7 +67,27 @@ module HXRuby
       end
 
       def write(relative_path, content)
-        Common.write_file(File.join(@output_dir, relative_path), content, force: true)
+        Common.write_file(
+          File.join(@output_dir, relative_path),
+          content,
+          force: @force,
+          root: @output_dir,
+          kind: generator_kind(relative_path),
+          source: "hxruby:scaffold"
+        )
+      end
+
+      def generator_kind(relative_path)
+        case relative_path
+        when /\Asrc_haxe\/migrations\//
+          "haxe_migration_source"
+        when /\Asrc_haxe\//
+          "haxe_source"
+        when "build.hxml"
+          "haxe_build"
+        else
+          "scaffold"
+        end
       end
 
       def render_model

@@ -82,6 +82,8 @@ RailsHx can be called production-ready when all of these are true:
 
 Generator/task ownership details are tracked in
 [RailsHx Generators And Rails Tasks Design](railshx-generators-and-tasks-design.md).
+Generated-file ownership details are tracked in
+[RailsHx Generated Artifact Ownership](railshx-generated-artifact-ownership.md).
 Follow-up beads under `haxe.ruby-bjv` cover manifest-backed generated artifact
 ownership, production migration snapshots, namespaced Rails generator hardening,
 schema adoption, migration-history collision checks, and `hxruby:doctor` /

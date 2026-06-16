@@ -18,12 +18,16 @@ module HXRuby
           output: "src_haxe/routes/Routes.hx",
           package: "routes",
           class_name: "Routes",
+          root: nil,
+          force: false,
         }
         OptionParser.new do |parser|
           parser.on("--input PATH") { |value| options[:input] = value }
           parser.on("--output PATH") { |value| options[:output] = value }
           parser.on("--package NAME") { |value| options[:package] = value }
           parser.on("--class NAME") { |value| options[:class_name] = value }
+          parser.on("--root PATH") { |value| options[:root] = value }
+          parser.on("--force") { options[:force] = true }
         end.parse!(argv)
         options
       end
@@ -32,16 +36,26 @@ module HXRuby
         @input = input
         @input_path = options.fetch(:input)
         @output_path = File.expand_path(options.fetch(:output))
+        @output_root = File.expand_path(options.fetch(:root) || infer_output_root(@output_path))
         @package_name = options.fetch(:package)
         @class_name = options.fetch(:class_name)
+        @force = options.fetch(:force)
       end
 
       def run
         input = @input || (@input_path ? File.read(File.expand_path(@input_path)) : $stdin.read)
-        Common.write_file(@output_path, render_routes(parse_routes(input)), force: true)
+        Common.write_file(@output_path, render_routes(parse_routes(input)), force: @force, root: @output_root, kind: "route_extern", source: "hxruby:routes")
       end
 
       private
+
+      def infer_output_root(path)
+        parts = File.expand_path(path).split(File::SEPARATOR)
+        index = parts.index("src_haxe")
+        return parts[0...index].join(File::SEPARATOR) unless index.nil?
+
+        File.dirname(path)
+      end
 
       def parse_routes(input)
         seen = {}

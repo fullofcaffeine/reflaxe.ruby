@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdtempSync, readFileSync, rmSync } = require("node:fs");
+const { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { tmpdir } = require("node:os");
 const { spawnSync } = require("node:child_process");
@@ -79,28 +79,95 @@ try {
     'export SECRET_KEY_BASE_DUMMY="${SECRET_KEY_BASE_DUMMY:-1}"',
     "bundle exec rake hxruby:production",
   ]);
+  expectManifest([
+    ["app_haxe/Boot.hx", "haxe_source", "hxruby:install"],
+    ["app_haxe/routes/Routes.hx", "haxe_source", "hxruby:install"],
+    ["config/importmap.rb", "rails_config", "hxruby:install"],
+    ["bin/railshx-dev", "bin_script", "hxruby:install"],
+  ]);
 
-  const overwrite = spawnSync("ruby", [
+  run("ruby", [
     "-I",
     join(root, "lib"),
     join(root, "scripts", "rails", "app.rb"),
     "--output",
     tempRoot,
-  ], {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite")) {
-    process.stdout.write(overwrite.stdout);
-    process.stderr.write(overwrite.stderr);
-    fail("rails app generator did not protect existing files");
+    "--name",
+    "TypedTasks",
+    "--source",
+    "app_haxe",
+    "--main",
+    "Boot",
+    "--rails-output-root",
+    "engines/blog/app/haxe_gen",
+  ]);
+
+  const collisionRoot = mkdtempSync(join(tmpdir(), "railshx-app-collision."));
+  try {
+    writeFileSync(join(collisionRoot, "build.hxml"), "# hand-written build file\n");
+    const overwrite = spawnSync("ruby", [
+      "-I",
+      join(root, "lib"),
+      join(root, "scripts", "rails", "app.rb"),
+      "--output",
+      collisionRoot,
+    ], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite non-RailsHx-owned file")) {
+      process.stdout.write(overwrite.stdout);
+      process.stderr.write(overwrite.stderr);
+      fail("rails app generator did not protect non-owned existing files");
+    }
+  } finally {
+    rmSync(collisionRoot, { force: true, recursive: true });
+  }
+
+  writeFileSync(join(tempRoot, "hand_written.rb"), "# app-owned file\n");
+  run("ruby", [
+    "-I",
+    join(root, "lib"),
+    "-e",
+    "require 'hxruby/generators/common'; HXRuby::Generators::Common.clean_owned_outputs(ARGV.fetch(0))",
+    tempRoot,
+  ]);
+  if (existsSync(join(tempRoot, "build.hxml")) || existsSync(join(tempRoot, "app_haxe", "Boot.hx"))) {
+    fail("manifest cleanup did not remove generated outputs");
+  }
+  if (!existsSync(join(tempRoot, "hand_written.rb"))) {
+    fail("manifest cleanup removed a non-owned file");
+  }
+  const cleanedManifest = JSON.parse(readFileSync(join(tempRoot, ".railshx", "manifest.json"), "utf8"));
+  if (cleanedManifest.outputs.length !== 0) {
+    fail("manifest cleanup did not clear output entries");
   }
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });
 }
 
 console.log("[rails-app-generator] OK");
+
+function expectManifest(entries) {
+  const manifestPath = join(tempRoot, ".railshx", "manifest.json");
+  if (!existsSync(manifestPath)) {
+    fail("missing RailsHx manifest");
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  if (manifest.version !== 1) {
+    fail(`unexpected manifest version: ${manifest.version}`);
+  }
+  for (const [output, kind, source] of entries) {
+    const entry = manifest.outputs.find((candidate) => candidate.output === output);
+    if (!entry) {
+      fail(`manifest missing output: ${output}`);
+    }
+    if (entry.kind !== kind || entry.source !== source || !entry.sha256) {
+      fail(`manifest entry for ${output} has wrong metadata`);
+    }
+  }
+}
 
 function expectFile(relativePath, expectedParts) {
   const path = join(tempRoot, relativePath);

@@ -121,7 +121,7 @@ module HXRuby
         haxe_class = native_name.split("::").last
         package = service_package(native_name)
         path = File.join(@output_dir, "src_haxe", Common.package_path(package), "#{haxe_class}.hx")
-        Common.write_file(path, render_service(package, haxe_class, native_name, service_contract(native_name)), force: @force)
+        write_owned(path, render_service(package, haxe_class, native_name, service_contract(native_name)), kind: "haxe_adopted_service")
       end
 
       def service_package(native_name)
@@ -239,7 +239,7 @@ module HXRuby
         locals_name = "#{Common.class_name_from_path(safe_template_path)}Locals"
         package = "#{@package_name}.templates"
         path = File.join(@output_dir, "src_haxe", Common.package_path(package), "#{haxe_class}.hx")
-        Common.write_file(path, render_template(package, haxe_class, locals_name, safe_template_path), force: @force)
+        write_owned(path, render_template(package, haxe_class, locals_name, safe_template_path), kind: "haxe_adopted_template")
       end
 
       def render_template(package, haxe_class, locals_name, template_path)
@@ -336,7 +336,11 @@ module HXRuby
         suffix = kind == :instance ? "Instance" : "ClassMethods"
         haxe_class = "#{Common.class_name_from_path(module_name)}#{suffix}"
         path = File.join(@output_dir, "src_haxe", Common.package_path(package), "#{haxe_class}.hx")
-        Common.write_file(path, render_extension_contract(package, haxe_class, module_name, source_label, methods, kind), force: @force)
+        write_owned(path, render_extension_contract(package, haxe_class, module_name, source_label, methods, kind), kind: "haxe_adopted_extension")
+      end
+
+      def write_owned(path, content, kind:)
+        Common.write_file(path, content, force: @force, root: @output_dir, kind: kind, source: "hxruby:adopt")
       end
 
       def render_extension_contract(package, haxe_class, module_name, source_label, methods, kind)
