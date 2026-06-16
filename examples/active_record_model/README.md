@@ -23,9 +23,7 @@ fields.
 entrypoint when you want to start from a full model relation:
 
 ```haxe
-import rails.active_record.Aggregate;
 import rails.active_record.Association;
-import rails.active_record.Expr;
 import rails.active_record.Group;
 import rails.active_record.Lock;
 import rails.active_record.Order;
@@ -83,8 +81,8 @@ var assignedNotSmall = Todo
 	.where({title: "assigned"})
 	.whereNotLte(Todo.f.id, 10)
 	.limit(2);
-var lowerTitleOrder = Todo.order(Expr.lower(Todo.f.title).asc()).limit(3);
-var lowerShip = Todo.whereExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
+var lowerTitleOrder = Todo.order(Todo.f.title.lower().asc()).limit(3);
+var lowerShip = Todo.where(Todo.f.title.lower().eq("ship")).limit(2);
 var unsafeSqlOpen = Todo.whereSql(Sql.unsafeWhere("status <> 'archived'")).limit(2);
 var unsafeSqlOrder = Todo.orderSql(Sql.unsafeOrder("LOWER(title) ASC")).limit(2);
 
@@ -137,11 +135,11 @@ var groupedProjection:Array<{status:String, todoCount:Int, userIdSum:Int, averag
 	Todo.f.status,
 	{
 		status: Todo.f.status,
-		todoCount: Aggregate.count(Todo.f.id),
-		userIdSum: Aggregate.sum(Todo.f.userId),
-		averageUserId: Aggregate.average(Todo.f.userId),
-		minId: Aggregate.minimum(Todo.f.id),
-		maxTitle: Aggregate.maximum(Todo.f.title)
+		todoCount: Todo.f.id.count(),
+		userIdSum: Todo.f.userId.sum(),
+		averageUserId: Todo.f.userId.average(),
+		minId: Todo.f.id.minimum(),
+		maxTitle: Todo.f.title.maximum()
 	}
 );
 var statusCounts:haxe.ds.StringMap<Int> = Group.count(
@@ -151,7 +149,7 @@ var statusCounts:haxe.ds.StringMap<Int> = Group.count(
 var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(
 	Todo.where({status: "open"}),
 	Todo.f.status,
-	Aggregate.count(Todo.f.id).gt(1)
+	Todo.f.id.count().gt(1)
 );
 var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
@@ -250,15 +248,16 @@ Type-safety features used here:
 - `whereBetween(Todo.f.id, 1, 10)` and `whereNotBetween(...)` use typed field
   refs plus same-typed range endpoints while lowering to Rails hash range
   criteria such as `where(id: 1..10)`.
-- `whereGt(Todo.f.id, 1)` / `whereLte(...)` and their negated forms use typed
-  field refs plus same-typed values while lowering to Rails/Arel comparison
-  predicates, avoiding raw `id > ?` SQL fragments. They share the same compiler
-  lowering backend as `whereExpr(Expr.field(Todo.f.id).gt(1))`.
-- `Expr.lower(Todo.f.title).asc()` and
-  `whereExpr(Expr.lower(Todo.f.title).eq("ship"))` use the typed RailsHx
-  expression layer for SQL functions while lowering to Rails/Arel
-  `Models::Todo.arel_table[:title].lower...` calls. Raw strings such as
-  `Todo.order("LOWER(title) ASC")` are intentionally rejected.
+- `whereGt(Todo.f.id, 1)` / `whereLte(...)`, `Todo.where(Todo.f.id.gt(1))`,
+  and their negated forms use typed field refs plus same-typed values while
+  lowering to Rails/Arel comparison predicates, avoiding raw `id > ?` SQL
+  fragments. They share the same compiler lowering backend as
+  `whereExpr(Expr.field(Todo.f.id).gt(1))`.
+- `Todo.f.title.lower().asc()` and
+  `Todo.where(Todo.f.title.lower().eq("ship"))` use the typed RailsHx
+  expression layer through field helpers for SQL functions while lowering to
+  Rails/Arel `Models::Todo.arel_table[:title].lower...` calls. Raw strings
+  such as `Todo.order("LOWER(title) ASC")` are intentionally rejected.
 - `whereSql(Sql.unsafeWhere(...))` and `orderSql(Sql.unsafeOrder(...))` are the
   explicit raw SQL escape hatches. They remain model/kind typed and searchable,
   so plain strings, wrong model owners, and wrong SQL fragment kinds fail before
@@ -298,7 +297,7 @@ Type-safety features used here:
 - `Projection.pluck(Todo.where(...), {id: Todo.f.id, title: Todo.f.title})`
   returns named rows such as `Array<{id:Int, title:String}>`, rejects empty
   specs, and rejects fields from another model before Rails runs.
-- `Projection.group(Todo.where(...), Todo.f.status, {status: Todo.f.status, todoCount: Aggregate.count(Todo.f.id)})`
+- `Projection.group(Todo.where(...), Todo.f.status, {status: Todo.f.status, todoCount: Todo.f.id.count()})`
   returns selected grouped aggregate rows such as
   `Array<{status:String, todoCount:Int}>`, rejects raw string aliases, rejects
   aggregate expressions from another model, and rejects non-grouped field
@@ -306,7 +305,7 @@ Type-safety features used here:
 - `Group.count(Todo.where(...), Todo.f.status)` returns `StringMap<Int>` for
   string keys, `Group.count(Todo, Todo.f.userId)` returns `IntMap<Int>` for
   integer keys, and unsupported key types fail during Haxe compilation.
-- `Group.countHaving(Todo.where(...), Todo.f.status, Aggregate.count(Todo.f.id).gt(1))`
+- `Group.countHaving(Todo.where(...), Todo.f.status, Todo.f.id.count().gt(1))`
   adds a typed aggregate `having` predicate and rejects raw strings or
   predicates from another model before Rails runs.
 - `Todo.maximum(Todo.f.id)` returns `Null<Int>` and rejects fields from other models.
@@ -322,12 +321,12 @@ Invalid projection/grouping examples fail during Haxe compilation:
 Projection.pluck(Todo, {id: User.f.id});
 Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name});
 Projection.pluck(Todo, {});
-Projection.group(Todo, Todo.f.status, {status: Todo.f.status, userCount: Aggregate.count(User.f.id)});
+Projection.group(Todo, Todo.f.status, {status: Todo.f.status, userCount: User.f.id.count()});
 Projection.group(Todo, Todo.f.status, {status: Todo.f.status, todoCount: "COUNT(*)"});
-Projection.group(Todo, Todo.f.status, {title: Todo.f.title, todoCount: Aggregate.count(Todo.f.id)});
+Projection.group(Todo, Todo.f.status, {title: Todo.f.title, todoCount: Todo.f.id.count()});
 Group.count(Todo, User.f.name);
 Group.count(Todo, Todo.f.completed);
-Group.countHaving(Todo, Todo.f.status, Aggregate.count(User.f.id).gt(1));
+Group.countHaving(Todo, Todo.f.status, User.f.id.count().gt(1));
 Group.countHaving(Todo, Todo.f.status, "COUNT(*) > 1");
 ```
 

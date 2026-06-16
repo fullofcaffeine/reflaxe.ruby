@@ -307,10 +307,18 @@ Models::Todo.where(Models::Todo.arel_table[:id].gt(1))
 Models::Todo.where.not(Models::Todo.arel_table[:id].lteq(10))
 ```
 
-These convenience methods use the same compiler predicate backend as
-`whereExpr(Expr.field(Todo.f.id).gt(1))`. Use the Rails-shaped helpers for
-common single-field comparisons and `Expr` when you need expression functions
-such as `Expr.lower(Todo.f.title).eq("ship")`.
+These convenience methods and fluent field predicates use the same compiler
+predicate backend as `whereExpr(Expr.field(Todo.f.id).gt(1))`. Prefer the
+field-shaped DSL for handwritten code:
+
+```haxe
+Todo.where(Todo.f.id.gt(1));
+Todo.where(Todo.f.title.lower().eq("ship"));
+assigned.whereNot(Todo.f.title.lower().eq("ship"));
+```
+
+Use explicit `Expr.*` builders when you need a lower-level compatibility form
+or are building framework internals.
 
 `whereNull(field)` and `whereNotNull(field)` cover Rails `nil` predicates
 without raw `IS NULL` strings. The field must be typed as `Null<T>`, so
@@ -440,9 +448,7 @@ Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false))
 Use generated field refs for query helpers that need a column identity:
 
 ```haxe
-import rails.active_record.Aggregate;
 import rails.active_record.Group;
-import rails.active_record.Expr;
 import rails.active_record.Order;
 import rails.active_record.Projection;
 
@@ -452,8 +458,8 @@ var recent = AuditLog
 
 var rewritten = Todo.reorder(Todo.f.title.desc()).limit(4);
 var stablePage = Todo.order(Order.many([Todo.f.title.asc(), Todo.f.id.desc()])).limit(20);
-var caseFolded = Todo.order(Expr.lower(Todo.f.title).asc()).limit(20);
-var lowerShip = Todo.whereExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
+var caseFolded = Todo.order(Todo.f.title.lower().asc()).limit(20);
+var lowerShip = Todo.where(Todo.f.title.lower().eq("ship")).limit(2);
 var stableRewrite = Todo
 	.where({status: "open"})
 	.reorder(Order.many([Todo.f.id.desc(), Todo.f.title.asc()]));
@@ -470,11 +476,11 @@ var groupedRows:Array<{status:String, todoCount:Int, userIdSum:Int, averageUserI
 	Todo.f.status,
 	{
 		status: Todo.f.status,
-		todoCount: Aggregate.count(Todo.f.id),
-		userIdSum: Aggregate.sum(Todo.f.userId),
-		averageUserId: Aggregate.average(Todo.f.userId),
-		minId: Aggregate.minimum(Todo.f.id),
-		maxTitle: Aggregate.maximum(Todo.f.title)
+		todoCount: Todo.f.id.count(),
+		userIdSum: Todo.f.userId.sum(),
+		averageUserId: Todo.f.userId.average(),
+		minId: Todo.f.id.minimum(),
+		maxTitle: Todo.f.title.maximum()
 	}
 );
 var statusCounts:haxe.ds.StringMap<Int> = Group.count(
@@ -484,7 +490,7 @@ var statusCounts:haxe.ds.StringMap<Int> = Group.count(
 var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(
 	Todo.where({status: "open"}),
 	Todo.f.status,
-	Aggregate.count(Todo.f.id).gt(1)
+	Todo.f.id.count().gt(1)
 );
 var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 var minId:Null<Int> = Todo.minimum(Todo.f.id);
@@ -526,23 +532,23 @@ when a stable Rails order needs more than one column; every item in the array
 must be an `Order<TModel>`, so mixed-model order lists fail during Haxe
 compilation while generated Ruby remains `order(title: :asc, id: :desc)`.
 
-`Expr<TModel, TValue>` is the typed RailsHx expression layer for cases that
-need SQL functions or Arel predicates. It is intentionally narrower than Arel:
-app code uses builders such as `Expr.field(Todo.f.id)` and
-`Expr.lower(Todo.f.title)`, while the compiler lowers them to
+`Expr<TModel, TValue>` is the typed RailsHx expression layer behind field
+helpers such as `Todo.f.id.gt(1)`, `Todo.f.title.lower()`, and
+`Todo.f.id.count()`. It is intentionally narrower than Arel: app code starts
+from generated field refs, while the compiler lowers them to
 `Models::Todo.arel_table[:id]` and
-`Models::Todo.arel_table[:title].lower`. `Expr.lower(...)` only accepts
-`String` fields from the owning model, so `Expr.lower(Todo.f.id)` and
-`Todo.order(Expr.lower(User.f.name).asc())` fail during Haxe compilation.
+`Models::Todo.arel_table[:title].lower`. `lower()` only exists for `String`
+fields from the owning model, so `Todo.f.id.lower()` and
+`Todo.order(User.f.name.lower().asc())` fail during Haxe compilation.
 For the expression, aggregate, and having design contract, see
 [RailsHx Query Expression Design](railshx-query-expression-design.md).
 
-`whereExpr(predicate)` and `whereNotExpr(predicate)` accept
-`Predicate<TModel>` values produced by typed expression methods:
+`where(predicate)` and `whereNot(predicate)` accept `Predicate<TModel>` values
+produced by typed field/expression methods:
 
 ```haxe
-Todo.whereExpr(Expr.field(Todo.f.id).gt(1));
-Todo.whereNotExpr(Expr.lower(Todo.f.title).eq("ship"));
+Todo.where(Todo.f.id.gt(1));
+Todo.whereNot(Todo.f.title.lower().eq("ship"));
 ```
 
 Generated Ruby:
@@ -606,10 +612,11 @@ positional arrays.
 
 `Projection.group(...)` is for selected grouped aggregate result rows. The spec
 must be a non-empty object literal made from the grouped field and typed
-`Aggregate.*` expressions from the same model. The object keys become the Haxe
-row field names and the aggregate expression types become the row value types,
-so editors can complete `row.todoCount` as `Int` and `row.maxTitle` as
-`String`. Generated Ruby remains Rails-shaped:
+aggregate expressions from the same model, usually field helpers such as
+`Todo.f.id.count()`. The object keys become the Haxe row field names and the
+aggregate expression types become the row value types, so editors can complete
+`row.todoCount` as `Int` and `row.maxTitle` as `String`. Generated Ruby remains
+Rails-shaped:
 `group(:status).pluck(:status, Model.arel_table[:id].count, ...)` plus the same
 small row shaper. v1 rejects arbitrary non-grouped fields to avoid generating
 invalid SQL.
@@ -621,8 +628,8 @@ key types, such as `Bool`, until the target has a clear map representation for
 those keys.
 
 `Group.countHaving(...)` adds a typed aggregate `having` predicate to grouped
-counts. The predicate must be a `Predicate<TModel>` produced by typed expression
-builders such as `Aggregate.count(Todo.f.id).gt(1)`, so raw strings like
+counts. The predicate must be a `Predicate<TModel>` produced by typed field or
+expression builders such as `Todo.f.id.count().gt(1)`, so raw strings like
 `"COUNT(*) > 1"` and predicates from another model are rejected before Ruby is
 emitted. The generated Ruby remains ordinary Rails/Arel:
 `group(:status).having(Model.arel_table[:id].count.gt(1)).count()`.
@@ -633,12 +640,12 @@ Invalid projection/grouping examples fail during Haxe compilation:
 Projection.pluck(Todo, {id: User.f.id});
 Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, name: User.f.name});
 Projection.pluck(Todo, {});
-Projection.group(Todo, Todo.f.status, {status: Todo.f.status, userCount: Aggregate.count(User.f.id)});
+Projection.group(Todo, Todo.f.status, {status: Todo.f.status, userCount: User.f.id.count()});
 Projection.group(Todo, Todo.f.status, {status: Todo.f.status, todoCount: "COUNT(*)"});
-Projection.group(Todo, Todo.f.status, {title: Todo.f.title, todoCount: Aggregate.count(Todo.f.id)});
+Projection.group(Todo, Todo.f.status, {title: Todo.f.title, todoCount: Todo.f.id.count()});
 Group.count(Todo, User.f.name);
 Group.count(Todo, Todo.f.completed);
-Group.countHaving(Todo, Todo.f.status, Aggregate.count(User.f.id).gt(1));
+Group.countHaving(Todo, Todo.f.status, User.f.id.count().gt(1));
 Group.countHaving(Todo, Todo.f.status, "COUNT(*) > 1");
 ```
 

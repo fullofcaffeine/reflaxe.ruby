@@ -26,7 +26,7 @@ Default query authoring should stay Rails-shaped and Haxe-typed:
 Todo.where({status: "open"}).order(Todo.f.title.asc()).limit(10);
 Todo.joins(Todo.a.user).where({user: {name: "owner"}});
 Projection.pluck(Todo.where({status: "open"}), {id: Todo.f.id, title: Todo.f.title});
-Projection.group(Todo.where({status: "open"}), Todo.f.status, {status: Todo.f.status, todoCount: Aggregate.count(Todo.f.id)});
+Projection.group(Todo.where({status: "open"}), Todo.f.status, {status: Todo.f.status, todoCount: Todo.f.id.count()});
 Group.count(Todo, Todo.f.status);
 ```
 
@@ -51,7 +51,7 @@ The approved path is:
 - Use `Field<TModel, TValue>` refs for order/select/pluck/group/aggregate APIs.
 - Add typed builders for common predicates before adding raw SQL. Examples:
   `Predicate.not(...)`, `Predicate.inList(...)`, `Predicate.range(...)`,
-  `Order.lower(Todo.f.title).asc()`, or `Aggregate.count(Todo.f.id).gt(1)`.
+  `Todo.f.title.lower().asc()`, or `Todo.f.id.count().gt(1)`.
 - If Rails needs a true SQL fragment, add a named escape hatch such as
   `Sql.raw(...)` or `Sql.fragment(...)`, document why a typed builder is not
   sufficient, and cover it with strict-boundary tests.
@@ -63,10 +63,10 @@ For the typed expression/Arel lowering contract, see
 
 | Surface | Default class | Approved default | Escape hatch policy |
 | --- | --- | --- | --- |
-| ActiveRecord `where` / `rewhere` / `findBy` / `exists` | Typed default | Criteria object generated from `@:railsColumn` and association metadata; expression predicates through `whereExpr(Expr.field(Todo.f.id).gt(1))` and `whereNotExpr(...)`. | Raw SQL uses explicit `whereSql(Sql.unsafeWhere(...))` / `whereNotSql(...)`, not string overloads. |
-| ActiveRecord `order` / `reorder` | Typed default | `Todo.f.title.asc()`, `Order.many([...])`, `Expr.lower(Todo.f.title).asc()`. | Raw ordering uses explicit `orderSql(Sql.unsafeOrder(...))` / `reorderSql(...)`. Additional SQL ordering functions should be typed builders first. |
+| ActiveRecord `where` / `rewhere` / `findBy` / `exists` | Typed default | Criteria object generated from `@:railsColumn` and association metadata; expression predicates through `where(Todo.f.id.gt(1))`, `where(Todo.f.title.lower().eq("ship"))`, and compatibility `whereExpr(...)`. | Raw SQL uses explicit `whereSql(Sql.unsafeWhere(...))` / `whereNotSql(...)`, not string overloads. |
+| ActiveRecord `order` / `reorder` | Typed default | `Todo.f.title.asc()`, `Order.many([...])`, `Todo.f.title.lower().asc()`. | Raw ordering uses explicit `orderSql(Sql.unsafeOrder(...))` / `reorderSql(...)`. Additional SQL ordering functions should be typed builders first. |
 | ActiveRecord `select` / `pluck` / projections | Typed default | `select(Todo.f.title)`, `Projection.pluck(...)`, `Projection.group(...)`. | SQL aliases/functions should become typed projection/expression builders before raw SQL. |
-| ActiveRecord `group` / `having` / aggregates | Typed default | `Group.count(source, Todo.f.status)`, `Group.countHaving(source, Todo.f.status, Aggregate.count(Todo.f.id).gt(1))`, typed aggregate builders. | Richer grouped keys and SQL functions should become typed builders before raw SQL. |
+| ActiveRecord `group` / `having` / aggregates | Typed default | `Group.count(source, Todo.f.status)`, `Group.countHaving(source, Todo.f.status, Todo.f.id.count().gt(1))`, typed aggregate builders. | Richer grouped keys and SQL functions should become typed builders before raw SQL. |
 | ActiveRecord `joins` / `includes` / `preload` / `eager_load` | Typed default | `Todo.a.user`, `Association.nested(...)`. | Raw join strings are escape hatches only. Prefer association refs or future typed join builders. |
 | Migrations | Typed default plus checked literals | Known models, columns, indexes, FKs, reversible operations; `externalTables` for Rails-owned schema, with safe Rails table identifiers required. | Raw SQL/data migrations need explicit operation names and rollback policy. |
 | Templates, layouts, and partials | Typed default plus checked literals | HHX, `Template.of(...)`, `Template.layout(...)`, `Template.existing(...)`, `Layout.named(...)` for explicit lower-level layout literals. | Raw ERB requires `@:railsAllowRawErb`; unchecked external paths use `Template.external(...)`. |

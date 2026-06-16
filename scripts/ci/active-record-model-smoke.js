@@ -46,6 +46,12 @@ const invalidWhereExprOwnerSourceDir = join(root, "test", ".generated", "active_
 const invalidWhereExprOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_owner_out");
 const invalidWhereExprTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_type_src");
 const invalidWhereExprTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_expr_type_out");
+const invalidFluentExprLowerTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_fluent_expr_lower_type_src");
+const invalidFluentExprLowerTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_fluent_expr_lower_type_out");
+const invalidFluentWhereExprOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_fluent_where_expr_owner_src");
+const invalidFluentWhereExprOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_fluent_where_expr_owner_out");
+const invalidFluentWhereExprTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_fluent_where_expr_type_src");
+const invalidFluentWhereExprTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_fluent_where_expr_type_out");
 const invalidWhereSqlStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_sql_string_src");
 const invalidWhereSqlStringOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_sql_string_out");
 const invalidWhereSqlOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_sql_owner_src");
@@ -574,8 +580,9 @@ for (const expected of [
   "Models::Todo.where(status: [",
   "Models::Todo.where(id: 1..10)",
   "Models::Todo.where(Models::Todo.arel_table[:id].gt(1))",
-  "Expr.lower(Todo.f.title)",
-  "whereExpr(Expr.lower",
+  "Todo.f.title.lower().eq(\"ship\")",
+  "Todo.where(Todo.f.id.gt(1))",
+  "Todo.f.id.count().gt(1)",
   "whereSql(Sql.unsafeWhere",
   "orderSql(Sql.unsafeOrder",
   "Models::Todo.where(notes: nil)",
@@ -630,6 +637,8 @@ for (const expected of [
   "Todo.whereNotBetween(Todo.f.id",
   "Todo.whereGt(Todo.f.id",
   "Todo.whereNotLte(Todo.f.id",
+  "Todo.where(Todo.f.title.lower().eq(\"ship\"))",
+  "Todo.f.id.count().gt(1)",
   "Todo.whereNull(Todo.f.notes",
   "Todo.whereNotNull(Todo.f.notes",
   "Todo.rewhere({completed: true})",
@@ -694,6 +703,9 @@ expectInvalidExprLowerValueTypeFailure();
 expectInvalidWhereExprShapeFailure();
 expectInvalidWhereExprOwnerFailure();
 expectInvalidWhereExprValueTypeFailure();
+expectInvalidFluentExprLowerValueTypeFailure();
+expectInvalidFluentWhereExprOwnerFailure();
+expectInvalidFluentWhereExprValueTypeFailure();
 expectInvalidWhereSqlStringFailure();
 expectInvalidWhereSqlOwnerFailure();
 expectInvalidOrderSqlKindFailure();
@@ -1588,6 +1600,70 @@ function expectInvalidWhereExprValueTypeFailure() {
 		invalidWhereExprTypeSourceDir,
 		invalidWhereExprTypeOutputDir,
 		"Invalid ActiveRecord whereExpr value type compiled successfully.",
+		"String should be Int"
+	);
+}
+
+function expectInvalidFluentExprLowerValueTypeFailure() {
+	mkdirSync(invalidFluentExprLowerTypeSourceDir, { recursive: true });
+	writeFileSync(join(invalidFluentExprLowerTypeSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.order(Todo.f.id.lower().asc());",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidFluentExprLowerTypeSourceDir,
+		invalidFluentExprLowerTypeOutputDir,
+		"Invalid ActiveRecord fluent lower non-string field compiled successfully.",
+		"has no field lower"
+	);
+}
+
+function expectInvalidFluentWhereExprOwnerFailure() {
+	mkdirSync(invalidFluentWhereExprOwnerSourceDir, { recursive: true });
+	writeFileSync(join(invalidFluentWhereExprOwnerSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"import models.User;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.where(User.f.name.eq(\"owner\"));",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidFluentWhereExprOwnerSourceDir,
+		invalidFluentWhereExprOwnerOutputDir,
+		"Invalid ActiveRecord fluent where predicate owner compiled successfully.",
+		"models.User should be models.Todo"
+	);
+}
+
+function expectInvalidFluentWhereExprValueTypeFailure() {
+	mkdirSync(invalidFluentWhereExprTypeSourceDir, { recursive: true });
+	writeFileSync(join(invalidFluentWhereExprTypeSourceDir, "Main.hx"), [
+		"import models.Todo;",
+		"",
+		"class Main {",
+		"\tstatic function main() {",
+		"\t\tvar bad = Todo.where(Todo.f.id.gt(\"one\"));",
+		"\t\tSys.println(bad == null);",
+		"\t}",
+		"}",
+		"",
+	].join("\n"));
+	expectInvalidCompile(
+		invalidFluentWhereExprTypeSourceDir,
+		invalidFluentWhereExprTypeOutputDir,
+		"Invalid ActiveRecord fluent where predicate value type compiled successfully.",
 		"String should be Int"
 	);
 }

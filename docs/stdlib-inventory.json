@@ -151,6 +151,14 @@
       "reason": "Typed ActiveRecord model field reference that lets RailsHx forms, params, and order expressions share one checked field source while lowering to Rails-native names/symbols."
     },
     {
+      "id": "std.rails.active_record_field_tools",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_record/FieldTools.hx",
+      "surface": "rails.active_record.FieldTools",
+      "reason": "Typed @:using extension helpers for generated ActiveRecord field refs, enabling fluent app-facing query expressions such as Todo.f.title.lower().eq(\"ship\") and Todo.f.id.count().gt(1) while the compiler erases them to Rails/Arel calls."
+    },
+    {
       "id": "std.rails.active_record_nullable_field",
       "owner": "std",
       "status": "implemented",
@@ -301,6 +309,38 @@
       "path": "std/rails/active_record/RecordNotFound.hx",
       "surface": "rails.active_record.RecordNotFound",
       "reason": "Typed extern for ActiveRecord::RecordNotFound usable from the controller lifecycle rescue DSL."
+    },
+    {
+      "id": "std.rails.test_assert",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/Assert.hx",
+      "surface": "rails.test.Assert",
+      "reason": "Typed Haxe-authored Rails test assertion facade lowered by the compiler to ordinary Minitest helpers without a RailsHx runtime assertion layer."
+    },
+    {
+      "id": "std.rails.test_dsl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/Dsl.hx",
+      "surface": "rails.test.Dsl",
+      "reason": "Compiler-erased Rails test declaration DSL for Haxe-authored tests, including typed test/setup/teardown marker calls lowered to Rails Minitest blocks."
+    },
+    {
+      "id": "std.rails.test_model_test_case",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/ModelTestCase.hx",
+      "surface": "rails.test.ModelTestCase",
+      "reason": "Typed marker base class for Haxe-authored ActiveSupport::TestCase model tests emitted as Rails test artifacts."
+    },
+    {
+      "id": "std.rails.test_description",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/TestDescription.hx",
+      "surface": "rails.test.TestDescription",
+      "reason": "Typed description token for RailsHx test declarations so test labels stay explicit and compiler validated before lowering to Rails Minitest."
     },
     {
       "id": "std.rails.model_macro",

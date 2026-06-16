@@ -21,8 +21,8 @@ class ModelMacro {
 		addModelFieldRefs(fields, selfType, cls.name, pos);
 		addModelAssociationRefs(fields, selfType, pos);
 		addModelAttachmentRefs(fields, selfType, pos);
-		addStub(fields, "where", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
-		addStub(fields, "whereNot", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
+		addCriteriaOrPredicateStub(fields, "where", criteriaType, selfType, relationComplexType(selfType, criteriaType, pos), pos);
+		addCriteriaOrPredicateStub(fields, "whereNot", criteriaType, selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addPlainStub(fields, "whereExpr", predicateComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "predicate", pos);
 		addPlainStub(fields, "whereNotExpr", predicateComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "predicate", pos);
 		addPlainStub(fields, "whereSql", sqlComplexType(selfType, "SqlWhere"), relationComplexType(selfType, criteriaType, pos), "fragment", pos);
@@ -1210,6 +1210,41 @@ class ModelMacro {
 				{name: ":native", params: [macro $v{name}], pos: pos},
 				{name: ":rubyKwargs", params: [], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addCriteriaOrPredicateStub(fields:Array<Field>, name:String, criteriaType:ComplexType, selfType:ComplexType, ret:ComplexType, pos:Position):Void {
+		for (field in fields) {
+			if (field.name == name) {
+				return;
+			}
+		}
+		fields.push({
+			name: name,
+			access: [APublic, AStatic],
+			kind: FFun({
+				args: [{name: "attrs", type: criteriaType}],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{name}], pos: pos},
+				{name: ":rubyKwargs", params: [], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos},
+				{
+					name: ":overload",
+					params: [{
+						expr: EFunction(null, {
+							args: [{name: "predicate", type: predicateComplexType(selfType)}],
+							ret: ret,
+							expr: macro {}
+						}),
+						pos: pos
+					}],
+					pos: pos
+				}
 			],
 			pos: pos
 		});

@@ -15,7 +15,7 @@ APIs.
 
 ## Goals
 
-- Keep query chains Rails-shaped: `Todo.whereExpr(...).order(...).limit(10)`.
+- Keep query chains Rails-shaped: `Todo.where(Todo.f.title.lower().eq("ship")).order(...).limit(10)`.
 - Preserve model ownership in the type system so expressions from `User` cannot
   flow into a `Todo` relation.
 - Preserve value typing so predicate values match field/expression types.
@@ -27,28 +27,33 @@ APIs.
 Field refs remain the starting point:
 
 ```haxe
-Expr.field(Todo.f.id);      // Expr<Todo, Int>
-Expr.lower(Todo.f.title);   // Expr<Todo, String>
-Aggregate.count(Todo.f.id); // Expr<Todo, Int>
+Todo.f.id.expr();      // Expr<Todo, Int>
+Todo.f.title.lower();  // Expr<Todo, String>
+Todo.f.id.count();     // Expr<Todo, Int>
 ```
+
+The older explicit forms (`Expr.field(Todo.f.id)`,
+`Expr.lower(Todo.f.title)`, and `Aggregate.count(Todo.f.id)`) remain supported
+for compatibility and framework internals, but new app-facing examples should
+prefer the fluent field helpers.
 
 Expression values can become predicates:
 
 ```haxe
-Todo.whereExpr(Expr.field(Todo.f.id).gt(1));
-Todo.whereNotExpr(Expr.lower(Todo.f.title).eq("ship"));
-Group.countHaving(Todo, Todo.f.status, Aggregate.count(Todo.f.id).gt(1));
+Todo.where(Todo.f.id.gt(1));
+Todo.whereNot(Todo.f.title.lower().eq("ship"));
+Group.countHaving(Todo, Todo.f.status, Todo.f.id.count().gt(1));
 Projection.group(Todo, Todo.f.status, {
 	status: Todo.f.status,
-	todoCount: Aggregate.count(Todo.f.id)
+	todoCount: Todo.f.id.count()
 });
 ```
 
 Expression values can also become typed order tokens:
 
 ```haxe
-Todo.order(Expr.lower(Todo.f.title).asc());
-Todo.reorder(Order.many([Todo.f.id.desc(), Expr.lower(Todo.f.title).asc()]));
+Todo.order(Todo.f.title.lower().asc());
+Todo.reorder(Order.many([Todo.f.id.desc(), Todo.f.title.lower().asc()]));
 ```
 
 Generated Ruby stays Rails/Arel-shaped:
@@ -77,6 +82,8 @@ Todo.order(Expr.lower(User.f.name).asc());
 Todo.order(Expr.lower(Todo.f.id).asc());
 Todo.whereExpr(Expr.field(Todo.f.id).gt("one"));
 Todo.whereExpr(Expr.field(Todo.f.title)); // not a Predicate<Todo>
+Todo.where(Todo.f.id.gt("one"));
+Todo.where(Todo.f.title.expr()); // not a Predicate<Todo>
 ```
 
 ## Arel Boundary
@@ -85,9 +92,9 @@ RailsHx does not expose raw Arel nodes in Haxe. Arel is the Ruby lowering target
 because Rails already uses it for typed expression/predicate shapes. The Haxe
 API should stay small and typed:
 
-- Add narrow builders such as `Expr.lower(field)` before adding generic Arel
+- Add narrow field helpers such as `field.lower()` before adding generic Arel
   access.
-- Add aggregate builders such as `Aggregate.count(field)` before allowing raw
+- Add aggregate field helpers such as `field.count()` before allowing raw
   `having` strings.
 - Keep builder inputs as generated `Field<TModel, TValue>` refs or typed
   RailsHx expressions.
@@ -125,10 +132,10 @@ facades, not arbitrary expression strings:
 - `Projection.pluck(source, {id: Todo.f.id, title: Todo.f.title})` owns
   multi-field result typing.
 - `Group.count(source, Todo.f.status)` owns grouped count map typing.
-- `Group.countHaving(source, Todo.f.status, Aggregate.count(Todo.f.id).gt(1))`
+- `Group.countHaving(source, Todo.f.status, Todo.f.id.count().gt(1))`
   owns v1 aggregate `having` predicates.
 - `Projection.group(source, Todo.f.status, {status: Todo.f.status, todoCount:
-  Aggregate.count(Todo.f.id)})` owns v1 selected aggregate result row shapes.
+  Todo.f.id.count()})` owns v1 selected aggregate result row shapes.
 - Future selected aggregate work should extend the typed projection builders
   rather than introducing raw `select("COUNT(*) AS todo_count")` strings.
 

@@ -1,7 +1,6 @@
 import models.AuditLog;
 import models.Todo;
 import models.User;
-import rails.active_record.Aggregate;
 import rails.active_record.Association;
 import rails.active_record.Expr;
 import rails.active_record.Group;
@@ -61,6 +60,10 @@ class Main {
 		var lowerShip = Todo.whereExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
 		var relationLowerNotShip = assigned.whereNotExpr(Expr.lower(Todo.f.title).eq("ship")).limit(2);
 		var exprAfterFirst = Todo.whereExpr(Expr.field(Todo.f.id).gt(1)).limit(2);
+		var fluentLowerTitleOrder = Todo.order(Todo.f.title.lower().asc()).limit(3);
+		var fluentLowerShip = Todo.where(Todo.f.title.lower().eq("ship")).limit(2);
+		var relationFluentLowerNotShip = assigned.whereNot(Todo.f.title.lower().eq("ship")).limit(2);
+		var fluentAfterFirst = Todo.where(Todo.f.id.gt(1)).limit(2);
 		var unsafeSqlOpen = Todo.whereSql(Sql.unsafeWhere("status <> 'archived'")).limit(2);
 		var unsafeSqlNotDone = assigned.whereNotSql(Sql.unsafeWhere("status = 'done'")).limit(2);
 		var unsafeSqlOrder = Todo.orderSql(Sql.unsafeOrder("LOWER(title) ASC")).limit(2);
@@ -112,18 +115,18 @@ class Main {
 			Todo.f.status,
 			{
 				status: Todo.f.status,
-				todoCount: Aggregate.count(Todo.f.id),
-				userIdSum: Aggregate.sum(Todo.f.userId),
-				averageUserId: Aggregate.average(Todo.f.userId),
-				minId: Aggregate.minimum(Todo.f.id),
-				maxTitle: Aggregate.maximum(Todo.f.title)
+				todoCount: Todo.f.id.count(),
+				userIdSum: Todo.f.userId.sum(),
+				averageUserId: Todo.f.userId.average(),
+				minId: Todo.f.id.minimum(),
+				maxTitle: Todo.f.title.maximum()
 			}
 		);
 		var statusCounts:haxe.ds.StringMap<Int> = Group.count(Todo.where({status: "open"}), Todo.f.status);
 		var busyStatusCounts:haxe.ds.StringMap<Int> = Group.countHaving(
 			Todo.where({status: "open"}),
 			Todo.f.status,
-			Aggregate.count(Todo.f.id).gt(1)
+			Todo.f.id.count().gt(1)
 		);
 		var userCounts:haxe.ds.IntMap<Int> = Group.count(Todo, Todo.f.userId);
 		var eventCounts:haxe.ds.IntMap<Int> = Group.count(AuditLog.where({eventCount: 1}), AuditLog.f.eventCount);
@@ -194,6 +197,10 @@ class Main {
 		Sys.println(lowerShip == null);
 		Sys.println(relationLowerNotShip == null);
 		Sys.println(exprAfterFirst == null);
+		Sys.println(fluentLowerTitleOrder == null);
+		Sys.println(fluentLowerShip == null);
+		Sys.println(relationFluentLowerNotShip == null);
+		Sys.println(fluentAfterFirst == null);
 		Sys.println(unsafeSqlOpen == null);
 		Sys.println(unsafeSqlNotDone == null);
 		Sys.println(unsafeSqlOrder == null);

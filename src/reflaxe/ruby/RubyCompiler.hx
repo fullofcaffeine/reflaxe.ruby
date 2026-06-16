@@ -1901,10 +1901,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr(printInlineExpr(target) + ".transaction(" + options.join(", ") + ") " + renderRubyBlock(params[0]));
 			case TField(target, access) if ((fieldAccessRawName(access) == "where" || fieldAccessRawName(access) == "rewhere") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
-				criteria == null ? null : RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(criteria)]);
+				if (criteria != null) {
+					RubyCall(compileExpr(target), fieldAccessRawName(access), [RubyRawExpr(criteria)]);
+				} else if (fieldAccessRawName(access) == "where") {
+					var predicate = activeRecordPredicateArg(params[0]);
+					predicate == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(predicate)]);
+				} else {
+					null;
+				}
 			case TField(target, access) if ((fieldAccessRawName(access) == "whereNot" || fieldAccessRawName(access) == "where_not") && params.length == 1):
 				var criteria = activeRecordCriteriaArg(params[0]);
-				criteria == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
+				if (criteria != null) {
+					RubyRawExpr(printInlineExpr(target) + ".where.not(" + criteria + ")");
+				} else {
+					var predicate = activeRecordPredicateArg(params[0]);
+					predicate == null ? null : RubyRawExpr(printInlineExpr(target) + ".where.not(" + predicate + ")");
+				}
 			case TField(target, access) if (fieldAccessRawName(access) == "whereExpr" && params.length == 1):
 				var predicate = activeRecordPredicateArg(params[0]);
 				predicate == null ? null : RubyCall(compileExpr(target), "where", [RubyRawExpr(predicate)]);
@@ -2595,6 +2607,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (expr.expr) {
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
 				activeRecordExpressionArg(inner);
+			case TBlock(values) if (values.length > 0):
+				activeRecordExpressionArg(values[values.length - 1]);
+			case TField(_, _):
+				activeRecordArelField(expr);
+			case TCall({expr: TField(fieldExpr, access)}, []) if (fieldAccessRawName(access) == "lower"):
+				var field = activeRecordArelField(fieldExpr);
+				field == null ? null : field + ".lower";
+			case TCall({expr: TField(fieldExpr, access)}, []) if (activeRecordAggregateMethod(fieldAccessRawName(access)) != null):
+				var field = activeRecordArelField(fieldExpr);
+				var method = activeRecordAggregateMethod(fieldAccessRawName(access));
+				field == null || method == null ? null : field + "." + method;
 			case TCall(callee, [fieldExpr]) if (isActiveRecordExprFieldCall(callee)):
 				activeRecordArelField(fieldExpr);
 			case TCall(callee, [fieldExpr]) if (isActiveRecordExprLowerCall(callee)):
@@ -2625,12 +2648,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActiveRecordExprFieldCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
-		return info != null && info.name == "field" && isActiveRecordExprOwner(info.owner);
+		return info != null && info.name == "field" && (isActiveRecordExprOwner(info.owner) || isActiveRecordFieldToolsOwner(info.owner));
 	}
 
 	static function isActiveRecordExprLowerCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
-		return info != null && info.name == "lower" && (isActiveRecordExprOwner(info.owner) || isActiveRecordOrderOwner(info.owner));
+		return info != null && info.name == "lower" && (isActiveRecordExprOwner(info.owner) || isActiveRecordOrderOwner(info.owner) || isActiveRecordFieldToolsOwner(info.owner));
 	}
 
 	static function isActiveRecordExprOrderCall(callee:TypedExpr):Bool {
@@ -2640,12 +2663,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActiveRecordExprPredicateCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
-		return info != null && activeRecordExpressionPredicateOp(info.name) != null && isActiveRecordExprOwner(info.owner);
+		return info != null && activeRecordExpressionPredicateOp(info.name) != null && (isActiveRecordExprOwner(info.owner) || isActiveRecordFieldToolsOwner(info.owner));
 	}
 
 	static function isActiveRecordAggregateCall(callee:TypedExpr):Bool {
 		var info = staticCallInfo(callee);
-		return info != null && activeRecordAggregateMethod(info.name) != null && info.owner == "rails.active_record.Aggregate";
+		return info != null && activeRecordAggregateMethod(info.name) != null && (info.owner == "rails.active_record.Aggregate" || isActiveRecordFieldToolsOwner(info.owner));
 	}
 
 	static function activeRecordAggregateMethod(name:String):Null<String> {
@@ -2663,6 +2686,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActiveRecordOrderOwner(owner:String):Bool {
 		return owner == "rails.active_record.Order" || StringTools.endsWith(owner, ".Order_Impl_");
+	}
+
+	static function isActiveRecordFieldToolsOwner(owner:String):Bool {
+		return owner == "rails.active_record.FieldTools";
 	}
 
 	static function isActiveRecordSqlOwner(owner:String):Bool {

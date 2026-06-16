@@ -6,7 +6,9 @@ package rails.active_record;
 	Methods are typed for Haxe authoring and lower to normal Rails relation calls.
 **/
 extern class Relation<TModel, TCriteria> {
+	@:overload(function(predicate:Predicate<TModel>):Relation<TModel, TCriteria> {})
 	public function where(criteria:TCriteria):Relation<TModel, TCriteria>;
+	@:overload(function(predicate:Predicate<TModel>):Relation<TModel, TCriteria> {})
 	public function whereNot(criteria:TCriteria):Relation<TModel, TCriteria>;
 	public function whereExpr(predicate:Predicate<TModel>):Relation<TModel, TCriteria>;
 	public function whereNotExpr(predicate:Predicate<TModel>):Relation<TModel, TCriteria>;
