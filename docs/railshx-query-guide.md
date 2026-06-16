@@ -874,18 +874,20 @@ as `scope :name`.
 
 The current query slice intentionally covers the common Rails relation path:
 
-- Typed criteria for flat model columns.
-- Typed association refs for `includes` and `joins`.
+- Typed criteria for flat model columns and nested association filters.
+- Typed association refs for `includes`, `preload`, `joins`, and `eagerLoad`.
 - Typed null relations through `none`.
 - Typed Rails query helpers through Haxe casing, such as `reverseOrder()` and `readOnly()`.
 - Typed relation composition through `or` and `merge`.
-- Typed field refs for `order`.
+- Typed field refs and fluent expressions for `order`, predicates, aggregates, and `having`.
+- Typed transactions and pessimistic locks.
+- Typed Rails scope/default-scope declarations.
 - `limit`, `offset`, `first`, `find`, `findBy`, `create`, and `toArray`.
 - Relation criteria checks that persist through assigned relation variables.
 
-Follow-up work remains for richer scope builders, aggregations, nested
-association-aware criteria, multi-model joins/projections, richer grouped-query
-key types, and more complete Rails query APIs. Until those land, prefer small
+Follow-up breadth remains for multi-model joins/projections, richer grouped-query
+key types, and less common Rails query APIs such as `unscope`, `only`, `except`,
+`references`, and `strict_loading`. Until those land, prefer small
 typed externs or typed wrapper methods at the boundary rather than raw strings
 or `__ruby__` in app code.
 

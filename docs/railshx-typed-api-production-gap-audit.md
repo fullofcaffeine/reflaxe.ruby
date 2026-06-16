@@ -30,7 +30,7 @@ Tracking gate: `haxe.ruby-bjv.3`.
 
 | Bead | Priority | Surface | Required outcome |
 | --- | --- | --- | --- |
-| `haxe.ruby-bjv.3.1` | P1 | ActiveRecord queries, scopes, transactions | Typed production query surface: scopes, transactions, locking, association-aware criteria, nested joins/includes, and SQL-bearing policy integration. |
+| `haxe.ruby-bjv.3.1` | P1 | ActiveRecord queries, scopes, transactions | Covered: typed production query spine, scopes, transactions, locking, association-aware criteria, nested joins/includes, and SQL-bearing policy integration. |
 | `haxe.ruby-bjv.3.2` | P1 | Models, associations, validations, migrations | Broader typed Rails model metadata and migration/schema evolution coverage, including constraints, indexes, reversible operations, and destructive-operation policy. |
 | `haxe.ruby-bjv.3.3` | P1 | Controllers, routing, request lifecycle | Production ActionController coverage for filters, redirects, respond_to-style flows, request variants, rescue/auth seams, and route/controller validation. |
 | `haxe.ruby-bjv.3.4` | P1 | HHX, ActionView, forms, components | Broader HHX helper/form/component/layout coverage with typed collection locals, slots, content_for/yield, and Rails-owned ERB interop. |
@@ -42,10 +42,10 @@ Tracking gate: `haxe.ruby-bjv.3`.
 
 | Surface | Current state | Production gap | Bead |
 | --- | --- | --- | --- |
-| ActiveRecord flat criteria | `where`, `rewhere`, `findBy`, `exists` check flat and nested association model columns and value types. | Richer predicates, relation-aware named criteria, and SQL/string policy integration remain incomplete. | `haxe.ruby-bjv.3.1` |
-| ActiveRecord relation chains | Common chains exist: `all`, `none`, `distinct`, `select`, `or`, `merge`, `order`, `reorder`, `limit`, `offset`, `first`, `last`, `toArray`. | Transactions, pessimistic/optimistic locking helpers, richer joins/includes/preload/eager_load, `where.not`, `unscope`, `only`, `except`, `references`, and `strict_loading` need typed decisions. | `haxe.ruby-bjv.3.1` |
-| Projections/grouping/aggregates | Single-field `pluck`, named `Projection.pluck`, grouped aggregate `Projection.group`, `Group.count`, `Group.countHaving`, typed aggregate predicates, and min/max/sum/average initial slices exist. | Multi-model projections, richer grouped keys, joined aggregate projections, and broader SQL function builders need design/implementation. | `haxe.ruby-bjv.3.1`, `haxe.ruby-bjv.3.7` |
-| Scopes | `@:railsScope` and `@:railsDefaultScope` keep typed Haxe static methods while emitting Rails `scope` / `default_scope` macros; ordinary static methods remain available for class helpers. | Richer merging/default-scope policy and broader runtime coverage remain follow-up work. | `haxe.ruby-bjv.3.1` |
+| ActiveRecord flat criteria | `where`, `rewhere`, `findBy`, and `exists` check flat and nested association model columns and value types; `where(predicate)` / `whereNot(predicate)` cover typed Arel-backed field predicates. | Production blocker closed. Future relation-aware named criteria can be designed as an ergonomic follow-up if dogfood needs them. | `haxe.ruby-bjv.3.1` |
+| ActiveRecord relation chains | Common chains exist: `all`, `none`, `distinct`, `select`, `or`, `merge`, `order`, `reorder`, `limit`, `offset`, `first`, `last`, `toArray`, `where.not`, `preload`, `eager_load`, transactions, and pessimistic locking. | Production blocker closed. Future breadth such as `unscope`, `only`, `except`, `references`, `strict_loading`, and optimistic-locking affordances should be separate non-blocking API expansion beads. | `haxe.ruby-bjv.3.1` |
+| Projections/grouping/aggregates | Single-field `pluck`, named `Projection.pluck`, grouped aggregate `Projection.group`, `Group.count`, `Group.countHaving`, typed aggregate predicates, min/max/sum/average slices, and fluent field expressions exist. | Production blocker closed for the common path. Multi-model projections, richer grouped keys, joined aggregate projections, and broader SQL function builders remain future design/implementation breadth. | follow-up as needed |
+| Scopes | `@:railsScope` and `@:railsDefaultScope` keep typed Haxe static methods while emitting Rails `scope` / `default_scope` macros; ordinary static methods remain available for class helpers. | Production blocker closed. Richer merging/default-scope policy and broader runtime coverage can be follow-up breadth. | `haxe.ruby-bjv.3.1` |
 | Model metadata | Initial columns, associations, validations, enums, callbacks, and schema metadata exist. | Common validation options, custom validators, dependent/inverse/through variants, polymorphic/STI decisions, nested attributes, scopes from associations, and callback coverage need audit-driven expansion. | `haxe.ruby-bjv.3.2` |
 | Migrations | Create-table and follow-up operation validation exist for known tables/columns/indexes/FKs and reversible destructive operations. | Constraints/checks, composite indexes, rename/change-table helpers, schema history, external table contracts, data migrations, and raw SQL policy need production treatment. | `haxe.ruby-bjv.3.2`, `haxe.ruby-bjv.3.7` |
 | Controllers/params | Typed strong params, request/response facades including `RequestFormat`, contextual `lifecycle` declarations for filters and `rescue_from`, status tokens, `respond_to` format collector, flash/session/cookies, and template rendering exist. | Richer content negotiation, variants, auth hooks, streaming/send_file, CSRF policy, route/controller validation, and request specs need coverage. | `haxe.ruby-bjv.3.3` |
@@ -76,5 +76,5 @@ remaining API gap is breadth and hardening: making common Rails surfaces typed
 enough that production app authors do not have to fall back to `Dynamic`,
 unchecked strings, raw SQL, or `__ruby__` for ordinary work.
 
-Production-ready status remains blocked until the P1 beads above are closed or
+Production-ready status remains blocked until the remaining P1 beads above are closed or
 explicitly reclassified with documented rationale.
