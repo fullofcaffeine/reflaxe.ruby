@@ -2,7 +2,7 @@
 
 `reflaxe.ruby` is a Reflaxe-based Haxe target that emits idiomatic Ruby and provides Rails-first typed APIs.
 
-The current `1.0.0` baseline supports executable Ruby smoke fixtures, shared `hxruby` runtime files and gem packaging, Ruby interop metadata, and a Rails MVP with typed ActiveRecord models, ActionController helpers, params macros, routes generation, and scaffold tooling.
+The current `0.1.0-beta.2` baseline supports executable Ruby smoke fixtures, shared `hxruby` runtime files and gem packaging, Ruby interop metadata, and a Rails MVP with typed ActiveRecord models, ActionController helpers, params macros, routes generation, and scaffold tooling.
 
 The project intentionally uses `0.x` beta versioning until the compiler and RailsHx framework layer are production-ready.
 
