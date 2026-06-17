@@ -10,3 +10,5 @@
 
 * bump package metadata to `0.1.0-beta.2` across npm, haxelib, and the Ruby gem ([799a0fb](https://github.com/fullofcaffeine/reflaxe.ruby/commit/799a0fb))
 * sync and close beta release tracking beads ([fcea730](https://github.com/fullofcaffeine/reflaxe.ruby/commit/fcea730), [51b9a47](https://github.com/fullofcaffeine/reflaxe.ruby/commit/51b9a47))
+* format beta release notes with categorized change lists and disable automatic stable release publication while in beta ([700b367](https://github.com/fullofcaffeine/reflaxe.ruby/commit/700b367))
+* close release-note tracking bead after GitHub release cleanup ([49dc9fa](https://github.com/fullofcaffeine/reflaxe.ruby/commit/49dc9fa))
