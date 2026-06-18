@@ -811,6 +811,9 @@ class RoutesDsl {
 			case _:
 				Context.error(context + ' reference "$name" is not a controller method.', pos);
 		}
+		if (name == "newAction" && railsActionName(classType, name) != "new") {
+			Context.error(context + ' references "newAction", which must be annotated with @:native("new") so it lowers to the Rails :new action.', pos);
+		}
 	}
 
 	static function findInstanceMethodIn(classType:ClassType, name:String):Null<ClassField> {

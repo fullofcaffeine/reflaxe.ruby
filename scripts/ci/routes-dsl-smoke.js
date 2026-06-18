@@ -84,6 +84,7 @@ for (const expected of [
   '    get "archived", to: "controllers/posts#archive", as: :archived_collection',
   "  member do",
   '    patch "publish", to: "controllers/posts#publish", as: :publish_post',
+  'resources :draft_posts, controller: "controllers/posts", only: [:new]',
   'resources :legacy_posts, controller: "controllers/posts", only: [:index]',
   'resource :profile, controller: "controllers/profiles", only: [:show, :update]',
   'resource :legacy_profile, controller: "controllers/profiles", only: [:show]',
@@ -100,6 +101,39 @@ for (const expected of [
   }
 }
 
+expectInvalidRouteDslFailure("missing routes field", [
+  "package routes;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {}",
+  "",
+], "must declare `static final routes");
+
+expectInvalidRouteDslFailure("non-static routes field", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tfinal routes = {",
+  "\t\troot(to(PostsController, index));",
+  "\t};",
+  "}",
+  "",
+], "routes field must be static");
+
+expectInvalidRouteDslFailure("routes field non-block initializer", [
+  "package routes;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = \"not routes\";",
+  "}",
+  "",
+], "routes must be a Haxe block");
+
 expectInvalidRouteDslFailure("missing action", [
   "package routes;",
   "",
@@ -114,6 +148,75 @@ expectInvalidRouteDslFailure("missing action", [
   "}",
   "",
 ], "missing controller action");
+
+expectInvalidRouteDslFailure("invalid only action", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import models.Post;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tresources(Post, PostsController, {only: [missingAction]});",
+  "\t};",
+  "}",
+  "",
+], "resources only references missing controller action");
+
+expectInvalidRouteDslFailure("invalid except action", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import models.Post;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tresources(Post, PostsController, {except: [missingAction]});",
+  "\t};",
+  "}",
+  "",
+], "resources except references missing controller action");
+
+expectInvalidRouteDslFailure("conflicting only and except actions", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import models.Post;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tresources(Post, PostsController, {only: [index], except: [destroy]});",
+  "\t};",
+  "}",
+  "",
+], "cannot combine only and except");
+
+expectInvalidRouteDslFailure("newAction without native new mapping", [
+  "package routes;",
+  "",
+  "import models.Post;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsController",
+  "class PlainNewController extends rails.action_controller.Base {",
+  "\tstatic final lifecycle = [];",
+  "\tpublic function newAction():Void {}",
+  "}",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tresources(Post, PlainNewController, {only: [newAction]});",
+  "\t};",
+  "}",
+  "",
+], "must be annotated with @:native(\"new\")");
 
 expectInvalidRouteDslFailure("bad option", [
   "package routes;",
@@ -180,6 +283,23 @@ expectInvalidRouteDslFailure("duplicate route alias", [
   "}",
   "",
 ], "duplicate explicit route alias");
+
+expectInvalidRouteDslFailure("top-level member", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tmember({",
+  "\t\t\tpatch(\"publish\", to(PostsController, publish));",
+  "\t\t});",
+  "\t};",
+  "}",
+  "",
+], "member blocks must be nested");
 
 expectInvalidRouteDslFailure("top-level collection", [
   "package routes;",
@@ -503,6 +623,7 @@ function writeValidFixture() {
     "\t\t\t\tpatch(\"publish\", to(PostsController, publish), {asName: routeName(\"publish_post\")});",
     "\t\t\t});",
     "\t\t});",
+    "\t\tresources(resourceName(\"draft_posts\"), PostsController, {only: [newAction]});",
     "\t\tresources(resourceName(\"legacy_posts\"), PostsController, {only: [index]});",
     "\t\tresource(Profile, ProfilesController, {only: [show, update]});",
     "\t\tresource(resourceName(\"legacy_profile\"), ProfilesController, {only: [show]});",
