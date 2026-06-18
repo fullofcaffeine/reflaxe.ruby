@@ -156,6 +156,7 @@ require_relative "rails/active_record/transaction_isolation/transaction_isolatio
 require_relative "rails/active_record/transaction_options"
 require_relative "rails/column_options"
 require_relative "rails/macros/params_macro"
+require_relative "rails/macros/routes_dsl"
 require_relative "rails/macros/view_macro"
 require_relative "rails/migration/check_constraint_options"
 require_relative "rails/migration/column_options"

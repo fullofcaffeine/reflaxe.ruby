@@ -225,6 +225,7 @@ const cases = [
       "db/migrate/20260101000001_update_todos.rb",
       "test/generated/models/todo_haxe_test.rb",
       "app/haxe_gen/main.rb",
+      "config/routes.rb",
       "config/initializers/hxruby_autoload.rb",
       "run.rb",
     ],

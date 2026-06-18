@@ -32,7 +32,7 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - HHX-first ActionView authoring: the index page and all extracted view pieces are authored as typed HHX, while Rails-native ERB is compiler output.
 - Haxe-authored JavaScript compiled into the Rails importmap/Turbo flow, so progressive behavior can stay in typed Haxe while Rails serves standard `app/javascript/**` assets.
 - Haxe-authored Rails migrations through `@:railsMigration(...)`; the compiler emits standard timestamped `db/migrate/*.rb` ActiveRecord migration files from typed snapshot operations.
-- Generated route helper externs under `src_haxe/routes/Routes.hx`.
+- Haxe-owned Rails routing through `src_haxe/routes/AppRoutes.hx`; the compiler emits standard `config/routes.rb`, and generated route helper externs under `src_haxe/routes/Routes.hx` still come from Rails route output.
 - CI smoke coverage that compiles the Haxe app, checks generated Rails Ruby, and runs Rails runtime tests when local Rails gems are available.
 
 ## Source Layout
@@ -49,12 +49,14 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - `views/TodoListView.hx` is the index's typed open-work list island: HHX validates the `todos` local, `<if>` branch, `<for>` loop binder, and `todo.title`/`todo.notes` expressions before generating `app/views/controllers/todos/_list.html.erb`.
 - `views/TodoFormView.hx` uses HHX inline markup (`<form_with>`, `<hidden_field>`, `<field_label>`, `<text_field>`, `<text_area>`, `<submit>`) plus model-owned refs such as `Todo.railsParamKey`, `Todo.f.title`, and `Todo.f.notes` for a typed Rails form partial. It generates `app/views/controllers/todos/_typed_form.html.erb`, which the index renders with `sample_user_id`.
 - `std/rails/turbo/Turbo.hx` provides a typed Haxe facade over Turbo lifecycle events, `Turbo.visit` actions/options, frame helpers, and client-side stream rendering, so client code uses Rails-native Turbo semantics without stringly-typed app logic.
+- `src_haxe/routes/AppRoutes.hx` is the Haxe-owned Rails routing source: `@:railsRoutes` plus `static final routes = { root(to(TodosController, index)); resources(Todo, TodosController, {only: [index, create]}); }` emits normal `config/routes.rb`.
 - `shared/TodoHooks.hx` centralizes behavior-bearing slots, IDs, selectors, data attributes, and storage keys as typed Haxe constants shared by HHX templates, Haxe JS, and Playwright.
 - `tools/ExportTodoHooks.hx` materializes those Haxe-owned hooks into `e2e/todo_hooks.ts`, so browser tests import the same selector contract instead of copying string literals.
 - `client/TodoClient.hx` compiles to `app/javascript/railshx/todo_client.js` and owns progressive enhancement: typed Turbo submit handling, smooth same-page navigation, scroll-position preservation after create, and a transient typed-status flash.
 - `assets/stylesheets/application.css` is copied into Rails' asset path; HHX owns structure, CSS owns presentation.
+- Generated `config/routes.rb` is materialized from `src_haxe/routes/AppRoutes.hx`.
 - Generated `app/views/controllers/todos/index.html.erb` is materialized from that Haxe template marker.
-- `src_haxe/routes/Routes.hx` is generated from Rails route output.
+- `src_haxe/routes/Routes.hx` is generated from Rails route output and remains the typed route-helper extern used by controllers/templates.
 - `db/migrate/20260101000000_create_todos.rb` is generated Rails migration output from the snapshot operations in `migrations/CreateTodos.hx`.
 
 ## Command Guide

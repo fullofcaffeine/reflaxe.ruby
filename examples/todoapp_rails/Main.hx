@@ -2,6 +2,7 @@ import controllers.TodosController;
 import migrations.CreateTodos;
 import migrations.UpdateTodos;
 import models.Todo;
+import routes.AppRoutes;
 import test_haxe.models.TodoHaxeTest;
 import views.ApplicationLayoutView;
 import views.TodoCardView;
@@ -26,6 +27,7 @@ import views.TodoSummaryView;
 class Main {
 	static function main() {
 		var todo:Todo = null;
+		var routes:Class<AppRoutes> = null;
 		var haxeAuthoredTest:Class<TodoHaxeTest> = TodoHaxeTest;
 		var migration:Class<CreateTodos> = CreateTodos;
 		var updateMigration:Class<UpdateTodos> = UpdateTodos;
@@ -39,6 +41,7 @@ class Main {
 		var view:Class<TodoIndexView> = TodoIndexView;
 		var summaryView:Class<TodoSummaryView> = TodoSummaryView;
 		Sys.println(todo == null);
+		Sys.println(routes == null);
 		Sys.println(haxeAuthoredTest != null);
 		Sys.println(migration != null);
 		Sys.println(updateMigration != null);

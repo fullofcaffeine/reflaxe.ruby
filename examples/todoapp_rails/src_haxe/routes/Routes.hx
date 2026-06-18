@@ -11,22 +11,16 @@ import rails.routing.RouteParam;
 // Ruby/Rails output: direct calls to Rails route helpers such as `todos_path`.
 @:native("self")
 extern class Routes {
+	@:native("root_path")
+	public static function rootPath():String;
+
+	@:native("root_url")
+	public static function rootUrl():String;
+
 	@:native("todos_path")
 	public static function todosPath():String;
 
 	@:native("todos_url")
 	public static function todosUrl():String;
-
-	@:native("todo_path")
-	public static function todoPath(id:RouteParam):String;
-
-	@:native("todo_url")
-	public static function todoUrl(id:RouteParam):String;
-
-	@:native("user_path")
-	public static function userPath(id:RouteParam):String;
-
-	@:native("user_url")
-	public static function userUrl(id:RouteParam):String;
 
 }

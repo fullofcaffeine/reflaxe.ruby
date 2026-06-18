@@ -40,12 +40,10 @@ for (const expected of [
   "import rails.routing.RouteParam;",
   '@:native("self")',
   "extern class Routes",
+  '@:native("root_path")',
+  "public static function rootPath():String;",
   '@:native("todos_path")',
   "public static function todosPath():String;",
-  '@:native("todo_path")',
-  "public static function todoPath(id:RouteParam):String;",
-  '@:native("user_url")',
-  "public static function userUrl(id:RouteParam):String;",
 ]) {
   if (!generated.includes(expected)) {
     console.error(`Routes generator output missing expected line: ${expected}`);

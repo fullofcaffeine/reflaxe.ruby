@@ -233,12 +233,6 @@ production:
 end
 `);
 
-  writeFile("config/routes.rb", `Rails.application.routes.draw do
-  root "controllers/todos#index"
-  resources :todos, controller: "controllers/todos", only: [:index, :create]
-end
-`);
-
   writeFile("config/importmap.rb", `pin "application"
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "railshx/todo_client", to: "railshx/todo_client.js"
