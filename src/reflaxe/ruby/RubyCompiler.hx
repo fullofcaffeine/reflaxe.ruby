@@ -27,6 +27,10 @@ import reflaxe.ruby.ast.RubyAST.RubyStatement;
 import reflaxe.ruby.compiler.RubyBuildContext;
 import reflaxe.ruby.compiler.RubyBuildContextResolver;
 import reflaxe.ruby.naming.RubyNaming;
+import reflaxe.ruby.rails.RailsRouteDecl;
+import reflaxe.ruby.rails.RailsRouteTarget;
+import reflaxe.ruby.rails.RailsRoutesExtractor;
+import reflaxe.ruby.rails.RailsRoutesEmitter;
 import reflaxe.ruby.RequireRegistry;
 import sys.FileSystem;
 import sys.io.File;
@@ -91,28 +95,6 @@ typedef RailsTestDecl = {
 	kind:String,
 	description:Null<String>,
 	body:TypedExpr,
-	pos:Position
-}
-
-typedef RailsRouteTarget = {
-	controller:String,
-	action:String
-}
-
-typedef RailsRouteDecl = {
-	kind:String,
-	target:Null<RailsRouteTarget>,
-	verb:String,
-	verbs:Array<String>,
-	path:String,
-	name:String,
-	controller:String,
-	moduleName:String,
-	only:Array<String>,
-	except:Array<String>,
-	param:String,
-	options:Array<String>,
-	children:Array<RailsRouteDecl>,
 	pos:Position
 }
 
@@ -4571,11 +4553,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return;
 		}
 		var decls = railsRouteDecls(routes);
-		validateRailsRouteAliases(decls);
-		var body:Array<String> = [];
-		for (decl in decls) {
-			body = body.concat(renderRailsRouteDecl(decl));
-		}
+		RailsRoutesExtractor.validateAliases(decls);
+		var body = RailsRoutesEmitter.renderBody(decls);
 		if (body.length == 0) {
 			Context.error("@:railsRoutes routes block must declare at least one route.", routes.field.pos);
 			return;
@@ -4634,33 +4613,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var decls:Array<RailsRouteDecl> = [];
 		for (entry in entries) {
-			var decl = railsRouteDecl(entry);
-			if (decl.kind == "collection" || decl.kind == "member") {
-				Context.error('@:railsRoutes ${decl.kind} blocks must be nested inside resources/resource declarations.', decl.pos);
-			}
-			decls.push(decl);
+			decls.push(railsRouteDecl(entry));
 		}
+		RailsRoutesExtractor.validateTopLevel(decls);
 		return decls;
-	}
-
-	static function validateRailsRouteAliases(decls:Array<RailsRouteDecl>):Void {
-		var seen = new Map<String, Position>();
-		validateRailsRouteAliasesIn(decls, seen);
-	}
-
-	static function validateRailsRouteAliasesIn(decls:Array<RailsRouteDecl>, seen:Map<String, Position>):Void {
-		for (decl in decls) {
-			if (decl.name != "" && ["verb", "match", "mount"].indexOf(decl.kind) != -1) {
-				if (seen.exists(decl.name)) {
-					Context.error('@:railsRoutes duplicate explicit route alias "${decl.name}". Each asName must be unique within a Haxe-owned routes file.',
-						decl.pos);
-				}
-				seen.set(decl.name, decl.pos);
-			}
-			if (decl.children.length > 0) {
-				validateRailsRouteAliasesIn(decl.children, seen);
-			}
-		}
 	}
 
 	static function railsRouteDecl(expr:TypedExpr):RailsRouteDecl {
@@ -4957,115 +4913,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsRoutes target must be produced by to(Controller, action).", expr.pos);
 				{controller: "", action: ""};
 		}
-	}
-
-	static function renderRailsRouteDecl(decl:RailsRouteDecl):Array<String> {
-		return switch (decl.kind) {
-			case "root":
-				decl.target == null ? [] : [
-					"root " + quoteRubyStringForCode(decl.target.controller + "#" + decl.target.action)
-				];
-			case "verb":
-				if (decl.target == null) {
-					[];
-				} else {
-					var parts = [
-						"to: " + quoteRubyStringForCode(decl.target.controller + "#" + decl.target.action)
-					];
-					if (decl.name != "") {
-						parts.push("as: " + rubySymbolLiteral(decl.name));
-					}
-					[decl.verb + " " + quoteRubyStringForCode(decl.path) + ", " + parts.join(", ")];
-				}
-			case "match":
-				if (decl.target == null) {
-					[];
-				} else {
-					var parts = [
-						"to: " + quoteRubyStringForCode(decl.target.controller + "#" + decl.target.action),
-						"via: [" + [for (verb in decl.verbs) rubySymbolLiteral(verb)].join(", ") + "]"
-					];
-					if (decl.name != "") {
-						parts.push("as: " + rubySymbolLiteral(decl.name));
-					}
-					["match " + quoteRubyStringForCode(decl.path) + ", " + parts.join(", ")];
-				}
-			case "resources":
-				renderRailsResourceRouteDecl(decl, "resources");
-			case "resource":
-				renderRailsResourceRouteDecl(decl, "resource");
-			case "collection" | "member":
-				if (decl.children.length == 0) {
-					[];
-				} else {
-					renderRailsRouteBlock(decl.kind, renderRailsRouteChildren(decl.children));
-				}
-			case "namespace":
-				renderRailsRouteBlock("namespace " + rubySymbolLiteral(decl.name), renderRailsRouteChildren(decl.children));
-			case "scope":
-				var parts = ["scope " + quoteRubyStringForCode(decl.path)];
-				if (decl.moduleName != "") {
-					parts.push("module: " + quoteRubyStringForCode(decl.moduleName));
-				}
-				if (decl.name != "") {
-					parts.push("as: " + rubySymbolLiteral(decl.name));
-				}
-				renderRailsRouteBlock(parts.join(", "), renderRailsRouteChildren(decl.children));
-			case "controller":
-				renderRailsRouteBlock("controller " + quoteRubyStringForCode(decl.controller), renderRailsRouteChildren(decl.children));
-			case "defaults":
-				renderRailsRouteBlock("defaults " + decl.options.join(", "), renderRailsRouteChildren(decl.children));
-			case "constraints":
-				renderRailsRouteBlock("constraints " + decl.options.join(", "), renderRailsRouteChildren(decl.children));
-			case "mount":
-				var parts = ["mount " + decl.controller + " => " + quoteRubyStringForCode(decl.path)];
-				if (decl.name != "") {
-					parts.push("as: " + rubySymbolLiteral(decl.name));
-				}
-				[parts.join(", ")];
-			case "rawRuby":
-				[decl.controller];
-			case _:
-				[];
-		}
-	}
-
-	static function renderRailsResourceRouteDecl(decl:RailsRouteDecl, keyword:String):Array<String> {
-		var parts = [
-			keyword + " " + rubySymbolLiteral(decl.name),
-			"controller: " + quoteRubyStringForCode(decl.controller)
-		];
-		if (decl.only.length > 0) {
-			parts.push("only: [" + [for (action in decl.only) rubySymbolLiteral(action)].join(", ") + "]");
-		}
-		if (decl.except.length > 0) {
-			parts.push("except: [" + [for (action in decl.except) rubySymbolLiteral(action)].join(", ") + "]");
-		}
-		if (decl.param != "") {
-			parts.push("param: " + rubySymbolLiteral(decl.param));
-		}
-		var head = parts.join(", ");
-		if (decl.children.length == 0) {
-			return [head];
-		}
-		return renderRailsRouteBlock(head, renderRailsRouteChildren(decl.children));
-	}
-
-	static function renderRailsRouteChildren(children:Array<RailsRouteDecl>):Array<String> {
-		var lines:Array<String> = [];
-		for (child in children) {
-			lines = lines.concat(renderRailsRouteDecl(child));
-		}
-		return lines;
-	}
-
-	static function renderRailsRouteBlock(head:String, body:Array<String>):Array<String> {
-		var lines = [head + " do"];
-		for (line in body) {
-			lines.push("  " + line);
-		}
-		lines.push("end");
-		return lines;
 	}
 
 	static function railsRouteChildren(expr:TypedExpr, label:String):Array<RailsRouteDecl> {
