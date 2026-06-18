@@ -124,6 +124,14 @@ class RoutesDsl {
 		#end
 	}
 
+	public static macro function resourceName(name:Expr):Expr {
+		#if macro
+		return macro $v{routeNameLiteral(name, "resourceName")};
+		#else
+		return macro null;
+		#end
+	}
+
 	public static macro function rubyConst(name:Expr):Expr {
 		#if macro
 		return macro $v{rubyConstantLiteral(name, "rubyConst")};
@@ -142,7 +150,7 @@ class RoutesDsl {
 
 	public static macro function resources(model:Expr, controller:Expr, ?options:Expr, ?children:Expr):Expr {
 		#if macro
-		var modelType = modelClass(model, "resources");
+		var name = resourceRouteName(model, "resources", false);
 		var controllerType = controllerClass(controller, "resources");
 		var optionsInfo = resourceOptions(options);
 		for (action in optionsInfo.only) {
@@ -151,7 +159,7 @@ class RoutesDsl {
 		for (action in optionsInfo.except) {
 			validateAction(controllerType, action, options == null ? controller.pos : options.pos, "resources except");
 		}
-		return macro @:pos(model.pos) rails.routing.RouteDecl.resources($v{modelRouteName(modelType)}, $v{controllerPath(controllerType)},
+		return macro @:pos(model.pos) rails.routing.RouteDecl.resources($v{name}, $v{controllerPath(controllerType)},
 			$e{stringArray([for (action in optionsInfo.only) railsActionName(controllerType, action)], model.pos)},
 			$e{stringArray([for (action in optionsInfo.except) railsActionName(controllerType, action)], model.pos)}, $v{optionsInfo.param},
 			$e{routeDeclArray(children, model.pos)});
@@ -162,7 +170,7 @@ class RoutesDsl {
 
 	public static macro function resource(model:Expr, controller:Expr, ?options:Expr, ?children:Expr):Expr {
 		#if macro
-		var modelType = modelClass(model, "resource");
+		var name = resourceRouteName(model, "resource", true);
 		var controllerType = controllerClass(controller, "resource");
 		var optionsInfo = resourceOptions(options);
 		for (action in optionsInfo.only) {
@@ -171,7 +179,7 @@ class RoutesDsl {
 		for (action in optionsInfo.except) {
 			validateAction(controllerType, action, options == null ? controller.pos : options.pos, "resource except");
 		}
-		return macro @:pos(model.pos) rails.routing.RouteDecl.resource($v{modelSingularRouteName(modelType)}, $v{controllerPath(controllerType)},
+		return macro @:pos(model.pos) rails.routing.RouteDecl.resource($v{name}, $v{controllerPath(controllerType)},
 			$e{stringArray([for (action in optionsInfo.only) railsActionName(controllerType, action)], model.pos)},
 			$e{stringArray([for (action in optionsInfo.except) railsActionName(controllerType, action)], model.pos)}, $v{optionsInfo.param},
 			$e{routeDeclArray(children, model.pos)});
@@ -323,6 +331,22 @@ class RoutesDsl {
 			case _:
 				Context.error(context + " expects a model class reference.", expr.pos);
 				null;
+		}
+	}
+
+	static function resourceRouteName(expr:Expr, context:String, singular:Bool):String {
+		return switch (unwrap(expr).expr) {
+			case ECall(callee, [arg]):
+				switch (unwrap(callee).expr) {
+					case EConst(CIdent("resourceName")):
+						routeNameLiteral(arg, context + " resourceName");
+					case _:
+						var classType = modelClass(expr, context);
+						singular ? modelSingularRouteName(classType) : modelRouteName(classType);
+				}
+			case _:
+				var classType = modelClass(expr, context);
+				singular ? modelSingularRouteName(classType) : modelRouteName(classType);
 		}
 	}
 

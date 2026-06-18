@@ -96,6 +96,10 @@ class AppRoutes {
 			except: [destroy],
 			param: paramName("slug")
 		});
+
+		resources(resourceName("legacy_posts"), TodosController, {
+			only: [index]
+		});
 	};
 }
 ```
@@ -280,7 +284,8 @@ required. Richer overload-like optional params can come later.
   exist on the target controller.
 - Resource names: prefer `resources(Todo, TodosController)` and derive the
   Rails resource name from typed model metadata or convention. Use
-  `resourceName("legacy_posts")` for non-model or legacy resources.
+  `resourceName("legacy_posts")` for non-model or legacy resources; it must be
+  a checked snake_case literal and still validates controller actions.
 - Route aliases: use `routeName("photo_display")`, not arbitrary strings.
   Validate snake_case helper prefix shape and reject empty/unsafe names.
 - Path literals: accept checked Rails path literals such as `"photos(/:id)"`
@@ -349,8 +354,10 @@ Implemented:
 - `resources(Model, Controller, {only: [...]})`
 - `resources(Model, Controller, {except: [...]})`
 - `resources(Model, Controller, {param: paramName("slug")})`
+- `resources(resourceName("legacy_posts"), Controller, {only: [...]})`
 - `resources(..., ..., ..., { collection({ ... }); member({ ... }); })`
 - `resource(Model, Controller, {only: [...]})`
+- `resource(resourceName("legacy_profile"), Controller, {only: [...]})`
 - `namespace("admin", { ... })`
 - `scope("/api", {moduleName: "api", asName: routeName("api")}, { ... })`
 - `controller(HealthController, { ... })`
