@@ -84,6 +84,22 @@ header mutation. `fetchOptions` and `fetchResponse` remain runtime-owned
 browser/Rails objects inside the lower-level detail typedefs, so repeated behavior
 should live in typed helpers instead of app code touching those objects directly.
 
+For common composer-style behavior, use the higher-level Hotwire helper instead
+of wiring keydown listeners in every app:
+
+```haxe
+import rails.hotwire.TextAreaComposer;
+
+TextAreaComposer.bindEnterSubmit(form);
+TextAreaComposer.clear(form);
+```
+
+`bindEnterSubmit` preserves the normal Hotwire path by calling
+`requestSubmit`: browser validation, Rails CSRF, Turbo form submission, and
+`turbo:submit-*` events all still run. See
+[RailsHx Haxe-Level Hotwire Layer](railshx-hotwire-haxe-layer-design.md) for the
+package split between `rails.turbo`, `rails.dom`, and `rails.hotwire`.
+
 ## Frames And Streams
 
 Frames stay normal `<turbo-frame>` elements. RailsHx provides typed helpers for

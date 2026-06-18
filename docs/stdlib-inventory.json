@@ -687,6 +687,14 @@
       "reason": "Typed RailsHx DOM facade for browser form APIs used by Turbo-friendly Haxe clients, including requestSubmit when Haxe DOM externs lag modern browsers."
     },
     {
+      "id": "std.rails.hotwire_text_area_composer",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/hotwire/TextAreaComposer.hx",
+      "surface": "rails.hotwire.TextAreaComposer",
+      "reason": "Higher-level typed Hotwire helper for textarea composer behavior: Enter submits through requestSubmit, Shift+Enter keeps newlines, IME composition is respected, and successful submits can clear the composer without raw JS in app code."
+    },
+    {
       "id": "std.rails.channel_macro",
       "owner": "std",
       "status": "implemented",

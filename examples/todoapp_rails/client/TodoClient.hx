@@ -4,10 +4,7 @@ import js.Browser;
 import js.html.Element;
 import js.html.Event;
 import js.html.EventTarget;
-import js.html.FormElement;
-import js.html.KeyboardEvent;
-import js.html.TextAreaElement;
-import rails.dom.Forms;
+import rails.hotwire.TextAreaComposer;
 import rails.turbo.Turbo;
 import reflaxe.js.Async;
 import reflaxe.js.Async.await;
@@ -130,12 +127,7 @@ class TodoClient {
 					Browser.window.sessionStorage.setItem(TodoHooks.chatStorageKey, "1");
 				} catch (_:js.lib.Error) {}
 			});
-			var textarea = chatTextarea(form);
-			if (textarea != null) {
-				textarea.addEventListener("keydown", function(event:KeyboardEvent):Void {
-					submitChatOnEnter(form, event);
-				});
-			}
+			TextAreaComposer.bindEnterSubmit(form);
 		}
 	}
 
@@ -160,7 +152,7 @@ class TodoClient {
 		if (form == null || !form.classList.contains(TodoHooks.chatFormClass) || success == false) {
 			return;
 		}
-		clearChatForm(form);
+		TextAreaComposer.clear(form);
 		announceChatChangeNow();
 	}
 
@@ -261,29 +253,6 @@ class TodoClient {
 			target.focus();
 		} catch (_:js.lib.Error) {}
 		js.Syntax.code("{0}.scrollIntoView({ behavior: 'smooth', block: 'start' })", target);
-	}
-
-	static function submitChatOnEnter(form:Element, event:KeyboardEvent):Void {
-		if (event.key != "Enter" || event.shiftKey || event.isComposing) {
-			return;
-		}
-		event.preventDefault();
-		// requestSubmit preserves normal Rails/Turbo submit handling, validation,
-		// CSRF, and turbo:submit-* events; form.submit() would bypass those seams.
-		var chatForm:FormElement = cast form;
-		Forms.requestSubmit(chatForm);
-	}
-
-	static function clearChatForm(form:Element):Void {
-		var textarea = chatTextarea(form);
-		if (textarea != null) {
-			textarea.value = "";
-		}
-	}
-
-	static function chatTextarea(form:Element):Null<TextAreaElement> {
-		var textarea = form.querySelector("textarea");
-		return textarea == null ? null : cast textarea;
 	}
 
 	static function elementTarget(target:Null<EventTarget>):Null<Element> {

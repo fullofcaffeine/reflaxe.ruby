@@ -21,4 +21,8 @@ yet expose a browser API needed by idiomatic Turbo/Hotwire code, add a small
 facade such as `rails.dom.Forms` here instead of using raw `js.Syntax.code` in
 app examples.
 
+Repeated Hotwire UX patterns belong one layer higher, under packages such as
+`rails.hotwire`, so app code can consume typed helpers instead of rewriting the
+same selector and lifecycle glue.
+
 See `docs/stdlib-ownership.md` and `docs/stdlib-inventory.json`.
