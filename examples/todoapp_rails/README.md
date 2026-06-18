@@ -8,19 +8,22 @@ From the repository root:
 
 ```bash
 eval "$(rbenv init - zsh)" # if your shell has not initialized rbenv yet
-rake todoapp:prepare
-rake todoapp:server
+rake todoapp:start
 ```
 
 Open [http://127.0.0.1:3000/](http://127.0.0.1:3000/). The generated Rails app is materialized under `test/.generated/rails_integration`; treat it as disposable output. The source of truth is the Haxe/HHX code in `examples/todoapp_rails/**` plus compiler/std code in `src/**` and `std/**`.
 
-For the RailsHx edit loop, keep Rails running and start the Haxe watcher in another terminal:
+For the RailsHx edit loop, start the app with the integrated watcher:
 
 ```bash
-rake todoapp:watch
+rake todoapp:start:watch
+# or:
+WATCH=1 rake todoapp:start
+# or:
+rake 'todoapp:start[watch]'
 ```
 
-The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources change. Rails serves those files through normal ActionController/ActionView, so a browser refresh is enough for most template/controller changes.
+That prepares the app once, then runs Rails and the watcher together. The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources change. Rails serves those files through normal ActionController/ActionView, so a browser refresh is enough for most template/controller changes.
 
 ## What The Sample Proves
 
@@ -61,6 +64,22 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 - `db/migrate/20260101000000_create_todos.rb` is generated Rails migration output from the snapshot operations in `migrations/CreateTodos.hx`.
 
 ## Command Guide
+
+```bash
+rake todoapp:start
+```
+
+Compiles Haxe/HHX, materializes the Rails app, prepares the development database, seeds demo data, and starts Rails. This is the normal one-command local start path.
+
+```bash
+WATCH=1 rake todoapp:start
+# or:
+rake todoapp:start:watch
+# or:
+rake 'todoapp:start[watch]'
+```
+
+Runs the same preparation step, then starts both Rails and the RailsHx watcher. Press Ctrl-C to stop both processes.
 
 ```bash
 rake todoapp:compile

@@ -176,6 +176,8 @@ expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "assets:precomp
 expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "zeitwerk:check", "todoapp production smoke");
 expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "rails_integration_release.tgz", "todoapp production smoke");
 expectIncludes(rootRakefile, "namespace :todoapp", "root Rakefile");
+expectIncludes(rootRakefile, "task :start", "root Rakefile todoapp tasks");
+expectIncludes(rootRakefile, "start_todoapp_with_watch", "root Rakefile todoapp tasks");
 expectIncludes(rootRakefile, "task :production", "root Rakefile todoapp tasks");
 expectIncludes(rootRakefile, "namespace :rails", "root Rakefile");
 expectIncludes(rootRakefile, "task :routes", "root Rakefile Rails generator tasks");

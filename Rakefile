@@ -34,12 +34,71 @@ def args_env
   Shellwords.split(ENV.fetch("ARGS", ""))
 end
 
+def truthy_env?(name)
+  value = ENV[name]
+  !value.nil? && !["", "0", "false", "no"].include?(value.downcase)
+end
+
+def spawn_command(*parts)
+  command = parts.compact.map(&:to_s).map(&:shellescape).join(" ")
+  puts command
+  Process.spawn(command, pgroup: true)
+end
+
+def stop_process_group(pid)
+  pgid = Process.getpgid(pid)
+  Process.kill("TERM", -pgid)
+rescue Errno::ESRCH, Errno::ECHILD
+  nil
+end
+
+def wait_for_processes(pids)
+  Process.wait2(-1)
+ensure
+  pids.each { |pid| stop_process_group(pid) }
+  pids.each do |pid|
+    Process.wait(pid)
+  rescue Errno::ECHILD
+    nil
+  end
+end
+
+def start_todoapp_with_watch
+  node_script("scripts/rails/todoapp.js", "prepare")
+  puts "[todoapp] Starting Rails server and RailsHx watcher. Press Ctrl-C to stop both."
+  pids = [
+    spawn_command("node", "scripts/rails/todoapp.js", "server"),
+    spawn_command("node", "scripts/rails/todoapp.js", "watch")
+  ]
+  wait_for_processes(pids)
+rescue Interrupt
+  puts "\n[todoapp] Stopping Rails server and watcher."
+  pids&.each { |pid| stop_process_group(pid) }
+end
+
 desc "Run the full repository test suite"
 task :test do
   npm_run("test")
 end
 
 namespace :todoapp do
+  desc "Prepare and start the RailsHx todoapp server. Use WATCH=1 for server + watcher"
+  task :start, [:mode] do |_task, args|
+    if truthy_env?("WATCH") || args[:mode] == "watch"
+      start_todoapp_with_watch
+    else
+      Rake::Task["todoapp:prepare"].invoke
+      Rake::Task["todoapp:server"].invoke
+    end
+  end
+
+  namespace :start do
+    desc "Prepare once, then run the RailsHx todoapp server and watcher together"
+    task :watch do
+      start_todoapp_with_watch
+    end
+  end
+
   desc "Compile the RailsHx todoapp into the disposable Rails app"
   task :compile do
     node_script("scripts/rails/todoapp.js", "compile")

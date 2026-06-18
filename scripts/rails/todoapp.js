@@ -326,7 +326,7 @@ function productionSmoke() {
 
 function watch() {
   compileAndMaterialize();
-  console.log("[todoapp] Watching Haxe/RailsHx sources. Run `npm run todoapp:server` in another terminal.");
+  console.log("[todoapp] Watching Haxe/RailsHx sources. Run `rake todoapp:server` in another terminal, or use `rake todoapp:start:watch` to run both.");
 
   let lastSnapshot = snapshot();
   let compiling = false;
@@ -496,9 +496,9 @@ function runStreaming(commandName, args, options = {}) {
 function printReady() {
   console.log("");
   console.log("[todoapp] Ready.");
-  console.log(`[todoapp] Run: npm run todoapp:server`);
+  console.log(`[todoapp] Run: rake todoapp:start`);
   console.log(`[todoapp] Visit: http://${bind}:${port}/`);
-  console.log("[todoapp] Optional watcher: npm run todoapp:watch");
+  console.log("[todoapp] Watch mode: rake todoapp:start:watch");
 }
 
 function usage() {
@@ -514,6 +514,6 @@ Commands:
            Compile, test, zeitwerk-check, precompile assets, and archive.
 
 Environment:
-  PORT=3001 BIND=0.0.0.0 HXRUBY_WATCH_INTERVAL=750 npm run todoapp:server
+  PORT=3001 BIND=0.0.0.0 HXRUBY_WATCH_INTERVAL=750 rake todoapp:server
 `);
 }

@@ -104,11 +104,20 @@ The canonical RailsHx end-to-end example is `examples/todoapp_rails`. The mixed 
 Run the generated Rails todo app locally:
 
 ```bash
-rake todoapp:prepare
-rake todoapp:server
+rake todoapp:start
 ```
 
-Then open `http://127.0.0.1:3000/`. For the RailsHx development loop, keep Rails running and start `rake todoapp:watch` in another terminal; Haxe/HHX and Haxe-authored JS changes refresh the generated Rails files while Rails continues serving the app.
+Then open `http://127.0.0.1:3000/`. For the RailsHx development loop, start the app with the integrated watcher:
+
+```bash
+rake todoapp:start:watch
+# or:
+WATCH=1 rake todoapp:start
+# or:
+rake 'todoapp:start[watch]'
+```
+
+That prepares the app once, runs Rails and the RailsHx watcher together, and refreshes generated Rails files when Haxe/HHX or Haxe-authored JS changes.
 
 For a real-browser RailsHx smoke, run the Playwright sentinel lane:
 
