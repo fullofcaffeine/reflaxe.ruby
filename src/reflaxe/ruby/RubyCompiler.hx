@@ -4822,6 +4822,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								children: [],
 								pos: expr.pos
 							};
+						case "rawRuby" if (params.length == 1):
+							{
+								kind: "rawRuby",
+								target: null,
+								verb: "",
+								verbs: [],
+								path: "",
+								name: "",
+								controller: railsRouteString(params[0], "raw Ruby route line"),
+								moduleName: "",
+								only: [],
+								except: [],
+								param: "",
+								children: [],
+								pos: expr.pos
+							};
 						case other:
 							Context.error('@:railsRoutes unsupported RouteDecl.${other} declaration in this implementation slice.', expr.pos);
 							invalidRailsRouteDecl(expr.pos);
@@ -4933,6 +4949,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					parts.push("as: " + rubySymbolLiteral(decl.name));
 				}
 				[parts.join(", ")];
+			case "rawRuby":
+				[decl.controller];
 			case _:
 				[];
 		}

@@ -31,4 +31,6 @@ extern class RouteDecl {
 	public static function controller(controller:String, children:Array<RouteDecl>):RouteDecl;
 
 	public static function mount(app:String, path:String, name:String):RouteDecl;
+
+	public static function rawRuby(line:String):RouteDecl;
 }

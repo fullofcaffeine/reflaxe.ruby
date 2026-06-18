@@ -237,6 +237,19 @@ class RoutesDsl {
 		#end
 	}
 
+	public static macro function uncheckedRubyRoute(line:Expr):Expr {
+		#if macro
+		if (!Context.defined("railshx_allow_unchecked_routes")) {
+			Context.error("uncheckedRubyRoute(...) requires -D railshx_allow_unchecked_routes. Prefer typed route declarations or checked escapes such as externalTo(...).",
+				line.pos);
+		}
+		var checkedLine = rawRubyRouteLine(line, "uncheckedRubyRoute");
+		return macro @:pos(line.pos) rails.routing.RouteDecl.rawRuby($v{checkedLine});
+		#else
+		return macro null;
+		#end
+	}
+
 	#if macro
 	static function verb(method:String, path:Expr, target:Expr, ?options:Expr):Expr {
 		var checkedPath = routePathLiteral(path, method);
@@ -468,6 +481,19 @@ class RoutesDsl {
 		var value = wrappedStringLiteral(expr, ["rubyConst"], context);
 		if (!~/^[A-Z][A-Za-z0-9_]*(::[A-Z][A-Za-z0-9_]*)*$/.match(value)) {
 			Context.error(context + ' expects a safe Ruby constant path such as "Sidekiq::Web".', expr.pos);
+		}
+		return value;
+	}
+
+	static function rawRubyRouteLine(expr:Expr, context:String):String {
+		var value = stringLiteral(expr, context);
+		if (value == "") {
+			Context.error(context + " line must not be empty.", expr.pos);
+		}
+		for (i in 0...value.length) {
+			if (value.charCodeAt(i) < 32) {
+				Context.error(context + " line must be a single-line literal without control characters.", expr.pos);
+			}
 		}
 		return value;
 	}

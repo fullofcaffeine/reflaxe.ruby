@@ -82,6 +82,7 @@ for (const escapeName of [
   "Template.external",
   "Lock.custom",
   "externalTables",
+  "uncheckedRubyRoute",
   "Sql.unsafeWhere",
   "Sql.unsafeOrder",
 ]) {
