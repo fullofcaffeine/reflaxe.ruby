@@ -12,6 +12,8 @@ extern class RouteDecl {
 
 	public static function verb(method:String, path:String, target:RouteTarget, name:String):RouteDecl;
 
+	public static function match(path:String, target:RouteTarget, verbs:Array<String>, name:String):RouteDecl;
+
 	public static function resources(name:String, controller:String, only:Array<String>, except:Array<String>, param:String,
 		children:Array<RouteDecl>):RouteDecl;
 

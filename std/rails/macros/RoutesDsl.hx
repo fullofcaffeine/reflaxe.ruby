@@ -80,6 +80,25 @@ class RoutesDsl {
 		return verb("delete", path, target, options);
 	}
 
+	public static macro function options(path:Expr, target:Expr, ?options:Expr):Expr {
+		return verb("options", path, target, options);
+	}
+
+	public static macro function head(path:Expr, target:Expr, ?options:Expr):Expr {
+		return verb("head", path, target, options);
+	}
+
+	public static macro function match(path:Expr, target:Expr, verbs:Expr, ?options:Expr):Expr {
+		#if macro
+		var checkedPath = routePathLiteral(path, "match");
+		var checkedVerbs = httpVerbList(verbs, "match via");
+		var optionsInfo = routeOptions(options);
+		return macro @:pos(path.pos) rails.routing.RouteDecl.match($v{checkedPath}, $target, $e{stringArray(checkedVerbs, verbs.pos)}, $v{optionsInfo.name});
+		#else
+		return macro null;
+		#end
+	}
+
 	public static macro function routeName(name:Expr):Expr {
 		#if macro
 		return macro $v{routeNameLiteral(name, "routeName")};
@@ -321,7 +340,57 @@ class RoutesDsl {
 				Context.error(context + " path contains an unsafe character.", expr.pos);
 			}
 		}
+		validateRoutePathSyntax(value, context, expr.pos);
 		return value;
+	}
+
+	static function validateRoutePathSyntax(value:String, context:String, pos:Position):Void {
+		var optionalDepth = 0;
+		var i = 0;
+		while (i < value.length) {
+			var ch = value.charAt(i);
+			switch (ch) {
+				case "(":
+					optionalDepth++;
+					if (optionalDepth > 1) {
+						Context.error(context + " path optional segments cannot be nested.", pos);
+					}
+				case ")":
+					optionalDepth--;
+					if (optionalDepth < 0) {
+						Context.error(context + " path has an unmatched optional segment close.", pos);
+					}
+				case ":":
+					i = validateRoutePathIdentifier(value, i + 1, context + " path param", pos);
+				case "*":
+					i = validateRoutePathIdentifier(value, i + 1, context + " path glob", pos);
+				case _:
+			}
+			i++;
+		}
+		if (optionalDepth != 0) {
+			Context.error(context + " path has an unclosed optional segment.", pos);
+		}
+	}
+
+	static function validateRoutePathIdentifier(value:String, start:Int, context:String, pos:Position):Int {
+		if (start >= value.length || !isIdentifierStart(value.charCodeAt(start))) {
+			Context.error(context + " must have a name like :id or *path.", pos);
+			return start;
+		}
+		var i = start + 1;
+		while (i < value.length && isIdentifierPart(value.charCodeAt(i))) {
+			i++;
+		}
+		return i - 1;
+	}
+
+	static function isIdentifierStart(code:Int):Bool {
+		return (code >= "A".code && code <= "Z".code) || (code >= "a".code && code <= "z".code) || code == "_".code;
+	}
+
+	static function isIdentifierPart(code:Int):Bool {
+		return isIdentifierStart(code) || (code >= "0".code && code <= "9".code);
 	}
 
 	static function routeNameLiteral(expr:Expr, context:String):String {
@@ -347,6 +416,34 @@ class RoutesDsl {
 			case EConst(CString(value, _)): value;
 			case _:
 				Context.error(context + " must be a literal string.", expr.pos);
+				"";
+		}
+	}
+
+	static function httpVerbList(expr:Expr, context:String):Array<String> {
+		return switch (unwrap(expr).expr) {
+			case EArrayDecl(values):
+				if (values.length == 0) {
+					Context.error(context + " must include at least one HTTP verb identifier.", expr.pos);
+				}
+				[for (value in values) httpVerb(value, context)];
+			case _:
+				[httpVerb(expr, context)];
+		}
+	}
+
+	static function httpVerb(expr:Expr, context:String):String {
+		var name = identifier(expr, context + " expects HTTP verb identifiers such as [GET, POST].");
+		return switch (name) {
+			case "GET": "get";
+			case "POST": "post";
+			case "PATCH": "patch";
+			case "PUT": "put";
+			case "DELETE": "delete";
+			case "OPTIONS": "options";
+			case "HEAD": "head";
+			case _:
+				Context.error(context + ' unsupported HTTP verb "$name". Supported verbs are GET, POST, PATCH, PUT, DELETE, OPTIONS, and HEAD.', expr.pos);
 				"";
 		}
 	}

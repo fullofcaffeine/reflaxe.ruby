@@ -33,6 +33,11 @@ for (const expected of [
   'patch "posts/:id", to: "controllers/posts#update", as: :patch_post',
   'put "posts/:id", to: "controllers/posts#update"',
   'delete "posts/:id", to: "controllers/posts#destroy", as: :delete_post',
+  'options "posts/options", to: "controllers/posts#options"',
+  'head "posts/ping", to: "controllers/posts#head_check", as: :post_ping',
+  'match "posts/search", to: "controllers/posts#search", via: [:get, :post], as: :post_search',
+  'get "photos(/:id)", to: "controllers/posts#show_optional", as: :photo_display',
+  'get "files/*path", to: "controllers/posts#file", as: :file',
   'resources :posts, controller: "controllers/posts", except: [:destroy], param: :slug do',
   "  collection do",
   '    get "archived", to: "controllers/posts#archive", as: :archived_collection',
@@ -131,6 +136,51 @@ expectInvalidRouteDslFailure("bad scope option", [
   "",
 ], "scope unsupported option");
 
+expectInvalidRouteDslFailure("bad match verb", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tmatch(\"broken\", to(PostsController, search), [GET, ALL]);",
+  "\t};",
+  "}",
+  "",
+], "unsupported HTTP verb");
+
+expectInvalidRouteDslFailure("bad optional path", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tget(\"photos(/:id\", to(PostsController, showOptional));",
+  "\t};",
+  "}",
+  "",
+], "unclosed optional segment");
+
+expectInvalidRouteDslFailure("bad glob path", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tget(\"files/*\", to(PostsController, file));",
+  "\t};",
+  "}",
+  "",
+], "path glob must have a name");
+
 console.log("[routes-dsl] OK");
 
 function writeValidFixture() {
@@ -169,6 +219,11 @@ function writeValidFixture() {
     "\t\tpatch(\"posts/:id\", to(PostsController, update), {asName: routeName(\"patch_post\")});",
     "\t\tput(\"posts/:id\", to(PostsController, update));",
     "\t\tdelete(\"posts/:id\", to(PostsController, destroy), {asName: routeName(\"delete_post\")});",
+    "\t\toptions(\"posts/options\", to(PostsController, options));",
+    "\t\thead(\"posts/ping\", to(PostsController, headCheck), {asName: routeName(\"post_ping\")});",
+    "\t\tmatch(\"posts/search\", to(PostsController, search), [GET, POST], {asName: routeName(\"post_search\")});",
+    "\t\tget(\"photos(/:id)\", to(PostsController, showOptional), {asName: routeName(\"photo_display\")});",
+    "\t\tget(\"files/*path\", to(PostsController, file), {asName: routeName(\"file\")});",
     "\t\tresources(Post, PostsController, {except: [destroy], param: paramName(\"slug\")}, {",
     "\t\t\tcollection({",
     "\t\t\t\tget(\"archived\", to(PostsController, archive), {asName: routeName(\"archived_collection\")});",
@@ -213,6 +268,11 @@ function writeCommonTypes(baseDir) {
     "\tpublic function destroy():Void {}",
     "\tpublic function archive():Void {}",
     "\tpublic function publish():Void {}",
+    "\tpublic function options():Void {}",
+    "\tpublic function headCheck():Void {}",
+    "\tpublic function search():Void {}",
+    "\tpublic function showOptional():Void {}",
+    "\tpublic function file():Void {}",
     "}",
     "",
   ].join("\n"));

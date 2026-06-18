@@ -321,7 +321,8 @@ against the Haxe route manifest.
 Implemented:
 
 - `root`
-- `get`, `post`, `patch`, `put`, and `delete`
+- `get`, `post`, `patch`, `put`, `delete`, `options`, and `head`
+- typed multi-verb `match("path", to(Controller, action), [GET, POST])`
 - `resources(Model, Controller, {only: [...]})`
 - `resources(Model, Controller, {except: [...]})`
 - `resources(Model, Controller, {param: paramName("slug")})`
@@ -331,13 +332,14 @@ Implemented:
 - `scope("/api", {moduleName: "api", asName: routeName("api")}, { ... })`
 - `controller(HealthController, { ... })`
 - checked route aliases through `routeName("archived_posts")`
-- checked path literals including normal Rails `:id` segments
+- checked path literals including normal Rails `:id` segments, optional
+  segments such as `"photos(/:id)"`, and glob segments such as `"files/*path"`
 - typed controller/action refs through `to(Controller, action)`
 - checked external controller refs through `@:railsExternalController`
 
 Defer:
 
-- `options`, `head`, typed multi-verb `match`, and unsafe all-verb routes
+- unsafe all-verb routes
 - action-only shorthand inside resource/member/collection blocks
 - action-only shorthand inside controller blocks
 - optional segments, glob segment parity, and route helper parity checks

@@ -84,7 +84,7 @@ Generated Ruby requires the matching ActiveSupport core extension files and call
 
 Raw `__ruby__` injection exists as an escape hatch, but examples and production-style code should prefer typed externs or std/runtime wrappers. The strict boundary defines enforce that policy.
 
-See [Ruby Extension Interop](docs/ruby-extension-interop.md) for examples ranging from simple module include/extend through existing gem wrapping, gradual adoption, Haxe-owned libraries, and metaprogramming-heavy contract generation.
+See [Ruby Extension Interop](docs/ruby-extension-interop.md) for examples ranging from simple module include/extend through existing gem wrapping, gradual adoption, Haxe-owned libraries, and metaprogramming-heavy contract generation. For installed Rails gems such as Devise, see [RailsHx Gem Layers](docs/railshx-gem-layers.md): Ruby/Bundler owns the runtime gem, while RailsHx provides typed contracts, macros, generators, and reusable companion packages when a gem is common enough.
 
 ## Rails Workflow
 
@@ -149,7 +149,7 @@ For a Rails app adoption scaffold, generate the RailsHx source layout, compile c
 rake rails:app ARGS="--output path/to/rails-app --name MyApp"
 ```
 
-The generated starter includes a typed `HomeController`, HHX layout, HHX home page, Haxe-owned root route, route-helper extern placeholder, Haxe-authored client JS, CSS/importmap wiring, app-local Rake tasks, and `bin/railshx-*` helpers. Rails-facing generators are implemented in Ruby and exposed through `bin/rails generate hxruby:*`, repository Rake wrappers, and installed-app `hxruby` rake tasks, following the same host-framework-native generator lesson as PhoenixHx Mix tasks. npm remains repo infrastructure for Lix, Playwright, semantic-release, and Node-based CI scripts; the RailsHx user-facing path is Rake/Rails.
+The generated starter includes a typed `HomeController`, HHX layout, HHX home page, Haxe-owned root route, route-helper extern placeholder, Haxe-authored client JS, CSS/importmap wiring, app-local Rake tasks, `bin/railshx-*` helpers, and `docs/railshx/gem_layers.md` for deterministic-first installed-gem wrapping. Rails-facing generators are implemented in Ruby and exposed through `bin/rails generate hxruby:*`, repository Rake wrappers, and installed-app `hxruby` rake tasks, following the same host-framework-native generator lesson as PhoenixHx Mix tasks. npm remains repo infrastructure for Lix, Playwright, semantic-release, and Node-based CI scripts; the RailsHx user-facing path is Rake/Rails.
 
 In an installed Rails app, prefer the Rails generator entrypoints:
 

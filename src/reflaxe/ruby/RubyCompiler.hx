@@ -103,6 +103,7 @@ typedef RailsRouteDecl = {
 	kind:String,
 	target:Null<RailsRouteTarget>,
 	verb:String,
+	verbs:Array<String>,
 	path:String,
 	name:String,
 	controller:String,
@@ -4593,6 +4594,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "root",
 								target: railsRouteTarget(params[0]),
 								verb: "",
+								verbs: [],
 								path: "",
 								name: "",
 								controller: "",
@@ -4608,8 +4610,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "verb",
 								target: railsRouteTarget(params[2]),
 								verb: railsRouteString(params[0], "route verb"),
+								verbs: [],
 								path: railsRouteString(params[1], "route path"),
 								name: railsRouteStringAllowEmpty(params[3], "route name"),
+								controller: "",
+								moduleName: "",
+								only: [],
+								except: [],
+								param: "",
+								children: [],
+								pos: expr.pos
+							};
+						case "match" if (params.length == 4):
+							{
+								kind: "match",
+								target: railsRouteTarget(params[1]),
+								verb: "",
+								verbs: railsRouteStringArray(params[2], "match verbs"),
+								path: railsRouteString(params[0], "match path"),
+								name: railsRouteStringAllowEmpty(params[3], "match name"),
 								controller: "",
 								moduleName: "",
 								only: [],
@@ -4623,6 +4642,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "resources",
 								target: null,
 								verb: "",
+								verbs: [],
 								path: "",
 								name: railsRouteString(params[0], "resources name"),
 								controller: railsRouteString(params[1], "resources controller"),
@@ -4638,6 +4658,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "resource",
 								target: null,
 								verb: "",
+								verbs: [],
 								path: "",
 								name: railsRouteString(params[0], "resource name"),
 								controller: railsRouteString(params[1], "resource controller"),
@@ -4653,6 +4674,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "collection",
 								target: null,
 								verb: "",
+								verbs: [],
 								path: "",
 								name: "",
 								controller: "",
@@ -4668,6 +4690,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "member",
 								target: null,
 								verb: "",
+								verbs: [],
 								path: "",
 								name: "",
 								controller: "",
@@ -4683,6 +4706,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "namespace",
 								target: null,
 								verb: "",
+								verbs: [],
 								path: "",
 								name: railsRouteString(params[0], "namespace name"),
 								controller: "",
@@ -4698,6 +4722,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "scope",
 								target: null,
 								verb: "",
+								verbs: [],
 								path: railsRouteString(params[0], "scope path"),
 								name: railsRouteStringAllowEmpty(params[2], "scope name"),
 								controller: "",
@@ -4713,6 +4738,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								kind: "controller",
 								target: null,
 								verb: "",
+								verbs: [],
 								path: "",
 								name: "",
 								controller: railsRouteString(params[0], "controller name"),
@@ -4742,6 +4768,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			kind: "",
 			target: null,
 			verb: "",
+			verbs: [],
 			path: "",
 			name: "",
 			controller: "",
@@ -4790,6 +4817,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						parts.push("as: " + rubySymbolLiteral(decl.name));
 					}
 					[decl.verb + " " + quoteRubyStringForCode(decl.path) + ", " + parts.join(", ")];
+				}
+			case "match":
+				if (decl.target == null) {
+					[];
+				} else {
+					var parts = [
+						"to: " + quoteRubyStringForCode(decl.target.controller + "#" + decl.target.action),
+						"via: [" + [for (verb in decl.verbs) rubySymbolLiteral(verb)].join(", ") + "]"
+					];
+					if (decl.name != "") {
+						parts.push("as: " + rubySymbolLiteral(decl.name));
+					}
+					["match " + quoteRubyStringForCode(decl.path) + ", " + parts.join(", ")];
 				}
 			case "resources":
 				renderRailsResourceRouteDecl(decl, "resources");

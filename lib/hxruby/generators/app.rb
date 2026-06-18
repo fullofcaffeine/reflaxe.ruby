@@ -53,6 +53,7 @@ module HXRuby
         write(File.join(@source_dir, "views", "HomeIndexView.hx"), render_home_index_view)
         write(File.join(@source_dir, "routes", "AppRoutes.hx"), render_app_routes)
         write(File.join(@source_dir, "routes", "Routes.hx"), render_routes)
+        write("docs/railshx/gem_layers.md", render_gem_layers_doc)
         write("app/javascript/application.js", render_application_js)
         write("app/assets/stylesheets/application.css", render_application_css)
         write("config/importmap.rb", render_importmap)
@@ -94,6 +95,8 @@ module HXRuby
           "asset"
         when /\Aconfig\//
           "rails_config"
+        when /\Adocs\//
+          "docs"
         when /\Alib\/tasks\//
           "rake_task"
         when /\Abin\//
@@ -313,6 +316,70 @@ module HXRuby
           "extern class Routes {",
           "\t// Generated route helpers will be written here.",
           "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_gem_layers_doc
+        [
+          "# RailsHx Gem Layers",
+          "",
+          "Use this file as the app-local template for wrapping installed Ruby/Rails gems with typed Haxe contracts.",
+          "",
+          "Rails and Bundler still own gem installation and runtime behavior. RailsHx should own only the typed Haxe layer around that gem: externs, mixin/patch contracts, macros, route/helper contracts, tests, and docs.",
+          "",
+          "## Workflow",
+          "",
+          "1. Install and configure the Ruby gem normally.",
+          "",
+          "   ```bash",
+          "   bundle add devise",
+          "   bin/rails generate devise:install",
+          "   bin/rails generate devise User",
+          "   ```",
+          "",
+          "2. Run a deterministic inventory before asking an LLM for help.",
+          "",
+          "   ```bash",
+          "   # Future RailsHx lane; until implemented, keep this checklist manual.",
+          "   bin/rails generate hxruby:gem-layer devise --discover",
+          "   ```",
+          "",
+          "   Capture what RailsHx can prove mechanically: gem version/path, public constants, RBS/YARD signatures, source-defined modules/methods, Rails routes, generated migrations, initializers, model concerns, controller helpers, and test helpers.",
+          "",
+          "3. Emit or maintain a conservative Haxe skeleton under `src_haxe/interop/gems/<gem_name>`.",
+          "",
+          "   ```haxe",
+          "   package interop.gems.devise;",
+          "",
+          "   // App-local typed contract around Devise. Keep uncertain APIs marked",
+          "   // with TODO/review comments instead of pretending they are safe.",
+          "   extern class DeviseHelpers {",
+          "     public static function authenticateUser(controller:rails.action_controller.Base):Void;",
+          "   }",
+          "   ```",
+          "",
+          "4. Ask an LLM only after the deterministic skeleton exists.",
+          "",
+          "   Give it this file, the deterministic inventory, the gem docs/source, and the RailsHx docs for extension contracts/gem layers. Ask it for a patch that follows RailsHx patterns, not for unchecked dynamic code.",
+          "",
+          "5. Validate the result.",
+          "",
+          "   ```bash",
+          "   bundle exec rake hxruby:compile",
+          "   bundle exec rake hxruby:gen:routes",
+          "   bin/rails test",
+          "   ```",
+          "",
+          "## Rules",
+          "",
+          "- Deterministic metadata wins over LLM guesses.",
+          "- Missing or unsafe gem paths should fail closed.",
+          "- Generated Haxe should compile before it is trusted.",
+          "- Uncertain APIs should stay review-marked, not silently become `Dynamic`.",
+          "- Popular layers such as Devise can graduate into reusable packages like `devisehx` or `hxruby-devise`; app-local contracts are still useful for project-specific policy.",
+          "",
+          "See the upstream RailsHx guide: https://github.com/fullofcaffeine/reflaxe.ruby/blob/main/docs/railshx-gem-layers.md",
           "",
         ].join("\n")
       end

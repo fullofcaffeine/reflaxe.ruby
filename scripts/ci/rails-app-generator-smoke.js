@@ -90,6 +90,13 @@ try {
     "package routes;",
     "extern class Routes",
   ]);
+  expectFile("docs/railshx/gem_layers.md", [
+    "RailsHx Gem Layers",
+    "Run a deterministic inventory before asking an LLM for help.",
+    "bundle add devise",
+    "bin/rails generate hxruby:gem-layer devise --discover",
+    "Uncertain APIs should stay review-marked",
+  ]);
   expectFile("lib/tasks/hxruby.rake", [
     'require "hxruby/tasks"',
   ]);
@@ -114,6 +121,7 @@ try {
     ["app_haxe/routes/Routes.hx", "haxe_source", "hxruby:install"],
     ["app_haxe/views/ApplicationLayoutView.hx", "haxe_source", "hxruby:install"],
     ["app_haxe/views/HomeIndexView.hx", "haxe_source", "hxruby:install"],
+    ["docs/railshx/gem_layers.md", "docs", "hxruby:install"],
     ["config/importmap.rb", "rails_config", "hxruby:install"],
     ["bin/railshx-dev", "bin_script", "hxruby:install"],
   ]);

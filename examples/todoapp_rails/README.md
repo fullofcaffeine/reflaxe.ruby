@@ -163,7 +163,7 @@ bin/rails generate hxruby:install MyApp
 rake rails:app ARGS="--output path/to/rails-app --name MyApp"
 ```
 
-That writes `build.hxml`, `build-client.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, and `bin/railshx-dev`. In an installed app, the same generator is exposed as:
+That writes `build.hxml`, `build-client.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, `bin/railshx-dev`, and `docs/railshx/gem_layers.md`. In an installed app, the same generator is exposed as:
 
 ```bash
 bundle exec rake hxruby:gen:app NAME=MyApp
@@ -180,6 +180,14 @@ Rails-owned routes/templates/services can still be adopted later through typed
 wrappers. See the top-level [README](../../README.md#rails-workflow) and
 [RailsHx Generators And Rails Tasks Design](../../docs/railshx-generators-and-tasks-design.md)
 for the full starter workflow.
+
+The generated `docs/railshx/gem_layers.md` is a user-facing template for
+wrapping installed gems such as Devise. It documents the recommended
+deterministic-first flow: install/configure the Ruby gem normally, inventory
+what RailsHx can prove, generate conservative Haxe contracts, optionally ask an
+LLM to improve the reviewed gaps, then trust only the code that passes Haxe
+compile, Rails tests, and parity checks. See
+[RailsHx Gem Layers](../../docs/railshx-gem-layers.md).
 
 The Rails-facing generators are Ruby-native and package with the `hxruby` gem. For gradual adoption of existing Rails code, scaffold typed wrappers without touching Rails-owned ERB/Ruby:
 
