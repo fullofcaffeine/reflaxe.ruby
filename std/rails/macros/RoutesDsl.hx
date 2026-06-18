@@ -7,6 +7,16 @@ import haxe.macro.Type.ClassField;
 import haxe.macro.Type.ClassType;
 import haxe.macro.Type.MetaAccess;
 import reflaxe.ruby.naming.RubyNaming;
+
+typedef ResourceOptions = {
+	only:Array<String>,
+	except:Array<String>,
+	param:String
+}
+
+typedef RouteOptions = {
+	name:String
+}
 #end
 
 /**
@@ -45,6 +55,42 @@ class RoutesDsl {
 		return macro @:pos(target.pos) rails.routing.RouteDecl.root($target);
 	}
 
+	public static macro function get(path:Expr, target:Expr, ?options:Expr):Expr {
+		return verb("get", path, target, options);
+	}
+
+	public static macro function post(path:Expr, target:Expr, ?options:Expr):Expr {
+		return verb("post", path, target, options);
+	}
+
+	public static macro function patch(path:Expr, target:Expr, ?options:Expr):Expr {
+		return verb("patch", path, target, options);
+	}
+
+	public static macro function put(path:Expr, target:Expr, ?options:Expr):Expr {
+		return verb("put", path, target, options);
+	}
+
+	public static macro function delete(path:Expr, target:Expr, ?options:Expr):Expr {
+		return verb("delete", path, target, options);
+	}
+
+	public static macro function routeName(name:Expr):Expr {
+		#if macro
+		return macro $v{routeNameLiteral(name, "routeName")};
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function paramName(name:Expr):Expr {
+		#if macro
+		return macro $v{routeNameLiteral(name, "paramName")};
+		#else
+		return macro null;
+		#end
+	}
+
 	public static macro function resources(model:Expr, controller:Expr, ?options:Expr, ?children:Expr):Expr {
 		#if macro
 		if (children != null && !isNullLiteral(children)) {
@@ -53,18 +99,28 @@ class RoutesDsl {
 		}
 		var modelType = modelClass(model, "resources");
 		var controllerType = controllerClass(controller, "resources");
-		var only = routeOnly(options);
-		for (action in only) {
+		var optionsInfo = resourceOptions(options);
+		for (action in optionsInfo.only) {
 			validateAction(controllerType, action, options == null ? controller.pos : options.pos, "resources only");
 		}
+		for (action in optionsInfo.except) {
+			validateAction(controllerType, action, options == null ? controller.pos : options.pos, "resources except");
+		}
 		return macro @:pos(model.pos) rails.routing.RouteDecl.resources($v{modelRouteName(modelType)}, $v{controllerPath(controllerType)},
-			$e{stringArray(only, model.pos)});
+			$e{stringArray([for (action in optionsInfo.only) railsActionName(controllerType, action)], model.pos)},
+			$e{stringArray([for (action in optionsInfo.except) railsActionName(controllerType, action)], model.pos)}, $v{optionsInfo.param});
 		#else
 		return macro null;
 		#end
 	}
 
 	#if macro
+	static function verb(method:String, path:Expr, target:Expr, ?options:Expr):Expr {
+		var checkedPath = routePathLiteral(path, method);
+		var optionsInfo = routeOptions(options);
+		return macro @:pos(path.pos) rails.routing.RouteDecl.verb($v{method}, $v{checkedPath}, $target, $v{optionsInfo.name});
+	}
+
 	static function controllerClass(expr:Expr, context:String):ClassType {
 		return switch (Context.typeExpr(expr).expr) {
 			case TTypeExpr(TClassDecl(classRef)):
@@ -93,25 +149,100 @@ class RoutesDsl {
 		}
 	}
 
-	static function routeOnly(options:Null<Expr>):Array<String> {
+	static function resourceOptions(options:Null<Expr>):ResourceOptions {
 		if (options == null) {
-			return ["index", "show", "create", "update", "destroy"];
+			return {only: [], except: [], param: ""};
 		}
 		return switch (unwrap(options).expr) {
 			case EObjectDecl(fields):
 				var only:Null<Array<String>> = null;
+				var except:Null<Array<String>> = null;
+				var param = "";
 				for (field in fields) {
 					switch (field.field) {
 						case "only":
 							only = actionList(field.expr, "resources only");
+						case "except":
+							except = actionList(field.expr, "resources except");
+						case "param":
+							param = routeNameLiteral(field.expr, "resources param");
 						case other:
-							Context.error('resources unsupported option "$other" in this first routing slice. Use only for now.', field.expr.pos);
+							Context.error('resources unsupported option "$other". Supported options are only, except, and param.', field.expr.pos);
 					}
 				}
-				only == null ? ["index", "show", "create", "update", "destroy"] : only;
+				if (only != null && except != null) {
+					Context.error("resources cannot combine only and except; choose one Rails route filter.", options.pos);
+				}
+				{only: only == null ? [] : only, except: except == null ? [] : except, param: param};
 			case _:
 				Context.error("resources options must be an object literal.", options.pos);
-				[];
+				{only: [], except: [], param: ""};
+		}
+	}
+
+	static function routeOptions(options:Null<Expr>):RouteOptions {
+		if (options == null || isNullLiteral(options)) {
+			return {name: ""};
+		}
+		return switch (unwrap(options).expr) {
+			case EObjectDecl(fields):
+				var name = "";
+				for (field in fields) {
+					switch (field.field) {
+						case "asName":
+							name = routeNameLiteral(field.expr, "route asName");
+						case other:
+							Context.error('route unsupported option "$other". Supported option is asName.', field.expr.pos);
+					}
+				}
+				{name: name};
+			case _:
+				Context.error("route options must be an object literal.", options.pos);
+				{name: ""};
+		}
+	}
+
+	static function routePathLiteral(expr:Expr, context:String):String {
+		var value = stringLiteral(expr, context + " path");
+		if (value == "") {
+			Context.error(context + " path must not be empty.", expr.pos);
+		}
+		if (value.indexOf("\\") >= 0 || value.indexOf("..") >= 0) {
+			Context.error(context + " path must be a safe Rails route literal without backslashes or traversal.", expr.pos);
+		}
+		for (i in 0...value.length) {
+			var code = value.charCodeAt(i);
+			if (code < 32 || value.charAt(i) == "\"" || value.charAt(i) == "'") {
+				Context.error(context + " path contains an unsafe character.", expr.pos);
+			}
+		}
+		return value;
+	}
+
+	static function routeNameLiteral(expr:Expr, context:String):String {
+		var value = switch (unwrap(expr).expr) {
+			case ECall(callee, [arg]):
+				switch (unwrap(callee).expr) {
+					case EConst(CIdent("routeName")) | EConst(CIdent("paramName")):
+						stringLiteral(arg, context);
+					case _:
+						stringLiteral(expr, context);
+				}
+			case _:
+				stringLiteral(expr, context);
+		}
+		if (!~/^[a-z][a-z0-9_]*$/.match(value)) {
+			Context.error(context + ' must be a snake_case literal such as "admin_posts".', expr.pos);
+		}
+		return value;
+	}
+
+	static function stringLiteral(expr:Expr, context:String):String {
+		return switch (unwrap(expr).expr) {
+			case EConst(CString(value, _)): value;
+			case _:
+				Context.error(context + " must be a literal string.", expr.pos);
+				"";
 		}
 	}
 

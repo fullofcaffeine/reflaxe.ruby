@@ -64,13 +64,13 @@ Why this mode stays first-class:
   `Dynamic` remains a language-level escape hatch and should not appear in
   generated route helper signatures.
 
-## Target Mode: Haxe-Owned Route Emission
+## Implemented Initial Mode: Haxe-Owned Route Emission
 
-For greenfield RailsHx apps, Haxe-owned routes should become the preferred
-source of truth once parity gates exist. The shape should be a typed Haxe
-declaration layer that feels close to Rails' routing DSL, removes avoidable
-strings through typed refs where possible, emits normal `config/routes.rb`, then
-immediately runs the same route-helper generator from Rails output.
+For greenfield RailsHx apps, Haxe-owned routes are the preferred source of truth
+for generator-created starter apps. The implemented initial shape is a typed
+Haxe declaration layer that feels close to Rails' routing DSL, removes avoidable
+controller/action/resource strings through typed refs where possible, and emits
+normal `config/routes.rb`. Route helper externs still come from Rails output.
 
 Canonical Haxe source:
 
@@ -88,27 +88,13 @@ class AppRoutes {
 	static final routes = {
 		root(to(TodosController, index));
 
+		get("todos/archive", to(TodosController, archive), {
+			asName: routeName("archived_todos")
+		});
+
 		resources(Todo, TodosController, {
-			only: [index, show, create, update, destroy],
+			except: [destroy],
 			param: paramName("slug")
-		}, {
-			collection({
-				get("completed", completed, {asName: routeName("completed")});
-			});
-
-			member({
-				patch("complete", complete);
-			});
-		});
-
-		namespace("admin", {
-			resources(resourceName("users"), AdminUsersController, {
-				only: [index, show]
-			});
-		});
-
-		controller(HealthController, {
-			get("up", show, {asName: routeName("health")});
 		});
 	};
 }
@@ -330,23 +316,28 @@ and generates `Routes.hx`. Haxe-owned mode compiles Haxe first, runs
 `bin/rails routes --expanded`, generates `Routes.hx`, and runs parity checks
 against the Haxe route manifest.
 
-## First-Slice Surface
+## Implemented First-Slice Surface
 
-Implement early:
+Implemented:
 
 - `root`
-- `get`, `post`, `patch`, `put`, `delete`, `options`, `head`
-- typed multi-verb `match`, but not unsafe `via: :all` by default
-- `resources` and `resource`
-- `only`, `except`, `member`, `collection`
-- `namespace`, `scope`, `controller`
-- optional segments, glob segments, `asName`, and `param`
-- simple `defaults` and `constraints`
-- checked external controller refs
-- checked mounted Rack app constants
+- `get`, `post`, `patch`, `put`, and `delete`
+- `resources(Model, Controller, {only: [...]})`
+- `resources(Model, Controller, {except: [...]})`
+- `resources(Model, Controller, {param: paramName("slug")})`
+- checked route aliases through `routeName("archived_posts")`
+- checked path literals including normal Rails `:id` segments
+- typed controller/action refs through `to(Controller, action)`
+- checked external controller refs through `@:railsExternalController`
 
 Defer:
 
+- `options`, `head`, typed multi-verb `match`, and unsafe all-verb routes
+- `resource`
+- `member`, `collection`, `namespace`, `scope`, and `controller`
+- optional segments, glob segment parity, and route helper parity checks
+- simple `defaults` and `constraints`
+- checked mounted Rack app constants
 - `concern`/`concerns`
 - `shallow`, `shallowPath`, and `shallowPrefix`
 - `drawExternal(...)` route files

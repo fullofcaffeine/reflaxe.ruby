@@ -10,5 +10,7 @@ package rails.routing;
 extern class RouteDecl {
 	public static function root(target:RouteTarget):RouteDecl;
 
-	public static function resources(name:String, controller:String, only:Array<String>):RouteDecl;
+	public static function verb(method:String, path:String, target:RouteTarget, name:String):RouteDecl;
+
+	public static function resources(name:String, controller:String, only:Array<String>, except:Array<String>, param:String):RouteDecl;
 }

@@ -102,9 +102,13 @@ typedef RailsRouteTarget = {
 typedef RailsRouteDecl = {
 	kind:String,
 	target:Null<RailsRouteTarget>,
+	verb:String,
+	path:String,
 	name:String,
 	controller:String,
 	only:Array<String>,
+	except:Array<String>,
+	param:String,
 	pos:Position
 }
 
@@ -4578,18 +4582,39 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "root",
 								target: railsRouteTarget(params[0]),
+								verb: "",
+								path: "",
 								name: "",
 								controller: "",
 								only: [],
+								except: [],
+								param: "",
 								pos: expr.pos
 							};
-						case "resources" if (params.length == 3):
+						case "verb" if (params.length == 4):
+							{
+								kind: "verb",
+								target: railsRouteTarget(params[2]),
+								verb: railsRouteString(params[0], "route verb"),
+								path: railsRouteString(params[1], "route path"),
+								name: railsRouteStringAllowEmpty(params[3], "route name"),
+								controller: "",
+								only: [],
+								except: [],
+								param: "",
+								pos: expr.pos
+							};
+						case "resources" if (params.length == 5):
 							{
 								kind: "resources",
 								target: null,
+								verb: "",
+								path: "",
 								name: railsRouteString(params[0], "resources name"),
 								controller: railsRouteString(params[1], "resources controller"),
 								only: railsRouteStringArray(params[2], "resources only"),
+								except: railsRouteStringArray(params[3], "resources except"),
+								param: railsRouteStringAllowEmpty(params[4], "resources param"),
 								pos: expr.pos
 							};
 						case other:
@@ -4610,9 +4635,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return {
 			kind: "",
 			target: null,
+			verb: "",
+			path: "",
 			name: "",
 			controller: "",
 			only: [],
+			except: [],
+			param: "",
 			pos: pos
 		};
 	}
@@ -4642,6 +4671,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				decl.target == null ? [] : [
 					"root " + quoteRubyStringForCode(decl.target.controller + "#" + decl.target.action)
 				];
+			case "verb":
+				if (decl.target == null) {
+					[];
+				} else {
+					var parts = [
+						"to: " + quoteRubyStringForCode(decl.target.controller + "#" + decl.target.action)
+					];
+					if (decl.name != "") {
+						parts.push("as: " + rubySymbolLiteral(decl.name));
+					}
+					[decl.verb + " " + quoteRubyStringForCode(decl.path) + ", " + parts.join(", ")];
+				}
 			case "resources":
 				var parts = [
 					"resources " + rubySymbolLiteral(decl.name),
@@ -4649,6 +4690,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				];
 				if (decl.only.length > 0) {
 					parts.push("only: [" + [for (action in decl.only) rubySymbolLiteral(action)].join(", ") + "]");
+				}
+				if (decl.except.length > 0) {
+					parts.push("except: [" + [for (action in decl.except) rubySymbolLiteral(action)].join(", ") + "]");
+				}
+				if (decl.param != "") {
+					parts.push("param: " + rubySymbolLiteral(decl.param));
 				}
 				[parts.join(", ")];
 			case _:
@@ -4662,6 +4709,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				value;
 			case _:
 				Context.error('@:railsRoutes $label must be a non-empty String literal marker value.', expr.pos);
+				"";
+		}
+	}
+
+	static function railsRouteStringAllowEmpty(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)):
+				value;
+			case _:
+				Context.error('@:railsRoutes $label must be a String literal marker value.', expr.pos);
 				"";
 		}
 	}
