@@ -9,7 +9,7 @@ This document records the supported tool/runtime contract for `reflaxe.ruby`.
 | Haxe | `4.3.7` | Supported | Pinned by `.haxerc` and `.github/workflows/ci.yml`. |
 | Node.js | `20` | Supported | Used for CI scripts, release tooling, and repository sample materializers. Rails-facing generators are Ruby-native. |
 | Ruby | `3.2`, `3.3`, `4.0` | Supported | CI matrix validates runtime smoke tests against these versions. |
-| Rails | Rails 7+/8 style app shape | Compile/syntax and runtime covered | `npm test` keeps local runtime checks optional when generated app bundles are missing; `npm run test:rails-runtime` and CI make Rails integration/interop runtime execution mandatory. |
+| Rails | Rails 7+/8 style app shape | Compile/syntax and runtime covered | `rake test`/`npm test` keeps local runtime checks optional when generated app bundles are missing; `rake test:rails:runtime` and CI make Rails integration/interop runtime execution mandatory. |
 
 ## Local Development Notes
 
@@ -19,7 +19,7 @@ Some lightweight Ruby smoke tests can pass on older system Rubies, including Rub
 
 The runtime file `runtime/hxruby/data_define.rb` includes compatibility behavior for older Rubies that do not provide `Data.define`; this is why Ruby `2.6` may emit `Data` deprecation warnings in local minitest output. Those warnings are expected locally and are not part of the supported Rails baseline.
 
-Run `npm run test:rails-runtime` from the pinned Ruby to install generated app bundles and execute the mandatory Rails runtime integration and mixed-interop tests locally. CI runs that command across Ruby `3.2`, `3.3`, and `4.0`. The plain `npm test` command remains friendly for fast compiler work: it syntax-checks generated Rails artifacts and runs Rails runtime tests only when the local bundles are already available.
+Run `rake test:rails:runtime` from the pinned Ruby to install generated app bundles and execute the mandatory Rails runtime integration and mixed-interop tests locally. CI runs the underlying npm command across Ruby `3.2`, `3.3`, and `4.0`. The plain `rake test`/`npm test` command remains friendly for fast compiler work: it syntax-checks generated Rails artifacts and runs Rails runtime tests only when the local bundles are already available.
 
 ## Profiles
 
@@ -90,8 +90,8 @@ Unsafe boundary policy is tracked in
 | Mixed Rails/RailsHx adoption sample | `examples/rails_interop_app` + `npm run test:rails-interop` | Initial compile/static smoke |
 | Existing Rails boundary adoption generator | `bin/rails generate hxruby:adopt` / `rake hxruby:gen:adopt` | Explicit service/template wrappers, source-backed service signature inference, source-backed extension contracts, plus suggest-only discovery |
 | Rails app install generator | `bin/rails generate hxruby:install` / `rake hxruby:gen:app` | Implemented |
-| Route helper generator | `bin/rails generate hxruby:routes` / `npm run rails:generate-routes` | Hardened for named Rails routes, nested/resource params, namespaces, member/collection routes, optional segments, globs, and mount-like rows |
-| Scaffold generator | `bin/rails generate hxruby:scaffold` / `npm run rails:scaffold` | Implemented |
+| Route helper generator | `bin/rails generate hxruby:routes` / `rake rails:routes` | Hardened for named Rails routes, nested/resource params, namespaces, member/collection routes, optional segments, globs, and mount-like rows |
+| Scaffold generator | `bin/rails generate hxruby:scaffold` / `rake rails:scaffold` | Implemented |
 | Rails engine/plugin affordances | `--rails-output-root`, engine-local `reflaxe_ruby_rails_output_root`, generated autoload initializer | Initial engine-local output and host-consumption slice |
 
 The rows above describe the current Rails MVP. The deeper typed Rails compiler layer is tracked as RailsHx; see `docs/railshx-roadmap.md`, [RailsHx Typed ActiveRecord Query Guide](railshx-query-guide.md), and the `haxe.ruby-wpi` bead epic.

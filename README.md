@@ -104,16 +104,16 @@ The canonical RailsHx end-to-end example is `examples/todoapp_rails`. The mixed 
 Run the generated Rails todo app locally:
 
 ```bash
-npm run todoapp:prepare
-npm run todoapp:server
+rake todoapp:prepare
+rake todoapp:server
 ```
 
-Then open `http://127.0.0.1:3000/`. For the RailsHx development loop, keep Rails running and start `npm run todoapp:watch` in another terminal; Haxe/HHX and Haxe-authored JS changes refresh the generated Rails files while Rails continues serving the app.
+Then open `http://127.0.0.1:3000/`. For the RailsHx development loop, keep Rails running and start `rake todoapp:watch` in another terminal; Haxe/HHX and Haxe-authored JS changes refresh the generated Rails files while Rails continues serving the app.
 
 For a real-browser RailsHx smoke, run the Playwright sentinel lane:
 
 ```bash
-npm run test:todoapp-playwright
+rake todoapp:playwright
 ```
 
 That prepares the generated Rails app, boots Rails on a dedicated port, runs `examples/todoapp_rails/e2e/*.spec.ts`, and tears the server down.
@@ -129,18 +129,18 @@ That lane proves Haxe can render existing ERB through `Template.external("path")
 To force the generated Rails runtime apps to install their bundles and execute Rails tests, run:
 
 ```bash
-npm run test:rails-runtime
+rake test:rails:runtime
 ```
 
-This is the mandatory CI lane for Rails runtime coverage across the supported Ruby matrix (`3.2`, `3.3`, `4.0`). Plain `npm test` keeps the compiler loop fast and still syntax-checks generated Rails artifacts; the Rails runtime lanes skip only when Rails gems are unavailable in a local environment. CI runs `npm run test:rails-runtime`, so missing generated-app Rails gems become hard failures there.
+This is the mandatory runtime lane for Rails coverage across the supported Ruby matrix (`3.2`, `3.3`, `4.0`). Plain `rake test`/`npm test` keeps the compiler loop fast and still syntax-checks generated Rails artifacts; the Rails runtime lanes skip only when Rails gems are unavailable in a local environment. CI runs the underlying npm script, so missing generated-app Rails gems become hard failures there.
 
 For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, and dev process files:
 
 ```bash
-npm run rails:app -- --output path/to/rails-app --name MyApp
+rake rails:app ARGS="--output path/to/rails-app --name MyApp"
 ```
 
-Rails-facing generators are implemented in Ruby and exposed through both npm convenience scripts and `hxruby` rake tasks, following the same host-framework-native generator lesson as PhoenixHx Mix tasks. The Haxe compiler is required to compile generated Haxe sources, not to run basic Rails adoption generators.
+Rails-facing generators are implemented in Ruby and exposed through `bin/rails generate hxruby:*`, repository Rake wrappers, and installed-app `hxruby` rake tasks, following the same host-framework-native generator lesson as PhoenixHx Mix tasks. npm remains repo infrastructure for Lix, Playwright, semantic-release, and Node-based CI scripts; the RailsHx user-facing path is Rake/Rails.
 
 In an installed Rails app, prefer the Rails generator entrypoints:
 
@@ -178,7 +178,7 @@ RAILS_ENV=production bundle exec rake hxruby:production
 The canonical dogfood app has a production smoke that exercises the same shape end to end:
 
 ```bash
-npm run test:todoapp-production
+rake todoapp:production
 ```
 
 That command compiles Haxe/HHX, compiles Haxe-authored JS, materializes the generated Rails app, runs Rails migrations/tests, runs `zeitwerk:check`, precompiles production assets, creates `test/.generated/rails_integration_release.tgz`, and verifies the release artifact includes generated RailsHx files.
@@ -190,13 +190,13 @@ The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roa
 Useful tooling:
 
 ```bash
-npm run rails:generate-routes -- --input routes.txt --output src_haxe/routes/Routes.hx
-npm run rails:scaffold -- --model Todo --fields title:String,isCompleted:Bool --validate title --controller --output tmp/todo
-npm run rails:adopt -- --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String --output tmp/rails_app
-npm run rails:app -- --output tmp/rails_app --name TodoApp
+rake rails:routes ARGS="--input routes.txt --output src_haxe/routes/Routes.hx"
+rake rails:scaffold ARGS="--model Todo --fields title:String,isCompleted:Bool --validate title --controller --output tmp/todo"
+rake rails:adopt ARGS="--service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String --output tmp/rails_app"
+rake rails:app ARGS="--output tmp/rails_app --name TodoApp"
 ```
 
-`npm run test:rails-integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed. `npm run test:rails-runtime` sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and makes both Rails integration and mixed-interop runtime execution mandatory.
+`rake test:rails:integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed. `rake test:rails:runtime` sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and makes both Rails integration and mixed-interop runtime execution mandatory.
 
 Route sync is phase 1 routing support: Rails-owned `config/routes.rb` stays the source of truth, and RailsHx generates typed Haxe externs from `rails routes`. Haxe-owned route emission is intentionally deferred until route-helper sync is fully deterministic; see [docs/railshx-routing-design.md](docs/railshx-routing-design.md).
 
@@ -226,23 +226,23 @@ ruby -v
 For mandatory Rails runtime integration, use the pinned Ruby and let the generated apps install their own bundles:
 
 ```bash
-npm run test:rails-runtime
+rake test:rails:runtime
 ```
 
-`npm test` will run Rails runtime checks when generated app bundles are already available. `npm run test:rails-runtime` makes missing Rails gems a hard failure and installs the generated bundles first, matching the dedicated CI lane. Runtime logs are stage-labeled (`compiler`, `materialization`, `migration`, `request tests`, and browser stages) so CI failures point at the failing boundary.
+`rake test`/`npm test` will run Rails runtime checks when generated app bundles are already available. `rake test:rails:runtime` makes missing Rails gems a hard failure and installs the generated bundles first, matching the dedicated CI lane. Runtime logs are stage-labeled (`compiler`, `materialization`, `migration`, `request tests`, and browser stages) so CI failures point at the failing boundary.
 
 ## Quality Gates
 
 ```bash
 npm test
-npm run format:haxe:check
-npm run security:gitleaks
-npm run test:snapshots
-npm run test:strict-boundaries
-npm run test:rails-runtime
-npm run ci:version-sync
-npm run ci:release-contracts
-npm run test:gem-package
+rake format:haxe:check
+rake security:gitleaks
+rake test:snapshots
+rake test:strict_boundaries
+rake test:rails:runtime
+rake ci:version_sync
+rake ci:release_contracts
+rake package:gem:test
 ```
 
 Snapshot tests compile with `reflaxe_ruby_strict_examples`, compare committed Ruby output, reject CRLF/trailing-newline/path leaks, and compile each snapshot case twice to catch non-deterministic output.
@@ -265,7 +265,7 @@ Install the repo-managed pre-commit hook:
 ```bash
 haxelib install formatter
 brew install gitleaks # or use another gitleaks install method
-npm run hooks:install
+rake hooks:install
 ```
 
 The hook runs a staged `gitleaks` scan and formats staged `.hx` files with [haxe-formatter](https://github.com/HaxeCheckstyle/haxe-formatter). CI runs the full Haxe formatter check and a dedicated gitleaks workflow, so local hooks catch the same class of issues before review.
@@ -275,13 +275,13 @@ The hook runs a staged `gitleaks` scan and formats staged `.hx` files with [haxe
 Build the release zip locally with:
 
 ```bash
-npm run release:haxelib-package
+rake package:haxelib:build
 ```
 
 Validate the package contents, compile the extracted `examples/hello_world` fixture, and smoke-test an installed `-lib reflaxe.ruby` consumer with:
 
 ```bash
-npm run test:haxelib-package
+rake package:haxelib:test
 ```
 
 Semantic-release runs the same package builder during release preparation and attaches `dist/reflaxe.ruby-*.zip` to the GitHub release.
@@ -291,13 +291,13 @@ Semantic-release runs the same package builder during release preparation and at
 Build the `hxruby` runtime gem locally with:
 
 ```bash
-npm run release:gem-package
+rake package:gem:build
 ```
 
 Validate the gem contents, runtime require path, rake task registration, and local gem install behavior with:
 
 ```bash
-npm run test:gem-package
+rake package:gem:test
 ```
 
 The gem exposes `require "hxruby"` for runtime helpers and `require "hxruby/tasks"` for Rails-oriented rake tasks:

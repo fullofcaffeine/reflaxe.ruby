@@ -8,8 +8,8 @@ From the repository root:
 
 ```bash
 eval "$(rbenv init - zsh)" # if your shell has not initialized rbenv yet
-npm run todoapp:prepare
-npm run todoapp:server
+rake todoapp:prepare
+rake todoapp:server
 ```
 
 Open [http://127.0.0.1:3000/](http://127.0.0.1:3000/). The generated Rails app is materialized under `test/.generated/rails_integration`; treat it as disposable output. The source of truth is the Haxe/HHX code in `examples/todoapp_rails/**` plus compiler/std code in `src/**` and `std/**`.
@@ -17,7 +17,7 @@ Open [http://127.0.0.1:3000/](http://127.0.0.1:3000/). The generated Rails app i
 For the RailsHx edit loop, keep Rails running and start the Haxe watcher in another terminal:
 
 ```bash
-npm run todoapp:watch
+rake todoapp:watch
 ```
 
 The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources change. Rails serves those files through normal ActionController/ActionView, so a browser refresh is enough for most template/controller changes.
@@ -63,35 +63,35 @@ The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources
 ## Command Guide
 
 ```bash
-npm run todoapp:compile
+rake todoapp:compile
 ```
 
 Compiles the RailsHx sample and refreshes generated Rails files in `test/.generated/rails_integration` without touching bundle state or the SQLite DB.
 
 ```bash
-npm run todoapp:prepare
+rake todoapp:prepare
 ```
 
 Compiles Haxe/HHX, materializes the Rails app, runs `bundle check || bundle install`, prepares the development database, and seeds demo data. Run this once before using the app, and rerun it after dependency or migration changes.
 
 ```bash
-npm run todoapp:server
+rake todoapp:server
 ```
 
 Starts Rails through the generated app-local `bin/rails` entrypoint with `127.0.0.1:3000` defaults. Override with normal environment variables:
 
 ```bash
-PORT=3001 BIND=0.0.0.0 npm run todoapp:server
+PORT=3001 BIND=0.0.0.0 rake todoapp:server
 ```
 
 ```bash
-npm run todoapp:watch
+rake todoapp:watch
 ```
 
 Runs a lightweight watcher for `src/**`, `std/**`, and `examples/todoapp_rails/**`. The recommended RailsHx dev workflow is Rails server in one terminal and this watcher in another; it refreshes generated Ruby/ERB plus the Haxe-authored JS client while Rails keeps serving the app.
 
 ```bash
-npm run todoapp:test
+rake todoapp:test
 ```
 
 Compiles, materializes, prepares the test DB, and runs the generated Rails test suite.
@@ -104,19 +104,19 @@ materializer copies them into the disposable generated Rails app instead of
 embedding Ruby test bodies inside build scripts.
 
 ```bash
-npm run test:todoapp-production
+rake todoapp:production
 ```
 
 Runs the deployability dogfood lane for this sample: compile Haxe/HHX, compile Haxe-authored JS, materialize the Rails app, prepare the test database, run Rails tests, boot production for `zeitwerk:check`, precompile production assets, build `test/.generated/rails_integration_release.tgz`, and assert the archive contains generated `app/haxe_gen/**`, generated ERB views, generated Haxe JS, migrations, and the RailsHx initializer.
 
 ```bash
-npm run test:todoapp-playwright
+rake todoapp:playwright
 ```
 
 Runs the RailsHx browser sentinel: compile/materialize the generated app, prepare and seed the SQLite DB, boot Rails on a dedicated port, run Playwright specs from `examples/todoapp_rails/e2e/*.spec.ts`, and shut Rails down. Override the port or spec when debugging:
 
 ```bash
-RAILSHX_PLAYWRIGHT_PORT=3101 RAILSHX_PLAYWRIGHT_SPEC=examples/todoapp_rails/e2e/todoapp.spec.ts npm run test:todoapp-playwright
+RAILSHX_PLAYWRIGHT_PORT=3101 RAILSHX_PLAYWRIGHT_SPEC=examples/todoapp_rails/e2e/todoapp.spec.ts rake todoapp:playwright
 ```
 
 ## Production Build Shape
@@ -133,7 +133,7 @@ The generated production runner delegates to `hxruby:production`, which compiles
 
 The production artifact must include generated `app/haxe_gen/**`, generated ActionView templates under `app/views/**`, generated Haxe JS under `app/javascript/railshx/**`, and `config/initializers/hxruby_autoload.rb`. The canonical source remains Haxe/HHX/Haxe JS; generated Rails files are build output.
 
-This sample proves that contract with `npm run test:todoapp-production`, which is also wired into CI as the RailsHx production dogfood lane.
+This sample proves that contract with `rake todoapp:production`, which is also wired into CI through the underlying RailsHx production dogfood lane.
 
 ## App Generator
 
@@ -141,7 +141,7 @@ RailsHx app/adoption files can be generated into a Rails app with:
 
 ```bash
 bin/rails generate hxruby:install MyApp
-npm run rails:app -- --output path/to/rails-app --name MyApp
+rake rails:app ARGS="--output path/to/rails-app --name MyApp"
 ```
 
 That writes `build.hxml`, `build-client.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, and `bin/railshx-dev`. In an installed app, the same generator is exposed as:
@@ -157,7 +157,7 @@ bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --service-source app/services/legacy_price_formatter.rb
 bin/rails generate hxruby:adopt --extension-source app/models/concerns/sluggable.rb --extension-module Sluggable
 bin/rails generate hxruby:adopt --discover
-npm run rails:adopt -- --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
+rake rails:adopt ARGS="--service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String"
 bundle exec rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter SERVICE_SOURCE=app/services/legacy_price_formatter.rb TEMPLATE=legacy/badge LOCALS=label:String,tone:String
 ```
 
@@ -183,14 +183,14 @@ The Haxe-authored client lane compiles through `examples/todoapp_rails/build-cli
 ## Test
 
 ```bash
-npm run test:todoapp-rails
-npm run test:rails-integration
-npm run test:rails-runtime
-npm run todoapp:test
-npm run test:todoapp-playwright
+rake test:todoapp:static
+rake test:rails:integration
+rake test:rails:runtime
+rake todoapp:test
+rake todoapp:playwright
 ```
 
-`test:rails-integration` always syntax-checks generated Ruby. It runs `rails db:migrate` and `rails test` when the generated Rails app bundle is available. `test:rails-runtime` is the mandatory runtime lane: it sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and runs both the todoapp Rails integration tests and the mixed Rails/RailsHx interop runtime tests.
+`test:rails:integration` always syntax-checks generated Ruby. It runs `rails db:migrate` and `rails test` when the generated Rails app bundle is available. `test:rails:runtime` is the mandatory runtime lane: it sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and runs both the todoapp Rails integration tests and the mixed Rails/RailsHx interop runtime tests.
 
 `test:todoapp-playwright` is the real-browser layer, modeled after the PhoenixHx sentinel approach but Rails-native: Playwright validates browser-rendered ActionView, importmap/Turbo/Haxe-client behavior, form submission, and same-page link enhancement against a running generated Rails app.
 
@@ -200,11 +200,11 @@ regression:
 
 | Layer | Command | What it owns |
 | --- | --- | --- |
-| Compiler/static | `npm run test:todoapp-rails` | Haxe/HHX compiles, generated Ruby/ERB/JS shape, negative type-safety checks, strict-boundary policy. |
-| Rails model/request | `npm run todoapp:test` or `npm run test:rails-integration` | ActiveRecord validations/scopes/associations, strong params, redirects, rendered templates, migrations, Rails test harness consumption. |
-| Mandatory runtime | `npm run test:rails-runtime` | Rails gems present, generated app can migrate and run Rails tests under the required runtime lane. |
-| Browser UX | `npm run test:todoapp-playwright` | Real browser rendering, Turbo/importmap/Haxe-client behavior, form submission, same-page navigation, visible UX regressions. |
-| Production | `npm run test:todoapp-production` | Zeitwerk, production boot, asset precompile, release archive contents. |
+| Compiler/static | `rake test:todoapp:static` | Haxe/HHX compiles, generated Ruby/ERB/JS shape, negative type-safety checks, strict-boundary policy. |
+| Rails model/request | `rake todoapp:test` or `rake test:rails:integration` | ActiveRecord validations/scopes/associations, strong params, redirects, rendered templates, migrations, Rails test harness consumption. |
+| Mandatory runtime | `rake test:rails:runtime` | Rails gems present, generated app can migrate and run Rails tests under the required runtime lane. |
+| Browser UX | `rake todoapp:playwright` | Real browser rendering, Turbo/importmap/Haxe-client behavior, form submission, same-page navigation, visible UX regressions. |
+| Production | `rake todoapp:production` | Zeitwerk, production boot, asset precompile, release archive contents. |
 
 ## Current Boundary
 

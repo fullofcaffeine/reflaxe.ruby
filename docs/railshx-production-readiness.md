@@ -46,7 +46,7 @@ Support expectation before production readiness:
 
 RailsHx can be called production-ready when all of these are true:
 
-- `npm test`, `npm run test:rails-runtime`, `npm run test:todoapp-playwright`,
+- `rake test`, `rake test:rails:runtime`, `rake todoapp:playwright`,
   packaging checks, release-contract checks, and snapshot checks are mandatory
   and green in CI for the supported toolchain matrix.
 - A deployable RailsHx dogfood app proves compile, migrations, Rails tests,
@@ -72,7 +72,7 @@ RailsHx can be called production-ready when all of these are true:
 
 | Bead | Gate | Required outcome |
 | --- | --- | --- |
-| `haxe.ruby-bjv.1` | Mandatory Rails runtime CI | `npm run test:rails-runtime` is a required CI gate on supported Ruby/Rails lanes, with clear failure staging. |
+| `haxe.ruby-bjv.1` | Mandatory Rails runtime CI | `rake test:rails:runtime` is the local required gate for supported Ruby/Rails lanes, with clear failure staging. CI runs the underlying npm script directly. |
 | `haxe.ruby-bjv.2` | Deployable dogfood app | A RailsHx app proves production compile, migrations, Rails tests, `zeitwerk:check`, `assets:precompile`, and release artifact shape. |
 | `haxe.ruby-bjv.3` | Typed API completeness audit | Production Rails API blockers are inventoried in [RailsHx Typed API Production Gap Audit](railshx-typed-api-production-gap-audit.md) and converted into implementation beads. SQL/string-bearing APIs get a typed or explicit escape-hatch policy before implementation. |
 | `haxe.ruby-bjv.4` | Escape-hatch/security audit | Raw Ruby, raw ERB, raw SQL, dynamic boundaries, file-backed macros, and generator inference are named in [RailsHx Escape Hatch And Security Audit](railshx-escape-hatch-security-audit.md) and are fail-closed or explicit opt-ins with tests. |
@@ -95,18 +95,18 @@ Before declaring production readiness, run and record:
 
 ```bash
 npm test
-npm run test:rails-runtime
-npm run test:todoapp-playwright
-npm run test:todoapp-production
-npm run test:snapshots
-npm run test:strict-boundaries
-npm run test:sql-string-policy
-npm run test:haxelib-package
-npm run test:gem-package
-npm run ci:release-contracts
+rake test:rails:runtime
+rake todoapp:playwright
+rake todoapp:production
+rake test:snapshots
+rake test:strict_boundaries
+rake test:sql_string_policy
+rake package:haxelib:test
+rake package:gem:test
+rake ci:release_contracts
 ```
 
-The dedicated CI Rails runtime job runs `npm run test:rails-runtime` across the
+The dedicated CI Rails runtime job runs the underlying `npm run test:rails-runtime` across the
 supported Ruby matrix (`3.2`, `3.3`, `4.0`). The local `npm test` path may skip
 Rails runtime execution when generated-app bundles are absent, but the dedicated
 runtime command and CI lane install those bundles and fail closed when Rails
@@ -123,7 +123,7 @@ integration points such as autoloading, rendering, migrations, mail delivery,
 storage services, ActionCable channels, assets, and production boot. Broad Rails
 behavior belongs to Rails unless RailsHx introduces custom runtime logic.
 
-The dedicated CI production dogfood job runs `npm run test:todoapp-production`
+The dedicated CI production dogfood job runs the underlying `npm run test:todoapp-production`
 on the pinned Ruby lane. That command compiles server Haxe/HHX and Haxe-authored
 client JS, materializes the Rails app, runs migrations/tests, runs
 `zeitwerk:check`, precompiles production assets, creates

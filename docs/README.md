@@ -60,9 +60,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 ```bash
 haxelib install formatter
 brew install gitleaks
-npm run hooks:install
-npm run format:haxe:check
-npm run security:gitleaks
+rake hooks:install
+rake format:haxe:check
+rake security:gitleaks
 npm test
 ```
 

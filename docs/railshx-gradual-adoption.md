@@ -41,7 +41,7 @@ To scaffold this boundary in an existing app, use the Ruby-native adoption gener
 
 ```bash
 bin/rails generate hxruby:adopt --template legacy/badge --locals label:String,tone:String
-npm run rails:adopt -- --template legacy/badge --locals label:String,tone:String
+rake rails:adopt ARGS="--template legacy/badge --locals label:String,tone:String"
 ```
 
 Inside a Rails app with the gem tasks loaded, the equivalent host-framework command is:
@@ -78,7 +78,7 @@ The adoption generator can also scaffold the extern shell:
 
 ```bash
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter
-npm run rails:adopt -- --service LegacyPriceFormatter
+rake rails:adopt ARGS="--service LegacyPriceFormatter"
 ```
 
 For an explicit Ruby source file, it can also infer starter signatures:
@@ -88,9 +88,7 @@ bin/rails generate hxruby:adopt \
   --service LegacyPriceFormatter \
   --service-source app/services/legacy_price_formatter.rb
 
-npm run rails:adopt -- \
-  --service LegacyPriceFormatter \
-  --service-source app/services/legacy_price_formatter.rb
+rake rails:adopt ARGS="--service LegacyPriceFormatter --service-source app/services/legacy_price_formatter.rb"
 ```
 
 The service source path is checked to stay inside the app/output root and parsed with `Ripper`; app code is not executed. The generator emits constructors from `initialize`, instance methods from `def method`, and static methods from `def self.method`. Required arguments default to `Dynamic`; optional arguments with obvious scalar defaults become `String`, `Int`, `Float`, or `Bool`. Ambiguous splats, keyword-heavy signatures, and blocks are marked as TODO comments instead of guessed unsafely.
@@ -102,9 +100,7 @@ bin/rails generate hxruby:adopt \
   --service RbsPriceFormatter \
   --rbs sig/rbs_price_formatter.rbs
 
-npm run rails:adopt -- \
-  --service RbsPriceFormatter \
-  --rbs sig/rbs_price_formatter.rbs
+rake rails:adopt ARGS="--service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs"
 
 bundle exec rake hxruby:gen:adopt \
   SERVICE=RbsPriceFormatter \
@@ -122,9 +118,7 @@ bin/rails generate hxruby:adopt \
   --extension-source app/models/concerns/sluggable.rb \
   --extension-module Sluggable
 
-npm run rails:adopt -- \
-  --extension-source app/models/concerns/sluggable.rb \
-  --extension-module Sluggable
+rake rails:adopt ARGS="--extension-source app/models/concerns/sluggable.rb --extension-module Sluggable"
 
 bundle exec rake hxruby:gen:adopt \
   EXTENSION_SOURCE=app/models/concerns/sluggable.rb \
