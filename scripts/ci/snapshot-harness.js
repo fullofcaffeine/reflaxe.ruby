@@ -179,6 +179,14 @@ const cases = [
     ],
   },
   {
+    name: "rails_routes_dsl",
+    defines: ["reflaxe_ruby_rails"],
+    files: [
+      "config/routes.rb",
+      ".railshx/routes.haxe.json",
+    ],
+  },
+  {
     name: "todoapp_rails",
     defines: ["reflaxe_ruby_rails"],
     extraClassPaths: ["examples/todoapp_rails/src_haxe"],

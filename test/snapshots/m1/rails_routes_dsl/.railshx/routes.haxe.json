@@ -1,0 +1,202 @@
+{
+  "output": "config/routes.rb",
+  "declarations": [
+    {
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:576-602",
+      "target": "controllers/posts#index",
+      "kind": "root"
+    },
+    {
+      "name": "archived_posts",
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:687-702",
+      "target": "controllers/posts#archive",
+      "path": "posts/archive",
+      "kind": "verb",
+      "verb": "get"
+    },
+    {
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:781-788",
+      "target": "controllers/posts#create",
+      "path": "posts",
+      "kind": "verb",
+      "verb": "post"
+    },
+    {
+      "name": "post_search",
+      "verbs": [
+        "get",
+        "post"
+      ],
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:828-842",
+      "target": "controllers/posts#search",
+      "path": "posts/search",
+      "kind": "match"
+    },
+    {
+      "name": "photo_display",
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1082-1096",
+      "target": "controllers/posts#show_optional",
+      "path": "photos(/:id)",
+      "kind": "verb",
+      "verb": "get"
+    },
+    {
+      "name": "file",
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1178-1191",
+      "target": "controllers/posts#file",
+      "path": "files/*path",
+      "kind": "verb",
+      "verb": "get"
+    },
+    {
+      "name": "legacy_post",
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1381-1399",
+      "target": "legacy/posts#show",
+      "path": "legacy/posts/:id",
+      "kind": "verb",
+      "verb": "get"
+    },
+    {
+      "name": "sidekiq",
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1618-1643",
+      "path": "/sidekiq",
+      "controller": "Sidekiq::Web",
+      "kind": "mount"
+    },
+    {
+      "options": [
+        "format: \"json\""
+      ],
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1705-1721",
+      "kind": "defaults",
+      "children": [
+        {
+          "options": [
+            "id: /[0-9]+/"
+          ],
+          "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1740-1758",
+          "kind": "constraints",
+          "children": [
+            {
+              "name": "numeric_post",
+              "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1770-1789",
+              "target": "controllers/posts#show",
+              "path": "numeric_posts/:id",
+              "kind": "verb",
+              "verb": "get"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "posts",
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1881-1885",
+      "except": [
+        "destroy"
+      ],
+      "controller": "controllers/posts",
+      "kind": "resources",
+      "children": [
+        {
+          "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1967-2068",
+          "kind": "collection",
+          "children": [
+            {
+              "name": "archived_collection",
+              "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:1977-1987",
+              "target": "controllers/posts#archive",
+              "path": "archived",
+              "kind": "verb",
+              "verb": "get"
+            }
+          ]
+        },
+        {
+          "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2081-2176",
+          "kind": "member",
+          "children": [
+            {
+              "name": "publish_post",
+              "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2093-2102",
+              "target": "controllers/posts#publish",
+              "path": "publish",
+              "kind": "verb",
+              "verb": "patch"
+            }
+          ]
+        }
+      ],
+      "param": "slug"
+    },
+    {
+      "name": "draft_posts",
+      "only": [
+        "new"
+      ],
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2277-2304",
+      "controller": "controllers/posts",
+      "kind": "resources"
+    },
+    {
+      "name": "profile",
+      "only": [
+        "show",
+        "update"
+      ],
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2356-2363",
+      "controller": "controllers/profiles",
+      "kind": "resource"
+    },
+    {
+      "name": "admin",
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2422-2429",
+      "kind": "namespace",
+      "children": [
+        {
+          "name": "admin_post_audit",
+          "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2440-2453",
+          "target": "controllers/admin/posts#audit",
+          "path": "posts/audit",
+          "kind": "verb",
+          "verb": "get"
+        }
+      ]
+    },
+    {
+      "name": "api",
+      "moduleName": "api",
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2544-2550",
+      "path": "/api",
+      "kind": "scope",
+      "children": [
+        {
+          "name": "status",
+          "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2608-2616",
+          "target": "controllers/health#show",
+          "path": "status",
+          "kind": "verb",
+          "verb": "get"
+        }
+      ]
+    },
+    {
+      "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2697-2713",
+      "controller": "controllers/health",
+      "kind": "controller",
+      "children": [
+        {
+          "name": "health",
+          "position": "examples/rails_routes_dsl/routes/AppRoutes.hx:2724-2728",
+          "target": "controllers/health#show",
+          "path": "up",
+          "kind": "verb",
+          "verb": "get"
+        }
+      ]
+    }
+  ],
+  "source": "routes.AppRoutes",
+  "version": 1,
+  "class": "routes.AppRoutes"
+}
