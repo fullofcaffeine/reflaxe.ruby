@@ -114,3 +114,23 @@ test('posts a typed RailsHx room note through Turbo-backed Haxe client hooks', a
   await expect(page.getByText('Room note posted')).toBeVisible()
   await expect.poll(async () => page.locator(hooks.selectors.chatMessages).count()).toBeGreaterThanOrEqual(beforeCount)
 })
+
+test('broadcasts typed ActionCable room notes to another browser session', async ({ browser }) => {
+  const sender = await browser.newPage()
+  const receiver = await browser.newPage()
+  try {
+    await gotoTodos(sender)
+    await gotoTodos(receiver)
+    await expect(receiver.locator(hooks.selectors.chatPanel)).toHaveAttribute(hooks.attrs.chatCableReady, 'true')
+
+    const body = `Cable note ${Date.now()}`
+    await sender.getByLabel('Add a typed room note').fill(body)
+    await sender.getByRole('button', { name: 'Post note' }).click()
+
+    await expect(sender.locator(hooks.selectors.chatPanel)).toContainText(body, { timeout: 20_000 })
+    await expect(receiver.locator(hooks.selectors.chatPanel)).toContainText(body, { timeout: 20_000 })
+  } finally {
+    await sender.close()
+    await receiver.close()
+  }
+})

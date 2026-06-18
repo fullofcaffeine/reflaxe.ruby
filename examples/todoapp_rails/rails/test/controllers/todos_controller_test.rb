@@ -84,8 +84,10 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   test "chat message create permits haxe-authored params and redirects" do
     user = Models::User.create!(name: "room owner", email: "room-create@example.test", role: "maintainer")
 
-    assert_difference "Models::ChatMessage.count", 1 do
-      post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: user.id, ignored: "nope" } }
+    assert_broadcasts("todoapp:chat", 1) do
+      assert_difference "Models::ChatMessage.count", 1 do
+        post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: user.id, ignored: "nope" } }
+      end
     end
 
     assert_redirected_to "/todos"

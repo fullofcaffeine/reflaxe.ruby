@@ -14,6 +14,9 @@ module Shared
     def self.attr_selector(value__hx0)
       return (("[" + value__hx0) + "]")
     end
+    def self.attr_equals_selector(value__hx0, expected__hx0)
+      return (((("[" + value__hx0) + "=\"") + expected__hx0) + "\"]")
+    end
     def self.anchor_href(value__hx0)
       return ("#" + value__hx0)
     end

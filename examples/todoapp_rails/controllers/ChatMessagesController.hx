@@ -1,5 +1,6 @@
 package controllers;
 
+import channels.ChatMessagesChannel;
 import models.ChatMessage;
 import models.User;
 import rails.action_controller.Status;
@@ -29,7 +30,8 @@ class ChatMessagesController extends rails.action_controller.Base {
 
 	public function create() {
 		var attrs = ParamsMacro.requirePermit(this.params(), ChatMessage.railsParamKey, [ChatMessage.f.body, ChatMessage.f.userId]);
-		ChatMessage.create(attrs);
+		var message = ChatMessage.create(attrs);
+		ChatMessagesChannel.announce(message.id, message.body, message.userId);
 		respondTo(function(format) {
 			format.turboStream(function() {
 				render({

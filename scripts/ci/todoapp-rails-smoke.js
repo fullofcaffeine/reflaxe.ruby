@@ -111,9 +111,24 @@ function compileTodoClient() {
     "static async hideAfterDelay",
     "await Async.delay(milliseconds)",
     "static async removeClassAfterDelay",
+    "Consumer.subscribe(consumer, \"Channels::ChatMessagesChannel\"",
+    ".setAttribute(\"data-railshx-chat-cable-ready\", \"true\")",
+    ".removeAttribute(\"data-railshx-chat-cable-ready\")",
+    "Turbo.renderStreamMessage(Turbo.stream(\"prepend\", \"railshx-chat-list\"",
+    "static escapeHtml(value)",
   ]) {
     if (!todoClient.includes(snippet)) {
       console.error(`todoapp_rails client output missing async/await snippet: ${snippet}`);
+      process.exit(1);
+    }
+  }
+  for (const forbidden of [
+    "document.createElement(\"li\")",
+    ".innerHTML =",
+    "insertBefore(item",
+  ]) {
+    if (todoClient.includes(forbidden)) {
+      console.error(`todoapp_rails client output should use Turbo Stream rendering instead of low-level DOM mutation: ${forbidden}`);
       process.exit(1);
     }
   }
@@ -199,6 +214,7 @@ compileTodoClient();
 for (const file of [
   "app/haxe_gen/models/todo.rb",
   "app/haxe_gen/models/user.rb",
+  "app/haxe_gen/channels/chat_messages_channel.rb",
   "app/haxe_gen/models/chat_message.rb",
   "app/haxe_gen/controllers/chat_messages_controller.rb",
   "app/haxe_gen/controllers/todo_index_locals.rb",
@@ -367,6 +383,19 @@ for (const expected of [
   }
 }
 
+const railsOwnedRouteFixture = readFileSync(join(exampleDir, "rails", "config", "routes_rails_owned.rb"), "utf8");
+for (const expected of [
+  "Rails-owned route fixture.",
+  'get "/rails-owned-health"',
+  'as: :legacy_health',
+  'mount ActionCable.server => "/cable"',
+]) {
+  if (!railsOwnedRouteFixture.includes(expected)) {
+    console.error(`todoapp_rails Rails-owned route fixture missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
 const committedRoutesExtern = readFileSync(join(exampleDir, "src_haxe", "routes", "Routes.hx"), "utf8");
 for (const expected of [
   '@:native("users_path")',
@@ -442,12 +471,27 @@ const chatMessagesControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen
 for (const expected of [
   /class ChatMessagesController < ActionController::Base/,
   /attrs__hx\d+ = self\.params\(\)\.require\("chat_message"\)\.permit\(\[:body, :user_id\]\)/,
-  /Models::ChatMessage\.create\(attrs__hx\d+\)/,
+  /message__hx\d+ = Models::ChatMessage\.create\(attrs__hx\d+\)/,
+  /Channels::ChatMessagesChannel\.announce\(message__hx\d+\.id, message__hx\d+\.body, message__hx\d+\.user_id\)/,
   /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-chat-panel", partial: "controllers\/todos\/chat_panel", locals: \{messages: Models::ChatMessage\.latest\(\)\.to_a\(\), current_user: Controllers::UserSession\.current_user\(gthis__hx\d+\), users: Models::User\.order\(name: :asc\)\.to_a\(\)\}\)\) \}/,
   /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
 ]) {
   if (!expected.test(chatMessagesControllerRuby)) {
     console.error(`todoapp_rails chat messages controller output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const chatMessagesChannelRuby = readFileSync(join(outputDir, "app", "haxe_gen", "channels", "chat_messages_channel.rb"), "utf8");
+for (const expected of [
+  /class ChatMessagesChannel < ActionCable::Channel::Base/,
+  /self\.stream_from\("todoapp:chat"\)/,
+  /self\.stop_all_streams\(\)/,
+  /def self\.announce\(id__hx\d+, body__hx\d+, user_id__hx\d+\)/,
+  /ActionCable\.server\.broadcast\("todoapp:chat", \{"id" => id__hx\d+, "body" => body__hx\d+, "userId" => user_id__hx\d+\}\)/,
+]) {
+  if (!expected.test(chatMessagesChannelRuby)) {
+    console.error(`todoapp_rails chat messages channel output missing expected line: ${expected}`);
     process.exit(1);
   }
 }
@@ -590,6 +634,7 @@ for (const expected of [
   "<text_area>",
   "Haxe-authored JavaScript",
   "models/ChatMessage.hx",
+  "channels/ChatMessagesChannel.hx",
   "views/ChatPanelView.hx",
 ]) {
   if (!readme.includes(expected)) {
@@ -691,10 +736,15 @@ for (const expected of [
   'public static inline var sessionFooterClass:CssClass = "session-footer";',
   'public static inline var chatFormClass:CssClass = "chat-form";',
   'public static inline var chatPanelId:DomId = "railshx-chat-panel";',
+  'public static inline var chatListId:DomId = "railshx-chat-list";',
+  'public static inline var chatMessageKeyAttr:DataAttr = "data-railshx-chat-message-key";',
+  'public static inline var chatCableReadyAttr:DataAttr = "data-railshx-chat-cable-ready";',
   'public static inline var openWorkId:DomId = "open-work";',
   'public static inline var boundAttr:DataAttr = "data-railshx-bound";',
   'public static inline var sessionAttr:DataAttr = "data-railshx-session";',
   "public static inline function classSelector",
+  "public static inline function idSelector",
+  "public static inline function attrEqualsSelector",
 ]) {
   if (!hooksSource.includes(expected)) {
     console.error(`todoapp_rails hook source missing expected typed hook content: ${expected}`);
@@ -740,6 +790,7 @@ for (const expected of [
   'sessionFooter: "session-footer"',
   'chatForm: "chat-form"',
   'chatPanel: "railshx-chat-panel"',
+  'chatCableReady: "data-railshx-chat-cable-ready"',
   'scrollLinks: "[data-railshx-scroll]"',
   'sessionForms: ".session-form"',
   'sessionFooter: ".session-footer"',
@@ -779,12 +830,12 @@ for (const expected of [
   'id="railshx-chat-panel"',
   "Typed Turbo room",
   "This is a Rails-native chat slice",
-  "<% if messages.length > 0 %>",
-  '<ul class="chat-list">',
+  '<ul id="railshx-chat-list" class="chat-list">',
   "<% messages.each do |message| %>",
-  '<li class="chat-message">',
+  '<li class="chat-message" data-railshx-chat-message-key="<%= message.id %>">',
   "<strong>User <%= message.user_id %></strong>",
   "<p><%= message.body %></p>",
+  "<% if messages.length == 0 %>",
   '<%= form_with url: chat_messages_path(), scope: :chat_message, local: true, class: "chat-form", data: {railshx_chat_form: true} do |form| %>',
   '<%= form.hidden_field :user_id, value: current_user.id %>',
   '<%= form.label :body, "Add a typed room note" %>',
@@ -793,6 +844,31 @@ for (const expected of [
 ]) {
   if (!typedChatPanel.includes(expected)) {
     console.error(`todoapp_rails typed chat panel missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const todoappMaterializer = readFileSync(join(root, "scripts", "rails", "todoapp.js"), "utf8");
+for (const expected of [
+  'pin "@rails/actioncable", to: "actioncable.esm.js"',
+  'pin "railshx/todo_client", to: "railshx/todo_client.js"',
+  'writeFile("config/cable.yml"',
+  "adapter: test",
+]) {
+  if (!todoappMaterializer.includes(expected)) {
+    console.error(`todoapp_rails materializer missing expected ActionCable/client importmap pin: ${expected}`);
+    process.exit(1);
+  }
+}
+
+for (const expected of [
+  'import * as ActionCable from "@rails/actioncable"',
+  "window.ActionCable = ActionCable",
+  'import("railshx/todo_client")',
+  "include ActionCable::TestHelper",
+]) {
+  if (!todoappMaterializer.includes(expected)) {
+    console.error(`todoapp_rails materializer missing expected ActionCable boot content: ${expected}`);
     process.exit(1);
   }
 }

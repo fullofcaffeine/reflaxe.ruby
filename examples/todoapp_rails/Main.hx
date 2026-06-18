@@ -1,3 +1,4 @@
+import channels.ChatMessagesChannel;
 import controllers.ChatMessagesController;
 import controllers.SessionsController;
 import controllers.TodosController;
@@ -37,6 +38,7 @@ import views.UserSwitcherView;
 class Main {
 	static function main() {
 		var todo:Todo = null;
+		var chatChannel:Class<ChatMessagesChannel> = ChatMessagesChannel;
 		var chatMessage:ChatMessage = null;
 		var routes:Class<AppRoutes> = null;
 		var haxeAuthoredTest:Class<TodoHaxeTest> = TodoHaxeTest;
@@ -61,6 +63,7 @@ class Main {
 		var userManagementView:Class<UserManagementView> = UserManagementView;
 		var userSwitcherView:Class<UserSwitcherView> = UserSwitcherView;
 		Sys.println(todo == null);
+		Sys.println(chatChannel != null);
 		Sys.println(chatMessage == null);
 		Sys.println(routes == null);
 		Sys.println(haxeAuthoredTest != null);

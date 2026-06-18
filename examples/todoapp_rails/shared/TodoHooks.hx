@@ -32,6 +32,7 @@ class TodoHooks {
 	public static inline var todoListId:DomId = "railshx-todo-list";
 	public static inline var sessionPanelId:DomId = "railshx-session-panel";
 	public static inline var chatPanelId:DomId = "railshx-chat-panel";
+	public static inline var chatListId:DomId = "railshx-chat-list";
 
 	public static inline var boundAttr:DataAttr = "data-railshx-bound";
 	public static inline var scrollAttr:DataAttr = "data-railshx-scroll";
@@ -40,6 +41,8 @@ class TodoHooks {
 	public static inline var sessionZoneAttr:DataAttr = "data-railshx-session-zone";
 	public static inline var chatAttr:DataAttr = "data-railshx-chat";
 	public static inline var chatFormAttr:DataAttr = "data-railshx-chat-form";
+	public static inline var chatMessageKeyAttr:DataAttr = "data-railshx-chat-message-key";
+	public static inline var chatCableReadyAttr:DataAttr = "data-railshx-chat-cable-ready";
 
 	public static inline var submitStorageKey:StorageKey = "railshx.todo.just_added";
 	public static inline var submitScrollStorageKey:StorageKey = "railshx.todo.submit_scroll_y";
@@ -56,6 +59,10 @@ class TodoHooks {
 
 	public static inline function attrSelector(value:DataAttr):Selector {
 		return "[" + value + "]";
+	}
+
+	public static inline function attrEqualsSelector(value:DataAttr, expected:String):Selector {
+		return "[" + value + "=\"" + expected + "\"]";
 	}
 
 	public static inline function anchorHref(value:DomId):Href {

@@ -39,19 +39,19 @@ class ChatPanelView {
 				</p>
 			</div>
 
-			<if ${locals.messages.length > 0}>
-				<ul class=${TodoHooks.chatListClass}>
-					<for ${message in locals.messages}>
-						<li class=${TodoHooks.chatMessageClass}>
-							<span class="avatar">#</span>
-							<div>
-								<strong>User ${message.userId}</strong>
-								<p>${message.body}</p>
-							</div>
-						</li>
-					</for>
-				</ul>
-			<else>
+			<ul id=${TodoHooks.chatListId} class=${TodoHooks.chatListClass}>
+				<for ${message in locals.messages}>
+					<li class=${TodoHooks.chatMessageClass} data-railshx-chat-message-key=${message.id}>
+						<span class="avatar">#</span>
+						<div>
+							<strong>User ${message.userId}</strong>
+							<p>${message.body}</p>
+						</div>
+					</li>
+				</for>
+			</ul>
+
+			<if ${locals.messages.length == 0}>
 				<div class="empty-state">No room notes yet. The standup is suspiciously quiet.</div>
 			</if>
 

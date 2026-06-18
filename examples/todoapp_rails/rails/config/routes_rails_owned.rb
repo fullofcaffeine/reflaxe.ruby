@@ -12,3 +12,5 @@
   get "/rails-owned-health",
     to: proc { [200, { "Content-Type" => "text/plain" }, ["rails-owned route\n"]] },
     as: :legacy_health
+
+  mount ActionCable.server => "/cable"

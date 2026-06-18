@@ -180,6 +180,7 @@ require "active_record/railtie"
 require "action_dispatch/railtie"
 require "action_controller/railtie"
 require "action_view/railtie"
+require "action_cable/engine"
 require "propshaft"
 require "importmap-rails"
 require "turbo-rails"
@@ -228,6 +229,16 @@ production:
   database: db/production.sqlite3
 `);
 
+  writeFile("config/cable.yml", `development:
+  adapter: async
+
+test:
+  adapter: test
+
+production:
+  adapter: async
+`);
+
   writeFile("config/environments/production.rb", `Rails.application.configure do
   config.eager_load = true
   config.consider_all_requests_local = false
@@ -239,6 +250,7 @@ end
 
   writeFile("config/importmap.rb", `pin "application"
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
+pin "@rails/actioncable", to: "actioncable.esm.js"
 pin "railshx/todo_client", to: "railshx/todo_client.js"
 pin_all_from "app/javascript/railshx", under: "railshx"
 `);
@@ -248,7 +260,9 @@ pin_all_from "app/javascript/railshx", under: "railshx"
     writeTargetPath("app/assets/stylesheets/application.css")
   );
   writeFile("app/javascript/application.js", `import "@hotwired/turbo-rails"
-import "railshx/todo_client"
+import * as ActionCable from "@rails/actioncable"
+window.ActionCable = ActionCable
+import("railshx/todo_client")
 `);
   copyClientModuleGraph();
 
@@ -284,7 +298,7 @@ end
 
 Models::ChatMessage.find_or_create_by!(body: "Routes, params, and HHX are all typed for this room.", user: owner)
 Models::ChatMessage.find_or_create_by!(body: "Turbo gets normal Rails streams; Haxe owns the safer authoring layer.", user: maintainer)
-Models::ChatMessage.find_or_create_by!(body: "No ActionCable yet: this slice dogfoods the mutation seam first.", user: member)
+Models::ChatMessage.find_or_create_by!(body: "ActionCable now carries typed room broadcasts between browsers.", user: member)
 `);
 
   writeFile("app/models/application_record.rb", `class ApplicationRecord < ActiveRecord::Base
@@ -295,8 +309,13 @@ end
   writeFile("test/test_helper.rb", `ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
+require "action_cable/channel/test_case"
 
 ActiveRecord::Migration.maintain_test_schema!
+
+class ActiveSupport::TestCase
+  include ActionCable::TestHelper
+end
 `);
   copyTree(join(exampleDir, "rails", "test"), join(appDir, "test"));
 }

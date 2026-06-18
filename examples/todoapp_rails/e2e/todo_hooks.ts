@@ -8,7 +8,9 @@ export const hooks = {
     session: "data-railshx-session",
     sessionZone: "data-railshx-session-zone",
     chat: "data-railshx-chat",
-    chatForm: "data-railshx-chat-form"
+    chatForm: "data-railshx-chat-form",
+    chatMessageKey: "data-railshx-chat-message-key",
+    chatCableReady: "data-railshx-chat-cable-ready"
   },
   classes: {
     shell: "todo-shell",
@@ -24,7 +26,8 @@ export const hooks = {
   },
   ids: {
     openWork: "open-work",
-    chatPanel: "railshx-chat-panel"
+    chatPanel: "railshx-chat-panel",
+    chatList: "railshx-chat-list"
   },
   meta: {
     templateName: "railshx-template",
@@ -41,6 +44,7 @@ export const hooks = {
     sessionFooter: ".session-footer",
     sessionZone: "[data-railshx-session-zone]",
     chatPanel: "#railshx-chat-panel",
+    chatList: "#railshx-chat-list",
     chatForms: ".chat-form",
     chatMessages: ".chat-message",
     openWork: "#open-work"

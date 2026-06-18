@@ -6,6 +6,7 @@ class Main
   end
   def self.main()
     todo__hx0 = nil
+    chat_channel__hx0 = Channels::ChatMessagesChannel
     chat_message__hx0 = nil
     routes__hx0 = nil
     haxe_authored_test__hx0 = TestHaxe::Models::TodoHaxeTest
@@ -30,6 +31,7 @@ class Main
     user_management_view__hx0 = Views::UserManagementView
     user_switcher_view__hx0 = Views::UserSwitcherView
     puts(HXRuby.stringify((todo__hx0 == nil)))
+    puts(HXRuby.stringify((chat_channel__hx0 != nil)))
     puts(HXRuby.stringify((chat_message__hx0 == nil)))
     puts(HXRuby.stringify((routes__hx0 == nil)))
     puts(HXRuby.stringify((haxe_authored_test__hx0 != nil)))
