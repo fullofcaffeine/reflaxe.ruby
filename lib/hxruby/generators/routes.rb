@@ -147,6 +147,7 @@ module HXRuby
           append_helper(lines, "#{helper.fetch(:prefix)}_url", helper.fetch(:params))
         end
 
+        lines.pop if lines.last == ""
         lines << "\t// No named Rails routes found." if helpers.empty?
         lines << "}"
         lines << ""

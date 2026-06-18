@@ -69,7 +69,23 @@ class RailsRouteManifest {
 
 	static function positionString(pos:Position):String {
 		var info = Context.getPosInfos(pos);
-		return info.file + ":" + info.min + "-" + info.max;
+		return stablePositionFile(info.file) + ":" + info.min + "-" + info.max;
+	}
+
+	static function stablePositionFile(file:String):String {
+		// Route manifests are committed/snapshotted review artifacts. Haxe macro
+		// positions often arrive as absolute local paths, so strip the compiler
+		// working directory and keep a stable repo-relative source hint.
+		var normalizedFile = StringTools.replace(file, "\\", "/");
+		var cwd = StringTools.replace(Sys.getCwd(), "\\", "/");
+		if (StringTools.endsWith(cwd, "/")) {
+			cwd = cwd.substr(0, cwd.length - 1);
+		}
+		var prefix = cwd + "/";
+		if (StringTools.startsWith(normalizedFile, prefix)) {
+			return normalizedFile.substr(prefix.length);
+		}
+		return normalizedFile;
 	}
 }
 #end

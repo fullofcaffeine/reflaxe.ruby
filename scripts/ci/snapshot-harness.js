@@ -226,9 +226,27 @@ const cases = [
       "test/generated/models/todo_haxe_test.rb",
       "app/haxe_gen/main.rb",
       "config/routes.rb",
+      ".railshx/routes.haxe.json",
       "config/initializers/hxruby_autoload.rb",
       "run.rb",
     ],
+  },
+];
+
+const routeGeneratorCases = [
+  {
+    name: "routes_generator",
+    input: "test/fixtures/rails_routes/routes.txt",
+    output: "src_haxe/routes/Routes.hx",
+    files: ["src_haxe/routes/Routes.hx"],
+    className: "Routes",
+  },
+  {
+    name: "routes_generator_complex",
+    input: "test/fixtures/rails_routes/complex_routes.txt",
+    output: "src_haxe/routes/ComplexRoutes.hx",
+    files: ["src_haxe/routes/ComplexRoutes.hx"],
+    className: "ComplexRoutes",
   },
 ];
 
@@ -251,6 +269,25 @@ for (const testCase of cases) {
 
   if (!update) {
     compileCase(testCase, stabilityOutputDir);
+    for (const relativeFile of testCase.files) {
+      compareStableOutput(testCase.name, relativeFile, outputDir, stabilityOutputDir);
+    }
+  }
+}
+
+for (const testCase of routeGeneratorCases) {
+  const outputDir = join(root, "test", ".generated", "snapshots", testCase.name);
+  const stabilityOutputDir = join(root, "test", ".generated", "snapshots_stability", testCase.name);
+  rmSync(outputDir, { force: true, recursive: true });
+  rmSync(stabilityOutputDir, { force: true, recursive: true });
+  runRouteGeneratorCase(testCase, outputDir);
+
+  for (const relativeFile of testCase.files) {
+    compareSnapshot(testCase.name, relativeFile, outputDir);
+  }
+
+  if (!update) {
+    runRouteGeneratorCase(testCase, stabilityOutputDir);
     for (const relativeFile of testCase.files) {
       compareStableOutput(testCase.name, relativeFile, outputDir, stabilityOutputDir);
     }
@@ -301,6 +338,22 @@ function run(command, args) {
     process.exit(result.status ?? 1);
   }
   return result;
+}
+
+function runRouteGeneratorCase(testCase, outputDir) {
+  run("ruby", [
+    "-I",
+    join(root, "lib"),
+    join(root, "scripts", "rails", "generate-routes.rb"),
+    "--input",
+    join(root, testCase.input),
+    "--output",
+    join(outputDir, testCase.output),
+    "--class",
+    testCase.className,
+    "--root",
+    outputDir,
+  ]);
 }
 
 function compareSnapshot(caseName, relativeFile, outputDir) {

@@ -1,0 +1,47 @@
+{
+  "output": "config/routes.rb",
+  "declarations": [
+    {
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:931-957",
+      "target": "controllers/todos#index",
+      "kind": "root"
+    },
+    {
+      "name": "todos",
+      "only": [
+        "index",
+        "create"
+      ],
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:972-976",
+      "controller": "controllers/todos",
+      "kind": "resources"
+    },
+    {
+      "name": "users",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1027-1034",
+      "target": "controllers/users#index",
+      "path": "users",
+      "kind": "verb",
+      "verb": "get"
+    },
+    {
+      "name": "sign_in",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1102-1111",
+      "target": "controllers/sessions#create",
+      "path": "session",
+      "kind": "verb",
+      "verb": "post"
+    },
+    {
+      "name": "sign_out",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1187-1196",
+      "target": "controllers/sessions#destroy",
+      "path": "session",
+      "kind": "verb",
+      "verb": "delete"
+    }
+  ],
+  "source": "routes.AppRoutes",
+  "version": 1,
+  "class": "routes.AppRoutes"
+}
