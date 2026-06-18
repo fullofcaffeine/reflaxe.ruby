@@ -53,6 +53,8 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - `examples/hello_world`: smallest pure Ruby compile/run path.
 - `examples/ruby_interop` and `examples/ruby_extensions`: consuming and authoring Ruby APIs from Haxe.
 - `examples/active_support_facades`: typed facades over Ruby/Rails extension-style APIs.
+- `examples/rails_routes_dsl`: focused Haxe-owned Rails route DSL fixture with
+  committed `config/routes.rb` and route-manifest snapshots.
 - `examples/rails_interop_app`: gradual Rails adoption with existing Ruby/ERB seams.
 - `examples/todoapp_rails`: canonical RailsHx dogfood app with HHX, ActiveRecord, migrations, Haxe-authored JS, Rails tests, production smoke, and Playwright.
 

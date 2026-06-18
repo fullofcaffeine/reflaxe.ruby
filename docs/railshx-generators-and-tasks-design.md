@@ -420,3 +420,27 @@ Use `../haxe.elixir.codex` as architectural inspiration, not as an API template:
 
 The shared lesson is compile-time typed Haxe authoring that emits normal
 framework-native artifacts.
+
+## Route Generator Modes
+
+Generator-created greenfield RailsHx apps should prefer Haxe-owned routes:
+
+```haxe
+@:railsRoutes
+class AppRoutes {
+	static final routes = {
+		root(to(HomeController, index));
+	};
+}
+```
+
+That source emits normal `config/routes.rb`. The next `hxruby:routes
+MODE=haxe-owned` pass runs Rails, reads the authoritative route table, and
+regenerates typed `Routes.hx` externs. Rails-owned apps skip the Haxe route
+compile and run `MODE=rails-owned` against the existing `config/routes.rb`
+instead.
+
+Do not silently merge generated Haxe routes into a hand-written Rails route
+file. Use explicit source-of-truth modes, generated headers, manifest entries,
+or future marker blocks. The focused compiler fixture is
+`examples/rails_routes_dsl`; the full app fixture is `examples/todoapp_rails`.

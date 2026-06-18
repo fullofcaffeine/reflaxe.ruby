@@ -99,3 +99,8 @@ Generator smoke tests should cover:
 
 Compiler surfaces should keep snapshot tests for generated output shape and
 negative tests for unsafe paths or duplicate generated files.
+
+For routing, `examples/rails_routes_dsl` is the focused compiler fixture. Its
+snapshots cover both generated `config/routes.rb` and the route-specific
+`.railshx/routes.haxe.json` manifest, while `examples/todoapp_rails` proves the
+same ownership model in a running Rails app.

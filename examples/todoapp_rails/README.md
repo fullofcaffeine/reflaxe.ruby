@@ -68,6 +68,11 @@ That prepares the app once, then runs Rails and the watcher together. The watche
 - `src_haxe/routes/Routes.hx` is generated from Rails route output and remains the typed route-helper extern used by controllers/templates.
 - `db/migrate/20260101000000_create_todos.rb` is generated Rails migration output from the snapshot operations in `migrations/CreateTodos.hx`.
 
+For the smallest possible route DSL example, see
+`../rails_routes_dsl`. The todoapp intentionally shows the messier app shape:
+Haxe-owned routes for greenfield code, one Rails-owned route for adoption, and
+typed route helpers consumed from controllers, HHX templates, and tests.
+
 ## Command Guide
 
 ```bash

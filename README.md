@@ -39,7 +39,7 @@ ruby out/ruby/run.rb
 For a guided public entrypoint, start with:
 
 - Pure Ruby: [examples/hello_world](examples/hello_world), [Ruby Extension Interop](docs/ruby-extension-interop.md), and [examples/ruby_extensions](examples/ruby_extensions).
-- RailsHx: [examples/todoapp_rails](examples/todoapp_rails) for a full app, and [examples/rails_interop_app](examples/rails_interop_app) for gradual adoption from existing Ruby/ERB.
+- RailsHx: [examples/todoapp_rails](examples/todoapp_rails) for a full app, [examples/rails_routes_dsl](examples/rails_routes_dsl) for focused Haxe-owned route snapshots, and [examples/rails_interop_app](examples/rails_interop_app) for gradual adoption from existing Ruby/ERB.
 - Documentation map: [docs/README.md](docs/README.md).
 
 ## Target Defines
@@ -213,7 +213,7 @@ rake rails:app ARGS="--output tmp/rails_app --name TodoApp"
 
 `rake test:rails:integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed. `rake test:rails:runtime` sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and makes both Rails integration and mixed-interop runtime execution mandatory.
 
-RailsHx routing supports both ownership directions. Existing Rails apps can keep Rails-owned `config/routes.rb` and generate typed Haxe externs from `rails routes`. Greenfield RailsHx apps can use Haxe-owned `@:railsRoutes` sources that emit normal `config/routes.rb`; Rails still remains the route-helper naming oracle by feeding `rails routes` back into `Routes.hx`. See [docs/railshx-routing-design.md](docs/railshx-routing-design.md).
+RailsHx routing supports both ownership directions. Existing Rails apps can keep Rails-owned `config/routes.rb` and generate typed Haxe externs from `rails routes`. Greenfield RailsHx apps can use Haxe-owned `@:railsRoutes` sources that emit normal `config/routes.rb`; Rails still remains the route-helper naming oracle by feeding `rails routes` back into `Routes.hx`. See [docs/railshx-routing-design.md](docs/railshx-routing-design.md) and the focused [examples/rails_routes_dsl](examples/rails_routes_dsl) snapshot fixture.
 
 ## Compatibility
 

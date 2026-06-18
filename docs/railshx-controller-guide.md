@@ -18,6 +18,13 @@ The local compiler-architecture inspiration is `../haxe.elixir.codex`: use the
 same PhoenixHx lesson of typed surfaces plus macros/registries, but adapt the
 output to Rails instead of copying Phoenix concepts directly.
 
+Controllers normally pair with generated typed route helpers from
+`routes.Routes`. Those externs are generated from Rails output in both
+ownership modes: Rails-owned `config/routes.rb` for adoption apps, or
+Haxe-owned `@:railsRoutes` sources that first emit `config/routes.rb`. See
+[RailsHx Routing Design](railshx-routing-design.md) and the focused
+`examples/rails_routes_dsl` fixture for the route source-of-truth contract.
+
 ## Controller Setup
 
 Annotate a Haxe class with `@:railsController` and extend
