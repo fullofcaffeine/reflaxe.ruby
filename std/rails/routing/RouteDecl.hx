@@ -29,4 +29,6 @@ extern class RouteDecl {
 	public static function scope(path:String, moduleName:String, name:String, children:Array<RouteDecl>):RouteDecl;
 
 	public static function controller(controller:String, children:Array<RouteDecl>):RouteDecl;
+
+	public static function mount(app:String, path:String, name:String):RouteDecl;
 }

@@ -56,6 +56,15 @@ class RoutesDsl {
 		#end
 	}
 
+	public static macro function externalTo(target:Expr):Expr {
+		#if macro
+		var parsed = externalTargetLiteral(target, "externalTo");
+		return macro @:pos(target.pos) rails.routing.RouteTarget.to($v{parsed.controller}, $v{parsed.action});
+		#else
+		return macro null;
+		#end
+	}
+
 	public static macro function root(target:Expr):Expr {
 		return macro @:pos(target.pos) rails.routing.RouteDecl.root($target);
 	}
@@ -110,6 +119,22 @@ class RoutesDsl {
 	public static macro function paramName(name:Expr):Expr {
 		#if macro
 		return macro $v{routeNameLiteral(name, "paramName")};
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function rubyConst(name:Expr):Expr {
+		#if macro
+		return macro $v{rubyConstantLiteral(name, "rubyConst")};
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function at(path:Expr):Expr {
+		#if macro
+		return macro $v{routePathLiteral(path, "at")};
 		#else
 		return macro null;
 		#end
@@ -196,6 +221,17 @@ class RoutesDsl {
 		#if macro
 		var classType = controllerClass(controller, "controller");
 		return macro @:pos(controller.pos) rails.routing.RouteDecl.controller($v{controllerPath(classType)}, $e{routeDeclArray(children, children.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function mountExternal(app:Expr, path:Expr, ?options:Expr):Expr {
+		#if macro
+		var checkedApp = rubyConstantLiteral(app, "mountExternal app");
+		var checkedPath = routePathLiteral(path, "mountExternal at");
+		var optionsInfo = routeOptions(options);
+		return macro @:pos(app.pos) rails.routing.RouteDecl.mount($v{checkedApp}, $v{checkedPath}, $v{optionsInfo.name});
 		#else
 		return macro null;
 		#end
@@ -327,7 +363,7 @@ class RoutesDsl {
 	}
 
 	static function routePathLiteral(expr:Expr, context:String):String {
-		var value = stringLiteral(expr, context + " path");
+		var value = wrappedStringLiteral(expr, ["at"], context + " path");
 		if (value == "") {
 			Context.error(context + " path must not be empty.", expr.pos);
 		}
@@ -409,6 +445,45 @@ class RoutesDsl {
 			Context.error(context + ' must be a snake_case literal such as "admin_posts".', expr.pos);
 		}
 		return value;
+	}
+
+	static function externalTargetLiteral(expr:Expr, context:String):{controller:String, action:String} {
+		var value = stringLiteral(expr, context);
+		var parts = value.split("#");
+		if (parts.length != 2 || parts[0] == "" || parts[1] == "") {
+			Context.error(context + ' expects a literal Rails target such as "legacy/posts#show".', expr.pos);
+		}
+		var controller = parts[0];
+		var action = parts.length > 1 ? parts[1] : "";
+		if (!~/^[a-z][a-z0-9_]*(\/[a-z][a-z0-9_]*)*$/.match(controller)) {
+			Context.error(context + " controller path must be a safe slash-separated Rails controller path.", expr.pos);
+		}
+		if (!~/^[a-z][a-z0-9_]*$/.match(action)) {
+			Context.error(context + " action must be a safe snake_case Rails action name.", expr.pos);
+		}
+		return {controller: controller, action: action};
+	}
+
+	static function rubyConstantLiteral(expr:Expr, context:String):String {
+		var value = wrappedStringLiteral(expr, ["rubyConst"], context);
+		if (!~/^[A-Z][A-Za-z0-9_]*(::[A-Z][A-Za-z0-9_]*)*$/.match(value)) {
+			Context.error(context + ' expects a safe Ruby constant path such as "Sidekiq::Web".', expr.pos);
+		}
+		return value;
+	}
+
+	static function wrappedStringLiteral(expr:Expr, wrappers:Array<String>, context:String):String {
+		return switch (unwrap(expr).expr) {
+			case ECall(callee, [arg]):
+				switch (unwrap(callee).expr) {
+					case EConst(CIdent(name)) if (wrappers.indexOf(name) != -1):
+						stringLiteral(arg, context);
+					case _:
+						stringLiteral(expr, context);
+				}
+			case _:
+				stringLiteral(expr, context);
+		}
 	}
 
 	static function stringLiteral(expr:Expr, context:String):String {

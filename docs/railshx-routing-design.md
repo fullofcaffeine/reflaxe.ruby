@@ -158,13 +158,19 @@ get("legacy/posts/:id", externalTo("legacy/posts#show"), {
 	asName: routeName("legacy_post")
 });
 
+mountExternal(rubyConst("Sidekiq::Web"), at("/sidekiq"), {
+	asName: routeName("sidekiq")
+});
+
 uncheckedRubyRoute('get "legacy/*path", to: "legacy#show"');
 ```
 
 `externalTo(...)` must be literal-only and validate `controller#action` shape,
-safe characters, no traversal, and no Ruby injection. `uncheckedRubyRoute(...)`
-must require `-D railshx_allow_unchecked_routes`, remain out of canonical
-examples, and pass Ruby syntax plus Rails route parity gates.
+safe characters, no traversal, and no Ruby injection. `mountExternal(...)`
+accepts checked Ruby constants and checked mount paths for Rack apps such as
+Sidekiq. `uncheckedRubyRoute(...)` must require `-D
+railshx_allow_unchecked_routes`, remain out of canonical examples, and pass Ruby
+syntax plus Rails route parity gates.
 
 Generated Rails output must be recognizable Rails:
 
@@ -336,6 +342,9 @@ Implemented:
   segments such as `"photos(/:id)"`, and glob segments such as `"files/*path"`
 - typed controller/action refs through `to(Controller, action)`
 - checked external controller refs through `@:railsExternalController`
+- checked literal external targets through `externalTo("legacy/posts#show")`
+- checked mounted Rack app constants through
+  `mountExternal(rubyConst("Sidekiq::Web"), at("/sidekiq"))`
 
 Defer:
 
@@ -344,7 +353,6 @@ Defer:
 - action-only shorthand inside controller blocks
 - optional segments, glob segment parity, and route helper parity checks
 - simple `defaults` and `constraints`
-- checked mounted Rack app constants
 - `concern`/`concerns`
 - `shallow`, `shallowPath`, and `shallowPrefix`
 - `drawExternal(...)` route files

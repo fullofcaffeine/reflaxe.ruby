@@ -38,6 +38,8 @@ for (const expected of [
   'match "posts/search", to: "controllers/posts#search", via: [:get, :post], as: :post_search',
   'get "photos(/:id)", to: "controllers/posts#show_optional", as: :photo_display',
   'get "files/*path", to: "controllers/posts#file", as: :file',
+  'get "legacy/posts/:id", to: "legacy/posts#show", as: :legacy_post',
+  'mount Sidekiq::Web => "/sidekiq", as: :sidekiq',
   'resources :posts, controller: "controllers/posts", except: [:destroy], param: :slug do',
   "  collection do",
   '    get "archived", to: "controllers/posts#archive", as: :archived_collection',
@@ -181,6 +183,34 @@ expectInvalidRouteDslFailure("bad glob path", [
   "",
 ], "path glob must have a name");
 
+expectInvalidRouteDslFailure("bad external target", [
+  "package routes;",
+  "",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tget(\"legacy\", externalTo(\"../legacy#show\"));",
+  "\t};",
+  "}",
+  "",
+], "controller path must be a safe slash-separated Rails controller path");
+
+expectInvalidRouteDslFailure("bad mounted constant", [
+  "package routes;",
+  "",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tmountExternal(rubyConst(\"sidekiq::Web\"), at(\"/sidekiq\"));",
+  "\t};",
+  "}",
+  "",
+], "safe Ruby constant path");
+
 console.log("[routes-dsl] OK");
 
 function writeValidFixture() {
@@ -224,6 +254,8 @@ function writeValidFixture() {
     "\t\tmatch(\"posts/search\", to(PostsController, search), [GET, POST], {asName: routeName(\"post_search\")});",
     "\t\tget(\"photos(/:id)\", to(PostsController, showOptional), {asName: routeName(\"photo_display\")});",
     "\t\tget(\"files/*path\", to(PostsController, file), {asName: routeName(\"file\")});",
+    "\t\tget(\"legacy/posts/:id\", externalTo(\"legacy/posts#show\"), {asName: routeName(\"legacy_post\")});",
+    "\t\tmountExternal(rubyConst(\"Sidekiq::Web\"), at(\"/sidekiq\"), {asName: routeName(\"sidekiq\")});",
     "\t\tresources(Post, PostsController, {except: [destroy], param: paramName(\"slug\")}, {",
     "\t\t\tcollection({",
     "\t\t\t\tget(\"archived\", to(PostsController, archive), {asName: routeName(\"archived_collection\")});",

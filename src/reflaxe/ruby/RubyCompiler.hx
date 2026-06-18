@@ -4806,6 +4806,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								children: railsRouteChildren(params[1], "controller children"),
 								pos: expr.pos
 							};
+						case "mount" if (params.length == 3):
+							{
+								kind: "mount",
+								target: null,
+								verb: "",
+								verbs: [],
+								path: railsRouteString(params[1], "mount path"),
+								name: railsRouteStringAllowEmpty(params[2], "mount name"),
+								controller: railsRouteString(params[0], "mount app"),
+								moduleName: "",
+								only: [],
+								except: [],
+								param: "",
+								children: [],
+								pos: expr.pos
+							};
 						case other:
 							Context.error('@:railsRoutes unsupported RouteDecl.${other} declaration in this implementation slice.', expr.pos);
 							invalidRailsRouteDecl(expr.pos);
@@ -4911,6 +4927,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				renderRailsRouteBlock(parts.join(", "), renderRailsRouteChildren(decl.children));
 			case "controller":
 				renderRailsRouteBlock("controller " + quoteRubyStringForCode(decl.controller), renderRailsRouteChildren(decl.children));
+			case "mount":
+				var parts = ["mount " + decl.controller + " => " + quoteRubyStringForCode(decl.path)];
+				if (decl.name != "") {
+					parts.push("as: " + rubySymbolLiteral(decl.name));
+				}
+				[parts.join(", ")];
 			case _:
 				[];
 		}
