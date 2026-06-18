@@ -21,7 +21,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 
 - [RailsHx Roadmap](railshx-roadmap.md): current Rails plan and sequencing.
 - [Production Readiness](railshx-production-readiness.md): gap tracker for real Rails adoption.
-- [Generators And Tasks](railshx-generators-and-tasks-design.md): Rails-native generator/task ownership.
+- [Generators And Tasks](railshx-generators-and-tasks-design.md): Rails-native generator/task ownership, generated starter skeleton, and `hxruby:start` workflows.
 - [Generated Artifact Ownership](railshx-generated-artifact-ownership.md): manifest/header safety and overwrite policy.
 - [Gradual Adoption](railshx-gradual-adoption.md): mixing existing Ruby/ERB with Haxe/HHX.
 - [Testing Strategy](railshx-testing-strategy.md): snapshots, smoke tests, Rails runtime tests, and Playwright.

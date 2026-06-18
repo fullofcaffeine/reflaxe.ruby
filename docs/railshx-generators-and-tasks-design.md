@@ -7,7 +7,25 @@ validation, and generated Rails-shaped artifacts.
 ## Public Workflow
 
 Greenfield RailsHx code should feel like normal Rails with a typed authoring
-step:
+step. A newly installed RailsHx app should be runnable immediately:
+
+```bash
+bin/rails generate hxruby:install MyApp
+bundle exec rake hxruby:start
+```
+
+For local editing, use the integrated Rails + Haxe watcher loop:
+
+```bash
+bundle exec rake hxruby:start:watch
+# or:
+WATCH=1 bundle exec rake hxruby:start
+# or:
+bundle exec rake 'hxruby:start[watch]'
+```
+
+After the starter, RailsHx generators should continue to compose with normal
+Rails tasks:
 
 ```bash
 bin/rails generate hxruby:model Todo title:string completed:boolean
@@ -49,8 +67,8 @@ Rails-owned surfaces:
 - `bin/rails db:migrate`, `db:rollback`, `db:migrate:status`, and schema dumps.
 - `bin/rails test`, Minitest/RSpec runtime, and Rails fixture/runtime behavior.
 - `zeitwerk:check`, `assets:precompile`, Rails boot, and Rails autoloading.
-- `config/routes.rb` by default; RailsHx may patch only through safe explicit
-  marker blocks or print snippets.
+- Existing/adopted `config/routes.rb` files by default; RailsHx may patch only
+  through safe explicit marker blocks or print snippets.
 - Existing `app/models/**/*.rb`, `app/controllers/**/*.rb`,
   `app/views/**/*.erb`, and `db/migrate/**/*.rb` files unless a RailsHx manifest
   proves ownership.
@@ -62,6 +80,8 @@ RailsHx-owned surfaces:
 - Compiler output such as `app/haxe_gen/**/*.rb`, generated HHX `.html.erb`
   files, generated test files, generated client JS, and generated migrations.
 - Generated route externs derived from Rails routes.
+- Haxe-owned route declarations such as `src_haxe/routes/AppRoutes.hx` in
+  greenfield RailsHx apps, which emit normal `config/routes.rb` artifacts.
 - Adoption wrappers for Ruby services, ERB partials, schema contracts, routes,
   RBS/YARD contracts, and extension/mixin externs.
 - A manifest and generated-file headers that record which source produced which
@@ -96,6 +116,57 @@ Do not override `bin/rails generate model`, `migration`, or `scaffold` by
 default. A future explicit install profile may configure Rails generator
 fallbacks, but gradual adoption depends on vanilla Rails generators remaining
 valid.
+
+## Install Generator Starter Skeleton
+
+`bin/rails generate hxruby:install MyApp` and the repository wrapper
+`rake rails:app ARGS="--output path/to/app --name MyApp"` should create a
+starter that is useful before the user adds a model. The generator writes the
+RailsHx build files, app-local Rake entrypoints, and a small typed app graph:
+
+- `src_haxe/Boot.hx`: compile sentinel that references the starter controller,
+  views, and routes so refactors fail during Haxe compilation instead of leaving
+  stale Rails artifacts.
+- `src_haxe/controllers/HomeController.hx`: typed `@:railsController` example
+  with `static final lifecycle = []` and typed template/layout rendering.
+- `src_haxe/views/ApplicationLayoutView.hx`: typed HHX layout that emits
+  `app/views/layouts/application.html.erb` with Rails CSRF/CSP, stylesheet, and
+  importmap helpers.
+- `src_haxe/views/HomeIndexView.hx`: typed HHX page with a `HomeIndexLocals`
+  object, proving locals/completion before Rails receives ERB.
+- `src_haxe/routes/AppRoutes.hx`: Haxe-owned `@:railsRoutes` root route that
+  emits normal `config/routes.rb`.
+- `src_haxe/routes/Routes.hx`: placeholder typed route-helper extern file. It
+  should be regenerated from Rails output with
+  `bundle exec rake hxruby:gen:routes` after route changes.
+- `src_haxe/client/Boot.hx`: Haxe-authored browser entrypoint compiled into the
+  Rails importmap asset path.
+- `build.hxml` and `build-client.hxml`: server and client compile contracts.
+- `lib/tasks/hxruby.rake`: app-local task bridge that loads `hxruby/tasks`.
+- `bin/railshx-dev` and `bin/railshx-prod`: developer and production wrappers.
+- `Procfile.railshx.dev`: optional `foreman`/`overmind` process file.
+
+The starter should default to Haxe-owned source of truth for the generated
+controller, HHX layout/page, client JS, and root route because it is greenfield
+RailsHx. Existing Rails apps remain first-class: if a team already owns
+`config/routes.rb`, controllers, ERB, or Ruby services, generators must consume
+them through route sync, typed externs, `Template.existing(...)`, or adoption
+wrappers rather than regenerating unowned files.
+
+The generated app-level Rake UX is:
+
+```bash
+bundle exec rake hxruby:start         # compile server/client, then run Rails
+bundle exec rake hxruby:start:watch   # compile once, then run Rails + watchers
+bundle exec rake hxruby:compile       # lower-level server compile
+bundle exec rake hxruby:compile:client
+bundle exec rake hxruby:gen:routes    # regenerate typed Routes.hx from Rails
+bundle exec rake hxruby:production    # compile, zeitwerk:check, assets
+```
+
+`bin/railshx-dev` should use `foreman` or `overmind` when available and fall
+back to `bundle exec rake hxruby:start:watch`, so a generated app remains usable
+without extra process-manager dependencies.
 
 ## Model Generator Contract
 
@@ -284,6 +355,9 @@ Keep RailsHx tasks as composition and validation helpers:
 - `hxruby:compile`: compile server Haxe into Rails artifacts.
 - `hxruby:compile:client`: compile Haxe-authored JS into Rails asset/importmap
   friendly output.
+- `hxruby:start`: compile server/client Haxe and start Rails.
+- `hxruby:start:watch`: compile once, then run Rails, the server Haxe watcher,
+  and the client Haxe watcher together.
 - `hxruby:watch` and `hxruby:watch:client`: developer loops.
 - `hxruby:routes`: route extern regeneration alias.
 - `hxruby:doctor`: environment, manifest, output-root, route freshness, and

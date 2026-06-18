@@ -143,13 +143,13 @@ rake test:rails:runtime
 
 This is the mandatory runtime lane for Rails coverage across the supported Ruby matrix (`3.2`, `3.3`, `4.0`). Plain `rake test`/`npm test` keeps the compiler loop fast and still syntax-checks generated Rails artifacts; the Rails runtime lanes skip only when Rails gems are unavailable in a local environment. CI runs the underlying npm script, so missing generated-app Rails gems become hard failures there.
 
-For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, and dev process files:
+For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, dev process files, and a small typed starter app:
 
 ```bash
 rake rails:app ARGS="--output path/to/rails-app --name MyApp"
 ```
 
-Rails-facing generators are implemented in Ruby and exposed through `bin/rails generate hxruby:*`, repository Rake wrappers, and installed-app `hxruby` rake tasks, following the same host-framework-native generator lesson as PhoenixHx Mix tasks. npm remains repo infrastructure for Lix, Playwright, semantic-release, and Node-based CI scripts; the RailsHx user-facing path is Rake/Rails.
+The generated starter includes a typed `HomeController`, HHX layout, HHX home page, Haxe-owned root route, route-helper extern placeholder, Haxe-authored client JS, CSS/importmap wiring, app-local Rake tasks, and `bin/railshx-*` helpers. Rails-facing generators are implemented in Ruby and exposed through `bin/rails generate hxruby:*`, repository Rake wrappers, and installed-app `hxruby` rake tasks, following the same host-framework-native generator lesson as PhoenixHx Mix tasks. npm remains repo infrastructure for Lix, Playwright, semantic-release, and Node-based CI scripts; the RailsHx user-facing path is Rake/Rails.
 
 In an installed Rails app, prefer the Rails generator entrypoints:
 
@@ -162,17 +162,23 @@ bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_
 bin/rails generate hxruby:adopt --discover
 ```
 
-Inside a generated/adopted RailsHx app, the recommended development flow is:
+Inside a generated RailsHx app, the recommended development flow is one command:
 
 ```bash
-bundle exec rake hxruby:compile
-bundle exec rake hxruby:compile:client
-bundle exec rails server
-bundle exec rake hxruby:watch # in another terminal, or use bin/railshx-dev with foreman/overmind
-bundle exec rake hxruby:watch:client # if not using bin/railshx-dev
+bundle exec rake hxruby:start
 ```
 
-Generated apps also include `bin/railshx-dev`, which starts Rails, the server Haxe watcher, and the client Haxe watcher through `foreman` or `overmind` when either tool is installed. Without those tools it prints the equivalent explicit commands.
+For the edit loop, run Rails and both Haxe watchers together:
+
+```bash
+bundle exec rake hxruby:start:watch
+# or:
+WATCH=1 bundle exec rake hxruby:start
+# or:
+bundle exec rake 'hxruby:start[watch]'
+```
+
+Generated apps also include `bin/railshx-dev`, which starts Rails, the server Haxe watcher, and the client Haxe watcher through `foreman` or `overmind` when either tool is installed. Without those tools it falls back to `bundle exec rake hxruby:start:watch`. If you need the lower-level pieces for CI debugging, use `bundle exec rake hxruby:compile`, `bundle exec rake hxruby:compile:client`, `bundle exec rake hxruby:watch`, and `bundle exec rake hxruby:watch:client` directly.
 
 For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, generated `db/migrate/**` files, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
 
@@ -194,7 +200,7 @@ That command compiles Haxe/HHX, compiles Haxe-authored JS, materializes the gene
 
 The current Rails surface is an alpha with a credible production path, not yet a production-ready contract. Production readiness is tracked by the `haxe.ruby-bjv` bead epic and documented in [docs/railshx-production-readiness.md](docs/railshx-production-readiness.md).
 
-The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`. See [docs/railshx-controller-guide.md](docs/railshx-controller-guide.md) for typed controllers/params, [docs/railshx-action-mailer-guide.md](docs/railshx-action-mailer-guide.md) for typed ActionMailer classes and HHX mail templates, [docs/railshx-active-job-guide.md](docs/railshx-active-job-guide.md) for typed ActiveJob classes and enqueue helpers, [docs/railshx-active-storage-guide.md](docs/railshx-active-storage-guide.md) for typed ActiveStorage refs, [docs/railshx-turbo-guide.md](docs/railshx-turbo-guide.md) for typed Turbo client and server-side stream helpers, [docs/railshx-action-cable-guide.md](docs/railshx-action-cable-guide.md) for typed ActionCable channels/subscriptions, [docs/railshx-instrumentation-guide.md](docs/railshx-instrumentation-guide.md) for typed ActiveSupport instrumentation, [docs/railshx-components-guide.md](docs/railshx-components-guide.md) for typed Rails-native components, [docs/railshx-engines-plugins-guide.md](docs/railshx-engines-plugins-guide.md) for engine/plugin output roots and host-app consumption, [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md) for mixed Ruby/ERB and Haxe adoption patterns, and [docs/railshx-haxe-authored-testing-design.md](docs/railshx-haxe-authored-testing-design.md) for the optional Haxe-authored Ruby/JS test-layer design.
+The next Rails-first compiler layer is tracked as RailsHx; see [docs/railshx-roadmap.md](docs/railshx-roadmap.md) for the typed ActiveRecord, migration, controller, route, generator, and integration-test roadmap inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`. See [docs/railshx-generators-and-tasks-design.md](docs/railshx-generators-and-tasks-design.md) for the generated app skeleton and Rake/Rails task contract, [docs/railshx-routing-design.md](docs/railshx-routing-design.md) for Haxe-owned and Rails-owned route source-of-truth modes, [docs/railshx-controller-guide.md](docs/railshx-controller-guide.md) for typed controllers/params, [docs/railshx-action-mailer-guide.md](docs/railshx-action-mailer-guide.md) for typed ActionMailer classes and HHX mail templates, [docs/railshx-active-job-guide.md](docs/railshx-active-job-guide.md) for typed ActiveJob classes and enqueue helpers, [docs/railshx-active-storage-guide.md](docs/railshx-active-storage-guide.md) for typed ActiveStorage refs, [docs/railshx-turbo-guide.md](docs/railshx-turbo-guide.md) for typed Turbo client and server-side stream helpers, [docs/railshx-action-cable-guide.md](docs/railshx-action-cable-guide.md) for typed ActionCable channels/subscriptions, [docs/railshx-instrumentation-guide.md](docs/railshx-instrumentation-guide.md) for typed ActiveSupport instrumentation, [docs/railshx-components-guide.md](docs/railshx-components-guide.md) for typed Rails-native components, [docs/railshx-engines-plugins-guide.md](docs/railshx-engines-plugins-guide.md) for engine/plugin output roots and host-app consumption, [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md) for mixed Ruby/ERB and Haxe adoption patterns, and [docs/railshx-haxe-authored-testing-design.md](docs/railshx-haxe-authored-testing-design.md) for the optional Haxe-authored Ruby/JS test-layer design.
 
 Useful tooling:
 
@@ -207,7 +213,7 @@ rake rails:app ARGS="--output tmp/rails_app --name TodoApp"
 
 `rake test:rails:integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed. `rake test:rails:runtime` sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and makes both Rails integration and mixed-interop runtime execution mandatory.
 
-Route sync is phase 1 routing support: Rails-owned `config/routes.rb` stays the source of truth, and RailsHx generates typed Haxe externs from `rails routes`. Haxe-owned route emission is intentionally deferred until route-helper sync is fully deterministic; see [docs/railshx-routing-design.md](docs/railshx-routing-design.md).
+RailsHx routing supports both ownership directions. Existing Rails apps can keep Rails-owned `config/routes.rb` and generate typed Haxe externs from `rails routes`. Greenfield RailsHx apps can use Haxe-owned `@:railsRoutes` sources that emit normal `config/routes.rb`; Rails still remains the route-helper naming oracle by feeding `rails routes` back into `Routes.hx`. See [docs/railshx-routing-design.md](docs/railshx-routing-design.md).
 
 ## Compatibility
 
@@ -319,6 +325,9 @@ bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 rake hxruby:compile
 rake hxruby:compile:client
+rake hxruby:start
+rake hxruby:start:watch
+rake hxruby:routes
 rake hxruby:production
 rake hxruby:watch
 rake hxruby:watch:client

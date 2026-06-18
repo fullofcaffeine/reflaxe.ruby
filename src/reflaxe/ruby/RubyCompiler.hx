@@ -4557,6 +4557,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var entries = switch (unwrapTypedExpr(expr).expr) {
 			case TBlock(values): values;
 			case TArrayDecl(values): values;
+			// Haxe may type a one-expression `{ root(...); }` initializer as the
+			// call itself instead of a TBlock. Accept that optimized AST shape so
+			// minimal route files stay ergonomic without changing the DSL contract.
+			case TCall(_, _): [expr];
 			case _:
 				Context.error("@:railsRoutes routes must be a Haxe block: `static final routes = { root(...); resources(...); };`.", expr.pos);
 				[];

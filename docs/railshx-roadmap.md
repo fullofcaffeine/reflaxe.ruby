@@ -27,7 +27,7 @@ Use `../haxe.elixir.codex` as the local inspiration, especially:
 - Ecto typed query APIs for typed `ActiveRecord::Relation` authoring.
 - Ecto migration DSL, builder, registry, and validator for Rails migration generation.
 - Phoenix typed controller/assign/params boundaries for Rails controller and strong-params boundaries.
-- Phoenix router DSL and generated helpers for Rails route helper sync, with Haxe-first routes deferred.
+- Phoenix router DSL and generated helpers for Rails route helper sync, adapted to Rails-owned and Haxe-owned route source-of-truth modes.
 - Mix/project generator docs and end-to-end Phoenix/Ecto examples for RailsHx generators and integration tests.
 
 The goal is not to make Rails look like Phoenix. The goal is to reuse the same successful compiler architecture: typed std surfaces plus macros/registries/tooling that lower into normal framework code.
@@ -70,7 +70,7 @@ Tracked by the `RailsHx typed Rails compiler` epic (`haxe.ruby-wpi`):
 - `haxe.ruby-wpi.4`: implement typed associations, validations, enums, and callbacks.
 - `haxe.ruby-wpi.5`: implement typed migration DSL and Rails migration generator. The initial create-table artifact lane exists; follow-up operation validation covers known tables, columns, indexes, foreign-key columns, reversible destructive operations, and explicit `externalTables` for Rails-owned schema. Production snapshot operations now cover `CreateTable`, `Column`, `Reference`, `Index`, `AddReference`, `RemoveReference`, `AddCompositeIndex`, `RenameColumn`, `RenameTable`, `ChangeNull`, check constraints, decimal precision/scale, migration version metadata, and explicit SQL/data migrations with rollback. Remaining breadth includes fuller change-table helpers, schema-history inference, and generator integration.
 - `haxe.ruby-wpi.6`: implement typed controllers, params, and action results.
-- `haxe.ruby-wpi.7`: harden route helper sync, then design Haxe-first routing. Phase 1 is Rails-owned route sync from `rails routes`; Haxe-owned route emission remains explicitly deferred until helper sync is deterministic. See [RailsHx Routing Design](railshx-routing-design.md).
+- `haxe.ruby-wpi.7`: harden route helper sync and Haxe-first routing. Rails-owned route sync from `rails routes` remains first-class for adoption, while generator-created greenfield apps can use Haxe-owned `@:railsRoutes` sources that emit normal `config/routes.rb`. See [RailsHx Routing Design](railshx-routing-design.md).
 - `haxe.ruby-wpi.8`: implement RailsHx generators, rake tasks, and adoption tooling. The initial mixed-app adoption sample exists through `examples/rails_interop_app`; Ruby-native app, route, scaffold, explicit adopt generators, Rails `hxruby:*` generator adapters, suggest-only adoption discovery, source-backed service signature inference, source-backed extension contract generation, and an initial deterministic RBS service inference subset now exist. Richer YARD/Rails-schema-assisted inference, schema adoption, ownership manifests, model/migration/controller generator hardening, and `hxruby:doctor`/`hxruby:check` remain follow-up work.
 - `haxe.ruby-wpi.9`: add end-to-end Rails integration app and CI gate.
 - `haxe.ruby-wpi.10`: write RailsHx guides and API references.

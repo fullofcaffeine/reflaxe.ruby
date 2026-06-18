@@ -361,7 +361,8 @@ Defer:
 - A project must choose one route source of truth per app or explicit route
   ownership boundary: Rails-owned `config/routes.rb` or Haxe-owned
   `@:railsRoutes`.
-- The greenfield RailsHx default should be Haxe-owned after implementation.
+- The greenfield RailsHx default is Haxe-owned for generator-created starter
+  apps.
 - The adoption/migration-safe mode is Rails-owned and must remain supported.
 - Haxe-owned route emission must refuse to overwrite an existing non-generated
   `config/routes.rb` unless an explicit force/adopt flag is used.
@@ -412,8 +413,9 @@ No Haxe-owned routing implementation should land without tests that:
 - Add ownership tests for absent files, generated-header rewrites,
   manifest-owned rewrites, unowned file refusal, and unsafe path refusal.
 
-Until that exists, RailsHx must continue to support Rails-owned route helper
-sync and generator ergonomics rather than emitting greenfield routes by default.
+RailsHx must continue to support Rails-owned route helper sync and generator
+ergonomics even while greenfield generator-created apps use Haxe-owned routes by
+default.
 
 ## Near-Term Work
 

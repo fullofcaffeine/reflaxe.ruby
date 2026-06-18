@@ -169,6 +169,18 @@ That writes `build.hxml`, `build-client.hxml`, `src_haxe/**`, `app/javascript/**
 bundle exec rake hxruby:gen:app NAME=MyApp
 ```
 
+The generated app is intentionally not an empty Haxe project. It starts with a
+typed `HomeController`, typed HHX `ApplicationLayoutView`, typed HHX
+`HomeIndexView`, Haxe-owned `AppRoutes`, `Routes.hx` route-helper extern
+placeholder, Haxe-authored client boot file, starter CSS/importmap wiring, and
+the app-local `hxruby:start` / `hxruby:start:watch` Rake tasks. That mirrors the
+shape exercised by this todoapp on a smaller scale: Haxe/HHX is the greenfield
+source of truth, Rails receives normal generated Ruby/ERB/routes/assets, and
+Rails-owned routes/templates/services can still be adopted later through typed
+wrappers. See the top-level [README](../../README.md#rails-workflow) and
+[RailsHx Generators And Rails Tasks Design](../../docs/railshx-generators-and-tasks-design.md)
+for the full starter workflow.
+
 The Rails-facing generators are Ruby-native and package with the `hxruby` gem. For gradual adoption of existing Rails code, scaffold typed wrappers without touching Rails-owned ERB/Ruby:
 
 ```bash

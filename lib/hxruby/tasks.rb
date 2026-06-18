@@ -41,6 +41,29 @@ module HXRuby
           end
         end
 
+        desc "Compile RailsHx server/client artifacts and start Rails. Use WATCH=1 for server + watchers"
+        task :start, [:mode] do |_task, args|
+          if truthy?(ENV["WATCH"]) || args[:mode] == "watch"
+            start_with_watch
+          else
+            compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+            compile_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+            rails(["server"])
+          end
+        end
+
+        namespace :start do
+          desc "Compile RailsHx server/client artifacts, then run Rails and Haxe watchers together"
+          task :watch do
+            start_with_watch
+          end
+        end
+
+        desc "Generate Haxe route externs from Rails routes"
+        task :routes do
+          Rake::Task["hxruby:gen:routes"].invoke
+        end
+
         desc "Compile RailsHx server/client artifacts and run production Rails checks"
         task :production do
           compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
@@ -117,6 +140,48 @@ module HXRuby
 
     def rails(args, env: {})
       sh(env.map { |key, value| "#{key}=#{value.to_s.shellescape}" }.concat([rails_command.shellescape, *args.map(&:shellescape)]).join(" "))
+    end
+
+    def rake_command
+      ENV.fetch("RAKE", "bundle exec rake")
+    end
+
+    def start_with_watch
+      compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+      compile_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+      puts "[hxruby] Starting Rails server and RailsHx watchers. Press Ctrl-C to stop all processes."
+      pids = [
+        spawn_shell([rails_command, "server"].map(&:shellescape).join(" ")),
+        spawn_shell("#{rake_command} hxruby:watch"),
+        spawn_shell("#{rake_command} hxruby:watch:client"),
+      ]
+      wait_for_processes(pids)
+    rescue Interrupt
+      puts "\n[hxruby] Stopping Rails server and RailsHx watchers."
+      pids&.each { |pid| stop_process_group(pid) }
+    end
+
+    def spawn_shell(command)
+      puts command
+      Process.spawn(command, pgroup: true)
+    end
+
+    def wait_for_processes(pids)
+      Process.wait2(-1)
+    ensure
+      pids.each { |pid| stop_process_group(pid) }
+      pids.each do |pid|
+        Process.wait(pid)
+      rescue Errno::ECHILD
+        nil
+      end
+    end
+
+    def stop_process_group(pid)
+      pgid = Process.getpgid(pid)
+      Process.kill("TERM", -pgid)
+    rescue Errno::ESRCH, Errno::ECHILD
+      nil
     end
 
     def production_env

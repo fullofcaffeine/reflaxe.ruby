@@ -35,7 +35,36 @@ try {
   ]);
   expectFile("app_haxe/Boot.hx", [
     "class Boot",
-    "TypedTasks RailsHx compile",
+    "import controllers.HomeController;",
+    "import routes.AppRoutes;",
+    "import views.ApplicationLayoutView;",
+    "import views.HomeIndexView;",
+  ]);
+  expectFile("app_haxe/controllers/HomeController.hx", [
+    "package controllers;",
+    "@:railsController",
+    "class HomeController extends rails.action_controller.Base",
+    "ViewMacro.renderTemplateWithLayout",
+    "Template.layout(ApplicationLayoutView)",
+  ]);
+  expectFile("app_haxe/views/ApplicationLayoutView.hx", [
+    "package views;",
+    '@:railsTemplate("layouts/application")',
+    '@:railsTemplateAst("render")',
+    "<csrf_meta_tags />",
+    "<rails_yield />",
+  ]);
+  expectFile("app_haxe/views/HomeIndexView.hx", [
+    "package views;",
+    '@:railsTemplate("controllers/home/index")',
+    '@:railsTemplateAst("render")',
+    "${locals.appName}",
+    "bundle exec rake hxruby:start:watch",
+  ]);
+  expectFile("app_haxe/routes/AppRoutes.hx", [
+    "package routes;",
+    "@:railsRoutes",
+    "root(to(HomeController, index));",
   ]);
   expectFile("build-client.hxml", [
     "path/to/reflaxe.ruby/std",
@@ -71,8 +100,7 @@ try {
   ]);
   expectFile("bin/railshx-dev", [
     "foreman start -f Procfile.railshx.dev",
-    "bundle exec rake hxruby:watch",
-    "bundle exec rake hxruby:watch:client",
+    "bundle exec rake hxruby:start:watch",
   ]);
   expectFile("bin/railshx-prod", [
     'export RAILS_ENV="${RAILS_ENV:-production}"',
@@ -81,10 +109,15 @@ try {
   ]);
   expectManifest([
     ["app_haxe/Boot.hx", "haxe_source", "hxruby:install"],
+    ["app_haxe/controllers/HomeController.hx", "haxe_source", "hxruby:install"],
+    ["app_haxe/routes/AppRoutes.hx", "haxe_source", "hxruby:install"],
     ["app_haxe/routes/Routes.hx", "haxe_source", "hxruby:install"],
+    ["app_haxe/views/ApplicationLayoutView.hx", "haxe_source", "hxruby:install"],
+    ["app_haxe/views/HomeIndexView.hx", "haxe_source", "hxruby:install"],
     ["config/importmap.rb", "rails_config", "hxruby:install"],
     ["bin/railshx-dev", "bin_script", "hxruby:install"],
   ]);
+  compileGeneratedStarter();
 
   run("ruby", [
     "-I",
@@ -182,9 +215,27 @@ function expectFile(relativePath, expectedParts) {
   }
 }
 
-function run(command, args) {
+function compileGeneratedStarter() {
+  const original = readFileSync(join(tempRoot, "build.hxml"), "utf8");
+  const localBuild = original
+    .split(/\r?\n/)
+    .filter((line) => line !== "-lib reflaxe.ruby")
+    .join("\n");
+  writeFileSync(join(tempRoot, "build.local.hxml"), `${localBuild}\n`);
+  run("haxe", [
+    "build.local.hxml",
+    "-cp",
+    join(root, "std"),
+    "-cp",
+    join(root, "src"),
+    "-cp",
+    join(root, "vendor", "reflaxe", "src"),
+  ], { cwd: tempRoot });
+}
+
+function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
-    cwd: root,
+    cwd: options.cwd ?? root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
