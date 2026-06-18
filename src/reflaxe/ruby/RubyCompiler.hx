@@ -4569,8 +4569,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (routes == null) {
 			return;
 		}
+		var decls = railsRouteDecls(routes);
+		validateRailsRouteAliases(decls);
 		var body:Array<String> = [];
-		for (decl in railsRouteDecls(routes)) {
+		for (decl in decls) {
 			body = body.concat(renderRailsRouteDecl(decl));
 		}
 		if (body.length == 0) {
@@ -4638,6 +4640,26 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			decls.push(decl);
 		}
 		return decls;
+	}
+
+	static function validateRailsRouteAliases(decls:Array<RailsRouteDecl>):Void {
+		var seen = new Map<String, Position>();
+		validateRailsRouteAliasesIn(decls, seen);
+	}
+
+	static function validateRailsRouteAliasesIn(decls:Array<RailsRouteDecl>, seen:Map<String, Position>):Void {
+		for (decl in decls) {
+			if (decl.name != "" && ["verb", "match", "mount"].indexOf(decl.kind) != -1) {
+				if (seen.exists(decl.name)) {
+					Context.error('@:railsRoutes duplicate explicit route alias "${decl.name}". Each asName must be unique within a Haxe-owned routes file.',
+						decl.pos);
+				}
+				seen.set(decl.name, decl.pos);
+			}
+			if (decl.children.length > 0) {
+				validateRailsRouteAliasesIn(decl.children, seen);
+			}
+		}
 	}
 
 	static function railsRouteDecl(expr:TypedExpr):RailsRouteDecl {

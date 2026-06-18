@@ -109,6 +109,27 @@ expectInvalidRouteDslFailure("bad route name", [
   "",
 ], "snake_case literal");
 
+expectInvalidRouteDslFailure("duplicate route alias", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import models.Post;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tget(\"posts/archive\", to(PostsController, archive), {asName: routeName(\"duplicate_posts\")});",
+  "\t\tresources(Post, PostsController, {only: [index]}, {",
+  "\t\t\tcollection({",
+  "\t\t\t\tget(\"archived\", to(PostsController, archive), {asName: routeName(\"duplicate_posts\")});",
+  "\t\t\t});",
+  "\t\t});",
+  "\t};",
+  "}",
+  "",
+], "duplicate explicit route alias");
+
 expectInvalidRouteDslFailure("top-level collection", [
   "package routes;",
   "",

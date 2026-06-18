@@ -338,6 +338,7 @@ Implemented:
 - `scope("/api", {moduleName: "api", asName: routeName("api")}, { ... })`
 - `controller(HealthController, { ... })`
 - checked route aliases through `routeName("archived_posts")`
+- duplicate explicit route alias diagnostics across the Haxe-owned route tree
 - checked path literals including normal Rails `:id` segments, optional
   segments such as `"photos(/:id)"`, and glob segments such as `"files/*path"`
 - typed controller/action refs through `to(Controller, action)`
