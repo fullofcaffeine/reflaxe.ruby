@@ -6,6 +6,7 @@ require "pathname"
 require "hxruby/generators/adopt"
 require "hxruby/generators/app"
 require "hxruby/generators/routes"
+require "hxruby/generators/routes_parity"
 require "hxruby/generators/scaffold"
 
 module HXRuby
@@ -60,9 +61,9 @@ module HXRuby
           end
         end
 
-        desc "Generate Haxe route externs from Rails routes"
+        desc "Generate Haxe route externs from Rails routes. MODE=rails-owned|haxe-owned|auto"
         task :routes do
-          Rake::Task["hxruby:gen:routes"].invoke
+          sync_routes
         end
 
         desc "Compile RailsHx server/client artifacts and run production Rails checks"
@@ -138,6 +139,31 @@ module HXRuby
     def compile_haxe(hxml)
       env = { "HXRUBY_GEM_ROOT" => gem_root }
       sh(env.map { |key, value| "#{key}=#{value.to_s.shellescape}" }.concat(["haxe", hxml].map(&:shellescape)).join(" "))
+    end
+
+    def sync_routes
+      mode = ENV.fetch("MODE", "auto")
+      unless ["rails-owned", "haxe-owned", "auto"].include?(mode)
+        abort("MODE must be rails-owned, haxe-owned, or auto")
+      end
+
+      haxe_owned = mode == "haxe-owned" || (mode == "auto" && haxe_owned_routes_available?)
+      compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml")) if haxe_owned
+
+      output = ENV.fetch("OUTPUT", "src_haxe/routes/Routes.hx")
+      package_name = ENV.fetch("PACKAGE", "routes")
+      class_name = ENV.fetch("CLASS", "Routes")
+      routes = IO.popen("#{rails_command} routes", &:read)
+      HXRuby::Generators::Routes.run(["--output", output, "--package", package_name, "--class", class_name], input: routes)
+
+      return unless haxe_owned
+
+      manifest = ENV.fetch("HXRUBY_ROUTES_MANIFEST", ".railshx/routes.haxe.json")
+      HXRuby::Generators::RoutesParity.run(["--manifest", manifest], input: routes)
+    end
+
+    def haxe_owned_routes_available?
+      File.file?(".railshx/routes.haxe.json") || File.file?("src_haxe/routes/AppRoutes.hx")
     end
 
     def compile_client_haxe(hxml)

@@ -67,6 +67,7 @@
     "test:sql-string-policy": "node scripts/ci/sql-string-policy-check.js",
     "rails:app": "ruby -I lib scripts/rails/app.rb",
     "rails:adopt": "ruby -I lib scripts/rails/adopt.rb",
+    "rails:check-routes-parity": "ruby -I lib scripts/rails/check-routes-parity.rb",
     "rails:generate-routes": "ruby -I lib scripts/rails/generate-routes.rb",
     "rails:migration": "ruby -I lib scripts/rails/migration.rb",
     "rails:model": "ruby -I lib scripts/rails/model.rb",

@@ -10,6 +10,7 @@ const outputFile = join(outputDir, "src_haxe", "routes", "Routes.hx");
 const fixture = join(root, "test", "fixtures", "rails_routes", "routes.txt");
 const complexOutputFile = join(outputDir, "src_haxe", "routes", "ComplexRoutes.hx");
 const complexFixture = join(root, "test", "fixtures", "rails_routes", "complex_routes.txt");
+const parityRoot = join(outputDir, "parity");
 
 rmSync(outputDir, { force: true, recursive: true });
 
@@ -125,6 +126,8 @@ if (collision.status === 0 || !collision.stderr.includes("Refusing to overwrite 
   process.exit(1);
 }
 
+runParitySmoke();
+
 function runGenerator(input, output, className = "Routes") {
   const result = spawnSync("ruby", [
     "-I",
@@ -147,4 +150,102 @@ function runGenerator(input, output, className = "Routes") {
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
   }
+}
+
+function runParitySmoke() {
+  mkdirSync(parityRoot, { recursive: true });
+  const routesPath = join(parityRoot, "routes.txt");
+  writeFileSync(routesPath, [
+    "Prefix Verb     URI Pattern                Controller#Action",
+    "root GET        /                          posts#index",
+    "post_search GET|POST /posts/search(.:format) posts#search",
+    "health GET      /up(.:format)              health#show",
+    "status GET      /api/status(.:format)      health#show",
+    "",
+  ].join("\n"));
+
+  const happyManifest = {
+    version: 1,
+    source: "routes.AppRoutes",
+    output: "config/routes.rb",
+    class: "routes.AppRoutes",
+    declarations: [
+      { kind: "root", target: "posts#index", position: "AppRoutes.hx:1" },
+      { kind: "match", name: "post_search", verbs: ["get", "post"], path: "posts/search", target: "posts#search", position: "AppRoutes.hx:2" },
+      { kind: "verb", name: "health", verb: "get", path: "up", target: "health#show", position: "AppRoutes.hx:3" },
+      {
+        kind: "scope",
+        path: "api",
+        position: "AppRoutes.hx:4",
+        children: [
+          { kind: "verb", name: "status", verb: "get", path: "status", target: "health#show", position: "AppRoutes.hx:5" },
+        ],
+      },
+    ],
+  };
+  expectParitySuccess("happy", happyManifest, routesPath);
+  expectParityFailure("missing", {
+    ...happyManifest,
+    declarations: happyManifest.declarations.concat([{ kind: "verb", name: "missing", verb: "get", path: "missing", target: "missing#show", position: "AppRoutes.hx:6" }]),
+  }, routesPath, "missing Haxe-owned route");
+  expectParityFailure("wrong-target", {
+    ...happyManifest,
+    declarations: [{ kind: "verb", name: "health", verb: "get", path: "up", target: "legacy#show", position: "AppRoutes.hx:7" }],
+  }, routesPath, "wrong target");
+  expectParityFailure("wrong-path", {
+    ...happyManifest,
+    declarations: [{ kind: "verb", name: "health", verb: "get", path: "wrong", target: "health#show", position: "AppRoutes.hx:8" }],
+  }, routesPath, "wrong path");
+  expectParityFailure("wrong-verb", {
+    ...happyManifest,
+    declarations: [{ kind: "verb", name: "health", verb: "post", path: "up", target: "health#show", position: "AppRoutes.hx:9" }],
+  }, routesPath, "wrong verb");
+  expectParityFailure("opaque", {
+    ...happyManifest,
+    declarations: [{ kind: "rawRuby", opaque: true, lineSha256: "abc", position: "AppRoutes.hx:10" }],
+  }, routesPath, "opaque raw Haxe-owned route");
+}
+
+function expectParitySuccess(name, manifest, routesPath) {
+  const manifestPath = writeParityManifest(name, manifest);
+  const result = runParity(manifestPath, routesPath);
+  if (result.status !== 0) {
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    console.error(`[routes-generator] expected route parity success for ${name}`);
+    process.exit(1);
+  }
+}
+
+function expectParityFailure(name, manifest, routesPath, expectedError) {
+  const manifestPath = writeParityManifest(name, manifest);
+  const result = runParity(manifestPath, routesPath);
+  if (result.status === 0 || !result.stderr.includes(expectedError)) {
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    console.error(`[routes-generator] expected route parity failure ${name}: ${expectedError}`);
+    process.exit(1);
+  }
+}
+
+function writeParityManifest(name, manifest) {
+  const path = join(parityRoot, `${name}.routes.haxe.json`);
+  writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
+  return path;
+}
+
+function runParity(manifestPath, routesPath) {
+  return spawnSync("ruby", [
+    "-I",
+    join(root, "lib"),
+    join(root, "scripts", "rails", "check-routes-parity.rb"),
+    "--manifest",
+    manifestPath,
+    "--input",
+    routesPath,
+  ], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
 }

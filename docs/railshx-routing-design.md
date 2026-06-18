@@ -332,7 +332,7 @@ Ruby constants, and context errors such as `member(...)` outside
 `resources(...)`. Cross-tree checks and duplicate output/alias checks belong in
 the compiler extraction pass.
 
-Post-emission sync should support:
+Post-emission sync supports:
 
 ```bash
 bundle exec rake hxruby:routes MODE=rails-owned
@@ -340,10 +340,19 @@ bundle exec rake hxruby:routes MODE=haxe-owned
 bundle exec rake hxruby:routes MODE=auto
 ```
 
-Rails-owned mode reads `config/routes.rb`, runs `bin/rails routes --expanded`,
-and generates `Routes.hx`. Haxe-owned mode compiles Haxe first, runs
-`bin/rails routes --expanded`, generates `Routes.hx`, and runs parity checks
-against the Haxe route manifest.
+Rails-owned mode reads `config/routes.rb`, runs `bin/rails routes`, and
+generates `Routes.hx`. Haxe-owned mode compiles Haxe first, runs `bin/rails
+routes`, generates `Routes.hx`, and runs parity checks against
+`.railshx/routes.haxe.json`. Auto mode uses the Haxe-owned lane when it sees
+`src_haxe/routes/AppRoutes.hx` or an existing `.railshx/routes.haxe.json`;
+otherwise it behaves like Rails-owned adoption mode.
+
+The first parity checker intentionally validates the route shapes RailsHx can
+prove from the Haxe route manifest: root routes, direct verb routes, `match`,
+simple `scope`/`namespace` path prefixes, mounted routes, wrong path/verb/target
+diagnostics, missing routes, and opaque raw-route rejection. Full resource
+expansion and richer nested route parity remain follow-up work under the route
+coverage beads because Rails helper naming is still delegated to Rails.
 
 ## Implemented First-Slice Surface
 
@@ -375,6 +384,9 @@ Implemented:
 - simple checked constraints through `constraints({id: rx("[0-9]+")}, { ... })`
 - route manifest emission under `.railshx/routes.haxe.json`
 - generated artifact ownership entries for `config/routes.rb` and the route manifest
+- `hxruby:routes MODE=rails-owned|haxe-owned|auto` route extern sync
+- initial Haxe-owned route parity checks for direct route declarations and
+  opaque raw-route rejection
 
 Defer:
 

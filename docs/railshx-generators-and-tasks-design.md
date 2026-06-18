@@ -369,7 +369,12 @@ Keep RailsHx tasks as composition and validation helpers:
 - `hxruby:start:watch`: compile once, then run Rails, the server Haxe watcher,
   and the client Haxe watcher together.
 - `hxruby:watch` and `hxruby:watch:client`: developer loops.
-- `hxruby:routes`: route extern regeneration alias.
+- `hxruby:routes`: route extern regeneration and route parity. Use
+  `MODE=rails-owned` for adoption apps where `config/routes.rb` is the source of
+  truth, `MODE=haxe-owned` to compile Haxe-owned `@:railsRoutes` first and then
+  compare Rails output with `.railshx/routes.haxe.json`, or `MODE=auto` to use
+  the Haxe-owned lane when `src_haxe/routes/AppRoutes.hx` or an existing route
+  manifest is present.
 - `hxruby:doctor`: environment, manifest, output-root, route freshness, and
   collision diagnostics.
 - `hxruby:check`: compile, syntax-check generated Ruby, and optionally run
