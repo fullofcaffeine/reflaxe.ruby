@@ -23,6 +23,24 @@ extern class Routes {
 	@:native("todos_url")
 	public static function todosUrl():String;
 
+	@:native("users_path")
+	public static function usersPath():String;
+
+	@:native("users_url")
+	public static function usersUrl():String;
+
+	@:native("sign_in_path")
+	public static function signInPath():String;
+
+	@:native("sign_in_url")
+	public static function signInUrl():String;
+
+	@:native("sign_out_path")
+	public static function signOutPath():String;
+
+	@:native("sign_out_url")
+	public static function signOutUrl():String;
+
 	@:native("legacy_health_path")
 	public static function legacyHealthPath():String;
 

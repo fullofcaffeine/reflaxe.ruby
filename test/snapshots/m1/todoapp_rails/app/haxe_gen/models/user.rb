@@ -10,7 +10,9 @@ module Models
         timestamps: true,
         columns: [
           {name: :id, haxe_name: "id", ruby_name: "id", haxe_type: "Int", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint},
-          {name: :name, haxe_name: "name", ruby_name: "name", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}
+          {name: :name, haxe_name: "name", ruby_name: "name", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil},
+          {name: :email, haxe_name: "email", ruby_name: "email", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil},
+          {name: :role, haxe_name: "role", ruby_name: "role", haxe_type: "String", rails_type: :string, nullable: false, default: "member", primary_key: false, index: true, unique: false, db_type: nil}
         ]
       }
     end
@@ -20,10 +22,20 @@ module Models
     has_many :todos
     # haxe column id: Int
     # haxe column name: String
+    # haxe column email: String
+    # haxe column role: String
     validates :name, presence: true
+    validates :email, presence: true
     def initialize(*args, **kwargs)
       args = args + [kwargs] unless kwargs.empty?
       super(*args)
+    end
+    def role_label()
+      return (if (self.role == "admin") then "Admin" else (if (self.role == "maintainer") then "Maintainer" else "Member" end) end)
+    end
+    def initials()
+      trimmed__hx0 = self.name.strip()
+      return (if (trimmed__hx0 == "") then "?" else trimmed__hx0[0, 1].upcase() end)
     end
   end
 end

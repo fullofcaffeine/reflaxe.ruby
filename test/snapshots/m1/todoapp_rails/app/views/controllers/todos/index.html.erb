@@ -26,6 +26,8 @@
 					</aside>
 				</section>
 
+				<%= render partial: "controllers/todos/user_switcher", locals: {users: users, current_user: current_user} %>
+
 				<section class="workspace">
 					<div class="card">
 						<h2>Add a task</h2>
@@ -38,5 +40,5 @@
 					</div>
 				</section>
 
-				<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user} %>
+				<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user, current_user: current_user} %>
 			</main>

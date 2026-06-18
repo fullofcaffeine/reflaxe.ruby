@@ -23,7 +23,7 @@ typedef TodoFormLocals = {
 @:railsTemplateAst("render")
 class TodoFormView {
 	public static function render(locals:TodoFormLocals):HtmlNode {
-		return <form_with url=${Routes.todosPath()} scope=${Todo.railsParamKey} local class=${TodoHooks.formClass}>
+		return <form_with url=${Routes.todosPath()} scope=${Todo.railsParamKey} local class=${TodoHooks.formClass} data-turbo="false">
 			<hidden_field name=${Todo.f.userId} value=${locals.sampleUserId} />
 			<div>
 				<field_label name=${Todo.f.title}>What should ship next?</field_label>

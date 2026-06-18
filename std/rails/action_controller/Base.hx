@@ -34,6 +34,14 @@ class Base {
 	@:rubyKwargs
 	public function redirectTo(location:String):Void {}
 
+	// Rails/Turbo form submissions should usually redirect with an explicit
+	// status, especially `Status.seeOther`. This overload-shaped facade keeps
+	// the Haxe call typed while lowering to `redirect_to path, status: ...`.
+
+	@:native("redirect_to")
+	@:rubyKwargs
+	public function redirectToLocation(location:String, options:RedirectOptions):Void {}
+
 	@:native("redirect_to")
 	@:rubyKwargs
 	public function redirectToOptions(options:RedirectOptions):Void {}

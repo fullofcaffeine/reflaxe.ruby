@@ -242,10 +242,18 @@ for (const expected of [
   "timestamps: true",
   "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
   "{name: :name, haxe_name: \"name\", ruby_name: \"name\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
+  "{name: :email, haxe_name: \"email\", ruby_name: \"email\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
+  "{name: :role, haxe_name: \"role\", ruby_name: \"role\", haxe_type: \"String\", rails_type: :string, nullable: false, default: \"member\", primary_key: false, index: true, unique: false, db_type: nil}",
   "has_many :todos",
   "# haxe column id: Int",
   "# haxe column name: String",
+  "# haxe column email: String",
+  "# haxe column role: String",
   "validates :name, presence: true",
+  "validates :email, presence: true",
+  "def role_label()",
+  "def initials()",
+  "trimmed__hx0[0, 1].upcase()",
 ]) {
   if (!userRuby.includes(expected)) {
     console.error(`todoapp_rails user model output missing expected line: ${expected}`);
@@ -259,7 +267,7 @@ for (const expected of [
   'require "test_helper"',
   "class TodoHaxeTest < ActiveSupport::TestCase",
   'test "typed incomplete scope returns typed titles" do',
-  'user__hx0 = Models::User.create(name: "haxe test owner")',
+  'user__hx0 = Models::User.create(name: "haxe test owner", email: "haxe-test-owner@example.test", role: "admin")',
   'Models::Todo.create(title: "ship haxe tests", notes: "generated Minitest", is_completed: false, user_id: user__hx0.id)',
   'Models::Todo.create(title: "hide completed work", notes: "done", is_completed: true, user_id: user__hx0.id)',
   'assert_equal(["ship haxe tests"], Models::Todo.incomplete().pluck(:title))',
@@ -277,6 +285,9 @@ for (const expected of [
   "Rails.application.routes.draw do",
   'root "controllers/todos#index"',
   'resources :todos, controller: "controllers/todos", only: [:index, :create]',
+  'get "users", to: "controllers/users#index", as: :users',
+  'post "session", to: "controllers/sessions#create", as: :sign_in',
+  'delete "session", to: "controllers/sessions#destroy", as: :sign_out',
 ]) {
   if (!generatedRoutes.includes(expected)) {
     console.error(`todoapp_rails generated routes missing expected line: ${expected}`);
@@ -286,6 +297,12 @@ for (const expected of [
 
 const committedRoutesExtern = readFileSync(join(exampleDir, "src_haxe", "routes", "Routes.hx"), "utf8");
 for (const expected of [
+  '@:native("users_path")',
+  "public static function usersPath():String;",
+  '@:native("sign_in_path")',
+  "public static function signInPath():String;",
+  '@:native("sign_out_path")',
+  "public static function signOutPath():String;",
   '@:native("legacy_health_path")',
   "public static function legacyHealthPath():String;",
 ]) {
@@ -301,13 +318,44 @@ for (const expected of [
   /module Controllers/,
   /class TodosController < ActionController::Base/,
   /todos__hx\d+ = Models::Todo\.incomplete\(\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)/,
-  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: Models::User\.first\(\)\}, layout: "application"\)/,
+  /users__hx\d+ = Models::User\.order\(name: :asc\)\.to_a\(\)/,
+  /current_user__hx\d+ = Controllers::UserSession\.current_user\(self\)/,
+  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, users: users__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: current_user__hx\d+, current_user: current_user__hx\d+\}, layout: "application"\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
-  /self\.redirect_to\(self\.todos_path\(\)\)/,
+  /self\.redirect_to\(self\.todos_path\(\), status: :see_other\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`todoapp_rails controller output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const sessionsControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "sessions_controller.rb"), "utf8");
+for (const expected of [
+  /class SessionsController < ActionController::Base/,
+  /user_params__hx\d+ = self\.params\(\)\.require\("user"\)/,
+  /self\.params\(\)\.require\("user"\)\.permit\(\[:id\]\)/,
+  /user__hx\d+ = Models::User\.find\(user_params__hx\d+\[:id\]\)/,
+  /self\.session\(\)\[:current_user_id\] = user__hx\d+\.id/,
+  /self\.flash\(\)\[:notice\] = \("Signed in as " \+ user__hx\d+\.name\)/,
+  /self\.session\(\)\.delete\(:current_user_id\)/,
+  /self\.redirect_to\(self\.todos_path\(\), status: :see_other\)/,
+]) {
+  if (!expected.test(sessionsControllerRuby)) {
+    console.error(`todoapp_rails sessions controller output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const usersControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "users_controller.rb"), "utf8");
+for (const expected of [
+  /class UsersController < ActionController::Base/,
+  /users__hx\d+ = Models::User\.order\(name: :asc\)\.to_a\(\)/,
+  /self\.render\(template: "controllers\/users\/index", locals: \{users: users__hx\d+, current_user: Controllers::UserSession\.current_user\(self\)\}, layout: "application"\)/,
+]) {
+  if (!expected.test(usersControllerRuby)) {
+    console.error(`todoapp_rails users controller output missing expected line: ${expected}`);
     process.exit(1);
   }
 }
@@ -456,6 +504,9 @@ for (const expected of [
   "static final routes = {",
   "root(to(TodosController, index));",
   "resources(Todo, TodosController, {only: [index, create]});",
+  'get("users", to(UsersController, index), {asName: routeName("users")});',
+  'post("session", to(SessionsController, create), {asName: routeName("sign_in")});',
+  'delete("session", to(SessionsController, destroy), {asName: routeName("sign_out")});',
 ]) {
   if (!routesSource.includes(expected)) {
     console.error(`todoapp_rails route source is missing expected Haxe-owned route content: ${expected}`);
@@ -474,8 +525,11 @@ for (const expected of [
   "class TodoHooks",
   "abstract CssClass(String)",
   'public static inline var formClass:CssClass = "todo-form";',
+  'public static inline var sessionFormClass:CssClass = "session-form";',
+  'public static inline var sessionFooterClass:CssClass = "session-footer";',
   'public static inline var openWorkId:DomId = "open-work";',
   'public static inline var boundAttr:DataAttr = "data-railshx-bound";',
+  'public static inline var sessionAttr:DataAttr = "data-railshx-session";',
   "public static inline function classSelector",
 ]) {
   if (!hooksSource.includes(expected)) {
@@ -500,6 +554,8 @@ const hookSpecSource = readFileSync(join(exampleDir, "e2e", "todoapp.spec.ts"), 
 for (const expected of [
   "import { hooks } from './todo_hooks'",
   "hooks.selectors.form",
+  "hooks.selectors.sessionForms",
+  "hooks.selectors.sessionFooter",
   "hooks.attrs.bound",
   "hooks.selectors.openWork",
 ]) {
@@ -513,7 +569,11 @@ const hookManifest = readFileSync(join(exampleDir, "e2e", "todo_hooks.ts"), "utf
 for (const expected of [
   "// Generated by examples/todoapp_rails/tools/ExportTodoHooks.hx.",
   'form: "todo-form"',
+  'sessionForm: "session-form"',
+  'sessionFooter: "session-footer"',
   'scrollLinks: "[data-railshx-scroll]"',
+  'sessionForms: ".session-form"',
+  'sessionFooter: ".session-footer"',
   'openWork: "#open-work"',
 ]) {
   if (!hookManifest.includes(expected)) {
@@ -530,10 +590,11 @@ for (const expected of [
   '<meta name="railshx-template" content="todo-index">',
   "<%= todo_count %>",
   "<%= typed_column_count %>",
+  '<%= render partial: "controllers/todos/user_switcher", locals: {users: users, current_user: current_user} %>',
   '<%= render partial: "controllers/todos/composer", locals: {sample_user: sample_user} %>',
   '<%= render partial: "controllers/todos/list", locals: {todos: todos} %>',
   "todo-shell",
-  '<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user} %>',
+  '<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user, current_user: current_user} %>',
 ]) {
   if (!view.includes(expected)) {
     console.error(`todoapp_rails view missing expected content: ${expected}`);
@@ -548,7 +609,7 @@ for (const expected of [
   '<%= csrf_meta_tags %>',
   '<%= csp_meta_tag %>',
   '<%= yield :head %>',
-  '<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>',
+  '<%= stylesheet_link_tag "application", data: {turbo_track: "reload"} %>',
   '<%= javascript_importmap_tags %>',
   '<%= yield %>',
 ]) {
@@ -599,7 +660,7 @@ for (const expected of [
 const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_dashboard.html.erb"), "utf8");
 for (const expected of [
   "<% railshx_component_body = capture do %>",
-  '<%= link_to "#open-work", class: "typed-route-link", "data-railshx-scroll": true do %>',
+  '<%= link_to "#open-work", class: "typed-route-link", data: {railshx_scroll: true} do %>',
   '<%= link_to legacy_health_path(), class: "typed-route-link rails-owned-route-link" do %>',
   "Rails-owned route, typed in Haxe",
   '<span><%= (if todos.length > 0 then "Jump to open work" else "Jump to the empty state" end) %></span>',
@@ -646,7 +707,7 @@ for (const expected of [
 
 const typedForm = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_typed_form.html.erb"), "utf8");
 for (const expected of [
-  '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>',
+  '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form", data: {turbo: false} do |form| %>',
   '<%= form.hidden_field :user_id, value: sample_user_id %>',
   '<%= form.label :title, "What should ship next?" %>',
   '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',
@@ -656,6 +717,45 @@ for (const expected of [
 ]) {
   if (!typedForm.includes(expected)) {
     console.error(`todoapp_rails typed form partial missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const typedUserSwitcher = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_user_switcher.html.erb"), "utf8");
+for (const expected of [
+  "Typed session layer",
+  "Choose a demo user",
+  '<%= link_to users_path(), class: "typed-route-link team-route-link" do %>',
+  '<div class="team-members" data-railshx-session-zone>',
+  "<% users.each do |user| %>",
+  '<%= form_with url: sign_in_path(), scope: :user, local: true, class: "session-form", data: {railshx_session: true, turbo: false} do |form| %>',
+  "<%= form.hidden_field :id, value: user.id %>",
+  '<span class="avatar"><%= user.initials() %></span>',
+  "<strong><%= user.name %></strong>",
+  "<span><%= user.email %></span>",
+  '<span class="role-pill"><%= user.role_label() %></span>',
+  '<%= form_with url: sign_out_path(), scope: :session, method: "delete", local: true, class: "session-clear-form", data: {railshx_session: true, turbo: false} do |form| %>',
+  '<%= form.submit "Clear session", type: "submit" %>',
+]) {
+  if (!typedUserSwitcher.includes(expected)) {
+    console.error(`todoapp_rails typed user switcher partial missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const typedUsersPage = readFileSync(join(outputDir, "app", "views", "controllers", "users", "index.html.erb"), "utf8");
+for (const expected of [
+  "RailsHx user management",
+  "Typed users, ordinary Rails output.",
+  '<%= link_to todos_path(), class: "typed-route-link" do %>',
+  "<% users.each do |user| %>",
+  '<span class="avatar"><%= user.initials() %></span>',
+  "<h2><%= user.name %></h2>",
+  "<p><%= user.email %></p>",
+  '<span class="role-pill"><%= user.role_label() %></span>',
+]) {
+  if (!typedUsersPage.includes(expected)) {
+    console.error(`todoapp_rails typed users page missing expected content: ${expected}`);
     process.exit(1);
   }
 }

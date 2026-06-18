@@ -10,7 +10,11 @@ class Main
     haxe_authored_test__hx0 = TestHaxe::Models::TodoHaxeTest
     migration__hx0 = Migrations::CreateTodos
     update_migration__hx0 = Migrations::UpdateTodos
+    user_migration__hx0 = Migrations::UpdateUsers
     controller__hx0 = nil
+    sessions_controller__hx0 = nil
+    user_controller__hx0 = nil
+    user_session__hx0 = Controllers::UserSession
     layout_view__hx0 = Views::ApplicationLayoutView
     card_view__hx0 = Views::TodoCardView
     composer_view__hx0 = Views::TodoComposerView
@@ -19,12 +23,18 @@ class Main
     list_view__hx0 = Views::TodoListView
     view__hx0 = Views::TodoIndexView
     summary_view__hx0 = Views::TodoSummaryView
+    user_management_view__hx0 = Views::UserManagementView
+    user_switcher_view__hx0 = Views::UserSwitcherView
     puts(HXRuby.stringify((todo__hx0 == nil)))
     puts(HXRuby.stringify((routes__hx0 == nil)))
     puts(HXRuby.stringify((haxe_authored_test__hx0 != nil)))
     puts(HXRuby.stringify((migration__hx0 != nil)))
     puts(HXRuby.stringify((update_migration__hx0 != nil)))
+    puts(HXRuby.stringify((user_migration__hx0 != nil)))
     puts(HXRuby.stringify((controller__hx0 == nil)))
+    puts(HXRuby.stringify((sessions_controller__hx0 == nil)))
+    puts(HXRuby.stringify((user_controller__hx0 == nil)))
+    puts(HXRuby.stringify((user_session__hx0 != nil)))
     puts(HXRuby.stringify((layout_view__hx0 != nil)))
     puts(HXRuby.stringify((card_view__hx0 != nil)))
     puts(HXRuby.stringify((composer_view__hx0 != nil)))
@@ -33,6 +43,8 @@ class Main
     puts(HXRuby.stringify((list_view__hx0 != nil)))
     puts(HXRuby.stringify((view__hx0 != nil)))
     puts(HXRuby.stringify((summary_view__hx0 != nil)))
+    puts(HXRuby.stringify((user_management_view__hx0 != nil)))
+    puts(HXRuby.stringify((user_switcher_view__hx0 != nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

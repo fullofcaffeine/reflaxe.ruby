@@ -3,6 +3,7 @@ package controllers;
 import models.Todo;
 import models.User;
 import rails.action_view.Template;
+import rails.action_controller.Status;
 import rails.macros.ParamsMacro;
 import rails.macros.ViewMacro;
 import routes.Routes;
@@ -11,9 +12,11 @@ import views.TodoIndexView;
 
 typedef TodoIndexLocals = {
 	var todos:Array<Todo>;
+	var users:Array<User>;
 	var todoCount:Int;
 	var typedColumnCount:Int;
 	var sampleUser:Null<User>;
+	var currentUser:Null<User>;
 }
 
 // RailsHx todo controller.
@@ -34,17 +37,21 @@ class TodosController extends rails.action_controller.Base {
 
 	public function index() {
 		var todos = Todo.incomplete().includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray();
+		var users = User.order(User.f.name.asc()).toArray();
+		var currentUser = UserSession.currentUser(this);
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {
 			todos: todos,
+			users: users,
 			todoCount: todos.length,
 			typedColumnCount: Todo.typedColumnCount(),
-			sampleUser: User.first()
+			sampleUser: currentUser,
+			currentUser: currentUser
 		}, Template.layout(ApplicationLayoutView));
 	}
 
 	public function create() {
 		var attrs = ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, Todo.f.notes, Todo.f.userId]);
 		var todo = Todo.create(attrs);
-		redirectTo(Routes.todosPath());
+		redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
 	}
 }

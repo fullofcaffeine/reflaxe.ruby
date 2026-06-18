@@ -1,6 +1,10 @@
+import controllers.SessionsController;
 import controllers.TodosController;
+import controllers.UserSession;
+import controllers.UsersController;
 import migrations.CreateTodos;
 import migrations.UpdateTodos;
+import migrations.UpdateUsers;
 import models.Todo;
 import routes.AppRoutes;
 import test_haxe.models.TodoHaxeTest;
@@ -12,6 +16,8 @@ import views.TodoFormView;
 import views.TodoIndexView;
 import views.TodoListView;
 import views.TodoSummaryView;
+import views.UserManagementView;
+import views.UserSwitcherView;
 
 // RailsHx todoapp compile sentinel.
 //
@@ -31,7 +37,11 @@ class Main {
 		var haxeAuthoredTest:Class<TodoHaxeTest> = TodoHaxeTest;
 		var migration:Class<CreateTodos> = CreateTodos;
 		var updateMigration:Class<UpdateTodos> = UpdateTodos;
+		var userMigration:Class<UpdateUsers> = UpdateUsers;
 		var controller:TodosController = null;
+		var sessionsController:SessionsController = null;
+		var userController:UsersController = null;
+		var userSession:Class<UserSession> = UserSession;
 		var layoutView:Class<ApplicationLayoutView> = ApplicationLayoutView;
 		var cardView:Class<TodoCardView> = TodoCardView;
 		var composerView:Class<TodoComposerView> = TodoComposerView;
@@ -40,12 +50,18 @@ class Main {
 		var listView:Class<TodoListView> = TodoListView;
 		var view:Class<TodoIndexView> = TodoIndexView;
 		var summaryView:Class<TodoSummaryView> = TodoSummaryView;
+		var userManagementView:Class<UserManagementView> = UserManagementView;
+		var userSwitcherView:Class<UserSwitcherView> = UserSwitcherView;
 		Sys.println(todo == null);
 		Sys.println(routes == null);
 		Sys.println(haxeAuthoredTest != null);
 		Sys.println(migration != null);
 		Sys.println(updateMigration != null);
+		Sys.println(userMigration != null);
 		Sys.println(controller == null);
+		Sys.println(sessionsController == null);
+		Sys.println(userController == null);
+		Sys.println(userSession != null);
 		Sys.println(layoutView != null);
 		Sys.println(cardView != null);
 		Sys.println(composerView != null);
@@ -54,5 +70,7 @@ class Main {
 		Sys.println(listView != null);
 		Sys.println(view != null);
 		Sys.println(summaryView != null);
+		Sys.println(userManagementView != null);
+		Sys.println(userSwitcherView != null);
 	}
 }

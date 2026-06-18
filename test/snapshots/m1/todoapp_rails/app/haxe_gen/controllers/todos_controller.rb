@@ -8,12 +8,14 @@ module Controllers
     end
     def index()
       todos__hx0 = Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()
-      self.render(template: "controllers/todos/index", locals: {todos: todos__hx0, todo_count: todos__hx0.length, typed_column_count: Models::Todo.typed_column_count(), sample_user: Models::User.first()}, layout: "application")
+      users__hx0 = Models::User.order(name: :asc).to_a()
+      current_user__hx0 = Controllers::UserSession.current_user(self)
+      self.render(template: "controllers/todos/index", locals: {todos: todos__hx0, users: users__hx0, todo_count: todos__hx0.length, typed_column_count: Models::Todo.typed_column_count(), sample_user: current_user__hx0, current_user: current_user__hx0}, layout: "application")
     end
     def create()
       attrs__hx0 = self.params().require("todo").permit([:title, :notes, :user_id])
       todo__hx0 = Models::Todo.create(attrs__hx0)
-      self.redirect_to(self.todos_path())
+      self.redirect_to(self.todos_path(), status: :see_other)
     end
   end
 end

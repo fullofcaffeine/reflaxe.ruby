@@ -4,11 +4,15 @@ export const hooks = {
   attrs: {
     bound: "data-railshx-bound",
     scroll: "data-railshx-scroll",
-    flash: "data-railshx-flash"
+    flash: "data-railshx-flash",
+    session: "data-railshx-session",
+    sessionZone: "data-railshx-session-zone"
   },
   classes: {
     shell: "todo-shell",
     form: "todo-form",
+    sessionForm: "session-form",
+    sessionFooter: "session-footer",
     list: "todo-list",
     item: "todo-item",
     dot: "todo-dot"
@@ -27,6 +31,9 @@ export const hooks = {
     items: ".todo-item",
     dots: ".todo-item .todo-dot",
     scrollLinks: "[data-railshx-scroll]",
+    sessionForms: ".session-form",
+    sessionFooter: ".session-footer",
+    sessionZone: "[data-railshx-session-zone]",
     openWork: "#open-work"
   }
 } as const

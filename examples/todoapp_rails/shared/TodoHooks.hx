@@ -17,6 +17,8 @@ class TodoHooks {
 
 	public static inline var shellClass:CssClass = "todo-shell";
 	public static inline var formClass:CssClass = "todo-form";
+	public static inline var sessionFormClass:CssClass = "session-form";
+	public static inline var sessionFooterClass:CssClass = "session-footer";
 	public static inline var itemClass:CssClass = "todo-item";
 	public static inline var listClass:CssClass = "todo-list";
 	public static inline var dotClass:CssClass = "todo-dot";
@@ -28,9 +30,12 @@ class TodoHooks {
 	public static inline var boundAttr:DataAttr = "data-railshx-bound";
 	public static inline var scrollAttr:DataAttr = "data-railshx-scroll";
 	public static inline var flashAttr:DataAttr = "data-railshx-flash";
+	public static inline var sessionAttr:DataAttr = "data-railshx-session";
+	public static inline var sessionZoneAttr:DataAttr = "data-railshx-session-zone";
 
 	public static inline var submitStorageKey:StorageKey = "railshx.todo.just_added";
 	public static inline var submitScrollStorageKey:StorageKey = "railshx.todo.submit_scroll_y";
+	public static inline var sessionStorageKey:StorageKey = "railshx.todo.session_changed";
 
 	public static inline function classSelector(value:CssClass):Selector {
 		return "." + value;

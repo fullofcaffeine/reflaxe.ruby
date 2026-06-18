@@ -7,6 +7,7 @@ import shared.TodoHooks;
 import views.TodoComposerView.TodoComposerLocals;
 import views.TodoListView.TodoListLocals;
 import views.TodoDashboardView;
+import views.UserSwitcherView.UserSwitcherLocals;
 
 // Todo index page authored as typed HHX.
 //
@@ -51,6 +52,11 @@ class TodoIndexView {
 					</aside>
 				</section>
 
+				<partial template=${(Template.of(UserSwitcherView) : Template<UserSwitcherLocals>)} locals=${{
+					users: locals.users,
+					currentUser: locals.currentUser
+				}} />
+
 				<section class="workspace">
 					<div class="card">
 						<h2>Add a task</h2>
@@ -65,9 +71,11 @@ class TodoIndexView {
 
 				<partial template=${(Template.of(TodoDashboardView) : Template<TodoIndexLocals>)} locals=${{
 					todos: locals.todos,
+					users: locals.users,
 					todoCount: locals.todoCount,
 					typedColumnCount: locals.typedColumnCount,
-					sampleUser: locals.sampleUser
+					sampleUser: locals.sampleUser,
+					currentUser: locals.currentUser
 				}} />
 			</main></>;
 	}

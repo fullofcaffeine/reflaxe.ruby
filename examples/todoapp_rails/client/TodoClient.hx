@@ -36,8 +36,10 @@ class TodoClient {
 
 	static function boot():Void {
 		bindTodoForm();
+		bindSessionForms();
 		bindScrollLinks();
 		announceCompletedCreate();
+		announceSessionChange();
 	}
 
 	static function bindTodoForm():Void {
@@ -85,6 +87,22 @@ class TodoClient {
 		}
 	}
 
+	static function bindSessionForms():Void {
+		var forms = Browser.document.querySelectorAll(TodoHooks.classSelector(TodoHooks.sessionFormClass));
+		for (i in 0...forms.length) {
+			var form:Element = cast forms.item(i);
+			if (form == null || form.getAttribute(TodoHooks.boundAttr) == "true") {
+				continue;
+			}
+			form.setAttribute(TodoHooks.boundAttr, "true");
+			form.addEventListener("submit", function(_:Event):Void {
+				try {
+					Browser.window.sessionStorage.setItem(TodoHooks.sessionStorageKey, "1");
+				} catch (_:js.lib.Error) {}
+			});
+		}
+	}
+
 	static function announceCompletedCreate():Void {
 		var shouldAnnounce = false;
 		var savedScrollY:Null<Float> = null;
@@ -109,6 +127,32 @@ class TodoClient {
 			Browser.window.setTimeout(function():Void {
 				flash.setAttribute("hidden", "hidden");
 			}, 2200);
+		}
+	}
+
+	static function announceSessionChange():Void {
+		var shouldAnnounce = false;
+		try {
+			shouldAnnounce = Browser.window.sessionStorage.getItem(TodoHooks.sessionStorageKey) == "1";
+			Browser.window.sessionStorage.removeItem(TodoHooks.sessionStorageKey);
+		} catch (_:js.lib.Error) {}
+		if (!shouldAnnounce) {
+			return;
+		}
+		var flash = Browser.document.querySelector(TodoHooks.attrSelector(TodoHooks.flashAttr));
+		if (flash != null) {
+			flash.textContent = "Session updated";
+			flash.removeAttribute("hidden");
+			Browser.window.setTimeout(function():Void {
+				flash.setAttribute("hidden", "hidden");
+			}, 2200);
+		}
+		var zone = Browser.document.querySelector(TodoHooks.attrSelector(TodoHooks.sessionZoneAttr));
+		if (zone != null) {
+			zone.classList.add("is-warm");
+			Browser.window.setTimeout(function():Void {
+				zone.classList.remove("is-warm");
+			}, 900);
 		}
 	}
 

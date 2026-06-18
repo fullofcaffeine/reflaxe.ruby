@@ -5,4 +5,7 @@
 Rails.application.routes.draw do
   root "controllers/todos#index"
   resources :todos, controller: "controllers/todos", only: [:index, :create]
+  get "users", to: "controllers/users#index", as: :users
+  post "session", to: "controllers/sessions#create", as: :sign_in
+  delete "session", to: "controllers/sessions#destroy", as: :sign_out
 end

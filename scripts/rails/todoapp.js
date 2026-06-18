@@ -38,6 +38,7 @@ switch (command) {
   case "prepare":
     compileAndMaterialize();
     bundleInstall();
+    resetDevelopmentDatabaseIfRequested();
     rails(["db:prepare"]);
     rails(["db:seed"]);
     printReady();
@@ -258,15 +259,33 @@ import "railshx/todo_client"
     );
   }
 
-  writeFile("db/seeds.rb", `owner = Models::User.find_or_create_by!(name: "RailsHx Owner")
+  writeFile("db/seeds.rb", `owner = Models::User.find_or_create_by!(email: "owner@example.test") do |user|
+  user.name = "RailsHx Owner"
+  user.role = "admin"
+end
+
+maintainer = Models::User.find_or_create_by!(email: "maintainer@example.test") do |user|
+  user.name = "Template Maintainer"
+  user.role = "maintainer"
+end
+
+member = Models::User.find_or_create_by!(email: "member@example.test") do |user|
+  user.name = "Product Member"
+  user.role = "member"
+end
 
 Models::Todo.find_or_create_by!(title: "Ship typed Rails templates", user: owner) do |todo|
   todo.notes = "HHX stays typed in Haxe; ERB is generated for Rails."
   todo.is_completed = false
 end
 
-Models::Todo.find_or_create_by!(title: "Wire the Rails dev loop", user: owner) do |todo|
+Models::Todo.find_or_create_by!(title: "Wire the Rails dev loop", user: maintainer) do |todo|
   todo.notes = "Compile Haxe, run Rails, keep the watcher nearby."
+  todo.is_completed = false
+end
+
+Models::Todo.find_or_create_by!(title: "Model a typed session seam", user: member) do |todo|
+  todo.notes = "Use Rails session and flash stores through typed Haxe facades."
   todo.is_completed = false
 end
 `);
@@ -302,6 +321,20 @@ function bundleInstall() {
     return;
   }
   runStreaming("bundle", ["install"], { cwd: appDir });
+}
+
+function resetDevelopmentDatabaseIfRequested() {
+  if (process.env.RAILSHX_TODOAPP_RESET_DB !== "1") {
+    return;
+  }
+  for (const file of [
+    "development.sqlite3",
+    "development.sqlite3-shm",
+    "development.sqlite3-wal",
+  ]) {
+    rmSync(join(appDir, "db", file), { force: true });
+  }
+  console.log("[todoapp] Reset development SQLite DB for deterministic browser test data.");
 }
 
 function rails(args, options = {}) {

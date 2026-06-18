@@ -33,7 +33,7 @@ That prepares the app once, then runs Rails and the watcher together. The watche
 - Haxe-owned ActionView artifact generation through `@:railsTemplate(...)`, which materializes the Rails-native ERB file under `app/views`.
 - Haxe-authored typed ActionView partials through `@:railsTemplateAst(...)`, Rails HHX inline markup, `H`, `HtmlNode`, and `HtmlAttr`; the compiler type-checks embedded expressions such as `todo.title`, typed conditionals/loops, typed partial locals, route helper calls, and typed form locals before emitting ERB.
 - HHX-first ActionView authoring: the index page and all extracted view pieces are authored as typed HHX, while Rails-native ERB is compiler output.
-- Haxe-authored JavaScript compiled into the Rails importmap/Turbo flow, so progressive behavior can stay in typed Haxe while Rails serves standard `app/javascript/**` assets.
+- Haxe-authored JavaScript compiled into the Rails importmap/Turbo flow, so progressive behavior can stay in typed Haxe while Rails serves standard `app/javascript/**` assets. The current sample uses the minimal Haxe JS target; the tracked follow-up is to adopt the PhoenixHx-style Genes lane for cleaner ES modules and `@:async`/`@:await` Turbo authoring.
 - Haxe-authored Rails migrations through `@:railsMigration(...)`; the compiler emits standard timestamped `db/migrate/*.rb` ActiveRecord migration files from typed snapshot operations.
 - Haxe-owned Rails routing through `src_haxe/routes/AppRoutes.hx`; the compiler emits standard `config/routes.rb`, and generated route helper externs under `src_haxe/routes/Routes.hx` still come from Rails route output. The sample also includes one Rails-owned `legacy_health` route to prove existing Rails routes can remain Rails-owned while Haxe consumes them through typed helpers.
 - CI smoke coverage that compiles the Haxe app, checks generated Rails Ruby, and runs Rails runtime tests when local Rails gems are available.
@@ -42,7 +42,10 @@ That prepares the app once, then runs Rails and the watcher together. The watche
 
 - `models/Todo.hx` and `models/User.hx` are RailsHx ActiveRecord models.
 - `migrations/CreateTodos.hx` is the Haxe-authored Rails migration snapshot source; generated Ruby lands at `db/migrate/20260101000000_create_todos.rb`.
-- `controllers/TodosController.hx` is a RailsHx controller using typed params and route helpers.
+- `migrations/UpdateUsers.hx` adds typed user profile/session columns as an immutable migration snapshot, while `models/User.hx` owns the current field/validation/helper contract.
+- `controllers/TodosController.hx` is a RailsHx controller using typed params, typed session-user lookup, typed relation queries, and route helpers.
+- `controllers/SessionsController.hx` demonstrates first-party Rails session/flash access from Haxe. It is intentionally not Devise; installed-gem auth belongs to the separate gem-layer adoption path.
+- `controllers/UsersController.hx` renders a second typed page for user management through checked HHX locals.
 - `Todo.incomplete()` returns an inferred typed relation shape, and the controller keeps the query chain typed with `includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray()` before handing an array to HHX templates.
 - `views/ApplicationLayoutView.hx` owns the Rails layout as typed HHX, including the doctype, Rails CSRF/CSP helper tags, stylesheet/importmap tags, and `<rails_yield />`; generated ERB lands at `app/views/layouts/application.html.erb`.
 - `views/TodoIndexView.hx` declares the typed Rails template artifact and owns the full page shell as HHX; scalar locals project from Haxe names such as `todoCount` to Rails locals such as `todo_count`.
@@ -51,12 +54,14 @@ That prepares the app once, then runs Rails and the watcher together. The watche
 - `views/TodoDashboardView.hx` composes the summary partial through typed `<partial>` locals, emits a typed `<link_to>` route helper with nested HHX block content, and generates `app/views/controllers/todos/_dashboard.html.erb`, which the index renders with normal Rails locals.
 - `views/TodoListView.hx` is the index's typed open-work list island: HHX validates the `todos` local, `<if>` branch, `<for>` loop binder, and `todo.title`/`todo.notes` expressions before generating `app/views/controllers/todos/_list.html.erb`.
 - `views/TodoFormView.hx` uses HHX inline markup (`<form_with>`, `<hidden_field>`, `<field_label>`, `<text_field>`, `<text_area>`, `<submit>`) plus model-owned refs such as `Todo.railsParamKey`, `Todo.f.title`, and `Todo.f.notes` for a typed Rails form partial. It generates `app/views/controllers/todos/_typed_form.html.erb`, which the index renders with `sample_user_id`.
-- `std/rails/turbo/Turbo.hx` provides a typed Haxe facade over Turbo lifecycle events, `Turbo.visit` actions/options, frame helpers, and client-side stream rendering, so client code uses Rails-native Turbo semantics without stringly-typed app logic.
-- `src_haxe/routes/AppRoutes.hx` is the Haxe-owned Rails routing source: `@:railsRoutes` plus `static final routes = { root(to(TodosController, index)); resources(Todo, TodosController, {only: [index, create]}); }` emits normal `config/routes.rb`.
+- `views/UserSwitcherView.hx` is the typed session/user panel: `User.f.id` drives the hidden form field, route helper externs drive sign-in/sign-out URLs, and `shared/TodoHooks` marks the Turbo-enhanced forms.
+- `views/UserManagementView.hx` is a second HHX page showing typed user fields, role helpers, and route-helper links.
+- `std/rails/turbo/Turbo.hx` provides a typed Haxe facade over Turbo lifecycle events, `Turbo.visit` actions/options, frame helpers, and client-side stream rendering, so client code uses Rails-native Turbo semantics without stringly-typed app logic. Repeated behavior hooks live in `shared/TodoHooks.hx` and are exported to Playwright, which is the same source-of-truth pattern RailsHx should use for richer Turbo abstractions.
+- `src_haxe/routes/AppRoutes.hx` is the Haxe-owned Rails routing source: `@:railsRoutes` plus typed controller/action refs emits normal `config/routes.rb` for todos, users, and session routes.
 - `rails/config/routes_rails_owned.rb` is a commented Rails-owned route snippet. It models an existing hand-written Rails route that stays outside `AppRoutes.hx`; `Routes.hx` still exposes it as typed `Routes.legacyHealthPath()` after route-helper generation.
 - `shared/TodoHooks.hx` centralizes behavior-bearing slots, IDs, selectors, data attributes, and storage keys as typed Haxe constants shared by HHX templates, Haxe JS, and Playwright.
 - `tools/ExportTodoHooks.hx` materializes those Haxe-owned hooks into `e2e/todo_hooks.ts`, so browser tests import the same selector contract instead of copying string literals.
-- `client/TodoClient.hx` compiles to `app/javascript/railshx/todo_client.js` and owns progressive enhancement: typed Turbo submit handling, smooth same-page navigation, scroll-position preservation after create, and a transient typed-status flash.
+- `client/TodoClient.hx` compiles to `app/javascript/railshx/todo_client.js` and owns progressive enhancement: typed Turbo lifecycle hooks, smooth same-page navigation, scroll-position preservation after create, and a transient typed-status flash. Redirecting demo forms currently opt out of Turbo Drive with `data-turbo="false"` for stable full-page Rails redirects; true Turbo Stream create/session responses are tracked as follow-up work.
 - `assets/stylesheets/application.css` is copied into Rails' asset path; HHX owns structure, CSS owns presentation.
 - Generated `config/routes.rb` is materialized from `src_haxe/routes/AppRoutes.hx`.
 - Generated `app/views/controllers/todos/index.html.erb` is materialized from that Haxe template marker.
@@ -231,7 +236,7 @@ rake todoapp:playwright
 
 `test:rails:integration` always syntax-checks generated Ruby. It runs `rails db:migrate` and `rails test` when the generated Rails app bundle is available. `test:rails:runtime` is the mandatory runtime lane: it sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and runs both the todoapp Rails integration tests and the mixed Rails/RailsHx interop runtime tests.
 
-`test:todoapp-playwright` is the real-browser layer, modeled after the PhoenixHx sentinel approach but Rails-native: Playwright validates browser-rendered ActionView, importmap/Turbo/Haxe-client behavior, form submission, and same-page link enhancement against a running generated Rails app.
+`test:todoapp-playwright` is the real-browser layer, modeled after the PhoenixHx sentinel approach but Rails-native: Playwright validates browser-rendered ActionView, importmap/Turbo/Haxe-client boot, and same-page link enhancement against a running generated Rails app. Mutating browser form flows are currently covered by Rails controller/runtime tests while the Playwright redirect stall is tracked in `haxe.ruby-ae6.1`.
 
 The todoapp is the canonical RailsHx dogfood app. When a RailsHx feature is
 demonstrated here, add coverage at the Rails layer that would catch a real app
@@ -242,7 +247,7 @@ regression:
 | Compiler/static | `rake test:todoapp:static` | Haxe/HHX compiles, generated Ruby/ERB/JS shape, negative type-safety checks, strict-boundary policy. |
 | Rails model/request | `rake todoapp:test` or `rake test:rails:integration` | ActiveRecord validations/scopes/associations, strong params, redirects, rendered templates, migrations, Rails test harness consumption. |
 | Mandatory runtime | `rake test:rails:runtime` | Rails gems present, generated app can migrate and run Rails tests under the required runtime lane. |
-| Browser UX | `rake todoapp:playwright` | Real browser rendering, Turbo/importmap/Haxe-client behavior, form submission, same-page navigation, visible UX regressions. |
+| Browser UX | `rake todoapp:playwright` | Real browser rendering, Turbo/importmap/Haxe-client behavior, same-page navigation, visible UX regressions. Mutating form E2E is tracked in `haxe.ruby-ae6.1`. |
 | Production | `rake todoapp:production` | Zeitwerk, production boot, asset precompile, release archive contents. |
 
 ## Current Boundary

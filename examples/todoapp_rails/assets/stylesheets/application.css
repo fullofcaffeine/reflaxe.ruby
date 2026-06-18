@@ -97,6 +97,187 @@ h2 {
 	margin-top: 28px;
 }
 
+.team-console {
+	display: grid;
+	grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.4fr);
+	gap: 26px;
+	margin: 28px 0;
+	overflow: hidden;
+	position: relative;
+}
+
+.team-console::after {
+	position: absolute;
+	top: -72px;
+	right: -62px;
+	width: 220px;
+	height: 220px;
+	border-radius: 999px;
+	background: radial-gradient(circle, rgba(255, 107, 53, 0.2), transparent 62%);
+	content: "";
+	pointer-events: none;
+}
+
+.team-console-copy,
+.team-members,
+.session-footer {
+	position: relative;
+	z-index: 1;
+}
+
+.team-console-copy {
+	align-self: center;
+}
+
+.team-console-copy h2,
+.users-page-hero h1 {
+	margin: 10px 0;
+	font-size: clamp(2rem, 4vw, 4.2rem);
+	line-height: 0.88;
+	letter-spacing: -0.06em;
+}
+
+.team-console-copy p,
+.users-page-hero p {
+	margin: 0 0 18px;
+	color: var(--muted);
+	font: 1.02rem/1.8 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.team-members {
+	display: grid;
+	gap: 12px;
+}
+
+.team-members.is-warm .person-card {
+	border-color: rgba(255, 107, 53, 0.48);
+	transform: translateY(-2px);
+}
+
+.session-form {
+	margin: 0;
+}
+
+.person-card {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	gap: 14px;
+	align-items: center;
+	width: 100%;
+	padding: 14px;
+	border: 1px solid var(--line);
+	border-radius: 24px;
+	color: var(--ink);
+	background: rgba(255, 255, 255, 0.78);
+	cursor: pointer;
+	text-align: left;
+	transition:
+		border-color 180ms ease,
+		box-shadow 180ms ease,
+		transform 180ms ease;
+}
+
+.person-card:hover,
+.person-card:focus-visible,
+.person-card.is-current {
+	border-color: rgba(255, 107, 53, 0.72);
+	box-shadow: 0 18px 42px rgba(24, 34, 31, 0.12);
+	outline: none;
+	transform: translateY(-2px);
+}
+
+.avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	border-radius: 18px;
+	color: var(--paper);
+	background: var(--ink);
+	font: 900 1.1rem/1 "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+.person-copy {
+	display: grid;
+	gap: 3px;
+}
+
+.person-copy strong,
+.user-management-card h2 {
+	font-size: 1rem;
+	letter-spacing: -0.02em;
+}
+
+.person-copy span,
+.user-management-card p {
+	margin: 0;
+	color: var(--muted);
+	font: 0.86rem/1.5 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.role-pill {
+	padding: 8px 10px;
+	border-radius: 999px;
+	color: var(--ink);
+	background: rgba(255, 107, 53, 0.13);
+	font: 900 0.72rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.11em;
+	text-transform: uppercase;
+}
+
+.session-footer {
+	display: flex;
+	grid-column: 1 / -1;
+	flex-wrap: wrap;
+	gap: 14px;
+	align-items: center;
+	justify-content: space-between;
+	padding-top: 18px;
+	border-top: 1px solid var(--line);
+	color: var(--muted);
+	font: 0.95rem/1.5 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.session-clear-form {
+	margin: 0;
+}
+
+.session-clear-form input[type="submit"] {
+	max-width: 180px;
+	background: transparent;
+}
+
+.users-shell {
+	padding-block: 54px 96px;
+}
+
+.users-page-hero {
+	margin-bottom: 26px;
+}
+
+.user-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 18px;
+}
+
+.user-management-card {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 16px;
+	align-items: center;
+	padding: 22px;
+	border: 1px solid var(--line);
+	border-radius: 32px;
+	background: rgba(255, 255, 255, 0.82);
+}
+
+.user-management-card.is-current {
+	border-color: rgba(255, 107, 53, 0.72);
+	box-shadow: 0 18px 48px rgba(24, 34, 31, 0.11);
+}
+
 .open-work-card:focus {
 	outline: 3px solid rgba(255, 107, 53, 0.34);
 	outline-offset: 6px;
@@ -287,7 +468,9 @@ h2 {
 
 @media (max-width: 820px) {
 	.hero,
-	.workspace {
+	.workspace,
+	.team-console,
+	.user-grid {
 		grid-template-columns: 1fr;
 	}
 

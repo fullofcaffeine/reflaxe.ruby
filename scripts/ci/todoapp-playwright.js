@@ -36,7 +36,7 @@ async function main() {
   const baseUrl = process.env.BASE_URL ?? `http://${bind}:${port}`;
 
   stage("browser app prepare", () => run(process.execPath, [join(root, "scripts", "rails", "todoapp.js"), "prepare"], {
-    env: { ...process.env, PORT: port, BIND: bind },
+    env: { ...process.env, PORT: port, BIND: bind, RAILSHX_TODOAPP_RESET_DB: "1" },
   }));
 
   stage("browser install", ensurePlaywrightBrowser);

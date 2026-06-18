@@ -1,6 +1,8 @@
 package routes;
 
+import controllers.SessionsController;
 import controllers.TodosController;
+import controllers.UsersController;
 import models.Todo;
 import rails.macros.RoutesDsl.*;
 
@@ -20,5 +22,8 @@ class AppRoutes {
 	static final routes = {
 		root(to(TodosController, index));
 		resources(Todo, TodosController, {only: [index, create]});
+		get("users", to(UsersController, index), {asName: routeName("users")});
+		post("session", to(SessionsController, create), {asName: routeName("sign_in")});
+		delete("session", to(SessionsController, destroy), {asName: routeName("sign_out")});
 	};
 }

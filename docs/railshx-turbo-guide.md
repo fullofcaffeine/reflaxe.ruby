@@ -5,6 +5,29 @@ behavior. Haxe authors write checked browser code; Rails still serves normal
 importmap assets and Turbo still owns navigation, form submission, frames, and
 streams.
 
+## Haxe-Authored Client Philosophy
+
+RailsHx client code should be more ergonomic than hand-written JavaScript or
+TypeScript while staying transparent to Rails. The goal is not a parallel Turbo
+runtime. The goal is typed authoring for ordinary Turbo behavior:
+
+- Put behavior hooks, DOM ids, data attributes, storage keys, stream targets,
+  and selectors behind shared Haxe constants/abstracts that HHX, Haxe JS, and
+  Playwright can all consume.
+- Prefer typed Turbo event/detail helpers over raw `CustomEvent` casts.
+- Prefer small typed behavior helpers for common lifecycle binding, submit
+  tracking, stream rendering, frame updates, and fetch-header mutation.
+- Keep `js.Syntax.code(...)` at the narrow browser/Turbo boundary when Haxe std
+  lacks a typed DOM shape; do not spread raw JS snippets through app code.
+- Generated Rails apps should be able to choose a modern Genes-backed client
+  lane for readable ES module output and future `@:async`/`@:await` authoring,
+  while plain Haxe JS remains the minimal fallback.
+
+PhoenixHx uses this architecture for LiveView clients: app-local
+`build-client.hxml`, `-lib genes`, typed hook registries shared with templates,
+and framework-owned runtime boot. RailsHx should adapt that pattern to
+Turbo/importmap rather than copying Phoenix hook APIs directly.
+
 ## Client Events
 
 Use `rails.turbo.Turbo` from Haxe-authored JavaScript:

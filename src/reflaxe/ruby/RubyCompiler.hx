@@ -1811,9 +1811,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (arrayCall != null) {
 			return arrayCall;
 		}
+		var stringCall = compileStringCall(callee, params);
+		if (stringCall != null) {
+			return stringCall;
+		}
 		var actionControllerStoreCall = compileActionControllerStoreCall(callee, params);
 		if (actionControllerStoreCall != null) {
 			return actionControllerStoreCall;
+		}
+		var actionControllerParamsCall = compileActionControllerParamsCall(callee, params);
+		if (actionControllerParamsCall != null) {
+			return actionControllerParamsCall;
 		}
 		var actionControllerResponseCall = compileActionControllerResponseCall(callee, params);
 		if (actionControllerResponseCall != null) {
@@ -2025,6 +2033,33 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				null;
 		}
+	}
+
+	static function compileStringCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (callee.expr) {
+			case TField(target, access) if (isStringExpr(target)):
+				var receiver = printInlineExpr(target);
+				switch (fieldAccessRawName(access)) {
+					case "substr" if (params.length == 1):
+						RubyRawExpr(receiver + "[" + printParam(params, 0) + "..]");
+					case "substr" if (params.length == 2):
+						RubyRawExpr(receiver + "[" + printParam(params, 0) + ", " + printParam(params, 1) + "]");
+					case "charAt" if (params.length == 1):
+						RubyRawExpr("(" + receiver + "[" + printParam(params, 0) + "] || \"\")");
+					case "toUpperCase" if (params.length == 0):
+						RubyCall(compileExpr(target), "upcase", []);
+					case "toLowerCase" if (params.length == 0):
+						RubyCall(compileExpr(target), "downcase", []);
+					case _:
+						null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function isStringExpr(expr:TypedExpr):Bool {
+		return TypeTools.toString(expr.t) == "String";
 	}
 
 	static function compileActiveRecordRelationCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -2559,6 +2594,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function isActionControllerKeyValueStore(expr:TypedExpr):Bool {
 		return switch (expr.t) {
 			case TInst(classRef, _): var classType = classRef.get(); classType.pack.join(".") == "rails.action_controller" && classType.name == "KeyValueStore";
+			case _:
+				false;
+		}
+	}
+
+	static function compileActionControllerParamsCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (callee.expr) {
+			case TField(target, access) if (isActionControllerParams(target)):
+				switch (fieldAccessRawName(access)) {
+					case "get" if (params.length == 1):
+						RubyRawExpr(printInlineExpr(target) + "[" + railsStoreKey(params[0]) + "]");
+					case _:
+						null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function isActionControllerParams(expr:TypedExpr):Bool {
+		return switch (expr.t) {
+			case TInst(classRef, _): var classType = classRef.get(); classType.pack.join(".") == "rails.action_controller" && classType.name == "Params";
 			case _:
 				false;
 		}
@@ -5714,6 +5771,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function lowerTemplateHelperAttrs(attrs:TypedExpr, scope:RailsTemplateScope):Array<String> {
 		var out:Array<String> = [];
+		var dataAttrs:Array<String> = [];
 		for (attr in expectTemplateArray(attrs, "HtmlNode.LinkTo attrs must be an array literal.")) {
 			var unwrapped = unwrapTemplateExpr(attr);
 			switch (unwrapped.expr) {
@@ -5723,23 +5781,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (params.length != 2) {
 								Context.error("HtmlAttr.Static expects name and value arguments.", unwrapped.pos);
 							} else {
-								out.push(helperKwargName(expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal."))
-									+ ": "
-									+ quoteRubyStringForCode(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal.")));
+								addTemplateHelperAttr(out, dataAttrs, expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal."),
+									quoteRubyStringForCode(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal.")));
 							}
 						case "Bool":
 							if (params.length != 1) {
 								Context.error("HtmlAttr.Bool expects one name argument.", unwrapped.pos);
 							} else {
-								out.push(helperKwargName(expectTemplateString(params[0], "HtmlAttr.Bool name must be a string literal.")) + ": true");
+								addTemplateHelperAttr(out, dataAttrs, expectTemplateString(params[0], "HtmlAttr.Bool name must be a string literal."), "true");
 							}
 						case "Expr":
 							if (params.length != 2) {
 								Context.error("HtmlAttr.Expr expects name and value arguments.", unwrapped.pos);
 							} else {
-								out.push(helperKwargName(expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal."))
-									+ ": "
-									+ printTemplateExpr(params[1], scope));
+								addTemplateHelperAttr(out, dataAttrs, expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal."),
+									printTemplateExpr(params[1], scope));
 							}
 						case other:
 							Context.error('Unsupported HtmlAttr constructor "$other" for HtmlNode.LinkTo.', unwrapped.pos);
@@ -5748,7 +5804,29 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					Context.error("HtmlNode.LinkTo attrs must contain HtmlAttr constructor expressions.", unwrapped.pos);
 			}
 		}
+		if (dataAttrs.length > 0) {
+			out.push("data: {" + dataAttrs.join(", ") + "}");
+		}
 		return out;
+	}
+
+	static function addTemplateHelperAttr(out:Array<String>, dataAttrs:Array<String>, name:String, value:String):Void {
+		if (StringTools.startsWith(name, "data-")) {
+			var dataName = RubyNaming.toLocalName(name.substr("data-".length));
+			dataAttrs.push(dataName + ": " + dataAttrValue(name, value));
+			return;
+		}
+		out.push(helperKwargName(name) + ": " + value);
+	}
+
+	static function dataAttrValue(name:String, value:String):String {
+		if (name == "data-turbo" && value == quoteRubyStringForCode("false")) {
+			return "false";
+		}
+		if (name == "data-turbo" && value == quoteRubyStringForCode("true")) {
+			return "true";
+		}
+		return value;
 	}
 
 	static function lowerTemplatePartial(template:TypedExpr, locals:TypedExpr, scope:RailsTemplateScope):String {

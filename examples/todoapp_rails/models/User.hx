@@ -2,10 +2,12 @@ package models;
 
 // User ActiveRecord model source of truth.
 //
-// Demonstrates: a typed Rails model with a `has_many` association and
-// validation metadata.
-// Type safety: `User.f.name` and `User.a.todos` are generated from this class;
-// query helpers inherited from `Base<User>` preserve `User` relation types.
+// Demonstrates: a typed Rails model with user-facing profile fields, a role
+// column, a `has_many` association, validation metadata, and small app-owned
+// helpers that still emit plain Ruby methods.
+// Type safety: `User.f.name`, `User.f.email`, `User.f.role`, and `User.a.todos`
+// are generated from this class; query helpers inherited from `Base<User>`
+// preserve `User` relation types.
 // IntelliSense: editors should complete model fields, field refs, association
 // refs, and inherited ActiveRecord-style query methods.
 // Ruby/Rails output: a normal `ApplicationRecord` model with Rails association
@@ -19,8 +21,26 @@ class User extends rails.active_record.Base<User> {
 	@:railsColumn({index: true})
 	public var name:String;
 
+	@:railsColumn({index: true})
+	public var email:String;
+
+	@:railsColumn({index: true, defaultValue: "member"})
+	public var role:String;
+
 	@:hasMany public var todos:rails.ActiveRecord.HasMany<Todo>;
 
 	@:validates({presence: true})
 	public var nameValidation:rails.ActiveRecord.Validation<String>;
+
+	@:validates({presence: true})
+	public var emailValidation:rails.ActiveRecord.Validation<String>;
+
+	public function roleLabel():String {
+		return role == "admin" ? "Admin" : role == "maintainer" ? "Maintainer" : "Member";
+	}
+
+	public function initials():String {
+		var trimmed = StringTools.trim(name);
+		return trimmed == "" ? "?" : trimmed.substr(0, 1).toUpperCase();
+	}
 }

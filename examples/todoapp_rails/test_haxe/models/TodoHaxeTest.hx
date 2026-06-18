@@ -25,7 +25,7 @@ class TodoHaxeTest extends ModelTestCase {
 	@:railsTests
 	static function define():Void {
 		test("typed incomplete scope returns typed titles", () -> {
-			var user = User.create({name: "haxe test owner"});
+			var user = User.create({name: "haxe test owner", email: "haxe-test-owner@example.test", role: "admin"});
 			Todo.create({
 				title: "ship haxe tests",
 				notes: "generated Minitest",
