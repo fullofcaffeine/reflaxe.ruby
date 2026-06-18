@@ -22,14 +22,15 @@ typed contracts, macros, checked generators, and app-facing ergonomics.
 
 There are two time horizons:
 
-- **Today:** use the generated `docs/railshx/gem_layers.md` template, existing
-  `hxruby:adopt` service/template/extension wrappers, and hand-reviewed Haxe
-  externs under `src_haxe/interop/gems/<gem>`.
-- **Planned:** use a dedicated `hxruby:adopt --gem` or
-  `hxruby:gem-layer` generator that performs the deterministic inventory and
-  writes the first skeleton automatically.
+- **Implemented now:** use `hxruby:adopt --gem NAME --discover` for a
+  deterministic Bundler inventory and `hxruby:adopt --gem NAME --write
+  contracts` for a conservative app-local Haxe skeleton under
+  `src_haxe/interop/gems/<gem>`.
+- **Planned next:** grow a dedicated `hxruby:gem-layer` generator and reusable
+  companion packages such as DeviseHx once the generic adoption lane has enough
+  production evidence.
 
-For a generic installed gem, the planned flow is:
+For a generic installed gem, the current flow is:
 
 ```bash
 bundle add some_gem
@@ -40,9 +41,10 @@ bundle exec rake hxruby:compile
 bin/rails test
 ```
 
-The future `--gem` lane should fail closed when the gem is not installed, the
-gem path cannot be resolved safely, metadata is missing, or generated Haxe would
-need unchecked `Dynamic` without a review marker.
+The `--gem` lane fails closed when the app `Gemfile` is missing, the gem is not
+present in Bundler's resolved specs, the gem path cannot be resolved safely, or
+the write mode is not explicit. Generated Haxe may contain `Dynamic` only with
+review/TODO markers because Ruby source rarely proves complete Haxe types.
 
 The first pass should be deterministic. Before asking an LLM for help, the
 generator should mechanically inventory what it can prove: installed gem path and
@@ -59,7 +61,8 @@ mechanical inventory and gem docs/source to propose a Haxe layer, while RailsHx
 remains the gatekeeper:
 
 ```bash
-bin/rails generate hxruby:gem-layer devise --discover --llm-prompt tmp/devisehx-prompt.md
+bin/rails generate hxruby:adopt --gem devise --discover
+bin/rails generate hxruby:adopt --gem devise --write contracts
 # Ask an LLM to draft patches using tmp/devisehx-prompt.md, the deterministic
 # inventory, the gem docs/source, and the RailsHx companion-layer templates.
 bundle exec rake hxruby:compile
@@ -78,16 +81,16 @@ bundle add devise
 bin/rails generate devise:install
 bin/rails generate devise User
 haxelib install devisehx
-bin/rails generate hxruby:gem-layer devise --models User
+bin/rails generate hxruby:adopt --gem devise --write contracts
 bundle exec rake hxruby:routes
 bundle exec rake hxruby:compile
 bin/rails test
 ```
 
-The exact command names are future-facing, but the contract is stable: Rails
-does normal Devise setup, then RailsHx generates or consumes typed Haxe
-contracts around Devise routes, helpers, controllers, model mixins, params, and
-test helpers.
+The reusable DeviseHx companion package is future-facing, but the contract is
+stable: Rails does normal Devise setup, then RailsHx generates or consumes typed
+Haxe contracts around Devise routes, helpers, controllers, model mixins, params,
+and test helpers.
 
 ## DeviseHx Shape
 

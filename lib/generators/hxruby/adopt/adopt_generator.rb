@@ -15,6 +15,8 @@ if defined?(Rails::Generators::Base)
       class_option :template, type: :string, desc: "Rails template path(s) to wrap, comma-separated"
       class_option :extension_source, type: :string, desc: "Ruby source file(s) to inspect for module extension contracts, comma-separated"
       class_option :extension_module, type: :string, desc: "Ruby module name(s) to generate from extension source, comma-separated"
+      class_option :gem, type: :string, desc: "Bundler-installed gem name(s) to inventory/adopt, comma-separated"
+      class_option :write, type: :string, desc: "Write mode for gem adoption; currently supports contracts"
       class_option :locals, type: :string, default: "", desc: "Template locals as name:Type,name:Type"
       class_option :package, type: :string, default: "interop", desc: "Haxe package for generated wrappers"
       class_option :output, type: :string, default: ".", desc: "Output root"
@@ -32,6 +34,8 @@ if defined?(Rails::Generators::Base)
         args += ["--template", hxruby_option(:template)] if hxruby_option(:template)
         args += ["--extension-source", hxruby_option(:extension_source)] if hxruby_option(:extension_source)
         args += ["--extension-module", hxruby_option(:extension_module)] if hxruby_option(:extension_module)
+        args += ["--gem", hxruby_option(:gem)] if hxruby_option(:gem)
+        args += ["--write", hxruby_option(:write)] if hxruby_option(:write)
         args += ["--locals", hxruby_option(:locals, "")] unless hxruby_option(:locals, "").to_s.empty?
         args << "--force" if hxruby_flag?(:force)
         args << "--discover" if hxruby_flag?(:discover)

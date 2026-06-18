@@ -13,7 +13,50 @@ mkdirSync(join(outputDir, "app", "views", "legacy"), { recursive: true });
 mkdirSync(join(outputDir, "app", "services"), { recursive: true });
 mkdirSync(join(outputDir, "app", "models", "concerns"), { recursive: true });
 mkdirSync(join(outputDir, "sig"), { recursive: true });
+mkdirSync(join(outputDir, "vendor", "demo_auth", "lib", "demo_auth"), { recursive: true });
 writeFileSync(existingErb, "<strong><%= label %></strong>\n");
+writeFileSync(join(outputDir, "Gemfile"), [
+  'source "https://rubygems.org"',
+  'gem "demo_auth", path: "vendor/demo_auth"',
+  "",
+].join("\n"));
+writeFileSync(join(outputDir, "vendor", "demo_auth", "demo_auth.gemspec"), [
+  "Gem::Specification.new do |s|",
+  '  s.name = "demo_auth"',
+  '  s.version = "0.1.0"',
+  '  s.summary = "Demo auth gem for RailsHx adoption smoke"',
+  '  s.authors = ["RailsHx"]',
+  '  s.files = Dir["lib/**/*.rb"]',
+  '  s.require_paths = ["lib"]',
+  "end",
+  "",
+].join("\n"));
+writeFileSync(join(outputDir, "vendor", "demo_auth", "lib", "demo_auth.rb"), [
+  'raise "gem source was executed"',
+  "",
+  "module DemoAuth",
+  "  class SessionManager",
+  '    def initialize(scope = "user")',
+  "      @scope = scope",
+  "    end",
+  "",
+  "    def current_user(controller)",
+  "      nil",
+  "    end",
+  "",
+  "    def self.enabled?(scope)",
+  "      true",
+  "    end",
+  "  end",
+  "",
+  "  module ControllerHelpers",
+  "    def authenticate_user!",
+  "      true",
+  "    end",
+  "  end",
+  "end",
+  "",
+].join("\n"));
 const serviceSource = join(outputDir, "app", "services", "legacy_price_formatter.rb");
 writeFileSync(serviceSource, [
   "raise \"service source was executed\"",
@@ -151,6 +194,72 @@ assertManifest([
   ["src_haxe/interop/extensions/SluggableClassMethods.hx", "haxe_adopted_extension"],
 ]);
 
+const gemDiscover = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--gem",
+  "demo_auth",
+  "--discover",
+]);
+if (!gemDiscover.stdout.includes("[rails:adopt:gem] demo_auth 0.1.0") || !gemDiscover.stdout.includes("constant: DemoAuth::SessionManager")) {
+  process.stdout.write(gemDiscover.stdout);
+  process.stderr.write(gemDiscover.stderr);
+  fail("gem discovery did not report deterministic Bundler inventory");
+}
+
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--package",
+  "interop",
+  "--gem",
+  "demo_auth",
+  "--write",
+  "contracts",
+]);
+assertIncludes("src_haxe/interop/gems/demo_auth/GemLayer.hx", [
+  "package interop.gems.demo_auth;",
+  "public static inline final gemName:String = \"demo_auth\";",
+  "public static inline final version:String = \"0.1.0\";",
+  "public static inline final reviewRequired:Bool = true;",
+]);
+assertIncludes("src_haxe/interop/gems/demo_auth/SessionManager.hx", [
+  "package interop.gems.demo_auth;",
+  "// Generated from Bundler gem demo_auth.",
+  '@:native("DemoAuth::SessionManager")',
+  "extern class SessionManager",
+  "public function new(?scope:String):Void;",
+  "public function currentUser(controller:Dynamic):Dynamic;",
+  '@:native("enabled?")',
+  "public static function enabled(scope:Dynamic):Dynamic;",
+]);
+assertIncludes("src_haxe/interop/gems/demo_auth/ControllerHelpers.hx", [
+  "package interop.gems.demo_auth;",
+  '@:native("DemoAuth::ControllerHelpers")',
+  "extern class ControllerHelpers",
+  '@:native("authenticate_user!")',
+  "public function authenticateUser():Dynamic;",
+]);
+assertIncludes("docs/railshx/gems/demo_auth.md", [
+  "# RailsHx Gem Layer: demo_auth",
+  "- Gem: `demo_auth`",
+  "- Version: `0.1.0`",
+  "- `DemoAuth::SessionManager`",
+  "Replace any generated `Dynamic` placeholders",
+]);
+assertManifest([
+  ["src_haxe/interop/gems/demo_auth/GemLayer.hx", "haxe_adopted_gem_layer"],
+  ["src_haxe/interop/gems/demo_auth/SessionManager.hx", "haxe_adopted_gem_contract"],
+  ["src_haxe/interop/gems/demo_auth/ControllerHelpers.hx", "haxe_adopted_gem_contract"],
+  ["docs/railshx/gems/demo_auth.md", "docs"],
+]);
+
 const erbAfter = readFileSync(existingErb, "utf8");
 if (erbAfter !== "<strong><%= label %></strong>\n") {
   fail("adoption generator overwrote Rails-owned ERB source");
@@ -161,6 +270,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "import interop.RbsPriceFormatter;",
   "import interop.extensions.SluggableClassMethods;",
   "import interop.extensions.SluggableInstance;",
+  "import interop.gems.demo_auth.GemLayer;",
+  "import interop.gems.demo_auth.SessionManager;",
   "import interop.templates.LegacyBadgeTemplate;",
   "",
   "class Main {",
@@ -168,6 +279,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\tvar service:Class<LegacyPriceFormatter> = LegacyPriceFormatter;",
   "\t\tvar rbsService:Class<RbsPriceFormatter> = RbsPriceFormatter;",
   "\t\tvar classMethods:Class<SluggableClassMethods> = SluggableClassMethods;",
+  "\t\tvar gemLayer:Class<GemLayer> = GemLayer;",
+  "\t\tvar sessionManager:Class<SessionManager> = SessionManager;",
   "\t\tvar instanceContract:Dynamic = (null : SluggableInstance);",
   "\t\tif (false) {",
   "\t\t\tvar formatter = new LegacyPriceFormatter();",
@@ -180,6 +293,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\tSys.println(service != null);",
   "\t\tSys.println(rbsService != null);",
   "\t\tSys.println(classMethods != null);",
+  "\t\tSys.println(gemLayer != null);",
+  "\t\tSys.println(sessionManager != null);",
   "\t\tSys.println(instanceContract == null);",
   "\t\tSys.println(LegacyBadgeTemplate.template.templatePath);",
   "\t}",
@@ -328,6 +443,29 @@ expectGeneratorFailure("source outside app root", [
   "--service-source",
   join(root, "README.md"),
 ], "--service-source must stay inside the generator output/app root");
+
+expectGeneratorFailure("missing gem", [
+  "--output",
+  outputDir,
+  "--gem",
+  "missing_auth",
+  "--discover",
+], "Gem missing_auth is not installed");
+
+expectGeneratorFailure("unsafe gem name", [
+  "--output",
+  outputDir,
+  "--gem",
+  "../demo_auth",
+  "--discover",
+], "--gem must be a safe Bundler gem name");
+
+expectGeneratorFailure("gem without mode", [
+  "--output",
+  outputDir,
+  "--gem",
+  "demo_auth",
+], "--gem requires --discover or --write contracts");
 
 console.log("[rails-adopt-generator] OK");
 

@@ -21,6 +21,8 @@ module HXRuby
           templates: [],
           extension_sources: [],
           extension_modules: [],
+          gems: [],
+          write: nil,
           locals: "",
           force: false,
           discover: false,
@@ -34,6 +36,8 @@ module HXRuby
           parser.on("--template PATH") { |value| options[:templates].concat(Common.split_csv(value)) }
           parser.on("--extension-source PATH") { |value| options[:extension_sources].concat(Common.split_csv(value)) }
           parser.on("--extension-module NAME") { |value| options[:extension_modules].concat(Common.split_csv(value)) }
+          parser.on("--gem NAME") { |value| options[:gems].concat(Common.split_csv(value)) }
+          parser.on("--write WHAT") { |value| options[:write] = value }
           parser.on("--locals FIELDS") { |value| options[:locals] = value }
           parser.on("--force") { options[:force] = true }
           parser.on("--discover") { options[:discover] = true }
@@ -44,7 +48,13 @@ module HXRuby
         if options[:services].empty? && options[:rbs_sources].any?
           raise Error, "--rbs requires at least one explicit --service constant."
         end
-        if !options[:discover] && options[:services].empty? && options[:templates].empty? && options[:extension_sources].empty?
+        if options[:gems].any? && !options[:discover] && options[:write] != "contracts"
+          raise Error, "--gem requires --discover or --write contracts."
+        end
+        if options[:write] && options[:write] != "contracts"
+          raise Error, "--write only supports contracts for gem adoption."
+        end
+        if !options[:discover] && options[:services].empty? && options[:templates].empty? && options[:extension_sources].empty? && options[:gems].empty?
           raise Error, "Provide at least one --service, --template, or --extension-source boundary to adopt."
         end
 
@@ -60,6 +70,8 @@ module HXRuby
         @templates = options.fetch(:templates).map { |template| checked_template_path(template) }
         @extension_sources = options.fetch(:extension_sources)
         @extension_modules = options.fetch(:extension_modules).map { |mod| checked_constant_path(mod, "--extension-module") }
+        @gems = options.fetch(:gems).map { |gem_name| checked_gem_name(gem_name) }
+        @write_mode = options.fetch(:write)
         @locals = parse_locals(options.fetch(:locals))
         @force = options.fetch(:force)
         @discover = options.fetch(:discover)
@@ -67,6 +79,8 @@ module HXRuby
 
       def run
         discover_boundaries if @discover
+        discover_gems if @discover && @gems.any?
+        write_gem_contracts if @write_mode == "contracts"
         @services.each { |service| write_service(service) }
         @templates.each { |template| write_template(template) }
         @extension_sources.each { |source| write_extension_contracts(source) }
@@ -75,6 +89,8 @@ module HXRuby
       private
 
       def discover_boundaries
+        return if @gems.any? && @services.empty? && @templates.empty? && @extension_sources.empty?
+
         services = discover_services
         templates = discover_templates
 
@@ -85,6 +101,20 @@ module HXRuby
         puts "[rails:adopt] Candidate ERB templates:"
         templates.each { |template| puts "  --template #{template}" }
         puts "  (none found)" if templates.empty?
+      end
+
+      def discover_gems
+        @gems.each do |gem_name|
+          inventory = gem_inventory(gem_name)
+          puts "[rails:adopt:gem] #{inventory.fetch(:name)} #{inventory.fetch(:version)}"
+          puts "  source files: #{inventory.fetch(:ruby_files).length}"
+          if inventory.fetch(:constants).empty?
+            puts "  constants: (none found)"
+          else
+            inventory.fetch(:constants).each { |constant| puts "  constant: #{constant}" }
+          end
+          puts "  next: bin/rails generate hxruby:adopt --gem #{gem_name} --write contracts"
+        end
       end
 
       def discover_services
@@ -310,6 +340,14 @@ module HXRuby
         Common.safe_relative_path(value, label: "--template")
       end
 
+      def checked_gem_name(value)
+        name = value.to_s.strip
+        unless name.match?(/\A[a-zA-Z0-9_.-]+\z/)
+          raise Error, "--gem must be a safe Bundler gem name"
+        end
+        name
+      end
+
       def checked_input_file(value, label)
         path = File.expand_path(value, @output_dir)
         unless path == @output_dir || path.start_with?("#{@output_dir}#{File::SEPARATOR}")
@@ -341,6 +379,164 @@ module HXRuby
 
       def write_owned(path, content, kind:)
         Common.write_file(path, content, force: @force, root: @output_dir, kind: kind, source: "hxruby:adopt")
+      end
+
+      def write_gem_contracts
+        @gems.each do |gem_name|
+          inventory = gem_inventory(gem_name)
+          package = "#{@package_name}.gems.#{Common.file_name(gem_name).tr("-", "_")}"
+          gem_dir = File.join(@output_dir, "src_haxe", Common.package_path(package))
+          write_owned(File.join(gem_dir, "GemLayer.hx"), render_gem_layer(package, inventory), kind: "haxe_adopted_gem_layer")
+          write_owned(File.join(@output_dir, "docs", "railshx", "gems", "#{Common.file_name(gem_name)}.md"), render_gem_layer_doc(inventory), kind: "docs")
+          gem_service_contracts(inventory).each do |contract|
+            native_name = contract.fetch(:constant_name)
+            next if native_name.to_s.empty?
+
+            haxe_class = native_name.split("::").last
+            write_owned(
+              File.join(gem_dir, "#{haxe_class}.hx"),
+              render_service(package, haxe_class, native_name, contract.merge(source_label: "Bundler gem #{gem_name}")),
+              kind: "haxe_adopted_gem_contract"
+            )
+          end
+        end
+      end
+
+      def gem_inventory(gem_name)
+        spec = resolve_bundler_gem(gem_name)
+        gem_root = File.expand_path(spec.full_gem_path)
+        raise Error, "Bundler gem #{gem_name} has an unsafe or missing path." unless File.directory?(gem_root)
+
+        ruby_files = Dir.glob(File.join(gem_root, "lib", "**", "*.rb")).sort
+        constants = ruby_files.flat_map { |path| GemSourceInventory.new(path).constants }.uniq.sort
+        {
+          name: spec.name,
+          version: spec.version.to_s,
+          ruby_files: ruby_files,
+          constants: constants,
+        }
+      end
+
+      def resolve_bundler_gem(gem_name)
+        gemfile = File.join(@output_dir, "Gemfile")
+        raise Error, "Cannot adopt gem #{gem_name}: Gemfile not found in #{@output_dir}." unless File.file?(gemfile)
+
+        require "bundler"
+        lockfile = File.join(@output_dir, "Gemfile.lock")
+        specs = nil
+        Dir.chdir(@output_dir) do
+          definition = Bundler::Definition.build(gemfile, File.file?(lockfile) ? lockfile : nil, nil)
+          specs = definition.specs
+        end
+        spec = specs.find { |candidate| candidate.name == gem_name }
+        raise Error, "Gem #{gem_name} is not installed in the app bundle. Add it to Gemfile and run bundle install." unless spec
+
+        spec
+      rescue Bundler::BundlerError => error
+        raise Error, "Unable to inspect Bundler gem #{gem_name}: #{error.message}"
+      end
+
+      def gem_service_contracts(inventory)
+        inventory.fetch(:ruby_files).flat_map do |source_path|
+          ServiceSourceParser.new(source_path, "Bundler gem #{inventory.fetch(:name)}").contracts
+        rescue Error
+          []
+        end
+      end
+
+      def render_gem_layer(package, inventory)
+        [
+          "package #{package};",
+          "",
+          "// RailsHx generated this app-local gem layer from deterministic Bundler metadata.",
+          "// Runtime ownership stays with the Ruby gem; this class only records the",
+          "// reviewed Haxe contract boundary for application code and tooling.",
+          "// Review required: generated externs may contain Dynamic placeholders when",
+          "// Ruby source/RBS did not prove a precise Haxe type.",
+          "class GemLayer {",
+          "\tpublic static inline final gemName:String = #{Common.haxe_string(inventory.fetch(:name))};",
+          "\tpublic static inline final version:String = #{Common.haxe_string(inventory.fetch(:version))};",
+          "\tpublic static inline final reviewRequired:Bool = true;",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_gem_layer_doc(inventory)
+        [
+          "# RailsHx Gem Layer: #{inventory.fetch(:name)}",
+          "",
+          "- Gem: `#{inventory.fetch(:name)}`",
+          "- Version: `#{inventory.fetch(:version)}`",
+          "- Metadata source: Bundler app Gemfile plus parsed Ruby source files.",
+          "- Runtime owner: the Ruby gem and Bundler.",
+          "- Haxe owner: app-local reviewed extern/contracts under `src_haxe/#{Common.package_path(@package_name)}/gems/#{Common.file_name(inventory.fetch(:name)).tr("-", "_")}`.",
+          "",
+          "## Constants Found",
+          "",
+          *(inventory.fetch(:constants).empty? ? ["- None found."] : inventory.fetch(:constants).map { |constant| "- `#{constant}`" }),
+          "",
+          "## Review Checklist",
+          "",
+          "- Replace any generated `Dynamic` placeholders with precise Haxe types where the app relies on that API.",
+          "- Keep runtime setup in Ruby/Rails: Gemfile, initializers, migrations, routes, and gem generators.",
+          "- Run `bundle exec rake hxruby:compile`, Rails tests, route parity, and browser/runtime gates relevant to this gem.",
+          "- Treat LLM-generated edits as reviewable patches; do not remove TODO/review markers without deterministic coverage.",
+          "",
+        ].join("\n")
+      end
+
+      class GemSourceInventory
+        def initialize(path)
+          @path = path
+          @source = File.read(path)
+        end
+
+        def constants
+          sexp = Ripper.sexp(@source)
+          raise Error, "Unable to parse gem source: #{@path}" unless sexp
+
+          collect_constants(sexp)
+        rescue Errno::ENOENT
+          raise Error, "Gem source disappeared while reading #{@path}"
+        end
+
+        private
+
+        def collect_constants(node, namespace = [])
+          return [] unless node.is_a?(Array)
+
+          out = []
+          if node[0] == :class || node[0] == :module
+            constant_name = const_name(node[1], namespace)
+            out << constant_name unless constant_name.empty?
+            body_node = node[0] == :class ? node[3] : node[2]
+            body_statements(body_node).each do |statement|
+              out.concat(collect_constants(statement, constant_name.split("::")))
+            end
+            return out
+          end
+
+          node.each { |child| out.concat(collect_constants(child, namespace)) if child.is_a?(Array) }
+          out
+        end
+
+        def const_name(node, namespace)
+          case node&.[](0)
+          when :const_ref
+            [*namespace, node[1][1]].join("::")
+          when :const_path_ref
+            [const_name(node[1], namespace), node[2][1]].reject(&:empty?).join("::")
+          else
+            ""
+          end
+        end
+
+        def body_statements(node)
+          return [] unless node&.[](0) == :bodystmt
+
+          node[1].is_a?(Array) ? node[1].compact.reject { |item| item == :void_stmt || item&.[](0) == :void_stmt } : []
+        end
       end
 
       def render_extension_contract(package, haxe_class, module_name, source_label, methods, kind)
