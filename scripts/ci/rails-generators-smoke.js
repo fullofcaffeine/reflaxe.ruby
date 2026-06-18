@@ -102,7 +102,9 @@ begin
   install.destination_root = File.join(temp, "install")
   install.install_railshx
   assert(File.exist?(File.join(temp, "install", "build.hxml")), "install generator did not write build.hxml")
-  assert(File.read(File.join(temp, "install", "app_haxe", "Boot.hx")).include?("TypedTasks RailsHx compile"), "install generator did not use app name/source/main")
+  assert(File.read(File.join(temp, "install", "app_haxe", "Boot.hx")).include?("class Boot"), "install generator did not use source/main")
+  assert(File.read(File.join(temp, "install", "app_haxe", "client", "Boot.hx")).include?("TypedTasks RailsHx client boot"), "install generator did not use app name in client boot")
+  assert(File.exist?(File.join(temp, "install", "app_haxe", "routes", "AppRoutes.hx")), "install generator did not default to Haxe-owned routes")
 
   routes_root = File.join(temp, "routes")
   FileUtils.mkdir_p(routes_root)
@@ -110,12 +112,13 @@ begin
   routes = Hxruby::RoutesGenerator.new([], {"input" => routes_fixture, "output" => "src_haxe/routes/Routes.hx"})
   routes.destination_root = routes_root
   routes.generate_routes
-  assert(File.read(File.join(routes_root, "src_haxe", "routes", "Routes.hx")).include?("public static function todoPath(id:RouteParam):String;"), "routes generator did not emit typed route helpers")
+  assert(File.read(File.join(routes_root, "src_haxe", "routes", "Routes.hx")).include?("public static function completeTodoPath(id:RouteParam):String;"), "routes generator did not emit typed route helpers")
 
   scaffold = Hxruby::ScaffoldGenerator.new(["Todo", "title:String", "isCompleted:Bool"], {"controller" => true, "output" => "scaffold"})
   scaffold.destination_root = temp
   scaffold.generate_scaffold
   assert(File.exist?(File.join(temp, "scaffold", "src_haxe", "controllers", "TodosController.hx")), "scaffold generator did not write controller")
+  assert(File.exist?(File.join(temp, "scaffold", "src_haxe", "routes", "AppRoutes.hx")), "scaffold generator did not default to Haxe-owned routes")
 
   migration = Hxruby::MigrationGenerator.new(["AddStatusToTodos", "status:string"], {"timestamp" => "20260101010200", "output" => "migration"})
   migration.destination_root = temp

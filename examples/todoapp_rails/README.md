@@ -173,7 +173,7 @@ bin/rails generate hxruby:install MyApp
 rake rails:app ARGS="--output path/to/rails-app --name MyApp"
 ```
 
-That writes `.haxerc`, `build.hxml`, `build-client.hxml`, `haxe_libraries/genes.hxml`, `haxe_libraries/helder.set.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, `bin/railshx-dev`, and `docs/railshx/gem_layers.md`. In an installed app, the same generator is exposed as:
+That writes `.haxerc`, `build.hxml`, `build-client.hxml`, `haxe_libraries/genes.hxml`, `haxe_libraries/helder.set.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, `bin/railshx-dev`, `bin/railshx-prod`, and `docs/railshx/gem_layers.md`. In an installed app, the same generator is exposed as:
 
 ```bash
 bundle exec rake hxruby:gen:app NAME=MyApp
@@ -190,6 +190,17 @@ Rails-owned routes/templates/services can still be adopted later through typed
 wrappers. See the top-level [README](../../README.md#rails-workflow) and
 [RailsHx Generators And Rails Tasks Design](../../docs/railshx-generators-and-tasks-design.md)
 for the full starter workflow.
+
+Route ownership is explicit in generated starters and scaffolds:
+
+```bash
+bin/rails generate hxruby:install MyApp --routes=haxe
+bin/rails generate hxruby:scaffold Todo title:String --controller --routes=snippet
+```
+
+Use `haxe` for greenfield RailsHx routes, `rails` when an existing
+`config/routes.rb` remains the source of truth, `snippet` when you want
+reviewable instructions only, and `none` when route setup is handled elsewhere.
 
 The generated `docs/railshx/gem_layers.md` is a user-facing template for
 wrapping installed gems such as Devise. It documents the recommended

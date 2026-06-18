@@ -177,7 +177,7 @@ try {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     });
-    if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite non-RailsHx-owned file")) {
+  if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite non-RailsHx-owned file")) {
       process.stdout.write(overwrite.stdout);
       process.stderr.write(overwrite.stderr);
       fail("rails app generator did not protect non-owned existing files");
@@ -185,6 +185,22 @@ try {
   } finally {
     rmSync(collisionRoot, { force: true, recursive: true });
   }
+
+  expectRouteMode("snippet", {
+    appRoutes: false,
+    routesExtern: true,
+    snippetDoc: true,
+  });
+  expectRouteMode("rails", {
+    appRoutes: false,
+    routesExtern: true,
+    snippetDoc: false,
+  });
+  expectRouteMode("none", {
+    appRoutes: false,
+    routesExtern: false,
+    snippetDoc: false,
+  });
 
   writeFileSync(join(tempRoot, "hand_written.rb"), "# app-owned file\n");
   run("ruby", [
@@ -240,6 +256,37 @@ function expectFile(relativePath, expectedParts) {
     if (!content.includes(expected)) {
       fail(`${relativePath} missing expected content: ${expected}`);
     }
+  }
+}
+
+function expectRouteMode(mode, expected) {
+  const routeModeRoot = mkdtempSync(join(tmpdir(), `railshx-app-${mode}.`));
+  try {
+    run("ruby", [
+      "-I",
+      join(root, "lib"),
+      join(root, "scripts", "rails", "app.rb"),
+      "--output",
+      routeModeRoot,
+      "--name",
+      "RouteMode",
+      "--routes",
+      mode,
+    ]);
+    const appRoutes = existsSync(join(routeModeRoot, "src_haxe", "routes", "AppRoutes.hx"));
+    const routesExtern = existsSync(join(routeModeRoot, "src_haxe", "routes", "Routes.hx"));
+    const snippetDoc = existsSync(join(routeModeRoot, "docs", "railshx", "routes.md"));
+    if (appRoutes !== expected.appRoutes) {
+      fail(`--routes=${mode} AppRoutes presence mismatch`);
+    }
+    if (routesExtern !== expected.routesExtern) {
+      fail(`--routes=${mode} Routes.hx presence mismatch`);
+    }
+    if (snippetDoc !== expected.snippetDoc) {
+      fail(`--routes=${mode} route snippet doc presence mismatch`);
+    }
+  } finally {
+    rmSync(routeModeRoot, { force: true, recursive: true });
   }
 }
 

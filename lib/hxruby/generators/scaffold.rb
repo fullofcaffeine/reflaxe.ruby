@@ -17,6 +17,7 @@ module HXRuby
           fields: "",
           validate: "",
           controller: false,
+          routes: "haxe",
           force: false,
         }
         OptionParser.new do |parser|
@@ -25,6 +26,7 @@ module HXRuby
           parser.on("--fields FIELDS") { |value| options[:fields] = value }
           parser.on("--validate FIELDS") { |value| options[:validate] = value }
           parser.on("--controller") { options[:controller] = true }
+          parser.on("--routes MODE", "Route mode: haxe, snippet, rails, or none") { |value| options[:routes] = value }
           parser.on("--force") { options[:force] = true }
         end.parse!(argv)
         raise Error, "Missing required argument --model" unless options[:model]
@@ -38,6 +40,7 @@ module HXRuby
         @fields = parse_fields(options.fetch(:fields))
         @validations = Common.split_csv(options.fetch(:validate))
         @with_controller = options.fetch(:controller)
+        @route_mode = validate_route_mode(options.fetch(:routes))
         @force = options.fetch(:force)
         @table_name = Common.pluralize(Common.file_name(@model_name))
         @controller_name = "#{Common.pluralize(@model_name)}Controller"
@@ -49,13 +52,37 @@ module HXRuby
       def run
         write("src_haxe/models/#{@model_name}.hx", render_model)
         write("src_haxe/migrations/#{@migration_name}.hx", render_migration)
-        write("src_haxe/routes/Routes.hx", render_routes)
+        write_route_files
         write("src_haxe/Main.hx", render_main)
         write("build.hxml", render_build)
         write("src_haxe/controllers/#{@controller_name}.hx", render_controller) if @with_controller
       end
 
       private
+
+      def validate_route_mode(value)
+        mode = value.to_s
+        return mode if %w[haxe snippet rails none].include?(mode)
+
+        raise Error, "Invalid --routes #{value.inspect}. Expected haxe, snippet, rails, or none."
+      end
+
+      def write_route_files
+        case @route_mode
+        when "haxe"
+          if @with_controller
+            write("src_haxe/routes/AppRoutes.hx", render_app_routes)
+          end
+          write("src_haxe/routes/Routes.hx", render_routes_placeholder)
+        when "rails"
+          write("src_haxe/routes/Routes.hx", render_routes)
+        when "snippet"
+          write("src_haxe/routes/Routes.hx", render_routes_placeholder)
+          write("docs/railshx/routes_snippet.md", render_routes_snippet)
+        when "none"
+          # The caller owns route setup elsewhere.
+        end
+      end
 
       def parse_fields(raw)
         Common.split_csv(raw).map do |entry|
@@ -112,13 +139,18 @@ module HXRuby
 
       def render_controller
         permitted = @fields.map { |field| Common.haxe_string(field.fetch(:name)) }.join(", ")
-        method_prefix = Common.pluralize(@model_name[0].downcase + @model_name[1..])
+        redirect_line = if @route_mode == "rails"
+                          method_prefix = Common.pluralize(@model_name[0].downcase + @model_name[1..])
+                          "\t\tredirectTo(Routes.#{method_prefix}Path());"
+                        else
+                          "\t\tredirectToOptions({action: \"index\"});"
+                        end
         [
           "package controllers;",
           "",
           "import models.#{@model_name};",
           "import rails.macros.ParamsMacro;",
-          "import routes.Routes;",
+          ("import routes.Routes;" if @route_mode == "rails"),
           "",
           "@:railsController",
           "class #{@controller_name} extends rails.action_controller.Base {",
@@ -132,8 +164,32 @@ module HXRuby
           "\tpublic function create() {",
           "\t\tvar attrs = ParamsMacro.requirePermit(this.params(), #{Common.haxe_string(@resource_name)}, [#{permitted}]);",
           "\t\tvar #{@resource_name} = #{@model_name}.create(attrs);",
-          "\t\tredirectTo(Routes.#{method_prefix}Path());",
+          redirect_line,
           "\t}",
+          "}",
+          "",
+        ].compact.join("\n")
+      end
+
+      def render_app_routes
+        [
+          "package routes;",
+          "",
+          "import controllers.#{@controller_name};",
+          "import models.#{@model_name};",
+          "import rails.macros.RoutesDsl.*;",
+          "",
+          "// Haxe-owned scaffold routes.",
+          "//",
+          "// Demonstrates: typed controller/action refs and model-derived resource",
+          "// names. The compiler emits normal Rails config/routes.rb; run",
+          "// `bundle exec rake hxruby:routes MODE=haxe-owned` after compiling to",
+          "// regenerate typed route-helper externs from Rails output.",
+          "@:railsRoutes",
+          "class AppRoutes {",
+          "\tstatic final routes = {",
+          "\t\tresources(#{@model_name}, #{@controller_name}, {only: [index, create]});",
+          "\t};",
           "}",
           "",
         ].join("\n")
@@ -163,13 +219,73 @@ module HXRuby
         ].join("\n")
       end
 
+      def render_routes_placeholder
+        [
+          "package routes;",
+          "",
+          "// Route helpers are generated from Rails output.",
+          "//",
+          "// Run `bundle exec rake hxruby:routes MODE=#{@route_mode == "haxe" ? "haxe-owned" : "rails-owned"}`",
+          "// after Rails can evaluate the generated routes.",
+          '@:native("self")',
+          "extern class Routes {",
+          "\t// Generated route helpers will be written here.",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_routes_snippet
+        [
+          "# RailsHx Scaffold Routes Snippet",
+          "",
+          "This scaffold was generated with `--routes=snippet`, so RailsHx did not",
+          "create a Haxe-owned `src_haxe/routes/AppRoutes.hx` file or mutate",
+          "`config/routes.rb`.",
+          "",
+          "## Haxe-owned",
+          "",
+          "Create `src_haxe/routes/AppRoutes.hx`:",
+          "",
+          "```haxe",
+          "package routes;",
+          "",
+          "import controllers.#{@controller_name};",
+          "import models.#{@model_name};",
+          "import rails.macros.RoutesDsl.*;",
+          "",
+          "@:railsRoutes",
+          "class AppRoutes {",
+          "\tstatic final routes = {",
+          "\t\tresources(#{@model_name}, #{@controller_name}, {only: [index, create]});",
+          "\t};",
+          "}",
+          "```",
+          "",
+          "Then run `bundle exec rake hxruby:routes MODE=haxe-owned` after compile.",
+          "",
+          "## Rails-owned",
+          "",
+          "Add the route to `config/routes.rb` yourself:",
+          "",
+          "```ruby",
+          "resources :#{@table_name}, only: [:index, :create]",
+          "```",
+          "",
+          "Then run `bundle exec rake hxruby:routes MODE=rails-owned`.",
+          "",
+        ].join("\n")
+      end
+
       def render_main
         imports = [
           ("import controllers.#{@controller_name};" if @with_controller),
           "import migrations.#{@migration_name};",
           "import models.#{@model_name};",
+          ("import routes.AppRoutes;" if @route_mode == "haxe" && @with_controller),
         ].compact
         controller_line = @with_controller ? "\t\tvar controller:#{@controller_name} = null;\n\t\tSys.println(controller == null);" : ""
+        routes_line = (@route_mode == "haxe" && @with_controller) ? "\t\tvar routes:Class<AppRoutes> = AppRoutes;\n\t\tSys.println(routes != null);" : ""
         [
           *imports,
           "",
@@ -180,6 +296,7 @@ module HXRuby
           "\t\tSys.println(model == null);",
           "\t\tSys.println(migration != null);",
           controller_line,
+          routes_line,
           "\t}",
           "}",
           "",

@@ -14,6 +14,7 @@ module HXRuby
         source: "src_haxe",
         main: "Main",
         rails_output_root: "app/haxe_gen",
+        routes: "haxe",
         force: false,
       }.freeze
 
@@ -29,6 +30,7 @@ module HXRuby
           parser.on("--source PATH") { |value| options[:source] = value }
           parser.on("--main CLASS") { |value| options[:main] = value }
           parser.on("--rails-output-root PATH") { |value| options[:rails_output_root] = value }
+          parser.on("--routes MODE", "Route mode: haxe, snippet, rails, or none") { |value| options[:routes] = value }
           parser.on("--force") { options[:force] = true }
         end.parse!(argv)
         options
@@ -40,6 +42,7 @@ module HXRuby
         @source_dir = options.fetch(:source)
         @main_class = options.fetch(:main)
         @rails_output_root = Common.safe_relative_path(options.fetch(:rails_output_root), label: "--rails-output-root")
+        @route_mode = validate_route_mode(options.fetch(:routes))
         @force = options.fetch(:force)
       end
 
@@ -54,8 +57,7 @@ module HXRuby
         write(File.join(@source_dir, "controllers", "HomeController.hx"), render_home_controller)
         write(File.join(@source_dir, "views", "ApplicationLayoutView.hx"), render_application_layout_view)
         write(File.join(@source_dir, "views", "HomeIndexView.hx"), render_home_index_view)
-        write(File.join(@source_dir, "routes", "AppRoutes.hx"), render_app_routes)
-        write(File.join(@source_dir, "routes", "Routes.hx"), render_routes)
+        write_route_files
         write("docs/railshx/gem_layers.md", render_gem_layers_doc)
         write("app/javascript/application.js", render_application_js)
         write("app/assets/stylesheets/application.css", render_application_css)
@@ -75,6 +77,29 @@ module HXRuby
       end
 
       private
+
+      def validate_route_mode(value)
+        mode = value.to_s
+        return mode if %w[haxe snippet rails none].include?(mode)
+
+        raise Error, "Invalid --routes #{value.inspect}. Expected haxe, snippet, rails, or none."
+      end
+
+      def write_route_files
+        case @route_mode
+        when "haxe"
+          write(File.join(@source_dir, "routes", "AppRoutes.hx"), render_app_routes)
+          write(File.join(@source_dir, "routes", "Routes.hx"), render_routes)
+        when "rails"
+          write(File.join(@source_dir, "routes", "Routes.hx"), render_routes)
+        when "snippet"
+          write(File.join(@source_dir, "routes", "Routes.hx"), render_routes)
+          write("docs/railshx/routes.md", render_routes_snippet)
+        when "none"
+          # Deliberately leave route source/helper files alone. This is useful
+          # for apps that already have a separate route ownership policy.
+        end
+      end
 
       def write(relative_path, content, executable: false)
         Common.write_file(
@@ -181,11 +206,24 @@ module HXRuby
       end
 
       def render_main
-        [
+        imports = [
           "import controllers.HomeController;",
-          "import routes.AppRoutes;",
           "import views.ApplicationLayoutView;",
           "import views.HomeIndexView;",
+        ]
+        imports << "import routes.AppRoutes;" if @route_mode == "haxe"
+        route_lines = if @route_mode == "haxe"
+                        [
+                          "\t\tvar routes:Class<AppRoutes> = AppRoutes;",
+                          "\t\tSys.println(routes != null);",
+                        ]
+                      else
+                        [
+                          "\t\t// Routes are #{@route_mode}-owned for this generated app.",
+                        ]
+                      end
+        [
+          *imports,
           "",
           "// RailsHx compile sentinel.",
           "//",
@@ -196,11 +234,10 @@ module HXRuby
           "class #{@main_class} {",
           "\tstatic function main() {",
           "\t\tvar controller:HomeController = null;",
-          "\t\tvar routes:Class<AppRoutes> = AppRoutes;",
           "\t\tvar layout:Class<ApplicationLayoutView> = ApplicationLayoutView;",
           "\t\tvar home:Class<HomeIndexView> = HomeIndexView;",
           "\t\tSys.println(controller == null);",
-          "\t\tSys.println(routes != null);",
+          *route_lines,
           "\t\tSys.println(layout != null);",
           "\t\tSys.println(home != null);",
           "\t}",
@@ -378,6 +415,60 @@ module HXRuby
           "extern class Routes {",
           "\t// Generated route helpers will be written here.",
           "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_routes_snippet
+        [
+          "# RailsHx Routes Snippet",
+          "",
+          "This app was generated with `--routes=snippet`, so RailsHx did not",
+          "create `#{File.join(@source_dir, "routes", "AppRoutes.hx")}` or mutate",
+          "`config/routes.rb`.",
+          "",
+          "Choose one route source of truth:",
+          "",
+          "## Haxe-owned",
+          "",
+          "Create `#{File.join(@source_dir, "routes", "AppRoutes.hx")}`:",
+          "",
+          "```haxe",
+          "package routes;",
+          "",
+          "import controllers.HomeController;",
+          "import rails.macros.RoutesDsl.*;",
+          "",
+          "@:railsRoutes",
+          "class AppRoutes {",
+          "\tstatic final routes = {",
+          "\t\troot(to(HomeController, index));",
+          "\t};",
+          "}",
+          "```",
+          "",
+          "Then run:",
+          "",
+          "```bash",
+          "bundle exec rake hxruby:compile",
+          "bundle exec rake hxruby:routes MODE=haxe-owned",
+          "```",
+          "",
+          "## Rails-owned",
+          "",
+          "Add the route to `config/routes.rb` yourself:",
+          "",
+          "```ruby",
+          "Rails.application.routes.draw do",
+          "  root \"home#index\"",
+          "end",
+          "```",
+          "",
+          "Then run:",
+          "",
+          "```bash",
+          "bundle exec rake hxruby:routes MODE=rails-owned",
+          "```",
           "",
         ].join("\n")
       end

@@ -156,12 +156,25 @@ RailsHx build files, app-local Rake entrypoints, and a small typed app graph:
 - `bin/railshx-dev` and `bin/railshx-prod`: developer and production wrappers.
 - `Procfile.railshx.dev`: optional `foreman`/`overmind` process file.
 
-The starter should default to Haxe-owned source of truth for the generated
+The starter defaults to Haxe-owned source of truth for the generated
 controller, HHX layout/page, client JS, and root route because it is greenfield
 RailsHx. Existing Rails apps remain first-class: if a team already owns
 `config/routes.rb`, controllers, ERB, or Ruby services, generators must consume
 them through route sync, typed externs, `Template.existing(...)`, or adoption
 wrappers rather than regenerating unowned files.
+
+Route generation is explicit:
+
+```bash
+bin/rails generate hxruby:install MyApp --routes=haxe    # default greenfield mode
+bin/rails generate hxruby:install MyApp --routes=snippet # reviewable instructions
+bin/rails generate hxruby:install MyApp --routes=rails   # Rails-owned routes
+bin/rails generate hxruby:install MyApp --routes=none    # leave routes untouched
+```
+
+`haxe` writes `AppRoutes.hx` plus a placeholder `Routes.hx`; `rails` writes only
+the helper extern placeholder; `snippet` writes the placeholder plus
+`docs/railshx/routes.md`; `none` writes no route files.
 
 The generated app-level Rake UX is:
 
@@ -444,3 +457,17 @@ Do not silently merge generated Haxe routes into a hand-written Rails route
 file. Use explicit source-of-truth modes, generated headers, manifest entries,
 or future marker blocks. The focused compiler fixture is
 `examples/rails_routes_dsl`; the full app fixture is `examples/todoapp_rails`.
+
+Scaffold follows the same mode names:
+
+```bash
+bin/rails generate hxruby:scaffold Todo title:String --controller --routes=haxe
+bin/rails generate hxruby:scaffold Todo title:String --controller --routes=snippet
+bin/rails generate hxruby:scaffold Todo title:String --controller --routes=rails
+bin/rails generate hxruby:scaffold Todo title:String --controller --routes=none
+```
+
+The scaffold default is `haxe` for greenfield code and emits a typed
+`resources(Model, Controller, ...)` declaration. Use `rails` when adopting an
+existing Rails-owned `config/routes.rb`; use `snippet` when you want a
+reviewable patch instead of generated route ownership.

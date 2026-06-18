@@ -338,6 +338,12 @@ rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
 ```
 
+Greenfield app/scaffold generators default to Haxe-owned routes. Pass
+`--routes=haxe|snippet|rails|none` to choose the route source-of-truth mode:
+`haxe` emits typed `@:railsRoutes`, `rails` keeps route helper extern generation
+for an existing Rails-owned `config/routes.rb`, `snippet` writes reviewable
+instructions, and `none` leaves route files untouched.
+
 Plain `require "hxruby"` has no gem runtime dependencies. The task entrypoint requires `rake`, which is available in the supported CI Rubies and normal Rails applications.
 
 Semantic-release builds the gem during release preparation and attaches `dist/hxruby-*.gem` to the GitHub release.

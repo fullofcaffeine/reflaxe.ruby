@@ -49,6 +49,7 @@ for (const file of [
   "src_haxe/models/Todo.hx",
   "src_haxe/migrations/CreateTodos.hx",
   "src_haxe/controllers/TodosController.hx",
+  "src_haxe/routes/AppRoutes.hx",
   "src_haxe/routes/Routes.hx",
   "src_haxe/Main.hx",
   "build.hxml",
@@ -78,12 +79,15 @@ assertIncludes("src_haxe/controllers/TodosController.hx", [
   "class TodosController extends rails.action_controller.Base",
   "static final lifecycle = [];",
   'ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"])',
-  "redirectTo(Routes.todosPath())",
+  'redirectToOptions({action: "index"})',
+]);
+assertIncludes("src_haxe/routes/AppRoutes.hx", [
+  "@:railsRoutes",
+  "resources(Todo, TodosController, {only: [index, create]});",
 ]);
 assertIncludes("src_haxe/routes/Routes.hx", [
   '@:native("self")',
-  '@:native("todos_path")',
-  "public static function todosPath():String;",
+  "Generated route helpers will be written here.",
 ]);
 if (!compileWithFirstAvailableReflaxe(join(outputDir, "ruby"))) {
   console.error("Unable to compile scaffolded Haxe project through Reflaxe.");
@@ -94,6 +98,7 @@ const manifest = JSON.parse(readFileSync(join(outputDir, ".railshx", "manifest.j
 for (const [output, kind] of [
   ["src_haxe/models/Todo.hx", "haxe_source"],
   ["src_haxe/migrations/CreateTodos.hx", "haxe_migration_source"],
+  ["src_haxe/routes/AppRoutes.hx", "haxe_source"],
   ["src_haxe/routes/Routes.hx", "haxe_source"],
   ["build.hxml", "haxe_build"],
 ]) {
@@ -102,6 +107,79 @@ for (const [output, kind] of [
     console.error(`Scaffold manifest missing expected ${output} ${kind} entry.`);
     process.exit(1);
   }
+}
+
+const railsRoutesDir = join(root, "test", ".generated", "scaffold_cli_rails_routes");
+rmSync(railsRoutesDir, { force: true, recursive: true });
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "scaffold.rb"),
+  "--model",
+  "Todo",
+  "--fields",
+  "title:String",
+  "--controller",
+  "--routes",
+  "rails",
+  "--output",
+  railsRoutesDir,
+]);
+const railsRoutesExtern = readFileSync(join(railsRoutesDir, "src_haxe", "routes", "Routes.hx"), "utf8");
+if (!railsRoutesExtern.includes("public static function todosPath():String;")) {
+  console.error("--routes=rails did not preserve Rails-owned helper extern generation.");
+  process.exit(1);
+}
+const railsRoutesController = readFileSync(join(railsRoutesDir, "src_haxe", "controllers", "TodosController.hx"), "utf8");
+if (!railsRoutesController.includes("redirectTo(Routes.todosPath())")) {
+  console.error("--routes=rails controller did not use generated route helper extern.");
+  process.exit(1);
+}
+
+const snippetRoutesDir = join(root, "test", ".generated", "scaffold_cli_snippet_routes");
+rmSync(snippetRoutesDir, { force: true, recursive: true });
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "scaffold.rb"),
+  "--model",
+  "Todo",
+  "--fields",
+  "title:String",
+  "--controller",
+  "--routes",
+  "snippet",
+  "--output",
+  snippetRoutesDir,
+]);
+if (existsSync(join(snippetRoutesDir, "src_haxe", "routes", "AppRoutes.hx"))) {
+  console.error("--routes=snippet should not create a Haxe-owned AppRoutes source.");
+  process.exit(1);
+}
+if (!existsSync(join(snippetRoutesDir, "docs", "railshx", "routes_snippet.md"))) {
+  console.error("--routes=snippet did not write reviewable route instructions.");
+  process.exit(1);
+}
+
+const noRoutesDir = join(root, "test", ".generated", "scaffold_cli_no_routes");
+rmSync(noRoutesDir, { force: true, recursive: true });
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "scaffold.rb"),
+  "--model",
+  "Todo",
+  "--fields",
+  "title:String",
+  "--controller",
+  "--routes",
+  "none",
+  "--output",
+  noRoutesDir,
+]);
+if (existsSync(join(noRoutesDir, "src_haxe", "routes"))) {
+  console.error("--routes=none should leave route files untouched.");
+  process.exit(1);
 }
 
 const collisionDir = join(root, "test", ".generated", "scaffold_cli_collision");
