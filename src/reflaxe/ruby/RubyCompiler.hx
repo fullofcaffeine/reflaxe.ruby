@@ -29,6 +29,7 @@ import reflaxe.ruby.compiler.RubyBuildContextResolver;
 import reflaxe.ruby.naming.RubyNaming;
 import reflaxe.ruby.rails.RailsRouteDecl;
 import reflaxe.ruby.rails.RailsRouteTarget;
+import reflaxe.ruby.rails.RailsRouteManifest;
 import reflaxe.ruby.rails.RailsRoutesExtractor;
 import reflaxe.ruby.rails.RailsRoutesEmitter;
 import reflaxe.ruby.RequireRegistry;
@@ -96,6 +97,13 @@ typedef RailsTestDecl = {
 	description:Null<String>,
 	body:TypedExpr,
 	pos:Position
+}
+
+typedef RailsManifestEntry = {
+	output:String,
+	kind:String,
+	source:String,
+	content:String
 }
 
 typedef RubyMetadataField = {
@@ -4570,7 +4578,26 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			lines.push("  " + line);
 		}
 		lines.push("end");
-		setRailsExtraFile(outputPath, normalizeGeneratedText(lines.join("\n")), classType.pos);
+		var routeContent = normalizeGeneratedText(lines.join("\n"));
+		var manifestPath = ".railshx/routes.haxe.json";
+		var routeManifest = RailsRouteManifest.render(fullTypeName(classType.pack, classType.name), outputPath, fullTypeName(classType.pack, classType.name),
+			decls);
+		setRailsExtraFile(outputPath, routeContent, classType.pos);
+		setRailsExtraFile(manifestPath, routeManifest, classType.pos);
+		recordRailsCompilerManifestEntries([
+			{
+				output: outputPath,
+				kind: "rails_config",
+				source: "@:railsRoutes " + fullTypeName(classType.pack, classType.name),
+				content: routeContent
+			},
+			{
+				output: manifestPath,
+				kind: "route_manifest",
+				source: "@:railsRoutes " + fullTypeName(classType.pack, classType.name),
+				content: routeManifest
+			}
+		], classType.pos);
 	}
 
 	static function railsRoutesField(classType:ClassType, varFields:Array<ClassVarData>):Null<ClassVarData> {
@@ -5059,6 +5086,48 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		} catch (_:Dynamic) {
 			return false;
 		}
+	}
+
+	function recordRailsCompilerManifestEntries(entries:Array<RailsManifestEntry>, pos:Position):Void {
+		var outputRoot = Context.definedValue(buildContext.outputDirDefineName);
+		if (outputRoot == null || outputRoot == "") {
+			return;
+		}
+		var manifestPath = Path.normalize(Path.join([outputRoot, ".railshx", "manifest.json"]));
+		var outputs:Array<Dynamic> = [];
+		if (FileSystem.exists(manifestPath)) {
+			try {
+				var parsed:Dynamic = haxe.Json.parse(File.getContent(manifestPath));
+				var parsedOutputs:Dynamic = Reflect.field(parsed, "outputs");
+				if (Std.isOfType(parsedOutputs, Array)) {
+					outputs = cast parsedOutputs;
+				}
+			} catch (e:Dynamic) {
+				Context.error('Invalid RailsHx manifest ${manifestPath}: ${Std.string(e)}', pos);
+				return;
+			}
+		}
+		var replacing = new Map<String, Bool>();
+		for (entry in entries) {
+			replacing.set(entry.output, true);
+		}
+		outputs = [
+			for (existing in outputs)
+				if (!replacing.exists(Std.string(Reflect.field(existing, "output")))) existing
+		];
+		for (entry in entries) {
+			var item:Dynamic = {};
+			Reflect.setField(item, "output", entry.output);
+			Reflect.setField(item, "kind", entry.kind);
+			Reflect.setField(item, "source", entry.source);
+			Reflect.setField(item, "sha256", haxe.crypto.Sha256.encode(entry.content));
+			outputs.push(item);
+		}
+		outputs.sort((a, b) -> Reflect.compare(Std.string(Reflect.field(a, "output")), Std.string(Reflect.field(b, "output"))));
+		var manifest:Dynamic = {};
+		Reflect.setField(manifest, "version", 1);
+		Reflect.setField(manifest, "outputs", outputs);
+		setExtraFile(OutputPath.fromStr(".railshx/manifest.json"), haxe.Json.stringify(manifest, null, "  ") + "\n");
 	}
 
 	static function validateRailsTestMethod(field:ClassFuncData):Void {

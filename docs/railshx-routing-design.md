@@ -319,11 +319,12 @@ Compiler implementation files:
 - `src/reflaxe/ruby/rails/RailsRoutesEmitter.hx`
 - `src/reflaxe/ruby/rails/RailsRouteManifest.hx`
 
-`RubyCompiler` should detect `@:railsRoutes`, require Rails mode, extract the
-`static final routes` declaration, emit `config/routes.rb`, emit a route
-manifest such as `.railshx/routes.haxe.json`, and suppress generation of a Ruby
-class for the declaration host. The route marker calls are compiler carriers,
-not a runtime routing library.
+`RubyCompiler` detects `@:railsRoutes`, requires Rails mode, extracts the
+`static final routes` declaration, emits `config/routes.rb`, emits the route
+manifest `.railshx/routes.haxe.json`, records both artifacts in
+`.railshx/manifest.json`, and suppresses generation of a Ruby class for the
+declaration host. The route marker calls are compiler carriers, not a runtime
+routing library.
 
 Macro validation should happen as early as possible for literal shape,
 controller/action refs, resource action tokens, unknown option fields, invalid
@@ -372,6 +373,8 @@ Implemented:
   `mountExternal(rubyConst("Sidekiq::Web"), at("/sidekiq"))`
 - typed object-literal route defaults through `defaults({format: "json"}, { ... })`
 - simple checked constraints through `constraints({id: rx("[0-9]+")}, { ... })`
+- route manifest emission under `.railshx/routes.haxe.json`
+- generated artifact ownership entries for `config/routes.rb` and the route manifest
 
 Defer:
 

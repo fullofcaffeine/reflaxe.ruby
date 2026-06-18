@@ -76,11 +76,16 @@ but RailsHx should not overwrite hand-written Rails files as a side effect.
 ## Compiler Output
 
 The compiler should continue emitting Rails-native generated headers for
-migrations, Rails tests, HHX/ERB artifacts, and initializers. Deeper compiler
-manifest integration belongs at the Reflaxe output boundary so every
-`setExtraFile` artifact is recorded consistently; until that lands, Ruby-native
-Rails generators use the manifest-backed writer and compiler artifacts rely on
-headers plus existing snapshot/runtime checks.
+migrations, Rails tests, HHX/ERB artifacts, and initializers. Ruby-native Rails
+generators use the manifest-backed writer. Compiler-side manifest integration is
+being added per artifact family: Haxe-owned `@:railsRoutes` output now records
+both `config/routes.rb` and `.railshx/routes.haxe.json` in `.railshx/manifest.json`.
+The route-specific manifest keeps the Haxe route declaration tree for future
+Rails parity checks; raw `uncheckedRubyRoute(...)` entries are marked opaque and
+record only a checksum of the raw line.
+
+Deeper manifest integration still belongs at the Reflaxe output boundary so
+every `setExtraFile` artifact can eventually be recorded consistently.
 
 ## Tests
 
