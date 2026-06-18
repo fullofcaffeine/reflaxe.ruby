@@ -103,15 +103,23 @@ test('handles importmap-backed Rails form flows (tracked in haxe.ruby-ae6.1)', a
 
 test('posts a typed RailsHx room note through Turbo-backed Haxe client hooks', async ({ page }) => {
   await gotoTodos(page)
+  await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
 
   const beforeCount = await page.locator(hooks.selectors.chatMessages).count()
   const body = `Room note ${Date.now()}`
+  const composer = page.getByLabel('Add a typed room note')
 
-  await page.getByLabel('Add a typed room note').fill(body)
-  await page.getByRole('button', { name: 'Post note' }).click()
+  await composer.fill('First line')
+  await composer.press('Shift+Enter')
+  await composer.type('Second line')
+  await expect(composer).toHaveValue('First line\nSecond line')
+
+  await composer.fill(body)
+  await composer.press('Enter')
 
   await expect(page.locator(hooks.selectors.chatPanel)).toContainText(body, { timeout: 20_000 })
   await expect(page.getByText('Room note posted')).toBeVisible()
+  await expect(composer).toHaveValue('')
   await expect.poll(async () => page.locator(hooks.selectors.chatMessages).count()).toBeGreaterThanOrEqual(beforeCount)
 })
 

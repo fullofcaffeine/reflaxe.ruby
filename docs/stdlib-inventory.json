@@ -679,6 +679,14 @@
       "reason": "Typed callback shape for Haxe-authored ActionCable client subscriptions."
     },
     {
+      "id": "std.rails.dom_forms",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/dom/Forms.hx",
+      "surface": "rails.dom.Forms",
+      "reason": "Typed RailsHx DOM facade for browser form APIs used by Turbo-friendly Haxe clients, including requestSubmit when Haxe DOM externs lag modern browsers."
+    },
+    {
       "id": "std.rails.channel_macro",
       "owner": "std",
       "status": "implemented",

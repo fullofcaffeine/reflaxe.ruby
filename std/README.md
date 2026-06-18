@@ -16,4 +16,9 @@ can be statically imported as an opt-in alias for `Sys.println`, preserving
 HXRuby stringification, while `ruby.Kernel.puts` remains the direct Ruby Kernel
 interop surface.
 
+RailsHx browser helpers should also stay typed. If Haxe's DOM externs do not
+yet expose a browser API needed by idiomatic Turbo/Hotwire code, add a small
+facade such as `rails.dom.Forms` here instead of using raw `js.Syntax.code` in
+app examples.
+
 See `docs/stdlib-ownership.md` and `docs/stdlib-inventory.json`.
