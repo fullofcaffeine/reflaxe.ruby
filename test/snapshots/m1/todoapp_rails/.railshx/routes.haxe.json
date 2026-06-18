@@ -47,6 +47,7 @@
     {
       "name": "chat_messages",
       "only": [
+        "index",
         "create"
       ],
       "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1260-1271",
@@ -55,7 +56,7 @@
     },
     {
       "name": "users",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1322-1329",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1329-1336",
       "target": "controllers/users#index",
       "path": "users",
       "kind": "verb",
@@ -63,7 +64,7 @@
     },
     {
       "name": "sign_in",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1397-1406",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1404-1413",
       "target": "controllers/sessions#create",
       "path": "session",
       "kind": "verb",
@@ -71,7 +72,7 @@
     },
     {
       "name": "sign_out",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1482-1491",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1489-1498",
       "target": "controllers/sessions#destroy",
       "path": "session",
       "kind": "verb",
@@ -79,11 +80,11 @@
     },
     {
       "name": "admin",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1572-1579",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1579-1586",
       "kind": "namespace",
       "children": [
         {
-          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1590-1597",
+          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1597-1604",
           "target": "controllers/users#index",
           "path": "users",
           "kind": "verb",
@@ -93,7 +94,7 @@
     },
     {
       "name": "optional_report",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1640-1657",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1647-1664",
       "target": "controllers/todos#optional_report",
       "path": "reports(/:year)",
       "kind": "verb",
@@ -101,7 +102,7 @@
     },
     {
       "name": "file",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1743-1756",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1750-1763",
       "target": "controllers/todos#file",
       "path": "files/*path",
       "kind": "verb",

@@ -1,6 +1,7 @@
 package reflaxe.js;
 
 #if macro
+import haxe.macro.Compiler;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 
@@ -15,11 +16,24 @@ import js.lib.Promise;
 
 	Genes already knows how to emit native ES `async` methods from `@:async`
 	field metadata and native `await` from `js.Syntax.code("await {0}", promise)`.
-	This facade keeps that target-specific machinery behind typed Haxe helpers so
-	RailsHx client code can stay editor-friendly while still producing ordinary
-	browser JavaScript.
+	This facade keeps that target-specific machinery behind typed Haxe helpers.
+	`enable()` also borrows Genes' `@:await expr` sugar so RailsHx client code can
+	read closer to JavaScript/TypeScript while staying parser-valid Haxe.
 **/
 class Async {
+	public static function enable():Void {
+		#if macro
+		Compiler.addGlobalMetadata("", "@:build(reflaxe.js.Async.build())", true, true, false);
+		#end
+	}
+
+	public static macro function build():Array<Field> {
+		return [
+			for (field in Context.getBuildFields())
+				processField(field)
+		];
+	}
+
 	/**
 		Await a JavaScript promise inside an async Genes-emitted function.
 
@@ -73,6 +87,60 @@ class Async {
 	}
 
 	#if macro
+	static function processField(field:Field):Field {
+		return switch field.kind {
+			case FFun(fn) if (fn != null && fn.expr != null):
+				fn.expr = processExpression(fn.expr);
+				field;
+			case FVar(t, e) if (e != null):
+				{
+					name: field.name,
+					doc: field.doc,
+					access: field.access,
+					kind: FVar(t, processExpression(e)),
+					pos: field.pos,
+					meta: field.meta
+				};
+			case FProp(get, set, t, e) if (e != null):
+				{
+					name: field.name,
+					doc: field.doc,
+					access: field.access,
+					kind: FProp(get, set, t, processExpression(e)),
+					pos: field.pos,
+					meta: field.meta
+				};
+			default:
+				field;
+		}
+	}
+
+	static function processExpression(expr:Expr):Expr {
+		return switch expr.expr {
+			case EMeta(meta, inner) if (meta.name == ":await" || meta.name == "await"):
+				lowerAwaitMeta(expr, meta, inner);
+			default:
+				expr.map(processExpression);
+		}
+	}
+
+	/**
+		Desugar `@:await promiseExpr` to the existing typed `await(promiseExpr)`.
+
+		This mirrors Genes' async sugar but intentionally stays syntax-only here:
+		build macros run before method locals are typed, so the actual promise
+		type-checking remains in the normal Haxe typing pass for `Async.await`.
+	**/
+	static function lowerAwaitMeta(whole:Expr, meta:MetadataEntry, inner:Expr):Expr {
+		if (meta.params.length > 0) {
+			Context.error("@:await does not take metadata arguments. Use `@:await expr`, `@:await (expr)` with a space, or `await(expr)`.", meta.pos);
+		}
+		var operand = processExpression(inner);
+		var out = macro reflaxe.js.Async.await($operand);
+		out.pos = whole.pos;
+		return out;
+	}
+
 	static function markFunctionBody(body:Expr):Expr {
 		var marker = macro var __async_marker__ = true;
 		return switch (body.expr) {

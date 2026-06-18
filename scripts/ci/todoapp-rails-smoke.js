@@ -93,6 +93,16 @@ function run(command, args, options = {}) {
 }
 
 function compileTodoClient() {
+  const clientBuild = readFileSync(join(exampleDir, "build-client.hxml"), "utf8");
+  for (const expected of [
+    "--macro genes.Generator.use()",
+    "--macro reflaxe.js.Async.enable()",
+  ]) {
+    if (!clientBuild.includes(expected)) {
+      console.error(`todoapp_rails client build is missing expected async/Genes setup: ${expected}`);
+      process.exit(1);
+    }
+  }
   run("haxe", [join(exampleDir, "build-client.hxml")]);
   for (const file of [
     "_todo_client_tmp.js",
@@ -111,9 +121,14 @@ function compileTodoClient() {
     "static async hideAfterDelay",
     "await Async.delay(milliseconds)",
     "static async removeClassAfterDelay",
+    "static async syncChatPanel",
+    "await Turbo.fetchStream(url)",
+    "await Async.delay(0)",
     "Consumer.subscribe(consumer, \"Channels::ChatMessagesChannel\"",
     ".setAttribute(\"data-railshx-chat-cable-ready\", \"true\")",
     ".removeAttribute(\"data-railshx-chat-cable-ready\")",
+    "data-railshx-chat-status",
+    "data-railshx-chat-sync-url",
     "Turbo.renderStreamMessage(Turbo.stream(\"prepend\", \"railshx-chat-list\"",
     "static escapeHtml(value)",
   ]) {
@@ -366,7 +381,7 @@ for (const expected of [
   "Rails.application.routes.draw do",
   'root "controllers/todos#index"',
   'resources :todos, controller: "controllers/todos", only: [:index, :create]',
-  'resources :chat_messages, controller: "controllers/chat_messages", only: [:create]',
+  'resources :chat_messages, controller: "controllers/chat_messages", only: [:index, :create]',
   'get "completed", to: "controllers/todos#completed"',
   'patch "complete", to: "controllers/todos#complete"',
   'get "users", to: "controllers/users#index", as: :users',
@@ -470,6 +485,7 @@ for (const expected of [
 const chatMessagesControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "chat_messages_controller.rb"), "utf8");
 for (const expected of [
   /class ChatMessagesController < ActionController::Base/,
+  /def index\(\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("chat_message"\)\.permit\(\[:body, :user_id\]\)/,
   /message__hx\d+ = Models::ChatMessage\.create\(attrs__hx\d+\)/,
   /Channels::ChatMessagesChannel\.announce\(message__hx\d+\.id, message__hx\d+\.body, message__hx\d+\.user_id\)/,
@@ -703,7 +719,7 @@ for (const expected of [
   "static final routes = {",
   "root(to(TodosController, index));",
   "resources(Todo, TodosController, {only: [index, create]}, {",
-  "resources(ChatMessage, ChatMessagesController, {only: [create]});",
+  "resources(ChatMessage, ChatMessagesController, {only: [index, create]});",
   "collection({",
   'get("completed", to(TodosController, completed));',
   "member({",
@@ -739,6 +755,8 @@ for (const expected of [
   'public static inline var chatListId:DomId = "railshx-chat-list";',
   'public static inline var chatMessageKeyAttr:DataAttr = "data-railshx-chat-message-key";',
   'public static inline var chatCableReadyAttr:DataAttr = "data-railshx-chat-cable-ready";',
+  'public static inline var chatSyncUrlAttr:DataAttr = "data-railshx-chat-sync-url";',
+  'public static inline var chatStatusAttr:DataAttr = "data-railshx-chat-status";',
   'public static inline var openWorkId:DomId = "open-work";',
   'public static inline var boundAttr:DataAttr = "data-railshx-bound";',
   'public static inline var sessionAttr:DataAttr = "data-railshx-session";',
@@ -789,8 +807,11 @@ for (const expected of [
   'sessionForm: "session-form"',
   'sessionFooter: "session-footer"',
   'chatForm: "chat-form"',
+  'chatStatus: "chat-status"',
   'chatPanel: "railshx-chat-panel"',
   'chatCableReady: "data-railshx-chat-cable-ready"',
+  'chatSyncUrl: "data-railshx-chat-sync-url"',
+  'chatStatus: "data-railshx-chat-status"',
   'scrollLinks: "[data-railshx-scroll]"',
   'sessionForms: ".session-form"',
   'sessionFooter: ".session-footer"',
@@ -828,7 +849,9 @@ for (const expected of [
 const typedChatPanel = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_chat_panel.html.erb"), "utf8");
 for (const expected of [
   'id="railshx-chat-panel"',
+  'data-railshx-chat-sync-url="<%= chat_messages_path() %>"',
   "Typed Turbo room",
+  '<span class="chat-status" data-railshx-chat-status>Connecting</span>',
   "This is a Rails-native chat slice",
   '<ul id="railshx-chat-list" class="chat-list">',
   "<% messages.each do |message| %>",

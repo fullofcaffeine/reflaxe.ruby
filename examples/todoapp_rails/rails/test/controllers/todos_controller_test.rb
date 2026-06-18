@@ -95,4 +95,16 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_equal "from typed room", message.body
     assert_equal user, message.user
   end
+
+  test "chat message index returns a turbo stream room snapshot" do
+    user = Models::User.create!(name: "room sync owner", email: "room-sync@example.test", role: "maintainer")
+    Models::ChatMessage.create!(body: "late subscriber snapshot", user: user)
+
+    get "/chat_messages", headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_includes @response.media_type, "text/vnd.turbo-stream.html"
+    assert_includes @response.body, '<turbo-stream action="replace" target="railshx-chat-panel">'
+    assert_includes @response.body, "late subscriber snapshot"
+  end
 end

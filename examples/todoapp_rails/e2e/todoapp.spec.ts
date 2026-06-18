@@ -122,6 +122,7 @@ test('broadcasts typed ActionCable room notes to another browser session', async
     await gotoTodos(sender)
     await gotoTodos(receiver)
     await expect(receiver.locator(hooks.selectors.chatPanel)).toHaveAttribute(hooks.attrs.chatCableReady, 'true')
+    await expect(receiver.locator(hooks.selectors.chatPanel)).toContainText('Live')
 
     const body = `Cable note ${Date.now()}`
     await sender.getByLabel('Add a typed room note').fill(body)
@@ -133,4 +134,20 @@ test('broadcasts typed ActionCable room notes to another browser session', async
     await sender.close()
     await receiver.close()
   }
+})
+
+test('syncs missed room notes after a late ActionCable connection', async ({ page, request }) => {
+  await gotoTodos(page)
+
+  const body = `Late cable note ${Date.now()}`
+  await request.post('/chat_messages', {
+    form: {
+      'chat_message[user_id]': '1',
+      'chat_message[body]': body
+    }
+  })
+
+  await page.reload()
+  await expect(page.locator(hooks.selectors.chatPanel)).toHaveAttribute(hooks.attrs.chatCableReady, 'true')
+  await expect(page.locator(hooks.selectors.chatPanel)).toContainText(body, { timeout: 20_000 })
 })

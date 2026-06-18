@@ -5,6 +5,11 @@ channels and subscriptions. The compiler emits `ActionCable::Channel::Base`
 subclasses and JavaScript client code calls the standard ActionCable
 `consumer.subscriptions.create(...)` API.
 
+For the broader RailsHx Hotwire direction, including how ActionCable payloads
+should connect to typed Turbo Stream targets, HHX partial locals, generated
+client subscription helpers, and Playwright hooks, see
+[RailsHx Full-Stack Hotwire Design](railshx-full-stack-hotwire-design.md).
+
 ## Server Channels
 
 Annotate a Haxe class with `@:railsChannel` and extend

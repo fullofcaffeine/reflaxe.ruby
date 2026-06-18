@@ -8,6 +8,7 @@ class RoutesTest < ActionDispatch::IntegrationTest
     assert_routing({ path: "/", method: :get }, { controller: "controllers/todos", action: "index" })
     assert_recognizes({ controller: "controllers/todos", action: "index" }, { path: "/todos", method: :get })
     assert_recognizes({ controller: "controllers/todos", action: "create" }, { path: "/todos", method: :post })
+    assert_recognizes({ controller: "controllers/chat_messages", action: "index" }, { path: "/chat_messages", method: :get })
     assert_recognizes({ controller: "controllers/chat_messages", action: "create" }, { path: "/chat_messages", method: :post })
     assert_recognizes({ controller: "controllers/todos", action: "completed" }, { path: "/todos/completed", method: :get })
     assert_recognizes({ controller: "controllers/todos", action: "complete", id: "42" }, { path: "/todos/42/complete", method: :patch })
@@ -25,6 +26,7 @@ class RoutesTest < ActionDispatch::IntegrationTest
     # file, which keeps Haxe-owned and Rails-owned call sites interoperable.
     assert_equal "/", root_path
     assert_equal "/todos", todos_path
+    assert_equal "/chat_messages", chat_messages_path
     assert_equal "/users", users_path
     assert_equal "/session", sign_in_path
     assert_equal "/session", sign_out_path

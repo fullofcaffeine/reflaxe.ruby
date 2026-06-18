@@ -4,6 +4,7 @@ import js.Browser;
 import js.html.Document;
 import js.html.Element;
 import js.html.Event;
+import js.lib.Promise;
 
 class Turbo {
 	public static function on(event:TurboEvent, handler:Event->Void, ?document:Document):Void {
@@ -91,6 +92,20 @@ class Turbo {
 			return;
 		}
 		js.Syntax.code("window.Turbo.renderStreamMessage({0})", html);
+	}
+
+	/**
+		Fetch a Rails Turbo Stream endpoint and hand the response back to Turbo.
+
+		This keeps Haxe-authored client code on the Rails/Hotwire path: Rails
+		renders `<turbo-stream>` markup, Turbo mutates the DOM, and Haxe only
+		provides typed orchestration instead of building HTML nodes by hand.
+		Genes lowers `@:async` plus `await(...)` to native ES async/await.
+	**/
+	public static function fetchStream(location:String):Promise<Bool> {
+		return
+			js.Syntax.code("fetch({0}, { headers: { Accept: 'text/vnd.turbo-stream.html' }, credentials: 'same-origin' }).then(function(response) { if (!response.ok) return false; return response.text().then(function(html) { if (window.Turbo && typeof window.Turbo.renderStreamMessage === 'function') window.Turbo.renderStreamMessage(html); return true; }); })",
+			location);
 	}
 
 	public static function stream(action:TurboStreamAction, target:String, ?template:String):String {

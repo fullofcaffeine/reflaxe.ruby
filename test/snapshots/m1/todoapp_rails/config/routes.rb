@@ -12,7 +12,7 @@ Rails.application.routes.draw do
       patch "complete", to: "controllers/todos#complete"
     end
   end
-  resources :chat_messages, controller: "controllers/chat_messages", only: [:create]
+  resources :chat_messages, controller: "controllers/chat_messages", only: [:index, :create]
   get "users", to: "controllers/users#index", as: :users
   post "session", to: "controllers/sessions#create", as: :sign_in
   delete "session", to: "controllers/sessions#destroy", as: :sign_out

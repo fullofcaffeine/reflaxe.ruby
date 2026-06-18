@@ -20,13 +20,18 @@ runtime. The goal is typed authoring for ordinary Turbo behavior:
 - Keep `js.Syntax.code(...)` at the narrow browser/Turbo boundary when Haxe std
   lacks a typed DOM shape; do not spread raw JS snippets through app code.
 - Generated Rails apps should default to the Genes-backed client lane for
-  readable ES module output and typed `@:async`/`await(...)` authoring, while
+  readable ES module output and typed `@:async`/`@:await` authoring, while
   plain Haxe JS remains the minimal fallback.
 
 PhoenixHx uses this architecture for LiveView clients: app-local
 `build-client.hxml`, `-lib genes`, typed hook registries shared with templates,
 and framework-owned runtime boot. RailsHx should adapt that pattern to
 Turbo/importmap rather than copying Phoenix hook APIs directly.
+
+For the broader backend-plus-frontend contract direction, including shared
+ActionCable payloads, Turbo Stream targets, HHX partial locals, generated
+subscription helpers, and Playwright hooks, see
+[RailsHx Full-Stack Hotwire Design](railshx-full-stack-hotwire-design.md).
 
 ## Client Events
 
@@ -228,20 +233,20 @@ Use `reflaxe.js.Async` for typed native async browser code:
 ```haxe
 import js.html.Element;
 import reflaxe.js.Async;
-import reflaxe.js.Async.await;
 
 class TodoClient {
   @:async
   static function hideAfterDelay(element:Element):Void {
-    await(Async.delay(2200));
+    @:await Async.delay(2200);
     element.setAttribute("hidden", "hidden");
   }
 }
 ```
 
 `@:async` is standard Haxe metadata consumed by Genes when it emits the ES
-module, and `await(...)` is a typed helper that lowers to native JavaScript
-`await`. The generated JavaScript is ordinary browser code:
+module. `@:await expr` is parser-valid Haxe expression metadata that RailsHx
+desugars to the typed `await(expr)` helper, which then lowers to native
+JavaScript `await`. The generated JavaScript is ordinary browser code:
 
 ```js
 static async hideAfterDelay(element) {
@@ -253,6 +258,9 @@ static async hideAfterDelay(element) {
 Inline callbacks can use `Async.async(() -> { ... })` when a callback expression
 itself needs to become an async function. Prefer method-level `@:async` for
 named behavior because it gives better stack traces and clearer generated JS.
+The classic `await(promise)` helper remains supported and is useful when extra
+parentheses make a complex expression clearer; prefer `@:await promise` for
+straight-line RailsHx client code because it reads closer to JavaScript/TypeScript.
 
 ## Tests
 

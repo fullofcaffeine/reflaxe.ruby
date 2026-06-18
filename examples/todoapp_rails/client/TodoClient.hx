@@ -27,6 +27,7 @@ import shared.TodoHooks;
 // alongside Turbo.
 class TodoClient {
 	static var chatSubscribed:Bool = false;
+	static var chatSyncing:Bool = false;
 
 	public static function main():Void {
 		boot();
@@ -145,15 +146,64 @@ class TodoClient {
 		var consumer = Consumer.create();
 		Consumer.subscribe(consumer, "Channels::ChatMessagesChannel", {}, {
 			connected: function():Void {
-				panel.setAttribute(TodoHooks.chatCableReadyAttr, "true");
+				setChatCableReady(true);
+				syncChatPanel();
 			},
 			disconnected: function():Void {
-				panel.removeAttribute(TodoHooks.chatCableReadyAttr);
+				setChatCableReady(false);
 			},
 			received: function(payload:ChatBroadcast):Void {
 				appendBroadcastMessage(payload);
 			}
 		});
+	}
+
+	static function setChatCableReady(ready:Bool):Void {
+		var panel = Browser.document.querySelector(TodoHooks.idSelector(TodoHooks.chatPanelId));
+		if (panel == null) {
+			return;
+		}
+		var status = panel.querySelector(TodoHooks.attrSelector(TodoHooks.chatStatusAttr));
+		if (ready) {
+			panel.setAttribute(TodoHooks.chatCableReadyAttr, "true");
+			if (status != null) {
+				status.textContent = "Live";
+			}
+		} else {
+			panel.removeAttribute(TodoHooks.chatCableReadyAttr);
+			if (status != null) {
+				status.textContent = "Reconnecting";
+			}
+		}
+	}
+
+	@:async
+	static function syncChatPanel():Void {
+		if (chatSyncing) {
+			return;
+		}
+		var panel = Browser.document.querySelector(TodoHooks.idSelector(TodoHooks.chatPanelId));
+		if (panel == null) {
+			return;
+		}
+		var url = panel.getAttribute(TodoHooks.chatSyncUrlAttr);
+		if (url == null || url == "") {
+			return;
+		}
+		chatSyncing = true;
+		try {
+			var status = panel.querySelector(TodoHooks.attrSelector(TodoHooks.chatStatusAttr));
+			if (status != null) {
+				status.textContent = "Syncing";
+			}
+			@:await Turbo.fetchStream(url);
+			@:await Async.delay(0);
+			bindChatForms();
+			setChatCableReady(true);
+		} catch (_:js.lib.Error) {
+			setChatCableReady(true);
+		}
+		chatSyncing = false;
 	}
 
 	static function announceSessionSubmit(target:Null<EventTarget>, success:Null<Bool>):Void {

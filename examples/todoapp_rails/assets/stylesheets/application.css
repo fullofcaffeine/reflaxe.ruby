@@ -280,6 +280,46 @@ h2 {
 	z-index: 1;
 }
 
+.chat-panel-kicker {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.chat-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	padding: 7px 11px;
+	color: var(--muted);
+	background: rgba(255, 255, 255, 0.64);
+	font: 900 0.66rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.chat-status::before {
+	content: "";
+	width: 8px;
+	height: 8px;
+	border-radius: 999px;
+	background: #f39b56;
+	box-shadow: 0 0 0 5px rgba(243, 155, 86, 0.14);
+}
+
+.chat-panel[data-railshx-chat-cable-ready="true"] .chat-status {
+	color: #2d5a47;
+}
+
+.chat-panel[data-railshx-chat-cable-ready="true"] .chat-status::before {
+	background: #45b66c;
+	box-shadow: 0 0 0 5px rgba(69, 182, 108, 0.16);
+}
+
 .chat-panel-header p {
 	margin: 0;
 	color: var(--muted);

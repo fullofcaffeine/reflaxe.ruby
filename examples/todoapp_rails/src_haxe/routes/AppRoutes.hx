@@ -31,7 +31,7 @@ class AppRoutes {
 				patch("complete", to(TodosController, complete));
 			});
 		});
-		resources(ChatMessage, ChatMessagesController, {only: [create]});
+		resources(ChatMessage, ChatMessagesController, {only: [index, create]});
 		get("users", to(UsersController, index), {asName: routeName("users")});
 		post("session", to(SessionsController, create), {asName: routeName("sign_in")});
 		delete("session", to(SessionsController, destroy), {asName: routeName("sign_out")});

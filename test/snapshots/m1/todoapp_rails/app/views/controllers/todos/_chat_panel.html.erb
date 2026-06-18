@@ -1,6 +1,9 @@
-<section id="railshx-chat-panel" class="card chat-panel" data-railshx-chat aria-label="RailsHx typed chatroom">
+<section id="railshx-chat-panel" class="card chat-panel" data-railshx-chat data-railshx-chat-sync-url="<%= chat_messages_path() %>" aria-label="RailsHx typed chatroom">
 			<div class="chat-panel-header">
-				<span class="eyebrow">Typed Turbo room</span>
+				<div class="chat-panel-kicker">
+					<span class="eyebrow">Typed Turbo room</span>
+					<span class="chat-status" data-railshx-chat-status>Connecting</span>
+				</div>
 				<h2>Ship room</h2>
 				<p>
 					This is a Rails-native chat slice: Haxe owns the model, migration,

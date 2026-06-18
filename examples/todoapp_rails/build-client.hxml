@@ -9,6 +9,7 @@
 -lib genes
 -D js-es=6
 --macro genes.Generator.use()
+--macro reflaxe.js.Async.enable()
 --macro addMetadata('@:genes.disableNativeAccessors', 'haxe.Exception')
 
 -main client.TodoClient

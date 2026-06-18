@@ -28,6 +28,23 @@ import views.ChatPanelView.ChatPanelLocals;
 class ChatMessagesController extends rails.action_controller.Base {
 	static final lifecycle = [];
 
+	public function index() {
+		respondTo(function(format) {
+			format.turboStream(function() {
+				render({
+					turboStream: TurboStreams.replace(StreamTarget.named(TodoHooks.chatPanelId), (Template.of(ChatPanelView) : Template<ChatPanelLocals>), {
+						messages: ChatMessage.latest().toArray(),
+						currentUser: UserSession.currentUser(this),
+						users: User.order(User.f.name.asc()).toArray()
+					})
+				});
+			});
+			format.html(function() {
+				redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
+			});
+		});
+	}
+
 	public function create() {
 		var attrs = ParamsMacro.requirePermit(this.params(), ChatMessage.railsParamKey, [ChatMessage.f.body, ChatMessage.f.userId]);
 		var message = ChatMessage.create(attrs);

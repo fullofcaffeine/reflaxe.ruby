@@ -38,6 +38,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Components Guide](railshx-components-guide.md)
 - [Turbo Guide](railshx-turbo-guide.md)
 - [ActionCable Guide](railshx-action-cable-guide.md)
+- [Full-Stack Hotwire Design](railshx-full-stack-hotwire-design.md)
 - [ActionMailer Guide](railshx-action-mailer-guide.md)
 - [ActiveJob Guide](railshx-active-job-guide.md)
 - [ActiveStorage Guide](railshx-active-storage-guide.md)

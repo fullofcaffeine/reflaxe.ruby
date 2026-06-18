@@ -163,6 +163,10 @@ Typed boundary:
   `ActionCable.broadcast(...)`, and a Haxe JS facade for
   `consumer.subscriptions.create(...)`. See
   [RailsHx ActionCable Guide](railshx-action-cable-guide.md).
+- Full-stack Hotwire contracts should connect ActionCable payloads, Turbo
+  Stream names/targets, HHX partial locals, generated client subscription
+  helpers, and Playwright selectors from one Haxe source of truth. See
+  [RailsHx Full-Stack Hotwire Design](railshx-full-stack-hotwire-design.md).
 - Broaden typed Turbo stream helpers to additional Rails helper shapes such as
   refresh and model callback macros where the target Rails API shape is proven,
   plus runtime Rails test coverage.

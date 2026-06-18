@@ -28,9 +28,12 @@ typedef ChatPanelLocals = {
 @:railsTemplateAst("render")
 class ChatPanelView {
 	public static function render(locals:ChatPanelLocals):HtmlNode {
-		return <section id=${TodoHooks.chatPanelId} class="card chat-panel" data-railshx-chat aria-label="RailsHx typed chatroom">
+		return <section id=${TodoHooks.chatPanelId} class="card chat-panel" data-railshx-chat data-railshx-chat-sync-url=${Routes.chatMessagesPath()} aria-label="RailsHx typed chatroom">
 			<div class="chat-panel-header">
-				<span class="eyebrow">Typed Turbo room</span>
+				<div class="chat-panel-kicker">
+					<span class="eyebrow">Typed Turbo room</span>
+					<span class=${TodoHooks.chatStatusClass} data-railshx-chat-status>Connecting</span>
+				</div>
 				<h2>Ship room</h2>
 				<p>
 					This is a Rails-native chat slice: Haxe owns the model, migration,
