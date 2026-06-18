@@ -769,6 +769,11 @@ private class RailsMarkupParser {
 				rejectChildren(name, children, pos);
 				rejectAttrs(name, attrs, pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.JavascriptImportmapTags;
+			case "turbo_stream_from":
+				rejectChildren(name, children, pos);
+				var stream = requireAttrValue(attrs, "stream", pos);
+				rejectAttrs(name, attrsExcept(attrs, ["stream"]), pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.TurboStreamFrom($stream);
 			case "rails_yield":
 				rejectChildren(name, children, pos);
 				rejectAttrs(name, attrs, pos);

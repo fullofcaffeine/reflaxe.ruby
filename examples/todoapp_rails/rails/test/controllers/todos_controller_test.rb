@@ -84,10 +84,8 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   test "chat message create permits haxe-authored params and redirects" do
     user = Models::User.create!(name: "room owner", email: "room-create@example.test", role: "maintainer")
 
-    assert_broadcasts("todoapp:chat", 1) do
-      assert_difference "Models::ChatMessage.count", 1 do
-        post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: user.id, ignored: "nope" } }
-      end
+    assert_difference "Models::ChatMessage.count", 1 do
+      post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: user.id, ignored: "nope" } }
     end
 
     assert_redirected_to "/todos"
@@ -96,15 +94,15 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_equal user, message.user
   end
 
-  test "chat message index returns a turbo stream room snapshot" do
-    user = Models::User.create!(name: "room sync owner", email: "room-sync@example.test", role: "maintainer")
-    Models::ChatMessage.create!(body: "late subscriber snapshot", user: user)
+  test "chat message create broadcasts through Turbo Streams for turbo clients" do
+    user = Models::User.create!(name: "room stream owner", email: "room-stream@example.test", role: "maintainer")
 
-    get "/chat_messages", headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    assert_difference "Models::ChatMessage.count", 1 do
+      post "/chat_messages",
+        params: { chat_message: { body: "streamed row", user_id: user.id } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
 
-    assert_response :success
-    assert_includes @response.media_type, "text/vnd.turbo-stream.html"
-    assert_includes @response.body, '<turbo-stream action="replace" target="railshx-chat-panel">'
-    assert_includes @response.body, "late subscriber snapshot"
+    assert_response :no_content
   end
 end

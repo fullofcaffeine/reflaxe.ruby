@@ -121,16 +121,7 @@ function compileTodoClient() {
     "static async hideAfterDelay",
     "await Async.delay(milliseconds)",
     "static async removeClassAfterDelay",
-    "static async syncChatPanel",
-    "await Turbo.fetchStream(url)",
-    "await Async.delay(0)",
-    "Consumer.subscribe(consumer, \"Channels::ChatMessagesChannel\"",
-    ".setAttribute(\"data-railshx-chat-cable-ready\", \"true\")",
-    ".removeAttribute(\"data-railshx-chat-cable-ready\")",
-    "data-railshx-chat-status",
-    "data-railshx-chat-sync-url",
-    "Turbo.renderStreamMessage(Turbo.stream(\"prepend\", \"railshx-chat-list\"",
-    "static escapeHtml(value)",
+    "Turbo.addFetchRequestHeader",
   ]) {
     if (!todoClient.includes(snippet)) {
       console.error(`todoapp_rails client output missing async/await snippet: ${snippet}`);
@@ -141,6 +132,11 @@ function compileTodoClient() {
     "document.createElement(\"li\")",
     ".innerHTML =",
     "insertBefore(item",
+    "static async syncChatPanel",
+    "await Async.delay(0)",
+    "Consumer.subscribe(consumer, \"Channels::ChatMessagesChannel\"",
+    "Turbo.renderStreamMessage(Turbo.stream(\"prepend\", \"railshx-chat-list\"",
+    "static escapeHtml(value)",
   ]) {
     if (todoClient.includes(forbidden)) {
       console.error(`todoapp_rails client output should use Turbo Stream rendering instead of low-level DOM mutation: ${forbidden}`);
@@ -229,7 +225,6 @@ compileTodoClient();
 for (const file of [
   "app/haxe_gen/models/todo.rb",
   "app/haxe_gen/models/user.rb",
-  "app/haxe_gen/channels/chat_messages_channel.rb",
   "app/haxe_gen/models/chat_message.rb",
   "app/haxe_gen/controllers/chat_messages_controller.rb",
   "app/haxe_gen/controllers/todo_index_locals.rb",
@@ -238,6 +233,7 @@ for (const file of [
   "app/haxe_gen/migrations/create_todos.rb",
   "app/haxe_gen/migrations/update_todos.rb",
   "app/haxe_gen/views/application_layout_view.rb",
+  "app/haxe_gen/views/chat_message_view.rb",
   "app/haxe_gen/views/chat_panel_view.rb",
   "app/haxe_gen/views/todo_card_view.rb",
   "app/haxe_gen/views/todo_composer_view.rb",
@@ -488,26 +484,12 @@ for (const expected of [
   /def index\(\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("chat_message"\)\.permit\(\[:body, :user_id\]\)/,
   /message__hx\d+ = Models::ChatMessage\.create\(attrs__hx\d+\)/,
-  /Channels::ChatMessagesChannel\.announce\(message__hx\d+\.id, message__hx\d+\.body, message__hx\d+\.user_id\)/,
-  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-chat-panel", partial: "controllers\/todos\/chat_panel", locals: \{messages: Models::ChatMessage\.latest\(\)\.to_a\(\), current_user: Controllers::UserSession\.current_user\(gthis__hx\d+\), users: Models::User\.order\(name: :asc\)\.to_a\(\)\}\)\) \}/,
+  /Turbo::StreamsChannel\.broadcast_prepend_to\("todoapp:chat", target: "railshx-chat-list", partial: "controllers\/todos\/chat_message", locals: \{message: message__hx\d+\}\)/,
+  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.head\(:no_content\) \}/,
   /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
 ]) {
   if (!expected.test(chatMessagesControllerRuby)) {
     console.error(`todoapp_rails chat messages controller output missing expected line: ${expected}`);
-    process.exit(1);
-  }
-}
-
-const chatMessagesChannelRuby = readFileSync(join(outputDir, "app", "haxe_gen", "channels", "chat_messages_channel.rb"), "utf8");
-for (const expected of [
-  /class ChatMessagesChannel < ActionCable::Channel::Base/,
-  /self\.stream_from\("todoapp:chat"\)/,
-  /self\.stop_all_streams\(\)/,
-  /def self\.announce\(id__hx\d+, body__hx\d+, user_id__hx\d+\)/,
-  /ActionCable\.server\.broadcast\("todoapp:chat", \{"id" => id__hx\d+, "body" => body__hx\d+, "userId" => user_id__hx\d+\}\)/,
-]) {
-  if (!expected.test(chatMessagesChannelRuby)) {
-    console.error(`todoapp_rails chat messages channel output missing expected line: ${expected}`);
     process.exit(1);
   }
 }
@@ -650,8 +632,8 @@ for (const expected of [
   "<text_area>",
   "Haxe-authored JavaScript",
   "models/ChatMessage.hx",
-  "channels/ChatMessagesChannel.hx",
   "views/ChatPanelView.hx",
+  "views/ChatMessageView.hx",
 ]) {
   if (!readme.includes(expected)) {
     console.error(`todoapp_rails README missing expected line: ${expected}`);
@@ -754,9 +736,6 @@ for (const expected of [
   'public static inline var chatPanelId:DomId = "railshx-chat-panel";',
   'public static inline var chatListId:DomId = "railshx-chat-list";',
   'public static inline var chatMessageKeyAttr:DataAttr = "data-railshx-chat-message-key";',
-  'public static inline var chatCableReadyAttr:DataAttr = "data-railshx-chat-cable-ready";',
-  'public static inline var chatSyncUrlAttr:DataAttr = "data-railshx-chat-sync-url";',
-  'public static inline var chatStatusAttr:DataAttr = "data-railshx-chat-status";',
   'public static inline var openWorkId:DomId = "open-work";',
   'public static inline var boundAttr:DataAttr = "data-railshx-bound";',
   'public static inline var sessionAttr:DataAttr = "data-railshx-session";',
@@ -790,6 +769,7 @@ for (const expected of [
   "hooks.selectors.sessionForms",
   "hooks.selectors.chatForms",
   "hooks.selectors.chatPanel",
+  "turbo-cable-stream-source[connected]",
   "hooks.selectors.sessionFooter",
   "hooks.attrs.bound",
   "hooks.selectors.openWork",
@@ -807,11 +787,7 @@ for (const expected of [
   'sessionForm: "session-form"',
   'sessionFooter: "session-footer"',
   'chatForm: "chat-form"',
-  'chatStatus: "chat-status"',
   'chatPanel: "railshx-chat-panel"',
-  'chatCableReady: "data-railshx-chat-cable-ready"',
-  'chatSyncUrl: "data-railshx-chat-sync-url"',
-  'chatStatus: "data-railshx-chat-status"',
   'scrollLinks: "[data-railshx-scroll]"',
   'sessionForms: ".session-form"',
   'sessionFooter: ".session-footer"',
@@ -821,6 +797,19 @@ for (const expected of [
 ]) {
   if (!hookManifest.includes(expected)) {
     console.error(`todoapp_rails generated Playwright hook manifest missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const appCss = readFileSync(join(exampleDir, "assets", "stylesheets", "application.css"), "utf8");
+for (const expected of [
+  ".chat-panel turbo-cable-stream-source",
+  ".chat-panel turbo-cable-stream-source::after",
+  ".chat-panel turbo-cable-stream-source[connected]::after",
+  'content: "live";',
+]) {
+  if (!appCss.includes(expected)) {
+    console.error(`todoapp_rails stylesheet missing native Turbo stream status styling: ${expected}`);
     process.exit(1);
   }
 }
@@ -849,15 +838,12 @@ for (const expected of [
 const typedChatPanel = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_chat_panel.html.erb"), "utf8");
 for (const expected of [
   'id="railshx-chat-panel"',
-  'data-railshx-chat-sync-url="<%= chat_messages_path() %>"',
+  '<%= turbo_stream_from "todoapp:chat" %>',
   "Typed Turbo room",
-  '<span class="chat-status" data-railshx-chat-status>Connecting</span>',
   "This is a Rails-native chat slice",
   '<ul id="railshx-chat-list" class="chat-list">',
   "<% messages.each do |message| %>",
-  '<li class="chat-message" data-railshx-chat-message-key="<%= message.id %>">',
-  "<strong>User <%= message.user_id %></strong>",
-  "<p><%= message.body %></p>",
+  '<%= render partial: "controllers/todos/chat_message", locals: {message: message} %>',
   "<% if messages.length == 0 %>",
   '<%= form_with url: chat_messages_path(), scope: :chat_message, local: true, class: "chat-form", data: {railshx_chat_form: true} do |form| %>',
   '<%= form.hidden_field :user_id, value: current_user.id %>',
@@ -867,6 +853,18 @@ for (const expected of [
 ]) {
   if (!typedChatPanel.includes(expected)) {
     console.error(`todoapp_rails typed chat panel missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const typedChatMessage = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_chat_message.html.erb"), "utf8");
+for (const expected of [
+  '<li class="chat-message" data-railshx-chat-message-key="<%= message.id %>">',
+  "<strong>User <%= message.user_id %></strong>",
+  "<p><%= message.body %></p>",
+]) {
+  if (!typedChatMessage.includes(expected)) {
+    console.error(`todoapp_rails typed chat message partial missing expected content: ${expected}`);
     process.exit(1);
   }
 }
@@ -885,13 +883,21 @@ for (const expected of [
 }
 
 for (const expected of [
-  'import * as ActionCable from "@rails/actioncable"',
-  "window.ActionCable = ActionCable",
   'import("railshx/todo_client")',
-  "include ActionCable::TestHelper",
 ]) {
   if (!todoappMaterializer.includes(expected)) {
     console.error(`todoapp_rails materializer missing expected ActionCable boot content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+for (const stale of [
+  'import * as ActionCable from "@rails/actioncable"',
+  "window.ActionCable = ActionCable",
+  "include ActionCable::TestHelper",
+]) {
+  if (todoappMaterializer.includes(stale)) {
+    console.error(`todoapp_rails materializer still contains non-canonical ActionCable boot content: ${stale}`);
     process.exit(1);
   }
 }

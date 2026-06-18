@@ -13,23 +13,27 @@ runtime calls.
 
 ## Motivation
 
-The todoapp chatroom now proves the baseline:
+The todoapp chatroom now proves the Rails-native baseline:
 
-- `channels/ChatMessagesChannel.hx` owns a typed `ChatBroadcast` payload and
-  a typed `Stream<ChatBroadcast>`.
+- `views/ChatPanelView.hx` subscribes with typed HHX
+  `<turbo_stream_from stream=${...} />`.
+- `views/ChatMessageView.hx` owns the typed row partial, stream name, and
+  stream target.
 - `controllers/ChatMessagesController.hx` creates an ActiveRecord row, then
-  broadcasts the typed payload.
-- `client/TodoClient.hx` subscribes through `rails.action_cable.Consumer` and
-  renders received payloads through `Turbo.renderStreamMessage(...)`.
-- `shared/TodoHooks.hx` centralizes DOM ids, data attrs, selectors, and
-  Playwright hooks.
-- Playwright opens two browser sessions and verifies realtime delivery.
+  broadcasts the server-rendered HHX partial through
+  `TurboStreams.broadcastPrependTo(...)`.
+- `client/TodoClient.hx` stays out of chat DOM mutation and only owns
+  progressive browser behavior such as form/session hooks and transient flashes.
+- `shared/TodoHooks.hx` centralizes DOM ids, classes, selectors, storage keys,
+  and Playwright hooks.
+- Playwright opens two browser sessions and verifies realtime delivery through
+  Rails/Turbo, not a custom client renderer.
 
-That is good, but still too manual. The client currently builds a small HTML
-template string because the server broadcast only carries data. The long-term
-Rails-native destination should make the easiest path either server-rendered
-Turbo Streams from typed HHX partial locals, or generated client stream helpers
-when client rendering is deliberately chosen.
+That is the canonical path. Haxe-owned ActionCable channels and client
+subscriptions remain valuable for custom payload protocols, presence, telemetry,
+canvas/charts, and other non-DOM or deliberately client-owned behavior, but a
+basic Rails list/panel update should not need more code than a classic Hotwire
+app.
 
 ## Principles
 
@@ -56,9 +60,9 @@ when client rendering is deliberately chosen.
 
 | Surface | Current state | Gap |
 | --- | --- | --- |
-| Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>` and `StreamTarget`. | Needs model/callback ergonomics, stream contracts, and todoapp dogfood using server-rendered broadcasts. |
-| ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. | Client channel names are still strings; server data payloads are not tied to Turbo partial locals. |
-| Haxe JS Turbo client | `Turbo.on*`, `Turbo.renderStreamMessage`, `Turbo.stream`, and Genes ES modules work with importmap. | Client stream HTML remains stringly; common subscription/lifecycle binding is verbose. |
+| Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>`, `StreamName<TLocals>`, and `StreamTarget`. The todoapp now dogfoods this with `turbo_stream_from` and server-rendered broadcasts. | Needs model/callback ergonomics and richer stream contract generation. |
+| ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. | Useful for custom payload protocols, but not the canonical DOM update path when Turbo Streams can render a partial. |
+| Haxe JS Turbo client | `Turbo.on*`, `Turbo.renderStreamMessage`, `Turbo.stream`, and Genes ES modules work with importmap. | Client-rendered stream HTML should be generated/typed when deliberately chosen; canonical Hotwire examples should not hand-build DOM fragments. |
 | Shared hooks | `TodoHooks` centralizes ids, attrs, classes, selectors, storage keys, and Playwright exports. | Needs a reusable generator/macro pattern, not only a hand-written sample. |
 | Browser tests | Playwright imports generated hook constants and verifies two-session updates. | Needs typed Haxe-authored browser test layer later, but TS Playwright can remain first-class. |
 
@@ -73,11 +77,15 @@ when client rendering is deliberately chosen.
 
 The preferred default for Rails UI is:
 
-1. Use the normal Turbo Stream response for the submitting browser.
-2. Use server-rendered `Turbo::StreamsChannel.broadcast_*_to` for other
-   subscribers.
-3. Use typed client-rendered streams only when the UI fragment is intentionally
-   client-owned or optimistic.
+1. Render current state from HHX on the page/frame.
+2. Subscribe with typed HHX `<turbo_stream_from>`.
+3. Broadcast server-rendered HHX partials with
+   `Turbo::StreamsChannel.broadcast_*_to`.
+4. Return `head :no_content` or a form-specific Turbo Stream response to the
+   submitter, but avoid duplicating the same target mutation in both response
+   and broadcast.
+5. Use typed client-rendered streams only when the UI fragment is intentionally
+   client-owned, optimistic, or not a normal Rails DOM partial.
 
 ## Proposed Contract Shape
 
@@ -171,14 +179,14 @@ Generated Haxe can still lower to:
 
 ```js
 consumer.subscriptions.create(
-  { channel: "Channels::ChatMessagesChannel" },
+  { channel: "Channels::PresenceChannel" },
   callbacks
 )
 ```
 
 The Haxe-facing API should infer the channel name from
-`@:railsChannel class ChatMessagesChannel` rather than making users repeat
-`"Channels::ChatMessagesChannel"` in app code.
+`@:railsChannel class PresenceChannel` rather than making users repeat
+`"Channels::PresenceChannel"` in app code.
 
 ### Typed Client-Rendered Stream
 
@@ -210,7 +218,7 @@ A future `@:hotwireContract` macro can validate and generate helper surfaces:
 ```haxe
 @:hotwireContract
 class ChatRoom {
-	static final cable = ChatMessagesChannel;
+	static final cable = PresenceChannel;
 	static final stream = "todoapp:chat";
 	static final target = TodoHooks.chatListId;
 	static final row = Template.of(ChatMessageRowView);

@@ -115,16 +115,18 @@ test('posts a typed RailsHx room note through Turbo-backed Haxe client hooks', a
   await expect.poll(async () => page.locator(hooks.selectors.chatMessages).count()).toBeGreaterThanOrEqual(beforeCount)
 })
 
-test('broadcasts typed ActionCable room notes to another browser session', async ({ browser }) => {
+test('broadcasts typed Turbo Stream room notes to another browser session', async ({ browser }) => {
   const sender = await browser.newPage()
   const receiver = await browser.newPage()
   try {
     await gotoTodos(sender)
     await gotoTodos(receiver)
-    await expect(receiver.locator(hooks.selectors.chatPanel)).toHaveAttribute(hooks.attrs.chatCableReady, 'true')
-    await expect(receiver.locator(hooks.selectors.chatPanel)).toContainText('Live')
+    await expect(sender.locator('turbo-cable-stream-source[connected]')).toHaveCount(1)
+    await expect(receiver.locator('turbo-cable-stream-source[connected]')).toHaveCount(1)
+    await expect(sender.locator('turbo-cable-stream-source[connected]')).toBeVisible()
+    await expect(receiver.locator('turbo-cable-stream-source[connected]')).toBeVisible()
 
-    const body = `Cable note ${Date.now()}`
+    const body = `Stream note ${Date.now()}`
     await sender.getByLabel('Add a typed room note').fill(body)
     await sender.getByRole('button', { name: 'Post note' }).click()
 
@@ -136,10 +138,10 @@ test('broadcasts typed ActionCable room notes to another browser session', async
   }
 })
 
-test('syncs missed room notes after a late ActionCable connection', async ({ page, request }) => {
+test('renders missed room notes from Rails state on reload', async ({ page, request }) => {
   await gotoTodos(page)
 
-  const body = `Late cable note ${Date.now()}`
+  const body = `Late stream note ${Date.now()}`
   await request.post('/chat_messages', {
     form: {
       'chat_message[user_id]': '1',
@@ -148,6 +150,5 @@ test('syncs missed room notes after a late ActionCable connection', async ({ pag
   })
 
   await page.reload()
-  await expect(page.locator(hooks.selectors.chatPanel)).toHaveAttribute(hooks.attrs.chatCableReady, 'true')
   await expect(page.locator(hooks.selectors.chatPanel)).toContainText(body, { timeout: 20_000 })
 })

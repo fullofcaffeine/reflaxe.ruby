@@ -3,8 +3,11 @@ package views;
 import models.ChatMessage;
 import models.User;
 import rails.action_view.HtmlNode;
+import rails.action_view.Template;
 import routes.Routes;
 import shared.TodoHooks;
+import views.ChatMessageView;
+import views.ChatMessageView.ChatMessageLocals;
 
 typedef ChatPanelLocals = {
 	var messages:Array<ChatMessage>;
@@ -14,25 +17,26 @@ typedef ChatPanelLocals = {
 
 // Typed chat panel partial.
 //
-// Demonstrates: realtime-style Rails UX without a parallel runtime. The panel is
-// authored as HHX, replaced through Turbo Streams, and still works with plain
-// HTML redirects when JavaScript is unavailable.
+// Demonstrates: classic Hotwire realtime UI authored through typed HHX. The
+// panel subscribes with `<turbo_stream_from>`, Rails broadcasts server-rendered
+// `_chat_message` partials, and Haxe JS does not maintain a duplicate room DOM.
 // Type safety: chat form fields use `ChatMessage.f.*`; the submit user comes
 // from a nullable typed `currentUser`; the loop body sees each message as a
 // `ChatMessage` with typed fields.
 // IntelliSense: editors should complete `locals.messages`, `message.body`,
-// `message.userId`, `ChatMessage.f.body`, and `Routes.chatMessagesPath`.
-// Ruby/Rails output: normal ERB with `form_with`, loops, conditionals, and Rails
-// route helpers.
+// `message.userId`, `ChatMessage.f.body`, `Routes.chatMessagesPath`, and
+// `ChatMessageView.roomStream`.
+// Ruby/Rails output: normal ERB with `turbo_stream_from`, `form_with`, typed
+// partial renders, loops, conditionals, and Rails route helpers.
 @:railsTemplate("controllers/todos/_chat_panel")
 @:railsTemplateAst("render")
 class ChatPanelView {
 	public static function render(locals:ChatPanelLocals):HtmlNode {
-		return <section id=${TodoHooks.chatPanelId} class="card chat-panel" data-railshx-chat data-railshx-chat-sync-url=${Routes.chatMessagesPath()} aria-label="RailsHx typed chatroom">
+		return <section id=${TodoHooks.chatPanelId} class="card chat-panel" data-railshx-chat aria-label="RailsHx typed chatroom">
 			<div class="chat-panel-header">
 				<div class="chat-panel-kicker">
 					<span class="eyebrow">Typed Turbo room</span>
-					<span class=${TodoHooks.chatStatusClass} data-railshx-chat-status>Connecting</span>
+					<turbo_stream_from stream=${ChatMessageView.roomStream()} />
 				</div>
 				<h2>Ship room</h2>
 				<p>
@@ -44,13 +48,7 @@ class ChatPanelView {
 
 			<ul id=${TodoHooks.chatListId} class=${TodoHooks.chatListClass}>
 				<for ${message in locals.messages}>
-					<li class=${TodoHooks.chatMessageClass} data-railshx-chat-message-key=${message.id}>
-						<span class="avatar">#</span>
-						<div>
-							<strong>User ${message.userId}</strong>
-							<p>${message.body}</p>
-						</div>
-					</li>
+					<partial template=${(Template.of(ChatMessageView) : Template<ChatMessageLocals>)} locals=${{message: message}} />
 				</for>
 			</ul>
 

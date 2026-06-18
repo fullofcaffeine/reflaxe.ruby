@@ -18,9 +18,9 @@ module Controllers
       gthis__hx0 = self
       attrs__hx0 = self.params().require("chat_message").permit([:body, :user_id])
       message__hx0 = Models::ChatMessage.create(attrs__hx0)
-      Channels::ChatMessagesChannel.announce(message__hx0.id, message__hx0.body, message__hx0.user_id)
+      Turbo::StreamsChannel.broadcast_prepend_to("todoapp:chat", target: "railshx-chat-list", partial: "controllers/todos/chat_message", locals: {message: message__hx0})
       self.respond_to() do |format__hx0|
-        format__hx0.turbo_stream() { gthis__hx0.render(turbo_stream: turbo_stream.replace("railshx-chat-panel", partial: "controllers/todos/chat_panel", locals: {messages: Models::ChatMessage.latest().to_a(), current_user: Controllers::UserSession.current_user(gthis__hx0), users: Models::User.order(name: :asc).to_a()})) }
+        format__hx0.turbo_stream() { gthis__hx0.head(:no_content) }
         format__hx0.html() { gthis__hx0.redirect_to(self.todos_path(), status: :see_other) }
       end
     end

@@ -1,13 +1,10 @@
 package client;
 
-import channels.ChatMessagesChannel.ChatBroadcast;
 import js.Browser;
 import js.html.Element;
 import js.html.Event;
 import js.html.EventTarget;
-import rails.action_cable.Consumer;
 import rails.turbo.Turbo;
-import rails.turbo.TurboStreamAction;
 import reflaxe.js.Async;
 import reflaxe.js.Async.await;
 import shared.TodoHooks;
@@ -18,17 +15,13 @@ import shared.TodoHooks;
 // Turbo-idiomatic through typed `rails.turbo.Turbo` event and stream helpers.
 // Type safety: DOM values are typed as `Element`/`Event` where possible;
 // storage keys and behavior hooks are centralized constants instead of repeated
-// magic strings; Turbo submit/fetch details and ActionCable room payloads use
-// typed structural contracts.
+// magic strings; Turbo submit/fetch details use typed structural contracts.
 // IntelliSense: editors should complete `Turbo.onLoad`, `Turbo.onSubmitStart`,
 // `Turbo.onBeforeFetchRequest`, `Browser.document`, `Element` methods, and the
 // helper functions below.
 // JS/Rails output: compiled JavaScript pinned through Rails importmap and run
 // alongside Turbo.
 class TodoClient {
-	static var chatSubscribed:Bool = false;
-	static var chatSyncing:Bool = false;
-
 	public static function main():Void {
 		boot();
 		Turbo.onLoad(function(_:Event):Void {
@@ -53,7 +46,6 @@ class TodoClient {
 		bindTodoForm();
 		bindSessionForms();
 		bindChatForms();
-		subscribeToChat();
 		bindScrollLinks();
 		announceCompletedCreate();
 		announceSessionChange();
@@ -135,75 +127,6 @@ class TodoClient {
 				} catch (_:js.lib.Error) {}
 			});
 		}
-	}
-
-	static function subscribeToChat():Void {
-		var panel = Browser.document.querySelector(TodoHooks.idSelector(TodoHooks.chatPanelId));
-		if (chatSubscribed || panel == null) {
-			return;
-		}
-		chatSubscribed = true;
-		var consumer = Consumer.create();
-		Consumer.subscribe(consumer, "Channels::ChatMessagesChannel", {}, {
-			connected: function():Void {
-				setChatCableReady(true);
-				syncChatPanel();
-			},
-			disconnected: function():Void {
-				setChatCableReady(false);
-			},
-			received: function(payload:ChatBroadcast):Void {
-				appendBroadcastMessage(payload);
-			}
-		});
-	}
-
-	static function setChatCableReady(ready:Bool):Void {
-		var panel = Browser.document.querySelector(TodoHooks.idSelector(TodoHooks.chatPanelId));
-		if (panel == null) {
-			return;
-		}
-		var status = panel.querySelector(TodoHooks.attrSelector(TodoHooks.chatStatusAttr));
-		if (ready) {
-			panel.setAttribute(TodoHooks.chatCableReadyAttr, "true");
-			if (status != null) {
-				status.textContent = "Live";
-			}
-		} else {
-			panel.removeAttribute(TodoHooks.chatCableReadyAttr);
-			if (status != null) {
-				status.textContent = "Reconnecting";
-			}
-		}
-	}
-
-	@:async
-	static function syncChatPanel():Void {
-		if (chatSyncing) {
-			return;
-		}
-		var panel = Browser.document.querySelector(TodoHooks.idSelector(TodoHooks.chatPanelId));
-		if (panel == null) {
-			return;
-		}
-		var url = panel.getAttribute(TodoHooks.chatSyncUrlAttr);
-		if (url == null || url == "") {
-			return;
-		}
-		chatSyncing = true;
-		try {
-			var status = panel.querySelector(TodoHooks.attrSelector(TodoHooks.chatStatusAttr));
-			if (status != null) {
-				status.textContent = "Syncing";
-			}
-			@:await Turbo.fetchStream(url);
-			@:await Async.delay(0);
-			bindChatForms();
-			setChatCableReady(true);
-		} catch (_:js.lib.Error) {
-			setChatCableReady(true);
-		}
-		chatSyncing = false;
 	}
 
 	static function announceSessionSubmit(target:Null<EventTarget>, success:Null<Bool>):Void {
@@ -308,39 +231,6 @@ class TodoClient {
 			panel.classList.add("is-warm");
 			removeClassAfterDelay(panel, "is-warm", 900);
 		}
-	}
-
-	static function appendBroadcastMessage(payload:ChatBroadcast):Void {
-		var list = Browser.document.querySelector(TodoHooks.idSelector(TodoHooks.chatListId));
-		if (list == null) {
-			return;
-		}
-		var messageKey = Std.string(payload.id);
-		if (Browser.document.querySelector(TodoHooks.attrEqualsSelector(TodoHooks.chatMessageKeyAttr, messageKey)) != null) {
-			return;
-		}
-
-		Turbo.renderStreamMessage(Turbo.stream(TurboStreamAction.Prepend, TodoHooks.chatListId, chatMessageTemplate(payload, messageKey)));
-	}
-
-	static function chatMessageTemplate(payload:ChatBroadcast, messageKey:String):String {
-		return '<li class="${TodoHooks.chatMessageClass}" ${TodoHooks.chatMessageKeyAttr}="${escapeHtml(messageKey)}">'
-			+ '<span class="avatar">#</span>'
-			+ '<div><strong>User ${payload.userId}</strong><p>${escapeHtml(payload.body)}</p></div>'
-			+ '</li>';
-	}
-
-	static function escapeHtml(value:String):String {
-		return value.split("&")
-			.join("&amp;")
-			.split("<")
-			.join("&lt;")
-			.split(">")
-			.join("&gt;")
-			.split("\"")
-			.join("&quot;")
-			.split("'")
-			.join("&#39;");
 	}
 
 	@:async

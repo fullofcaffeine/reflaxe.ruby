@@ -50,6 +50,7 @@ module HXRuby
         write("build.hxml", render_build)
         write("build-client.hxml", render_client_build)
         write(".haxerc", render_haxerc)
+        write("AGENTS.md", render_agents)
         write("haxe_libraries/genes.hxml", render_genes_hxml)
         write("haxe_libraries/helder.set.hxml", render_helder_set_hxml)
         write(File.join(@source_dir, "#{@main_class}.hx"), render_main)
@@ -180,6 +181,35 @@ module HXRuby
           '  "version": "4.3.7",',
           '  "resolveLibs": "scoped"',
           "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_agents
+        [
+          "# RailsHx App Agent Instructions",
+          "",
+          "This Rails app uses RailsHx: Haxe/HHX is the typed source for generated Ruby, ERB, routes, migrations, and client JavaScript where this app has explicitly chosen Haxe ownership. Rails still owns runtime tasks such as `bin/rails db:migrate`, `bin/rails test`, Zeitwerk, ActionCable, Turbo, and assets.",
+          "",
+          "## Development Loop",
+          "",
+          "- Prefer `bundle exec rake hxruby:start` for a one-command compile-and-run loop.",
+          "- Prefer `bundle exec rake hxruby:start:watch` while editing Haxe/HHX/Haxe JS.",
+          "- Run `bundle exec rake hxruby:compile`, `bundle exec rake hxruby:compile:client`, `bundle exec rake hxruby:gen:routes`, and Rails tests before landing changes that affect generated artifacts.",
+          "- Generated Rails files are build output unless they are explicitly Rails-owned adoption files. Do not hand-edit generated `app/haxe_gen/**`, generated HHX ERB, generated importmap client modules, or RailsHx-owned migration artifacts.",
+          "",
+          "## RailsHx Authoring Rules",
+          "",
+          "- Author RailsHx-owned templates as typed HHX, not raw ERB strings. Existing Rails-owned ERB may be consumed through typed adoption contracts.",
+          "- Prefer typed refs over strings: route helpers, model fields, params keys, template refs, Turbo stream names/targets, DOM hooks, and generated selectors should come from Haxe constants/macros where available.",
+          "- Keep generated Ruby/Rails output recognizable to Rails developers: ordinary controllers, models, migrations, route helpers, templates, Turbo Streams, ActionCable, and tests.",
+          "- If a classic Rails/Hotwire app would not need custom JavaScript, timers, manual fetches, post-render repair hooks, or duplicate client-side templates for a behavior, RailsHx should not need them either. Add or improve the typed RailsHx wrapper around the Rails primitive instead.",
+          "- For realtime DOM updates, prefer the normal Hotwire shape: render current state on page load, subscribe with typed HHX such as `<turbo_stream_from stream=${...} />`, and broadcast server-rendered typed partials through `TurboStreams.broadcast*To(...)`. Use Haxe JS `Consumer.subscribe(...)` only for custom non-DOM protocols or genuinely client-owned behavior.",
+          "- Do not duplicate the same UI in HHX and Haxe JS string/DOM builders. If Rails can render the row/panel partial, broadcast or render that partial.",
+          "",
+          "## Scope Rule",
+          "",
+          "- Put future agent guidance in the narrowest inherited `AGENTS.md`: app-specific RailsHx workflow here, upstream compiler/framework rules in the `reflaxe.ruby` repo, and library-specific client/compiler guidance in the relevant dependency docs.",
           "",
         ].join("\n")
       end

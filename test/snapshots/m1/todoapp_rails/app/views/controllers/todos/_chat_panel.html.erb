@@ -1,8 +1,8 @@
-<section id="railshx-chat-panel" class="card chat-panel" data-railshx-chat data-railshx-chat-sync-url="<%= chat_messages_path() %>" aria-label="RailsHx typed chatroom">
+<section id="railshx-chat-panel" class="card chat-panel" data-railshx-chat aria-label="RailsHx typed chatroom">
 			<div class="chat-panel-header">
 				<div class="chat-panel-kicker">
 					<span class="eyebrow">Typed Turbo room</span>
-					<span class="chat-status" data-railshx-chat-status>Connecting</span>
+					<%= turbo_stream_from "todoapp:chat" %>
 				</div>
 				<h2>Ship room</h2>
 				<p>
@@ -14,13 +14,7 @@
 
 			<ul id="railshx-chat-list" class="chat-list">
 				<% messages.each do |message| %>
-					<li class="chat-message" data-railshx-chat-message-key="<%= message.id %>">
-						<span class="avatar">#</span>
-						<div>
-							<strong>User <%= message.user_id %></strong>
-							<p><%= message.body %></p>
-						</div>
-					</li>
+					<%= render partial: "controllers/todos/chat_message", locals: {message: message} %>
 				<% end %>
 			</ul>
 

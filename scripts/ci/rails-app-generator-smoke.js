@@ -111,7 +111,8 @@ try {
     "RailsHx Gem Layers",
     "Run a deterministic inventory before asking an LLM for help.",
     "bundle add devise",
-    "bin/rails generate hxruby:gem-layer devise --discover",
+    "bin/rails generate hxruby:adopt --gem devise --discover",
+    "bin/rails generate hxruby:adopt --gem devise --write contracts",
     "Uncertain APIs should stay review-marked",
   ]);
   expectFile("lib/tasks/hxruby.rake", [

@@ -5486,6 +5486,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							"<%= javascript_importmap_tags %>";
 						}
+					case "TurboStreamFrom":
+						if (params.length != 1) {
+							Context.error("HtmlNode.TurboStreamFrom expects one stream argument.", node.pos);
+							"";
+						} else {
+							lowerTemplateTurboStreamFrom(params[0]);
+						}
 					case "Yield":
 						if (params.length != 0) {
 							Context.error("HtmlNode.Yield expects no arguments.", node.pos);
@@ -5797,6 +5804,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			quoteRubyStringForCode(expectTemplateString(name, "HtmlNode.StylesheetLinkTag name must be a string literal."))
 		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= stylesheet_link_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateTurboStreamFrom(stream:TypedExpr):String {
+		return "<%= turbo_stream_from " + printParam([stream], 0) + " %>";
 	}
 
 	static function lowerTemplateHelperAttrs(attrs:TypedExpr, scope:RailsTemplateScope):Array<String> {

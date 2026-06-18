@@ -6,7 +6,6 @@ class Main
   end
   def self.main()
     todo__hx0 = nil
-    chat_channel__hx0 = Channels::ChatMessagesChannel
     chat_message__hx0 = nil
     routes__hx0 = nil
     haxe_authored_test__hx0 = TestHaxe::Models::TodoHaxeTest
@@ -19,6 +18,7 @@ class Main
     sessions_controller__hx0 = nil
     user_controller__hx0 = nil
     user_session__hx0 = Controllers::UserSession
+    chat_message_view__hx0 = Views::ChatMessageView
     chat_panel_view__hx0 = Views::ChatPanelView
     layout_view__hx0 = Views::ApplicationLayoutView
     card_view__hx0 = Views::TodoCardView
@@ -31,7 +31,6 @@ class Main
     user_management_view__hx0 = Views::UserManagementView
     user_switcher_view__hx0 = Views::UserSwitcherView
     puts(HXRuby.stringify((todo__hx0 == nil)))
-    puts(HXRuby.stringify((chat_channel__hx0 != nil)))
     puts(HXRuby.stringify((chat_message__hx0 == nil)))
     puts(HXRuby.stringify((routes__hx0 == nil)))
     puts(HXRuby.stringify((haxe_authored_test__hx0 != nil)))
@@ -44,6 +43,7 @@ class Main
     puts(HXRuby.stringify((sessions_controller__hx0 == nil)))
     puts(HXRuby.stringify((user_controller__hx0 == nil)))
     puts(HXRuby.stringify((user_session__hx0 != nil)))
+    puts(HXRuby.stringify((chat_message_view__hx0 != nil)))
     puts(HXRuby.stringify((chat_panel_view__hx0 != nil)))
     puts(HXRuby.stringify((layout_view__hx0 != nil)))
     puts(HXRuby.stringify((card_view__hx0 != nil)))

@@ -9,10 +9,7 @@ export const hooks = {
     sessionZone: "data-railshx-session-zone",
     chat: "data-railshx-chat",
     chatForm: "data-railshx-chat-form",
-    chatMessageKey: "data-railshx-chat-message-key",
-    chatCableReady: "data-railshx-chat-cable-ready",
-    chatSyncUrl: "data-railshx-chat-sync-url",
-    chatStatus: "data-railshx-chat-status"
+    chatMessageKey: "data-railshx-chat-message-key"
   },
   classes: {
     shell: "todo-shell",
@@ -22,7 +19,6 @@ export const hooks = {
     chatForm: "chat-form",
     chatList: "chat-list",
     chatMessage: "chat-message",
-    chatStatus: "chat-status",
     list: "todo-list",
     item: "todo-item",
     dot: "todo-dot"

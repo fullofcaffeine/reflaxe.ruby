@@ -87,6 +87,14 @@
       "reason": "Typed regular expression surface for Ruby Regexp lowering."
     },
     {
+      "id": "std.reflaxe.js.async",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/reflaxe/js/Async.hx",
+      "surface": "reflaxe.js.Async",
+      "reason": "Typed async/await helper facade for Haxe-authored JavaScript compiled through Genes, including parser-valid @:await sugar and Promise delay helpers."
+    },
+    {
       "id": "std.ruby.symbol",
       "owner": "std",
       "status": "implemented",
@@ -101,6 +109,14 @@
       "path": "std/ruby/Kernel.hx",
       "surface": "ruby.Kernel",
       "reason": "Typed Kernel externs for direct Ruby interop."
+    },
+    {
+      "id": "std.ruby.prelude",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Prelude.hx",
+      "surface": "ruby.Prelude",
+      "reason": "Opt-in Ruby-style puts/print aliases that preserve Sys/HXRuby stringification instead of direct Kernel conversion."
     },
     {
       "id": "std.ruby.standard_error",
@@ -919,12 +935,68 @@
       "reason": "Typed RailsHx migration operation DSL for production snapshot, alter/drop/index/reference/check-constraint/rename/change-null/foreign-key/reversible ActiveRecord migration statements."
     },
     {
+      "id": "std.rails.routes_dsl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/RoutesDsl.hx",
+      "surface": "rails.macros.RoutesDsl",
+      "reason": "Typed Haxe-owned Rails routing macro DSL that validates controller/action refs and lowers marker calls into Rails-native config/routes.rb output."
+    },
+    {
+      "id": "std.rails.routing_http_verb",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/routing/HttpVerb.hx",
+      "surface": "rails.routing.HttpVerb",
+      "reason": "Typed HTTP verb token for Rails route declarations and match-style route APIs."
+    },
+    {
+      "id": "std.rails.routing_resource_action",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/routing/ResourceAction.hx",
+      "surface": "rails.routing.ResourceAction",
+      "reason": "Typed Rails resource action vocabulary used by route DSL validation and future value-level route APIs."
+    },
+    {
+      "id": "std.rails.routing_route_decl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/routing/RouteDecl.hx",
+      "surface": "rails.routing.RouteDecl",
+      "reason": "Compiler-owned route declaration carrier consumed by reflaxe.ruby when emitting Rails config/routes.rb artifacts."
+    },
+    {
+      "id": "std.rails.routing_route_name",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/routing/RouteName.hx",
+      "surface": "rails.routing.RouteName",
+      "reason": "Checked Rails route helper prefix carrier so route aliases do not degrade into unconstrained strings."
+    },
+    {
       "id": "std.rails.routing_route_param",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/routing/RouteParam.hx",
       "surface": "rails.routing.RouteParam",
       "reason": "Typed route-helper parameter token used by generated Rails route externs so required path/glob segments accept common scalar IDs while model/object IDs cross an explicit Rails to_param boundary."
+    },
+    {
+      "id": "std.rails.routing_route_regex",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/routing/RouteRegex.hx",
+      "surface": "rails.routing.RouteRegex",
+      "reason": "Checked route regex carrier for Rails constraints so segment-regex safety rules stay explicit."
+    },
+    {
+      "id": "std.rails.routing_route_target",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/routing/RouteTarget.hx",
+      "surface": "rails.routing.RouteTarget",
+      "reason": "Compiler-owned route target carrier produced from typed controller/action refs and erased into Rails controller#action strings."
     },
     {
       "id": "std.rails.params_macro",

@@ -22,7 +22,6 @@ class TodoHooks {
 	public static inline var chatFormClass:CssClass = "chat-form";
 	public static inline var chatListClass:CssClass = "chat-list";
 	public static inline var chatMessageClass:CssClass = "chat-message";
-	public static inline var chatStatusClass:CssClass = "chat-status";
 	public static inline var itemClass:CssClass = "todo-item";
 	public static inline var listClass:CssClass = "todo-list";
 	public static inline var dotClass:CssClass = "todo-dot";
@@ -43,9 +42,6 @@ class TodoHooks {
 	public static inline var chatAttr:DataAttr = "data-railshx-chat";
 	public static inline var chatFormAttr:DataAttr = "data-railshx-chat-form";
 	public static inline var chatMessageKeyAttr:DataAttr = "data-railshx-chat-message-key";
-	public static inline var chatCableReadyAttr:DataAttr = "data-railshx-chat-cable-ready";
-	public static inline var chatSyncUrlAttr:DataAttr = "data-railshx-chat-sync-url";
-	public static inline var chatStatusAttr:DataAttr = "data-railshx-chat-status";
 
 	public static inline var submitStorageKey:StorageKey = "railshx.todo.just_added";
 	public static inline var submitScrollStorageKey:StorageKey = "railshx.todo.submit_scroll_y";

@@ -23,6 +23,7 @@ enum HtmlNode {
 	CspMetaTag;
 	StylesheetLinkTag(name:String, attrs:Array<HtmlAttr>);
 	JavascriptImportmapTags;
+	TurboStreamFrom<TPayload>(stream:rails.turbo.StreamName<TPayload>);
 	Yield;
 	FormWith<TUrl>(url:TUrl, scope:String, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	FormHiddenField<TValue>(name:String, value:TValue);

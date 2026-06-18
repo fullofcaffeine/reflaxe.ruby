@@ -11,4 +11,9 @@ not wrapper runtimes. For receiver extensions such as ActiveSupport core
 extensions, prefer `@:rubyPatch` externs under packages like
 `rails.active_support` and use them from app code with Haxe `using`.
 
+Ruby-flavored convenience helpers should stay explicit. `ruby.Prelude.puts`
+can be statically imported as an opt-in alias for `Sys.println`, preserving
+HXRuby stringification, while `ruby.Kernel.puts` remains the direct Ruby Kernel
+interop surface.
+
 See `docs/stdlib-ownership.md` and `docs/stdlib-inventory.json`.
