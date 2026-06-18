@@ -106,6 +106,7 @@ typedef RailsRouteDecl = {
 	path:String,
 	name:String,
 	controller:String,
+	moduleName:String,
 	only:Array<String>,
 	except:Array<String>,
 	param:String,
@@ -4595,6 +4596,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								path: "",
 								name: "",
 								controller: "",
+								moduleName: "",
 								only: [],
 								except: [],
 								param: "",
@@ -4609,6 +4611,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								path: railsRouteString(params[1], "route path"),
 								name: railsRouteStringAllowEmpty(params[3], "route name"),
 								controller: "",
+								moduleName: "",
 								only: [],
 								except: [],
 								param: "",
@@ -4623,6 +4626,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								path: "",
 								name: railsRouteString(params[0], "resources name"),
 								controller: railsRouteString(params[1], "resources controller"),
+								moduleName: "",
 								only: railsRouteStringArray(params[2], "resources only"),
 								except: railsRouteStringArray(params[3], "resources except"),
 								param: railsRouteStringAllowEmpty(params[4], "resources param"),
@@ -4637,6 +4641,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								path: "",
 								name: railsRouteString(params[0], "resource name"),
 								controller: railsRouteString(params[1], "resource controller"),
+								moduleName: "",
 								only: railsRouteStringArray(params[2], "resource only"),
 								except: railsRouteStringArray(params[3], "resource except"),
 								param: railsRouteStringAllowEmpty(params[4], "resource param"),
@@ -4651,6 +4656,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								path: "",
 								name: "",
 								controller: "",
+								moduleName: "",
 								only: [],
 								except: [],
 								param: "",
@@ -4665,10 +4671,56 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								path: "",
 								name: "",
 								controller: "",
+								moduleName: "",
 								only: [],
 								except: [],
 								param: "",
 								children: railsRouteChildren(params[0], "member children"),
+								pos: expr.pos
+							};
+						case "namespace" if (params.length == 2):
+							{
+								kind: "namespace",
+								target: null,
+								verb: "",
+								path: "",
+								name: railsRouteString(params[0], "namespace name"),
+								controller: "",
+								moduleName: "",
+								only: [],
+								except: [],
+								param: "",
+								children: railsRouteChildren(params[1], "namespace children"),
+								pos: expr.pos
+							};
+						case "scope" if (params.length == 4):
+							{
+								kind: "scope",
+								target: null,
+								verb: "",
+								path: railsRouteString(params[0], "scope path"),
+								name: railsRouteStringAllowEmpty(params[2], "scope name"),
+								controller: "",
+								moduleName: railsRouteStringAllowEmpty(params[1], "scope moduleName"),
+								only: [],
+								except: [],
+								param: "",
+								children: railsRouteChildren(params[3], "scope children"),
+								pos: expr.pos
+							};
+						case "controller" if (params.length == 2):
+							{
+								kind: "controller",
+								target: null,
+								verb: "",
+								path: "",
+								name: "",
+								controller: railsRouteString(params[0], "controller name"),
+								moduleName: "",
+								only: [],
+								except: [],
+								param: "",
+								children: railsRouteChildren(params[1], "controller children"),
 								pos: expr.pos
 							};
 						case other:
@@ -4693,6 +4745,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			path: "",
 			name: "",
 			controller: "",
+			moduleName: "",
 			only: [],
 			except: [],
 			param: "",
@@ -4748,6 +4801,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				} else {
 					renderRailsRouteBlock(decl.kind, renderRailsRouteChildren(decl.children));
 				}
+			case "namespace":
+				renderRailsRouteBlock("namespace " + rubySymbolLiteral(decl.name), renderRailsRouteChildren(decl.children));
+			case "scope":
+				var parts = ["scope " + quoteRubyStringForCode(decl.path)];
+				if (decl.moduleName != "") {
+					parts.push("module: " + quoteRubyStringForCode(decl.moduleName));
+				}
+				if (decl.name != "") {
+					parts.push("as: " + rubySymbolLiteral(decl.name));
+				}
+				renderRailsRouteBlock(parts.join(", "), renderRailsRouteChildren(decl.children));
+			case "controller":
+				renderRailsRouteBlock("controller " + quoteRubyStringForCode(decl.controller), renderRailsRouteChildren(decl.children));
 			case _:
 				[];
 		}

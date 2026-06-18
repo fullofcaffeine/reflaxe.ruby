@@ -21,4 +21,10 @@ extern class RouteDecl {
 	public static function collection(children:Array<RouteDecl>):RouteDecl;
 
 	public static function member(children:Array<RouteDecl>):RouteDecl;
+
+	public static function namespace(name:String, children:Array<RouteDecl>):RouteDecl;
+
+	public static function scope(path:String, moduleName:String, name:String, children:Array<RouteDecl>):RouteDecl;
+
+	public static function controller(controller:String, children:Array<RouteDecl>):RouteDecl;
 }

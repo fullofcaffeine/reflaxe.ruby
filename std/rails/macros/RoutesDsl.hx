@@ -17,6 +17,11 @@ typedef ResourceOptions = {
 typedef RouteOptions = {
 	name:String
 }
+
+typedef ScopeOptions = {
+	moduleName:String,
+	name:String
+}
 #end
 
 /**
@@ -147,6 +152,36 @@ class RoutesDsl {
 		#end
 	}
 
+	public static macro function namespace(name:Expr, children:Expr):Expr {
+		#if macro
+		var checkedName = routeNameLiteral(name, "namespace");
+		return macro @:pos(name.pos) rails.routing.RouteDecl.namespace($v{checkedName}, $e{routeDeclArray(children, children.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function scope(path:Expr, optionsOrChildren:Expr, ?children:Expr):Expr {
+		#if macro
+		var checkedPath = routePathLiteral(path, "scope");
+		var optionsInfo = children == null ? {moduleName: "", name: ""} : scopeOptions(optionsOrChildren);
+		var childExpr = children == null ? optionsOrChildren : children;
+		return macro @:pos(path.pos) rails.routing.RouteDecl.scope($v{checkedPath}, $v{optionsInfo.moduleName}, $v{optionsInfo.name},
+			$e{routeDeclArray(childExpr, childExpr.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function controller(controller:Expr, children:Expr):Expr {
+		#if macro
+		var classType = controllerClass(controller, "controller");
+		return macro @:pos(controller.pos) rails.routing.RouteDecl.controller($v{controllerPath(classType)}, $e{routeDeclArray(children, children.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
 	#if macro
 	static function verb(method:String, path:Expr, target:Expr, ?options:Expr):Expr {
 		var checkedPath = routePathLiteral(path, method);
@@ -244,6 +279,31 @@ class RoutesDsl {
 			case _:
 				Context.error("route options must be an object literal.", options.pos);
 				{name: ""};
+		}
+	}
+
+	static function scopeOptions(options:Null<Expr>):ScopeOptions {
+		if (options == null || isNullLiteral(options)) {
+			return {moduleName: "", name: ""};
+		}
+		return switch (unwrap(options).expr) {
+			case EObjectDecl(fields):
+				var moduleName = "";
+				var name = "";
+				for (field in fields) {
+					switch (field.field) {
+						case "moduleName":
+							moduleName = routeNameLiteral(field.expr, "scope moduleName");
+						case "asName":
+							name = routeNameLiteral(field.expr, "scope asName");
+						case other:
+							Context.error('scope unsupported option "$other". Supported options are moduleName and asName.', field.expr.pos);
+					}
+				}
+				{moduleName: moduleName, name: name};
+			case _:
+				Context.error("scope options must be an object literal.", options.pos);
+				{moduleName: "", name: ""};
 		}
 	}
 

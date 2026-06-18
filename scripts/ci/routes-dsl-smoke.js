@@ -39,6 +39,12 @@ for (const expected of [
   "  member do",
   '    patch "publish", to: "controllers/posts#publish", as: :publish_post',
   'resource :profile, controller: "controllers/profiles", only: [:show, :update]',
+  "namespace :admin do",
+  '  get "posts/audit", to: "controllers/admin/posts#audit", as: :admin_post_audit',
+  'scope "/api", module: "api", as: :api do',
+  '  get "status", to: "controllers/health#show", as: :status',
+  'controller "controllers/health" do',
+  '  get "up", to: "controllers/health#show", as: :health',
 ]) {
   if (!routes.includes(expected)) {
     console.error(`[routes-dsl] generated config/routes.rb missing expected line: ${expected}`);
@@ -108,6 +114,23 @@ expectInvalidRouteDslFailure("top-level collection", [
   "",
 ], "collection blocks must be nested");
 
+expectInvalidRouteDslFailure("bad scope option", [
+  "package routes;",
+  "",
+  "import controllers.HealthController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tscope(\"/api\", {module: \"api\"}, {",
+  "\t\t\tget(\"status\", to(HealthController, show));",
+  "\t\t});",
+  "\t};",
+  "}",
+  "",
+], "scope unsupported option");
+
 console.log("[routes-dsl] OK");
 
 function writeValidFixture() {
@@ -131,6 +154,8 @@ function writeValidFixture() {
     "",
     "import controllers.PostsController;",
     "import controllers.ProfilesController;",
+    "import controllers.HealthController;",
+    "import controllers.admin.PostsController as AdminPostsController;",
     "import models.Post;",
     "import models.Profile;",
     "import rails.macros.RoutesDsl.*;",
@@ -153,6 +178,15 @@ function writeValidFixture() {
     "\t\t\t});",
     "\t\t});",
     "\t\tresource(Profile, ProfilesController, {only: [show, update]});",
+    "\t\tnamespace(\"admin\", {",
+    "\t\t\tget(\"posts/audit\", to(AdminPostsController, audit), {asName: routeName(\"admin_post_audit\")});",
+    "\t\t});",
+    "\t\tscope(\"/api\", {moduleName: \"api\", asName: routeName(\"api\")}, {",
+    "\t\t\tget(\"status\", to(HealthController, show), {asName: routeName(\"status\")});",
+    "\t\t});",
+    "\t\tcontroller(HealthController, {",
+    "\t\t\tget(\"up\", to(HealthController, show), {asName: routeName(\"health\")});",
+    "\t\t});",
     "\t};",
     "}",
     "",
@@ -161,6 +195,7 @@ function writeValidFixture() {
 
 function writeCommonTypes(baseDir) {
   mkdirSync(join(baseDir, "controllers"), { recursive: true });
+  mkdirSync(join(baseDir, "controllers", "admin"), { recursive: true });
   mkdirSync(join(baseDir, "models"), { recursive: true });
   writeFileSync(join(baseDir, "controllers", "PostsController.hx"), [
     "package controllers;",
@@ -190,6 +225,28 @@ function writeCommonTypes(baseDir) {
     "",
     "\tpublic function show():Void {}",
     "\tpublic function update():Void {}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(baseDir, "controllers", "HealthController.hx"), [
+    "package controllers;",
+    "",
+    "@:railsController",
+    "class HealthController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = [];",
+    "",
+    "\tpublic function show():Void {}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(baseDir, "controllers", "admin", "PostsController.hx"), [
+    "package controllers.admin;",
+    "",
+    "@:railsController",
+    "class PostsController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = [];",
+    "",
+    "\tpublic function audit():Void {}",
     "}",
     "",
   ].join("\n"));
