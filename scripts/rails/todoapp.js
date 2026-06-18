@@ -5,6 +5,7 @@ const {
   chmodSync,
   existsSync,
   mkdirSync,
+  readFileSync,
   readdirSync,
   rmSync,
   statSync,
@@ -139,6 +140,7 @@ function materializeRailsApp() {
 
   copyTree(join(compiledDir, "app"), join(appDir, "app"));
   copyTree(join(compiledDir, "config"), join(appDir, "config"));
+  spliceRailsOwnedRouteSnippet();
 
   copyTree(join(compiledDir, "db", "migrate"), join(appDir, "db", "migrate"));
   if (existsSync(join(compiledDir, "test"))) {
@@ -433,6 +435,25 @@ function copyTree(source, target) {
       copyFileSync(sourcePath, targetPath);
     }
   }
+}
+
+function spliceRailsOwnedRouteSnippet() {
+  const routesPath = writeTargetPath("config/routes.rb");
+  const snippetPath = join(exampleDir, "rails", "config", "routes_rails_owned.rb");
+  const routes = readFileSync(routesPath, "utf8");
+  const snippet = readFileSync(snippetPath, "utf8").trimEnd();
+  const insertionPoint = "\nend\n";
+
+  if (!routes.includes(insertionPoint)) {
+    console.error("[todoapp] Generated config/routes.rb did not have the expected Rails draw terminator.");
+    process.exit(1);
+  }
+
+  // This is intentionally a materializer-only mixed-ownership seam for the
+  // todoapp. Greenfield RailsHx routes still come from AppRoutes.hx; this
+  // snippet models an existing Rails app route that remains Rails-owned but is
+  // consumed from Haxe through the generated typed Routes.hx extern.
+  writeFileSync(routesPath, routes.replace(insertionPoint, `\n${snippet}\nend\n`));
 }
 
 function writeFile(relativePath, content) {

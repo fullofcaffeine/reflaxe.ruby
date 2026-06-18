@@ -44,6 +44,8 @@ for (const expected of [
   "public static function rootPath():String;",
   '@:native("todos_path")',
   "public static function todosPath():String;",
+  '@:native("legacy_health_path")',
+  "public static function legacyHealthPath():String;",
 ]) {
   if (!generated.includes(expected)) {
     console.error(`Routes generator output missing expected line: ${expected}`);

@@ -284,6 +284,17 @@ for (const expected of [
   }
 }
 
+const committedRoutesExtern = readFileSync(join(exampleDir, "src_haxe", "routes", "Routes.hx"), "utf8");
+for (const expected of [
+  '@:native("legacy_health_path")',
+  "public static function legacyHealthPath():String;",
+]) {
+  if (!committedRoutesExtern.includes(expected)) {
+    console.error(`todoapp_rails route extern missing typed Rails-owned route helper: ${expected}`);
+    process.exit(1);
+  }
+}
+
 const controllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "todos_controller.rb"), "utf8");
 for (const expected of [
   /require "action_controller\/railtie"/,
@@ -589,6 +600,8 @@ const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers
 for (const expected of [
   "<% railshx_component_body = capture do %>",
   '<%= link_to "#open-work", class: "typed-route-link", "data-railshx-scroll": true do %>',
+  '<%= link_to legacy_health_path(), class: "typed-route-link rails-owned-route-link" do %>',
+  "Rails-owned route, typed in Haxe",
   '<span><%= (if todos.length > 0 then "Jump to open work" else "Jump to the empty state" end) %></span>',
   '<span class="typed-route-count"><%= todos.length %></span>',
   '<% end %>',

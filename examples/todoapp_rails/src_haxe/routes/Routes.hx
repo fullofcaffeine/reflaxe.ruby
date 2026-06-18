@@ -23,4 +23,10 @@ extern class Routes {
 	@:native("todos_url")
 	public static function todosUrl():String;
 
+	@:native("legacy_health_path")
+	public static function legacyHealthPath():String;
+
+	@:native("legacy_health_url")
+	public static function legacyHealthUrl():String;
+
 }
