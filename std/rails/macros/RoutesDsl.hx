@@ -226,6 +226,35 @@ class RoutesDsl {
 		#end
 	}
 
+	public static macro function defaults(values:Expr, children:Expr):Expr {
+		#if macro
+		var options = routeOptionFragments(values, "defaults", false);
+		return macro @:pos(values.pos) rails.routing.RouteDecl.defaults($e{stringArray(options, values.pos)}, $e{routeDeclArray(children, children.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function constraints(values:Expr, children:Expr):Expr {
+		#if macro
+		var options = routeOptionFragments(values, "constraints", true);
+		return macro @:pos(values.pos) rails.routing.RouteDecl.constraints($e{stringArray(options, values.pos)}, $e{routeDeclArray(children, children.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function rx(pattern:Expr):Expr {
+		#if macro
+		// `rx(...)` is intentionally a tiny checked carrier for Rails segment
+		// regexes. It lets `constraints({id: rx("[0-9]+")}, ...)` keep regexes
+		// literal-only and reject Rails-invalid anchors before Ruby is emitted.
+		return macro @:pos(pattern.pos) ($v{routeRegexLiteral(pattern, "rx")} : rails.routing.RouteRegex);
+		#else
+		return macro null;
+		#end
+	}
+
 	public static macro function mountExternal(app:Expr, path:Expr, ?options:Expr):Expr {
 		#if macro
 		var checkedApp = rubyConstantLiteral(app, "mountExternal app");
@@ -373,6 +402,86 @@ class RoutesDsl {
 				Context.error("scope options must be an object literal.", options.pos);
 				{moduleName: "", name: ""};
 		}
+	}
+
+	static function routeOptionFragments(options:Expr, context:String, allowRegex:Bool):Array<String> {
+		return switch (unwrap(options).expr) {
+			case EObjectDecl(fields):
+				if (fields.length == 0) {
+					Context.error(context + " options must include at least one checked literal option.", options.pos);
+				}
+				[
+					for (field in fields) {
+						validateRubyOptionKey(field.field, field.expr.pos, context);
+						field.field + ": " + routeOptionValue(field.expr, context + " " + field.field, allowRegex);
+					}
+				];
+			case _:
+				Context.error(context + " options must be an object literal.", options.pos);
+				[];
+		}
+	}
+
+	static function routeOptionValue(expr:Expr, context:String, allowRegex:Bool):String {
+		return switch (unwrap(expr).expr) {
+			case ECall(callee, [arg]):
+				switch (unwrap(callee).expr) {
+					case EConst(CIdent("rx")) if (allowRegex):
+						"/" + routeRegexLiteral(arg, context) + "/";
+					case EConst(CIdent("rx")):
+						Context.error(context + " does not accept rx(...); regex constraints are only valid in constraints(...).", expr.pos);
+						"";
+					case _:
+						Context.error(context + " must be a literal String, number, Bool, or rx(...) constraint.", expr.pos);
+						"";
+				}
+			case EConst(CString(value, _)):
+				quoteRubyString(value);
+			case EConst(CInt(value)) | EConst(CFloat(value)):
+				value;
+			case EConst(CIdent("true")):
+				"true";
+			case EConst(CIdent("false")):
+				"false";
+			case _:
+				Context.error(context + " must be a literal String, number, Bool, or rx(...) constraint.", expr.pos);
+				"";
+		}
+	}
+
+	static function validateRubyOptionKey(key:String, pos:Position, context:String):Void {
+		if (!~/^[a-z][a-z0-9_]*$/.match(key)) {
+			Context.error(context + ' option key "$key" must be snake_case so it can lower to a safe Ruby keyword.', pos);
+		}
+	}
+
+	static function routeRegexLiteral(expr:Expr, context:String):String {
+		var value = stringLiteral(expr, context);
+		if (value == "") {
+			Context.error(context + " regex must not be empty.", expr.pos);
+		}
+		for (i in 0...value.length) {
+			var code = value.charCodeAt(i);
+			var ch = value.charAt(i);
+			if (code < 32 || ch == "/") {
+				Context.error(context + " regex contains a character RailsHx cannot safely emit inside a Ruby /.../ route constraint.", expr.pos);
+			}
+			if (ch == "^" || ch == "$") {
+				Context.error(context
+					+ " regex constraints must not use anchors (^ or $); Rails route segment constraints are already anchored by the router.",
+					expr.pos);
+			}
+		}
+		if (value.indexOf("\\A") >= 0 || value.indexOf("\\z") >= 0 || value.indexOf("\\Z") >= 0) {
+			Context.error(context + " regex constraints must not use absolute anchors such as \\A or \\z.", expr.pos);
+		}
+		return value;
+	}
+
+	static function quoteRubyString(value:String):String {
+		var escaped = StringTools.replace(value, "\\", "\\\\");
+		escaped = StringTools.replace(escaped, "\"", "\\\"");
+		return "\"" + escaped + "\"";
 	}
 
 	static function routePathLiteral(expr:Expr, context:String):String {

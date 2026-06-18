@@ -45,6 +45,9 @@ for (const expected of [
   'get "files/*path", to: "controllers/posts#file", as: :file',
   'get "legacy/posts/:id", to: "legacy/posts#show", as: :legacy_post',
   'mount Sidekiq::Web => "/sidekiq", as: :sidekiq',
+  'defaults format: "json" do',
+  '  constraints id: /[0-9]+/ do',
+  '    get "numeric_posts/:id", to: "controllers/posts#show", as: :numeric_post',
   'resources :posts, controller: "controllers/posts", except: [:destroy], param: :slug do',
   "  collection do",
   '    get "archived", to: "controllers/posts#archive", as: :archived_collection',
@@ -237,6 +240,40 @@ expectInvalidRouteDslFailure("bad mounted constant", [
   "",
 ], "safe Ruby constant path");
 
+expectInvalidRouteDslFailure("anchored route regex", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tconstraints({id: rx(\"^[0-9]+$\")}, {",
+  "\t\t\tget(\"posts/:id\", to(PostsController, show));",
+  "\t\t});",
+  "\t};",
+  "}",
+  "",
+], "regex constraints must not use anchors");
+
+expectInvalidRouteDslFailure("bad constraint key", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tconstraints({BadKey: \"draft\"}, {",
+  "\t\t\tget(\"posts/:id\", to(PostsController, show));",
+  "\t\t});",
+  "\t};",
+  "}",
+  "",
+], "must be snake_case");
+
 expectInvalidRouteDslFailure("unchecked raw route without define", [
   "package routes;",
   "",
@@ -307,6 +344,11 @@ function writeValidFixture() {
     "\t\tget(\"files/*path\", to(PostsController, file), {asName: routeName(\"file\")});",
     "\t\tget(\"legacy/posts/:id\", externalTo(\"legacy/posts#show\"), {asName: routeName(\"legacy_post\")});",
     "\t\tmountExternal(rubyConst(\"Sidekiq::Web\"), at(\"/sidekiq\"), {asName: routeName(\"sidekiq\")});",
+    "\t\tdefaults({format: \"json\"}, {",
+    "\t\t\tconstraints({id: rx(\"[0-9]+\")}, {",
+    "\t\t\t\tget(\"numeric_posts/:id\", to(PostsController, show), {asName: routeName(\"numeric_post\")});",
+    "\t\t\t});",
+    "\t\t});",
     "\t\tresources(Post, PostsController, {except: [destroy], param: paramName(\"slug\")}, {",
     "\t\t\tcollection({",
     "\t\t\t\tget(\"archived\", to(PostsController, archive), {asName: routeName(\"archived_collection\")});",

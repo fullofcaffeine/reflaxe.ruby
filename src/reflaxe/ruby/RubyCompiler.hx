@@ -111,6 +111,7 @@ typedef RailsRouteDecl = {
 	only:Array<String>,
 	except:Array<String>,
 	param:String,
+	options:Array<String>,
 	children:Array<RailsRouteDecl>,
 	pos:Position
 }
@@ -4681,6 +4682,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: [],
 								pos: expr.pos
 							};
@@ -4697,6 +4699,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: [],
 								pos: expr.pos
 							};
@@ -4713,6 +4716,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: [],
 								pos: expr.pos
 							};
@@ -4729,6 +4733,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: railsRouteStringArray(params[2], "resources only"),
 								except: railsRouteStringArray(params[3], "resources except"),
 								param: railsRouteStringAllowEmpty(params[4], "resources param"),
+								options: [],
 								children: railsRouteChildren(params[5], "resources children"),
 								pos: expr.pos
 							};
@@ -4745,6 +4750,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: railsRouteStringArray(params[2], "resource only"),
 								except: railsRouteStringArray(params[3], "resource except"),
 								param: railsRouteStringAllowEmpty(params[4], "resource param"),
+								options: [],
 								children: railsRouteChildren(params[5], "resource children"),
 								pos: expr.pos
 							};
@@ -4761,6 +4767,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: railsRouteChildren(params[0], "collection children"),
 								pos: expr.pos
 							};
@@ -4777,6 +4784,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: railsRouteChildren(params[0], "member children"),
 								pos: expr.pos
 							};
@@ -4793,6 +4801,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: railsRouteChildren(params[1], "namespace children"),
 								pos: expr.pos
 							};
@@ -4809,6 +4818,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: railsRouteChildren(params[3], "scope children"),
 								pos: expr.pos
 							};
@@ -4825,7 +4835,42 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: railsRouteChildren(params[1], "controller children"),
+								pos: expr.pos
+							};
+						case "defaults" if (params.length == 2):
+							{
+								kind: "defaults",
+								target: null,
+								verb: "",
+								verbs: [],
+								path: "",
+								name: "",
+								controller: "",
+								moduleName: "",
+								only: [],
+								except: [],
+								param: "",
+								options: railsRouteStringArray(params[0], "defaults options"),
+								children: railsRouteChildren(params[1], "defaults children"),
+								pos: expr.pos
+							};
+						case "constraints" if (params.length == 2):
+							{
+								kind: "constraints",
+								target: null,
+								verb: "",
+								verbs: [],
+								path: "",
+								name: "",
+								controller: "",
+								moduleName: "",
+								only: [],
+								except: [],
+								param: "",
+								options: railsRouteStringArray(params[0], "constraints options"),
+								children: railsRouteChildren(params[1], "constraints children"),
 								pos: expr.pos
 							};
 						case "mount" if (params.length == 3):
@@ -4841,6 +4886,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: [],
 								pos: expr.pos
 							};
@@ -4857,6 +4903,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								options: [],
 								children: [],
 								pos: expr.pos
 							};
@@ -4887,6 +4934,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			only: [],
 			except: [],
 			param: "",
+			options: [],
 			children: [],
 			pos: pos
 		};
@@ -4965,6 +5013,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				renderRailsRouteBlock(parts.join(", "), renderRailsRouteChildren(decl.children));
 			case "controller":
 				renderRailsRouteBlock("controller " + quoteRubyStringForCode(decl.controller), renderRailsRouteChildren(decl.children));
+			case "defaults":
+				renderRailsRouteBlock("defaults " + decl.options.join(", "), renderRailsRouteChildren(decl.children));
+			case "constraints":
+				renderRailsRouteBlock("constraints " + decl.options.join(", "), renderRailsRouteChildren(decl.children));
 			case "mount":
 				var parts = ["mount " + decl.controller + " => " + quoteRubyStringForCode(decl.path)];
 				if (decl.name != "") {

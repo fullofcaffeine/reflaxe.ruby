@@ -162,13 +162,24 @@ mountExternal(rubyConst("Sidekiq::Web"), at("/sidekiq"), {
 	asName: routeName("sidekiq")
 });
 
+defaults({format: "json"}, {
+	constraints({id: rx("[0-9]+")}, {
+		get("numeric_posts/:id", to(PostsController, show), {
+			asName: routeName("numeric_post")
+		});
+	});
+});
+
 uncheckedRubyRoute('get "legacy/*path", to: "legacy#show"');
 ```
 
 `externalTo(...)` must be literal-only and validate `controller#action` shape,
 safe characters, no traversal, and no Ruby injection. `mountExternal(...)`
 accepts checked Ruby constants and checked mount paths for Rack apps such as
-Sidekiq. `uncheckedRubyRoute(...)` must require `-D
+Sidekiq. `defaults(...)` and `constraints(...)` use checked object literals;
+regex segment constraints must go through `rx("...")`, which rejects Rails-invalid
+anchors and unsafe delimiter characters at Haxe compile time.
+`uncheckedRubyRoute(...)` must require `-D
 railshx_allow_unchecked_routes`, remain out of canonical examples, and pass Ruby
 syntax plus Rails route parity gates.
 
@@ -198,6 +209,12 @@ Rails.application.routes.draw do
 
   controller :health do
     get "up", action: :show, as: :health
+  end
+
+  defaults format: "json" do
+    constraints id: /[0-9]+/ do
+      get "numeric_posts/:id", to: "posts#show", as: :numeric_post
+    end
   end
 end
 ```
@@ -346,6 +363,8 @@ Implemented:
 - checked literal external targets through `externalTo("legacy/posts#show")`
 - checked mounted Rack app constants through
   `mountExternal(rubyConst("Sidekiq::Web"), at("/sidekiq"))`
+- typed object-literal route defaults through `defaults({format: "json"}, { ... })`
+- simple checked constraints through `constraints({id: rx("[0-9]+")}, { ... })`
 
 Defer:
 
@@ -353,7 +372,6 @@ Defer:
 - action-only shorthand inside resource/member/collection blocks
 - action-only shorthand inside controller blocks
 - optional segments, glob segment parity, and route helper parity checks
-- simple `defaults` and `constraints`
 - `concern`/`concerns`
 - `shallow`, `shallowPath`, and `shallowPrefix`
 - `drawExternal(...)` route files
