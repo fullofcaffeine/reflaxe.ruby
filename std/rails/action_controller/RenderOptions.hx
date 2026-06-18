@@ -4,6 +4,7 @@ typedef RenderOptions = {
 	@:optional var json:Dynamic;
 	@:optional var plain:String;
 	@:optional var html:String;
+	@:optional var turboStream:Dynamic;
 	@:optional var template:String;
 	@:optional var locals:Dynamic;
 	@:optional var layout:Dynamic;

@@ -43,7 +43,7 @@ async function main() {
 
   currentStage = "browser server boot";
   process.stdout.write(`[todoapp-playwright] stage: ${currentStage}\n`);
-  server = spawn("bundle", ["exec", "ruby", "bin/rails", "server", "-b", bind, "-p", port], {
+  server = spawn("bundle", ["exec", "puma", "-b", `tcp://${bind}:${port}`, "-e", "development", "-t", "0:16", "config.ru"], {
     cwd: appDir,
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],

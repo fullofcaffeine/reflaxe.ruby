@@ -29,6 +29,11 @@ class TodoClient {
 			var form = event.detail.formSubmission == null ? null : event.detail.formSubmission.formElement;
 			captureTodoSubmit(form == null ? event.target : form);
 		});
+		Turbo.onSubmitEnd(function(event):Void {
+			var form = event.detail.formSubmission == null ? null : event.detail.formSubmission.formElement;
+			announceTodoSubmit(form == null ? event.target : form, event.detail.success);
+			announceSessionSubmit(form == null ? event.target : form, event.detail.success);
+		});
 		Turbo.onBeforeFetchRequest(function(event):Void {
 			Turbo.addFetchRequestHeader(event, "X-RailsHx-Client", "todoapp");
 		});
@@ -103,6 +108,22 @@ class TodoClient {
 		}
 	}
 
+	static function announceSessionSubmit(target:Null<EventTarget>, success:Null<Bool>):Void {
+		var form = elementTarget(target);
+		if (form == null || !form.classList.contains(TodoHooks.sessionFormClass) || success == false) {
+			return;
+		}
+		announceSessionChangeNow();
+	}
+
+	static function announceTodoSubmit(target:Null<EventTarget>, success:Null<Bool>):Void {
+		var form = elementTarget(target);
+		if (form == null || !form.classList.contains(TodoHooks.formClass) || success == false) {
+			return;
+		}
+		announceCompletedCreateNow();
+	}
+
 	static function announceCompletedCreate():Void {
 		var shouldAnnounce = false;
 		var savedScrollY:Null<Float> = null;
@@ -119,7 +140,10 @@ class TodoClient {
 		if (savedScrollY != null && !Math.isNaN(savedScrollY)) {
 			restoreScroll(savedScrollY);
 		}
+		announceCompletedCreateNow();
+	}
 
+	static function announceCompletedCreateNow():Void {
 		var flash = Browser.document.querySelector(TodoHooks.attrSelector(TodoHooks.flashAttr));
 		if (flash != null) {
 			flash.textContent = "Task added to open work";
@@ -139,6 +163,10 @@ class TodoClient {
 		if (!shouldAnnounce) {
 			return;
 		}
+		announceSessionChangeNow();
+	}
+
+	static function announceSessionChangeNow():Void {
 		var flash = Browser.document.querySelector(TodoHooks.attrSelector(TodoHooks.flashAttr));
 		if (flash != null) {
 			flash.textContent = "Session updated";

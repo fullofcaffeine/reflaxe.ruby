@@ -23,7 +23,7 @@ typedef UserSwitcherLocals = {
 @:railsTemplateAst("render")
 class UserSwitcherView {
 	public static function render(locals:UserSwitcherLocals):HtmlNode {
-		return <section class="team-console card" aria-label="RailsHx user session demo">
+		return <section id=${TodoHooks.sessionPanelId} class="team-console card" aria-label="RailsHx user session demo">
 			<div class="team-console-copy">
 				<span class="eyebrow">Typed session layer</span>
 				<h2>Choose a demo user</h2>
@@ -37,7 +37,7 @@ class UserSwitcherView {
 			</div>
 			<div class="team-members" data-railshx-session-zone>
 				<for ${user in locals.users}>
-					<form_with url=${Routes.signInPath()} scope=${User.railsParamKey} local class=${TodoHooks.sessionFormClass} data-railshx-session data-turbo="false">
+					<form_with url=${Routes.signInPath()} scope=${User.railsParamKey} local class=${TodoHooks.sessionFormClass} data-railshx-session>
 						<hidden_field name=${User.f.id} value=${user.id} />
 						<button type="submit" class=${locals.currentUser != null && locals.currentUser.id == user.id ? "person-card is-current" : "person-card"}>
 							<span class="avatar">${user.initials()}</span>
@@ -55,7 +55,7 @@ class UserSwitcherView {
 					Current user:
 					<strong>${locals.currentUser == null ? "fallback owner" : locals.currentUser.name}</strong>
 				</span>
-				<form_with url=${Routes.signOutPath()} scope="session" method="delete" local class="session-clear-form" data-railshx-session data-turbo="false">
+				<form_with url=${Routes.signOutPath()} scope="session" method="delete" local class="session-clear-form" data-railshx-session>
 					<submit type="submit">Clear session</submit>
 				</form_with>
 			</div>

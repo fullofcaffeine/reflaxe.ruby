@@ -323,7 +323,9 @@ for (const expected of [
   /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, users: users__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: current_user__hx\d+, current_user: current_user__hx\d+\}, layout: "application"\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
-  /self\.redirect_to\(self\.todos_path\(\), status: :see_other\)/,
+  /self\.respond_to\(\) do \|format__hx\d+\|/,
+  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-todo-list", partial: "controllers\/todos\/list", locals: \{todos: Models::Todo\.incomplete\(\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)\}\)\) \}/,
+  /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`todoapp_rails controller output missing expected line: ${expected}`);
@@ -340,7 +342,9 @@ for (const expected of [
   /self\.session\(\)\[:current_user_id\] = user__hx\d+\.id/,
   /self\.flash\(\)\[:notice\] = \("Signed in as " \+ user__hx\d+\.name\)/,
   /self\.session\(\)\.delete\(:current_user_id\)/,
-  /self\.redirect_to\(self\.todos_path\(\), status: :see_other\)/,
+  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-session-panel", partial: "controllers\/todos\/user_switcher", locals: \{users: Models::User\.order\(name: :asc\)\.to_a\(\), current_user: user__hx\d+\}\)\) \}/,
+  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-session-panel", partial: "controllers\/todos\/user_switcher", locals: \{users: Models::User\.order\(name: :asc\)\.to_a\(\), current_user: nil\}\)\) \}/,
+  /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
 ]) {
   if (!expected.test(sessionsControllerRuby)) {
     console.error(`todoapp_rails sessions controller output missing expected line: ${expected}`);
@@ -691,7 +695,7 @@ for (const expected of [
 const typedList = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_list.html.erb"), "utf8");
 for (const expected of [
   "<% if todos.length > 0 %>",
-  '<ul class="todo-list">',
+  '<ul id="railshx-todo-list" class="todo-list">',
   "<% todos.each do |todo| %>",
   '<li class="todo-item">',
   "<%= todo.title %>",
@@ -707,7 +711,7 @@ for (const expected of [
 
 const typedForm = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_typed_form.html.erb"), "utf8");
 for (const expected of [
-  '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form", data: {turbo: false} do |form| %>',
+  '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>',
   '<%= form.hidden_field :user_id, value: sample_user_id %>',
   '<%= form.label :title, "What should ship next?" %>',
   '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',
@@ -728,13 +732,13 @@ for (const expected of [
   '<%= link_to users_path(), class: "typed-route-link team-route-link" do %>',
   '<div class="team-members" data-railshx-session-zone>',
   "<% users.each do |user| %>",
-  '<%= form_with url: sign_in_path(), scope: :user, local: true, class: "session-form", data: {railshx_session: true, turbo: false} do |form| %>',
+  '<%= form_with url: sign_in_path(), scope: :user, local: true, class: "session-form", data: {railshx_session: true} do |form| %>',
   "<%= form.hidden_field :id, value: user.id %>",
   '<span class="avatar"><%= user.initials() %></span>',
   "<strong><%= user.name %></strong>",
   "<span><%= user.email %></span>",
   '<span class="role-pill"><%= user.role_label() %></span>',
-  '<%= form_with url: sign_out_path(), scope: :session, method: "delete", local: true, class: "session-clear-form", data: {railshx_session: true, turbo: false} do |form| %>',
+  '<%= form_with url: sign_out_path(), scope: :session, method: "delete", local: true, class: "session-clear-form", data: {railshx_session: true} do |form| %>',
   '<%= form.submit "Clear session", type: "submit" %>',
 ]) {
   if (!typedUserSwitcher.includes(expected)) {

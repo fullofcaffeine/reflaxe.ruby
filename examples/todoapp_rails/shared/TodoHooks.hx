@@ -26,6 +26,8 @@ class TodoHooks {
 
 	public static inline var openWorkId:DomId = "open-work";
 	public static inline var openWorkHref:Href = "#open-work";
+	public static inline var todoListId:DomId = "railshx-todo-list";
+	public static inline var sessionPanelId:DomId = "railshx-session-panel";
 
 	public static inline var boundAttr:DataAttr = "data-railshx-bound";
 	public static inline var scrollAttr:DataAttr = "data-railshx-scroll";

@@ -2,6 +2,7 @@ package views;
 
 import models.Todo;
 import rails.action_view.HtmlNode;
+import shared.TodoHooks;
 
 typedef TodoListLocals = {
 	var todos:Array<Todo>;
@@ -20,7 +21,7 @@ typedef TodoListLocals = {
 class TodoListView {
 	public static function render(locals:TodoListLocals):HtmlNode {
 		return <if ${locals.todos.length > 0}>
-			<ul class="todo-list">
+			<ul id=${TodoHooks.todoListId} class="todo-list">
 				<for ${todo in locals.todos}>
 					<li class="todo-item">
 						<span class="todo-dot" aria-hidden="true"></span>

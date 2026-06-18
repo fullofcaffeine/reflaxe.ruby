@@ -74,7 +74,7 @@ test('uses typed Haxe client behavior for same-page Rails links', async ({ page 
   await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
 })
 
-test.skip('handles importmap-backed Rails form flows (tracked in haxe.ruby-ae6.1)', async ({ page }) => {
+test('handles importmap-backed Rails form flows (tracked in haxe.ruby-ae6.1)', async ({ page }) => {
   await gotoTodos(page)
 
   const beforeCount = await page.locator(hooks.selectors.listItems).count()

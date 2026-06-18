@@ -2,8 +2,14 @@ package controllers;
 
 import models.User;
 import rails.action_controller.Status;
+import rails.action_view.Template;
 import rails.macros.ParamsMacro;
+import rails.turbo.StreamTarget;
+import rails.turbo.TurboStreams;
 import routes.Routes;
+import shared.TodoHooks;
+import views.UserSwitcherView;
+import views.UserSwitcherView.UserSwitcherLocals;
 
 // Demo session controller.
 //
@@ -26,12 +32,38 @@ class SessionsController extends rails.action_controller.Base {
 		var user = User.find(cast userParams.get("id"));
 		this.session().set(UserSession.currentUserIdKey, user.id);
 		this.flash().set("notice", "Signed in as " + user.name);
-		redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
+		respondTo(function(format) {
+			format.turboStream(function() {
+				render({
+					turboStream: TurboStreams.replace(StreamTarget.named(TodoHooks.sessionPanelId),
+						(Template.of(UserSwitcherView) : Template<UserSwitcherLocals>), {
+							users: User.order(User.f.name.asc()).toArray(),
+							currentUser: user
+						})
+				});
+			});
+			format.html(function() {
+				redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
+			});
+		});
 	}
 
 	public function destroy() {
 		this.session().delete(UserSession.currentUserIdKey);
 		this.flash().set("notice", "Session cleared");
-		redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
+		respondTo(function(format) {
+			format.turboStream(function() {
+				render({
+					turboStream: TurboStreams.replace(StreamTarget.named(TodoHooks.sessionPanelId),
+						(Template.of(UserSwitcherView) : Template<UserSwitcherLocals>), {
+							users: User.order(User.f.name.asc()).toArray(),
+							currentUser: null
+						})
+				});
+			});
+			format.html(function() {
+				redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
+			});
+		});
 	}
 }

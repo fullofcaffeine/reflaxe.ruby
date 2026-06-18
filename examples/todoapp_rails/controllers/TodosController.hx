@@ -6,9 +6,14 @@ import rails.action_view.Template;
 import rails.action_controller.Status;
 import rails.macros.ParamsMacro;
 import rails.macros.ViewMacro;
+import rails.turbo.StreamTarget;
+import rails.turbo.TurboStreams;
 import routes.Routes;
+import shared.TodoHooks;
 import views.ApplicationLayoutView;
 import views.TodoIndexView;
+import views.TodoListView;
+import views.TodoListView.TodoListLocals;
 
 typedef TodoIndexLocals = {
 	var todos:Array<Todo>;
@@ -52,6 +57,17 @@ class TodosController extends rails.action_controller.Base {
 	public function create() {
 		var attrs = ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, Todo.f.notes, Todo.f.userId]);
 		var todo = Todo.create(attrs);
-		redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
+		respondTo(function(format) {
+			format.turboStream(function() {
+				render({
+					turboStream: TurboStreams.replace(StreamTarget.named(TodoHooks.todoListId), (Template.of(TodoListView) : Template<TodoListLocals>), {
+						todos: Todo.incomplete().includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray()
+					})
+				});
+			});
+			format.html(function() {
+				redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
+			});
+		});
 	}
 }
