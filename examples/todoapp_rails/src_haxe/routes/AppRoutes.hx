@@ -1,8 +1,10 @@
 package routes;
 
+import controllers.ChatMessagesController;
 import controllers.SessionsController;
 import controllers.TodosController;
 import controllers.UsersController;
+import models.ChatMessage;
 import models.Todo;
 import rails.macros.RoutesDsl.*;
 
@@ -29,6 +31,7 @@ class AppRoutes {
 				patch("complete", to(TodosController, complete));
 			});
 		});
+		resources(ChatMessage, ChatMessagesController, {only: [create]});
 		get("users", to(UsersController, index), {asName: routeName("users")});
 		post("session", to(SessionsController, create), {asName: routeName("sign_in")});
 		delete("session", to(SessionsController, destroy), {asName: routeName("sign_out")});

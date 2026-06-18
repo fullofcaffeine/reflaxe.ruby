@@ -19,6 +19,9 @@ class TodoHooks {
 	public static inline var formClass:CssClass = "todo-form";
 	public static inline var sessionFormClass:CssClass = "session-form";
 	public static inline var sessionFooterClass:CssClass = "session-footer";
+	public static inline var chatFormClass:CssClass = "chat-form";
+	public static inline var chatListClass:CssClass = "chat-list";
+	public static inline var chatMessageClass:CssClass = "chat-message";
 	public static inline var itemClass:CssClass = "todo-item";
 	public static inline var listClass:CssClass = "todo-list";
 	public static inline var dotClass:CssClass = "todo-dot";
@@ -28,16 +31,20 @@ class TodoHooks {
 	public static inline var openWorkHref:Href = "#open-work";
 	public static inline var todoListId:DomId = "railshx-todo-list";
 	public static inline var sessionPanelId:DomId = "railshx-session-panel";
+	public static inline var chatPanelId:DomId = "railshx-chat-panel";
 
 	public static inline var boundAttr:DataAttr = "data-railshx-bound";
 	public static inline var scrollAttr:DataAttr = "data-railshx-scroll";
 	public static inline var flashAttr:DataAttr = "data-railshx-flash";
 	public static inline var sessionAttr:DataAttr = "data-railshx-session";
 	public static inline var sessionZoneAttr:DataAttr = "data-railshx-session-zone";
+	public static inline var chatAttr:DataAttr = "data-railshx-chat";
+	public static inline var chatFormAttr:DataAttr = "data-railshx-chat-form";
 
 	public static inline var submitStorageKey:StorageKey = "railshx.todo.just_added";
 	public static inline var submitScrollStorageKey:StorageKey = "railshx.todo.submit_scroll_y";
 	public static inline var sessionStorageKey:StorageKey = "railshx.todo.session_changed";
+	public static inline var chatStorageKey:StorageKey = "railshx.todo.chat_posted";
 
 	public static inline function classSelector(value:CssClass):Selector {
 		return "." + value;

@@ -248,6 +248,123 @@ h2 {
 	background: transparent;
 }
 
+.chat-panel {
+	display: grid;
+	grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr);
+	gap: 24px;
+	margin-top: 28px;
+	position: relative;
+	overflow: hidden;
+}
+
+.chat-panel::before {
+	content: "";
+	position: absolute;
+	inset: -110px auto auto -70px;
+	width: 220px;
+	height: 220px;
+	border-radius: 999px;
+	background: radial-gradient(circle, rgba(185, 244, 211, 0.42), transparent 66%);
+	pointer-events: none;
+	transition: transform 260ms ease;
+}
+
+.chat-panel.is-warm::before {
+	transform: scale(1.18) translate(12px, 8px);
+}
+
+.chat-panel-header,
+.chat-list,
+.chat-form {
+	position: relative;
+	z-index: 1;
+}
+
+.chat-panel-header p {
+	margin: 0;
+	color: var(--muted);
+	font: 1.02rem/1.75 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.chat-list {
+	display: grid;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.chat-message {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 14px;
+	align-items: start;
+	padding: 16px;
+	border: 1px solid var(--line);
+	border-radius: 24px;
+	background: rgba(255, 255, 255, 0.72);
+}
+
+.chat-message p {
+	margin: 4px 0 0;
+	color: var(--muted);
+	font: 0.94rem/1.55 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.chat-form {
+	display: grid;
+	gap: 14px;
+	grid-column: 1 / -1;
+	padding-top: 20px;
+	border-top: 1px solid var(--line);
+}
+
+.chat-form label {
+	color: var(--muted);
+	font: 800 0.78rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.11em;
+	text-transform: uppercase;
+}
+
+.chat-form textarea {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 96px;
+	border: 1px solid var(--line);
+	border-radius: 18px;
+	padding: 16px 18px;
+	color: var(--ink);
+	background: rgba(255, 255, 255, 0.78);
+	font: 1rem/1.35 "Avenir Next", "Trebuchet MS", sans-serif;
+	outline: none;
+	resize: vertical;
+}
+
+.chat-form textarea:focus {
+	border-color: rgba(255, 107, 53, 0.66);
+	box-shadow: 0 0 0 5px rgba(255, 107, 53, 0.12);
+}
+
+.chat-form input[type="submit"] {
+	justify-self: start;
+	border: 0;
+	border-radius: 18px;
+	padding: 16px 20px;
+	color: white;
+	cursor: pointer;
+	font: 900 0.9rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	background: linear-gradient(135deg, #18221f, #365249);
+	box-shadow: 0 16px 38px rgba(24, 34, 31, 0.24);
+	transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.chat-form input[type="submit"]:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 20px 46px rgba(24, 34, 31, 0.3);
+}
+
 .users-shell {
 	padding-block: 54px 96px;
 }
@@ -470,6 +587,7 @@ h2 {
 	.hero,
 	.workspace,
 	.team-console,
+	.chat-panel,
 	.user-grid {
 		grid-template-columns: 1fr;
 	}

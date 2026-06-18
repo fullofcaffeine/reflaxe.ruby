@@ -7,6 +7,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     Models::Todo.create!(title: "zed open task", is_completed: false, user: user)
     Models::Todo.create!(title: "alpha open task", is_completed: false, user: user)
     Models::Todo.create!(title: "completed hidden task", is_completed: true, user: user)
+    Models::ChatMessage.create!(body: "typed chat note", user: user)
 
     get "/todos"
 
@@ -16,6 +17,8 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, "Typed session layer"
     assert_includes @response.body, "owner@example.test"
     assert_includes @response.body, "Manage users"
+    assert_includes @response.body, "Typed Turbo room"
+    assert_includes @response.body, "typed chat note"
     assert_includes @response.body, "alpha open task"
     assert_includes @response.body, "zed open task"
     assert_not_includes @response.body, "completed hidden task"
@@ -76,5 +79,18 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, "Typed users, ordinary Rails output."
     assert_includes @response.body, "owner-users@example.test"
     assert_includes @response.body, "Back to todo board"
+  end
+
+  test "chat message create permits haxe-authored params and redirects" do
+    user = Models::User.create!(name: "room owner", email: "room-create@example.test", role: "maintainer")
+
+    assert_difference "Models::ChatMessage.count", 1 do
+      post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: user.id, ignored: "nope" } }
+    end
+
+    assert_redirected_to "/todos"
+    message = Models::ChatMessage.order(:id).last
+    assert_equal "from typed room", message.body
+    assert_equal user, message.user
   end
 end

@@ -281,6 +281,10 @@ Models::Todo.find_or_create_by!(title: "Model a typed session seam", user: membe
   todo.notes = "Use Rails session and flash stores through typed Haxe facades."
   todo.is_completed = false
 end
+
+Models::ChatMessage.find_or_create_by!(body: "Routes, params, and HHX are all typed for this room.", user: owner)
+Models::ChatMessage.find_or_create_by!(body: "Turbo gets normal Rails streams; Haxe owns the safer authoring layer.", user: maintainer)
+Models::ChatMessage.find_or_create_by!(body: "No ActionCable yet: this slice dogfoods the mutation seam first.", user: member)
 `);
 
   writeFile("app/models/application_record.rb", `class ApplicationRecord < ActiveRecord::Base

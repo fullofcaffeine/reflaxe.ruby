@@ -40,5 +40,7 @@
 					</div>
 				</section>
 
-				<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user, current_user: current_user} %>
+				<%= render partial: "controllers/todos/chat_panel", locals: {messages: chat_messages, current_user: current_user, users: users} %>
+
+				<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user, current_user: current_user} %>
 			</main>

@@ -1,9 +1,11 @@
 package models;
 
+import models.ChatMessage;
+
 // User ActiveRecord model source of truth.
 //
 // Demonstrates: a typed Rails model with user-facing profile fields, a role
-// column, a `has_many` association, validation metadata, and small app-owned
+// column, `has_many` associations, validation metadata, and small app-owned
 // helpers that still emit plain Ruby methods.
 // Type safety: `User.f.name`, `User.f.email`, `User.f.role`, and `User.a.todos`
 // are generated from this class; query helpers inherited from `Base<User>`
@@ -28,6 +30,8 @@ class User extends rails.active_record.Base<User> {
 	public var role:String;
 
 	@:hasMany public var todos:rails.ActiveRecord.HasMany<Todo>;
+
+	@:hasMany public var chatMessages:rails.ActiveRecord.HasMany<ChatMessage>;
 
 	@:validates({presence: true})
 	public var nameValidation:rails.ActiveRecord.Validation<String>;

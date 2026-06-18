@@ -15,4 +15,11 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "Admin", user.role_label
     assert_equal "O", user.initials
   end
+
+  test "owns chat messages through typed association metadata" do
+    user = Models::User.create!(name: "Owner", email: "owner-chat@example.test", role: "admin")
+    message = Models::ChatMessage.create!(body: "typed room note", user: user)
+
+    assert_equal [message], user.chat_messages.to_a
+  end
 end

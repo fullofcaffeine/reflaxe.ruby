@@ -2,7 +2,7 @@
   "output": "config/routes.rb",
   "declarations": [
     {
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:931-957",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1001-1027",
       "target": "controllers/todos#index",
       "kind": "root"
     },
@@ -12,16 +12,16 @@
         "index",
         "create"
       ],
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:972-976",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1042-1046",
       "controller": "controllers/todos",
       "kind": "resources",
       "children": [
         {
-          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1036-1096",
+          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1106-1166",
           "kind": "collection",
           "children": [
             {
-              "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1046-1057",
+              "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1116-1127",
               "target": "controllers/todos#completed",
               "path": "completed",
               "kind": "verb",
@@ -30,11 +30,11 @@
           ]
         },
         {
-          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1109-1169",
+          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1179-1239",
           "kind": "member",
           "children": [
             {
-              "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1121-1131",
+              "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1191-1201",
               "target": "controllers/todos#complete",
               "path": "complete",
               "kind": "verb",
@@ -45,8 +45,17 @@
       ]
     },
     {
+      "name": "chat_messages",
+      "only": [
+        "create"
+      ],
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1260-1271",
+      "controller": "controllers/chat_messages",
+      "kind": "resources"
+    },
+    {
       "name": "users",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1184-1191",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1322-1329",
       "target": "controllers/users#index",
       "path": "users",
       "kind": "verb",
@@ -54,7 +63,7 @@
     },
     {
       "name": "sign_in",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1259-1268",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1397-1406",
       "target": "controllers/sessions#create",
       "path": "session",
       "kind": "verb",
@@ -62,7 +71,7 @@
     },
     {
       "name": "sign_out",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1344-1353",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1482-1491",
       "target": "controllers/sessions#destroy",
       "path": "session",
       "kind": "verb",
@@ -70,11 +79,11 @@
     },
     {
       "name": "admin",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1434-1441",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1572-1579",
       "kind": "namespace",
       "children": [
         {
-          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1452-1459",
+          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1590-1597",
           "target": "controllers/users#index",
           "path": "users",
           "kind": "verb",
@@ -84,7 +93,7 @@
     },
     {
       "name": "optional_report",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1502-1519",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1640-1657",
       "target": "controllers/todos#optional_report",
       "path": "reports(/:year)",
       "kind": "verb",
@@ -92,7 +101,7 @@
     },
     {
       "name": "file",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1605-1618",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1743-1756",
       "target": "controllers/todos#file",
       "path": "files/*path",
       "kind": "verb",

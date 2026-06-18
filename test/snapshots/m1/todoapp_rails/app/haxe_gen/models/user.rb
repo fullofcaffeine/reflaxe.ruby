@@ -20,6 +20,7 @@ module Models
       __hx_rails_schema()[:columns].length
     end
     has_many :todos
+    has_many :chat_messages
     # haxe column id: Int
     # haxe column name: String
     # haxe column email: String

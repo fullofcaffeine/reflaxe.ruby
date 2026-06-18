@@ -35,6 +35,12 @@ extern class Routes {
 	@:native("todos_url")
 	public static function todosUrl():String;
 
+	@:native("chat_messages_path")
+	public static function chatMessagesPath():String;
+
+	@:native("chat_messages_url")
+	public static function chatMessagesUrl():String;
+
 	@:native("users_path")
 	public static function usersPath():String;
 

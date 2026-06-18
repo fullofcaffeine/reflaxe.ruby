@@ -199,11 +199,15 @@ compileTodoClient();
 for (const file of [
   "app/haxe_gen/models/todo.rb",
   "app/haxe_gen/models/user.rb",
+  "app/haxe_gen/models/chat_message.rb",
+  "app/haxe_gen/controllers/chat_messages_controller.rb",
   "app/haxe_gen/controllers/todo_index_locals.rb",
   "app/haxe_gen/controllers/todos_controller.rb",
+  "app/haxe_gen/migrations/create_chat_messages.rb",
   "app/haxe_gen/migrations/create_todos.rb",
   "app/haxe_gen/migrations/update_todos.rb",
   "app/haxe_gen/views/application_layout_view.rb",
+  "app/haxe_gen/views/chat_panel_view.rb",
   "app/haxe_gen/views/todo_card_view.rb",
   "app/haxe_gen/views/todo_composer_view.rb",
   "app/haxe_gen/views/todo_dashboard_view.rb",
@@ -213,6 +217,7 @@ for (const file of [
   "app/haxe_gen/views/todo_summary_view.rb",
   "app/views/controllers/todos/index.html.erb",
   "app/views/controllers/todos/_card.html.erb",
+  "app/views/controllers/todos/_chat_panel.html.erb",
   "app/views/controllers/todos/_composer.html.erb",
   "app/views/controllers/todos/_dashboard.html.erb",
   "app/views/controllers/todos/_list.html.erb",
@@ -222,6 +227,7 @@ for (const file of [
   "config/routes.rb",
   "db/migrate/20260101000000_create_todos.rb",
   "db/migrate/20260101000001_update_todos.rb",
+  "db/migrate/20260101000003_create_chat_messages.rb",
   "test/generated/models/todo_haxe_test.rb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
@@ -280,6 +286,7 @@ for (const expected of [
   "{name: :email, haxe_name: \"email\", ruby_name: \"email\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   "{name: :role, haxe_name: \"role\", ruby_name: \"role\", haxe_type: \"String\", rails_type: :string, nullable: false, default: \"member\", primary_key: false, index: true, unique: false, db_type: nil}",
   "has_many :todos",
+  "has_many :chat_messages",
   "# haxe column id: Int",
   "# haxe column name: String",
   "# haxe column email: String",
@@ -292,6 +299,29 @@ for (const expected of [
 ]) {
   if (!userRuby.includes(expected)) {
     console.error(`todoapp_rails user model output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const chatMessageRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "chat_message.rb"), "utf8");
+for (const expected of [
+  'require "active_record"',
+  "module Models",
+  "class ChatMessage < ::ApplicationRecord",
+  'self.table_name = "chat_messages"',
+  "def self.__hx_rails_schema()",
+  'table_name: "chat_messages"',
+  "{name: :body, haxe_name: \"body\", ruby_name: \"body\", haxe_type: \"String\", rails_type: :text, nullable: false, default: nil, primary_key: false, index: false, unique: false, db_type: :text}",
+  "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
+  "belongs_to :user",
+  "# haxe column body: String",
+  "# haxe column user_id: Int",
+  "validates :body, presence: true",
+  "def self.latest()",
+  "Models::ChatMessage.includes(:user).order(id: :desc).limit(6)",
+]) {
+  if (!chatMessageRuby.includes(expected)) {
+    console.error(`todoapp_rails chat message model output missing expected line: ${expected}`);
     process.exit(1);
   }
 }
@@ -320,6 +350,7 @@ for (const expected of [
   "Rails.application.routes.draw do",
   'root "controllers/todos#index"',
   'resources :todos, controller: "controllers/todos", only: [:index, :create]',
+  'resources :chat_messages, controller: "controllers/chat_messages", only: [:create]',
   'get "completed", to: "controllers/todos#completed"',
   'patch "complete", to: "controllers/todos#complete"',
   'get "users", to: "controllers/users#index", as: :users',
@@ -339,6 +370,8 @@ for (const expected of [
 const committedRoutesExtern = readFileSync(join(exampleDir, "src_haxe", "routes", "Routes.hx"), "utf8");
 for (const expected of [
   '@:native("users_path")',
+  '@:native("chat_messages_path")',
+  "public static function chatMessagesPath():String;",
   "public static function usersPath():String;",
   '@:native("completed_todos_path")',
   "public static function completedTodosPath():String;",
@@ -368,6 +401,7 @@ for (const expected of [
   "class RoutesTest < ActionDispatch::IntegrationTest",
   "assert_routing({ path: \"/\", method: :get }, { controller: \"controllers/todos\", action: \"index\" })",
   "assert_recognizes({ controller: \"controllers/todos\", action: \"create\" }, { path: \"/todos\", method: :post })",
+  "assert_recognizes({ controller: \"controllers/chat_messages\", action: \"create\" }, { path: \"/chat_messages\", method: :post })",
   "assert_recognizes({ controller: \"controllers/todos\", action: \"completed\" }, { path: \"/todos/completed\", method: :get })",
   "assert_recognizes({ controller: \"controllers/todos\", action: \"complete\", id: \"42\" }, { path: \"/todos/42/complete\", method: :patch })",
   "assert_recognizes({ controller: \"controllers/todos\", action: \"optional_report\", year: \"2026\" }, { path: \"/reports/2026\", method: :get })",
@@ -389,8 +423,9 @@ for (const expected of [
   /class TodosController < ActionController::Base/,
   /todos__hx\d+ = Models::Todo\.incomplete\(\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)/,
   /users__hx\d+ = Models::User\.order\(name: :asc\)\.to_a\(\)/,
+  /chat_messages__hx\d+ = Models::ChatMessage\.latest\(\)\.to_a\(\)/,
   /current_user__hx\d+ = Controllers::UserSession\.current_user\(self\)/,
-  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, users: users__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: current_user__hx\d+, current_user: current_user__hx\d+\}, layout: "application"\)/,
+  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, users: users__hx\d+, chat_messages: chat_messages__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: current_user__hx\d+, current_user: current_user__hx\d+\}, layout: "application"\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :user_id\]\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
   /self\.respond_to\(\) do \|format__hx\d+\|/,
@@ -399,6 +434,20 @@ for (const expected of [
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`todoapp_rails controller output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const chatMessagesControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "chat_messages_controller.rb"), "utf8");
+for (const expected of [
+  /class ChatMessagesController < ActionController::Base/,
+  /attrs__hx\d+ = self\.params\(\)\.require\("chat_message"\)\.permit\(\[:body, :user_id\]\)/,
+  /Models::ChatMessage\.create\(attrs__hx\d+\)/,
+  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-chat-panel", partial: "controllers\/todos\/chat_panel", locals: \{messages: Models::ChatMessage\.latest\(\)\.to_a\(\), current_user: Controllers::UserSession\.current_user\(gthis__hx\d+\), users: Models::User\.order\(name: :asc\)\.to_a\(\)\}\)\) \}/,
+  /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
+]) {
+  if (!expected.test(chatMessagesControllerRuby)) {
+    console.error(`todoapp_rails chat messages controller output missing expected line: ${expected}`);
     process.exit(1);
   }
 }
@@ -460,6 +509,19 @@ for (const expected of [
   }
 }
 
+const chatMigrationClassRuby = readFileSync(join(outputDir, "app", "haxe_gen", "migrations", "create_chat_messages.rb"), "utf8");
+for (const expected of [
+  "module Migrations",
+  "class CreateChatMessages",
+  'def self.__hx_name()',
+  '"migrations.CreateChatMessages"',
+]) {
+  if (!chatMigrationClassRuby.includes(expected)) {
+    console.error(`todoapp_rails chat migration marker output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
 const migrationRuby = readFileSync(join(outputDir, "db", "migrate", "20260101000000_create_todos.rb"), "utf8");
 for (const expected of [
   "# Generated by RailsHx from @:railsMigration.",
@@ -503,6 +565,21 @@ for (const expected of [
   }
 }
 
+const chatMigrationRuby = readFileSync(join(outputDir, "db", "migrate", "20260101000003_create_chat_messages.rb"), "utf8");
+for (const expected of [
+  "# Generated by RailsHx from @:railsMigration.",
+  "class CreateChatMessages < ActiveRecord::Migration[7.1]",
+  "create_table :chat_messages do |t|",
+  "t.text :body, null: false",
+  "t.references :user, null: false, foreign_key: true",
+  "t.index [:user_id, :id]",
+]) {
+  if (!chatMigrationRuby.includes(expected)) {
+    console.error(`todoapp_rails generated chat migration missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
 const readme = readFileSync(join(exampleDir, "README.md"), "utf8");
 for (const expected of [
   "RailsHx Todo App",
@@ -512,6 +589,8 @@ for (const expected of [
   "Haxe-authored Rails migration",
   "<text_area>",
   "Haxe-authored JavaScript",
+  "models/ChatMessage.hx",
+  "views/ChatPanelView.hx",
 ]) {
   if (!readme.includes(expected)) {
     console.error(`todoapp_rails README missing expected line: ${expected}`);
@@ -551,6 +630,7 @@ for (const expected of [
   '<main class=${TodoHooks.shellClass}>',
   '<partial template=${(Template.of(TodoComposerView)',
   '<partial template=${(Template.of(TodoListView)',
+  '<partial template=${(Template.of(ChatPanelView)',
   '<partial template=${(Template.of(TodoDashboardView)',
 ]) {
   if (!indexSource.includes(expected)) {
@@ -578,6 +658,7 @@ for (const expected of [
   "static final routes = {",
   "root(to(TodosController, index));",
   "resources(Todo, TodosController, {only: [index, create]}, {",
+  "resources(ChatMessage, ChatMessagesController, {only: [create]});",
   "collection({",
   'get("completed", to(TodosController, completed));',
   "member({",
@@ -608,6 +689,8 @@ for (const expected of [
   'public static inline var formClass:CssClass = "todo-form";',
   'public static inline var sessionFormClass:CssClass = "session-form";',
   'public static inline var sessionFooterClass:CssClass = "session-footer";',
+  'public static inline var chatFormClass:CssClass = "chat-form";',
+  'public static inline var chatPanelId:DomId = "railshx-chat-panel";',
   'public static inline var openWorkId:DomId = "open-work";',
   'public static inline var boundAttr:DataAttr = "data-railshx-bound";',
   'public static inline var sessionAttr:DataAttr = "data-railshx-session";',
@@ -624,6 +707,7 @@ for (const expected of [
   "import shared.TodoHooks;",
   "examples/todoapp_rails/e2e/todo_hooks.ts",
   "TodoHooks.classSelector(TodoHooks.formClass)",
+  "TodoHooks.classSelector(TodoHooks.chatFormClass)",
 ]) {
   if (!hookExportSource.includes(expected)) {
     console.error(`todoapp_rails hook exporter missing expected content: ${expected}`);
@@ -636,6 +720,8 @@ for (const expected of [
   "import { hooks } from './todo_hooks'",
   "hooks.selectors.form",
   "hooks.selectors.sessionForms",
+  "hooks.selectors.chatForms",
+  "hooks.selectors.chatPanel",
   "hooks.selectors.sessionFooter",
   "hooks.attrs.bound",
   "hooks.selectors.openWork",
@@ -652,9 +738,13 @@ for (const expected of [
   'form: "todo-form"',
   'sessionForm: "session-form"',
   'sessionFooter: "session-footer"',
+  'chatForm: "chat-form"',
+  'chatPanel: "railshx-chat-panel"',
   'scrollLinks: "[data-railshx-scroll]"',
   'sessionForms: ".session-form"',
   'sessionFooter: ".session-footer"',
+  'chatForms: ".chat-form"',
+  'chatPanel: "#railshx-chat-panel"',
   'openWork: "#open-work"',
 ]) {
   if (!hookManifest.includes(expected)) {
@@ -674,11 +764,35 @@ for (const expected of [
   '<%= render partial: "controllers/todos/user_switcher", locals: {users: users, current_user: current_user} %>',
   '<%= render partial: "controllers/todos/composer", locals: {sample_user: sample_user} %>',
   '<%= render partial: "controllers/todos/list", locals: {todos: todos} %>',
+  '<%= render partial: "controllers/todos/chat_panel", locals: {messages: chat_messages, current_user: current_user, users: users} %>',
   "todo-shell",
-  '<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user, current_user: current_user} %>',
+  '<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user, current_user: current_user} %>',
 ]) {
   if (!view.includes(expected)) {
     console.error(`todoapp_rails view missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const typedChatPanel = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_chat_panel.html.erb"), "utf8");
+for (const expected of [
+  'id="railshx-chat-panel"',
+  "Typed Turbo room",
+  "This is a Rails-native chat slice",
+  "<% if messages.length > 0 %>",
+  '<ul class="chat-list">',
+  "<% messages.each do |message| %>",
+  '<li class="chat-message">',
+  "<strong>User <%= message.user_id %></strong>",
+  "<p><%= message.body %></p>",
+  '<%= form_with url: chat_messages_path(), scope: :chat_message, local: true, class: "chat-form", data: {railshx_chat_form: true} do |form| %>',
+  '<%= form.hidden_field :user_id, value: current_user.id %>',
+  '<%= form.label :body, "Add a typed room note" %>',
+  '<%= form.text_area :body, placeholder: "Share what changed, what blocked, or what shipped", rows: 3, required: true %>',
+  '<%= form.submit "Post note", type: "submit" %>',
+]) {
+  if (!typedChatPanel.includes(expected)) {
+    console.error(`todoapp_rails typed chat panel missing expected content: ${expected}`);
     process.exit(1);
   }
 }

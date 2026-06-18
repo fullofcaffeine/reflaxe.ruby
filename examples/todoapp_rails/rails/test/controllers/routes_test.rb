@@ -8,6 +8,7 @@ class RoutesTest < ActionDispatch::IntegrationTest
     assert_routing({ path: "/", method: :get }, { controller: "controllers/todos", action: "index" })
     assert_recognizes({ controller: "controllers/todos", action: "index" }, { path: "/todos", method: :get })
     assert_recognizes({ controller: "controllers/todos", action: "create" }, { path: "/todos", method: :post })
+    assert_recognizes({ controller: "controllers/chat_messages", action: "create" }, { path: "/chat_messages", method: :post })
     assert_recognizes({ controller: "controllers/todos", action: "completed" }, { path: "/todos/completed", method: :get })
     assert_recognizes({ controller: "controllers/todos", action: "complete", id: "42" }, { path: "/todos/42/complete", method: :patch })
     assert_routing({ path: "/users", method: :get }, { controller: "controllers/users", action: "index" })

@@ -4,6 +4,8 @@ import controllers.TodosController.TodoIndexLocals;
 import rails.action_view.HtmlNode;
 import rails.action_view.Template;
 import shared.TodoHooks;
+import views.ChatPanelView;
+import views.ChatPanelView.ChatPanelLocals;
 import views.TodoComposerView.TodoComposerLocals;
 import views.TodoListView.TodoListLocals;
 import views.TodoDashboardView;
@@ -69,9 +71,16 @@ class TodoIndexView {
 					</div>
 				</section>
 
+				<partial template=${(Template.of(ChatPanelView) : Template<ChatPanelLocals>)} locals=${{
+					messages: locals.chatMessages,
+					currentUser: locals.currentUser,
+					users: locals.users
+				}} />
+
 				<partial template=${(Template.of(TodoDashboardView) : Template<TodoIndexLocals>)} locals=${{
 					todos: locals.todos,
 					users: locals.users,
+					chatMessages: locals.chatMessages,
 					todoCount: locals.todoCount,
 					typedColumnCount: locals.typedColumnCount,
 					sampleUser: locals.sampleUser,

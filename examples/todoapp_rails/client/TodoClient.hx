@@ -35,6 +35,7 @@ class TodoClient {
 			var form = event.detail.formSubmission == null ? null : event.detail.formSubmission.formElement;
 			announceTodoSubmit(form == null ? event.target : form, event.detail.success);
 			announceSessionSubmit(form == null ? event.target : form, event.detail.success);
+			announceChatSubmit(form == null ? event.target : form, event.detail.success);
 		});
 		Turbo.onBeforeFetchRequest(function(event):Void {
 			Turbo.addFetchRequestHeader(event, "X-RailsHx-Client", "todoapp");
@@ -44,9 +45,11 @@ class TodoClient {
 	static function boot():Void {
 		bindTodoForm();
 		bindSessionForms();
+		bindChatForms();
 		bindScrollLinks();
 		announceCompletedCreate();
 		announceSessionChange();
+		announceChatChange();
 	}
 
 	static function bindTodoForm():Void {
@@ -110,6 +113,22 @@ class TodoClient {
 		}
 	}
 
+	static function bindChatForms():Void {
+		var forms = Browser.document.querySelectorAll(TodoHooks.classSelector(TodoHooks.chatFormClass));
+		for (i in 0...forms.length) {
+			var form:Element = cast forms.item(i);
+			if (form == null || form.getAttribute(TodoHooks.boundAttr) == "true") {
+				continue;
+			}
+			form.setAttribute(TodoHooks.boundAttr, "true");
+			form.addEventListener("submit", function(_:Event):Void {
+				try {
+					Browser.window.sessionStorage.setItem(TodoHooks.chatStorageKey, "1");
+				} catch (_:js.lib.Error) {}
+			});
+		}
+	}
+
 	static function announceSessionSubmit(target:Null<EventTarget>, success:Null<Bool>):Void {
 		var form = elementTarget(target);
 		if (form == null || !form.classList.contains(TodoHooks.sessionFormClass) || success == false) {
@@ -124,6 +143,14 @@ class TodoClient {
 			return;
 		}
 		announceCompletedCreateNow();
+	}
+
+	static function announceChatSubmit(target:Null<EventTarget>, success:Null<Bool>):Void {
+		var form = elementTarget(target);
+		if (form == null || !form.classList.contains(TodoHooks.chatFormClass) || success == false) {
+			return;
+		}
+		announceChatChangeNow();
 	}
 
 	static function announceCompletedCreate():Void {
@@ -177,6 +204,32 @@ class TodoClient {
 		if (zone != null) {
 			zone.classList.add("is-warm");
 			removeClassAfterDelay(zone, "is-warm", 900);
+		}
+	}
+
+	static function announceChatChange():Void {
+		var shouldAnnounce = false;
+		try {
+			shouldAnnounce = Browser.window.sessionStorage.getItem(TodoHooks.chatStorageKey) == "1";
+			Browser.window.sessionStorage.removeItem(TodoHooks.chatStorageKey);
+		} catch (_:js.lib.Error) {}
+		if (!shouldAnnounce) {
+			return;
+		}
+		announceChatChangeNow();
+	}
+
+	static function announceChatChangeNow():Void {
+		var flash = Browser.document.querySelector(TodoHooks.attrSelector(TodoHooks.flashAttr));
+		if (flash != null) {
+			flash.textContent = "Room note posted";
+			flash.removeAttribute("hidden");
+			hideAfterDelay(flash, 2200);
+		}
+		var panel = Browser.document.querySelector(TodoHooks.idSelector(TodoHooks.chatPanelId));
+		if (panel != null) {
+			panel.classList.add("is-warm");
+			removeClassAfterDelay(panel, "is-warm", 900);
 		}
 	}
 

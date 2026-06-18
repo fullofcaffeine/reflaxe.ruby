@@ -6,19 +6,25 @@ export const hooks = {
     scroll: "data-railshx-scroll",
     flash: "data-railshx-flash",
     session: "data-railshx-session",
-    sessionZone: "data-railshx-session-zone"
+    sessionZone: "data-railshx-session-zone",
+    chat: "data-railshx-chat",
+    chatForm: "data-railshx-chat-form"
   },
   classes: {
     shell: "todo-shell",
     form: "todo-form",
     sessionForm: "session-form",
     sessionFooter: "session-footer",
+    chatForm: "chat-form",
+    chatList: "chat-list",
+    chatMessage: "chat-message",
     list: "todo-list",
     item: "todo-item",
     dot: "todo-dot"
   },
   ids: {
-    openWork: "open-work"
+    openWork: "open-work",
+    chatPanel: "railshx-chat-panel"
   },
   meta: {
     templateName: "railshx-template",
@@ -34,6 +40,9 @@ export const hooks = {
     sessionForms: ".session-form",
     sessionFooter: ".session-footer",
     sessionZone: "[data-railshx-session-zone]",
+    chatPanel: "#railshx-chat-panel",
+    chatForms: ".chat-form",
+    chatMessages: ".chat-message",
     openWork: "#open-work"
   }
 } as const

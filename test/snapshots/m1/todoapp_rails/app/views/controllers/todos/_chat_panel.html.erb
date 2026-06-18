@@ -1,0 +1,40 @@
+<section id="railshx-chat-panel" class="card chat-panel" data-railshx-chat aria-label="RailsHx typed chatroom">
+			<div class="chat-panel-header">
+				<span class="eyebrow">Typed Turbo room</span>
+				<h2>Ship room</h2>
+				<p>
+					This is a Rails-native chat slice: Haxe owns the model, migration,
+					controller, params, route, HHX, and client hooks; Rails receives
+					ordinary ActiveRecord, ActionView, and Turbo Stream artifacts.
+				</p>
+			</div>
+
+			<% if messages.length > 0 %>
+				<ul class="chat-list">
+					<% messages.each do |message| %>
+						<li class="chat-message">
+							<span class="avatar">#</span>
+							<div>
+								<strong>User <%= message.user_id %></strong>
+								<p><%= message.body %></p>
+							</div>
+						</li>
+					<% end %>
+				</ul>
+			<% else %>
+				<div class="empty-state">No room notes yet. The standup is suspiciously quiet.</div>
+			<% end %>
+
+			<% if current_user != nil %>
+				<%= form_with url: chat_messages_path(), scope: :chat_message, local: true, class: "chat-form", data: {railshx_chat_form: true} do |form| %>
+					<%= form.hidden_field :user_id, value: current_user.id %>
+					<div>
+						<%= form.label :body, "Add a typed room note" %>
+						<%= form.text_area :body, placeholder: "Share what changed, what blocked, or what shipped", rows: 3, required: true %>
+					</div>
+					<%= form.submit "Post note", type: "submit" %>
+				<% end %>
+			<% else %>
+				<div class="empty-state">Choose a user before posting a room note.</div>
+			<% end %>
+		</section>

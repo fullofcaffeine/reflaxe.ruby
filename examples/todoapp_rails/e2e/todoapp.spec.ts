@@ -24,12 +24,15 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
   await expect(page.locator(`meta[name="${hooks.meta.templateName}"]`)).toHaveAttribute('content', hooks.meta.templateContent)
   await expect(page.locator(hooks.selectors.form)).toHaveAttribute(hooks.attrs.bound, 'true')
   await expect(page.locator(hooks.selectors.sessionForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
+  await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
   await expect(page.locator(hooks.selectors.scrollLinks).first()).toHaveAttribute(hooks.attrs.bound, 'true')
 
   const bodyText = await page.locator('body').innerText()
   expect(bodyText).toMatch(/RailsHx sample/i)
   expect(bodyText).toMatch(/Typed session layer/i)
+  expect(bodyText).toMatch(/Typed Turbo room/i)
   expect(bodyText).toContain('Ship typed Rails templates')
+  expect(bodyText).toContain('Routes, params, and HHX are all typed for this room.')
   expect(bodyText).not.toMatch(/<%=?|%>|<\/?(div|span|form|input|textarea|section|article)(\s|>)/i)
 
   await expect(page.getByText(/Back to todos/i)).toHaveCount(0)
@@ -96,4 +99,18 @@ test('handles importmap-backed Rails form flows (tracked in haxe.ruby-ae6.1)', a
   await expect(page.getByText(/Current user:/)).toBeVisible()
   await expect(page.locator(hooks.selectors.sessionFooter)).toContainText('Template Maintainer')
   await page.waitForLoadState('networkidle')
+})
+
+test('posts a typed RailsHx room note through Turbo-backed Haxe client hooks', async ({ page }) => {
+  await gotoTodos(page)
+
+  const beforeCount = await page.locator(hooks.selectors.chatMessages).count()
+  const body = `Room note ${Date.now()}`
+
+  await page.getByLabel('Add a typed room note').fill(body)
+  await page.getByRole('button', { name: 'Post note' }).click()
+
+  await expect(page.locator(hooks.selectors.chatPanel)).toContainText(body, { timeout: 20_000 })
+  await expect(page.getByText('Room note posted')).toBeVisible()
+  await expect.poll(async () => page.locator(hooks.selectors.chatMessages).count()).toBeGreaterThanOrEqual(beforeCount)
 })

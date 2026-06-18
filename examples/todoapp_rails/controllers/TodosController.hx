@@ -1,5 +1,6 @@
 package controllers;
 
+import models.ChatMessage;
 import models.Todo;
 import models.User;
 import rails.action_view.Template;
@@ -18,6 +19,7 @@ import views.TodoListView.TodoListLocals;
 typedef TodoIndexLocals = {
 	var todos:Array<Todo>;
 	var users:Array<User>;
+	var chatMessages:Array<ChatMessage>;
 	var todoCount:Int;
 	var typedColumnCount:Int;
 	var sampleUser:Null<User>;
@@ -43,10 +45,12 @@ class TodosController extends rails.action_controller.Base {
 	public function index() {
 		var todos = Todo.incomplete().includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray();
 		var users = User.order(User.f.name.asc()).toArray();
+		var chatMessages = ChatMessage.latest().toArray();
 		var currentUser = UserSession.currentUser(this);
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {
 			todos: todos,
 			users: users,
+			chatMessages: chatMessages,
 			todoCount: todos.length,
 			typedColumnCount: Todo.typedColumnCount(),
 			sampleUser: currentUser,
