@@ -4,8 +4,20 @@
 
 Rails.application.routes.draw do
   root "controllers/todos#index"
-  resources :todos, controller: "controllers/todos", only: [:index, :create]
+  resources :todos, controller: "controllers/todos", only: [:index, :create] do
+    collection do
+      get "completed", to: "controllers/todos#completed"
+    end
+    member do
+      patch "complete", to: "controllers/todos#complete"
+    end
+  end
   get "users", to: "controllers/users#index", as: :users
   post "session", to: "controllers/sessions#create", as: :sign_in
   delete "session", to: "controllers/sessions#destroy", as: :sign_out
+  namespace :admin do
+    get "users", to: "controllers/users#index"
+  end
+  get "reports(/:year)", to: "controllers/todos#optional_report", as: :optional_report
+  get "files/*path", to: "controllers/todos#file", as: :file
 end

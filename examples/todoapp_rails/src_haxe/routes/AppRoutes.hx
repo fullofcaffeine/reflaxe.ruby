@@ -21,9 +21,21 @@ import rails.macros.RoutesDsl.*;
 class AppRoutes {
 	static final routes = {
 		root(to(TodosController, index));
-		resources(Todo, TodosController, {only: [index, create]});
+		resources(Todo, TodosController, {only: [index, create]}, {
+			collection({
+				get("completed", to(TodosController, completed));
+			});
+			member({
+				patch("complete", to(TodosController, complete));
+			});
+		});
 		get("users", to(UsersController, index), {asName: routeName("users")});
 		post("session", to(SessionsController, create), {asName: routeName("sign_in")});
 		delete("session", to(SessionsController, destroy), {asName: routeName("sign_out")});
+		namespace("admin", {
+			get("users", to(UsersController, index));
+		});
+		get("reports(/:year)", to(TodosController, optionalReport), {asName: routeName("optional_report")});
+		get("files/*path", to(TodosController, file), {asName: routeName("file")});
 	};
 }

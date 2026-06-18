@@ -22,5 +22,17 @@ module Controllers
         format__hx0.html() { gthis__hx0.redirect_to(self.todos_path(), status: :see_other) }
       end
     end
+    def completed()
+      nil
+    end
+    def complete()
+      nil
+    end
+    def optional_report()
+      nil
+    end
+    def file()
+      nil
+    end
   end
 end

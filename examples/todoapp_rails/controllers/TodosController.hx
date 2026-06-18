@@ -70,4 +70,12 @@ class TodosController extends rails.action_controller.Base {
 			});
 		});
 	}
+
+	public function completed() {}
+
+	public function complete() {}
+
+	public function optionalReport() {}
+
+	public function file() {}
 }

@@ -17,6 +17,18 @@ extern class Routes {
 	@:native("root_url")
 	public static function rootUrl():String;
 
+	@:native("completed_todos_path")
+	public static function completedTodosPath():String;
+
+	@:native("completed_todos_url")
+	public static function completedTodosUrl():String;
+
+	@:native("complete_todo_path")
+	public static function completeTodoPath(id:RouteParam):String;
+
+	@:native("complete_todo_url")
+	public static function completeTodoUrl(id:RouteParam):String;
+
 	@:native("todos_path")
 	public static function todosPath():String;
 
@@ -40,6 +52,24 @@ extern class Routes {
 
 	@:native("sign_out_url")
 	public static function signOutUrl():String;
+
+	@:native("admin_users_path")
+	public static function adminUsersPath():String;
+
+	@:native("admin_users_url")
+	public static function adminUsersUrl():String;
+
+	@:native("optional_report_path")
+	public static function optionalReportPath():String;
+
+	@:native("optional_report_url")
+	public static function optionalReportUrl():String;
+
+	@:native("file_path")
+	public static function filePath(path:RouteParam):String;
+
+	@:native("file_url")
+	public static function fileUrl(path:RouteParam):String;
 
 	@:native("legacy_health_path")
 	public static function legacyHealthPath():String;

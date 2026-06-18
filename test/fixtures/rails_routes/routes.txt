@@ -1,8 +1,13 @@
 Prefix Verb   URI Pattern               Controller#Action
   root GET    /                          controllers/todos#index
+completed_todos GET /todos/completed(.:format) controllers/todos#completed
+complete_todo PATCH /todos/:id/complete(.:format) controllers/todos#complete
  todos GET    /todos(.:format)           controllers/todos#index
        POST   /todos(.:format)           controllers/todos#create
  users GET    /users(.:format)           controllers/users#index
-sign_in GET   /sign_in(.:format)         controllers/sessions#new
-sign_out DELETE /sign_out(.:format)      controllers/sessions#destroy
+sign_in POST  /session(.:format)         controllers/sessions#create
+sign_out DELETE /session(.:format)       controllers/sessions#destroy
+admin_users GET /admin/users(.:format)   controllers/users#index
+optional_report GET /reports(/:year)(.:format) controllers/todos#optional_report
+file GET      /files/*path(.:format)     controllers/todos#file
 legacy_health GET /rails-owned-health(.:format) rails_owned/health#show

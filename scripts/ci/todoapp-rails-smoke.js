@@ -320,9 +320,15 @@ for (const expected of [
   "Rails.application.routes.draw do",
   'root "controllers/todos#index"',
   'resources :todos, controller: "controllers/todos", only: [:index, :create]',
+  'get "completed", to: "controllers/todos#completed"',
+  'patch "complete", to: "controllers/todos#complete"',
   'get "users", to: "controllers/users#index", as: :users',
   'post "session", to: "controllers/sessions#create", as: :sign_in',
   'delete "session", to: "controllers/sessions#destroy", as: :sign_out',
+  "namespace :admin do",
+  'get "users", to: "controllers/users#index"',
+  'get "reports(/:year)", to: "controllers/todos#optional_report", as: :optional_report',
+  'get "files/*path", to: "controllers/todos#file", as: :file',
 ]) {
   if (!generatedRoutes.includes(expected)) {
     console.error(`todoapp_rails generated routes missing expected line: ${expected}`);
@@ -334,6 +340,16 @@ const committedRoutesExtern = readFileSync(join(exampleDir, "src_haxe", "routes"
 for (const expected of [
   '@:native("users_path")',
   "public static function usersPath():String;",
+  '@:native("completed_todos_path")',
+  "public static function completedTodosPath():String;",
+  '@:native("complete_todo_path")',
+  "public static function completeTodoPath(id:RouteParam):String;",
+  '@:native("admin_users_path")',
+  "public static function adminUsersPath():String;",
+  '@:native("optional_report_path")',
+  "public static function optionalReportPath():String;",
+  '@:native("file_path")',
+  "public static function filePath(path:RouteParam):String;",
   '@:native("sign_in_path")',
   "public static function signInPath():String;",
   '@:native("sign_out_path")',
@@ -343,6 +359,25 @@ for (const expected of [
 ]) {
   if (!committedRoutesExtern.includes(expected)) {
     console.error(`todoapp_rails route extern missing typed Rails-owned route helper: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const routeTestSource = readFileSync(join(exampleDir, "rails", "test", "controllers", "routes_test.rb"), "utf8");
+for (const expected of [
+  "class RoutesTest < ActionDispatch::IntegrationTest",
+  "assert_routing({ path: \"/\", method: :get }, { controller: \"controllers/todos\", action: \"index\" })",
+  "assert_recognizes({ controller: \"controllers/todos\", action: \"create\" }, { path: \"/todos\", method: :post })",
+  "assert_recognizes({ controller: \"controllers/todos\", action: \"completed\" }, { path: \"/todos/completed\", method: :get })",
+  "assert_recognizes({ controller: \"controllers/todos\", action: \"complete\", id: \"42\" }, { path: \"/todos/42/complete\", method: :patch })",
+  "assert_recognizes({ controller: \"controllers/todos\", action: \"optional_report\", year: \"2026\" }, { path: \"/reports/2026\", method: :get })",
+  "assert_recognizes({ controller: \"controllers/todos\", action: \"file\", path: \"docs/readme\" }, { path: \"/files/docs/readme\", method: :get })",
+  "assert_equal \"/rails-owned-health\", legacy_health_path",
+  "get legacy_health_path",
+  "Routes.legacyHealthPath()",
+]) {
+  if (!routeTestSource.includes(expected)) {
+    console.error(`todoapp_rails route runtime test source missing expected content: ${expected}`);
     process.exit(1);
   }
 }
@@ -542,10 +577,17 @@ for (const expected of [
   "@:railsRoutes",
   "static final routes = {",
   "root(to(TodosController, index));",
-  "resources(Todo, TodosController, {only: [index, create]});",
+  "resources(Todo, TodosController, {only: [index, create]}, {",
+  "collection({",
+  'get("completed", to(TodosController, completed));',
+  "member({",
+  'patch("complete", to(TodosController, complete));',
   'get("users", to(UsersController, index), {asName: routeName("users")});',
   'post("session", to(SessionsController, create), {asName: routeName("sign_in")});',
   'delete("session", to(SessionsController, destroy), {asName: routeName("sign_out")});',
+  'namespace("admin", {',
+  'get("reports(/:year)", to(TodosController, optionalReport), {asName: routeName("optional_report")});',
+  'get("files/*path", to(TodosController, file), {asName: routeName("file")});',
 ]) {
   if (!routesSource.includes(expected)) {
     console.error(`todoapp_rails route source is missing expected Haxe-owned route content: ${expected}`);
