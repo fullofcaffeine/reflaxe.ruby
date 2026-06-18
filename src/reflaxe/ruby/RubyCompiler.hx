@@ -109,6 +109,7 @@ typedef RailsRouteDecl = {
 	only:Array<String>,
 	except:Array<String>,
 	param:String,
+	children:Array<RailsRouteDecl>,
 	pos:Position
 }
 
@@ -4569,7 +4570,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsRoutes routes must be a Haxe block: `static final routes = { root(...); resources(...); };`.", expr.pos);
 				[];
 		}
-		return [for (entry in entries) railsRouteDecl(entry)];
+		var decls:Array<RailsRouteDecl> = [];
+		for (entry in entries) {
+			var decl = railsRouteDecl(entry);
+			if (decl.kind == "collection" || decl.kind == "member") {
+				Context.error('@:railsRoutes ${decl.kind} blocks must be nested inside resources/resource declarations.', decl.pos);
+			}
+			decls.push(decl);
+		}
+		return decls;
 	}
 
 	static function railsRouteDecl(expr:TypedExpr):RailsRouteDecl {
@@ -4589,6 +4598,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								children: [],
 								pos: expr.pos
 							};
 						case "verb" if (params.length == 4):
@@ -4602,9 +4612,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: [],
 								except: [],
 								param: "",
+								children: [],
 								pos: expr.pos
 							};
-						case "resources" if (params.length == 5):
+						case "resources" if (params.length == 6):
 							{
 								kind: "resources",
 								target: null,
@@ -4615,6 +4626,49 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								only: railsRouteStringArray(params[2], "resources only"),
 								except: railsRouteStringArray(params[3], "resources except"),
 								param: railsRouteStringAllowEmpty(params[4], "resources param"),
+								children: railsRouteChildren(params[5], "resources children"),
+								pos: expr.pos
+							};
+						case "resource" if (params.length == 6):
+							{
+								kind: "resource",
+								target: null,
+								verb: "",
+								path: "",
+								name: railsRouteString(params[0], "resource name"),
+								controller: railsRouteString(params[1], "resource controller"),
+								only: railsRouteStringArray(params[2], "resource only"),
+								except: railsRouteStringArray(params[3], "resource except"),
+								param: railsRouteStringAllowEmpty(params[4], "resource param"),
+								children: railsRouteChildren(params[5], "resource children"),
+								pos: expr.pos
+							};
+						case "collection" if (params.length == 1):
+							{
+								kind: "collection",
+								target: null,
+								verb: "",
+								path: "",
+								name: "",
+								controller: "",
+								only: [],
+								except: [],
+								param: "",
+								children: railsRouteChildren(params[0], "collection children"),
+								pos: expr.pos
+							};
+						case "member" if (params.length == 1):
+							{
+								kind: "member",
+								target: null,
+								verb: "",
+								path: "",
+								name: "",
+								controller: "",
+								only: [],
+								except: [],
+								param: "",
+								children: railsRouteChildren(params[0], "member children"),
 								pos: expr.pos
 							};
 						case other:
@@ -4642,6 +4696,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			only: [],
 			except: [],
 			param: "",
+			children: [],
 			pos: pos
 		};
 	}
@@ -4684,21 +4739,64 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					[decl.verb + " " + quoteRubyStringForCode(decl.path) + ", " + parts.join(", ")];
 				}
 			case "resources":
-				var parts = [
-					"resources " + rubySymbolLiteral(decl.name),
-					"controller: " + quoteRubyStringForCode(decl.controller)
-				];
-				if (decl.only.length > 0) {
-					parts.push("only: [" + [for (action in decl.only) rubySymbolLiteral(action)].join(", ") + "]");
+				renderRailsResourceRouteDecl(decl, "resources");
+			case "resource":
+				renderRailsResourceRouteDecl(decl, "resource");
+			case "collection" | "member":
+				if (decl.children.length == 0) {
+					[];
+				} else {
+					renderRailsRouteBlock(decl.kind, renderRailsRouteChildren(decl.children));
 				}
-				if (decl.except.length > 0) {
-					parts.push("except: [" + [for (action in decl.except) rubySymbolLiteral(action)].join(", ") + "]");
-				}
-				if (decl.param != "") {
-					parts.push("param: " + rubySymbolLiteral(decl.param));
-				}
-				[parts.join(", ")];
 			case _:
+				[];
+		}
+	}
+
+	static function renderRailsResourceRouteDecl(decl:RailsRouteDecl, keyword:String):Array<String> {
+		var parts = [
+			keyword + " " + rubySymbolLiteral(decl.name),
+			"controller: " + quoteRubyStringForCode(decl.controller)
+		];
+		if (decl.only.length > 0) {
+			parts.push("only: [" + [for (action in decl.only) rubySymbolLiteral(action)].join(", ") + "]");
+		}
+		if (decl.except.length > 0) {
+			parts.push("except: [" + [for (action in decl.except) rubySymbolLiteral(action)].join(", ") + "]");
+		}
+		if (decl.param != "") {
+			parts.push("param: " + rubySymbolLiteral(decl.param));
+		}
+		var head = parts.join(", ");
+		if (decl.children.length == 0) {
+			return [head];
+		}
+		return renderRailsRouteBlock(head, renderRailsRouteChildren(decl.children));
+	}
+
+	static function renderRailsRouteChildren(children:Array<RailsRouteDecl>):Array<String> {
+		var lines:Array<String> = [];
+		for (child in children) {
+			lines = lines.concat(renderRailsRouteDecl(child));
+		}
+		return lines;
+	}
+
+	static function renderRailsRouteBlock(head:String, body:Array<String>):Array<String> {
+		var lines = [head + " do"];
+		for (line in body) {
+			lines.push("  " + line);
+		}
+		lines.push("end");
+		return lines;
+	}
+
+	static function railsRouteChildren(expr:TypedExpr, label:String):Array<RailsRouteDecl> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				[for (value in values) railsRouteDecl(value)];
+			case _:
+				Context.error('@:railsRoutes $label must be an Array<RouteDecl> marker value.', expr.pos);
 				[];
 		}
 	}

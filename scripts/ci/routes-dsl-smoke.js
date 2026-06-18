@@ -33,7 +33,12 @@ for (const expected of [
   'patch "posts/:id", to: "controllers/posts#update", as: :patch_post',
   'put "posts/:id", to: "controllers/posts#update"',
   'delete "posts/:id", to: "controllers/posts#destroy", as: :delete_post',
-  'resources :posts, controller: "controllers/posts", except: [:destroy], param: :slug',
+  'resources :posts, controller: "controllers/posts", except: [:destroy], param: :slug do',
+  "  collection do",
+  '    get "archived", to: "controllers/posts#archive", as: :archived_collection',
+  "  member do",
+  '    patch "publish", to: "controllers/posts#publish", as: :publish_post',
+  'resource :profile, controller: "controllers/profiles", only: [:show, :update]',
 ]) {
   if (!routes.includes(expected)) {
     console.error(`[routes-dsl] generated config/routes.rb missing expected line: ${expected}`);
@@ -86,6 +91,23 @@ expectInvalidRouteDslFailure("bad route name", [
   "",
 ], "snake_case literal");
 
+expectInvalidRouteDslFailure("top-level collection", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tcollection({",
+  "\t\t\tget(\"archived\", to(PostsController, archive));",
+  "\t\t});",
+  "\t};",
+  "}",
+  "",
+], "collection blocks must be nested");
+
 console.log("[routes-dsl] OK");
 
 function writeValidFixture() {
@@ -108,7 +130,9 @@ function writeValidFixture() {
     "package routes;",
     "",
     "import controllers.PostsController;",
+    "import controllers.ProfilesController;",
     "import models.Post;",
+    "import models.Profile;",
     "import rails.macros.RoutesDsl.*;",
     "",
     "@:railsRoutes",
@@ -120,7 +144,15 @@ function writeValidFixture() {
     "\t\tpatch(\"posts/:id\", to(PostsController, update), {asName: routeName(\"patch_post\")});",
     "\t\tput(\"posts/:id\", to(PostsController, update));",
     "\t\tdelete(\"posts/:id\", to(PostsController, destroy), {asName: routeName(\"delete_post\")});",
-    "\t\tresources(Post, PostsController, {except: [destroy], param: paramName(\"slug\")});",
+    "\t\tresources(Post, PostsController, {except: [destroy], param: paramName(\"slug\")}, {",
+    "\t\t\tcollection({",
+    "\t\t\t\tget(\"archived\", to(PostsController, archive), {asName: routeName(\"archived_collection\")});",
+    "\t\t\t});",
+    "\t\t\tmember({",
+    "\t\t\t\tpatch(\"publish\", to(PostsController, publish), {asName: routeName(\"publish_post\")});",
+    "\t\t\t});",
+    "\t\t});",
+    "\t\tresource(Profile, ProfilesController, {only: [show, update]});",
     "\t};",
     "}",
     "",
@@ -145,6 +177,19 @@ function writeCommonTypes(baseDir) {
     "\tpublic function update():Void {}",
     "\tpublic function destroy():Void {}",
     "\tpublic function archive():Void {}",
+    "\tpublic function publish():Void {}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(baseDir, "controllers", "ProfilesController.hx"), [
+    "package controllers;",
+    "",
+    "@:railsController",
+    "class ProfilesController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = [];",
+    "",
+    "\tpublic function show():Void {}",
+    "\tpublic function update():Void {}",
     "}",
     "",
   ].join("\n"));
@@ -153,6 +198,13 @@ function writeCommonTypes(baseDir) {
     "",
     "@:railsModel(\"posts\")",
     "class Post extends rails.active_record.Base<Post> {}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(baseDir, "models", "Profile.hx"), [
+    "package models;",
+    "",
+    "@:railsModel(\"profiles\")",
+    "class Profile extends rails.active_record.Base<Profile> {}",
     "",
   ].join("\n"));
 }

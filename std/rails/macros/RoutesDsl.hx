@@ -93,10 +93,6 @@ class RoutesDsl {
 
 	public static macro function resources(model:Expr, controller:Expr, ?options:Expr, ?children:Expr):Expr {
 		#if macro
-		if (children != null && !isNullLiteral(children)) {
-			Context.error("resources children blocks are not implemented in this first RailsHx routing slice. File/follow the routing bead before using member/collection here.",
-				children.pos);
-		}
 		var modelType = modelClass(model, "resources");
 		var controllerType = controllerClass(controller, "resources");
 		var optionsInfo = resourceOptions(options);
@@ -108,7 +104,44 @@ class RoutesDsl {
 		}
 		return macro @:pos(model.pos) rails.routing.RouteDecl.resources($v{modelRouteName(modelType)}, $v{controllerPath(controllerType)},
 			$e{stringArray([for (action in optionsInfo.only) railsActionName(controllerType, action)], model.pos)},
-			$e{stringArray([for (action in optionsInfo.except) railsActionName(controllerType, action)], model.pos)}, $v{optionsInfo.param});
+			$e{stringArray([for (action in optionsInfo.except) railsActionName(controllerType, action)], model.pos)}, $v{optionsInfo.param},
+			$e{routeDeclArray(children, model.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function resource(model:Expr, controller:Expr, ?options:Expr, ?children:Expr):Expr {
+		#if macro
+		var modelType = modelClass(model, "resource");
+		var controllerType = controllerClass(controller, "resource");
+		var optionsInfo = resourceOptions(options);
+		for (action in optionsInfo.only) {
+			validateAction(controllerType, action, options == null ? controller.pos : options.pos, "resource only");
+		}
+		for (action in optionsInfo.except) {
+			validateAction(controllerType, action, options == null ? controller.pos : options.pos, "resource except");
+		}
+		return macro @:pos(model.pos) rails.routing.RouteDecl.resource($v{modelSingularRouteName(modelType)}, $v{controllerPath(controllerType)},
+			$e{stringArray([for (action in optionsInfo.only) railsActionName(controllerType, action)], model.pos)},
+			$e{stringArray([for (action in optionsInfo.except) railsActionName(controllerType, action)], model.pos)}, $v{optionsInfo.param},
+			$e{routeDeclArray(children, model.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function collection(children:Expr):Expr {
+		#if macro
+		return macro @:pos(children.pos) rails.routing.RouteDecl.collection($e{routeDeclArray(children, children.pos)});
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function member(children:Expr):Expr {
+		#if macro
+		return macro @:pos(children.pos) rails.routing.RouteDecl.member($e{routeDeclArray(children, children.pos)});
 		#else
 		return macro null;
 		#end
@@ -119,6 +152,18 @@ class RoutesDsl {
 		var checkedPath = routePathLiteral(path, method);
 		var optionsInfo = routeOptions(options);
 		return macro @:pos(path.pos) rails.routing.RouteDecl.verb($v{method}, $v{checkedPath}, $target, $v{optionsInfo.name});
+	}
+
+	static function routeDeclArray(children:Null<Expr>, pos:Position):Expr {
+		if (children == null || isNullLiteral(children)) {
+			return {expr: EArrayDecl([]), pos: pos};
+		}
+		var entries = switch (unwrap(children).expr) {
+			case EBlock(values): values;
+			case EArrayDecl(values): values;
+			case _: [children];
+		}
+		return {expr: EArrayDecl(entries), pos: children.pos};
 	}
 
 	static function controllerClass(expr:Expr, context:String):ClassType {
@@ -318,6 +363,14 @@ class RoutesDsl {
 			return explicit;
 		}
 		return RubyNaming.fileName(classType.name) + "s";
+	}
+
+	static function modelSingularRouteName(classType:ClassType):String {
+		var plural = modelRouteName(classType);
+		if (StringTools.endsWith(plural, "s") && plural.length > 1) {
+			return plural.substr(0, plural.length - 1);
+		}
+		return plural;
 	}
 
 	static function identifier(expr:Expr, message:String):String {

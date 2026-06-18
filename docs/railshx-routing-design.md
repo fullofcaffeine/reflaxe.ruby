@@ -325,6 +325,8 @@ Implemented:
 - `resources(Model, Controller, {only: [...]})`
 - `resources(Model, Controller, {except: [...]})`
 - `resources(Model, Controller, {param: paramName("slug")})`
+- `resources(..., ..., ..., { collection({ ... }); member({ ... }); })`
+- `resource(Model, Controller, {only: [...]})`
 - checked route aliases through `routeName("archived_posts")`
 - checked path literals including normal Rails `:id` segments
 - typed controller/action refs through `to(Controller, action)`
@@ -333,8 +335,8 @@ Implemented:
 Defer:
 
 - `options`, `head`, typed multi-verb `match`, and unsafe all-verb routes
-- `resource`
-- `member`, `collection`, `namespace`, `scope`, and `controller`
+- `namespace`, `scope`, and `controller`
+- action-only shorthand inside resource/member/collection blocks
 - optional segments, glob segment parity, and route helper parity checks
 - simple `defaults` and `constraints`
 - checked mounted Rack app constants
