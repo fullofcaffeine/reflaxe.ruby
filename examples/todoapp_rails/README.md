@@ -33,7 +33,7 @@ That prepares the app once, then runs Rails and the watcher together. The watche
 - Haxe-owned ActionView artifact generation through `@:railsTemplate(...)`, which materializes the Rails-native ERB file under `app/views`.
 - Haxe-authored typed ActionView partials through `@:railsTemplateAst(...)`, Rails HHX inline markup, `H`, `HtmlNode`, and `HtmlAttr`; the compiler type-checks embedded expressions such as `todo.title`, typed conditionals/loops, typed partial locals, route helper calls, and typed form locals before emitting ERB.
 - HHX-first ActionView authoring: the index page and all extracted view pieces are authored as typed HHX, while Rails-native ERB is compiler output.
-- Haxe-authored JavaScript compiled into the Rails importmap/Turbo flow, so progressive behavior can stay in typed Haxe while Rails serves standard `app/javascript/**` assets. The current sample uses the minimal Haxe JS target; the tracked follow-up is to adopt the PhoenixHx-style Genes lane for cleaner ES modules and `@:async`/`@:await` Turbo authoring.
+- Haxe-authored JavaScript compiled through the Genes ES-module lane into the Rails importmap/Turbo flow, so progressive behavior can stay in typed Haxe while Rails serves standard `app/javascript/**` assets. The remaining tracked follow-up is higher-level `@:async`/`@:await` Turbo authoring on top of this module output.
 - Haxe-authored Rails migrations through `@:railsMigration(...)`; the compiler emits standard timestamped `db/migrate/*.rb` ActiveRecord migration files from typed snapshot operations.
 - Haxe-owned Rails routing through `src_haxe/routes/AppRoutes.hx`; the compiler emits standard `config/routes.rb`, and generated route helper externs under `src_haxe/routes/Routes.hx` still come from Rails route output. The sample also includes one Rails-owned `legacy_health` route to prove existing Rails routes can remain Rails-owned while Haxe consumes them through typed helpers.
 - CI smoke coverage that compiles the Haxe app, checks generated Rails Ruby, and runs Rails runtime tests when local Rails gems are available.
@@ -61,7 +61,7 @@ That prepares the app once, then runs Rails and the watcher together. The watche
 - `rails/config/routes_rails_owned.rb` is a commented Rails-owned route snippet. It models an existing hand-written Rails route that stays outside `AppRoutes.hx`; `Routes.hx` still exposes it as typed `Routes.legacyHealthPath()` after route-helper generation.
 - `shared/TodoHooks.hx` centralizes behavior-bearing slots, IDs, selectors, data attributes, and storage keys as typed Haxe constants shared by HHX templates, Haxe JS, and Playwright.
 - `tools/ExportTodoHooks.hx` materializes those Haxe-owned hooks into `e2e/todo_hooks.ts`, so browser tests import the same selector contract instead of copying string literals.
-- `client/TodoClient.hx` compiles to `app/javascript/railshx/todo_client.js` and owns progressive enhancement: typed Turbo lifecycle hooks, smooth same-page navigation, scroll-position preservation after create, and a transient typed-status flash. Redirecting demo forms currently opt out of Turbo Drive with `data-turbo="false"` for stable full-page Rails redirects; true Turbo Stream create/session responses are tracked as follow-up work.
+- `client/TodoClient.hx` compiles through Genes to `app/javascript/railshx/todo_client.js` plus importmap-friendly ES modules under `app/javascript/railshx/**`. It owns progressive enhancement: typed Turbo lifecycle hooks, smooth same-page navigation, scroll-position preservation after create, and a transient typed-status flash. Todo and session mutations now return typed Turbo Stream updates for Turbo requests while retaining normal Rails redirects for HTML fallback.
 - `assets/stylesheets/application.css` is copied into Rails' asset path; HHX owns structure, CSS owns presentation.
 - Generated `config/routes.rb` is materialized from `src_haxe/routes/AppRoutes.hx`.
 - Generated `app/views/controllers/todos/index.html.erb` is materialized from that Haxe template marker.
@@ -168,7 +168,7 @@ bin/rails generate hxruby:install MyApp
 rake rails:app ARGS="--output path/to/rails-app --name MyApp"
 ```
 
-That writes `build.hxml`, `build-client.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, `bin/railshx-dev`, and `docs/railshx/gem_layers.md`. In an installed app, the same generator is exposed as:
+That writes `.haxerc`, `build.hxml`, `build-client.hxml`, `haxe_libraries/genes.hxml`, `haxe_libraries/helder.set.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, `bin/railshx-dev`, and `docs/railshx/gem_layers.md`. In an installed app, the same generator is exposed as:
 
 ```bash
 bundle exec rake hxruby:gen:app NAME=MyApp
@@ -222,7 +222,7 @@ haxe -D ruby_output=test/.generated/todoapp_rails \
 
 Generated app-owned Ruby lands under `app/haxe_gen/**`, generated migrations land under `db/migrate/**`, and Rails autoload setup lands in `config/initializers/hxruby_autoload.rb`.
 
-The Haxe-authored client lane compiles through `examples/todoapp_rails/build-client.hxml`, which adds `-cp std` so `rails.turbo.Turbo` and its typed event/action modules are available while emitting JavaScript for Rails importmap assets.
+The Haxe-authored client lane compiles through `examples/todoapp_rails/build-client.hxml`, which adds `-cp std` so `rails.turbo.Turbo` and its typed event/action modules are available. The build uses Genes (`-lib genes`, `--macro genes.Generator.use()`, and `-D js-es=6`) so Rails receives readable ES module assets under `app/javascript/railshx/**` instead of one flattened JavaScript blob.
 
 ## Test
 
@@ -236,7 +236,7 @@ rake todoapp:playwright
 
 `test:rails:integration` always syntax-checks generated Ruby. It runs `rails db:migrate` and `rails test` when the generated Rails app bundle is available. `test:rails:runtime` is the mandatory runtime lane: it sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and runs both the todoapp Rails integration tests and the mixed Rails/RailsHx interop runtime tests.
 
-`test:todoapp-playwright` is the real-browser layer, modeled after the PhoenixHx sentinel approach but Rails-native: Playwright validates browser-rendered ActionView, importmap/Turbo/Haxe-client boot, and same-page link enhancement against a running generated Rails app. Mutating browser form flows are currently covered by Rails controller/runtime tests while the Playwright redirect stall is tracked in `haxe.ruby-ae6.1`.
+`test:todoapp-playwright` is the real-browser layer, modeled after the PhoenixHx sentinel approach but Rails-native: Playwright validates browser-rendered ActionView, importmap/Turbo/Haxe-client boot, same-page link enhancement, and Turbo-backed form flows against a running generated Rails app.
 
 The todoapp is the canonical RailsHx dogfood app. When a RailsHx feature is
 demonstrated here, add coverage at the Rails layer that would catch a real app
@@ -247,7 +247,7 @@ regression:
 | Compiler/static | `rake test:todoapp:static` | Haxe/HHX compiles, generated Ruby/ERB/JS shape, negative type-safety checks, strict-boundary policy. |
 | Rails model/request | `rake todoapp:test` or `rake test:rails:integration` | ActiveRecord validations/scopes/associations, strong params, redirects, rendered templates, migrations, Rails test harness consumption. |
 | Mandatory runtime | `rake test:rails:runtime` | Rails gems present, generated app can migrate and run Rails tests under the required runtime lane. |
-| Browser UX | `rake todoapp:playwright` | Real browser rendering, Turbo/importmap/Haxe-client behavior, same-page navigation, visible UX regressions. Mutating form E2E is tracked in `haxe.ruby-ae6.1`. |
+| Browser UX | `rake todoapp:playwright` | Real browser rendering, Turbo/importmap/Haxe-client behavior, same-page navigation, Turbo form mutation flows, visible UX regressions. |
 | Production | `rake todoapp:production` | Zeitwerk, production boot, asset precompile, release archive contents. |
 
 ## Current Boundary

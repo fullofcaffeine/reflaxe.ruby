@@ -55,6 +55,8 @@ try {
     "runtime/hxruby/core.rb",
     "runtime/hxruby/data_define.rb",
     "runtime/hxruby/hx_exception.rb",
+    "vendor/genes/src/genes/Generator.hx",
+    "vendor/genes/haxelib.json",
     "scripts/rails/adopt.rb",
     "scripts/rails/app.rb",
     "scripts/rails/generate-routes.rb",

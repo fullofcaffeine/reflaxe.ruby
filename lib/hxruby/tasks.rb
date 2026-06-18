@@ -2,6 +2,7 @@
 
 require "rake"
 require "shellwords"
+require "pathname"
 require "hxruby/generators/adopt"
 require "hxruby/generators/app"
 require "hxruby/generators/routes"
@@ -25,7 +26,7 @@ module HXRuby
         namespace :compile do
           desc "Compile Haxe-authored JavaScript with HXRUBY_CLIENT_HXML or build-client.hxml"
           task :client do
-            compile_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+            compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
           end
         end
 
@@ -47,7 +48,7 @@ module HXRuby
             start_with_watch
           else
             compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
-            compile_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+            compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
             rails(["server"])
           end
         end
@@ -67,7 +68,7 @@ module HXRuby
         desc "Compile RailsHx server/client artifacts and run production Rails checks"
         task :production do
           compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
-          compile_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+          compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
           rails(["zeitwerk:check"], env: production_env)
           rails(["assets:precompile"], env: production_env)
         end
@@ -135,7 +136,16 @@ module HXRuby
     end
 
     def compile_haxe(hxml)
-      sh(["haxe", hxml].map(&:shellescape).join(" "))
+      env = { "HXRUBY_GEM_ROOT" => gem_root }
+      sh(env.map { |key, value| "#{key}=#{value.to_s.shellescape}" }.concat(["haxe", hxml].map(&:shellescape)).join(" "))
+    end
+
+    def compile_client_haxe(hxml)
+      compile_haxe(hxml)
+      rewrite_importmap_module_imports(
+        ENV.fetch("HXRUBY_CLIENT_MODULE_ROOT", "app/javascript/railshx"),
+        ENV.fetch("HXRUBY_CLIENT_IMPORT_ROOT", "railshx")
+      )
     end
 
     def rails(args, env: {})
@@ -148,7 +158,7 @@ module HXRuby
 
     def start_with_watch
       compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
-      compile_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+      compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
       puts "[hxruby] Starting Rails server and RailsHx watchers. Press Ctrl-C to stop all processes."
       pids = [
         spawn_shell([rails_command, "server"].map(&:shellescape).join(" ")),
@@ -188,6 +198,25 @@ module HXRuby
       env = { "RAILS_ENV" => ENV.fetch("RAILS_ENV", "production") }
       env["SECRET_KEY_BASE_DUMMY"] = ENV.fetch("SECRET_KEY_BASE_DUMMY", "1")
       env
+    end
+
+    def rewrite_importmap_module_imports(module_root, import_root)
+      root = File.expand_path(module_root)
+      return unless Dir.exist?(root)
+
+      Dir.glob(File.join(root, "**", "*.js")).each do |path|
+        original = File.read(path)
+        rewritten = original.gsub(/(from\s+["']|import\s+["']|import\s*\(\s*["'])(\.[^"']+\.js)(["'])/) do
+          match = Regexp.last_match
+          prefix = match[1]
+          specifier = match[2]
+          suffix = match[3]
+          target = File.expand_path(specifier, File.dirname(path))
+          relative_target = Pathname.new(target).relative_path_from(Pathname.new(root)).to_s.sub(/\.js\z/, "")
+          "#{prefix}#{import_root}/#{relative_target}#{suffix}"
+        end
+        File.write(path, rewritten) if rewritten != original
+      end
     end
 
     def watch_task(task_name)

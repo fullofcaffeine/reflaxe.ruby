@@ -46,6 +46,9 @@ module HXRuby
       def run
         write("build.hxml", render_build)
         write("build-client.hxml", render_client_build)
+        write(".haxerc", render_haxerc)
+        write("haxe_libraries/genes.hxml", render_genes_hxml)
+        write("haxe_libraries/helder.set.hxml", render_helder_set_hxml)
         write(File.join(@source_dir, "#{@main_class}.hx"), render_main)
         write(File.join(@source_dir, "client", "Boot.hx"), render_client_boot)
         write(File.join(@source_dir, "controllers", "HomeController.hx"), render_home_controller)
@@ -89,6 +92,10 @@ module HXRuby
         case relative_path
         when /\A#{Regexp.escape(@source_dir)}\//
           "haxe_source"
+        when /\Ahaxe_libraries\//
+          "haxe_dependency"
+        when ".haxerc"
+          "haxe_config"
         when /\Aapp\/javascript\//
           "client_js"
         when /\Aapp\/assets\//
@@ -125,10 +132,48 @@ module HXRuby
         [
           "-cp #{@source_dir}",
           "# Use `-cp path/to/reflaxe.ruby/std` when consuming RailsHx client std from an installed package.",
+          "# Genes emits split ES modules that Rails can serve through importmap/Propshaft.",
+          "# The generated haxe_libraries/genes.hxml points at the packaged hxruby root.",
+          "-lib genes",
+          "-D js-es=6",
+          "--macro genes.Generator.use()",
+          "--macro addMetadata('@:genes.disableNativeAccessors', 'haxe.Exception')",
           "-main client.Boot",
           "-js app/javascript/railshx/app.js",
           "-D source-map",
+          "-D js-unflatten",
           "--dce=full",
+          "",
+        ].join("\n")
+      end
+
+      def render_haxerc
+        [
+          "{",
+          '  "version": "4.3.7",',
+          '  "resolveLibs": "scoped"',
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_genes_hxml
+        [
+          "# RailsHx vendors Genes so generated apps get readable ES module output",
+          "# without adding a second JavaScript bundler. `hxruby` rake tasks set",
+          "# HXRUBY_GEM_ROOT before invoking Haxe.",
+          "-cp ${HXRUBY_GEM_ROOT}/vendor/genes/src",
+          "-lib helder.set",
+          "-D genes=0.4.14",
+          "",
+        ].join("\n")
+      end
+
+      def render_helder_set_hxml
+        [
+          '# @install: lix --silent download "haxelib:/helder.set#0.3.1" into helder.set/0.3.1/haxelib',
+          "-cp ${HAXE_LIBCACHE}/helder.set/0.3.1/haxelib/src",
+          "-D helder.set=0.3.1",
           "",
         ].join("\n")
       end
@@ -458,6 +503,7 @@ module HXRuby
           'pin "application"',
           'pin "@hotwired/turbo-rails", to: "turbo.min.js"',
           'pin "railshx/app", to: "railshx/app.js"',
+          'pin_all_from "app/javascript/railshx", under: "railshx"',
           "",
         ].join("\n")
       end

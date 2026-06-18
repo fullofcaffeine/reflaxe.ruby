@@ -137,6 +137,8 @@ for (const required of [
   "std/rails/macros/ViewMacro.hx",
   "runtime/hxruby/core.rb",
   "vendor/reflaxe/src/reflaxe/ReflectCompiler.hx",
+  "vendor/genes/src/genes/Generator.hx",
+  "vendor/genes/haxelib.json",
 ]) {
   if (!entrySet.has(required)) {
     fail(`archive missing required entry: ${required}`);

@@ -141,7 +141,15 @@ RailsHx build files, app-local Rake entrypoints, and a small typed app graph:
   `bundle exec rake hxruby:gen:routes` after route changes.
 - `src_haxe/client/Boot.hx`: Haxe-authored browser entrypoint compiled into the
   Rails importmap asset path.
+- `.haxerc`: app-local scoped dependency resolution so `haxe_libraries/**`
+  entries are used instead of requiring global haxelib installs.
 - `build.hxml` and `build-client.hxml`: server and client compile contracts.
+  The client build should use Genes so generated apps get readable ES module
+  output for Rails importmap/Propshaft instead of one flattened JavaScript file.
+- `haxe_libraries/genes.hxml` and `haxe_libraries/helder.set.hxml`: app-local
+  dependency stubs for the Genes client lane. `hxruby` rake tasks set
+  `HXRUBY_GEM_ROOT`, so generated apps resolve the vendored Genes source from
+  the installed package or checkout.
 - `lib/tasks/hxruby.rake`: app-local task bridge that loads `hxruby/tasks`.
 - `bin/railshx-dev` and `bin/railshx-prod`: developer and production wrappers.
 - `Procfile.railshx.dev`: optional `foreman`/`overmind` process file.

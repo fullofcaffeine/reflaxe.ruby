@@ -6,6 +6,7 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "todoapp_rails");
+const clientOutputDir = join(root, "test", ".generated", "todoapp_rails_client");
 const exampleDir = join(root, "examples", "todoapp_rails");
 const invalidSourceDir = join(root, "test", ".generated", "todoapp_rails_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "todoapp_rails_invalid_out");
@@ -79,6 +80,7 @@ const reflaxeCandidates = [
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: root,
+    env: options.env ?? process.env,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -88,6 +90,21 @@ function run(command, args, options = {}) {
     process.exit(result.status ?? 1);
   }
   return result;
+}
+
+function compileTodoClient() {
+  run("haxe", [join(exampleDir, "build-client.hxml")]);
+  for (const file of [
+    "_todo_client_tmp.js",
+    "client/TodoClient.js",
+    "rails/turbo/Turbo.js",
+    "genes/Register.js",
+  ]) {
+    if (!existsSync(join(clientOutputDir, file))) {
+      console.error(`todoapp_rails client Genes output missing expected file: ${file}`);
+      process.exit(1);
+    }
+  }
 }
 
 rmSync(outputDir, { force: true, recursive: true });
@@ -153,6 +170,7 @@ rmSync(migrationDropTableSourceDir, { force: true, recursive: true });
 rmSync(migrationDropTableOutputDir, { force: true, recursive: true });
 rmSync(migrationSnapshotOpsSourceDir, { force: true, recursive: true });
 rmSync(migrationSnapshotOpsOutputDir, { force: true, recursive: true });
+rmSync(clientOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
 
@@ -160,6 +178,7 @@ if (!compileWithFirstAvailableReflaxe()) {
   console.error("Unable to compile todoapp_rails through Reflaxe.");
   process.exit(1);
 }
+compileTodoClient();
 
 for (const file of [
   "app/haxe_gen/models/todo.rb",

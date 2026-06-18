@@ -33,6 +33,10 @@ if [ "${#STAGED_HX_FILES[@]}" -gt 0 ]; then
         echo "[pre-commit] Skipping HHX template source: $hx_file"
         continue
       fi
+      if [[ "$hx_file" == vendor/* ]]; then
+        echo "[pre-commit] Skipping vendored Haxe source: $hx_file"
+        continue
+      fi
       if grep -q '@:railsMigration' "$ROOT_DIR/$hx_file"; then
         echo "[pre-commit] Skipping Rails migration source: $hx_file"
         continue

@@ -1,0 +1,13 @@
+# genes — ES6 JavaScript generator (vendored)
+#
+# RailsHx vendors the same small Genes generator used by PhoenixHx so generated
+# Rails apps can build readable ES module JavaScript without relying on a global
+# haxelib install. Client builds should use `-lib genes`; server Ruby builds
+# should stay on `-lib reflaxe.ruby`.
+
+-cp ${SCOPE_DIR}/vendor/genes/src
+
+# genes depends on helder.set for its internal Set<T> abstraction.
+-lib helder.set
+
+-D genes=0.4.14

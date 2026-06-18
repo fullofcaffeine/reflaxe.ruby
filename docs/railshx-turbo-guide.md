@@ -19,9 +19,9 @@ runtime. The goal is typed authoring for ordinary Turbo behavior:
   tracking, stream rendering, frame updates, and fetch-header mutation.
 - Keep `js.Syntax.code(...)` at the narrow browser/Turbo boundary when Haxe std
   lacks a typed DOM shape; do not spread raw JS snippets through app code.
-- Generated Rails apps should be able to choose a modern Genes-backed client
-  lane for readable ES module output and future `@:async`/`@:await` authoring,
-  while plain Haxe JS remains the minimal fallback.
+- Generated Rails apps should default to the Genes-backed client lane for
+  readable ES module output and future `@:async`/`@:await` authoring, while
+  plain Haxe JS remains the minimal fallback.
 
 PhoenixHx uses this architecture for LiveView clients: app-local
 `build-client.hxml`, `-lib genes`, typed hook registries shared with templates,
@@ -195,9 +195,30 @@ bundle exec rake hxruby:compile:client
 bundle exec rake hxruby:watch:client
 ```
 
-The todoapp sample wires this through `examples/todoapp_rails/build-client.hxml`
-and imports the compiled asset from `app/javascript/application.js` alongside
-`@hotwired/turbo-rails`.
+The default RailsHx starter and the todoapp sample wire this through
+`build-client.hxml` with Genes:
+
+```hxml
+-lib genes
+-D js-es=6
+--macro genes.Generator.use()
+--macro addMetadata('@:genes.disableNativeAccessors', 'haxe.Exception')
+-D js-unflatten
+```
+
+Genes keeps Haxe-authored client code in readable ES modules, which fits Rails'
+importmap/Propshaft defaults better than a single flattened JavaScript blob. The
+entry asset is still imported from `app/javascript/application.js` alongside
+`@hotwired/turbo-rails`, while relative module imports stay inside
+`app/javascript/railshx/**`.
+
+RailsHx rake tasks set `HXRUBY_GEM_ROOT` before invoking Haxe so generated apps
+can resolve the vendored Genes source shipped with the `hxruby` package. After
+client compilation, `hxruby:compile:client` rewrites Genes' relative
+`./module.js` imports to bare `railshx/module` importmap specifiers; this keeps
+Rails asset digests from breaking nested module imports in development or
+production. Direct manual `haxe build-client.hxml` runs should either happen
+through those rake tasks or run the same rewrite step.
 
 ## Tests
 

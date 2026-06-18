@@ -1,0 +1,7 @@
+# helder.set — small Set<T> abstraction used by genes.
+#
+# `lix download` resolves this into HAXE_LIBCACHE from the @install directive.
+
+# @install: lix --silent download "haxelib:/helder.set#0.3.1" into helder.set/0.3.1/haxelib
+-cp ${HAXE_LIBCACHE}/helder.set/0.3.1/haxelib/src
+-D helder.set=0.3.1

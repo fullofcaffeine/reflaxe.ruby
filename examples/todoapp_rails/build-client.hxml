@@ -2,7 +2,17 @@
 # The Rails materializer compiles this into app/javascript/railshx/todo_client.js.
 -cp examples/todoapp_rails
 -cp std
+
+# Genes emits readable ES module JavaScript for Rails importmap assets. This is
+# the RailsHx analogue of PhoenixHx's client lane: Haxe owns typed authoring,
+# Rails/Turbo still own browser runtime behavior.
+-lib genes
+-D js-es=6
+--macro genes.Generator.use()
+--macro addMetadata('@:genes.disableNativeAccessors', 'haxe.Exception')
+
 -main client.TodoClient
 -js test/.generated/todoapp_rails_client/_todo_client_tmp.js
 -D source-map
+-D js-unflatten
 --dce=full

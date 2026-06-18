@@ -16,6 +16,7 @@ const includePrefixes = [
   "runtime/",
   "lib/",
   "vendor/reflaxe/",
+  "vendor/genes/src/",
   "docs/",
   "examples/",
   "haxe_libraries/",
@@ -27,6 +28,8 @@ const includeFiles = new Set([
   "README.md",
   "CHANGELOG.md",
   "LICENSE",
+  "vendor/genes/haxelib.json",
+  "vendor/genes/readme.md",
 ]);
 
 function run(command, args, options = {}) {

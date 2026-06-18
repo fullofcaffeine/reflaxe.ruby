@@ -134,6 +134,7 @@ function materializeRailsApp() {
     join(appDir, "app", "javascript"),
     join(appDir, "app", "views", "controllers", "todos"),
     join(appDir, "config", "initializers", "hxruby_autoload.rb"),
+    join(appDir, "public", "assets"),
     join(appDir, "test", "generated"),
   ]) {
     rmSync(path, { force: true, recursive: true });
@@ -239,6 +240,7 @@ end
   writeFile("config/importmap.rb", `pin "application"
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "railshx/todo_client", to: "railshx/todo_client.js"
+pin_all_from "app/javascript/railshx", under: "railshx"
 `);
 
   copyFileSync(
@@ -248,16 +250,7 @@ pin "railshx/todo_client", to: "railshx/todo_client.js"
   writeFile("app/javascript/application.js", `import "@hotwired/turbo-rails"
 import "railshx/todo_client"
 `);
-  copyFileSync(
-    join(compiledClientDir, "_todo_client_tmp.js"),
-    writeTargetPath("app/javascript/railshx/todo_client.js")
-  );
-  if (existsSync(join(compiledClientDir, "_todo_client_tmp.js.map"))) {
-    copyFileSync(
-      join(compiledClientDir, "_todo_client_tmp.js.map"),
-      writeTargetPath("app/javascript/railshx/todo_client.js.map")
-    );
-  }
+  copyClientModuleGraph();
 
   writeFile("db/seeds.rb", `owner = Models::User.find_or_create_by!(email: "owner@example.test") do |user|
   user.name = "RailsHx Owner"
@@ -442,6 +435,8 @@ function assertReleaseArchive() {
     "./app/views/controllers/todos/index.html.erb",
     "./app/views/layouts/application.html.erb",
     "./app/javascript/railshx/todo_client.js",
+    "./app/javascript/railshx/client/TodoClient.js",
+    "./app/javascript/railshx/rails/turbo/Turbo.js",
     "./db/migrate/20260101000000_create_todos.rb",
     "./config/initializers/hxruby_autoload.rb",
   ]) {
@@ -468,6 +463,59 @@ function copyTree(source, target) {
       copyFileSync(sourcePath, targetPath);
     }
   }
+}
+
+function copyClientModuleGraph() {
+  const entry = join(compiledClientDir, "_todo_client_tmp.js");
+  if (!existsSync(entry)) {
+    console.error("[todoapp] Haxe client output did not include _todo_client_tmp.js.");
+    process.exit(1);
+  }
+
+  const targetRoot = writeTargetPath("app/javascript/railshx/.keep");
+  rmSync(dirname(targetRoot), { force: true, recursive: true });
+  copyTree(compiledClientDir, dirname(targetRoot));
+
+  copyFileSync(entry, writeTargetPath("app/javascript/railshx/todo_client.js"));
+  rmSync(writeTargetPath("app/javascript/railshx/_todo_client_tmp.js"), { force: true });
+
+  const sourceMap = join(compiledClientDir, "_todo_client_tmp.js.map");
+  if (existsSync(sourceMap)) {
+    copyFileSync(sourceMap, writeTargetPath("app/javascript/railshx/todo_client.js.map"));
+    rmSync(writeTargetPath("app/javascript/railshx/_todo_client_tmp.js.map"), { force: true });
+  }
+
+  rewriteImportmapModuleImports(dirname(targetRoot), "railshx");
+}
+
+function rewriteImportmapModuleImports(moduleRoot, importRoot) {
+  for (const file of collectJsFiles(moduleRoot)) {
+    const original = readFileSync(file, "utf8");
+    const rewritten = original.replace(/(from\s+["']|import\s+["']|import\s*\(\s*["'])(\.[^"']+\.js)(["'])/g, (_match, prefix, specifier, suffix) => {
+      const target = resolve(dirname(file), specifier);
+      const modulePath = relative(moduleRoot, target).replace(/\\/g, "/").replace(/\.js$/, "");
+      return `${prefix}${importRoot}/${modulePath}${suffix}`;
+    });
+    if (rewritten !== original) {
+      writeFileSync(file, rewritten);
+    }
+  }
+}
+
+function collectJsFiles(path) {
+  const files = [];
+  if (!existsSync(path)) {
+    return files;
+  }
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    const fullPath = join(path, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectJsFiles(fullPath));
+    } else if (entry.isFile() && entry.name.endsWith(".js")) {
+      files.push(fullPath);
+    }
+  }
+  return files;
 }
 
 function spliceRailsOwnedRouteSnippet() {

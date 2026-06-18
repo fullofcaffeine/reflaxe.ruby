@@ -155,6 +155,7 @@ expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-pack
 expectIncludes(versionSyncCheck, "README current baseline", "version sync check");
 expectIncludes(haxelibPackageBuilder, `"zip", ["-X", "-q", "-@", outPath]`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");
+expectIncludes(haxelibPackageBuilder, `"vendor/genes/src/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
 expectIncludes(haxelibPackageCheck, "haxelib\", [\"newrepo\"]", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "\"-lib\"", "Haxelib package check");
@@ -163,8 +164,10 @@ expectIncludes(haxelibPackageCheck, "TODO: lower", "Haxelib package check");
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");
+expectIncludes(gemPackageCheck, "vendor/genes/src/genes/Generator.hx", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "hxruby:production", "Ruby gem package check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
+expectIncludes(hxrubyGemspec, 'vendor/genes/src/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.2"', "hxruby.gemspec");
 expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");
 expectIncludes(hxrubyTasks, 'require "rake"', "hxruby tasks");

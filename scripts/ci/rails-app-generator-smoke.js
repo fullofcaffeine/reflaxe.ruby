@@ -68,8 +68,24 @@ try {
   ]);
   expectFile("build-client.hxml", [
     "path/to/reflaxe.ruby/std",
+    "-lib genes",
+    "--macro genes.Generator.use()",
     "-main client.Boot",
     "-js app/javascript/railshx/app.js",
+    "-D js-unflatten",
+  ]);
+  expectFile(".haxerc", [
+    '"version": "4.3.7"',
+    '"resolveLibs": "scoped"',
+  ]);
+  expectFile("haxe_libraries/genes.hxml", [
+    "${HXRUBY_GEM_ROOT}/vendor/genes/src",
+    "-lib helder.set",
+    "-D genes=0.4.14",
+  ]);
+  expectFile("haxe_libraries/helder.set.hxml", [
+    "haxelib:/helder.set#0.3.1",
+    "-D helder.set=0.3.1",
   ]);
   expectFile("app_haxe/client/Boot.hx", [
     "package client;",
@@ -85,6 +101,7 @@ try {
   expectFile("config/importmap.rb", [
     'pin "@hotwired/turbo-rails", to: "turbo.min.js"',
     'pin "railshx/app", to: "railshx/app.js"',
+    'pin_all_from "app/javascript/railshx", under: "railshx"',
   ]);
   expectFile("app_haxe/routes/Routes.hx", [
     "package routes;",
@@ -121,6 +138,9 @@ try {
     ["app_haxe/routes/Routes.hx", "haxe_source", "hxruby:install"],
     ["app_haxe/views/ApplicationLayoutView.hx", "haxe_source", "hxruby:install"],
     ["app_haxe/views/HomeIndexView.hx", "haxe_source", "hxruby:install"],
+    [".haxerc", "haxe_config", "hxruby:install"],
+    ["haxe_libraries/genes.hxml", "haxe_dependency", "hxruby:install"],
+    ["haxe_libraries/helder.set.hxml", "haxe_dependency", "hxruby:install"],
     ["docs/railshx/gem_layers.md", "docs", "hxruby:install"],
     ["config/importmap.rb", "rails_config", "hxruby:install"],
     ["bin/railshx-dev", "bin_script", "hxruby:install"],
@@ -239,11 +259,33 @@ function compileGeneratedStarter() {
     "-cp",
     join(root, "vendor", "reflaxe", "src"),
   ], { cwd: tempRoot });
+
+  run("haxe", ["build-client.hxml", "-cp", join(root, "std")], {
+    cwd: tempRoot,
+    env: { ...process.env, HXRUBY_GEM_ROOT: root },
+  });
+  run("ruby", [
+    "-I",
+    join(root, "lib"),
+    "-e",
+    "require 'hxruby/tasks'; HXRuby::Tasks.rewrite_importmap_module_imports('app/javascript/railshx', 'railshx')",
+  ], { cwd: tempRoot });
+  if (!existsSync(join(tempRoot, "app", "javascript", "railshx", "app.js"))) {
+    fail("generated client build did not emit app/javascript/railshx/app.js");
+  }
+  if (!existsSync(join(tempRoot, "app", "javascript", "railshx", "client", "Boot.js"))) {
+    fail("generated client build did not emit Genes module graph");
+  }
+  expectFile("app/javascript/railshx/app.js", [
+    'from "railshx/genes/Register"',
+    'from "railshx/client/Boot"',
+  ]);
 }
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
+    env: options.env ?? process.env,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
