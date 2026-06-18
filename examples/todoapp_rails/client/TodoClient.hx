@@ -5,6 +5,8 @@ import js.html.Element;
 import js.html.Event;
 import js.html.EventTarget;
 import rails.turbo.Turbo;
+import reflaxe.js.Async;
+import reflaxe.js.Async.await;
 import shared.TodoHooks;
 
 // Haxe-authored Rails/Turbo client behavior.
@@ -148,9 +150,7 @@ class TodoClient {
 		if (flash != null) {
 			flash.textContent = "Task added to open work";
 			flash.removeAttribute("hidden");
-			Browser.window.setTimeout(function():Void {
-				flash.setAttribute("hidden", "hidden");
-			}, 2200);
+			hideAfterDelay(flash, 2200);
 		}
 	}
 
@@ -171,17 +171,25 @@ class TodoClient {
 		if (flash != null) {
 			flash.textContent = "Session updated";
 			flash.removeAttribute("hidden");
-			Browser.window.setTimeout(function():Void {
-				flash.setAttribute("hidden", "hidden");
-			}, 2200);
+			hideAfterDelay(flash, 2200);
 		}
 		var zone = Browser.document.querySelector(TodoHooks.attrSelector(TodoHooks.sessionZoneAttr));
 		if (zone != null) {
 			zone.classList.add("is-warm");
-			Browser.window.setTimeout(function():Void {
-				zone.classList.remove("is-warm");
-			}, 900);
+			removeClassAfterDelay(zone, "is-warm", 900);
 		}
+	}
+
+	@:async
+	static function hideAfterDelay(element:Element, milliseconds:Int):Void {
+		await(Async.delay(milliseconds));
+		element.setAttribute("hidden", "hidden");
+	}
+
+	@:async
+	static function removeClassAfterDelay(element:Element, className:String, milliseconds:Int):Void {
+		await(Async.delay(milliseconds));
+		element.classList.remove(className);
 	}
 
 	static function focusAndScroll(target:Element):Void {

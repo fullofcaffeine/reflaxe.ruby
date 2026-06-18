@@ -67,7 +67,7 @@ try {
     "root(to(HomeController, index));",
   ]);
   expectFile("build-client.hxml", [
-    "path/to/reflaxe.ruby/std",
+    "-cp ${HXRUBY_GEM_ROOT}/std",
     "-lib genes",
     "--macro genes.Generator.use()",
     "-main client.Boot",
@@ -279,6 +279,11 @@ function compileGeneratedStarter() {
   expectFile("app/javascript/railshx/app.js", [
     'from "railshx/genes/Register"',
     'from "railshx/client/Boot"',
+  ]);
+  expectFile("app/javascript/railshx/client/Boot.js", [
+    "static async readySoon",
+    "await Async.delay(50)",
+    'data-railshx-client"',
   ]);
 }
 

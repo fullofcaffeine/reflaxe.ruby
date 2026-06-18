@@ -97,6 +97,7 @@ function compileTodoClient() {
   for (const file of [
     "_todo_client_tmp.js",
     "client/TodoClient.js",
+    "reflaxe/js/Async.js",
     "rails/turbo/Turbo.js",
     "genes/Register.js",
   ]) {
@@ -104,6 +105,21 @@ function compileTodoClient() {
       console.error(`todoapp_rails client Genes output missing expected file: ${file}`);
       process.exit(1);
     }
+  }
+  const todoClient = readFileSync(join(clientOutputDir, "client", "TodoClient.js"), "utf8");
+  for (const snippet of [
+    "static async hideAfterDelay",
+    "await Async.delay(milliseconds)",
+    "static async removeClassAfterDelay",
+  ]) {
+    if (!todoClient.includes(snippet)) {
+      console.error(`todoapp_rails client output missing async/await snippet: ${snippet}`);
+      process.exit(1);
+    }
+  }
+  if (todoClient.includes("__async_marker__")) {
+    console.error("todoapp_rails client output leaked the Genes async marker.");
+    process.exit(1);
   }
 }
 

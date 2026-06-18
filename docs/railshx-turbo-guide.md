@@ -20,7 +20,7 @@ runtime. The goal is typed authoring for ordinary Turbo behavior:
 - Keep `js.Syntax.code(...)` at the narrow browser/Turbo boundary when Haxe std
   lacks a typed DOM shape; do not spread raw JS snippets through app code.
 - Generated Rails apps should default to the Genes-backed client lane for
-  readable ES module output and future `@:async`/`@:await` authoring, while
+  readable ES module output and typed `@:async`/`await(...)` authoring, while
   plain Haxe JS remains the minimal fallback.
 
 PhoenixHx uses this architecture for LiveView clients: app-local
@@ -199,6 +199,7 @@ The default RailsHx starter and the todoapp sample wire this through
 `build-client.hxml` with Genes:
 
 ```hxml
+-cp ${HXRUBY_GEM_ROOT}/std
 -lib genes
 -D js-es=6
 --macro genes.Generator.use()
@@ -213,12 +214,45 @@ entry asset is still imported from `app/javascript/application.js` alongside
 `app/javascript/railshx/**`.
 
 RailsHx rake tasks set `HXRUBY_GEM_ROOT` before invoking Haxe so generated apps
-can resolve the vendored Genes source shipped with the `hxruby` package. After
-client compilation, `hxruby:compile:client` rewrites Genes' relative
+can resolve the typed RailsHx client std and vendored Genes source shipped with
+the `hxruby` package. After client compilation, `hxruby:compile:client` rewrites Genes' relative
 `./module.js` imports to bare `railshx/module` importmap specifiers; this keeps
 Rails asset digests from breaking nested module imports in development or
 production. Direct manual `haxe build-client.hxml` runs should either happen
 through those rake tasks or run the same rewrite step.
+
+## Async/Await
+
+Use `reflaxe.js.Async` for typed native async browser code:
+
+```haxe
+import js.html.Element;
+import reflaxe.js.Async;
+import reflaxe.js.Async.await;
+
+class TodoClient {
+  @:async
+  static function hideAfterDelay(element:Element):Void {
+    await(Async.delay(2200));
+    element.setAttribute("hidden", "hidden");
+  }
+}
+```
+
+`@:async` is standard Haxe metadata consumed by Genes when it emits the ES
+module, and `await(...)` is a typed helper that lowers to native JavaScript
+`await`. The generated JavaScript is ordinary browser code:
+
+```js
+static async hideAfterDelay(element) {
+  await Async.delay(2200);
+  element.setAttribute("hidden", "hidden");
+}
+```
+
+Inline callbacks can use `Async.async(() -> { ... })` when a callback expression
+itself needs to become an async function. Prefer method-level `@:async` for
+named behavior because it gives better stack traces and clearer generated JS.
 
 ## Tests
 

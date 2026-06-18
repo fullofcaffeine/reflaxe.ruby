@@ -146,6 +146,8 @@ RailsHx build files, app-local Rake entrypoints, and a small typed app graph:
 - `build.hxml` and `build-client.hxml`: server and client compile contracts.
   The client build should use Genes so generated apps get readable ES module
   output for Rails importmap/Propshaft instead of one flattened JavaScript file.
+  It should also include `${HXRUBY_GEM_ROOT}/std` so generated apps can consume
+  typed Turbo and `reflaxe.js.Async` helpers through the app-local rake tasks.
 - `haxe_libraries/genes.hxml` and `haxe_libraries/helder.set.hxml`: app-local
   dependency stubs for the Genes client lane. `hxruby` rake tasks set
   `HXRUBY_GEM_ROOT`, so generated apps resolve the vendored Genes source from
