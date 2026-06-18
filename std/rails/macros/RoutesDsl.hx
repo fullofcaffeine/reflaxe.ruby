@@ -287,7 +287,105 @@ class RoutesDsl {
 		#end
 	}
 
+	public static macro function concern(name:Expr, children:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("Rails route concerns",
+			"Route concerns need typed reusable route fragments plus parity expansion before RailsHx can support them safely.", name.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function concerns(name:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("Rails route concerns",
+			"Route concerns need typed reusable route fragments plus parity expansion before RailsHx can support them safely.", name.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function shallow(children:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("shallow routes",
+			"Use explicit member/collection routes for now; shallow resource helper parity is tracked as future routing work.", children.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function shallowPath(path:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("shallow routes", "shallowPath is deferred until RailsHx supports shallow resource expansion and helper parity.", path.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function shallowPrefix(prefix:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("shallow routes", "shallowPrefix is deferred until RailsHx supports shallow resource expansion and helper parity.",
+			prefix.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function drawExternal(name:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("external route files",
+			"RailsHx keeps route order explicit; split route files need checked file ownership and parity before drawExternal can be safe.", name.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function redirect(path:Expr, target:Expr, ?options:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("redirect routes",
+			"Redirect routes need a typed redirect target abstraction so generated routes remain auditable instead of raw Ruby fragments.", path.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function direct(name:Expr, children:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("direct route helpers",
+			"direct helpers are helper-generation macros; RailsHx needs a typed helper contract before emitting them.", name.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function resolve(model:Expr, children:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("resolve route helpers",
+			"resolve helpers affect polymorphic route generation and are deferred until typed polymorphic helper contracts exist.", model.pos);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function deviseFor(resource:Expr, ?options:Expr):Expr {
+		#if macro
+		return unsupportedRouteDsl("gem route macros",
+			"Devise-style route macros should come from a typed gem layer such as future DeviseHx, not from an unchecked generic route call.", resource.pos);
+		#else
+		return macro null;
+		#end
+	}
+
 	#if macro
+	static function unsupportedRouteDsl(feature:String, details:String, pos:Position):Expr {
+		// These are deliberately real macro entry points, not missing
+		// identifiers: users get a RailsHx routing diagnostic for known Rails
+		// surfaces that are intentionally deferred instead of a generic Haxe
+		// name-resolution error.
+		Context.error("RailsHx route DSL does not support " + feature + " yet. " + details, pos);
+		return macro null;
+	}
+
 	static function verb(method:String, path:Expr, target:Expr, ?options:Expr):Expr {
 		var checkedPath = routePathLiteral(path, method);
 		var optionsInfo = routeOptions(options);
@@ -367,6 +465,9 @@ class RoutesDsl {
 							except = actionList(field.expr, "resources except");
 						case "param":
 							param = routeNameLiteral(field.expr, "resources param");
+						case "shallow" | "shallowPath" | "shallowPrefix":
+							Context.error('resources option "${field.field}" is not supported yet. Shallow routes need resource expansion and helper parity before RailsHx can emit them safely.',
+								field.expr.pos);
 						case other:
 							Context.error('resources unsupported option "$other". Supported options are only, except, and param.', field.expr.pos);
 					}

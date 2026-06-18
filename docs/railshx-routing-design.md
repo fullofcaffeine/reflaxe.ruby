@@ -403,6 +403,21 @@ Defer:
 - gem-specific macros such as `devise_for`
 - arbitrary Ruby loops, conditionals, lambdas, and dynamic route generation
 
+Known deferred DSL calls should fail with RailsHx-specific diagnostics, not
+generic Haxe name-resolution errors. The public `RoutesDsl` intentionally
+defines unsupported macro entry points for deferred Rails concepts such as
+`concern`, `shallow`, `drawExternal`, `redirect`, `direct`, `resolve`, and
+Devise-style route macros so users get an actionable message and a clear typed
+escape/adoption path.
+
+The route parity checker is currently Ruby-native because it plugs directly into
+Rails/Rake tooling, but the deterministic comparison core is a good Haxe->Ruby
+dogfood candidate. Once the parity algorithm settles, move the pure manifest
+comparison logic into a Haxe-authored library that compiles to idiomatic Ruby,
+while keeping the Rails task/generator adapter Ruby-native. That gives Rails
+developers a normal task surface and also showcases that Haxe-authored Ruby can
+be pleasant, typed, and reviewable.
+
 ## Source-Of-Truth Rules
 
 - A project must choose one route source of truth per app or explicit route

@@ -336,6 +336,95 @@ expectInvalidRouteDslFailure("unchecked raw route without define", [
   "",
 ], "requires -D railshx_allow_unchecked_routes");
 
+expectInvalidRouteDslFailure("deferred route concerns", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tconcern(\"commentable\", {",
+  "\t\t\tget(\"comments\", to(PostsController, index));",
+  "\t\t});",
+  "\t};",
+  "}",
+  "",
+], "does not support Rails route concerns yet");
+
+expectInvalidRouteDslFailure("deferred shallow resource option", [
+  "package routes;",
+  "",
+  "import controllers.PostsController;",
+  "import models.Post;",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tresources(Post, PostsController, {shallow: true});",
+  "\t};",
+  "}",
+  "",
+], "Shallow routes need resource expansion");
+
+expectInvalidRouteDslFailure("deferred external route file", [
+  "package routes;",
+  "",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tdrawExternal(\"admin\");",
+  "\t};",
+  "}",
+  "",
+], "does not support external route files yet");
+
+expectInvalidRouteDslFailure("deferred redirect route", [
+  "package routes;",
+  "",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tredirect(\"/old\", \"/new\");",
+  "\t};",
+  "}",
+  "",
+], "does not support redirect routes yet");
+
+expectInvalidRouteDslFailure("deferred direct helper", [
+  "package routes;",
+  "",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tdirect(\"browse\", {});",
+  "\t};",
+  "}",
+  "",
+], "does not support direct route helpers yet");
+
+expectInvalidRouteDslFailure("deferred gem route macro", [
+  "package routes;",
+  "",
+  "import rails.macros.RoutesDsl.*;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tdeviseFor(resourceName(\"users\"));",
+  "\t};",
+  "}",
+  "",
+], "does not support gem route macros yet");
+
 expectRouteOutputCollisionFailure();
 expectDuplicateRoutesOutputFailure();
 
