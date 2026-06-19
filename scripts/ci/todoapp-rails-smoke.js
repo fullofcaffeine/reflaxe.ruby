@@ -1025,7 +1025,7 @@ const typedUserSwitcher = readFileSync(join(outputDir, "app", "views", "controll
 for (const expected of [
   "Typed session layer",
   "Choose a demo user",
-  '<%= link_to users_path(), class: "typed-route-link team-route-link" do %>',
+  '<%= link_to users_path(), class: "typed-route-link team-route-link", data: {turbo_frame: "railshx-user-frame"} do %>',
   '<div class="team-members" data-railshx-session-zone>',
   "<% users.each do |user| %>",
   '<%= form_with url: sign_in_path(), scope: :user, local: true, class: "session-form", data: {railshx_session: true} do |form| %>',
@@ -1036,6 +1036,8 @@ for (const expected of [
   '<span class="role-pill"><%= user.role_label() %></span>',
   '<%= form_with url: sign_out_path(), scope: :session, method: "delete", local: true, class: "session-clear-form", data: {railshx_session: true} do |form| %>',
   '<%= form.submit "Clear session", type: "submit" %>',
+  '<turbo-frame id="railshx-user-frame" class="user-management-frame">',
+  "Turbo Frame ready.",
 ]) {
   if (!typedUserSwitcher.includes(expected)) {
     console.error(`todoapp_rails typed user switcher partial missing expected content: ${expected}`);
@@ -1047,7 +1049,8 @@ const typedUsersPage = readFileSync(join(outputDir, "app", "views", "controllers
 for (const expected of [
   "RailsHx user management",
   "Typed users, ordinary Rails output.",
-  '<%= link_to todos_path(), class: "typed-route-link" do %>',
+  '<turbo-frame id="railshx-user-frame" class="user-management-frame">',
+  '<%= link_to todos_path(), class: "typed-route-link", data: {turbo_frame: "_top"} do %>',
   "<% users.each do |user| %>",
   '<span class="avatar"><%= user.initials() %></span>',
   "<h2><%= user.name %></h2>",

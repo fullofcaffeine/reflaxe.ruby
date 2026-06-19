@@ -102,8 +102,22 @@ package split between `rails.turbo`, `rails.dom`, and `rails.hotwire`.
 
 ## Frames And Streams
 
-Frames stay normal `<turbo-frame>` elements. RailsHx provides typed helpers for
-common frame attributes:
+Frames stay normal `<turbo-frame>` elements in generated Rails output. In HHX,
+author them with the typed RailsHx tag:
+
+```haxe
+<turbo_frame id=${TodoHooks.userFrameId} class="user-management-frame">
+	<div>Frame placeholder</div>
+</turbo_frame>
+```
+
+The todoapp demonstrates the full standard Hotwire flow: a typed
+`data-turbo-frame=${TodoHooks.userFrameId}` link points at `/users`, and the
+users page returns the matching `<turbo_frame>` so Turbo extracts it into the
+current page. RailsHx adds typed ids and route helpers; Turbo still owns the
+navigation.
+
+RailsHx also provides typed client helpers for common frame attributes:
 
 ```haxe
 import rails.turbo.TurboFrameLoading;

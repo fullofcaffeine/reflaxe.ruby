@@ -25,4 +25,9 @@ Repeated Hotwire UX patterns belong one layer higher, under packages such as
 `rails.hotwire`, so app code can consume typed helpers instead of rewriting the
 same selector and lifecycle glue.
 
+Rails template primitives that are Hotwire-native, such as HHX
+`<turbo_frame>` and `<turbo_stream_from>`, belong in `rails.action_view` and
+should lower to ordinary Rails/Turbo markup rather than introducing client
+runtime wrappers.
+
 See `docs/stdlib-ownership.md` and `docs/stdlib-inventory.json`.

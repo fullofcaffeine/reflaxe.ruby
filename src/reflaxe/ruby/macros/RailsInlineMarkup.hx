@@ -774,6 +774,10 @@ private class RailsMarkupParser {
 				var stream = requireAttrValue(attrs, "stream", pos);
 				rejectAttrs(name, attrsExcept(attrs, ["stream"]), pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.TurboStreamFrom($stream);
+			case "turbo_frame":
+				var id = requireAttrValue(attrs, "id", pos);
+				var frameAttrs = attrsExcept(attrs, ["id"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.TurboFrame($id, ${mkArray(frameAttrs.map(mkAttr), pos)}, ${mkArray(children, pos)});
 			case "rails_yield":
 				rejectChildren(name, children, pos);
 				rejectAttrs(name, attrs, pos);

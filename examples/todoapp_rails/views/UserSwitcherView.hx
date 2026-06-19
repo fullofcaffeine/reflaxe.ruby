@@ -12,13 +12,17 @@ typedef UserSwitcherLocals = {
 
 // Typed session/user switcher partial.
 //
-// Demonstrates: a Rails session form authored as HHX, with typed model field
-// refs for the submitted user id and centralized behavior hooks for Haxe JS.
+// Demonstrates: Rails session forms plus a standard Turbo Frame navigation
+// target authored as HHX. The "Manage users" link loads `/users` into the
+// frame through normal Turbo behavior; direct `/users` visits still render as a
+// normal Rails page fallback.
 // Type safety: `User.f.id` powers the hidden field, `currentUser` is nullable,
-// and `Routes.signInPath/signOutPath/usersPath` are generated route externs.
+// `TodoHooks.userFrameId` keeps the frame target shared with the users page, and
+// `Routes.signInPath/signOutPath/usersPath` are generated route externs.
 // IntelliSense: editors should complete `users`, `currentUser`, `user.roleLabel`,
-// `User.f.id`, and the route helpers.
-// Ruby/Rails output: normal Rails `form_with`, `link_to`, and ERB loops.
+// `User.f.id`, `TodoHooks.userFrameId`, and the route helpers.
+// Ruby/Rails output: normal Rails `form_with`, `link_to`, `turbo-frame`, and ERB
+// loops; no custom fetch or client-side user rendering is generated.
 @:railsTemplate("controllers/todos/_user_switcher")
 @:railsTemplateAst("render")
 class UserSwitcherView {
@@ -31,7 +35,7 @@ class UserSwitcherView {
 					This panel is first-party RailsHx: typed ActiveRecord users, checked
 					session params, Rails flash/session stores, and Turbo-friendly forms.
 				</p>
-				<link_to url=${Routes.usersPath()} class="typed-route-link team-route-link">
+				<link_to url=${Routes.usersPath()} class="typed-route-link team-route-link" data-turbo-frame=${TodoHooks.userFrameId}>
 					<span>Manage users</span>
 				</link_to>
 			</div>
@@ -59,6 +63,12 @@ class UserSwitcherView {
 					<submit type="submit">Clear session</submit>
 				</form_with>
 			</div>
+			<turbo_frame id=${TodoHooks.userFrameId} class=${TodoHooks.userFrameClass}>
+				<div class="user-frame-placeholder">
+					<strong>Turbo Frame ready.</strong>
+					<span>Open typed user management without leaving the board.</span>
+				</div>
+			</turbo_frame>
 		</section>;
 	}
 }

@@ -31,6 +31,7 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
   expect(bodyText).toMatch(/RailsHx sample/i)
   expect(bodyText).toMatch(/Typed session layer/i)
   expect(bodyText).toMatch(/Typed Turbo room/i)
+  expect(bodyText).toMatch(/Turbo Frame ready/i)
   expect(bodyText).toContain('Ship typed Rails templates')
   expect(bodyText).toContain('Routes, params, and HHX are all typed for this room.')
   expect(bodyText).not.toMatch(/<%=?|%>|<\/?(div|span|form|input|textarea|section|article)(\s|>)/i)
@@ -65,6 +66,29 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
     expect(dotBox!.x + dotBox!.width).toBeLessThanOrEqual(itemBox!.x + itemBox!.width)
     expect(dotBox!.y + dotBox!.height).toBeLessThanOrEqual(itemBox!.y + itemBox!.height)
   }
+})
+
+test('loads typed user management through a standard Turbo Frame', async ({ page }) => {
+  await gotoTodos(page)
+
+  const frame = page.locator(hooks.selectors.userFrame)
+  await expect(frame).toContainText('Turbo Frame ready.')
+
+  await page.getByRole('link', { name: 'Manage users' }).click()
+
+  await expect(frame).toContainText('RailsHx user management', { timeout: 20_000 })
+  await expect(frame).toContainText('Typed users, ordinary Rails output.')
+  await expect(frame.locator('.user-management-card')).toHaveCount(3)
+  await expect(page).toHaveURL(/\/todos$/)
+})
+
+test('renders the users route directly as a Rails fallback with the same frame contract', async ({ page }) => {
+  await page.goto('/users', { waitUntil: 'domcontentloaded', timeout: 15_000 })
+
+  const frame = page.locator(hooks.selectors.userFrame)
+  await expect(frame).toBeVisible()
+  await expect(frame).toContainText('RailsHx user management')
+  await expect(page.getByRole('link', { name: 'Back to todo board' })).toBeVisible()
 })
 
 test('uses typed Haxe client behavior for same-page Rails links', async ({ page }) => {

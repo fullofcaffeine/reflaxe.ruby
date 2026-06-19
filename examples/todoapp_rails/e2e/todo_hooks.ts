@@ -16,6 +16,7 @@ export const hooks = {
     form: "todo-form",
     sessionForm: "session-form",
     sessionFooter: "session-footer",
+    userFrame: "user-management-frame",
     chatForm: "chat-form",
     chatList: "chat-list",
     chatMessage: "chat-message",
@@ -25,6 +26,7 @@ export const hooks = {
   },
   ids: {
     openWork: "open-work",
+    userFrame: "railshx-user-frame",
     chatPanel: "railshx-chat-panel",
     chatList: "railshx-chat-list"
   },
@@ -42,6 +44,7 @@ export const hooks = {
     sessionForms: ".session-form",
     sessionFooter: ".session-footer",
     sessionZone: "[data-railshx-session-zone]",
+    userFrame: "#railshx-user-frame",
     chatPanel: "#railshx-chat-panel",
     chatList: "#railshx-chat-list",
     chatForms: ".chat-form",

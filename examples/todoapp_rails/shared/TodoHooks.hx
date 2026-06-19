@@ -19,6 +19,7 @@ class TodoHooks {
 	public static inline var formClass:CssClass = "todo-form";
 	public static inline var sessionFormClass:CssClass = "session-form";
 	public static inline var sessionFooterClass:CssClass = "session-footer";
+	public static inline var userFrameClass:CssClass = "user-management-frame";
 	public static inline var chatFormClass:CssClass = "chat-form";
 	public static inline var chatListClass:CssClass = "chat-list";
 	public static inline var chatMessageClass:CssClass = "chat-message";
@@ -31,6 +32,7 @@ class TodoHooks {
 	public static inline var openWorkHref:Href = "#open-work";
 	public static inline var todoListId:DomId = "railshx-todo-list";
 	public static inline var sessionPanelId:DomId = "railshx-session-panel";
+	public static inline var userFrameId:DomId = "railshx-user-frame";
 	public static inline var chatPanelId:DomId = "railshx-chat-panel";
 	public static inline var chatListId:DomId = "railshx-chat-list";
 

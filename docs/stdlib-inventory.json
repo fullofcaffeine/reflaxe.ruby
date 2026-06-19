@@ -772,7 +772,7 @@
       "status": "implemented",
       "path": "std/rails/action_view/HtmlNode.hx",
       "surface": "rails.action_view.HtmlNode",
-      "reason": "Compile-time ActionView node AST for typed Haxe template expressions, loops, partial composition, helper links, and form builders lowered into Rails ERB."
+      "reason": "Compile-time ActionView node AST for typed Haxe template expressions, loops, partial composition, helper links, form builders, turbo_frame, and turbo_stream_from lowered into Rails ERB/Hotwire markup."
     },
     {
       "id": "std.rails.action_view_slot",

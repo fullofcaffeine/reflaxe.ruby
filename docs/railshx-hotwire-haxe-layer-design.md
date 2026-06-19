@@ -11,7 +11,14 @@ RailsHx should expose Hotwire at three Haxe levels, each with a different job:
 The goal is not a RailsHx frontend runtime. The goal is typed Haxe authoring for
 normal Hotwire patterns.
 
-## First Helper
+When an app-local pattern becomes useful twice, move it into one of these
+layers. Canonical examples should be small because RailsHx centralizes the
+boring contracts: event names, form submission semantics, frame ids, stream
+targets, DOM compatibility gaps, and repeated lifecycle binding.
+
+## Concrete Patterns
+
+### Textarea Composer
 
 `rails.hotwire.TextAreaComposer` is the first concrete helper:
 
@@ -32,11 +39,36 @@ It implements the chat/composer convention Rails apps often want:
 The todoapp dogfoods this helper so the sample demonstrates Rails-native
 Hotwire behavior without app-local raw JS escapes or duplicate client rendering.
 
+### Turbo Frames
+
+RailsHx HHX has a typed `<turbo_frame>` tag:
+
+```haxe
+<turbo_frame id=${TodoHooks.userFrameId} class="user-management-frame">
+	<div>Frame placeholder</div>
+</turbo_frame>
+```
+
+The compiler emits ordinary Hotwire HTML:
+
+```erb
+<turbo-frame id="<%= ... %>" class="user-management-frame">
+  ...
+</turbo-frame>
+```
+
+Use this for standard Rails/Turbo frame navigation. The todoapp uses a typed
+`data-turbo-frame=${TodoHooks.userFrameId}` link and returns a matching
+`<turbo_frame>` from the users page, so Turbo performs normal frame extraction.
+No custom Haxe fetch, duplicated HTML builder, or client-side router is needed.
+
 ## Design Rules
 
 - Prefer `rails.hotwire` when the code is a reusable Hotwire UX pattern.
 - Prefer `rails.turbo` when the code maps directly to a Turbo primitive.
 - Prefer `rails.dom` when the only gap is a missing browser extern.
+- Prefer typed HHX primitives such as `<turbo_frame>` and
+  `<turbo_stream_from>` before adding JavaScript.
 - Do not hide server-rendered Turbo Streams behind client-side HTML builders.
 - Do not add helpers that make Rails behavior less recognizable to Rails
   developers.

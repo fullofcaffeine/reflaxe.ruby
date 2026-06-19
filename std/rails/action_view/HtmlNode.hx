@@ -24,6 +24,10 @@ enum HtmlNode {
 	StylesheetLinkTag(name:String, attrs:Array<HtmlAttr>);
 	JavascriptImportmapTags;
 	TurboStreamFrom<TPayload>(stream:rails.turbo.StreamName<TPayload>);
+	// HHX authors write `<turbo_frame id=...>` because Haxe identifiers cannot
+	// naturally use Rails' dash tag spelling. The compiler erases this node to
+	// a normal `<turbo-frame>` element, preserving standard Hotwire behavior.
+	TurboFrame<TId>(id:TId, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	Yield;
 	FormWith<TUrl>(url:TUrl, scope:String, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	FormHiddenField<TValue>(name:String, value:TValue);

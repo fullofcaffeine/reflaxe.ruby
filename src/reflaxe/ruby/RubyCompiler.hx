@@ -5493,6 +5493,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateTurboStreamFrom(params[0]);
 						}
+					case "TurboFrame":
+						if (params.length != 3) {
+							Context.error("HtmlNode.TurboFrame expects id, attrs, and children arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateTurboFrame(params[0], params[1], params[2], scope);
+						}
 					case "Yield":
 						if (params.length != 0) {
 							Context.error("HtmlNode.Yield expects no arguments.", node.pos);
@@ -5808,6 +5815,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function lowerTemplateTurboStreamFrom(stream:TypedExpr):String {
 		return "<%= turbo_stream_from " + printParam([stream], 0) + " %>";
+	}
+
+	static function lowerTemplateTurboFrame(id:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
+		var children = expectTemplateArray(childrenExpr, "HtmlNode.TurboFrame children must be an array literal.");
+		var staticId = templateStaticString(id);
+		var out = "<turbo-frame id=" + (staticId == null ? "\"<%= " + printTemplateExpr(id, scope) + " %>\"" : quoteHtmlAttr(staticId));
+		for (attr in expectTemplateArray(attrs, "HtmlNode.TurboFrame attrs must be an array literal.")) {
+			out += lowerTemplateAttr(attr, scope);
+		}
+		out += ">";
+		for (child in children) {
+			out += lowerTemplateNode(child, scope);
+		}
+		return out + "</turbo-frame>";
 	}
 
 	static function lowerTemplateHelperAttrs(attrs:TypedExpr, scope:RailsTemplateScope):Array<String> {
