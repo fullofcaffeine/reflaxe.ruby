@@ -6,6 +6,7 @@ import haxe.macro.Expr.Position;
 typedef RailsRouteDecl = {
 	kind:String,
 	target:Null<RailsRouteTarget>,
+	devise:Null<RailsDeviseForDecl>,
 	verb:String,
 	verbs:Array<String>,
 	path:String,
@@ -18,5 +19,14 @@ typedef RailsRouteDecl = {
 	options:Array<String>,
 	children:Array<RailsRouteDecl>,
 	pos:Position
+}
+
+typedef RailsDeviseForDecl = {
+	resource:String,
+	mappingScope:String,
+	rubyClass:String,
+	contractType:String,
+	contractField:String,
+	contractSchema:Int
 }
 #end

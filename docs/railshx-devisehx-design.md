@@ -225,9 +225,19 @@ Then:
 bundle exec rake hxruby:routes
 ```
 
-Haxe-owned Devise route DSL can come later:
+The route generator has fixture coverage for the normal Devise helper matrix:
+sessions, passwords, registrations, confirmations, unlocks, and OmniAuth
+authorize/callback helpers. These helpers are generated from Rails route output,
+not guessed by DeviseHx.
+
+Haxe-owned Devise route DSL supports a deliberately narrow no-options MVP:
+`DeviseRoutes.deviseFor(UserAuth.scope)`.
 
 ```haxe
+import app.auth.UserAuth;
+import devisehx.routes.DeviseRoutes;
+import rails.macros.RoutesDsl.*;
+
 @:railsRoutes
 class AppRoutes {
 	static final routes = {
@@ -237,8 +247,23 @@ class AppRoutes {
 }
 ```
 
-That should lower to `devise_for :users`, but Rails still remains the helper
-naming oracle through route sync and parity.
+The macro accepts only direct generated scope fields carrying
+`@:deviseHxRoute(...)` metadata, then emits ordinary Rails:
+
+```ruby
+devise_for :users
+```
+
+This is intentionally not a string API. Literals, locals, function-produced
+scopes, constructed `DeviseScope` values, nested declarations, duplicate split
+mappings, and options fail closed. That preserves the key ownership boundary:
+the Haxe macro declares one checked Devise mapping; Devise expands it; Rails
+names the helpers; RailsHx consumes the actual `rails routes` output to generate
+typed route externs.
+
+Typed `only`/`skip` route options and split Devise mappings are planned in
+`haxe.ruby-443`. Until that lands, customized Devise route mappings should stay
+Rails-owned and still be consumed through generated route externs.
 
 ## HHX Helpers
 

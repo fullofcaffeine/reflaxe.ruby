@@ -27,6 +27,20 @@ class RailsRouteManifest {
 		if (decl.target != null) {
 			Reflect.setField(out, "target", decl.target.controller + "#" + decl.target.action);
 		}
+		if (decl.kind == "deviseFor" && decl.devise != null) {
+			Reflect.setField(out, "resource", decl.devise.resource);
+			var expectedMapping:Dynamic = {};
+			Reflect.setField(expectedMapping, "name", decl.devise.mappingScope);
+			Reflect.setField(expectedMapping, "className", decl.devise.rubyClass);
+			Reflect.setField(expectedMapping, "path", decl.devise.resource);
+			Reflect.setField(out, "expectedMapping", expectedMapping);
+			var contract:Dynamic = {};
+			Reflect.setField(contract, "type", decl.devise.contractType);
+			Reflect.setField(contract, "field", decl.devise.contractField);
+			Reflect.setField(contract, "schema", decl.devise.contractSchema);
+			Reflect.setField(out, "contract", contract);
+			Reflect.setField(out, "options", {});
+		}
 		if (decl.verb != "") {
 			Reflect.setField(out, "verb", decl.verb);
 		}

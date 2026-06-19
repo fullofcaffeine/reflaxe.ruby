@@ -4656,6 +4656,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "root",
 								target: railsRouteTarget(params[0]),
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4673,6 +4674,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "verb",
 								target: railsRouteTarget(params[2]),
+								devise: null,
 								verb: railsRouteString(params[0], "route verb"),
 								verbs: [],
 								path: railsRouteString(params[1], "route path"),
@@ -4690,6 +4692,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "match",
 								target: railsRouteTarget(params[1]),
+								devise: null,
 								verb: "",
 								verbs: railsRouteStringArray(params[2], "match verbs"),
 								path: railsRouteString(params[0], "match path"),
@@ -4707,6 +4710,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "resources",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4724,6 +4728,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "resource",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4741,6 +4746,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "collection",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4758,6 +4764,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "member",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4775,6 +4782,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "namespace",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4792,6 +4800,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "scope",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: railsRouteString(params[0], "scope path"),
@@ -4809,6 +4818,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "controller",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4826,6 +4836,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "defaults",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4843,6 +4854,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "constraints",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4860,6 +4872,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "mount",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: railsRouteString(params[1], "mount path"),
@@ -4873,10 +4886,36 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								children: [],
 								pos: expr.pos
 							};
+						case "deviseFor" if (params.length == 6):
+							{
+								kind: "deviseFor",
+								target: null,
+								devise: {
+									resource: railsRouteString(params[0], "Devise resource"),
+									mappingScope: railsRouteString(params[1], "Devise mapping scope"),
+									rubyClass: railsRouteString(params[2], "Devise Ruby class"),
+									contractType: railsRouteString(params[3], "Devise contract type"),
+									contractField: railsRouteString(params[4], "Devise contract field"),
+									contractSchema: railsRouteInt(params[5], "Devise contract schema")
+								},
+								verb: "",
+								verbs: [],
+								path: "",
+								name: "",
+								controller: "",
+								moduleName: "",
+								only: [],
+								except: [],
+								param: "",
+								options: [],
+								children: [],
+								pos: expr.pos
+							};
 						case "rawRuby" if (params.length == 1):
 							{
 								kind: "rawRuby",
 								target: null,
+								devise: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -4908,6 +4947,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return {
 			kind: "",
 			target: null,
+			devise: null,
 			verb: "",
 			verbs: [],
 			path: "",
@@ -4969,6 +5009,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error('@:railsRoutes $label must be a String literal marker value.', expr.pos);
 				"";
+		}
+	}
+
+	static function railsRouteInt(expr:TypedExpr, label:String):Int {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TInt(value)):
+				value;
+			case _:
+				Context.error('@:railsRoutes $label must be an Int literal marker value.', expr.pos);
+				0;
 		}
 	}
 

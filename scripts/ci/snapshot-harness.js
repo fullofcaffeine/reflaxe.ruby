@@ -262,6 +262,13 @@ const routeGeneratorCases = [
     files: ["src_haxe/routes/ComplexRoutes.hx"],
     className: "ComplexRoutes",
   },
+  {
+    name: "routes_generator_devise",
+    input: "test/fixtures/rails_routes/devise_routes.txt",
+    output: "src_haxe/routes/DeviseRoutes.hx",
+    files: ["src_haxe/routes/DeviseRoutes.hx"],
+    className: "DeviseRoutes",
+  },
 ];
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));

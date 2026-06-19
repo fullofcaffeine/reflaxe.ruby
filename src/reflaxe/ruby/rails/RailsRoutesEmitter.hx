@@ -79,6 +79,8 @@ class RailsRoutesEmitter {
 					parts.push("as: " + rubySymbolLiteral(decl.name));
 				}
 				[parts.join(", ")];
+			case "deviseFor":
+				decl.devise == null ? [] : ["devise_for " + rubySymbolLiteral(decl.devise.resource)];
 			case "rawRuby":
 				[decl.controller];
 			case _:

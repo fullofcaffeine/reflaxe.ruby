@@ -10,6 +10,8 @@ const outputFile = join(outputDir, "src_haxe", "routes", "Routes.hx");
 const fixture = join(root, "test", "fixtures", "rails_routes", "routes.txt");
 const complexOutputFile = join(outputDir, "src_haxe", "routes", "ComplexRoutes.hx");
 const complexFixture = join(root, "test", "fixtures", "rails_routes", "complex_routes.txt");
+const deviseOutputFile = join(outputDir, "src_haxe", "routes", "DeviseRoutes.hx");
+const deviseFixture = join(root, "test", "fixtures", "rails_routes", "devise_routes.txt");
 const parityRoot = join(outputDir, "parity");
 
 rmSync(outputDir, { force: true, recursive: true });
@@ -98,6 +100,60 @@ for (const unexpected of [
 ]) {
   if (complexGenerated.includes(unexpected)) {
     console.error(`Complex route generator output included unexpected content: ${unexpected}`);
+    process.exit(1);
+  }
+}
+
+runGenerator(deviseFixture, deviseOutputFile, "DeviseRoutes");
+const deviseGenerated = readFileSync(deviseOutputFile, "utf8");
+for (const expected of [
+  "extern class DeviseRoutes",
+  '@:native("new_user_session_path")',
+  "public static function newUserSessionPath():String;",
+  '@:native("user_session_path")',
+  "public static function userSessionPath():String;",
+  '@:native("destroy_user_session_path")',
+  "public static function destroyUserSessionPath():String;",
+  '@:native("new_user_password_path")',
+  "public static function newUserPasswordPath():String;",
+  '@:native("edit_user_password_path")',
+  "public static function editUserPasswordPath():String;",
+  '@:native("user_password_path")',
+  "public static function userPasswordPath():String;",
+  '@:native("cancel_user_registration_path")',
+  "public static function cancelUserRegistrationPath():String;",
+  '@:native("new_user_registration_path")',
+  "public static function newUserRegistrationPath():String;",
+  '@:native("edit_user_registration_path")',
+  "public static function editUserRegistrationPath():String;",
+  '@:native("user_registration_path")',
+  "public static function userRegistrationPath():String;",
+  '@:native("new_user_confirmation_path")',
+  "public static function newUserConfirmationPath():String;",
+  '@:native("user_confirmation_path")',
+  "public static function userConfirmationPath():String;",
+  '@:native("new_user_unlock_path")',
+  "public static function newUserUnlockPath():String;",
+  '@:native("user_unlock_path")',
+  "public static function userUnlockPath():String;",
+  '@:native("user_github_omniauth_authorize_path")',
+  "public static function userGithubOmniauthAuthorizePath():String;",
+  '@:native("user_github_omniauth_callback_path")',
+  "public static function userGithubOmniauthCallbackPath():String;",
+]) {
+  if (!deviseGenerated.includes(expected)) {
+    console.error(`Devise route generator output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+for (const unexpected of [
+  "userSessionPath(id",
+  "userPasswordPath(id",
+  "userRegistrationPath(id",
+]) {
+  if (deviseGenerated.includes(unexpected)) {
+    console.error(`Devise route generator output included unexpected content: ${unexpected}`);
     process.exit(1);
   }
 }

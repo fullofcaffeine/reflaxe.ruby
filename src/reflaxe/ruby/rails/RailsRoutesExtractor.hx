@@ -17,6 +17,8 @@ class RailsRoutesExtractor {
 				Context.error('@:railsRoutes ${decl.kind} blocks must be nested inside resources/resource declarations.', decl.pos);
 			}
 		}
+		validateDeviseForLocations(decls, true);
+		validateDeviseMappings(decls);
 	}
 
 	public static function validateAliases(decls:Array<RailsRouteDecl>):Void {
@@ -35,6 +37,39 @@ class RailsRoutesExtractor {
 			}
 			if (decl.children.length > 0) {
 				validateAliasesIn(decl.children, seen);
+			}
+		}
+	}
+
+	static function validateDeviseForLocations(decls:Array<RailsRouteDecl>, topLevel:Bool):Void {
+		for (decl in decls) {
+			if (decl.kind == "deviseFor" && !topLevel) {
+				Context.error("@:railsRoutes DeviseRoutes.deviseFor(...) is top-level only in this MVP. Keep nested/scoped/custom Devise routes Rails-owned until typed Devise route options land.",
+					decl.pos);
+			}
+			if (decl.children.length > 0) {
+				validateDeviseForLocations(decl.children, false);
+			}
+		}
+	}
+
+	static function validateDeviseMappings(decls:Array<RailsRouteDecl>):Void {
+		var seen = new Map<String, Position>();
+		validateDeviseMappingsIn(decls, seen);
+	}
+
+	static function validateDeviseMappingsIn(decls:Array<RailsRouteDecl>, seen:Map<String, Position>):Void {
+		for (decl in decls) {
+			if (decl.kind == "deviseFor" && decl.devise != null) {
+				var key = decl.devise.mappingScope;
+				if (seen.exists(key)) {
+					Context.error('@:railsRoutes duplicate Devise mapping scope "${key}". Split Devise route mappings are planned, but require typed only/skip route options first (tracked by haxe.ruby-443); keep split/custom Devise routes Rails-owned for the MVP.',
+						decl.pos);
+				}
+				seen.set(key, decl.pos);
+			}
+			if (decl.children.length > 0) {
+				validateDeviseMappingsIn(decl.children, seen);
 			}
 		}
 	}

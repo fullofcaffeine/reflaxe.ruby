@@ -370,7 +370,8 @@ class RoutesDsl {
 	public static macro function deviseFor(resource:Expr, ?options:Expr):Expr {
 		#if macro
 		return unsupportedRouteDsl("gem route macros",
-			"Devise-style route macros should come from a typed gem layer such as future DeviseHx, not from an unchecked generic route call.", resource.pos);
+			"Devise route macros come from the typed DeviseHx layer. Use `devisehx.routes.DeviseRoutes.deviseFor(UserAuth.scope)` instead of a generic unchecked route call.",
+			resource.pos);
 		#else
 		return macro null;
 		#end

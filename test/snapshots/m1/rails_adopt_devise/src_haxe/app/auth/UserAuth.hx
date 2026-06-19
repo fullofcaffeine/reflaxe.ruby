@@ -12,6 +12,14 @@ import rails.action_controller.Base;
 // Runtime ownership stays with Devise/Rails; this class is an app-local typed
 // contract that gives Haxe completion for the concrete Devise scope helpers.
 final class UserAuth {
+	@:deviseHxRoute({
+		schema: 1,
+		routeAuthorable: true,
+		resource: "users",
+		mappingScope: "user",
+		rubyClass: "User",
+		haxeModel: "models.User"
+	})
 	public static final scope:DeviseScope<User> = DeviseScope.of(ScopeName.named("user"), RouteResource.named("users"), User);
 
 	public static final authenticate:AuthFilter<User> = Auth.require(scope);
