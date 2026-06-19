@@ -13,6 +13,7 @@ const complexFixture = join(root, "test", "fixtures", "rails_routes", "complex_r
 const deviseOutputFile = join(outputDir, "src_haxe", "routes", "DeviseRoutes.hx");
 const deviseFixture = join(root, "test", "fixtures", "rails_routes", "devise_routes.txt");
 const parityRoot = join(outputDir, "parity");
+const taskRoot = join(outputDir, "task_sync");
 
 rmSync(outputDir, { force: true, recursive: true });
 
@@ -183,6 +184,7 @@ if (collision.status === 0 || !collision.stderr.includes("Refusing to overwrite 
 }
 
 runParitySmoke();
+runRoutesTaskSmoke();
 
 function runGenerator(input, output, className = "Routes") {
   const result = spawnSync("ruby", [
@@ -260,11 +262,61 @@ function runParitySmoke() {
     ...happyManifest,
     declarations: [{ kind: "rawRuby", opaque: true, lineSha256: "abc", position: "AppRoutes.hx:10" }],
   }, routesPath, "opaque raw Haxe-owned route");
+  expectParityFailure("unsupported-version", {
+    ...happyManifest,
+    version: 99,
+  }, routesPath, "unsupported Haxe-owned route manifest version");
+  expectParityFailure("unknown-kind", {
+    ...happyManifest,
+    declarations: [{ kind: "mysteryRoute", position: "AppRoutes.hx:11" }],
+  }, routesPath, "unknown Haxe-owned route manifest declaration kind mysteryRoute");
+
+  const deviseManifest = {
+    version: 2,
+    source: "routes.AppRoutes",
+    output: "config/routes.rb",
+    class: "routes.AppRoutes",
+    declarations: [
+      {
+        kind: "deviseFor",
+        resource: "users",
+        expectedMapping: { name: "user", className: "User", path: "users" },
+        contract: { type: "app.auth.UserAuth", field: "scope", schema: 1 },
+        options: {},
+        position: "AppRoutes.hx:12",
+      },
+    ],
+  };
+  expectParityFailure("devise-missing-facts", deviseManifest, routesPath, "Devise route manifest entries require Devise mapping facts");
+  expectParitySuccess("devise-happy", deviseManifest, routesPath, writeDeviseFacts("devise-happy", {
+    mappings: {
+      user: { name: "user", className: "User", path: "users", scopedPath: "users", modelHasDevise: true },
+    },
+  }));
+  expectParityFailure("devise-missing-mapping", deviseManifest, routesPath, "missing Devise mapping", writeDeviseFacts("devise-missing-mapping", { mappings: {} }));
+  expectParityFailure("devise-wrong-class", deviseManifest, routesPath, "wrong Devise mapping", writeDeviseFacts("devise-wrong-class", {
+    mappings: {
+      user: { name: "user", className: "Account", path: "users", scopedPath: "users", modelHasDevise: true },
+    },
+  }));
+  expectParityFailure("devise-wrong-path", deviseManifest, routesPath, "wrong Devise mapping", writeDeviseFacts("devise-wrong-path", {
+    mappings: {
+      user: { name: "user", className: "User", path: "accounts", scopedPath: "accounts", modelHasDevise: true },
+    },
+  }));
+  expectParityFailure("devise-model-missing-devise", deviseManifest, routesPath, "does not point at a model with Devise modules", writeDeviseFacts("devise-model-missing-devise", {
+    mappings: {
+      user: { name: "user", className: "User", path: "users", scopedPath: "users", modelHasDevise: false },
+    },
+  }));
+  const malformedFactsPath = join(parityRoot, "devise-malformed-facts.json");
+  writeFileSync(malformedFactsPath, "{not-json");
+  expectParityFailure("devise-malformed-facts", deviseManifest, routesPath, "Invalid Devise mapping facts", malformedFactsPath);
 }
 
-function expectParitySuccess(name, manifest, routesPath) {
+function expectParitySuccess(name, manifest, routesPath, factsPath = null) {
   const manifestPath = writeParityManifest(name, manifest);
-  const result = runParity(manifestPath, routesPath);
+  const result = runParity(manifestPath, routesPath, factsPath);
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
@@ -273,9 +325,9 @@ function expectParitySuccess(name, manifest, routesPath) {
   }
 }
 
-function expectParityFailure(name, manifest, routesPath, expectedError) {
+function expectParityFailure(name, manifest, routesPath, expectedError, factsPath = null) {
   const manifestPath = writeParityManifest(name, manifest);
-  const result = runParity(manifestPath, routesPath);
+  const result = runParity(manifestPath, routesPath, factsPath);
   if (result.status === 0 || !result.stderr.includes(expectedError)) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
@@ -290,8 +342,14 @@ function writeParityManifest(name, manifest) {
   return path;
 }
 
-function runParity(manifestPath, routesPath) {
-  return spawnSync("ruby", [
+function writeDeviseFacts(name, facts) {
+  const path = join(parityRoot, `${name}.devise-facts.json`);
+  writeFileSync(path, `${JSON.stringify(facts, null, 2)}\n`);
+  return path;
+}
+
+function runParity(manifestPath, routesPath, factsPath = null) {
+  const args = [
     "-I",
     join(root, "lib"),
     join(root, "scripts", "rails", "check-routes-parity.rb"),
@@ -299,8 +357,78 @@ function runParity(manifestPath, routesPath) {
     manifestPath,
     "--input",
     routesPath,
+  ];
+  if (factsPath) {
+    args.push("--devise-facts", factsPath);
+  }
+  return spawnSync("ruby", args, {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
+
+function runRoutesTaskSmoke() {
+  mkdirSync(taskRoot, { recursive: true });
+  const railsStub = join(taskRoot, "rails_stub.rb");
+  writeFileSync(railsStub, [
+    'if ARGV.first == "routes"',
+    '  if ENV["FAIL_ROUTES"] == "1"',
+    '    warn "stubbed rails routes failure"',
+    "    exit 7",
+    "  end",
+    '  puts File.read(ENV.fetch("ROUTES_FIXTURE"))',
+    "else",
+    '  abort "unexpected rails command: #{ARGV.join(" ")}"',
+    "end",
+    "",
+  ].join("\n"));
+
+  const taskOutput = join(taskRoot, "src_haxe", "routes", "Routes.hx");
+  const ok = runRoutesTask({
+    OUTPUT: taskOutput,
+    RAILS: `ruby ${railsStub}`,
+    ROUTES_FIXTURE: fixture,
+    MODE: "rails-owned",
+  });
+  if (ok.status !== 0) {
+    process.stdout.write(ok.stdout);
+    process.stderr.write(ok.stderr);
+    console.error("hxruby:routes MODE=rails-owned failed with a valid rails routes provider.");
+    process.exit(1);
+  }
+  const generated = readFileSync(taskOutput, "utf8");
+  for (const expected of ["public static function rootPath():String;", "public static function legacyHealthPath():String;"]) {
+    if (!generated.includes(expected)) {
+      console.error(`hxruby:routes MODE=rails-owned output missing expected helper: ${expected}`);
+      process.exit(1);
+    }
+  }
+
+  const failure = runRoutesTask({
+    OUTPUT: join(taskRoot, "failure", "src_haxe", "routes", "Routes.hx"),
+    RAILS: `ruby ${railsStub}`,
+    ROUTES_FIXTURE: fixture,
+    MODE: "rails-owned",
+    FAIL_ROUTES: "1",
+  });
+  if (failure.status === 0 || !failure.stderr.includes("Rails route helper extraction failed")) {
+    process.stdout.write(failure.stdout);
+    process.stderr.write(failure.stderr);
+    console.error("hxruby:routes did not fail loudly when rails routes failed.");
+    process.exit(1);
+  }
+}
+
+function runRoutesTask(extraEnv) {
+  return spawnSync("ruby", [
+    "-I",
+    join(root, "lib"),
+    "-e",
+    'require "hxruby/tasks"; HXRuby::Tasks.install; Rake::Task["hxruby:routes"].invoke',
   ], {
     cwd: root,
+    env: { ...process.env, ...extraEnv },
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });

@@ -131,6 +131,8 @@ expectIncludes(ciWorkflow, "npm run test:todoapp-production", "CI workflow");
 expectIncludes(ciWorkflow, "actions/checkout@v6", "CI workflow");
 expectIncludes(ciWorkflow, "actions/setup-node@v6", "CI workflow");
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
+expectIncludes(packageJson.scripts.test, "test:examples-compile", "npm test");
+expectIncludes(packageJson.scripts["test:examples-compile"] ?? "", "examples-compile-smoke.js", "package.json scripts");
 expectIncludes(packageJson.scripts.test, "test:haxelib-package", "npm test");
 expectIncludes(packageJson.scripts.test, "test:gem-package", "npm test");
 expectIncludes(packageJson.scripts["test:todoapp-playwright"] ?? "", "todoapp-playwright.js", "package.json scripts");

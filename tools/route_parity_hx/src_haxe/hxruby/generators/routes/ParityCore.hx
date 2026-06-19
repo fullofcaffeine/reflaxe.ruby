@@ -38,6 +38,11 @@ class ParityCore {
 	public static function main():Void {}
 
 	public static function compareManifest(manifest:Dynamic, railsRoutes:String):Array<String> {
+		var manifestErrors = validateManifest(manifest);
+		if (manifestErrors.length > 0) {
+			return manifestErrors;
+		}
+
 		var routes = parseRoutes(railsRoutes);
 		var expected = flattenManifest(hashArray(manifest, "declarations"), "");
 		var errors:Array<String> = [];
@@ -45,6 +50,39 @@ class ParityCore {
 			errors = errors.concat(compareRoute(route, routes));
 		}
 		return errors;
+	}
+
+	static function validateManifest(manifest:Dynamic):Array<String> {
+		var errors:Array<String> = [];
+		var version:Dynamic = hashValue(manifest, "version");
+		var versionText = version == null ? "" : Std.string(version);
+		if (versionText != "1" && versionText != "2") {
+			errors.push('unsupported Haxe-owned route manifest version ${versionText == "" ? "(missing)" : versionText}');
+		}
+		if (!NativeHash.exists(manifest, "declarations")) {
+			errors.push("Haxe-owned route manifest is missing declarations");
+		}
+		return errors.concat(validateDeclarations(hashArray(manifest, "declarations")));
+	}
+
+	static function validateDeclarations(declarations:Array<Dynamic>):Array<String> {
+		var errors:Array<String> = [];
+		for (decl in declarations) {
+			var kind = hashString(decl, "kind");
+			if (!supportedDeclarationKind(kind)) {
+				errors.push('unknown Haxe-owned route manifest declaration kind ${kind == null ? "(missing)" : kind}');
+			} else {
+				errors = errors.concat(validateDeclarations(childrenOf(decl)));
+			}
+		}
+		return errors;
+	}
+
+	static function supportedDeclarationKind(kind:Null<String>):Bool {
+		return switch kind {
+			case "collection" | "constraints" | "controller" | "defaults" | "deviseFor" | "match" | "member" | "mount" | "namespace" | "rawRuby" | "resource" | "resources" | "root" | "scope" | "verb": true;
+			case _: false;
+		}
 	}
 
 	static function parseRoutes(input:String):Array<RailsRoute> {
@@ -165,6 +203,8 @@ class ParityCore {
 				[expectedRoute(decl, nullableName(decl), null, joinedPath(prefix, hashString(decl, "path")), null)];
 			case "rawRuby":
 				[new ManifestRoute(null, null, "", null, hashString(decl, "position"), true)];
+			case "deviseFor":
+				[];
 			case "scope":
 				flattenManifest(childrenOf(decl), joinedPath(prefix, hashString(decl, "path")));
 			case "namespace":
@@ -309,6 +349,10 @@ class ParityCore {
 	}
 
 	static function hashString(hash:Dynamic, key:String):Null<String> {
+		return NativeHash.get(hash, key);
+	}
+
+	static function hashValue(hash:Dynamic, key:String):Dynamic {
 		return NativeHash.get(hash, key);
 	}
 

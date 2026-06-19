@@ -1,10 +1,15 @@
 # frozen_string_literal: true
 
 require "rake"
+require "fileutils"
+require "json"
+require "open3"
 require "shellwords"
 require "pathname"
+require "tempfile"
 require "hxruby/generators/adopt"
 require "hxruby/generators/app"
+require "hxruby/generators/common"
 require "hxruby/generators/routes"
 require "hxruby/generators/routes_parity"
 require "hxruby/generators/scaffold"
@@ -92,7 +97,7 @@ module HXRuby
             output = ENV.fetch("OUTPUT", "src_haxe/routes/Routes.hx")
             package_name = ENV.fetch("PACKAGE", "routes")
             class_name = ENV.fetch("CLASS", "Routes")
-            routes = IO.popen("#{rails_command} routes", &:read)
+            routes = capture_rails_routes
             HXRuby::Generators::Routes.run(["--output", output, "--package", package_name, "--class", class_name], input: routes)
           end
 
@@ -153,17 +158,96 @@ module HXRuby
       output = ENV.fetch("OUTPUT", "src_haxe/routes/Routes.hx")
       package_name = ENV.fetch("PACKAGE", "routes")
       class_name = ENV.fetch("CLASS", "Routes")
-      routes = IO.popen("#{rails_command} routes", &:read)
-      HXRuby::Generators::Routes.run(["--output", output, "--package", package_name, "--class", class_name], input: routes)
+      routes = capture_rails_routes
 
-      return unless haxe_owned
+      unless haxe_owned
+        HXRuby::Generators::Routes.run(["--output", output, "--package", package_name, "--class", class_name], input: routes)
+        return
+      end
 
       manifest = ENV.fetch("HXRUBY_ROUTES_MANIFEST", ".railshx/routes.haxe.json")
-      HXRuby::Generators::RoutesParity.run(["--manifest", manifest], input: routes)
+      facts_file = nil
+      parity_args = ["--manifest", manifest]
+      if route_manifest_has_devise?(manifest)
+        facts_file = Tempfile.new(["hxruby-devise-route-facts", ".json"])
+        facts_file.write(capture_devise_mapping_facts)
+        facts_file.flush
+        parity_args += ["--devise-facts", facts_file.path]
+      end
+
+      HXRuby::Generators::RoutesParity.run(parity_args, input: routes)
+      content = HXRuby::Generators::Routes.render_from_rails_routes(routes, package: package_name, class_name: class_name)
+      write_route_extern_atomically(output, content)
+    ensure
+      facts_file&.close!
     end
 
     def haxe_owned_routes_available?
       File.file?(".railshx/routes.haxe.json") || File.file?("src_haxe/routes/AppRoutes.hx")
+    end
+
+    def capture_rails_routes
+      capture_rails_stdout("routes", "Rails route helper extraction")
+    end
+
+    def capture_devise_mapping_facts
+      code = [
+        'require "json"',
+        'unless defined?(Devise); warn "Devise is not loaded"; exit 2; end',
+        'facts = { mappings: {} }',
+        'Devise.mappings.each do |name, mapping|',
+        '  model = mapping.to',
+        '  facts[:mappings][name.to_s] = {',
+        '    name: mapping.name.to_s,',
+        '    className: mapping.class_name.to_s,',
+        '    path: mapping.path.to_s,',
+        '    scopedPath: mapping.scoped_path.to_s,',
+        '    fullpath: mapping.fullpath.to_s,',
+        '    modelHasDevise: model.respond_to?(:devise_modules)',
+        '  }',
+        'end',
+        'puts JSON.generate(facts)',
+      ].join("; ")
+      capture_rails_stdout("runner #{code.shellescape}", "Devise mapping facts probe")
+    end
+
+    def capture_rails_stdout(command_suffix, description)
+      stdout, stderr, status = Open3.capture3("#{rails_command} #{command_suffix}")
+      return stdout if status.success?
+
+      abort("#{description} failed with status #{status.exitstatus}:\n#{stderr.empty? ? stdout : stderr}")
+    end
+
+    def route_manifest_has_devise?(manifest)
+      path = File.expand_path(manifest)
+      return false unless File.file?(path)
+
+      payload = JSON.parse(File.read(path))
+      contains_devise_declaration?(payload.fetch("declarations", []))
+    rescue JSON::ParserError
+      false
+    end
+
+    def contains_devise_declaration?(declarations)
+      declarations.any? do |declaration|
+        declaration["kind"] == "deviseFor" || contains_devise_declaration?(declaration.fetch("children", []))
+      end
+    end
+
+    def write_route_extern_atomically(output, content)
+      path = File.expand_path(output)
+      root = HXRuby::Generators::Routes.infer_output_root(path)
+      if File.exist?(path) && !HXRuby::Generators::Common.owned_file?(path, root)
+        raise HXRuby::Generators::Error, "Refusing to overwrite non-RailsHx-owned file #{path}. Re-run with --force only if you intend to take ownership."
+      end
+
+      FileUtils.mkdir_p(File.dirname(path))
+      tmp = File.join(File.dirname(path), ".#{File.basename(path)}.#{$$}.tmp")
+      File.write(tmp, content)
+      File.rename(tmp, path)
+      HXRuby::Generators::Common.record_manifest_entry(root, path, content, kind: "route_extern", source: "hxruby:routes")
+    ensure
+      FileUtils.rm_f(tmp) if tmp
     end
 
     def compile_client_haxe(hxml)

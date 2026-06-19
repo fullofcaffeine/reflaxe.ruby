@@ -6,10 +6,15 @@ complete_todo PATCH /todos/:id/complete(.:format) controllers/todos#complete
        POST   /todos(.:format)           controllers/todos#create
 chat_messages GET /chat_messages(.:format) controllers/chat_messages#index
               POST /chat_messages(.:format) controllers/chat_messages#create
+new_user_session GET /users/sign_in(.:format) devise/sessions#new
+user_session POST /users/sign_in(.:format) devise/sessions#create
+destroy_user_session DELETE /users/sign_out(.:format) devise/sessions#destroy
  users GET    /users(.:format)           controllers/users#index
-sign_in POST  /session(.:format)         controllers/sessions#create
-sign_out DELETE /session(.:format)       controllers/sessions#destroy
-admin_users GET /admin/users(.:format)   controllers/users#index
+       POST   /users(.:format)           controllers/users#create
+  user PATCH  /users/:id(.:format)       controllers/users#update
+       PUT    /users/:id(.:format)       controllers/users#update
+       DELETE /users/:id(.:format)       controllers/users#destroy
+guest_sign_in POST /session/guest(.:format) controllers/sessions#create_guest
 optional_report GET /reports(/:year)(.:format) controllers/todos#optional_report
 file GET      /files/*path(.:format)     controllers/todos#file
 legacy_health GET /rails-owned-health(.:format) rails_owned/health#show

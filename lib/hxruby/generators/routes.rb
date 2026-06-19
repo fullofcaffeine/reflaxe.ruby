@@ -12,6 +12,20 @@ module HXRuby
         new(parse(argv), input: input).run
       end
 
+      def self.render_from_rails_routes(input, package:, class_name:)
+        new(
+          {
+            input: nil,
+            output: "src_haxe/routes/Routes.hx",
+            package: package,
+            class_name: class_name,
+            root: nil,
+            force: false,
+          },
+          input: input
+        ).render
+      end
+
       def self.parse(argv)
         options = {
           input: nil,
@@ -43,18 +57,26 @@ module HXRuby
       end
 
       def run
+        Common.write_file(@output_path, render, force: @force, root: @output_root, kind: "route_extern", source: "hxruby:routes")
+      end
+
+      def render
         input = @input || (@input_path ? File.read(File.expand_path(@input_path)) : $stdin.read)
-        Common.write_file(@output_path, render_routes(parse_routes(input)), force: @force, root: @output_root, kind: "route_extern", source: "hxruby:routes")
+        render_routes(parse_routes(input))
       end
 
       private
 
-      def infer_output_root(path)
+      def self.infer_output_root(path)
         parts = File.expand_path(path).split(File::SEPARATOR)
         index = parts.index("src_haxe")
         return parts[0...index].join(File::SEPARATOR) unless index.nil?
 
         File.dirname(path)
+      end
+
+      def infer_output_root(path)
+        self.class.infer_output_root(path)
       end
 
       def parse_routes(input)

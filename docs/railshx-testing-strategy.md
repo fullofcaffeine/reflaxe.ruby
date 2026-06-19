@@ -10,8 +10,10 @@ reviewable as if a Rails developer had written it by hand.
 2. Negative Haxe compile tests prove type-safety and fail-closed boundaries.
 3. Smoke tests prove focused invariants such as file existence, Ruby syntax,
    generator/package shape, and explicit escape-hatch policy.
-4. Rails runtime tests prove thin Rails consumption seams only.
-5. Browser and production dogfood tests prove the end-to-end app workflow.
+4. Example compile gates prove public examples still type-check after compiler
+   and std/framework changes.
+5. Rails runtime tests prove thin Rails consumption seams only.
+6. Browser and production dogfood tests prove the end-to-end app workflow.
 
 Runtime tests should not retest Rails itself. They should prove that generated
 files land where Rails expects them and can be consumed through normal Rails
@@ -30,6 +32,7 @@ load/render/migrate/deliver/subscribe/asset paths.
 | Rails interop/adoption | Snapshot-backed for RailsHx-owned output plus focused interop smoke/runtime-if-available. | Healthy after mixed-app snapshots. | Keep smoke focused on external ERB not being overwritten, checked locals/path failures, materialization, syntax, and request tests. |
 | Rails engine/plugin | Snapshot-backed plus focused smoke/generator checks. | Healthy after engine/plugin snapshots. | Keep smoke limited to syntax, executable output, unsafe output-root rejection, and generator CLI checks. |
 | Rails routing | Snapshot-backed for the focused `examples/rails_routes_dsl` output plus todoapp runtime/request seams and negative route DSL smoke. | Healthy. Snapshots own generated `config/routes.rb` and `.railshx/routes.haxe.json`; smoke owns invalid DSL diagnostics, unsafe escapes, route-helper generation, parity seams, and the Haxe-authored route parity core dogfood freshness check. | Keep exact output changes in snapshots. Keep runtime tests thin: route recognition/helper existence/request dispatch where Rails must consume generated routes. |
+| Examples | `npm run test:examples-compile` compiles every `examples/*/Main.hx` entrypoint plus known example client builds, and audits that each example declares snapshot/smoke/runtime/browser coverage. | New baseline. This catches stale examples and route/template/model drift before a user copies broken sample code. | Keep small compiler examples snapshot-backed; keep larger Rails examples on focused snapshots plus smoke/runtime/browser tests instead of snapshotting entire generated apps redundantly. |
 | Generators and package/release checks | Smoke/check scripts, with golden snapshots for complex generated contracts such as DeviseHx app-local auth layers. | Healthy. CLI/product behavior stays in smoke; generated Haxe/docs/JSON output gets snapshots once users will review or depend on it. | Keep generic generator checks smoke-focused, but require snapshots plus Haxe compile checks for typed gem-layer contracts. |
 | Browser/production dogfood | Playwright and production smoke. | Appropriate. These prove UX and deployable app seams, not compiler output. | Keep thin and user-visible. |
 
@@ -44,6 +47,10 @@ load/render/migrate/deliver/subscribe/asset paths.
   the script name, add a short script comment or cover it in this document.
 - Keep runtime materialization small. Runtime lanes should boot enough Rails to
   consume generated artifacts, not cover Rails framework behavior broadly.
+- Examples are executable QA assets. Every example entrypoint should stay in
+  `test:examples-compile`, and that gate should list its expected-output/test
+  contract. Compile-only coverage is enough only when compiler typing/snapshots
+  fully own the contract; otherwise add focused smoke/runtime/browser coverage.
 - When a smoke test discovers an important generated-output shape, add the shape
   to `scripts/ci/snapshot-harness.js` or file a bead explaining why that output
   cannot be snapshotted yet.

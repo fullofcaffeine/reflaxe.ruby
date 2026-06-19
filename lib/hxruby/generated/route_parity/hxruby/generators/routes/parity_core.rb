@@ -11,6 +11,10 @@ module Hxruby
           nil
         end
         def self.compare_manifest(manifest__hx0, rails_routes__hx0)
+          manifest_errors__hx0 = Hxruby::Generators::Routes::ParityCore.validate_manifest(manifest__hx0)
+          if (manifest_errors__hx0.length > 0)
+            return manifest_errors__hx0
+          end
           routes__hx0 = Hxruby::Generators::Routes::ParityCore.parse_routes(rails_routes__hx0)
           expected__hx0 = Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.hash_array(manifest__hx0, "declarations"), "")
           errors__hx0 = []
@@ -21,6 +25,41 @@ module Hxruby
             errors__hx0 = HXRuby.array_concat(errors__hx0, Hxruby::Generators::Routes::ParityCore.compare_route(route__hx0, routes__hx0))
           end
           return errors__hx0
+        end
+        def self.validate_manifest(manifest__hx0)
+          errors__hx0 = []
+          version__hx0 = Hxruby::Generators::Routes::ParityCore.hash_value(manifest__hx0, "version")
+          version_text__hx0 = (if (version__hx0 == nil) then "" else HXRuby.stringify(version__hx0) end)
+          if ((version_text__hx0 != "1") && (version_text__hx0 != "2"))
+            HXRuby.array_push(errors__hx0, ("unsupported Haxe-owned route manifest version " + (if (version_text__hx0 == "") then "(missing)" else version_text__hx0 end)))
+          end
+          if (!Ruby::NativeHash.exists(manifest__hx0, "declarations"))
+            HXRuby.array_push(errors__hx0, "Haxe-owned route manifest is missing declarations")
+          end
+          return HXRuby.array_concat(errors__hx0, Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.hash_array(manifest__hx0, "declarations")))
+        end
+        def self.validate_declarations(declarations__hx0)
+          errors__hx0 = []
+          g__hx0 = 0
+          while (g__hx0 < declarations__hx0.length)
+            decl__hx0 = declarations__hx0[g__hx0]
+            g__hx0 = (g__hx0 + 1)
+            kind__hx0 = Hxruby::Generators::Routes::ParityCore.hash_string(decl__hx0, "kind")
+            if (!Hxruby::Generators::Routes::ParityCore.supported_declaration_kind(kind__hx0))
+              HXRuby.array_push(errors__hx0, ("unknown Haxe-owned route manifest declaration kind " + (if (kind__hx0 == nil) then "(missing)" else kind__hx0 end)))
+            else
+              errors__hx0 = HXRuby.array_concat(errors__hx0, Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.children_of(decl__hx0)))
+            end
+          end
+          return errors__hx0
+        end
+        def self.supported_declaration_kind(kind__hx0)
+          return (if (kind__hx0 == nil) then false else case kind__hx0
+when "collection", "constraints", "controller", "defaults", "deviseFor", "match", "member", "mount", "namespace", "rawRuby", "resource", "resources", "root", "scope", "verb"
+  true
+else
+  false
+end end)
         end
         def self.parse_routes(input__hx0)
           routes__hx0 = []
@@ -140,6 +179,8 @@ end
           return (if (kind__hx0 == nil) then [] else case kind__hx0
 when "constraints", "controller", "defaults"
   Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.children_of(decl__hx0), prefix__hx0)
+when "deviseFor"
+  []
 when "match"
   this__hx0 = Hxruby::Generators::Routes::ParityCore.hash_array(decl__hx0, "verbs")
   g__hx0 = []
@@ -356,6 +397,9 @@ end end)
           return false
         end
         def self.hash_string(hash__hx0, key__hx0)
+          return Ruby::NativeHash.get(hash__hx0, key__hx0)
+        end
+        def self.hash_value(hash__hx0, key__hx0)
           return Ruby::NativeHash.get(hash__hx0, key__hx0)
         end
         def self.hash_array(hash__hx0, key__hx0)
