@@ -14,6 +14,8 @@
       "route_resource": "users",
       "model": "User",
       "table": "users",
+      "route_authorable": true,
+      "route_authorability_reason": "",
       "modules": [
         "database_authenticatable",
         "registerable",

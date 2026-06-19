@@ -664,6 +664,21 @@ expectInvalidRouteDslFailure("DeviseHx missing metadata", [
   "",
 ], "expected a generated DeviseHx route contract");
 
+expectInvalidRouteDslFailure("DeviseHx non-authorable adopted route", [
+  "package routes;",
+  "",
+  "import app.auth.NonAuthorableAuth;",
+  "import devisehx.routes.DeviseRoutes;",
+  "",
+  "@:railsRoutes",
+  "class AppRoutes {",
+  "\tstatic final routes = {",
+  "\t\tDeviseRoutes.deviseFor(NonAuthorableAuth.scope);",
+  "\t};",
+  "}",
+  "",
+], "existing devise_for uses unsupported options; keep this route Rails-owned");
+
 expectInvalidRouteDslFailure("DeviseHx nested route", [
   "package routes;",
   "",
@@ -1057,6 +1072,22 @@ function writeCommonTypes(baseDir) {
     "// This intentionally lacks @:deviseHxRoute metadata so the negative route",
     "// smoke proves arbitrary DeviseScope fields cannot authorize Haxe-owned routes.",
     "final class PlainAuth {",
+    "\tpublic static final scope:DeviseScope<User> = DeviseScope.of(ScopeName.named(\"user\"), RouteResource.named(\"users\"), User);",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(baseDir, "app", "auth", "NonAuthorableAuth.hx"), [
+    "package app.auth;",
+    "",
+    "import devisehx.DeviseScope;",
+    "import devisehx.RouteResource;",
+    "import devisehx.ScopeName;",
+    "import models.User;",
+    "",
+    "// Adopted complex Devise routes still get typed auth helpers, but the",
+    "// route metadata records why Haxe-owned route emission must stay disabled.",
+    "final class NonAuthorableAuth {",
+    "\t@:deviseHxRoute({schema: 1, routeAuthorable: false, resource: \"users\", mappingScope: \"user\", rubyClass: \"User\", haxeModel: \"models.User\", reason: \"existing devise_for uses unsupported options; keep this route Rails-owned\"})",
     "\tpublic static final scope:DeviseScope<User> = DeviseScope.of(ScopeName.named(\"user\"), RouteResource.named(\"users\"), User);",
     "}",
     "",

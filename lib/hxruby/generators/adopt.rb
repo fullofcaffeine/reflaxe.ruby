@@ -504,11 +504,18 @@ module HXRuby
         puts "[rails:adopt:devise] #{inventory.fetch(:name)} #{inventory.fetch(:version_string)}"
         inventory.fetch(:scopes).each do |scope|
           puts "  scope: #{scope.fetch(:scope)} model=#{scope.fetch(:model)} resource=#{scope.fetch(:route_resource)}"
+          puts "    route authorable: #{scope.fetch(:route_authorable)}"
+          puts "    route reason: #{scope.fetch(:route_authorability_reason)}" unless scope.fetch(:route_authorable)
           puts "    modules: #{scope.fetch(:modules).join(", ")}"
           puts "    schema: #{scope.fetch(:schema_status)}"
           scope.fetch(:helpers).each { |helper| puts "    helper: #{helper}" }
         end
-        puts "  diagnostics: none"
+        diagnostics = devise_diagnostics(inventory).fetch(:diagnostics)
+        if diagnostics.empty?
+          puts "  diagnostics: none"
+        else
+          diagnostics.each { |diagnostic| puts "  diagnostic: #{diagnostic.fetch(:message)}" }
+        end
         puts "  next: bin/rails generate hxruby:adopt --gem devise --write contracts"
       end
 
@@ -538,6 +545,8 @@ module HXRuby
             route_resource: route_scope.fetch(:route_resource),
             model: route_scope.fetch(:model),
             table: route_scope.fetch(:route_resource),
+            route_authorable: route_scope.fetch(:route_authorable),
+            route_authorability_reason: route_scope.fetch(:route_authorability_reason),
             modules: modules,
             helpers: devise_helpers(route_scope.fetch(:scope)),
             schema_status: schema.fetch(:status),
@@ -561,20 +570,138 @@ module HXRuby
         raise Error, "Cannot adopt Devise: config/routes.rb not found in #{@output_dir}." unless File.file?(routes_path)
 
         content = File.read(routes_path)
-        resources = content.scan(/\bdevise_for\s+:(#{ruby_identifier_pattern})\b/).flatten
-        raise Error, "Cannot adopt Devise: no literal devise_for scopes found in config/routes.rb." if resources.empty?
+        declarations = extract_devise_route_declarations(content, routes_path)
+        raise Error, "Cannot adopt Devise: no literal devise_for scopes found in config/routes.rb." if declarations.empty?
 
-        duplicates = resources.tally.select { |_resource, count| count > 1 }.keys
+        duplicates = declarations.map { |declaration| declaration.fetch(:resource) }.tally.select { |_resource, count| count > 1 }.keys
         raise Error, "Cannot adopt Devise: ambiguous duplicate devise_for scope(s): #{duplicates.join(", ")}." if duplicates.any?
 
-        resources.map do |resource|
+        declarations.map do |declaration|
+          resource = declaration.fetch(:resource)
           scope = singular_resource_name(resource)
           {
             scope: scope,
             route_resource: resource,
             model: Common.class_name_from_path(scope),
+            route_authorable: declaration.fetch(:route_authorable),
+            route_authorability_reason: declaration.fetch(:route_authorability_reason),
           }
         end
+      end
+
+      # Devise route declarations are Ruby DSL calls, so this uses Ripper tokens
+      # rather than regex. The MVP deliberately authorizes only plain top-level
+      # `devise_for :users` / `devise_for "users"`; richer Rails-owned route
+      # shapes still generate typed auth contracts but cannot be re-emitted by
+      # Haxe-owned routes until DeviseHx supports that exact semantic subset.
+      def extract_devise_route_declarations(content, routes_path)
+        sexp = Ripper.sexp(content)
+        raise Error, "Cannot adopt Devise: #{relative_output_path(routes_path)} is not parseable Ruby." unless sexp
+
+        declarations = []
+        depth = 0
+        draw_depth = nil
+        ripper_tokens_by_line(content).sort.each do |_line, tokens|
+          line_depth = depth
+          draw_depth ||= line_depth + 1 if rails_routes_draw_line?(tokens) && token_count(tokens, :on_kw, "do").positive?
+
+          tokens.each_with_index do |token, index|
+            next unless token.fetch(:type) == :on_ident && token.fetch(:text) == "devise_for"
+
+            parsed = parse_devise_for_tokens(tokens, index)
+            next unless parsed
+
+            reason = nil
+            if draw_depth.nil?
+              reason = "existing devise_for is outside Rails.application.routes.draw; keep this route Rails-owned"
+            elsif line_depth != draw_depth
+              reason = "existing devise_for is nested in another routes block or scope; keep this route Rails-owned"
+            elsif parsed.fetch(:has_block)
+              reason = "existing devise_for uses a block; keep this route Rails-owned"
+            elsif parsed.fetch(:has_options)
+              reason = "existing devise_for uses unsupported options; keep this route Rails-owned"
+            end
+
+            declarations << {
+              resource: parsed.fetch(:resource),
+              route_authorable: reason.nil?,
+              route_authorability_reason: reason || "",
+            }
+          end
+
+          depth += token_count(tokens, :on_kw, "do")
+          depth += token_count(tokens, :on_lbrace, "{")
+          depth -= token_count(tokens, :on_kw, "end")
+          depth -= token_count(tokens, :on_rbrace, "}")
+          depth = 0 if depth.negative?
+        end
+        declarations
+      end
+
+      def ripper_tokens_by_line(content)
+        Ripper.lex(content).each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |((line, column), type, text, _state), by_line|
+          next if %i[on_sp on_ignored_sp on_nl on_ignored_nl on_comment].include?(type)
+
+          by_line[line] << { type: type, text: text, column: column }
+        end
+      end
+
+      def rails_routes_draw_line?(tokens)
+        tokens.map { |token| token.fetch(:text) }.join.include?("Rails.application.routes.draw")
+      end
+
+      def token_count(tokens, type, text)
+        tokens.count { |token| token.fetch(:type) == type && token.fetch(:text) == text }
+      end
+
+      def parse_devise_for_tokens(tokens, index)
+        cursor = index + 1
+        cursor += 1 if tokens[cursor]&.fetch(:type) == :on_lparen
+        resource, resource_end = parse_devise_resource(tokens, cursor)
+        return nil unless resource
+
+        remaining = tokens[(resource_end + 1)..] || []
+        remaining = remaining.reject { |token| token.fetch(:type) == :on_rparen }
+        has_block = remaining.any? do |token|
+          token.fetch(:type) == :on_kw && token.fetch(:text) == "do"
+        end
+        has_options = remaining.any? do |token|
+          next false if token.fetch(:type) == :on_kw && %w[do end].include?(token.fetch(:text))
+          next false if %i[on_lbrace on_rbrace].include?(token.fetch(:type))
+
+          true
+        end
+        {
+          resource: resource,
+          has_block: has_block,
+          has_options: has_options,
+        }
+      end
+
+      def parse_devise_resource(tokens, cursor)
+        token = tokens[cursor]
+        return [nil, cursor] unless token
+
+        if token.fetch(:type) == :on_symbeg && token.fetch(:text) == ":"
+          name = tokens[cursor + 1]
+          return [nil, cursor] unless name && %i[on_ident on_const].include?(name.fetch(:type))
+          return [name.fetch(:text), cursor + 1]
+        end
+
+        if token.fetch(:type) == :on_tstring_beg
+          pieces = []
+          index = cursor + 1
+          while tokens[index] && tokens[index].fetch(:type) != :on_tstring_end
+            return [nil, cursor] unless tokens[index].fetch(:type) == :on_tstring_content
+
+            pieces << tokens[index].fetch(:text)
+            index += 1
+          end
+          return [nil, cursor] unless tokens[index]
+          return [pieces.join, index]
+        end
+
+        [nil, cursor]
       end
 
       def parse_devise_modules(model_name)
@@ -646,17 +773,40 @@ module HXRuby
       end
 
       def devise_diagnostics(inventory)
+        diagnostics = inventory.fetch(:scopes).filter_map do |scope|
+          next if scope.fetch(:route_authorable)
+
+          {
+            level: "warning",
+            code: "devise_route_not_authorable",
+            scope: scope.fetch(:scope),
+            message: scope.fetch(:route_authorability_reason),
+          }
+        end
         {
           version: 1,
           kind: "devise_diagnostics",
           gem: inventory.fetch(:name),
-          status: "ok",
-          diagnostics: [],
+          status: diagnostics.empty? ? "ok" : "review",
+          diagnostics: diagnostics,
         }
       end
 
       def render_devise_auth_contract(scope)
         class_name = "#{scope.fetch(:model)}Auth"
+        route_authorable = scope.fetch(:route_authorable)
+        route_meta = [
+          "\t\tschema: 1,",
+          "\t\trouteAuthorable: #{route_authorable},",
+          "\t\tresource: #{Common.haxe_string(scope.fetch(:route_resource))},",
+          "\t\tmappingScope: #{Common.haxe_string(scope.fetch(:scope))},",
+          "\t\trubyClass: #{Common.haxe_string(scope.fetch(:model))},",
+          "\t\thaxeModel: #{Common.haxe_string("models.#{scope.fetch(:model)}")}",
+        ]
+        unless route_authorable
+          route_meta[-1] = "#{route_meta[-1]},"
+          route_meta << "\t\treason: #{Common.haxe_string(scope.fetch(:route_authorability_reason))}"
+        end
         [
           "package app.auth;",
           "",
@@ -673,12 +823,7 @@ module HXRuby
           "// contract that gives Haxe completion for the concrete Devise scope helpers.",
           "final class #{class_name} {",
           "\t@:deviseHxRoute({",
-          "\t\tschema: 1,",
-          "\t\trouteAuthorable: true,",
-          "\t\tresource: #{Common.haxe_string(scope.fetch(:route_resource))},",
-          "\t\tmappingScope: #{Common.haxe_string(scope.fetch(:scope))},",
-          "\t\trubyClass: #{Common.haxe_string(scope.fetch(:model))},",
-          "\t\thaxeModel: #{Common.haxe_string("models.#{scope.fetch(:model)}")}",
+          *route_meta,
           "\t})",
           "\tpublic static final scope:DeviseScope<#{scope.fetch(:model)}> = DeviseScope.of(ScopeName.named(#{Common.haxe_string(scope.fetch(:scope))}), RouteResource.named(#{Common.haxe_string(scope.fetch(:route_resource))}), #{scope.fetch(:model)});",
           "",
