@@ -81,6 +81,13 @@ required by `haxe.ruby-bjv.6.4`: reusable package boundaries, deterministic
 metadata inputs, typed model/controller/route APIs, current-user typing,
 escape-hatch policy, tests, docs, and bead mutations.
 
+The folded design review lives in
+[`railshx-devisehx-design.md`](railshx-devisehx-design.md). Treat it as the
+source of truth for DeviseHx implementation sequencing: Devise remains the
+runtime owner, Rails route output remains the helper oracle, and RailsHx owns
+typed scope contracts, deterministic inventory, HHX helpers, generator
+validation, and dogfood tests.
+
 For a reusable gem layer such as Devise:
 
 ```bash

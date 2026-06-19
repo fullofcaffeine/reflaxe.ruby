@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fullofcaffeine/reflaxe.ruby/docs/railshx-devisehx-inventory.schema.json",
+  "title": "RailsHx DeviseHx deterministic inventory",
+  "type": "object",
+  "required": ["version", "gem", "scopes", "unknowns", "unsafe_required"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "app_root": {
+      "type": "string"
+    },
+    "gem": {
+      "type": "object",
+      "required": ["name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "const": "devise"
+        },
+        "version": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "warden_version": {
+          "type": "string"
+        }
+      }
+    },
+    "rails": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "api_only": {
+          "type": "boolean"
+        }
+      }
+    },
+    "initializer": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "mailer": {
+          "type": "string"
+        },
+        "scoped_views": {
+          "type": "boolean"
+        },
+        "sign_out_via": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authentication_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dynamic_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/unknown"
+          }
+        }
+      }
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scope"
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unknown"
+      }
+    },
+    "unsafe_required": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unsafe"
+      }
+    }
+  },
+  "$defs": {
+    "scope": {
+      "type": "object",
+      "required": ["scope", "route_resource", "model", "modules", "helpers", "schema_status"],
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "type": "string"
+        },
+        "route_resource": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "table": {
+          "type": "string"
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "helpers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/route"
+          }
+        },
+        "schema_status": {
+          "type": "string",
+          "enum": ["ok", "missing_schema", "missing_columns", "unknown", "review_required"]
+        },
+        "schema_columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/column"
+          }
+        },
+        "missing_columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "custom_controllers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "routes": {
+              "type": "string"
+            },
+            "model": {
+              "type": "string"
+            },
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "review": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/unknown"
+          }
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": ["helper", "verb", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "helper": {
+          "type": "string"
+        },
+        "verb": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "controller_action": {
+          "type": "string"
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "nullable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["kind", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "unsafe": {
+      "type": "object",
+      "required": ["kind", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

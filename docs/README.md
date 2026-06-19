@@ -26,6 +26,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Gradual Adoption](railshx-gradual-adoption.md): mixing existing Ruby/ERB with Haxe/HHX.
 - [Gem Layers](railshx-gem-layers.md): wrapping installed Ruby gems through typed contracts and reusable companion packages such as future DeviseHx.
 - [DeviseHx GPT 5.5 Pro Prompt](railshx-devisehx-gpt55-prompt.md): required pre-implementation design review packet for the reusable Devise companion layer.
+- [DeviseHx Design](railshx-devisehx-design.md): folded GPT 5.5 Pro review, API shape, extraction strategy, escape hatches, tests, and rollout plan.
 - [Testing Strategy](railshx-testing-strategy.md): snapshots, smoke tests, Rails runtime tests, and Playwright.
 - [Typed API Production Gap Audit](railshx-typed-api-production-gap-audit.md): current typed API gaps.
 
