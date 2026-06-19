@@ -106,6 +106,12 @@ contract is stable: Rails does normal Devise setup, then RailsHx generates or
 consumes typed Haxe contracts around Devise routes, helpers, controllers, model
 mixins, params, and test helpers.
 
+Reusable gem layers should use the testing pyramid in
+[`railshx-gem-layer-testing.md`](railshx-gem-layer-testing.md): deterministic
+inventory/generator smoke, generated artifact snapshots, Haxe positive and
+negative compile tests, thin Rails runtime seam tests, and small dogfood browser
+flows. Do not retest the Ruby gem's own runtime when RailsHx is only wrapping it.
+
 The todoapp now carries the first canonical DeviseHx dogfood slice. It keeps
 Devise as the runtime owner for Warden, encrypted passwords, routes, sessions,
 and sign-out semantics, while Haxe owns `UserAuth`, typed `@:devise(...)` model

@@ -10,6 +10,12 @@ Rails/Devise artifacts.
 This design folds in the GPT 5.5 Pro review required by
 `haxe.ruby-bjv.6.4`.
 
+For the reusable testing pattern, see
+[`railshx-gem-layer-testing.md`](railshx-gem-layer-testing.md). DeviseHx should
+test deterministic discovery, generated contracts, Haxe type-safety boundaries,
+and thin Rails/browser seams; it should not reimplement or broadly retest
+Devise/Warden internals.
+
 ## Verdict
 
 Use a three-layer model:
