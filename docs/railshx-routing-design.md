@@ -417,13 +417,19 @@ defines unsupported macro entry points for deferred Rails concepts such as
 Devise-style route macros so users get an actionable message and a clear typed
 escape/adoption path.
 
-The route parity checker is currently Ruby-native because it plugs directly into
-Rails/Rake tooling, but the deterministic comparison core is a good Haxe->Ruby
-dogfood candidate. Once the parity algorithm settles, move the pure manifest
-comparison logic into a Haxe-authored library that compiles to idiomatic Ruby,
-while keeping the Rails task/generator adapter Ruby-native. That gives Rails
-developers a normal task surface and also showcases that Haxe-authored Ruby can
-be pleasant, typed, and reviewable.
+The route parity checker deliberately uses a hybrid shape. The Rails/Rake-facing
+adapter remains Ruby-native because it handles CLI options, file IO, JSON parse
+errors, and `HXRuby::Generators::Error` in the normal Rails tooling layer. The
+deterministic manifest-vs-`rails routes` comparison core is authored in Haxe
+under `tools/route_parity_hx` and compiled to committed Ruby under
+`lib/hxruby/generated/route_parity`.
+
+This is an intentional dogfood seam: the Haxe source should stay easier to
+reason about than the equivalent dynamic Ruby algorithm, while the public Rails
+task still looks and behaves like normal Ruby/Rake tooling. `npm run
+test:routes-generator` runs `test:route-parity-dogfood`, which recompiles the
+Haxe source and fails if the committed generated Ruby is stale. Do not hand-edit
+the generated route parity files; regenerate them from the Haxe source.
 
 ## Source-Of-Truth Rules
 

@@ -4,6 +4,8 @@ completed_todos GET /todos/completed(.:format) controllers/todos#completed
 complete_todo PATCH /todos/:id/complete(.:format) controllers/todos#complete
  todos GET    /todos(.:format)           controllers/todos#index
        POST   /todos(.:format)           controllers/todos#create
+chat_messages GET /chat_messages(.:format) controllers/chat_messages#index
+              POST /chat_messages(.:format) controllers/chat_messages#create
  users GET    /users(.:format)           controllers/users#index
 sign_in POST  /session(.:format)         controllers/sessions#create
 sign_out DELETE /session(.:format)       controllers/sessions#destroy
