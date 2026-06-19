@@ -4886,7 +4886,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								children: [],
 								pos: expr.pos
 							};
-						case "deviseFor" if (params.length == 6):
+						case "deviseFor" if (params.length == 8):
 							{
 								kind: "deviseFor",
 								target: null,
@@ -4896,7 +4896,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 									rubyClass: railsRouteString(params[2], "Devise Ruby class"),
 									contractType: railsRouteString(params[3], "Devise contract type"),
 									contractField: railsRouteString(params[4], "Devise contract field"),
-									contractSchema: railsRouteInt(params[5], "Devise contract schema")
+									contractSchema: railsRouteInt(params[5], "Devise contract schema"),
+									only: railsRouteStringArray(params[6], "Devise only route groups"),
+									skip: railsRouteStringArray(params[7], "Devise skip route groups")
 								},
 								verb: "",
 								verbs: [],

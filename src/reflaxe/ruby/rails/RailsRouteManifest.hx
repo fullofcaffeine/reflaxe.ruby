@@ -39,7 +39,14 @@ class RailsRouteManifest {
 			Reflect.setField(contract, "field", decl.devise.contractField);
 			Reflect.setField(contract, "schema", decl.devise.contractSchema);
 			Reflect.setField(out, "contract", contract);
-			Reflect.setField(out, "options", {});
+			var deviseOptions:Dynamic = {};
+			if (decl.devise.only.length > 0) {
+				Reflect.setField(deviseOptions, "only", decl.devise.only);
+			}
+			if (decl.devise.skip.length > 0) {
+				Reflect.setField(deviseOptions, "skip", decl.devise.skip);
+			}
+			Reflect.setField(out, "options", deviseOptions);
 		}
 		if (decl.verb != "") {
 			Reflect.setField(out, "verb", decl.verb);

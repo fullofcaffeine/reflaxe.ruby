@@ -80,12 +80,26 @@ class RailsRoutesEmitter {
 				}
 				[parts.join(", ")];
 			case "deviseFor":
-				decl.devise == null ? [] : ["devise_for " + rubySymbolLiteral(decl.devise.resource)];
+				renderDeviseForDecl(decl);
 			case "rawRuby":
 				[decl.controller];
 			case _:
 				[];
 		}
+	}
+
+	static function renderDeviseForDecl(decl:RailsRouteDecl):Array<String> {
+		if (decl.devise == null) {
+			return [];
+		}
+		var parts = ["devise_for " + rubySymbolLiteral(decl.devise.resource)];
+		if (decl.devise.only.length > 0) {
+			parts.push("only: [" + [for (group in decl.devise.only) rubySymbolLiteral(group)].join(", ") + "]");
+		}
+		if (decl.devise.skip.length > 0) {
+			parts.push("skip: [" + [for (group in decl.devise.skip) rubySymbolLiteral(group)].join(", ") + "]");
+		}
+		return [parts.join(", ")];
 	}
 
 	static function renderResourceDecl(decl:RailsRouteDecl, keyword:String):Array<String> {

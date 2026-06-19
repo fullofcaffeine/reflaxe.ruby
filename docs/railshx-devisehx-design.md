@@ -230,11 +230,14 @@ sessions, passwords, registrations, confirmations, unlocks, and OmniAuth
 authorize/callback helpers. These helpers are generated from Rails route output,
 not guessed by DeviseHx.
 
-Haxe-owned Devise route DSL supports a deliberately narrow no-options MVP:
-`DeviseRoutes.deviseFor(UserAuth.scope)`.
+Haxe-owned Devise route DSL supports a deliberately narrow typed subset:
+`DeviseRoutes.deviseFor(UserAuth.scope)` plus `only`/`skip` route-group
+selection.
 
 ```haxe
 import app.auth.UserAuth;
+import app.auth.AdminAuth;
+import devisehx.routes.DeviseRouteGroup.*;
 import devisehx.routes.DeviseRoutes;
 import rails.macros.RoutesDsl.*;
 
@@ -242,6 +245,8 @@ import rails.macros.RoutesDsl.*;
 class AppRoutes {
 	static final routes = {
 		DeviseRoutes.deviseFor(UserAuth.scope);
+		DeviseRoutes.deviseFor(AdminAuth.scope, { only: [Sessions] });
+		DeviseRoutes.deviseFor(AdminAuth.scope, { skip: [Sessions] });
 		root(to(DashboardController, index));
 	};
 }
@@ -252,18 +257,23 @@ The macro accepts only direct generated scope fields carrying
 
 ```ruby
 devise_for :users
+devise_for :admins, only: [:sessions]
+devise_for :admins, skip: [:sessions]
 ```
 
 This is intentionally not a string API. Literals, locals, function-produced
-scopes, constructed `DeviseScope` values, nested declarations, duplicate split
-mappings, and options fail closed. That preserves the key ownership boundary:
-the Haxe macro declares one checked Devise mapping; Devise expands it; Rails
-names the helpers; RailsHx consumes the actual `rails routes` output to generate
-typed route externs.
+scopes, constructed `DeviseScope` values, nested declarations, raw strings,
+unknown options, and combined `only` + `skip` fail closed. Duplicate mappings
+are allowed only when every duplicate declaration is explicitly split with typed
+`DeviseRouteGroup` tokens. That preserves the key ownership boundary: the Haxe
+macro declares checked Devise mappings; Devise expands them; Rails names the
+helpers; RailsHx consumes the actual `rails routes` output to generate typed
+route externs.
 
-Typed `only`/`skip` route options and split Devise mappings are planned in
-`haxe.ruby-443`. Until that lands, customized Devise route mappings should stay
-Rails-owned and still be consumed through generated route externs.
+Custom controllers, `path`, `path_names`, `class_name`, `singular`, constraints,
+and other advanced Devise route options remain Rails-owned until DeviseHx has
+typed contracts for them. They should still be consumed through generated route
+externs.
 
 ## HHX Helpers
 

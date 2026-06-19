@@ -21,21 +21,105 @@ import haxe.macro.Type.TypedExpr;
 class DeviseRoutes {
 	public static macro function deviseFor(scope:Expr, ?options:Expr):Expr {
 		#if macro
-		if (options != null && !isNullExpr(options)) {
-			Context.error("DeviseRoutes.deviseFor options are not supported in this MVP. Keep customized Devise routes Rails-owned until DeviseHx has typed option parity.",
-				options.pos);
-		}
 		var contract = generatedRouteContract(scope);
+		var routeOptions = deviseRouteOptions(options);
 		return macro @:pos(scope.pos) rails.routing.RouteDecl.deviseFor($v{contract.resource}, $v{contract.mappingScope}, $v{contract.rubyClass},
-			$v{contract.contractType}, $v{contract.contractField}, $v{contract.schema});
+			$v{contract.contractType}, $v{contract.contractField}, $v{contract.schema}, $e{stringArray(routeOptions.only, scope.pos)},
+			$e{stringArray(routeOptions.skip, scope.pos)});
 		#else
 		return macro null;
 		#end
 	}
 
 	#if macro
-	static function isNullExpr(expr:Expr):Bool {
+	static function deviseRouteOptions(options:Null<Expr>):DeviseRouteOptions {
+		if (options == null || isNullExpr(options)) {
+			return {only: [], skip: []};
+		}
+		var out:DeviseRouteOptions = {only: [], skip: []};
+		switch unwrap(options).expr {
+			case EObjectDecl(fields):
+				for (field in fields) {
+					switch field.field {
+						case "only":
+							out.only = routeGroupArray(field.expr, "only");
+						case "skip":
+							out.skip = routeGroupArray(field.expr, "skip");
+						case other:
+							Context.error('DeviseRoutes.deviseFor unsupported option "$other". Supported options are only and skip.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("DeviseRoutes.deviseFor options must be an object literal.", options.pos);
+		}
+		if (out.only.length > 0 && out.skip.length > 0) {
+			Context.error("DeviseRoutes.deviseFor cannot combine only and skip. Split the declarations explicitly or keep this Devise route Rails-owned.",
+				options.pos);
+		}
+		return out;
+	}
+
+	static function routeGroupArray(expr:Expr, label:String):Array<String> {
+		return switch unwrap(expr).expr {
+			case EArrayDecl(values):
+				if (values.length == 0) {
+					Context.error('DeviseRoutes.deviseFor $label must include at least one DeviseRouteGroup token.', expr.pos);
+				}
+				[for (value in values) routeGroup(value, label)];
+			case _:
+				Context.error('DeviseRoutes.deviseFor $label must be an array of DeviseRouteGroup tokens.', expr.pos);
+				[];
+		}
+	}
+
+	static function routeGroup(expr:Expr, label:String):String {
+		var typed = Context.typeExpr(expr);
+		var token = switch typed.expr {
+			case TField(_, FEnum(enumRef, enumField)):
+				var enumType = enumRef.get();
+				if (fullTypeName(enumType.pack, enumType.name) != "devisehx.routes.DeviseRouteGroup") {
+					Context.error('DeviseRoutes.deviseFor $label entries must come from devisehx.routes.DeviseRouteGroup.', expr.pos);
+				}
+				enumField.name;
+			case _:
+				Context.error('DeviseRoutes.deviseFor $label entries must be DeviseRouteGroup enum tokens, not strings or dynamic values.', expr.pos);
+				"";
+		}
+		return switch token {
+			case "Sessions":
+				"sessions";
+			case "Passwords":
+				"passwords";
+			case "Registrations":
+				"registrations";
+			case "Confirmations":
+				"confirmations";
+			case "Unlocks":
+				"unlocks";
+			case "OmniauthCallbacks":
+				"omniauth_callbacks";
+			case _:
+				Context.error('Unsupported DeviseRouteGroup "$token" in DeviseRoutes.deviseFor $label.', expr.pos);
+				"";
+		}
+	}
+
+	static function stringArray(values:Array<String>, pos:Position):Expr {
+		return {
+			expr: EArrayDecl([for (value in values) macro $v{value}]),
+			pos: pos
+		};
+	}
+
+	static function unwrap(expr:Expr):Expr {
 		return switch expr.expr {
+			case EParenthesis(inner) | EMeta(_, inner): unwrap(inner);
+			case _: expr;
+		}
+	}
+
+	static function isNullExpr(expr:Expr):Bool {
+		return switch unwrap(expr).expr {
 			case EConst(CIdent("null")): true;
 			case _: false;
 		}
@@ -215,5 +299,10 @@ private typedef DeviseRouteContract = {
 	var reason:String;
 	var contractType:String;
 	var contractField:String;
+}
+
+private typedef DeviseRouteOptions = {
+	var only:Array<String>;
+	var skip:Array<String>;
 }
 #end

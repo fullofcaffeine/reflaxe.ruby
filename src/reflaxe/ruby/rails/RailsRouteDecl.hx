@@ -27,6 +27,8 @@ typedef RailsDeviseForDecl = {
 	rubyClass:String,
 	contractType:String,
 	contractField:String,
-	contractSchema:Int
+	contractSchema:Int,
+	only:Array<String>,
+	skip:Array<String>
 }
 #end
