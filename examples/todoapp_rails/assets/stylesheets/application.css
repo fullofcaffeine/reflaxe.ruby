@@ -151,10 +151,15 @@ body {
 }
 
 .login-form input[type="submit"],
+.auth-guest-form,
 .auth-guest-form input[type="submit"],
 .auth-guest-form button,
+.topbar-logout,
 .topbar-logout input[type="submit"],
 .topbar-logout button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	border: 0;
 	border-radius: 18px;
 	padding: 16px 20px;
@@ -169,8 +174,10 @@ body {
 }
 
 .login-form input[type="submit"]:hover,
+.auth-guest-form:hover,
 .auth-guest-form input[type="submit"]:hover,
 .auth-guest-form button:hover,
+.topbar-logout:hover,
 .topbar-logout input[type="submit"]:hover,
 .topbar-logout button:hover {
 	transform: translateY(-1px);
@@ -190,7 +197,9 @@ body {
 }
 
 .guest-entry form,
-.session-chip form {
+.guest-entry .button_to,
+.session-chip form,
+.session-chip .button_to {
 	margin: 0;
 }
 
@@ -252,6 +261,7 @@ body {
 	min-width: 0;
 }
 
+.topbar-logout,
 .topbar-logout input[type="submit"],
 .topbar-logout button {
 	padding: 13px 15px;
@@ -491,6 +501,7 @@ h2 {
 	margin: 0;
 }
 
+.session-clear-form,
 .session-clear-form input[type="submit"],
 button.session-clear-form {
 	max-width: 180px;
@@ -505,7 +516,7 @@ button.session-clear-form {
 .user-management-frame {
 	display: block;
 	grid-column: 1 / -1;
-	margin-bottom: 20px;
+	margin: 32px 0 34px;
 }
 
 .user-management-frame[busy] {
@@ -707,7 +718,7 @@ button.session-clear-form {
 
 .users-admin-board {
 	display: grid;
-	gap: 22px;
+	gap: 30px;
 	border: 1px solid var(--line);
 	border-radius: 34px;
 	padding: clamp(22px, 3vw, 34px);
@@ -723,7 +734,7 @@ button.session-clear-form {
 	grid-template-columns: minmax(0, 1fr) auto;
 	gap: 24px;
 	align-items: start;
-	padding-bottom: 20px;
+	padding-bottom: 28px;
 	border-bottom: 1px solid var(--line);
 }
 
@@ -746,12 +757,17 @@ button.session-clear-form {
 .user-create-card {
 	display: grid;
 	grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1fr);
-	gap: 24px;
+	gap: 30px;
 	align-items: start;
 	border: 1px dashed rgba(24, 34, 31, 0.18);
 	border-radius: 28px;
-	padding: 22px;
+	padding: clamp(22px, 2.6vw, 32px);
 	background: rgba(255, 250, 240, 0.5);
+}
+
+.user-create-card h2 {
+	max-width: 360px;
+	font-size: clamp(2.2rem, 4.4vw, 4.2rem);
 }
 
 .user-create-form,
@@ -799,8 +815,12 @@ button.session-clear-form {
 
 .user-create-form input[type="submit"],
 .user-card-form input[type="submit"],
+.user-delete-form,
 .user-delete-form input[type="submit"],
 .user-delete-form button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	border: 0;
 	border-radius: 16px;
 	padding: 13px 15px;
@@ -846,6 +866,7 @@ button.session-clear-form {
 	margin: -4px 0 0;
 }
 
+.user-delete-form,
 .user-delete-form input[type="submit"],
 .user-delete-form button {
 	color: var(--ember);
@@ -855,6 +876,7 @@ button.session-clear-form {
 
 .user-create-form input[type="submit"]:hover,
 .user-card-form input[type="submit"]:hover,
+.user-delete-form:hover,
 .user-delete-form input[type="submit"]:hover,
 .user-delete-form button:hover {
 	transform: translateY(-1px);
@@ -1069,6 +1091,7 @@ button.session-clear-form {
 	.workspace,
 	.team-console,
 	.chat-panel,
+	.user-create-card,
 	.user-grid {
 		grid-template-columns: 1fr;
 	}
