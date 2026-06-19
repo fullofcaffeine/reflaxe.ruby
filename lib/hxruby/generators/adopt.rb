@@ -105,6 +105,11 @@ module HXRuby
 
       def discover_gems
         @gems.each do |gem_name|
+          if devise_gem?(gem_name)
+            print_devise_inventory(devise_inventory(gem_name))
+            next
+          end
+
           inventory = gem_inventory(gem_name)
           puts "[rails:adopt:gem] #{inventory.fetch(:name)} #{inventory.fetch(:version)}"
           puts "  source files: #{inventory.fetch(:ruby_files).length}"
@@ -383,6 +388,11 @@ module HXRuby
 
       def write_gem_contracts
         @gems.each do |gem_name|
+          if devise_gem?(gem_name)
+            write_devise_contracts(gem_name)
+            next
+          end
+
           inventory = gem_inventory(gem_name)
           package = "#{@package_name}.gems.#{Common.file_name(gem_name).tr("-", "_")}"
           gem_dir = File.join(@output_dir, "src_haxe", Common.package_path(package))
@@ -484,6 +494,261 @@ module HXRuby
           "- Treat LLM-generated edits as reviewable patches; do not remove TODO/review markers without deterministic coverage.",
           "",
         ].join("\n")
+      end
+
+      def devise_gem?(gem_name)
+        gem_name == "devise"
+      end
+
+      def print_devise_inventory(inventory)
+        puts "[rails:adopt:devise] #{inventory.fetch(:name)} #{inventory.fetch(:version_string)}"
+        inventory.fetch(:scopes).each do |scope|
+          puts "  scope: #{scope.fetch(:scope)} model=#{scope.fetch(:model)} resource=#{scope.fetch(:route_resource)}"
+          puts "    modules: #{scope.fetch(:modules).join(", ")}"
+          puts "    schema: #{scope.fetch(:schema_status)}"
+          scope.fetch(:helpers).each { |helper| puts "    helper: #{helper}" }
+        end
+        puts "  diagnostics: none"
+        puts "  next: bin/rails generate hxruby:adopt --gem devise --write contracts"
+      end
+
+      def write_devise_contracts(gem_name)
+        inventory = devise_inventory(gem_name)
+        base_dir = File.join(@output_dir, ".railshx", "gems", "devise")
+        write_owned(File.join(base_dir, "inventory.json"), JSON.pretty_generate(inventory) + "\n", kind: "devise_inventory")
+        write_owned(File.join(base_dir, "diagnostics.json"), JSON.pretty_generate(devise_diagnostics(inventory)) + "\n", kind: "devise_diagnostics")
+        inventory.fetch(:scopes).each do |scope|
+          class_name = "#{scope.fetch(:model)}Auth"
+          write_owned(
+            File.join(@output_dir, "src_haxe", "app", "auth", "#{class_name}.hx"),
+            render_devise_auth_contract(scope),
+            kind: "devise_auth_contract"
+          )
+        end
+        write_owned(File.join(@output_dir, "docs", "railshx", "gems", "devise.md"), render_devise_doc(inventory), kind: "docs")
+      end
+
+      def devise_inventory(gem_name)
+        base = gem_inventory(gem_name)
+        scopes = parse_devise_routes.map do |route_scope|
+          modules = parse_devise_modules(route_scope.fetch(:model))
+          schema = parse_devise_schema(route_scope.fetch(:route_resource), modules)
+          {
+            scope: route_scope.fetch(:scope),
+            route_resource: route_scope.fetch(:route_resource),
+            model: route_scope.fetch(:model),
+            table: route_scope.fetch(:route_resource),
+            modules: modules,
+            helpers: devise_helpers(route_scope.fetch(:scope)),
+            schema_status: schema.fetch(:status),
+            schema_columns: schema.fetch(:columns),
+            required_columns: schema.fetch(:required_columns),
+          }
+        end
+        {
+          version: 1,
+          kind: "devise_inventory",
+          name: base.fetch(:name),
+          version_string: base.fetch(:version),
+          ruby_files: base.fetch(:ruby_files).length,
+          constants: base.fetch(:constants),
+          scopes: scopes,
+        }
+      end
+
+      def parse_devise_routes
+        routes_path = File.join(@output_dir, "config", "routes.rb")
+        raise Error, "Cannot adopt Devise: config/routes.rb not found in #{@output_dir}." unless File.file?(routes_path)
+
+        content = File.read(routes_path)
+        resources = content.scan(/\bdevise_for\s+:(#{ruby_identifier_pattern})\b/).flatten
+        raise Error, "Cannot adopt Devise: no literal devise_for scopes found in config/routes.rb." if resources.empty?
+
+        duplicates = resources.tally.select { |_resource, count| count > 1 }.keys
+        raise Error, "Cannot adopt Devise: ambiguous duplicate devise_for scope(s): #{duplicates.join(", ")}." if duplicates.any?
+
+        resources.map do |resource|
+          scope = singular_resource_name(resource)
+          {
+            scope: scope,
+            route_resource: resource,
+            model: Common.class_name_from_path(scope),
+          }
+        end
+      end
+
+      def parse_devise_modules(model_name)
+        model_path = File.join(@output_dir, "app", "models", "#{Common.file_name(model_name)}.rb")
+        raise Error, "Devise scope #{Common.file_name(model_name)} maps to missing model file #{relative_output_path(model_path)}." unless File.file?(model_path)
+
+        content = File.read(model_path)
+        declarations = content.scan(/\bdevise\s+([^\n]+)/).flatten
+        raise Error, "Devise model #{model_name} must contain a literal devise :module declaration." if declarations.empty?
+
+        modules = declarations.flat_map { |declaration| declaration.scan(/:(#{ruby_identifier_pattern})\b/).flatten }.uniq
+        raise Error, "Devise model #{model_name} did not expose any literal Devise modules." if modules.empty?
+
+        modules
+      end
+
+      def parse_devise_schema(table_name, modules)
+        schema_path = File.join(@output_dir, "db", "schema.rb")
+        raise Error, "Cannot adopt Devise: db/schema.rb not found in #{@output_dir}." unless File.file?(schema_path)
+
+        content = File.read(schema_path)
+        block = content[/^\s*create_table\s+["']#{Regexp.escape(table_name)}["'][\s\S]*?^\s*end\b/m]
+        raise Error, "Cannot adopt Devise: db/schema.rb does not contain table #{table_name.inspect}." unless block
+
+        columns = block.scan(/^\s*t\.(#{ruby_identifier_pattern})\s+["'](#{ruby_identifier_pattern})["']/).map do |type, name|
+          { name: name, type: type }
+        end
+        column_names = columns.map { |column| column.fetch(:name) }
+        required_columns = devise_required_columns(modules)
+        missing_columns = required_columns - column_names
+        if missing_columns.any?
+          raise Error, "Cannot adopt Devise: table #{table_name} is missing required column(s): #{missing_columns.join(", ")}."
+        end
+
+        {
+          status: "ok",
+          columns: columns.sort_by { |column| column.fetch(:name) },
+          required_columns: required_columns.sort,
+        }
+      end
+
+      def devise_required_columns(modules)
+        modules.flat_map do |mod|
+          case mod
+          when "database_authenticatable"
+            %w[email encrypted_password]
+          when "recoverable"
+            %w[reset_password_token reset_password_sent_at]
+          when "rememberable"
+            %w[remember_created_at]
+          when "confirmable"
+            %w[confirmation_token confirmed_at confirmation_sent_at]
+          when "lockable"
+            %w[failed_attempts unlock_token locked_at]
+          when "trackable"
+            %w[sign_in_count current_sign_in_at last_sign_in_at current_sign_in_ip last_sign_in_ip]
+          else
+            []
+          end
+        end.uniq
+      end
+
+      def devise_helpers(scope)
+        [
+          "authenticate_#{scope}!",
+          "current_#{scope}",
+          "#{scope}_signed_in?",
+        ]
+      end
+
+      def devise_diagnostics(inventory)
+        {
+          version: 1,
+          kind: "devise_diagnostics",
+          gem: inventory.fetch(:name),
+          status: "ok",
+          diagnostics: [],
+        }
+      end
+
+      def render_devise_auth_contract(scope)
+        class_name = "#{scope.fetch(:model)}Auth"
+        [
+          "package app.auth;",
+          "",
+          "import devisehx.Auth;",
+          "import devisehx.AuthFilter;",
+          "import devisehx.DeviseScope;",
+          "import devisehx.RouteResource;",
+          "import devisehx.ScopeName;",
+          "import models.#{scope.fetch(:model)};",
+          "import rails.action_controller.Base;",
+          "",
+          "// Generated by DeviseHx from deterministic Bundler, route, model, and schema metadata.",
+          "// Runtime ownership stays with Devise/Rails; this class is an app-local typed",
+          "// contract that gives Haxe completion for the concrete Devise scope helpers.",
+          "final class #{class_name} {",
+          "\tpublic static final scope:DeviseScope<#{scope.fetch(:model)}> = DeviseScope.of(ScopeName.named(#{Common.haxe_string(scope.fetch(:scope))}), RouteResource.named(#{Common.haxe_string(scope.fetch(:route_resource))}), #{scope.fetch(:model)});",
+          "",
+          "\tpublic static final authenticate:AuthFilter<#{scope.fetch(:model)}> = Auth.require(scope);",
+          "",
+          "\tpublic static inline function current(controller:Base):Null<#{scope.fetch(:model)}> {",
+          "\t\treturn Auth.current(controller, scope);",
+          "\t}",
+          "",
+          "\tpublic static inline function currentRequired(controller:Base):#{scope.fetch(:model)} {",
+          "\t\treturn Auth.currentRequired(controller, scope);",
+          "\t}",
+          "",
+          "\tpublic static inline function signedIn(controller:Base):Bool {",
+          "\t\treturn Auth.signedIn(controller, scope);",
+          "\t}",
+          "",
+          "\tpublic static inline function signIn(controller:Base, resource:#{scope.fetch(:model)}):Void {",
+          "\t\tAuth.signIn(controller, scope, resource);",
+          "\t}",
+          "",
+          "\tpublic static inline function signOut(controller:Base):Void {",
+          "\t\tAuth.signOut(controller, scope);",
+          "\t}",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_devise_doc(inventory)
+        lines = [
+          "# DeviseHx Adoption",
+          "",
+          "- Gem: `#{inventory.fetch(:name)}`",
+          "- Version: `#{inventory.fetch(:version_string)}`",
+          "- Runtime owner: Devise, Warden, Rails routes, Rails controllers, and Bundler.",
+          "- Haxe owner: app-local typed auth contracts under `src_haxe/app/auth`.",
+          "",
+          "DeviseHx does not replace Devise. It records deterministic app metadata and emits typed Haxe contracts that call normal Rails/Devise helpers.",
+          "",
+          "## Scopes",
+          "",
+        ]
+        inventory.fetch(:scopes).each do |scope|
+          lines += [
+            "### #{scope.fetch(:model)}",
+            "",
+            "- Scope: `#{scope.fetch(:scope)}`",
+            "- Route resource: `#{scope.fetch(:route_resource)}`",
+            "- Modules: `#{scope.fetch(:modules).join("`, `")}`",
+            "- Schema status: `#{scope.fetch(:schema_status)}`",
+            "- Generated contract: `app.auth.#{scope.fetch(:model)}Auth`",
+            "- Typed helpers: `current`, `currentRequired`, `signedIn`, `signIn`, `signOut`, `authenticate`.",
+            "",
+          ]
+        end
+        lines += [
+          "## Review Checklist",
+          "",
+          "- Keep Devise installation, initializer, migrations, and route macros in Rails unless a later Haxe-owned route slice explicitly takes ownership.",
+          "- Run `bundle exec rake hxruby:routes` after changing Devise routes so route externs keep using Rails as the helper oracle.",
+          "- Run `bundle exec rake hxruby:compile` and Rails request/browser tests after changing auth boundaries.",
+          "- Treat missing/dynamic Devise metadata as a generator failure or explicit unsafe seam, not as `Dynamic` app code.",
+          "",
+        ]
+        lines.join("\n")
+      end
+
+      def singular_resource_name(resource)
+        name = resource.to_s
+        return "#{name[0...-3]}y" if name.end_with?("ies")
+        return name[0...-1] if name.end_with?("s")
+
+        name
+      end
+
+      def ruby_identifier_pattern
+        "[A-Za-z_][A-Za-z0-9_]*"
       end
 
       class GemSourceInventory

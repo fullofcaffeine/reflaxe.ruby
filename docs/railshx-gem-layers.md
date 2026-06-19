@@ -174,6 +174,23 @@ and controller lifecycle hooks.
   mark uncertain APIs for review, and pass Ruby syntax, Rails runtime, and
   route/schema/helper parity gates where applicable.
 
+## Testing Policy
+
+Typed gem layers should not re-test the Ruby gem they wrap. DeviseHx, for
+example, should not duplicate Devise's login/session test suite. RailsHx tests
+should prove the boundary RailsHx owns:
+
+- deterministic discovery and adoption smoke tests for fail-closed behavior;
+- committed golden snapshots for generated Haxe contracts, JSON inventory,
+  diagnostics, docs, and other reviewable artifacts;
+- Haxe compile checks proving generated app-local contracts are usable by typed
+  Haxe app code;
+- focused Rails request/browser dogfood only where Rails must consume generated
+  artifacts end-to-end, such as a later DeviseHx login/logout example.
+
+This is now tracked as `haxe.ruby-8jr` so future companion gem layers inherit
+the same pattern instead of growing ad hoc test suites.
+
 ## Starter Template
 
 New RailsHx starter apps include an app-local copy of this workflow at

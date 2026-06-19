@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "kind": "devise_inventory",
+  "name": "devise",
+  "version_string": "5.0.0",
+  "ruby_files": 1,
+  "constants": [
+    "Devise",
+    "Devise::Mapping"
+  ],
+  "scopes": [
+    {
+      "scope": "user",
+      "route_resource": "users",
+      "model": "User",
+      "table": "users",
+      "modules": [
+        "database_authenticatable",
+        "registerable",
+        "recoverable",
+        "rememberable",
+        "validatable"
+      ],
+      "helpers": [
+        "authenticate_user!",
+        "current_user",
+        "user_signed_in?"
+      ],
+      "schema_status": "ok",
+      "schema_columns": [
+        {
+          "name": "created_at",
+          "type": "datetime"
+        },
+        {
+          "name": "email",
+          "type": "string"
+        },
+        {
+          "name": "encrypted_password",
+          "type": "string"
+        },
+        {
+          "name": "remember_created_at",
+          "type": "datetime"
+        },
+        {
+          "name": "reset_password_sent_at",
+          "type": "datetime"
+        },
+        {
+          "name": "reset_password_token",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime"
+        }
+      ],
+      "required_columns": [
+        "email",
+        "encrypted_password",
+        "remember_created_at",
+        "reset_password_sent_at",
+        "reset_password_token"
+      ]
+    }
+  ]
+}

@@ -30,7 +30,7 @@ load/render/migrate/deliver/subscribe/asset paths.
 | Rails interop/adoption | Snapshot-backed for RailsHx-owned output plus focused interop smoke/runtime-if-available. | Healthy after mixed-app snapshots. | Keep smoke focused on external ERB not being overwritten, checked locals/path failures, materialization, syntax, and request tests. |
 | Rails engine/plugin | Snapshot-backed plus focused smoke/generator checks. | Healthy after engine/plugin snapshots. | Keep smoke limited to syntax, executable output, unsafe output-root rejection, and generator CLI checks. |
 | Rails routing | Snapshot-backed for the focused `examples/rails_routes_dsl` output plus todoapp runtime/request seams and negative route DSL smoke. | Healthy. Snapshots own generated `config/routes.rb` and `.railshx/routes.haxe.json`; smoke owns invalid DSL diagnostics, unsafe escapes, route-helper generation, parity seams, and the Haxe-authored route parity core dogfood freshness check. | Keep exact output changes in snapshots. Keep runtime tests thin: route recognition/helper existence/request dispatch where Rails must consume generated routes. |
-| Generators and package/release checks | Smoke/check scripts only. | Appropriate. These are command/product-shape checks more than compiler-output snapshots. | Keep smoke/check style; add golden fixture snapshots only if generator output becomes complex or unstable. |
+| Generators and package/release checks | Smoke/check scripts, with golden snapshots for complex generated contracts such as DeviseHx app-local auth layers. | Healthy. CLI/product behavior stays in smoke; generated Haxe/docs/JSON output gets snapshots once users will review or depend on it. | Keep generic generator checks smoke-focused, but require snapshots plus Haxe compile checks for typed gem-layer contracts. |
 | Browser/production dogfood | Playwright and production smoke. | Appropriate. These prove UX and deployable app seams, not compiler output. | Keep thin and user-visible. |
 
 ## Smoke Test Rules
@@ -67,6 +67,12 @@ Use this checklist when adding or reviewing a smoke test:
 
 - Keep package/release/generator checks as smoke/check scripts unless their
   generated output becomes complex enough to need golden fixtures.
+- Typed RailsHx gem layers, including DeviseHx, use a stricter variant of that
+  rule: smoke tests cover deterministic inventory and fail-closed adoption,
+  snapshots cover generated contracts/docs/JSON, Haxe compile checks prove the
+  contracts are usable, and later dogfood apps cover only Rails consumption
+  seams such as login/logout flows. Do not re-test the wrapped Ruby gem's own
+  behavior unless RailsHx adds runtime logic.
 - When a smoke grows new generated-output text assertions, first ask whether the
   output belongs in `scripts/ci/snapshot-harness.js` instead.
 - `test:route-parity-dogfood` is a generated-source freshness check, not a broad

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "kind": "devise_diagnostics",
+  "gem": "devise",
+  "status": "ok",
+  "diagnostics": [
+
+  ]
+}
