@@ -11,7 +11,7 @@ import views.ChatMessageView.ChatMessageLocals;
 
 typedef ChatPanelLocals = {
 	var messages:Array<ChatMessage>;
-	var currentUser:Null<User>;
+	var currentUser:User;
 	var users:Array<User>;
 }
 
@@ -20,9 +20,9 @@ typedef ChatPanelLocals = {
 // Demonstrates: classic Hotwire realtime UI authored through typed HHX. The
 // panel subscribes with `<turbo_stream_from>`, Rails broadcasts server-rendered
 // `_chat_message` partials, and Haxe JS does not maintain a duplicate room DOM.
-// Type safety: chat form fields use `ChatMessage.f.*`; the submit user comes
-// from a nullable typed `currentUser`; the loop body sees each message as a
-// `ChatMessage` with typed fields.
+// Type safety: chat form fields use `ChatMessage.f.*`; authorship comes from
+// the authenticated `currentUser` in the controller, not a spoofable hidden
+// field; the loop body sees each message as a `ChatMessage` with typed fields.
 // IntelliSense: editors should complete `locals.messages`, `message.body`,
 // `message.userId`, `ChatMessage.f.body`, `Routes.chatMessagesPath`, and
 // `ChatMessageView.roomStream`.
@@ -56,18 +56,13 @@ class ChatPanelView {
 				<div class="empty-state">No room notes yet. The standup is suspiciously quiet.</div>
 			</if>
 
-			<if ${locals.currentUser != null}>
-				<form_with url=${Routes.chatMessagesPath()} scope=${ChatMessage.railsParamKey} local class=${TodoHooks.chatFormClass} data-railshx-chat-form>
-					<hidden_field name=${ChatMessage.f.userId} value=${locals.currentUser.id} />
-					<div>
-						<field_label name=${ChatMessage.f.body}>Add a typed room note</field_label>
-						<text_area name=${ChatMessage.f.body} placeholder="Share what changed, what blocked, or what shipped" rows=${3} required />
-					</div>
-					<submit type="submit">Post note</submit>
-				</form_with>
-			<else>
-				<div class="empty-state">Choose a user before posting a room note.</div>
-			</if>
+			<form_with url=${Routes.chatMessagesPath()} scope=${ChatMessage.railsParamKey} local class=${TodoHooks.chatFormClass} data-railshx-chat-form>
+				<div>
+					<field_label name=${ChatMessage.f.body}>Add a typed room note</field_label>
+					<text_area name=${ChatMessage.f.body} placeholder="Share what changed, what blocked, or what shipped" rows=${3} required />
+				</div>
+				<submit type="submit">Post note</submit>
+			</form_with>
 		</section>;
 	}
 }

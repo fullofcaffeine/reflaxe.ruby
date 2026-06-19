@@ -24,8 +24,7 @@ typedef TodoIndexLocals = {
 	var chatMessages:Array<ChatMessage>;
 	var todoCount:Int;
 	var typedColumnCount:Int;
-	var sampleUser:Null<User>;
-	var currentUser:Null<User>;
+	var currentUser:User;
 }
 
 // RailsHx todo controller.
@@ -43,35 +42,36 @@ typedef TodoIndexLocals = {
 @:railsController
 class TodosController extends rails.action_controller.Base {
 	static final lifecycle = {
-		// The board is public so guests can reach the typed DeviseHx sign-in
-		// panel; mutations stay protected and can safely use Devise sessions.
-		beforeAction(UserAuth.authenticate, {except: [index]});
+		// The board is a real authenticated Rails surface. Devise owns the
+		// redirect/filter; RailsHx only gives the filter a typed Haxe ref.
+		beforeAction(UserAuth.authenticate, {});
 	};
 
 	public function index() {
-		var todos = Todo.incomplete().includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray();
+		var currentUser = UserAuth.currentRequired(this);
+		var todos = Todo.where({isCompleted: false, userId: currentUser.id}).includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray();
 		var users = User.order(User.f.name.asc()).toArray();
 		var chatMessages = ChatMessage.latest().toArray();
-		var currentUser = UserAuth.current(this);
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {
 			todos: todos,
 			users: users,
 			chatMessages: chatMessages,
 			todoCount: todos.length,
 			typedColumnCount: Todo.typedColumnCount(),
-			sampleUser: currentUser,
 			currentUser: currentUser
 		}, Template.layout(ApplicationLayoutView));
 	}
 
 	public function create() {
-		var attrs = ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, Todo.f.notes, Todo.f.userId]);
+		var currentUser = UserAuth.currentRequired(this);
+		var attrs = ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, Todo.f.notes]);
+		attrs = ParamsMacro.mergeField(attrs, Todo.f.userId, currentUser.id);
 		var todo = Todo.create(attrs);
 		respondTo(function(format) {
 			format.turboStream(function() {
 				render({
 					turboStream: TurboStreams.replace(StreamTarget.named(TodoHooks.todoListId), (Template.of(TodoListView) : Template<TodoListLocals>), {
-						todos: Todo.incomplete().includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray()
+						todos: Todo.where({isCompleted: false, userId: currentUser.id}).includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray()
 					})
 				});
 			});

@@ -237,6 +237,8 @@ for (const file of [
   "app/haxe_gen/views/application_layout_view.rb",
   "app/haxe_gen/views/chat_message_view.rb",
   "app/haxe_gen/views/chat_panel_view.rb",
+  "app/haxe_gen/views/app_top_bar_view.rb",
+  "app/haxe_gen/views/devise_login_view.rb",
   "app/haxe_gen/views/todo_card_view.rb",
   "app/haxe_gen/views/todo_composer_view.rb",
   "app/haxe_gen/views/todo_dashboard_view.rb",
@@ -246,12 +248,14 @@ for (const file of [
   "app/haxe_gen/views/todo_summary_view.rb",
   "app/views/controllers/todos/index.html.erb",
   "app/views/controllers/todos/_card.html.erb",
+  "app/views/controllers/todos/_app_top_bar.html.erb",
   "app/views/controllers/todos/_chat_panel.html.erb",
   "app/views/controllers/todos/_composer.html.erb",
   "app/views/controllers/todos/_dashboard.html.erb",
   "app/views/controllers/todos/_list.html.erb",
   "app/views/controllers/todos/_summary.html.erb",
   "app/views/controllers/todos/_typed_form.html.erb",
+  "app/views/devise/sessions/new.html.erb",
   "app/views/layouts/application.html.erb",
   "config/routes.rb",
   "db/migrate/20260101000000_create_todos.rb",
@@ -467,16 +471,17 @@ for (const expected of [
   /require "action_controller\/railtie"/,
   /module Controllers/,
   /class TodosController < ActionController::Base/,
-  /todos__hx\d+ = Models::Todo\.incomplete\(\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)/,
+  /todos__hx\d+ = Models::Todo\.where\(is_completed: false, user_id: current_user__hx\d+\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)/,
   /users__hx\d+ = Models::User\.order\(name: :asc\)\.to_a\(\)/,
   /chat_messages__hx\d+ = Models::ChatMessage\.latest\(\)\.to_a\(\)/,
-  /before_action :authenticate_user!, except: \[:index\]/,
+  /before_action :authenticate_user!/,
   /current_user__hx\d+ = current_user\(\)/,
-  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, users: users__hx\d+, chat_messages: chat_messages__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), sample_user: current_user__hx\d+, current_user: current_user__hx\d+\}, layout: "application"\)/,
-  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes, :user_id\]\)/,
+  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, users: users__hx\d+, chat_messages: chat_messages__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), current_user: current_user__hx\d+\}, layout: "application"\)/,
+  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes\]\)/,
+  /attrs__hx\d+ = attrs__hx\d+\.merge\(user_id: current_user__hx\d+\.id\)/,
   /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
   /self\.respond_to\(\) do \|format__hx\d+\|/,
-  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-todo-list", partial: "controllers\/todos\/list", locals: \{todos: Models::Todo\.incomplete\(\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)\}\)\) \}/,
+  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-todo-list", partial: "controllers\/todos\/list", locals: \{todos: Models::Todo\.where\(is_completed: false, user_id: current_user__hx\d+\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)\}\)\) \}/,
   /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
 ]) {
   if (!expected.test(controllerRuby)) {
@@ -488,8 +493,10 @@ for (const expected of [
 const chatMessagesControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "chat_messages_controller.rb"), "utf8");
 for (const expected of [
   /class ChatMessagesController < ActionController::Base/,
+  /before_action :authenticate_user!/,
   /def index\(\)/,
-  /attrs__hx\d+ = self\.params\(\)\.require\("chat_message"\)\.permit\(\[:body, :user_id\]\)/,
+  /attrs__hx\d+ = self\.params\(\)\.require\("chat_message"\)\.permit\(\[:body\]\)/,
+  /attrs__hx\d+ = attrs__hx\d+\.merge\(user_id: current_user__hx\d+\.id\)/,
   /message__hx\d+ = Models::ChatMessage\.create\(attrs__hx\d+\)/,
   /Turbo::StreamsChannel\.broadcast_prepend_to\("todoapp:chat", target: "railshx-chat-list", partial: "controllers\/todos\/chat_message", locals: \{message: message__hx\d+\}\)/,
   /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.head\(:no_content\) \}/,
@@ -827,7 +834,6 @@ for (const expected of [
   "hooks.selectors.chatForms",
   "hooks.selectors.chatPanel",
   "turbo-cable-stream-source[connected]",
-  "hooks.selectors.sessionFooter",
   "hooks.attrs.bound",
   "hooks.selectors.openWork",
 ]) {
@@ -879,12 +885,13 @@ for (const expected of [
   '<meta name="railshx-template" content="todo-index">',
   "<%= todo_count %>",
   "<%= typed_column_count %>",
-  '<%= render partial: "controllers/todos/user_switcher", locals: {users: users, current_user: current_user} %>',
-  '<%= render partial: "controllers/todos/composer", locals: {sample_user: sample_user} %>',
+  '<%= render partial: "controllers/todos/app_top_bar", locals: {current_user: current_user} %>',
+  '<turbo-frame id="railshx-user-frame" class="user-management-frame"></turbo-frame>',
+  '<%= render partial: "controllers/todos/composer", locals: {current_user: current_user} %>',
   '<%= render partial: "controllers/todos/list", locals: {todos: todos} %>',
   '<%= render partial: "controllers/todos/chat_panel", locals: {messages: chat_messages, current_user: current_user, users: users} %>',
   "todo-shell",
-  '<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user, current_user: current_user} %>',
+  '<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, current_user: current_user} %>',
 ]) {
   if (!view.includes(expected)) {
     console.error(`todoapp_rails view missing expected content: ${expected}`);
@@ -903,7 +910,6 @@ for (const expected of [
   '<%= render partial: "controllers/todos/chat_message", locals: {message: message} %>',
   "<% if messages.length == 0 %>",
   '<%= form_with url: chat_messages_path(), scope: :chat_message, local: true, class: "chat-form", data: {railshx_chat_form: true} do |form| %>',
-  '<%= form.hidden_field :user_id, value: current_user.id %>',
   '<%= form.label :body, "Add a typed room note" %>',
   '<%= form.text_area :body, placeholder: "Share what changed, what blocked, or what shipped", rows: 3, required: true %>',
   '<%= form.submit "Post note", type: "submit" %>',
@@ -912,6 +918,10 @@ for (const expected of [
     console.error(`todoapp_rails typed chat panel missing expected content: ${expected}`);
     process.exit(1);
   }
+}
+if (typedChatPanel.includes("hidden_field :user_id")) {
+  console.error("todoapp_rails chat panel must not render a spoofable user_id hidden field.");
+  process.exit(1);
 }
 
 const typedChatMessage = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_chat_message.html.erb"), "utf8");
@@ -975,7 +985,7 @@ for (const expected of [
     process.exit(1);
   }
 }
-for (const forbidden of ["<% todos ||= [] %>", "<% sample_user = Models::User.order(:id).first %>", "controllers/todos/hero"]) {
+for (const forbidden of ["<% todos ||= [] %>", "<% sample_user = Models::User.order(:id).first %>", "controllers/todos/hero", "controllers/todos/user_switcher"]) {
   if (view.includes(forbidden)) {
     console.error(`todoapp_rails HHX index should not contain raw shell content: ${forbidden}`);
     process.exit(1);
@@ -1034,10 +1044,7 @@ for (const expected of [
 
 const typedComposer = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_composer.html.erb"), "utf8");
 for (const expected of [
-  "<% if sample_user != nil %>",
-  '<%= render partial: "controllers/todos/typed_form", locals: {sample_user_id: sample_user.id} %>',
-  "<% else %>",
-  "Create a user first; the integration fixture seeds one before exercising this page.",
+  '<%= render partial: "controllers/todos/typed_form", locals: {current_user_name: current_user.name} %>',
 ]) {
   if (!typedComposer.includes(expected)) {
     console.error(`todoapp_rails typed composer partial missing expected content: ${expected}`);
@@ -1047,8 +1054,9 @@ for (const expected of [
 
 const typedList = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_list.html.erb"), "utf8");
 for (const expected of [
+  '<div id="railshx-todo-list" class="todo-list-frame">',
   "<% if todos.length > 0 %>",
-  '<ul id="railshx-todo-list" class="todo-list">',
+  '<ul class="todo-list">',
   "<% todos.each do |todo| %>",
   '<li class="todo-item">',
   "<%= todo.title %>",
@@ -1065,7 +1073,7 @@ for (const expected of [
 const typedForm = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_typed_form.html.erb"), "utf8");
 for (const expected of [
   '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>',
-  '<%= form.hidden_field :user_id, value: sample_user_id %>',
+  '<p class="form-owner-note">New tasks will be assigned to <%= current_user_name %>.</p>',
   '<%= form.label :title, "What should ship next?" %>',
   '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',
   '<%= form.label :notes, "Why does it matter?" %>',
@@ -1077,25 +1085,44 @@ for (const expected of [
     process.exit(1);
   }
 }
+if (typedForm.includes("hidden_field :user_id")) {
+  console.error("todoapp_rails typed form must not render a spoofable user_id hidden field.");
+  process.exit(1);
+}
 
-const typedUserSwitcher = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_user_switcher.html.erb"), "utf8");
+const typedAppTopBar = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_app_top_bar.html.erb"), "utf8");
 for (const expected of [
-  "DeviseHx auth layer",
-  "Typed auth, Rails-owned sessions.",
-  '<%= link_to users_path(), class: "typed-route-link team-route-link", data: {turbo_frame: "railshx-user-frame"} do %>',
-  '<div class="team-members auth-members" data-railshx-session-zone>',
-  "<% if current_user == nil %>",
-  "Guest gate",
-  '<%= link_to new_user_session_path(), class: "typed-route-link auth-link" do %>',
-  '<%= button_to "Continue as guest", guest_sign_in_path(), method: "post", class: "session-clear-form auth-guest-form", data: {railshx_session: true} %>',
-  '<%= button_to "Sign out", destroy_user_session_path(), method: "delete", class: "session-clear-form", data: {railshx_session: true} %>',
-  '<turbo-frame id="railshx-user-frame" class="user-management-frame">',
-  "Turbo Frame ready.",
-  '<%= button_to users_path(), method: "get", class: "typed-route-link" do %>',
-  "<span>Open in frame</span>",
+  '<header class="app-topbar" aria-label="Todoapp session">',
+  "RailsHx Todo",
+  "Devise session active",
+  '<%= link_to users_path(), class: "typed-route-link topbar-link", data: {turbo_frame: "railshx-user-frame"} do %>',
+  '<%= link_to "#open-work", class: "typed-route-link topbar-link", data: {railshx_scroll: true} do %>',
+  '<span class="avatar"><%= current_user.initials() %></span>',
+  '<strong><%= current_user.name %></strong>',
+  '<em><%= current_user.role_label() %> · <%= current_user.email %></em>',
+  '<%= button_to "Log out", destroy_user_session_path(), method: "delete", class: "session-clear-form topbar-logout", data: {railshx_session: true} %>',
 ]) {
-  if (!typedUserSwitcher.includes(expected)) {
-    console.error(`todoapp_rails typed user switcher partial missing expected content: ${expected}`);
+  if (!typedAppTopBar.includes(expected)) {
+    console.error(`todoapp_rails typed app top bar partial missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const typedDeviseLogin = readFileSync(join(outputDir, "app", "views", "devise", "sessions", "new.html.erb"), "utf8");
+for (const expected of [
+  '<main class="login-shell">',
+  "Sign in to the typed Rails board.",
+  "Devise owns Warden, password verification, sessions, and redirects.",
+  "Seeded demo",
+  "owner@example.test",
+  "password123",
+  '<%= form_with url: user_session_path(), scope: :user, local: true, class: "login-form", data: {railshx_session: true} do |form| %>',
+  '<%= form.text_field :email, type: "email", autocomplete: "email", placeholder: "owner@example.test", autofocus: true, required: true %>',
+  '<%= form.password_field :password, autocomplete: "current-password", placeholder: "password123", required: true %>',
+  '<%= button_to "Continue as guest", guest_sign_in_path(), method: "post", class: "auth-guest-form", data: {railshx_session: true} %>',
+]) {
+  if (!typedDeviseLogin.includes(expected)) {
+    console.error(`todoapp_rails typed Devise login view missing expected content: ${expected}`);
     process.exit(1);
   }
 }

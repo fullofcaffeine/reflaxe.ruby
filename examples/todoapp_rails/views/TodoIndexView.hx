@@ -6,10 +6,11 @@ import rails.action_view.Template;
 import shared.TodoHooks;
 import views.ChatPanelView;
 import views.ChatPanelView.ChatPanelLocals;
+import views.AppTopBarView;
+import views.AppTopBarView.AppTopBarLocals;
 import views.TodoComposerView.TodoComposerLocals;
 import views.TodoListView.TodoListLocals;
 import views.TodoDashboardView;
-import views.UserSwitcherView.UserSwitcherLocals;
 
 // Todo index page authored as typed HHX.
 //
@@ -31,6 +32,9 @@ class TodoIndexView {
 				<meta name=${TodoHooks.templateMetaName} content=${TodoHooks.templateMetaContent} />
 			</content_for>
 			<main class=${TodoHooks.shellClass}>
+				<partial template=${(Template.of(AppTopBarView) : Template<AppTopBarLocals>)} locals=${{
+					currentUser: locals.currentUser
+				}} />
 				<div class=${TodoHooks.flashClass} data-railshx-flash role="status" aria-live="polite" hidden></div>
 				<section class="hero">
 					<div class="card">
@@ -54,15 +58,12 @@ class TodoIndexView {
 					</aside>
 				</section>
 
-				<partial template=${(Template.of(UserSwitcherView) : Template<UserSwitcherLocals>)} locals=${{
-					users: locals.users,
-					currentUser: locals.currentUser
-				}} />
+				<turbo_frame id=${TodoHooks.userFrameId} class=${TodoHooks.userFrameClass}></turbo_frame>
 
 				<section class="workspace">
 					<div class="card">
 						<h2>Add a task</h2>
-						<partial template=${(Template.of(TodoComposerView) : Template<TodoComposerLocals>)} locals=${{sampleUser: locals.sampleUser}} />
+						<partial template=${(Template.of(TodoComposerView) : Template<TodoComposerLocals>)} locals=${{currentUser: locals.currentUser}} />
 					</div>
 
 					<div id=${TodoHooks.openWorkId} class="card open-work-card" tabindex="-1">
@@ -80,12 +81,11 @@ class TodoIndexView {
 				<partial template=${(Template.of(TodoDashboardView) : Template<TodoIndexLocals>)} locals=${{
 					todos: locals.todos,
 					users: locals.users,
-					chatMessages: locals.chatMessages,
-					todoCount: locals.todoCount,
-					typedColumnCount: locals.typedColumnCount,
-					sampleUser: locals.sampleUser,
-					currentUser: locals.currentUser
-				}} />
+						chatMessages: locals.chatMessages,
+						todoCount: locals.todoCount,
+						typedColumnCount: locals.typedColumnCount,
+						currentUser: locals.currentUser
+					}} />
 			</main></>;
 	}
 }

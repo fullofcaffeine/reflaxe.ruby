@@ -35,6 +35,14 @@ class ParamsMacro {
 		return macro $params.requireParam($root).permit($e{permitArrayExpr(permit)});
 	}
 
+	public static macro function mergeField(params:Expr, field:Expr, value:Expr):Expr {
+		var info = fieldInfo(field);
+		if (info.model == null) {
+			Context.error("ParamsMacro.mergeField expects a generated RailsHx model field ref such as Todo.f.userId.", field.pos);
+		}
+		return macro rails.action_controller.ParamsRuntime.mergeField($params, $field, $value);
+	}
+
 	#if macro
 	static function permitSpecs(expr:Expr):Array<PermitSpec> {
 		return switch (expr.expr) {

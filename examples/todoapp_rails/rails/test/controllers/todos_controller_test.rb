@@ -1,39 +1,60 @@
 require "test_helper"
 
 class TodosControllerTest < ActionDispatch::IntegrationTest
-  test "index renders the polished RailsHx todo page with ordered open work" do
+  test "signed-out users see the designed DeviseHx login page" do
+    get "/todos"
+
+    assert_redirected_to "/users/sign_in"
+
+    get "/users/sign_in"
+
+    assert_response :success
+    assert_includes @response.body, "login-shell"
+    assert_includes @response.body, "Sign in to the typed Rails board."
+    assert_includes @response.body, "owner@example.test"
+    assert_includes @response.body, "password123"
+    assert_includes @response.body, "Continue as guest"
+    assert_includes @response.body, "Devise owns Warden"
+  end
+
+  test "index renders the authenticated RailsHx todo page scoped to current user" do
     user = create_user!(name: "owner", email: "owner@example.test", role: "admin")
-    create_user!(name: "member", email: "member@example.test", role: "member")
+    other_user = create_user!(name: "member", email: "member@example.test", role: "member")
     Models::Todo.create!(title: "zed open task", is_completed: false, user: user)
     Models::Todo.create!(title: "alpha open task", is_completed: false, user: user)
     Models::Todo.create!(title: "completed hidden task", is_completed: true, user: user)
+    Models::Todo.create!(title: "other user private task", is_completed: false, user: other_user)
     Models::ChatMessage.create!(body: "typed chat note", user: user)
 
+    sign_in user
     get "/todos"
 
     assert_response :success
     assert_includes @response.body, "Typed Rails, polished Ruby."
     assert_includes @response.body, "RailsHx sample"
-    assert_includes @response.body, "DeviseHx auth layer"
-    assert_includes @response.body, "Guest gate"
-    assert_includes @response.body, "Open Devise login"
-    assert_includes @response.body, "Continue as guest"
-    assert_includes @response.body, "Manage users"
+    assert_includes @response.body, "Devise session active"
+    assert_includes @response.body, "owner@example.test"
+    assert_includes @response.body, "Log out"
+    assert_includes @response.body, "Users"
     assert_includes @response.body, "Typed Turbo room"
     assert_includes @response.body, "typed chat note"
     assert_includes @response.body, "alpha open task"
     assert_includes @response.body, "zed open task"
     assert_not_includes @response.body, "completed hidden task"
+    assert_not_includes @response.body, "other user private task"
+    assert_not_includes @response.body, "DeviseHx auth layer"
+    assert_not_includes @response.body, "Continue as guest"
     assert_operator @response.body.index("alpha open task"), :<, @response.body.index("zed open task")
     assert_includes @response.body, "typed columns"
   end
 
-  test "create permits haxe-authored params and ignores unpermitted fields" do
+  test "create permits haxe-authored params and server-owns user assignment" do
     user = create_user!(name: "owner", email: "owner-create@example.test", role: "admin")
+    other_user = create_user!(name: "attacker", email: "attacker-create@example.test", role: "member")
     sign_in user
 
     assert_difference "Models::Todo.count", 1 do
-      post "/todos", params: { todo: { title: "from params", notes: "typed notes", is_completed: true, user_id: user.id, ignored: "nope" } }
+      post "/todos", params: { todo: { title: "from params", notes: "typed notes", is_completed: true, user_id: other_user.id, ignored: "nope" } }
     end
 
     assert_redirected_to "/todos"
@@ -61,19 +82,24 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     post "/guest"
 
     assert_redirected_to "/todos"
+    get "/todos"
+    assert_response :success
+    assert_includes @response.body, "Guest Workspace"
+    assert_includes @response.body, "Devise session active"
+
     get "/users"
     assert_response :success
     assert_includes @response.body, "Guest Workspace"
   end
 
-  test "devise sign out returns guests to the public board" do
+  test "devise sign out returns users to protected login flow" do
     user = create_user!(name: "session owner", email: "session-clear@example.test", role: "maintainer")
     sign_in user
 
     delete "/users/sign_out"
 
     assert_redirected_to "/"
-    get "/users"
+    get "/todos"
     assert_redirected_to "/users/sign_in"
   end
 
@@ -89,12 +115,13 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, "Back to todo board"
   end
 
-  test "chat message create permits haxe-authored params and redirects" do
+  test "chat message create permits haxe-authored params and server-owns user assignment" do
     user = create_user!(name: "room owner", email: "room-create@example.test", role: "maintainer")
+    other_user = create_user!(name: "room spoof", email: "room-spoof@example.test", role: "member")
     sign_in user
 
     assert_difference "Models::ChatMessage.count", 1 do
-      post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: user.id, ignored: "nope" } }
+      post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: other_user.id, ignored: "nope" } }
     end
 
     assert_redirected_to "/todos"

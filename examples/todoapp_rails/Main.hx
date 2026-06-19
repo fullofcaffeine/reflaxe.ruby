@@ -13,8 +13,10 @@ import models.Todo;
 import routes.AppRoutes;
 import test_haxe.models.TodoHaxeTest;
 import views.ApplicationLayoutView;
+import views.AppTopBarView;
 import views.ChatMessageView;
 import views.ChatPanelView;
+import views.DeviseLoginView;
 import views.TodoCardView;
 import views.TodoComposerView;
 import views.TodoDashboardView;
@@ -23,7 +25,6 @@ import views.TodoIndexView;
 import views.TodoListView;
 import views.TodoSummaryView;
 import views.UserManagementView;
-import views.UserSwitcherView;
 
 // RailsHx todoapp compile sentinel.
 //
@@ -54,7 +55,9 @@ class Main {
 		var userController:UsersController = null;
 		var chatMessageView:Class<ChatMessageView> = ChatMessageView;
 		var chatPanelView:Class<ChatPanelView> = ChatPanelView;
+		var deviseLoginView:Class<DeviseLoginView> = DeviseLoginView;
 		var layoutView:Class<ApplicationLayoutView> = ApplicationLayoutView;
+		var topBarView:Class<AppTopBarView> = AppTopBarView;
 		var cardView:Class<TodoCardView> = TodoCardView;
 		var composerView:Class<TodoComposerView> = TodoComposerView;
 		var dashboardView:Class<TodoDashboardView> = TodoDashboardView;
@@ -63,7 +66,6 @@ class Main {
 		var view:Class<TodoIndexView> = TodoIndexView;
 		var summaryView:Class<TodoSummaryView> = TodoSummaryView;
 		var userManagementView:Class<UserManagementView> = UserManagementView;
-		var userSwitcherView:Class<UserSwitcherView> = UserSwitcherView;
 		Sys.println(todo == null);
 		Sys.println(chatMessage == null);
 		Sys.println(userAuth != null);
@@ -80,7 +82,9 @@ class Main {
 		Sys.println(userController == null);
 		Sys.println(chatMessageView != null);
 		Sys.println(chatPanelView != null);
+		Sys.println(deviseLoginView != null);
 		Sys.println(layoutView != null);
+		Sys.println(topBarView != null);
 		Sys.println(cardView != null);
 		Sys.println(composerView != null);
 		Sys.println(dashboardView != null);
@@ -89,6 +93,5 @@ class Main {
 		Sys.println(view != null);
 		Sys.println(summaryView != null);
 		Sys.println(userManagementView != null);
-		Sys.println(userSwitcherView != null);
 	}
 }

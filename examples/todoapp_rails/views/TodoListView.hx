@@ -16,28 +16,33 @@ typedef TodoListLocals = {
 // IntelliSense: editors should complete `locals.todos`, loop variable `todo`,
 // and `Todo` model fields inside the `<for>` body.
 // Ruby/Rails output: ERB conditional/iteration over the Rails local `todos`.
+// Turbo safety: the outer `railshx-todo-list` target is always present, even
+// when the list is empty, so Rails `turbo_stream.replace(...)` has a stable
+// target after the first task is created.
 @:railsTemplate("controllers/todos/_list")
 @:railsTemplateAst("render")
 class TodoListView {
 	public static function render(locals:TodoListLocals):HtmlNode {
-		return <if ${locals.todos.length > 0}>
-			<ul id=${TodoHooks.todoListId} class="todo-list">
-				<for ${todo in locals.todos}>
-					<li class="todo-item">
-						<span class="todo-dot" aria-hidden="true"></span>
-						<div>
-							<span>${todo.title}</span>
-							<if ${todo.notes != ""}>
-								<p class="todo-notes">${todo.notes}</p>
-							</if>
-						</div>
-					</li>
-				</for>
-			</ul>
-		<else>
-			<div class="empty-state">
-				No open tasks. Serene, but suspicious.
-			</div>
-		</if>;
+		return <div id=${TodoHooks.todoListId} class="todo-list-frame">
+			<if ${locals.todos.length > 0}>
+				<ul class="todo-list">
+					<for ${todo in locals.todos}>
+						<li class="todo-item">
+							<span class="todo-dot" aria-hidden="true"></span>
+							<div>
+								<span>${todo.title}</span>
+								<if ${todo.notes != ""}>
+									<p class="todo-notes">${todo.notes}</p>
+								</if>
+							</div>
+						</li>
+					</for>
+				</ul>
+			<else>
+				<div class="empty-state">
+					No open tasks. Serene, but suspicious.
+				</div>
+			</if>
+		</div>;
 	}
 }

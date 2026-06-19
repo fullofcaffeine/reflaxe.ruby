@@ -30,6 +30,235 @@ body {
 	padding: 56px 0;
 }
 
+.login-shell {
+	display: grid;
+	grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.72fr);
+	gap: 28px;
+	width: min(1120px, calc(100% - 32px));
+	margin: 0 auto;
+	padding: min(10vh, 92px) 0 72px;
+}
+
+.login-hero,
+.login-panel {
+	position: relative;
+	overflow: hidden;
+	min-height: 560px;
+}
+
+.login-hero {
+	display: grid;
+	align-content: space-between;
+	background:
+		radial-gradient(circle at 18% 8%, rgba(255, 209, 102, 0.42), transparent 20rem),
+		radial-gradient(circle at 84% 88%, rgba(185, 244, 211, 0.5), transparent 20rem),
+		var(--glass);
+}
+
+.login-hero::after {
+	position: absolute;
+	right: -86px;
+	bottom: -84px;
+	width: 260px;
+	height: 260px;
+	border-radius: 999px;
+	background: radial-gradient(circle, rgba(255, 107, 53, 0.22), transparent 64%);
+	content: "";
+	pointer-events: none;
+}
+
+.login-copy {
+	position: relative;
+	z-index: 1;
+}
+
+.login-copy h1 {
+	font-size: clamp(3rem, 7vw, 6.9rem);
+}
+
+.login-copy p,
+.login-panel p {
+	max-width: 620px;
+	color: var(--muted);
+	font: 1.06rem/1.78 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.credential-card {
+	position: relative;
+	z-index: 1;
+	display: grid;
+	gap: 8px;
+	max-width: 340px;
+	border: 1px solid rgba(24, 34, 31, 0.14);
+	border-radius: 28px;
+	padding: 22px;
+	background: rgba(255, 255, 255, 0.72);
+	box-shadow: 0 20px 54px rgba(24, 34, 31, 0.12);
+}
+
+.credential-card span,
+.credential-card em,
+.session-copy em,
+.brand-mark em {
+	color: var(--muted);
+	font: 800 0.78rem/1.35 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.credential-card strong {
+	font-size: 1.2rem;
+}
+
+.credential-card em {
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+.login-panel {
+	display: grid;
+	align-content: center;
+	gap: 22px;
+}
+
+.login-form {
+	display: grid;
+	gap: 16px;
+}
+
+.login-form label {
+	color: var(--muted);
+	font: 800 0.78rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.11em;
+	text-transform: uppercase;
+}
+
+.login-form input:not([type="checkbox"]) {
+	box-sizing: border-box;
+	width: 100%;
+	border: 1px solid var(--line);
+	border-radius: 20px;
+	padding: 17px 18px;
+	color: var(--ink);
+	background: rgba(255, 255, 255, 0.78);
+	font: 1rem/1.2 "Avenir Next", "Trebuchet MS", sans-serif;
+	outline: none;
+}
+
+.login-form input:focus {
+	border-color: rgba(255, 107, 53, 0.66);
+	box-shadow: 0 0 0 5px rgba(255, 107, 53, 0.12);
+}
+
+.login-form input[type="submit"],
+.auth-guest-form input[type="submit"],
+.auth-guest-form button,
+.topbar-logout input[type="submit"],
+.topbar-logout button {
+	border: 0;
+	border-radius: 18px;
+	padding: 16px 20px;
+	color: white;
+	cursor: pointer;
+	font: 900 0.9rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	background: linear-gradient(135deg, #18221f, #365249);
+	box-shadow: 0 16px 38px rgba(24, 34, 31, 0.24);
+	transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.login-form input[type="submit"]:hover,
+.auth-guest-form input[type="submit"]:hover,
+.auth-guest-form button:hover,
+.topbar-logout input[type="submit"]:hover,
+.topbar-logout button:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 20px 46px rgba(24, 34, 31, 0.3);
+}
+
+.guest-entry {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	align-items: center;
+	justify-content: space-between;
+	border-top: 1px solid var(--line);
+	padding-top: 18px;
+	color: var(--muted);
+	font: 0.95rem/1.5 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.guest-entry form,
+.session-chip form {
+	margin: 0;
+}
+
+.app-topbar {
+	display: grid;
+	grid-template-columns: minmax(220px, 1fr) auto minmax(280px, auto);
+	gap: 18px;
+	align-items: center;
+	margin-bottom: 28px;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	padding: 12px 14px;
+	background: rgba(255, 255, 255, 0.72);
+	box-shadow: 0 18px 56px rgba(24, 34, 31, 0.12);
+	backdrop-filter: blur(20px);
+}
+
+.brand-mark,
+.session-chip,
+.topbar-actions {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.brand-glyph {
+	display: inline-grid;
+	place-items: center;
+	width: 46px;
+	height: 46px;
+	border-radius: 17px;
+	color: var(--paper);
+	background: var(--ink);
+	font: 900 0.9rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: -0.04em;
+}
+
+.brand-mark strong,
+.session-copy strong {
+	display: block;
+	line-height: 1.15;
+}
+
+.topbar-actions {
+	justify-content: center;
+}
+
+.topbar-link {
+	margin: 0;
+	background: rgba(255, 250, 240, 0.74);
+}
+
+.session-chip {
+	justify-content: flex-end;
+}
+
+.session-copy {
+	display: grid;
+	min-width: 0;
+}
+
+.topbar-logout input[type="submit"],
+.topbar-logout button {
+	padding: 13px 15px;
+	font-size: 0.76rem;
+	box-shadow: none;
+}
+
 .hero,
 .workspace {
 	display: grid;
@@ -116,13 +345,6 @@ h2 {
 	background: radial-gradient(circle, rgba(255, 107, 53, 0.2), transparent 62%);
 	content: "";
 	pointer-events: none;
-}
-
-.auth-console {
-	background:
-		radial-gradient(circle at 8% 0%, rgba(185, 244, 211, 0.38), transparent 18rem),
-		radial-gradient(circle at 92% 18%, rgba(255, 209, 102, 0.24), transparent 16rem),
-		var(--glass);
 }
 
 .team-console-copy,
@@ -280,26 +502,10 @@ button.session-clear-form {
 	background: rgba(255, 255, 255, 0.68);
 }
 
-button.auth-guest-form {
-	max-width: none;
-	border: 0;
-	padding-inline: 18px;
-	color: white;
-	background: linear-gradient(135deg, #18221f, #365249);
-	box-shadow: 0 14px 34px rgba(24, 34, 31, 0.2);
-}
-
-button.auth-guest-form:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 18px 42px rgba(24, 34, 31, 0.28);
-}
-
 .user-management-frame {
 	display: block;
 	grid-column: 1 / -1;
-	min-height: 112px;
-	border-top: 1px solid rgba(24, 34, 31, 0.1);
-	padding-top: 18px;
+	margin-bottom: 20px;
 }
 
 .user-management-frame[busy] {
@@ -529,6 +735,20 @@ button.auth-guest-form:hover {
 	gap: 14px;
 }
 
+.todo-list-frame {
+	min-height: 72px;
+}
+
+.form-owner-note {
+	margin: 0;
+	border: 1px solid rgba(54, 82, 73, 0.16);
+	border-radius: 16px;
+	padding: 12px 14px;
+	color: var(--muted);
+	background: rgba(185, 244, 211, 0.24);
+	font: 0.95rem/1.5 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
 .todo-form input:not([type="checkbox"]),
 .todo-form textarea {
 	box-sizing: border-box;
@@ -707,12 +927,29 @@ button.auth-guest-form:hover {
 }
 
 @media (max-width: 820px) {
+	.login-shell,
 	.hero,
 	.workspace,
 	.team-console,
 	.chat-panel,
 	.user-grid {
 		grid-template-columns: 1fr;
+	}
+
+	.login-hero,
+	.login-panel {
+		min-height: auto;
+	}
+
+	.app-topbar {
+		grid-template-columns: 1fr;
+		border-radius: 32px;
+	}
+
+	.topbar-actions,
+	.session-chip {
+		justify-content: flex-start;
+		flex-wrap: wrap;
 	}
 
 	.todo-shell {

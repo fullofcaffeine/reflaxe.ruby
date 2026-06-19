@@ -1,52 +1,68 @@
 import { expect, test, type Page } from '@playwright/test'
 import { hooks } from './todo_hooks'
 
-async function gotoTodos(page: Page) {
-  let lastError: unknown = null
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      await page.goto('/todos', { waitUntil: 'domcontentloaded', timeout: 15_000 })
-      await expect(page.locator(hooks.selectors.shell)).toBeVisible()
-      return
-    } catch (error) {
-      lastError = error
-      await page.waitForTimeout(400)
-    }
-  }
-  throw lastError
+async function gotoLogin(page: Page) {
+  await page.goto('/todos', { waitUntil: 'domcontentloaded', timeout: 15_000 })
+  await expect(page).toHaveURL(/\/users\/sign_in$/)
+  await expect(page.locator('.login-shell')).toBeVisible()
 }
 
 async function continueAsGuest(page: Page) {
   const guestButton = page.getByRole('button', { name: 'Continue as guest' })
-  if (await guestButton.isVisible().catch(() => false)) {
-    await guestButton.click()
-    await expect(page).toHaveURL(/\/todos$/)
-  }
-  await expect(page.locator(hooks.selectors.sessionFooter)).toContainText(/signed in/i)
+  await expect(guestButton).toBeVisible()
+  await guestButton.click()
+  await expect(page).toHaveURL(/\/todos$/)
+  await expect(page.locator(hooks.selectors.shell)).toBeVisible()
+  await expect(page.locator('.session-chip').getByText('Guest Workspace', { exact: true })).toBeVisible()
+  await expect(page.locator('.brand-mark').getByText('Devise session active')).toBeVisible()
+}
+
+async function loginAsOwner(page: Page) {
+  await gotoLogin(page)
+  await page.getByLabel('Email').fill('owner@example.test')
+  await page.getByLabel('Password').fill('password123')
+  await page.getByRole('button', { name: 'Log in' }).click()
+  await expect(page).toHaveURL(/\/todos$/)
+  await expect(page.locator(hooks.selectors.shell)).toBeVisible()
+  await expect(page.locator('.session-chip').getByText('owner@example.test')).toBeVisible()
 }
 
 async function gotoAuthenticatedTodos(page: Page) {
-  await gotoTodos(page)
+  await gotoLogin(page)
   await continueAsGuest(page)
 }
 
+test('renders the designed DeviseHx login page before the protected board', async ({ page }) => {
+  await gotoLogin(page)
+
+  await expect(page).toHaveTitle(/RailsHx Todoapp/)
+  await expect(page.getByText('Sign in to the typed Rails board.')).toBeVisible()
+  await expect(page.getByText('Devise owns Warden')).toBeVisible()
+  await expect(page.getByText('Seeded demo')).toBeVisible()
+  await expect(page.getByText('owner@example.test')).toBeVisible()
+  await expect(page.getByText('password123')).toBeVisible()
+  await expect(page.locator(hooks.selectors.sessionForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
+  await expect(page.getByRole('button', { name: 'Continue as guest' })).toBeVisible()
+
+  await loginAsOwner(page)
+})
+
 test('renders the typed RailsHx todo page through real browser assets', async ({ page }) => {
-  await gotoTodos(page)
+  await loginAsOwner(page)
 
   await expect(page).toHaveTitle(/RailsHx Todoapp/)
   await expect(page.getByText('Typed Rails, polished Ruby.')).toBeVisible()
   await expect(page.locator(`meta[name="${hooks.meta.templateName}"]`)).toHaveAttribute('content', hooks.meta.templateContent)
-  await expect(page.locator(hooks.selectors.sessionForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
   await expect(page.locator(hooks.selectors.scrollLinks).first()).toHaveAttribute(hooks.attrs.bound, 'true')
 
   const bodyText = await page.locator('body').innerText()
   expect(bodyText).toMatch(/RailsHx sample/i)
-  expect(bodyText).toMatch(/DeviseHx auth layer/i)
-  expect(bodyText).toMatch(/Continue as guest/i)
+  expect(bodyText).toMatch(/Devise session active/i)
+  expect(bodyText).toMatch(/owner@example\.test/i)
   expect(bodyText).toMatch(/Typed Turbo room/i)
-  expect(bodyText).toMatch(/Turbo Frame ready/i)
   expect(bodyText).toContain('Ship typed Rails templates')
   expect(bodyText).toContain('Routes, params, and HHX are all typed for this room.')
+  expect(bodyText).not.toMatch(/DeviseHx auth layer|Continue as guest|Turbo Frame ready/i)
   expect(bodyText).not.toMatch(/<%=?|%>|<\/?(div|span|form|input|textarea|section|article)(\s|>)/i)
 
   await expect(page.getByText(/Back to todos/i)).toHaveCount(0)
@@ -80,7 +96,6 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
     expect(dotBox!.y + dotBox!.height).toBeLessThanOrEqual(itemBox!.y + itemBox!.height)
   }
 
-  await continueAsGuest(page)
   await expect(page.locator(hooks.selectors.form)).toHaveAttribute(hooks.attrs.bound, 'true')
   await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
 })
@@ -89,9 +104,9 @@ test('loads typed user management through a standard Turbo Frame', async ({ page
   await gotoAuthenticatedTodos(page)
 
   const frame = page.locator(hooks.selectors.userFrame)
-  await expect(frame).toContainText('Turbo Frame ready.')
+  await expect(frame).toHaveCount(1)
 
-  await page.getByRole('link', { name: 'Manage users' }).click()
+  await page.getByRole('link', { name: 'Users' }).click()
 
   await expect(frame).toContainText('RailsHx user management', { timeout: 20_000 })
   await expect(frame).toContainText('Typed users, ordinary Rails output.')
@@ -136,7 +151,7 @@ test('handles importmap-backed Rails form flows (tracked in haxe.ruby-ae6.1)', a
   await page.waitForLoadState('networkidle')
 
   await expect(page.getByText('Task added')).toBeVisible()
-  await expect(page.locator(hooks.selectors.sessionFooter)).toContainText(/signed in/i)
+  await expect(page.locator('.session-chip').getByText('Guest Workspace', { exact: true })).toBeVisible()
   await page.waitForLoadState('networkidle')
 })
 
@@ -162,8 +177,7 @@ test('broadcasts typed Turbo Stream room notes to another browser session', asyn
   const sender = await browser.newPage()
   const receiver = await browser.newPage()
   try {
-    await gotoTodos(sender)
-    await continueAsGuest(sender)
+    await gotoAuthenticatedTodos(sender)
     await gotoAuthenticatedTodos(receiver)
     await expect(sender.locator('turbo-cable-stream-source[connected]')).toHaveCount(1)
     await expect(receiver.locator('turbo-cable-stream-source[connected]')).toHaveCount(1)
@@ -188,7 +202,6 @@ test('renders missed room notes from Rails state on reload', async ({ page }) =>
   const body = `Late stream note ${Date.now()}`
   await page.context().request.post('/chat_messages', {
     form: {
-      'chat_message[user_id]': '1',
       'chat_message[body]': body
     }
   })

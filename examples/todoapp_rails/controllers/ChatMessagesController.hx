@@ -54,7 +54,9 @@ class ChatMessagesController extends rails.action_controller.Base {
 	}
 
 	public function create() {
-		var attrs = ParamsMacro.requirePermit(this.params(), ChatMessage.railsParamKey, [ChatMessage.f.body, ChatMessage.f.userId]);
+		var currentUser = UserAuth.currentRequired(this);
+		var attrs = ParamsMacro.requirePermit(this.params(), ChatMessage.railsParamKey, [ChatMessage.f.body]);
+		attrs = ParamsMacro.mergeField(attrs, ChatMessage.f.userId, currentUser.id);
 		var message = ChatMessage.create(attrs);
 		TurboStreams.broadcastPrependTo(ChatMessageView.roomStream(), ChatMessageView.roomTarget(),
 			(Template.of(ChatMessageView) : Template<ChatMessageLocals>), {

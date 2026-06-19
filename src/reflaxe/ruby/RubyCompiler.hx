@@ -1992,6 +1992,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (actionControllerParamsCall != null) {
 			return actionControllerParamsCall;
 		}
+		var actionControllerParamsRuntimeCall = compileActionControllerParamsRuntimeCall(callee, params);
+		if (actionControllerParamsRuntimeCall != null) {
+			return actionControllerParamsRuntimeCall;
+		}
 		var actionControllerResponseCall = compileActionControllerResponseCall(callee, params);
 		if (actionControllerResponseCall != null) {
 			return actionControllerResponseCall;
@@ -2886,6 +2890,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				null;
 		}
+	}
+
+	static function compileActionControllerParamsRuntimeCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		var info = staticCallInfo(callee);
+		if (info == null || info.owner != "rails.action_controller.ParamsRuntime" || info.name != "mergeField" || params.length != 3) {
+			return null;
+		}
+		var field = activeRecordFieldName(params[1]);
+		if (field == null) {
+			Context.error("ParamsRuntime.mergeField expects a generated RailsHx model field ref.", params[1].pos);
+			return RubyRawExpr("nil");
+		}
+		return RubyRawExpr(printInlineExpr(params[0]) + ".merge(" + RubyNaming.toMethodName(field) + ": " + printInlineExpr(params[2]) + ")");
 	}
 
 	static function isActionControllerParams(expr:TypedExpr):Bool {
@@ -5909,6 +5926,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFormTextField(params[0], params[1], scope);
 						}
+					case "FormPasswordField":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormPasswordField expects name and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormPasswordField(params[0], params[1], scope);
+						}
 					case "FormTextArea":
 						if (params.length != 2) {
 							Context.error("HtmlNode.FormTextArea expects name and attrs arguments.", node.pos);
@@ -6107,6 +6131,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			rubySymbolLiteral(expectTemplateFieldName(name, "H.textField name must be a string literal or RailsHx model field ref."))
 		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".text_field " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFormPasswordField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.passwordField name must be a string literal or RailsHx model field ref."))
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= " + form + ".password_field " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormTextArea(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
