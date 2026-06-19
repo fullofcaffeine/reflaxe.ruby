@@ -1034,10 +1034,11 @@ for (const expected of [
   "<strong><%= user.name %></strong>",
   "<span><%= user.email %></span>",
   '<span class="role-pill"><%= user.role_label() %></span>',
-  '<%= form_with url: sign_out_path(), scope: :session, method: "delete", local: true, class: "session-clear-form", data: {railshx_session: true} do |form| %>',
-  '<%= form.submit "Clear session", type: "submit" %>',
+  '<%= button_to "Clear session", sign_out_path(), method: "delete", class: "session-clear-form", data: {railshx_session: true} %>',
   '<turbo-frame id="railshx-user-frame" class="user-management-frame">',
   "Turbo Frame ready.",
+  '<%= button_to users_path(), method: "get", class: "typed-route-link" do %>',
+  "<span>Open in frame</span>",
 ]) {
   if (!typedUserSwitcher.includes(expected)) {
     console.error(`todoapp_rails typed user switcher partial missing expected content: ${expected}`);
@@ -1050,7 +1051,7 @@ for (const expected of [
   "RailsHx user management",
   "Typed users, ordinary Rails output.",
   '<turbo-frame id="railshx-user-frame" class="user-management-frame">',
-  '<%= link_to todos_path(), class: "typed-route-link", data: {turbo_frame: "_top"} do %>',
+  '<%= link_to "Back to todo board", todos_path(), class: "typed-route-link", data: {turbo_frame: "_top"} %>',
   "<% users.each do |user| %>",
   '<span class="avatar"><%= user.initials() %></span>',
   "<h2><%= user.name %></h2>",

@@ -14,6 +14,8 @@ import shared.TodoHooks;
 // id comes from the same `TodoHooks.userFrameId` contract used by the caller.
 // IntelliSense: editors should complete user fields, `TodoHooks.userFrameId`,
 // and `Routes.todosPath`.
+// Helper ergonomics: this uses the simple HHX `<link_to text="...">` form,
+// which lowers to Rails' non-block `link_to "Back to todo board", ...`.
 // Ruby/Rails output: `controllers/users/index.html.erb` containing a normal
 // `<turbo-frame id="railshx-user-frame">` that Turbo can extract.
 @:railsTemplate("controllers/users/index")
@@ -30,9 +32,7 @@ class UserManagementView {
 						controllers/views around a user model while still generating plain Ruby
 						and ERB that a Rails app can own or adopt later.
 					</p>
-					<link_to url=${Routes.todosPath()} class="typed-route-link" data-turbo-frame="_top">
-						<span>Back to todo board</span>
-					</link_to>
+					<link_to url=${Routes.todosPath()} text="Back to todo board" class="typed-route-link" data-turbo-frame="_top" />
 				</section>
 				<section class="user-grid">
 					<for ${user in locals.users}>

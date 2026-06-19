@@ -244,7 +244,8 @@ h2 {
 	margin: 0;
 }
 
-.session-clear-form input[type="submit"] {
+.session-clear-form input[type="submit"],
+button.session-clear-form {
 	max-width: 180px;
 	background: transparent;
 }
@@ -276,6 +277,10 @@ h2 {
 
 .user-frame-placeholder strong {
 	color: var(--ink);
+}
+
+.user-frame-placeholder form {
+	margin: 0;
 }
 
 .chat-panel {

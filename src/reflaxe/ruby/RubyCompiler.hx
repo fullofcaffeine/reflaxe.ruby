@@ -5458,6 +5458,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateLinkToBlock(params[0], params[1], params[2], scope);
 						}
+					case "ButtonTo":
+						if (params.length != 3) {
+							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateButtonTo(params[0], params[1], params[2], scope);
+						}
+					case "ButtonToBlock":
+						if (params.length != 3) {
+							Context.error("HtmlNode.ButtonToBlock expects url, attrs, and children arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateButtonToBlock(params[0], params[1], params[2], scope);
+						}
 					case "CsrfMetaTags":
 						if (params.length != 0) {
 							Context.error("HtmlNode.CsrfMetaTags expects no arguments.", node.pos);
@@ -5792,6 +5806,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var args = [printTemplateExpr(url, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		var out = "<%= link_to " + args.join(", ") + " do %>";
 		for (child in expectTemplateArray(childrenExpr, "HtmlNode.LinkToBlock children must be an array literal.")) {
+			out += lowerTemplateNode(child, scope);
+		}
+		return out + "<% end %>";
+	}
+
+	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(label, scope), printTemplateExpr(url, scope)];
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		if (kwargs.length > 0) {
+			args = args.concat(kwargs);
+		}
+		return "<%= button_to " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateButtonToBlock(url:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(url, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		var out = "<%= button_to " + args.join(", ") + " do %>";
+		for (child in expectTemplateArray(childrenExpr, "HtmlNode.ButtonToBlock children must be an array literal.")) {
 			out += lowerTemplateNode(child, scope);
 		}
 		return out + "<% end %>";

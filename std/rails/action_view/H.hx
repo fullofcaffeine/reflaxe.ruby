@@ -60,6 +60,14 @@ class H {
 		return macro rails.action_view.HtmlNode.LinkToBlock($url, $attrs, $children);
 	}
 
+	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
+	}
+
+	public static macro function buttonBlock(url:Expr, attrs:Expr, children:Expr):Expr {
+		return macro rails.action_view.HtmlNode.ButtonToBlock($url, $attrs, $children);
+	}
+
 	public static macro function csrfMetaTags():Expr {
 		return macro rails.action_view.HtmlNode.CsrfMetaTags;
 	}

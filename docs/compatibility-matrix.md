@@ -74,11 +74,11 @@ Unsafe boundary policy is tracked in
 | Typed Rails partial locals object | `render(locals:TLocals)` + `locals.foo` projection | Initial locals slice |
 | Typed ActionView template AST | `@:railsTemplateAst(...)` + `H`/`HtmlNode`/`HtmlAttr` | Initial lower-level AST slice |
 | Typed ActionView partial composition | `H.partial(...)` + `Template<TLocals>` | Initial partial/component slice |
-| Typed ActionView route/helper calls | `H.linkTo(...)` + route externs | Initial helper slice |
+| Typed ActionView route/helper calls | `H.linkTo(...)`, `H.buttonTo(...)` + route externs | Initial helper slice |
 | Typed ActionView form helpers | `<form_with scope=${Todo.railsParamKey}>`, `<text_field name=${Todo.f.title}>`, `<text_area>`, `<check_box>`, `<submit>` | Initial typed field-ref form slice |
-| Typed HHX control/helper tags | `<if>`, `<for>`, `<link_to>`, `<partial>` | Initial template/helper slice |
+| Typed HHX control/helper tags | `<if>`, `<for>`, `<link_to>`, `<button_to>`, `<partial>` | Initial template/helper slice |
 | Typed HHX helper label children | static text or `${...}` expression children | Initial helper slice |
-| Typed HHX nested helper slots | `<link_to>...</link_to>` block-form content | Initial slot slice |
+| Typed HHX nested helper slots | `<link_to>...</link_to>`, `<button_to>...</button_to>` block-form content | Initial slot slice |
 | Typed RailsHx components | `Component<TLocals>`, `<component component=${...}>`, `Slot.content()` | Initial ActionView capture/render partial slice |
 | Typed Turbo client helpers | `rails.turbo.Turbo`, `TurboVisitAction`, `TurboStreamAction` | Initial Haxe JS/importmap-friendly slice |
 | Typed server-side Turbo streams | `TurboStreams.append/prepend/before/after/replace/update/remove`, `broadcast*To`, `StreamTarget`, `StreamName<TPayload>`, `Template<TLocals>` | Rails-native `turbo_stream.*`/`Turbo::StreamsChannel` slice |

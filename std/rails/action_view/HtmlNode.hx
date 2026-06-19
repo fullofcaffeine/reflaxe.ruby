@@ -19,6 +19,11 @@ enum HtmlNode {
 	Partial<TLocals>(template:Template<TLocals>, locals:TLocals);
 	LinkTo<TLabel, TUrl>(label:TLabel, url:TUrl, attrs:Array<HtmlAttr>);
 	LinkToBlock<TUrl>(url:TUrl, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
+	// Rails `button_to` has both normal and block forms. Keeping separate AST
+	// nodes lets HHX lower simple labels to `button_to "Label", path` and
+	// nested markup to `button_to path do ... end` without runtime wrappers.
+	ButtonTo<TLabel, TUrl>(label:TLabel, url:TUrl, attrs:Array<HtmlAttr>);
+	ButtonToBlock<TUrl>(url:TUrl, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	CsrfMetaTags;
 	CspMetaTag;
 	StylesheetLinkTag(name:String, attrs:Array<HtmlAttr>);

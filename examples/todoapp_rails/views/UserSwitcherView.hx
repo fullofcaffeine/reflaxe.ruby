@@ -12,17 +12,21 @@ typedef UserSwitcherLocals = {
 
 // Typed session/user switcher partial.
 //
-// Demonstrates: Rails session forms plus a standard Turbo Frame navigation
-// target authored as HHX. The "Manage users" link loads `/users` into the
-// frame through normal Turbo behavior; direct `/users` visits still render as a
-// normal Rails page fallback.
+// Demonstrates: Rails session forms plus standard Turbo Frame navigation
+// targets authored as HHX. The "Manage users" link and placeholder button load
+// `/users` into the frame through normal Turbo behavior; direct `/users` visits
+// still render as a normal Rails page fallback. Sign-out uses the simple
+// `button_to "Clear session", sign_out_path, method: :delete` Rails shape,
+// while the frame placeholder uses Rails' block-form `button_to ... do` shape
+// to prove nested HHX children lower to a normal ActionView helper block.
 // Type safety: `User.f.id` powers the hidden field, `currentUser` is nullable,
 // `TodoHooks.userFrameId` keeps the frame target shared with the users page, and
 // `Routes.signInPath/signOutPath/usersPath` are generated route externs.
 // IntelliSense: editors should complete `users`, `currentUser`, `user.roleLabel`,
 // `User.f.id`, `TodoHooks.userFrameId`, and the route helpers.
-// Ruby/Rails output: normal Rails `form_with`, `link_to`, `turbo-frame`, and ERB
-// loops; no custom fetch or client-side user rendering is generated.
+// Ruby/Rails output: normal Rails `form_with`, `link_to`, simple/block
+// `button_to`, `turbo-frame`, and ERB loops; no custom fetch or client-side
+// user rendering is generated.
 @:railsTemplate("controllers/todos/_user_switcher")
 @:railsTemplateAst("render")
 class UserSwitcherView {
@@ -59,14 +63,17 @@ class UserSwitcherView {
 					Current user:
 					<strong>${locals.currentUser == null ? "fallback owner" : locals.currentUser.name}</strong>
 				</span>
-				<form_with url=${Routes.signOutPath()} scope="session" method="delete" local class="session-clear-form" data-railshx-session>
-					<submit type="submit">Clear session</submit>
-				</form_with>
+				<button_to url=${Routes.signOutPath()} method="delete" class="session-clear-form" data-railshx-session>
+					Clear session
+				</button_to>
 			</div>
 			<turbo_frame id=${TodoHooks.userFrameId} class=${TodoHooks.userFrameClass}>
 				<div class="user-frame-placeholder">
 					<strong>Turbo Frame ready.</strong>
 					<span>Open typed user management without leaving the board.</span>
+					<button_to url=${Routes.usersPath()} method="get" class="typed-route-link">
+						<span>Open in frame</span>
+					</button_to>
 				</div>
 			</turbo_frame>
 		</section>;

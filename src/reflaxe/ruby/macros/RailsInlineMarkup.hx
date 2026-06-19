@@ -735,6 +735,23 @@ private class RailsMarkupParser {
 						macro null;
 					}
 				}
+			case "button_to":
+				var url = requireAttrValue(attrs, "url", pos);
+				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);
+				var explicitText = attrValue(attrs, "text");
+				if (explicitText != null) {
+					macro @:pos(pos) rails.action_view.HtmlNode.ButtonTo($explicitText, $url, ${mkArray(buttonAttrs.map(mkAttr), pos)});
+				} else {
+					var label = textChildExpr(children, pos);
+					if (label != null) {
+						macro @:pos(pos) rails.action_view.HtmlNode.ButtonTo($label, $url, ${mkArray(buttonAttrs.map(mkAttr), pos)});
+					} else if (children.length > 0) {
+						macro @:pos(pos) rails.action_view.HtmlNode.ButtonToBlock($url, ${mkArray(buttonAttrs.map(mkAttr), pos)}, ${mkArray(children, pos)});
+					} else {
+						Context.error('Rails HHX <button_to> expects text/expression children, text="...", or nested markup children.', pos);
+						macro null;
+					}
+				}
 			case "partial":
 				var template = requireAttrValue(attrs, "template", pos);
 				var locals = requireAttrValue(attrs, "locals", pos);
