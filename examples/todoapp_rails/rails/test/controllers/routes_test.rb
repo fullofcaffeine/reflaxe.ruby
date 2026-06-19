@@ -13,8 +13,7 @@ class RoutesTest < ActionDispatch::IntegrationTest
     assert_recognizes({ controller: "controllers/todos", action: "completed" }, { path: "/todos/completed", method: :get })
     assert_recognizes({ controller: "controllers/todos", action: "complete", id: "42" }, { path: "/todos/42/complete", method: :patch })
     assert_routing({ path: "/users", method: :get }, { controller: "controllers/users", action: "index" })
-    assert_routing({ path: "/session", method: :post }, { controller: "controllers/sessions", action: "create" })
-    assert_routing({ path: "/session", method: :delete }, { controller: "controllers/sessions", action: "destroy" })
+    assert_routing({ path: "/guest", method: :post }, { controller: "controllers/sessions", action: "create_guest" })
     assert_recognizes({ controller: "controllers/todos", action: "optional_report", year: "2026" }, { path: "/reports/2026", method: :get })
     assert_recognizes({ controller: "controllers/todos", action: "optional_report" }, { path: "/reports", method: :get })
     assert_recognizes({ controller: "controllers/todos", action: "file", path: "docs/readme" }, { path: "/files/docs/readme", method: :get })
@@ -28,8 +27,9 @@ class RoutesTest < ActionDispatch::IntegrationTest
     assert_equal "/todos", todos_path
     assert_equal "/chat_messages", chat_messages_path
     assert_equal "/users", users_path
-    assert_equal "/session", sign_in_path
-    assert_equal "/session", sign_out_path
+    assert_equal "/users/sign_in", new_user_session_path
+    assert_equal "/users/sign_out", destroy_user_session_path
+    assert_equal "/guest", guest_sign_in_path
     assert_equal "/todos/completed", completed_todos_path
     assert_equal "/todos/42/complete", complete_todo_path(42)
     assert_equal "/admin/users", admin_users_path

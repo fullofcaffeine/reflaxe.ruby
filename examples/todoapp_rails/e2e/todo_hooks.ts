@@ -41,7 +41,7 @@ export const hooks = {
     items: ".todo-item",
     dots: ".todo-item .todo-dot",
     scrollLinks: "[data-railshx-scroll]",
-    sessionForms: ".session-form",
+    sessionForms: "[data-railshx-session]",
     sessionFooter: ".session-footer",
     sessionZone: "[data-railshx-session-zone]",
     userFrame: "#railshx-user-frame",

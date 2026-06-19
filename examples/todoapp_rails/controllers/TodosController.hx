@@ -1,10 +1,12 @@
 package controllers;
 
+import app.auth.UserAuth;
 import models.ChatMessage;
 import models.Todo;
 import models.User;
 import rails.action_view.Template;
 import rails.action_controller.Status;
+import rails.macros.ControllerDsl.beforeAction;
 import rails.macros.ParamsMacro;
 import rails.macros.ViewMacro;
 import rails.turbo.StreamTarget;
@@ -40,13 +42,17 @@ typedef TodoIndexLocals = {
 
 @:railsController
 class TodosController extends rails.action_controller.Base {
-	static final lifecycle = [];
+	static final lifecycle = {
+		// The board is public so guests can reach the typed DeviseHx sign-in
+		// panel; mutations stay protected and can safely use Devise sessions.
+		beforeAction(UserAuth.authenticate, {except: [index]});
+	};
 
 	public function index() {
 		var todos = Todo.incomplete().includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray();
 		var users = User.order(User.f.name.asc()).toArray();
 		var chatMessages = ChatMessage.latest().toArray();
-		var currentUser = UserSession.currentUser(this);
+		var currentUser = UserAuth.current(this);
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {
 			todos: todos,
 			users: users,

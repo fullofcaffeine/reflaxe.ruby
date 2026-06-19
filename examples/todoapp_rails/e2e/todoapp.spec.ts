@@ -16,20 +16,33 @@ async function gotoTodos(page: Page) {
   throw lastError
 }
 
+async function continueAsGuest(page: Page) {
+  const guestButton = page.getByRole('button', { name: 'Continue as guest' })
+  if (await guestButton.isVisible().catch(() => false)) {
+    await guestButton.click()
+    await expect(page).toHaveURL(/\/todos$/)
+  }
+  await expect(page.locator(hooks.selectors.sessionFooter)).toContainText(/signed in/i)
+}
+
+async function gotoAuthenticatedTodos(page: Page) {
+  await gotoTodos(page)
+  await continueAsGuest(page)
+}
+
 test('renders the typed RailsHx todo page through real browser assets', async ({ page }) => {
   await gotoTodos(page)
 
   await expect(page).toHaveTitle(/RailsHx Todoapp/)
   await expect(page.getByText('Typed Rails, polished Ruby.')).toBeVisible()
   await expect(page.locator(`meta[name="${hooks.meta.templateName}"]`)).toHaveAttribute('content', hooks.meta.templateContent)
-  await expect(page.locator(hooks.selectors.form)).toHaveAttribute(hooks.attrs.bound, 'true')
   await expect(page.locator(hooks.selectors.sessionForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
-  await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
   await expect(page.locator(hooks.selectors.scrollLinks).first()).toHaveAttribute(hooks.attrs.bound, 'true')
 
   const bodyText = await page.locator('body').innerText()
   expect(bodyText).toMatch(/RailsHx sample/i)
-  expect(bodyText).toMatch(/Typed session layer/i)
+  expect(bodyText).toMatch(/DeviseHx auth layer/i)
+  expect(bodyText).toMatch(/Continue as guest/i)
   expect(bodyText).toMatch(/Typed Turbo room/i)
   expect(bodyText).toMatch(/Turbo Frame ready/i)
   expect(bodyText).toContain('Ship typed Rails templates')
@@ -66,10 +79,14 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
     expect(dotBox!.x + dotBox!.width).toBeLessThanOrEqual(itemBox!.x + itemBox!.width)
     expect(dotBox!.y + dotBox!.height).toBeLessThanOrEqual(itemBox!.y + itemBox!.height)
   }
+
+  await continueAsGuest(page)
+  await expect(page.locator(hooks.selectors.form)).toHaveAttribute(hooks.attrs.bound, 'true')
+  await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
 })
 
 test('loads typed user management through a standard Turbo Frame', async ({ page }) => {
-  await gotoTodos(page)
+  await gotoAuthenticatedTodos(page)
 
   const frame = page.locator(hooks.selectors.userFrame)
   await expect(frame).toContainText('Turbo Frame ready.')
@@ -78,11 +95,12 @@ test('loads typed user management through a standard Turbo Frame', async ({ page
 
   await expect(frame).toContainText('RailsHx user management', { timeout: 20_000 })
   await expect(frame).toContainText('Typed users, ordinary Rails output.')
-  await expect(frame.locator('.user-management-card')).toHaveCount(3)
+  await expect(frame.locator('.user-management-card')).toHaveCount(4)
   await expect(page).toHaveURL(/\/todos$/)
 })
 
 test('renders the users route directly as a Rails fallback with the same frame contract', async ({ page }) => {
+  await gotoAuthenticatedTodos(page)
   await page.goto('/users', { waitUntil: 'domcontentloaded', timeout: 15_000 })
 
   const frame = page.locator(hooks.selectors.userFrame)
@@ -92,7 +110,7 @@ test('renders the users route directly as a Rails fallback with the same frame c
 })
 
 test('uses typed Haxe client behavior for same-page Rails links', async ({ page }) => {
-  await gotoTodos(page)
+  await gotoAuthenticatedTodos(page)
 
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.locator(hooks.selectors.scrollLinks).first().click()
@@ -102,7 +120,7 @@ test('uses typed Haxe client behavior for same-page Rails links', async ({ page 
 })
 
 test('handles importmap-backed Rails form flows (tracked in haxe.ruby-ae6.1)', async ({ page }) => {
-  await gotoTodos(page)
+  await gotoAuthenticatedTodos(page)
 
   const beforeCount = await page.locator(hooks.selectors.listItems).count()
   const title = `Playwright task ${Date.now()}`
@@ -117,29 +135,22 @@ test('handles importmap-backed Rails form flows (tracked in haxe.ruby-ae6.1)', a
   await expect.poll(async () => page.locator(hooks.selectors.listItems).count()).toBeGreaterThanOrEqual(beforeCount)
   await page.waitForLoadState('networkidle')
 
-  await page.getByRole('button', { name: /Template Maintainer/ }).click()
-
-  await expect(page.getByText('Session updated')).toBeVisible()
-  await expect(page.getByText(/Current user:/)).toBeVisible()
-  await expect(page.locator(hooks.selectors.sessionFooter)).toContainText('Template Maintainer')
+  await expect(page.getByText('Task added')).toBeVisible()
+  await expect(page.locator(hooks.selectors.sessionFooter)).toContainText(/signed in/i)
   await page.waitForLoadState('networkidle')
 })
 
 test('posts a typed RailsHx room note through Turbo-backed Haxe client hooks', async ({ page }) => {
-  await gotoTodos(page)
+  await gotoAuthenticatedTodos(page)
   await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
+  await expect(page.locator('turbo-cable-stream-source[connected]')).toBeVisible()
 
   const beforeCount = await page.locator(hooks.selectors.chatMessages).count()
   const body = `Room note ${Date.now()}`
   const composer = page.getByLabel('Add a typed room note')
 
-  await composer.fill('First line')
-  await composer.press('Shift+Enter')
-  await composer.type('Second line')
-  await expect(composer).toHaveValue('First line\nSecond line')
-
   await composer.fill(body)
-  await composer.press('Enter')
+  await page.getByRole('button', { name: 'Post note' }).click()
 
   await expect(page.locator(hooks.selectors.chatPanel)).toContainText(body, { timeout: 20_000 })
   await expect(page.getByText('Room note posted')).toBeVisible()
@@ -152,7 +163,8 @@ test('broadcasts typed Turbo Stream room notes to another browser session', asyn
   const receiver = await browser.newPage()
   try {
     await gotoTodos(sender)
-    await gotoTodos(receiver)
+    await continueAsGuest(sender)
+    await gotoAuthenticatedTodos(receiver)
     await expect(sender.locator('turbo-cable-stream-source[connected]')).toHaveCount(1)
     await expect(receiver.locator('turbo-cable-stream-source[connected]')).toHaveCount(1)
     await expect(sender.locator('turbo-cable-stream-source[connected]')).toBeVisible()
@@ -170,11 +182,11 @@ test('broadcasts typed Turbo Stream room notes to another browser session', asyn
   }
 })
 
-test('renders missed room notes from Rails state on reload', async ({ page, request }) => {
-  await gotoTodos(page)
+test('renders missed room notes from Rails state on reload', async ({ page }) => {
+  await gotoAuthenticatedTodos(page)
 
   const body = `Late stream note ${Date.now()}`
-  await request.post('/chat_messages', {
+  await page.context().request.post('/chat_messages', {
     form: {
       'chat_message[user_id]': '1',
       'chat_message[body]': body

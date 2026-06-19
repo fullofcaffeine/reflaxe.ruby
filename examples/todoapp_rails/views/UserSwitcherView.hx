@@ -10,62 +10,74 @@ typedef UserSwitcherLocals = {
 	var currentUser:Null<User>;
 }
 
-// Typed session/user switcher partial.
+// Typed DeviseHx auth/user panel partial.
 //
-// Demonstrates: Rails session forms plus standard Turbo Frame navigation
-// targets authored as HHX. The "Manage users" link and placeholder button load
-// `/users` into the frame through normal Turbo behavior; direct `/users` visits
-// still render as a normal Rails page fallback. Sign-out uses the simple
-// `button_to "Clear session", sign_out_path, method: :delete` Rails shape,
-// while the frame placeholder uses Rails' block-form `button_to ... do` shape
-// to prove nested HHX children lower to a normal ActionView helper block.
-// Type safety: `User.f.id` powers the hidden field, `currentUser` is nullable,
-// `TodoHooks.userFrameId` keeps the frame target shared with the users page, and
-// `Routes.signInPath/signOutPath/usersPath` are generated route externs.
+// Demonstrates: Devise-owned login/logout routes plus a Haxe-owned guest
+// sign-in action. The "Manage users" link still loads `/users` into a Turbo
+// Frame, proving DeviseHx can compose with ordinary Hotwire navigation.
+// Type safety: `currentUser` is nullable, `TodoHooks.userFrameId` keeps the
+// frame target shared with the users page, and `Routes.*` helpers are generated
+// typed externs from actual Rails routes.
 // IntelliSense: editors should complete `users`, `currentUser`, `user.roleLabel`,
-// `User.f.id`, `TodoHooks.userFrameId`, and the route helpers.
-// Ruby/Rails output: normal Rails `form_with`, `link_to`, simple/block
-// `button_to`, `turbo-frame`, and ERB loops; no custom fetch or client-side
-// user rendering is generated.
+// `TodoHooks.userFrameId`, and Devise route helpers such as
+// `newUserSessionPath`/`destroyUserSessionPath`.
+// Ruby/Rails output: normal Rails `link_to`, `button_to`, `turbo-frame`, and
+// ERB loops; Devise owns session persistence.
 @:railsTemplate("controllers/todos/_user_switcher")
 @:railsTemplateAst("render")
 class UserSwitcherView {
 	public static function render(locals:UserSwitcherLocals):HtmlNode {
-		return <section id=${TodoHooks.sessionPanelId} class="team-console card" aria-label="RailsHx user session demo">
+		return <section id=${TodoHooks.sessionPanelId} class="team-console card auth-console" aria-label="RailsHx DeviseHx auth demo">
 			<div class="team-console-copy">
-				<span class="eyebrow">Typed session layer</span>
-				<h2>Choose a demo user</h2>
+				<span class="eyebrow">DeviseHx auth layer</span>
+				<h2>Typed auth, Rails-owned sessions.</h2>
 				<p>
-					This panel is first-party RailsHx: typed ActiveRecord users, checked
-					session params, Rails flash/session stores, and Turbo-friendly forms.
+					Devise owns Warden, passwords, routes, and sessions. Haxe owns the
+					typed scope contract, auth filter, current-user helper, guest flow,
+					and HHX composition around it.
 				</p>
 				<link_to url=${Routes.usersPath()} class="typed-route-link team-route-link" data-turbo-frame=${TodoHooks.userFrameId}>
 					<span>Manage users</span>
 				</link_to>
 			</div>
-			<div class="team-members" data-railshx-session-zone>
-				<for ${user in locals.users}>
-					<form_with url=${Routes.signInPath()} scope=${User.railsParamKey} local class=${TodoHooks.sessionFormClass} data-railshx-session>
-						<hidden_field name=${User.f.id} value=${user.id} />
-						<button type="submit" class=${locals.currentUser != null && locals.currentUser.id == user.id ? "person-card is-current" : "person-card"}>
-							<span class="avatar">${user.initials()}</span>
-							<span class="person-copy">
-								<strong>${user.name}</strong>
-								<span>${user.email}</span>
-							</span>
-							<span class="role-pill">${user.roleLabel()}</span>
-						</button>
-					</form_with>
-				</for>
+			<div class="team-members auth-members" data-railshx-session-zone>
+				<if ${locals.currentUser == null}>
+					<div class="person-card auth-card">
+						<span class="avatar">?</span>
+						<span class="person-copy">
+							<strong>Guest gate</strong>
+							<span>Use Devise login or enter as a seeded guest.</span>
+						</span>
+						<span class="role-pill">Public</span>
+					</div>
+				<else>
+					<div class="person-card is-current auth-card">
+						<span class="avatar">${locals.currentUser.initials()}</span>
+						<span class="person-copy">
+							<strong>${locals.currentUser.name}</strong>
+							<span>${locals.currentUser.email}</span>
+						</span>
+						<span class="role-pill">${locals.currentUser.roleLabel()}</span>
+					</div>
+				</if>
 			</div>
 			<div class=${TodoHooks.sessionFooterClass}>
 				<span>
-					Current user:
-					<strong>${locals.currentUser == null ? "fallback owner" : locals.currentUser.name}</strong>
+					Auth state:
+					<strong>${locals.currentUser == null ? "signed out" : "signed in as " + locals.currentUser.name}</strong>
 				</span>
-				<button_to url=${Routes.signOutPath()} method="delete" class="session-clear-form" data-railshx-session>
-					Clear session
-				</button_to>
+				<if ${locals.currentUser == null}>
+					<link_to url=${Routes.newUserSessionPath()} class="typed-route-link auth-link">
+						<span>Open Devise login</span>
+					</link_to>
+					<button_to url=${Routes.guestSignInPath()} method="post" class="session-clear-form auth-guest-form" data-railshx-session>
+						Continue as guest
+					</button_to>
+				<else>
+					<button_to url=${Routes.destroyUserSessionPath()} method="delete" class="session-clear-form" data-railshx-session>
+						Sign out
+					</button_to>
+				</if>
 			</div>
 			<turbo_frame id=${TodoHooks.userFrameId} class=${TodoHooks.userFrameClass}>
 				<div class="user-frame-placeholder">

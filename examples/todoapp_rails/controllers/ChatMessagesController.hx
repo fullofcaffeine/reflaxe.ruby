@@ -1,9 +1,11 @@
 package controllers;
 
+import app.auth.UserAuth;
 import models.ChatMessage;
 import models.User;
 import rails.action_controller.Status;
 import rails.action_view.Template;
+import rails.macros.ControllerDsl.beforeAction;
 import rails.macros.ParamsMacro;
 import rails.turbo.StreamTarget;
 import rails.turbo.TurboStreams;
@@ -30,7 +32,9 @@ import views.ChatMessageView.ChatMessageLocals;
 // `redirect_to`.
 @:railsController
 class ChatMessagesController extends rails.action_controller.Base {
-	static final lifecycle = [];
+	static final lifecycle = {
+		beforeAction(UserAuth.authenticate, {});
+	};
 
 	public function index() {
 		respondTo(function(format) {
@@ -38,7 +42,7 @@ class ChatMessagesController extends rails.action_controller.Base {
 				render({
 					turboStream: TurboStreams.replace(StreamTarget.named(TodoHooks.chatPanelId), (Template.of(ChatPanelView) : Template<ChatPanelLocals>), {
 						messages: ChatMessage.latest().toArray(),
-						currentUser: UserSession.currentUser(this),
+						currentUser: UserAuth.currentRequired(this),
 						users: User.order(User.f.name.asc()).toArray()
 					})
 				});

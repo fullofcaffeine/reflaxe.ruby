@@ -41,23 +41,35 @@ extern class Routes {
 	@:native("chat_messages_url")
 	public static function chatMessagesUrl():String;
 
+	@:native("new_user_session_path")
+	public static function newUserSessionPath():String;
+
+	@:native("new_user_session_url")
+	public static function newUserSessionUrl():String;
+
+	@:native("user_session_path")
+	public static function userSessionPath():String;
+
+	@:native("user_session_url")
+	public static function userSessionUrl():String;
+
+	@:native("destroy_user_session_path")
+	public static function destroyUserSessionPath():String;
+
+	@:native("destroy_user_session_url")
+	public static function destroyUserSessionUrl():String;
+
 	@:native("users_path")
 	public static function usersPath():String;
 
 	@:native("users_url")
 	public static function usersUrl():String;
 
-	@:native("sign_in_path")
-	public static function signInPath():String;
+	@:native("guest_sign_in_path")
+	public static function guestSignInPath():String;
 
-	@:native("sign_in_url")
-	public static function signInUrl():String;
-
-	@:native("sign_out_path")
-	public static function signOutPath():String;
-
-	@:native("sign_out_url")
-	public static function signOutUrl():String;
+	@:native("guest_sign_in_url")
+	public static function guestSignInUrl():String;
 
 	@:native("admin_users_path")
 	public static function adminUsersPath():String;

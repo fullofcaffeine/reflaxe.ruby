@@ -56,7 +56,7 @@ class ExportTodoHooks {
 			line("items", TodoHooks.classSelector(TodoHooks.itemClass), ","),
 			line("dots", TodoHooks.classSelector(TodoHooks.itemClass) + " " + TodoHooks.classSelector(TodoHooks.dotClass), ","),
 			line("scrollLinks", TodoHooks.attrSelector(TodoHooks.scrollAttr), ","),
-			line("sessionForms", TodoHooks.classSelector(TodoHooks.sessionFormClass), ","),
+			line("sessionForms", TodoHooks.attrSelector(TodoHooks.sessionAttr), ","),
 			line("sessionFooter", TodoHooks.classSelector(TodoHooks.sessionFooterClass), ","),
 			line("sessionZone", TodoHooks.attrSelector(TodoHooks.sessionZoneAttr), ","),
 			line("userFrame", TodoHooks.idSelector(TodoHooks.userFrameId), ","),

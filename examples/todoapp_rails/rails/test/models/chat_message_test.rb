@@ -2,7 +2,7 @@ require "test_helper"
 
 class ChatMessageTest < ActiveSupport::TestCase
   test "validates required body and belongs to a user" do
-    user = Models::User.create!(name: "room owner", email: "room-owner@example.test", role: "admin")
+    user = create_user!(name: "room owner", email: "room-owner@example.test", role: "admin")
     message = Models::ChatMessage.new(user: user)
 
     assert_not message.valid?
@@ -13,7 +13,7 @@ class ChatMessageTest < ActiveSupport::TestCase
   end
 
   test "latest returns newest typed messages with users loaded" do
-    user = Models::User.create!(name: "room owner", email: "room-latest@example.test", role: "admin")
+    user = create_user!(name: "room owner", email: "room-latest@example.test", role: "admin")
     first = Models::ChatMessage.create!(body: "first", user: user)
     second = Models::ChatMessage.create!(body: "second", user: user)
 

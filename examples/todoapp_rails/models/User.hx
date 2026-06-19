@@ -1,5 +1,8 @@
 package models;
 
+import app.auth.UserAuth;
+import devisehx.model.DeviseModule.*;
+import devisehx.model.DeviseResource;
 import models.ChatMessage;
 
 // User ActiveRecord model source of truth.
@@ -13,10 +16,11 @@ import models.ChatMessage;
 // IntelliSense: editors should complete model fields, field refs, association
 // refs, and inherited ActiveRecord-style query methods.
 // Ruby/Rails output: a normal `ApplicationRecord` model with Rails association
-// and validation macros.
+// and validation macros, plus Devise's ordinary `devise :...` class macro.
 @:railsModel("users")
 @:railsTimestamps
-class User extends rails.active_record.Base<User> {
+@:devise(UserAuth.scope, [databaseAuthenticatable, validatable])
+class User extends rails.active_record.Base<User> implements DeviseResource<User> {
 	@:railsColumn({primaryKey: true, dbType: "bigint"})
 	public var id:Int;
 
@@ -25,6 +29,9 @@ class User extends rails.active_record.Base<User> {
 
 	@:railsColumn({index: true})
 	public var email:String;
+
+	@:railsColumn({dbType: "string", nullable: false, defaultValue: ""})
+	public var encryptedPassword:String;
 
 	@:railsColumn({index: true, defaultValue: "member"})
 	public var role:String;

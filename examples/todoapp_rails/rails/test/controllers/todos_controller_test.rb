@@ -2,8 +2,8 @@ require "test_helper"
 
 class TodosControllerTest < ActionDispatch::IntegrationTest
   test "index renders the polished RailsHx todo page with ordered open work" do
-    user = Models::User.create!(name: "owner", email: "owner@example.test", role: "admin")
-    Models::User.create!(name: "member", email: "member@example.test", role: "member")
+    user = create_user!(name: "owner", email: "owner@example.test", role: "admin")
+    create_user!(name: "member", email: "member@example.test", role: "member")
     Models::Todo.create!(title: "zed open task", is_completed: false, user: user)
     Models::Todo.create!(title: "alpha open task", is_completed: false, user: user)
     Models::Todo.create!(title: "completed hidden task", is_completed: true, user: user)
@@ -14,8 +14,10 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes @response.body, "Typed Rails, polished Ruby."
     assert_includes @response.body, "RailsHx sample"
-    assert_includes @response.body, "Typed session layer"
-    assert_includes @response.body, "owner@example.test"
+    assert_includes @response.body, "DeviseHx auth layer"
+    assert_includes @response.body, "Guest gate"
+    assert_includes @response.body, "Open Devise login"
+    assert_includes @response.body, "Continue as guest"
     assert_includes @response.body, "Manage users"
     assert_includes @response.body, "Typed Turbo room"
     assert_includes @response.body, "typed chat note"
@@ -27,7 +29,8 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create permits haxe-authored params and ignores unpermitted fields" do
-    user = Models::User.create!(name: "owner", email: "owner-create@example.test", role: "admin")
+    user = create_user!(name: "owner", email: "owner-create@example.test", role: "admin")
+    sign_in user
 
     assert_difference "Models::Todo.count", 1 do
       post "/todos", params: { todo: { title: "from params", notes: "typed notes", is_completed: true, user_id: user.id, ignored: "nope" } }
@@ -42,7 +45,8 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create redirects without persisting invalid records" do
-    user = Models::User.create!(name: "owner", email: "owner-invalid@example.test", role: "admin")
+    user = create_user!(name: "owner", email: "owner-invalid@example.test", role: "admin")
+    sign_in user
 
     assert_no_difference "Models::Todo.count" do
       post "/todos", params: { todo: { title: "", notes: "missing title", user_id: user.id } }
@@ -51,27 +55,31 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/todos"
   end
 
-  test "session create stores the selected user id and redirects" do
-    user = Models::User.create!(name: "session owner", email: "session@example.test", role: "maintainer")
+  test "guest sign in uses Devise and reaches protected RailsHx pages" do
+    create_user!(name: "Guest Workspace", email: "guest@example.test", role: "guest")
 
-    post "/session", params: { user: { id: user.id } }
+    post "/guest"
 
     assert_redirected_to "/todos"
-    assert_equal user.id, session[:current_user_id]
+    get "/users"
+    assert_response :success
+    assert_includes @response.body, "Guest Workspace"
   end
 
-  test "session destroy clears the selected user id and redirects" do
-    user = Models::User.create!(name: "session owner", email: "session-clear@example.test", role: "maintainer")
-    post "/session", params: { user: { id: user.id } }
+  test "devise sign out returns guests to the public board" do
+    user = create_user!(name: "session owner", email: "session-clear@example.test", role: "maintainer")
+    sign_in user
 
-    delete "/session", params: { session: {} }
+    delete "/users/sign_out"
 
-    assert_redirected_to "/todos"
-    assert_nil session[:current_user_id]
+    assert_redirected_to "/"
+    get "/users"
+    assert_redirected_to "/users/sign_in"
   end
 
   test "users page renders typed user management" do
-    Models::User.create!(name: "owner", email: "owner-users@example.test", role: "admin")
+    user = create_user!(name: "owner", email: "owner-users@example.test", role: "admin")
+    sign_in user
 
     get "/users"
 
@@ -82,7 +90,8 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "chat message create permits haxe-authored params and redirects" do
-    user = Models::User.create!(name: "room owner", email: "room-create@example.test", role: "maintainer")
+    user = create_user!(name: "room owner", email: "room-create@example.test", role: "maintainer")
+    sign_in user
 
     assert_difference "Models::ChatMessage.count", 1 do
       post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: user.id, ignored: "nope" } }
@@ -95,7 +104,8 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "chat message create broadcasts through Turbo Streams for turbo clients" do
-    user = Models::User.create!(name: "room stream owner", email: "room-stream@example.test", role: "maintainer")
+    user = create_user!(name: "room stream owner", email: "room-stream@example.test", role: "maintainer")
+    sign_in user
 
     assert_difference "Models::ChatMessage.count", 1 do
       post "/chat_messages",

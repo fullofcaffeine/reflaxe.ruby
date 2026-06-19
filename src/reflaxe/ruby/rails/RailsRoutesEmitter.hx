@@ -93,6 +93,9 @@ class RailsRoutesEmitter {
 			return [];
 		}
 		var parts = ["devise_for " + rubySymbolLiteral(decl.devise.resource)];
+		if (decl.devise.rubyClass.indexOf("::") >= 0) {
+			parts.push("class_name: " + quoteRubyStringForCode(decl.devise.rubyClass));
+		}
 		if (decl.devise.only.length > 0) {
 			parts.push("only: [" + [for (group in decl.devise.only) rubySymbolLiteral(group)].join(", ") + "]");
 		}

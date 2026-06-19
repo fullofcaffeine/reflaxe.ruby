@@ -99,7 +99,7 @@ class TodoClient {
 	}
 
 	static function bindSessionForms():Void {
-		var forms = Browser.document.querySelectorAll(TodoHooks.classSelector(TodoHooks.sessionFormClass));
+		var forms = Browser.document.querySelectorAll(TodoHooks.attrSelector(TodoHooks.sessionAttr));
 		for (i in 0...forms.length) {
 			var form:Element = cast forms.item(i);
 			if (form == null || form.getAttribute(TodoHooks.boundAttr) == "true") {
@@ -133,7 +133,7 @@ class TodoClient {
 
 	static function announceSessionSubmit(target:Null<EventTarget>, success:Null<Bool>):Void {
 		var form = elementTarget(target);
-		if (form == null || !form.classList.contains(TodoHooks.sessionFormClass) || success == false) {
+		if (form == null || form.getAttribute(TodoHooks.sessionAttr) != "true" || success == false) {
 			return;
 		}
 		announceSessionChangeNow();

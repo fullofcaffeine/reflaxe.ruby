@@ -157,6 +157,7 @@ gem "puma", ">= 5.0"
 gem "propshaft", ">= 0.9"
 gem "importmap-rails", ">= 2.0"
 gem "turbo-rails", ">= 2.0"
+gem "devise", ">= 4.9"
 `);
 
   writeFile("config.ru", `require_relative "config/environment"
@@ -184,6 +185,8 @@ require "action_cable/engine"
 require "propshaft"
 require "importmap-rails"
 require "turbo-rails"
+require "devise"
+require "devise/orm/active_record"
 
 module HXRubyTodoapp
   class Application < Rails::Application
@@ -194,6 +197,19 @@ module HXRubyTodoapp
     config.assets.paths << Rails.root.join("app/javascript")
     config.action_controller.allow_forgery_protection = false
   end
+end
+`);
+
+  writeFile("config/initializers/devise.rb", `Devise.setup do |config|
+  config.mailer_sender = "railshx@example.test"
+  config.secret_key = "railshx-todoapp-devise-secret-key-for-generated-fixture-only"
+  config.case_insensitive_keys = [:email]
+  config.strip_whitespace_keys = [:email]
+  config.skip_session_storage = [:http_auth]
+  config.stretches = Rails.env.test? ? 1 : 12
+  config.reconfirmable = false
+  config.expire_all_remember_me_on_sign_out = true
+  config.sign_out_via = :delete
 end
 `);
 
@@ -264,19 +280,32 @@ import("railshx/todo_client")
 `);
   copyClientModuleGraph();
 
-  writeFile("db/seeds.rb", `owner = Models::User.find_or_create_by!(email: "owner@example.test") do |user|
+writeFile("db/seeds.rb", `owner = Models::User.find_or_create_by!(email: "owner@example.test") do |user|
   user.name = "RailsHx Owner"
   user.role = "admin"
+  user.password = "password123"
+  user.password_confirmation = "password123"
 end
 
 maintainer = Models::User.find_or_create_by!(email: "maintainer@example.test") do |user|
   user.name = "Template Maintainer"
   user.role = "maintainer"
+  user.password = "password123"
+  user.password_confirmation = "password123"
 end
 
 member = Models::User.find_or_create_by!(email: "member@example.test") do |user|
   user.name = "Product Member"
   user.role = "member"
+  user.password = "password123"
+  user.password_confirmation = "password123"
+end
+
+guest = Models::User.find_or_create_by!(email: "guest@example.test") do |user|
+  user.name = "Guest Workspace"
+  user.role = "guest"
+  user.password = "password123"
+  user.password_confirmation = "password123"
 end
 
 Models::Todo.find_or_create_by!(title: "Ship typed Rails templates", user: owner) do |todo|
@@ -297,6 +326,7 @@ end
 Models::ChatMessage.find_or_create_by!(body: "Routes, params, and HHX are all typed for this room.", user: owner)
 Models::ChatMessage.find_or_create_by!(body: "Turbo gets normal Rails streams; Haxe owns the safer authoring layer.", user: maintainer)
 Models::ChatMessage.find_or_create_by!(body: "Turbo Streams carry typed room updates between browsers.", user: member)
+Models::ChatMessage.find_or_create_by!(body: "Guest mode is Devise-backed; Haxe just makes the happy path typed.", user: guest)
 `);
 
   writeFile("app/models/application_record.rb", `class ApplicationRecord < ActiveRecord::Base
@@ -308,13 +338,28 @@ end
 `);
 
   rmSync(writeTargetPath("test"), { force: true, recursive: true });
-  writeFile("test/test_helper.rb", `ENV["RAILS_ENV"] ||= "test"
+writeFile("test/test_helper.rb", `ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
 ActiveRecord::Migration.maintain_test_schema!
 
 class ActiveSupport::TestCase
+  USER_PASSWORD = "password123"
+
+  def create_user!(name:, email:, role: "member")
+    Models::User.create!(
+      name: name,
+      email: email,
+      role: role,
+      password: USER_PASSWORD,
+      password_confirmation: USER_PASSWORD
+    )
+  end
+end
+
+class ActionDispatch::IntegrationTest
+  include Devise::Test::IntegrationHelpers
 end
 `);
   copyTree(join(exampleDir, "rails", "test"), join(appDir, "test"));

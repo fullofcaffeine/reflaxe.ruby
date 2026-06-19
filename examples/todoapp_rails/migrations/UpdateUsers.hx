@@ -3,7 +3,7 @@ package migrations;
 import rails.migration.Migration;
 import rails.migration.MigrationOperation;
 
-// User profile/session migration.
+// User profile migration.
 //
 // Demonstrates: production-safe additive migration snapshots for model fields
 // added after the initial app migration.
@@ -14,7 +14,7 @@ import rails.migration.MigrationOperation;
 // IntelliSense: editors should complete `AddColumn`, `AddIndex`, and typed
 // column option fields.
 // Ruby/Rails output: a timestamped ActiveRecord migration adding email/role
-// columns and indexes.
+// profile columns and indexes.
 @:railsMigration({
 	timestamp: "20260101000002",
 	className: "UpdateUsers",

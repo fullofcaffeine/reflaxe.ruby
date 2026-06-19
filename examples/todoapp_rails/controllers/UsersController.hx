@@ -1,7 +1,9 @@
 package controllers;
 
+import app.auth.UserAuth;
 import models.User;
 import rails.action_view.Template;
+import rails.macros.ControllerDsl.beforeAction;
 import rails.macros.ViewMacro;
 import views.ApplicationLayoutView;
 import views.UserManagementView;
@@ -24,13 +26,15 @@ typedef UserIndexLocals = {
 
 @:railsController
 class UsersController extends rails.action_controller.Base {
-	static final lifecycle = [];
+	static final lifecycle = {
+		beforeAction(UserAuth.authenticate, {});
+	};
 
 	public function index() {
 		var users = User.order(User.f.name.asc()).toArray();
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(UserManagementView) : Template<UserIndexLocals>), {
 			users: users,
-			currentUser: UserSession.currentUser(this)
+			currentUser: UserAuth.currentRequired(this)
 		}, Template.layout(ApplicationLayoutView));
 	}
 }

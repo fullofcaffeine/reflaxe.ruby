@@ -69,6 +69,11 @@ class ControllerDsl {
 		var except:Array<String> = [];
 		if (options != null) {
 			switch (unwrap(options).expr) {
+				case EConst(CIdent("null")) | EBlock([]):
+					// Macro optional arguments may arrive as `null`, and Haxe parses
+					// `{}` as an empty block rather than an object literal. Treat both
+					// as "no Rails lifecycle options" so `beforeAction(auth, {})`
+					// remains ergonomic while still validating non-empty options.
 				case EObjectDecl(fields):
 					for (field in fields) {
 						switch (field.field) {

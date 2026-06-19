@@ -477,8 +477,8 @@ Required coverage:
   compile.
 - Rails request tests for protected route redirect, login, logout, signed-in
   access, and bad login.
-- Playwright for guest/login/protected/sign-out browser flow once the dogfood
-  app exists.
+- Playwright for guest/login/protected/sign-out browser flow in the todoapp
+  dogfood slice and any later dedicated DeviseHx fixture.
 
 ## Rollout
 
@@ -490,9 +490,13 @@ Required coverage:
 6. Add model module/schema validation.
 7. Add HHX helpers/views.
 8. Add sanitizer, mailer, and test-helper seams.
-9. Add a dedicated `examples/devisehx_todoapp`.
+9. Expand the todoapp DeviseHx dogfood slice and, if needed, add a dedicated
+   `examples/devisehx_todoapp` for larger Devise matrices.
 10. Harden packaging/release lanes and version matrix.
 
-Keep `examples/todoapp_rails` on first-party sessions. Add Devise in a separate
-example so the canonical compiler dogfood app remains dependency-light while the
-DeviseHx layer proves real Devise integration.
+`examples/todoapp_rails` now carries the first integrated DeviseHx slice:
+Devise-backed sessions, a Haxe-owned guest sign-in route, protected controllers,
+typed `UserAuth.current/currentRequired/signIn`, `@:devise(...)` model metadata,
+and HHX auth composition. Keep that slice focused and Rails-native; add a
+separate DeviseHx fixture only when the matrix grows beyond what the canonical
+todoapp should carry.

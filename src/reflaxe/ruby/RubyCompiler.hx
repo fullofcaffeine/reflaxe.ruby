@@ -1519,6 +1519,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			body.push("self.table_name = " + quoteRubyStringForCode(tableName));
 		}
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
+		body = body.concat(railsDeviseModelLines(classType));
 		body = body.concat(railsSchemaRegistryLines(tableName, varFields, classType));
 		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":belongsTo")) {
@@ -1597,6 +1598,65 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			modulePath: classType.pack == null ? [] : classType.pack.copy(),
 			statements: statements
 		};
+	}
+
+	static function railsDeviseModelLines(classType:ClassType):Array<String> {
+		var entries = classType.meta.extract(":devise");
+		if (entries.length == 0) {
+			return [];
+		}
+		if (entries.length > 1) {
+			Context.error("@:devise can only be declared once per Rails model.", classType.pos);
+		}
+		var entry = entries[0];
+		if (entry.params.length != 2) {
+			Context.error("@:devise expects a generated Devise scope and an array of Devise module tokens.", entry.pos);
+		}
+		var modules = railsDeviseModuleSymbols(entry.params[1]);
+		if (modules.length == 0) {
+			Context.error("@:devise requires at least one Devise module token.", entry.pos);
+		}
+		return ["devise " + [for (name in modules) rubySymbolLiteral(name)].join(", ")];
+	}
+
+	static function railsDeviseModuleSymbols(expr:haxe.macro.Expr):Array<String> {
+		return switch expr.expr {
+			case EArrayDecl(items):
+				[for (item in items) railsDeviseModuleSymbol(item)];
+			case _:
+				Context.error("@:devise module list must be an array literal so RailsHx can emit deterministic `devise :...` Ruby.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsDeviseModuleSymbol(expr:haxe.macro.Expr):String {
+		return switch expr.expr {
+			case EConst(CIdent(name)):
+				railsDeviseKnownModule(name, expr.pos);
+			case EField(_, name):
+				railsDeviseKnownModule(name, expr.pos);
+			case _:
+				Context.error("@:devise module entries must be known DeviseHx module tokens imported from devisehx.model.DeviseModule.", expr.pos);
+				"database_authenticatable";
+		}
+	}
+
+	static function railsDeviseKnownModule(name:String, pos:haxe.macro.Expr.Position):String {
+		return switch name {
+			case "databaseAuthenticatable": "database_authenticatable";
+			case "registerable": "registerable";
+			case "recoverable": "recoverable";
+			case "rememberable": "rememberable";
+			case "validatable": "validatable";
+			case "confirmable": "confirmable";
+			case "lockable": "lockable";
+			case "trackable": "trackable";
+			case "timeoutable": "timeoutable";
+			case _:
+				Context.error('Unsupported @:devise module token "$name". Use a known devisehx.model.DeviseModule token or keep the model Rails-owned until custom module metadata is implemented.',
+					pos);
+				"database_authenticatable";
+		}
 	}
 
 	static function railsSchemaRegistryLines(tableName:Null<String>, varFields:Array<ClassVarData>, classType:ClassType):Array<String> {

@@ -1,8 +1,9 @@
+import app.auth.UserAuth;
 import controllers.ChatMessagesController;
 import controllers.SessionsController;
 import controllers.TodosController;
-import controllers.UserSession;
 import controllers.UsersController;
+import migrations.AddDeviseToUsers;
 import migrations.CreateChatMessages;
 import migrations.CreateTodos;
 import migrations.UpdateTodos;
@@ -39,8 +40,10 @@ class Main {
 	static function main() {
 		var todo:Todo = null;
 		var chatMessage:ChatMessage = null;
+		var userAuth:Class<UserAuth> = UserAuth;
 		var routes:Class<AppRoutes> = null;
 		var haxeAuthoredTest:Class<TodoHaxeTest> = TodoHaxeTest;
+		var deviseMigration:Class<AddDeviseToUsers> = AddDeviseToUsers;
 		var chatMigration:Class<CreateChatMessages> = CreateChatMessages;
 		var migration:Class<CreateTodos> = CreateTodos;
 		var updateMigration:Class<UpdateTodos> = UpdateTodos;
@@ -49,7 +52,6 @@ class Main {
 		var controller:TodosController = null;
 		var sessionsController:SessionsController = null;
 		var userController:UsersController = null;
-		var userSession:Class<UserSession> = UserSession;
 		var chatMessageView:Class<ChatMessageView> = ChatMessageView;
 		var chatPanelView:Class<ChatPanelView> = ChatPanelView;
 		var layoutView:Class<ApplicationLayoutView> = ApplicationLayoutView;
@@ -64,8 +66,10 @@ class Main {
 		var userSwitcherView:Class<UserSwitcherView> = UserSwitcherView;
 		Sys.println(todo == null);
 		Sys.println(chatMessage == null);
+		Sys.println(userAuth != null);
 		Sys.println(routes == null);
 		Sys.println(haxeAuthoredTest != null);
+		Sys.println(deviseMigration != null);
 		Sys.println(chatMigration != null);
 		Sys.println(migration != null);
 		Sys.println(updateMigration != null);
@@ -74,7 +78,6 @@ class Main {
 		Sys.println(controller == null);
 		Sys.println(sessionsController == null);
 		Sys.println(userController == null);
-		Sys.println(userSession != null);
 		Sys.println(chatMessageView != null);
 		Sys.println(chatPanelView != null);
 		Sys.println(layoutView != null);

@@ -1,9 +1,12 @@
 package routes;
 
+import app.auth.UserAuth;
 import controllers.ChatMessagesController;
 import controllers.SessionsController;
 import controllers.TodosController;
 import controllers.UsersController;
+import devisehx.routes.DeviseRouteGroup.*;
+import devisehx.routes.DeviseRoutes;
 import models.ChatMessage;
 import models.Todo;
 import rails.macros.RoutesDsl.*;
@@ -22,6 +25,7 @@ import rails.macros.RoutesDsl.*;
 @:railsRoutes
 class AppRoutes {
 	static final routes = {
+		DeviseRoutes.deviseFor(UserAuth.scope, {only: [Sessions]});
 		root(to(TodosController, index));
 		resources(Todo, TodosController, {only: [index, create]}, {
 			collection({
@@ -33,8 +37,7 @@ class AppRoutes {
 		});
 		resources(ChatMessage, ChatMessagesController, {only: [index, create]});
 		get("users", to(UsersController, index), {asName: routeName("users")});
-		post("session", to(SessionsController, create), {asName: routeName("sign_in")});
-		delete("session", to(SessionsController, destroy), {asName: routeName("sign_out")});
+		post("guest", to(SessionsController, createGuest), {asName: routeName("guest_sign_in")});
 		namespace("admin", {
 			get("users", to(UsersController, index));
 		});
