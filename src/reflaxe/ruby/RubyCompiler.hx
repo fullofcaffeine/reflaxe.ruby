@@ -2854,14 +2854,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActionControllerStoreCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
+			case TField(target, access) if (isActionControllerFlashStore(target)):
+				switch (fieldAccessRawName(access)) {
+					case "notice" if (params.length == 1):
+						RubyRawExpr(printActionControllerStoreTarget(target) + "[:notice] = " + printInlineExpr(params[0]));
+					case "alert" if (params.length == 1):
+						RubyRawExpr(printActionControllerStoreTarget(target) + "[:alert] = " + printInlineExpr(params[0]));
+					case _:
+						null;
+				}
 			case TField(target, access) if (isActionControllerKeyValueStore(target)):
 				switch (fieldAccessRawName(access)) {
 					case "get" if (params.length == 1):
-						RubyRawExpr(printInlineExpr(target) + "[" + railsStoreKey(params[0]) + "]");
+						RubyRawExpr(printActionControllerStoreTarget(target) + "[" + railsStoreKey(params[0]) + "]");
 					case "set" if (params.length == 2):
-						RubyRawExpr(printInlineExpr(target) + "[" + railsStoreKey(params[0]) + "] = " + printInlineExpr(params[1]));
+						RubyRawExpr(printActionControllerStoreTarget(target) + "[" + railsStoreKey(params[0]) + "] = " + printInlineExpr(params[1]));
 					case "delete" if (params.length == 1):
-						RubyCall(compileExpr(target), "delete", [RubyRawExpr(railsStoreKey(params[0]))]);
+						RubyRawExpr(printActionControllerStoreTarget(target) + ".delete(" + railsStoreKey(params[0]) + ")");
 					case _:
 						null;
 				}
@@ -2872,9 +2881,44 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActionControllerKeyValueStore(expr:TypedExpr):Bool {
 		return switch (expr.t) {
-			case TInst(classRef, _): var classType = classRef.get(); classType.pack.join(".") == "rails.action_controller" && classType.name == "KeyValueStore";
+			case TInst(classRef, _): var classType = classRef.get(); classType.pack.join(".") == "rails.action_controller" && (classType.name == "KeyValueStore"
+					|| classType.name == "FlashStore");
 			case _:
 				false;
+		}
+	}
+
+	static function isActionControllerFlashStore(expr:TypedExpr):Bool {
+		return switch (expr.t) {
+			case TInst(classRef, _): var classType = classRef.get(); classType.pack.join(".") == "rails.action_controller" && classType.name == "FlashStore";
+			case _:
+				false;
+		}
+	}
+
+	static function printActionControllerStoreTarget(expr:TypedExpr):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall(fn, []) if (isActionControllerFlashStore(expr)):
+				switch (unwrapTypedExpr(fn).expr) {
+					case TField(receiver, access):
+						var name = fieldAccessRawName(access);
+						if (name == "get_flash" || name == "flash") {
+							printInlineExpr(receiver) + ".flash()";
+						} else {
+							printInlineExpr(expr);
+						}
+					case _:
+						printInlineExpr(expr);
+				}
+			case TField(receiver, access) if (isActionControllerFlashStore(expr)):
+				var name = fieldAccessRawName(access);
+				if (name == "get_flash" || name == "flash") {
+					printInlineExpr(receiver) + ".flash()";
+				} else {
+					printInlineExpr(expr);
+				}
+			case _:
+				printInlineExpr(expr);
 		}
 	}
 
@@ -3600,6 +3644,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function simplifyRubyIdentityBegin(code:String):String {
 		var lines = code.split("\n");
+		if (lines.length == 6 && lines[0] == "begin" && lines[5] == "end") {
+			var firstPrefix = "  ";
+			var nilSuffix = " = nil";
+			if (StringTools.startsWith(lines[1], firstPrefix)
+				&& StringTools.startsWith(lines[2], firstPrefix)
+				&& StringTools.endsWith(lines[2], nilSuffix)) {
+				var valueAssign = lines[1].substr(firstPrefix.length);
+				var eq = valueAssign.indexOf(" = ");
+				var valueLocal = eq < 0 ? "" : valueAssign.substr(0, eq);
+				var valueExpr = eq < 0 ? "" : valueAssign.substr(eq + " = ".length);
+				var boxLocal = lines[2].substr(firstPrefix.length, lines[2].length - firstPrefix.length - nilSuffix.length);
+				if (valueLocal != "" && boxLocal != "" && lines[3] == boxLocal + " = " + valueLocal && lines[4] == boxLocal) {
+					return simplifyRubyCompilerLocalNames(valueExpr);
+				}
+			}
+		}
 		if (lines.length != 5 || lines[0] != "begin" || lines[4] != "end") {
 			return code;
 		}
@@ -3613,7 +3673,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (local == "" || !StringTools.startsWith(lines[2], assignPrefix) || lines[3] != prefix + local) {
 			return code;
 		}
-		return lines[2].substr(assignPrefix.length);
+		return simplifyRubyCompilerLocalNames(lines[2].substr(assignPrefix.length));
+	}
+
+	static function simplifyRubyCompilerLocalNames(code:String):String {
+		return ~/\b([a-z][A-Za-z0-9_]*)__hx[0-9]+\b/g.replace(code, "$1");
 	}
 
 	static function printRailsLocalsHash(expr:TypedExpr):Null<String> {
@@ -5913,11 +5977,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							lowerTemplateFormHiddenField(params[0], params[1], scope);
 						}
 					case "FormLabel":
-						if (params.length != 2) {
-							Context.error("HtmlNode.FormLabel expects name and text arguments.", node.pos);
+						if (params.length != 3) {
+							Context.error("HtmlNode.FormLabel expects name, text, and attrs arguments.", node.pos);
 							"";
 						} else {
-							lowerTemplateFormLabel(params[0], params[1], scope);
+							lowerTemplateFormLabel(params[0], params[1], params[2], scope);
 						}
 					case "FormTextField":
 						if (params.length != 2) {
@@ -6067,7 +6131,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				} else {
 					var binder = func.args[0].v;
 					var nextScope = cloneTemplateScope(scope);
-					nextScope.localNames.set(binder.id, RubyNaming.toLocalName(binder.name));
+					var binderName = RubyNaming.toLocalName(haxeSourceLocalName(binder.name));
+					nextScope.localNames.set(binder.id, binderName);
 					var body = extractTemplateAstReturn(func.expr);
 					if (body == null) {
 						Context.error("HtmlNode.For render function must return a HtmlNode.", fn.pos);
@@ -6075,7 +6140,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					} else {"<% "
 						+ printTemplateExpr(items, scope)
 						+ ".each do |"
-						+ RubyNaming.toLocalName(binder.name)
+						+ binderName
 						+ "| %>"
 						+ lowerTemplateNode(body, nextScope)
 						+ "<% end %>";
@@ -6114,15 +6179,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			+ " %>";
 	}
 
-	static function lowerTemplateFormLabel(name:TypedExpr, text:TypedExpr, scope:RailsTemplateScope):String {
+	static function lowerTemplateFormLabel(name:TypedExpr, text:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var form = requireFormBuilder(scope, name);
-		return "<%= "
-			+ form
-			+ ".label "
-			+ rubySymbolLiteral(expectTemplateFieldName(name, "H.label name must be a string literal or RailsHx model field ref."))
-			+ ", "
-			+ printTemplateExpr(text, scope)
-			+ " %>";
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.label name must be a string literal or RailsHx model field ref.")),
+			printTemplateExpr(text, scope)
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= " + form + ".label " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormTextField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
@@ -6538,9 +6601,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function printTemplateExpr(expr:TypedExpr, scope:RailsTemplateScope):String {
 		var unwrapped = unwrapTemplateExpr(expr);
+		var abstractValue = abstractIdentityBlockValue(unwrapped);
+		if (abstractValue != null) {
+			return printTemplateExpr(abstractValue, scope);
+		}
 		return switch (unwrapped.expr) {
 			case TLocal(v) if (scope.localNames.exists(v.id)):
 				scope.localNames.get(v.id);
+			case TLocal(v):
+				haxeSourceLocalName(v.name);
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (isSlotContentCall(classRef.get(), fieldRef.get())):
 				Context.error("Slot.content() may only be used as the matching slot local for HtmlNode.Component.", unwrapped.pos);
 				"nil";
@@ -6549,12 +6618,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TConst(TInt(value)): Std.string(value);
 			case TConst(TFloat(value)): value;
 			case TConst(TString(value)): quoteRubyStringForCode(value);
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, [value]) if (isStdStringCall(classRef.get(), fieldRef.get())):
+				printTemplateExpr(value, scope) + ".to_s";
 			case TField(_, FStatic(_, fieldRef)):
 				var staticValue = templateStaticFieldString(fieldRef.get());
 				if (staticValue != null) {
 					quoteRubyStringForCode(staticValue);
 				} else {
-					reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped));
+					simplifyRubyIdentityBegin(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped)));
 				}
 			case TArray(target, index): printTemplateExpr(target, scope) + "[" + printTemplateExpr(index, scope) + "]";
 			case TArrayDecl(values): "[" + [for (value in values) printTemplateExpr(value, scope)].join(", ") + "]";
@@ -6586,8 +6657,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				+ (eElse == null ? "nil" : printTemplateExpr(eElse, scope))
 				+ " end)";
 			case _:
-				reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped));
+				simplifyRubyIdentityBegin(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped)));
 		}
+	}
+
+	static function isStdStringCall(classType:ClassType, field:haxe.macro.Type.ClassField):Bool {
+		return classType.pack.length == 0 && classType.name == "Std" && field.name == "string";
+	}
+
+	static function haxeSourceLocalName(name:String):String {
+		var marker = name.lastIndexOf("__hx");
+		if (marker <= 0) {
+			return name;
+		}
+		var suffix = name.substr(marker + "__hx".length);
+		return ~/^[0-9]+$/.match(suffix) ? name.substr(0, marker) : name;
 	}
 
 	static function isSlotContentCall(classType:ClassType, field:haxe.macro.Type.ClassField):Bool {

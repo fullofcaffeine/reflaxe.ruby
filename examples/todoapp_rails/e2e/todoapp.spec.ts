@@ -15,6 +15,7 @@ async function continueAsGuest(page: Page) {
   await expect(page.locator(hooks.selectors.shell)).toBeVisible()
   await expect(page.locator('.session-chip').getByText('Guest Workspace', { exact: true })).toBeVisible()
   await expect(page.locator('.brand-mark').getByText('Devise session active')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Users' })).toHaveCount(0)
 }
 
 async function loginAsOwner(page: Page) {
@@ -101,27 +102,54 @@ test('renders the typed RailsHx todo page through real browser assets', async ({
 })
 
 test('loads typed user management through a standard Turbo Frame', async ({ page }) => {
-  await gotoAuthenticatedTodos(page)
+  await loginAsOwner(page)
 
   const frame = page.locator(hooks.selectors.userFrame)
   await expect(frame).toHaveCount(1)
 
   await page.getByRole('link', { name: 'Users' }).click()
 
-  await expect(frame).toContainText('RailsHx user management', { timeout: 20_000 })
-  await expect(frame).toContainText('Typed users, ordinary Rails output.')
+  await expect(frame).toContainText('Admin-only RailsHx user management', { timeout: 20_000 })
+  await expect(frame).toContainText('Typed users, ordinary Rails CRUD.')
   await expect(frame.locator('.user-management-card')).toHaveCount(4)
   await expect(page).toHaveURL(/\/todos$/)
 })
 
 test('renders the users route directly as a Rails fallback with the same frame contract', async ({ page }) => {
-  await gotoAuthenticatedTodos(page)
+  await loginAsOwner(page)
   await page.goto('/users', { waitUntil: 'domcontentloaded', timeout: 15_000 })
 
   const frame = page.locator(hooks.selectors.userFrame)
   await expect(frame).toBeVisible()
-  await expect(frame).toContainText('RailsHx user management')
+  await expect(frame).toContainText('Admin-only RailsHx user management')
   await expect(page.getByRole('link', { name: 'Back to todo board' })).toBeVisible()
+})
+
+test('lets admins create, update, and remove users through typed RailsHx CRUD', async ({ page }) => {
+  await loginAsOwner(page)
+  await page.getByRole('link', { name: 'Users' }).click()
+
+  const frame = page.locator(hooks.selectors.userFrame)
+  const createForm = frame.locator('.user-create-card')
+  const unique = Date.now()
+  const email = `teammate-${unique}@example.test`
+
+  await createForm.getByLabel('Name').fill(`Typed Teammate ${unique}`)
+  await createForm.getByLabel('Email').fill(email)
+  await createForm.getByLabel('Role').fill('member')
+  await createForm.getByLabel('Password', { exact: true }).fill('password123')
+  await createForm.getByLabel('Confirm password').fill('password123')
+  await createForm.getByRole('button', { name: 'Create user' }).click()
+
+  const card = frame.locator('.user-management-card').filter({ hasText: email })
+  await expect(card).toBeVisible({ timeout: 20_000 })
+  await card.locator('input[name="user[role]"]').fill('maintainer')
+  await card.getByRole('button', { name: 'Save user' }).click()
+
+  const updatedCard = frame.locator('.user-management-card').filter({ hasText: email })
+  await expect(updatedCard).toContainText('Maintainer', { timeout: 20_000 })
+  await updatedCard.getByRole('button', { name: 'Remove user' }).click()
+  await expect(frame).not.toContainText(email, { timeout: 20_000 })
 })
 
 test('uses typed Haxe client behavior for same-page Rails links', async ({ page }) => {

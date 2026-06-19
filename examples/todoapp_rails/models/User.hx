@@ -47,7 +47,11 @@ class User extends rails.active_record.Base<User> implements DeviseResource<User
 	public var emailValidation:rails.ActiveRecord.Validation<String>;
 
 	public function roleLabel():String {
-		return role == "admin" ? "Admin" : role == "maintainer" ? "Maintainer" : "Member";
+		return role == "admin" ? "Admin" : role == "maintainer" ? "Maintainer" : role == "guest" ? "Guest" : "Member";
+	}
+
+	public function canManageUsers():Bool {
+		return role == "admin";
 	}
 
 	public function initials():String {

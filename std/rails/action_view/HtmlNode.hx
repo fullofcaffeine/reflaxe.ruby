@@ -36,7 +36,7 @@ enum HtmlNode {
 	Yield;
 	FormWith<TUrl>(url:TUrl, scope:String, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	FormHiddenField<TValue>(name:String, value:TValue);
-	FormLabel<TText>(name:String, text:TText);
+	FormLabel<TText>(name:String, text:TText, attrs:Array<HtmlAttr>);
 	FormTextField(name:String, attrs:Array<HtmlAttr>);
 	FormPasswordField(name:String, attrs:Array<HtmlAttr>);
 	FormTextArea(name:String, attrs:Array<HtmlAttr>);

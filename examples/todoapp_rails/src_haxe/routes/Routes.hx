@@ -65,17 +65,17 @@ extern class Routes {
 	@:native("users_url")
 	public static function usersUrl():String;
 
+	@:native("user_path")
+	public static function userPath(id:RouteParam):String;
+
+	@:native("user_url")
+	public static function userUrl(id:RouteParam):String;
+
 	@:native("guest_sign_in_path")
 	public static function guestSignInPath():String;
 
 	@:native("guest_sign_in_url")
 	public static function guestSignInUrl():String;
-
-	@:native("admin_users_path")
-	public static function adminUsersPath():String;
-
-	@:native("admin_users_url")
-	public static function adminUsersUrl():String;
 
 	@:native("optional_report_path")
 	public static function optionalReportPath():String;

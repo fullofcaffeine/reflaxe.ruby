@@ -49,7 +49,11 @@ class TodosController extends rails.action_controller.Base {
 
 	public function index() {
 		var currentUser = UserAuth.currentRequired(this);
-		var todos = Todo.where({isCompleted: false, userId: currentUser.id}).includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray();
+		var todos = Todo.where({isCompleted: false, userId: currentUser.id})
+			.includes(Todo.a.user)
+			.order(Todo.f.title.asc())
+			.limit(10)
+			.toArray();
 		var users = User.order(User.f.name.asc()).toArray();
 		var chatMessages = ChatMessage.latest().toArray();
 		ViewMacro.renderTemplateWithLayout(this, (Template.of(TodoIndexView) : Template<TodoIndexLocals>), {
@@ -71,8 +75,11 @@ class TodosController extends rails.action_controller.Base {
 			format.turboStream(function() {
 				render({
 					turboStream: TurboStreams.replace(StreamTarget.named(TodoHooks.todoListId), (Template.of(TodoListView) : Template<TodoListLocals>), {
-						todos: Todo.where({isCompleted: false, userId: currentUser.id}).includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray()
-					})
+						todos: Todo.where({isCompleted: false, userId: currentUser.id})
+							.includes(Todo.a.user)
+							.order(Todo.f.title.asc())
+							.limit(10)
+							.toArray()})
 				});
 			});
 			format.html(function() {

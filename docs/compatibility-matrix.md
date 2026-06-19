@@ -63,7 +63,7 @@ Unsafe boundary policy is tracked in
 | Controller request/response facades | `request().requestMethod()`, `request().format().json()`, `response().status()` | Initial typed extern facade slice |
 | Controller lifecycle | `static final lifecycle = { beforeAction(authenticateUser, {only: [create]}); rescueFrom(RecordNotFound, notFound); }` | Initial contextual lifecycle DSL for filters and `rescue_from`; legacy method metadata remains compatibility-only |
 | ActiveJob lifecycle/runtime | `static final lifecycle = { queueAs("mailers"); retryOn(StandardError, {attempts: 3}); discardOn(DeserializationError); }`, `performLater(...)`, `performNow(...)` | Initial contextual lifecycle DSL plus typed enqueue helpers; runtime Rails lane covers queue/enqueue/perform, typed argument serialization/deserialization, and retry re-enqueue behavior |
-| Controller stores | `flash().set("notice", "...")`, `session().get("key")`, `cookies().delete("key")` | Initial typed flash/session/cookies store slice |
+| Controller stores | `flash.notice("...")`, `flash.alert("...")`, `session().get("key")`, `cookies().delete("key")` | Initial typed flash/session/cookies store slice |
 | Controller response statuses | `head(Status.noContent)`, `render({json: data, status: Status.created})` | Initial typed status-token slice lowering to Rails symbols |
 | Controller respond_to | `respondTo(function(format) { format.html(...); format.json(...); })` | Initial typed format collector slice |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |

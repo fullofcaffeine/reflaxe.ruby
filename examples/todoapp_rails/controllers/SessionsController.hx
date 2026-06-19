@@ -23,7 +23,7 @@ class SessionsController extends rails.action_controller.Base {
 	public function createGuest() {
 		var guest:User = cast User.findBy({email: "guest@example.test"});
 		UserAuth.signIn(this, guest);
-		this.flash().set("notice", "Signed in as the guest workspace");
+		this.flash.notice("Signed in as the guest workspace");
 		redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
 	}
 }

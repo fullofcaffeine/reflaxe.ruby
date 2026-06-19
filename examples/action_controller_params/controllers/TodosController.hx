@@ -64,7 +64,7 @@ class TodosController extends rails.action_controller.Base {
 		var wantsJson = requestFormat.json();
 		var requestFormatName = requestFormat.toString();
 		var currentStatus = response().status();
-		flash().set("notice", "Todo queued");
+		flash.notice("Todo queued");
 		session().set("lastTodoTitle", attrs);
 		var remembered = session().get("lastTodoTitle");
 		cookies().set("todoFilter", "open");

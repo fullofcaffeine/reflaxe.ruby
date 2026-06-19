@@ -9,6 +9,7 @@ import devisehx.routes.DeviseRouteGroup.*;
 import devisehx.routes.DeviseRoutes;
 import models.ChatMessage;
 import models.Todo;
+import models.User;
 import rails.macros.RoutesDsl.*;
 
 // Haxe-owned Rails routes for the todoapp.
@@ -36,11 +37,8 @@ class AppRoutes {
 			});
 		});
 		resources(ChatMessage, ChatMessagesController, {only: [index, create]});
-		get("users", to(UsersController, index), {asName: routeName("users")});
+		resources(User, UsersController, {only: [index, create, update, destroy]});
 		post("guest", to(SessionsController, createGuest), {asName: routeName("guest_sign_in")});
-		namespace("admin", {
-			get("users", to(UsersController, index));
-		});
 		get("reports(/:year)", to(TodosController, optionalReport), {asName: routeName("optional_report")});
 		get("files/*path", to(TodosController, file), {asName: routeName("file")});
 	};

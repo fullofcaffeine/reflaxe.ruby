@@ -695,33 +695,170 @@ button.session-clear-form {
 }
 
 .users-shell {
-	padding-block: 54px 96px;
+	width: min(1120px, calc(100% - 32px));
+	margin: 0 auto;
+	padding: 28px 0 80px;
+}
+
+.todo-shell .users-shell {
+	width: 100%;
+	padding: 0;
+}
+
+.users-admin-board {
+	display: grid;
+	gap: 22px;
+	border: 1px solid var(--line);
+	border-radius: 34px;
+	padding: clamp(22px, 3vw, 34px);
+	background:
+		radial-gradient(circle at 2% 0%, rgba(185, 244, 211, 0.34), transparent 20rem),
+		rgba(255, 255, 255, 0.76);
+	box-shadow: 0 24px 80px rgba(24, 34, 31, 0.13);
+	backdrop-filter: blur(20px);
 }
 
 .users-page-hero {
-	margin-bottom: 26px;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 24px;
+	align-items: start;
+	padding-bottom: 20px;
+	border-bottom: 1px solid var(--line);
+}
+
+.users-page-hero h1,
+.user-create-card h2 {
+	margin: 8px 0 12px;
+	font-size: clamp(2.15rem, 4.2vw, 4.8rem);
+	line-height: 0.9;
+	letter-spacing: -0.065em;
+}
+
+.users-page-hero p,
+.user-create-card p {
+	max-width: 760px;
+	margin: 0;
+	color: var(--muted);
+	font: 1rem/1.72 "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.user-create-card {
+	display: grid;
+	grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1fr);
+	gap: 24px;
+	align-items: start;
+	border: 1px dashed rgba(24, 34, 31, 0.18);
+	border-radius: 28px;
+	padding: 22px;
+	background: rgba(255, 250, 240, 0.5);
+}
+
+.user-create-form,
+.user-card-form {
+	display: grid;
+	gap: 12px;
+}
+
+.user-create-form {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.user-create-form input[type="submit"] {
+	align-self: end;
+}
+
+.user-create-form label,
+.user-card-form label {
+	display: block;
+	margin-bottom: 7px;
+	color: var(--muted);
+	font: 900 0.7rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.user-create-form input:not([type="submit"]),
+.user-card-form input:not([type="submit"]) {
+	box-sizing: border-box;
+	width: 100%;
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	padding: 13px 14px;
+	color: var(--ink);
+	background: rgba(255, 255, 255, 0.78);
+	font: 0.95rem/1.2 "Avenir Next", "Trebuchet MS", sans-serif;
+	outline: none;
+}
+
+.user-create-form input:focus,
+.user-card-form input:focus {
+	border-color: rgba(255, 107, 53, 0.66);
+	box-shadow: 0 0 0 5px rgba(255, 107, 53, 0.12);
+}
+
+.user-create-form input[type="submit"],
+.user-card-form input[type="submit"],
+.user-delete-form input[type="submit"],
+.user-delete-form button {
+	border: 0;
+	border-radius: 16px;
+	padding: 13px 15px;
+	color: white;
+	cursor: pointer;
+	font: 900 0.78rem/1 "Avenir Next", "Trebuchet MS", sans-serif;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	background: linear-gradient(135deg, #18221f, #365249);
+	box-shadow: 0 14px 32px rgba(24, 34, 31, 0.18);
+	transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
 .user-grid {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 18px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
 }
 
 .user-management-card {
 	display: grid;
-	grid-template-columns: auto minmax(0, 1fr);
 	gap: 16px;
-	align-items: center;
-	padding: 22px;
+	align-items: stretch;
+	padding: 18px;
 	border: 1px solid var(--line);
-	border-radius: 32px;
+	border-radius: 28px;
 	background: rgba(255, 255, 255, 0.82);
+}
+
+.user-card-heading {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	gap: 14px;
+	align-items: center;
 }
 
 .user-management-card.is-current {
 	border-color: rgba(255, 107, 53, 0.72);
 	box-shadow: 0 18px 48px rgba(24, 34, 31, 0.11);
+}
+
+.user-delete-form {
+	margin: -4px 0 0;
+}
+
+.user-delete-form input[type="submit"],
+.user-delete-form button {
+	color: var(--ember);
+	background: rgba(255, 107, 53, 0.1);
+	box-shadow: none;
+}
+
+.user-create-form input[type="submit"]:hover,
+.user-card-form input[type="submit"]:hover,
+.user-delete-form input[type="submit"]:hover,
+.user-delete-form button:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 18px 40px rgba(24, 34, 31, 0.16);
 }
 
 .open-work-card:focus {

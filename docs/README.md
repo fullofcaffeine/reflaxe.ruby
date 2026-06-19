@@ -49,6 +49,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [SQL String Policy](railshx-sql-string-policy.md)
 - [Type Safety Review](railshx-type-safety-review.md)
 - [Escape Hatch Security Audit](railshx-escape-hatch-security-audit.md)
+- [RailsHx Skeleton And Todoapp Tutorial](railshx-skeleton-and-todoapp-tutorial.md)
 - [Haxe-Authored Testing Design](railshx-haxe-authored-testing-design.md)
 
 ## Examples
@@ -59,7 +60,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - `examples/rails_routes_dsl`: focused Haxe-owned Rails route DSL fixture with
   committed `config/routes.rb` and route-manifest snapshots.
 - `examples/rails_interop_app`: gradual Rails adoption with existing Ruby/ERB seams.
-- `examples/todoapp_rails`: canonical RailsHx dogfood app with HHX, ActiveRecord, migrations, Haxe-authored JS, Rails tests, production smoke, and Playwright.
+- `examples/todoapp_rails`: canonical RailsHx dogfood app with HHX, ActiveRecord, migrations, DeviseHx, Haxe-authored JS, Rails tests, production smoke, and Playwright.
 
 ## Local Public-Readiness Checks
 

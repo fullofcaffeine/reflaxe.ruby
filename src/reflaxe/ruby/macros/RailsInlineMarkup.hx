@@ -701,7 +701,8 @@ private class RailsMarkupParser {
 			case "field_label":
 				var labelName = requireAttrValue(attrs, "name", pos);
 				var text = attrValueOrTextChildren(attrs, children, "field_label", pos);
-				macro @:pos(pos) rails.action_view.HtmlNode.FormLabel($labelName, $text);
+				var labelAttrs = attrsExcept(attrs, ["name", "text"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.FormLabel($labelName, $text, ${mkArray(labelAttrs.map(mkAttr), pos)});
 			case "text_field":
 				var textFieldName = requireAttrValue(attrs, "name", pos);
 				var textFieldAttrs = attrsExcept(attrs, ["name"]);

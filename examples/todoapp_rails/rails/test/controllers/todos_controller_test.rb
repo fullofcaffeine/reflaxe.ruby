@@ -86,10 +86,10 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes @response.body, "Guest Workspace"
     assert_includes @response.body, "Devise session active"
+    assert_not_includes @response.body, "Users"
 
     get "/users"
-    assert_response :success
-    assert_includes @response.body, "Guest Workspace"
+    assert_redirected_to "/todos"
   end
 
   test "devise sign out returns users to protected login flow" do
@@ -103,16 +103,48 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/users/sign_in"
   end
 
-  test "users page renders typed user management" do
+  test "users page renders admin-only typed CRUD" do
     user = create_user!(name: "owner", email: "owner-users@example.test", role: "admin")
+    managed = create_user!(name: "member", email: "member-users@example.test", role: "member")
     sign_in user
 
     get "/users"
 
     assert_response :success
-    assert_includes @response.body, "Typed users, ordinary Rails output."
+    assert_includes @response.body, "Admin-only RailsHx user management"
+    assert_includes @response.body, "Typed users, ordinary Rails CRUD."
     assert_includes @response.body, "owner-users@example.test"
+    assert_includes @response.body, "member-users@example.test"
+    assert_includes @response.body, "Create user"
+    assert_includes @response.body, "Save user"
+    assert_includes @response.body, "Remove user"
     assert_includes @response.body, "Back to todo board"
+
+    assert_difference "Models::User.count", 1 do
+      post "/users", params: { user: { name: "New Admin", email: "new-admin@example.test", role: "admin", password: USER_PASSWORD, password_confirmation: USER_PASSWORD } }
+    end
+    assert_redirected_to "/users"
+    assert_equal "admin", Models::User.find_by(email: "new-admin@example.test").role
+
+    patch "/users/#{managed.id}", params: { user: { name: "Updated Member", email: "updated-member@example.test", role: "maintainer" } }
+    assert_redirected_to "/users"
+    managed.reload
+    assert_equal "Updated Member", managed.name
+    assert_equal "maintainer", managed.role
+
+    assert_difference "Models::User.count", -1 do
+      delete "/users/#{managed.id}"
+    end
+    assert_redirected_to "/users"
+  end
+
+  test "non-admin users cannot manage users" do
+    user = create_user!(name: "member", email: "member-denied@example.test", role: "member")
+    sign_in user
+
+    get "/users"
+
+    assert_redirected_to "/todos"
   end
 
   test "chat message create permits haxe-authored params and server-owns user assignment" do

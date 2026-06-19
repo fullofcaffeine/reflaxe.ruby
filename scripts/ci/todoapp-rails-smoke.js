@@ -389,10 +389,8 @@ for (const expected of [
   'resources :chat_messages, controller: "controllers/chat_messages", only: [:index, :create]',
   'get "completed", to: "controllers/todos#completed"',
   'patch "complete", to: "controllers/todos#complete"',
-  'get "users", to: "controllers/users#index", as: :users',
+  'resources :users, controller: "controllers/users", only: [:index, :create, :update, :destroy]',
   'post "guest", to: "controllers/sessions#create_guest", as: :guest_sign_in',
-  "namespace :admin do",
-  'get "users", to: "controllers/users#index"',
   'get "reports(/:year)", to: "controllers/todos#optional_report", as: :optional_report',
   'get "files/*path", to: "controllers/todos#file", as: :file',
 ]) {
@@ -421,12 +419,12 @@ for (const expected of [
   '@:native("chat_messages_path")',
   "public static function chatMessagesPath():String;",
   "public static function usersPath():String;",
+  '@:native("user_path")',
+  "public static function userPath(id:RouteParam):String;",
   '@:native("completed_todos_path")',
   "public static function completedTodosPath():String;",
   '@:native("complete_todo_path")',
   "public static function completeTodoPath(id:RouteParam):String;",
-  '@:native("admin_users_path")',
-  "public static function adminUsersPath():String;",
   '@:native("optional_report_path")',
   "public static function optionalReportPath():String;",
   '@:native("file_path")',
@@ -527,8 +525,19 @@ const usersControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "con
 for (const expected of [
   /class UsersController < ActionController::Base/,
   /before_action :authenticate_user!/,
+  /current_user__hx\d+ = self\.require_admin\(\)/,
   /users__hx\d+ = Models::User\.order\(name: :asc\)\.to_a\(\)/,
-  /self\.render\(template: "controllers\/users\/index", locals: \{users: users__hx\d+, current_user: current_user\(\)\}, layout: "application"\)/,
+  /self\.render\(template: "controllers\/users\/index", locals: \{users: users__hx\d+, current_user: current_user__hx\d+\}, layout: "application"\)/,
+  /def create\(\)/,
+  /self\.params\(\)\.require\("user"\)\.permit\(\[:name, :email, :role, :password, :password_confirmation\]\)/,
+  /Models::User\.create\(attrs__hx\d+\)/,
+  /self\.flash\(\)\[:notice\] = "User created"/,
+  /def update\(\)/,
+  /Models::User\.find\(self\.param_id\(\)\)/,
+  /user__hx\d+\.update\(attrs__hx\d+\)/,
+  /def destroy\(\)/,
+  /user__hx\d+\.destroy\(\)/,
+  /self\.flash\(\)\[:alert\] = "Admin access is required for user management"/,
 ]) {
   if (!expected.test(usersControllerRuby)) {
     console.error(`todoapp_rails users controller output missing expected line: ${expected}`);
@@ -767,13 +776,12 @@ for (const expected of [
   "root(to(TodosController, index));",
   "resources(Todo, TodosController, {only: [index, create]}, {",
   "resources(ChatMessage, ChatMessagesController, {only: [index, create]});",
+  "resources(User, UsersController, {only: [index, create, update, destroy]});",
   "collection({",
   'get("completed", to(TodosController, completed));',
   "member({",
   'patch("complete", to(TodosController, complete));',
-  'get("users", to(UsersController, index), {asName: routeName("users")});',
   'post("guest", to(SessionsController, createGuest), {asName: routeName("guest_sign_in")});',
-  'namespace("admin", {',
   'get("reports(/:year)", to(TodosController, optionalReport), {asName: routeName("optional_report")});',
   'get("files/*path", to(TodosController, file), {asName: routeName("file")});',
 ]) {
@@ -836,6 +844,9 @@ for (const expected of [
   "turbo-cable-stream-source[connected]",
   "hooks.attrs.bound",
   "hooks.selectors.openWork",
+  "lets admins create, update, and remove users through typed RailsHx CRUD",
+  "Admin-only RailsHx user management",
+  "await loginAsOwner(page)",
 ]) {
   if (!hookSpecSource.includes(expected)) {
     console.error(`todoapp_rails Playwright spec missing generated hook usage: ${expected}`);
@@ -1095,6 +1106,7 @@ for (const expected of [
   '<header class="app-topbar" aria-label="Todoapp session">',
   "RailsHx Todo",
   "Devise session active",
+  '<% if current_user.can_manage_users() %>',
   '<%= link_to users_path(), class: "typed-route-link topbar-link", data: {turbo_frame: "railshx-user-frame"} do %>',
   '<%= link_to "#open-work", class: "typed-route-link topbar-link", data: {railshx_scroll: true} do %>',
   '<span class="avatar"><%= current_user.initials() %></span>',
@@ -1129,10 +1141,14 @@ for (const expected of [
 
 const typedUsersPage = readFileSync(join(outputDir, "app", "views", "controllers", "users", "index.html.erb"), "utf8");
 for (const expected of [
-  "RailsHx user management",
-  "Typed users, ordinary Rails output.",
+  "Admin-only RailsHx user management",
+  "Typed users, ordinary Rails CRUD.",
   '<turbo-frame id="railshx-user-frame" class="user-management-frame">',
   '<%= link_to "Back to todo board", todos_path(), class: "typed-route-link", data: {turbo_frame: "_top"} %>',
+  '<%= form_with url: users_path(), scope: :user, local: true, class: "user-create-form" do |form| %>',
+  '<%= form.password_field :password, placeholder: "password123", required: true %>',
+  '<%= form_with url: user_path(user.id), scope: :user, method: "patch", local: true, class: "user-card-form" do |form| %>',
+  '<%= button_to "Remove user", user_path(user.id), method: "delete", class: "user-delete-form" %>',
   "<% users.each do |user| %>",
   '<span class="avatar"><%= user.initials() %></span>',
   "<h2><%= user.name %></h2>",

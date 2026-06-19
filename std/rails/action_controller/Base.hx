@@ -15,7 +15,10 @@ class Base {
 		return cast null;
 	}
 
-	public function flash():KeyValueStore<String> {
+	@:native("flash")
+	public var flash(get, never):FlashStore;
+
+	function get_flash():FlashStore {
 		return cast null;
 	}
 

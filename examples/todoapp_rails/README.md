@@ -2,6 +2,9 @@
 
 This is the end-to-end RailsHx sample for `reflaxe.ruby`. It shows typed Haxe authoring for Rails code while keeping the generated Ruby recognizable to a Rails app.
 
+For the guided walkthrough of the generated RailsHx skeleton and this larger
+dogfood app, see [`docs/railshx-skeleton-and-todoapp-tutorial.md`](../../docs/railshx-skeleton-and-todoapp-tutorial.md).
+
 ## Quick Start
 
 From the repository root:
@@ -50,7 +53,7 @@ That prepares the app once, then runs Rails and the watcher together. The watche
 - `controllers/TodosController.hx` is a RailsHx controller using typed params, typed Devise current-user lookup, typed relation queries, and route helpers. The board itself is protected through `beforeAction(UserAuth.authenticate, {})`; Devise renders the login page first, while the Haxe-owned guest action creates a real Devise session for demos.
 - `controllers/SessionsController.hx` demonstrates a Haxe-owned guest convenience action layered over real Devise. Regular login/logout routes come from Devise; the guest action calls typed `UserAuth.signIn(this, guest)` and emits ordinary `sign_in(:user, guest)`.
 - `controllers/ChatMessagesController.hx` demonstrates the Hotwire mutation seam: typed strong params create a chat message, the controller broadcasts a typed server-rendered HHX partial with `TurboStreams.broadcastPrependTo(...)`, Turbo clients receive `head :no_content`, and HTML fallback redirects through normal Rails.
-- `controllers/UsersController.hx` renders a second typed page for user management through checked HHX locals.
+- `controllers/UsersController.hx` renders admin-only user CRUD through checked HHX locals, typed Devise current-user checks, typed params, and resourceful Rails routes.
 - `Todo.incomplete()` returns an inferred typed relation shape, and the controller keeps the query chain typed with `includes(Todo.a.user).order(Todo.f.title.asc()).limit(10).toArray()` before handing an array to HHX templates.
 - `views/ApplicationLayoutView.hx` owns the Rails layout as typed HHX, including the doctype, Rails CSRF/CSP helper tags, stylesheet/importmap tags, and `<rails_yield />`; generated ERB lands at `app/views/layouts/application.html.erb`.
 - `views/TodoIndexView.hx` declares the typed Rails template artifact and owns the full page shell as HHX; scalar locals project from Haxe names such as `todoCount` to Rails locals such as `todo_count`.

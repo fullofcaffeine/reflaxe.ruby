@@ -105,7 +105,7 @@ class H {
 	}
 
 	public static macro function label(name:Expr, text:Expr):Expr {
-		return macro rails.action_view.HtmlNode.FormLabel($name, $text);
+		return macro rails.action_view.HtmlNode.FormLabel($name, $text, []);
 	}
 
 	public static macro function textField(name:Expr, attrs:Expr):Expr {

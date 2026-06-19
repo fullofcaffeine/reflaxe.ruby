@@ -71,6 +71,8 @@ class ModelMacro {
 		addStub(fields, "create", macro :Dynamic, selfType, pos);
 		addStub(fields, "createBang", macro :Dynamic, selfType, pos);
 		addStub(fields, "build", macro :Dynamic, selfType, pos);
+		addInstanceStub(fields, "update", macro :Dynamic, macro :Bool, "attrs", pos);
+		addNoArgInstanceStub(fields, "destroy", macro :Bool, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "last", nullableSelf, pos);
 		addPluckStub(fields, selfType, pos);
@@ -1309,6 +1311,55 @@ class ModelMacro {
 			}),
 			meta: [
 				{name: ":native", params: [macro $v{nativeName}], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	// ActiveRecord instance APIs such as `update` and `destroy` are provided as
+	// Haxe-visible stubs so app code gets completion/type-checking. The
+	// `@:rubyExternStub` metadata makes the Ruby compiler skip emitting these
+	// placeholder bodies; calls still lower to ordinary receiver dispatch.
+	static function addInstanceStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, pos:Position):Void {
+		for (field in fields) {
+			if (field.name == name) {
+				return;
+			}
+		}
+		fields.push({
+			name: name,
+			access: [APublic],
+			kind: FFun({
+				args: [{name: argName, type: argType}],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{name}], pos: pos},
+				{name: ":rubyKwargs", params: [], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addNoArgInstanceStub(fields:Array<Field>, name:String, ret:ComplexType, pos:Position):Void {
+		for (field in fields) {
+			if (field.name == name) {
+				return;
+			}
+		}
+		fields.push({
+			name: name,
+			access: [APublic],
+			kind: FFun({
+				args: [],
+				ret: ret,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro $v{name}], pos: pos},
 				{name: ":rubyExternStub", params: [], pos: pos}
 			],
 			pos: pos

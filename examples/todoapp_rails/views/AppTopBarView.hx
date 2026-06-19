@@ -34,9 +34,11 @@ class AppTopBarView {
 				</span>
 			</div>
 			<nav class="topbar-actions" aria-label="Primary">
-				<link_to url=${Routes.usersPath()} class="typed-route-link topbar-link" data-turbo-frame=${TodoHooks.userFrameId}>
-					<span>Users</span>
-				</link_to>
+				<if ${locals.currentUser.canManageUsers()}>
+					<link_to url=${Routes.usersPath()} class="typed-route-link topbar-link" data-turbo-frame=${TodoHooks.userFrameId}>
+						<span>Users</span>
+					</link_to>
+				</if>
 				<link_to url=${TodoHooks.openWorkHref} class="typed-route-link topbar-link" data-railshx-scroll>
 					<span>Open work</span>
 				</link_to>

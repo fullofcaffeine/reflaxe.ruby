@@ -72,7 +72,7 @@ class TodosController extends rails.action_controller.Base {
 		);
 
 		Todo.create(attrs);
-		flash().set("notice", "Todo queued");
+		flash.notice("Todo queued");
 		redirectToOptions({action: "index", status: Status.seeOther});
 	}
 }
@@ -221,7 +221,7 @@ compatibility, but new RailsHx examples and docs should prefer `lifecycle`.
 Rails controller stores are typed facades over Rails runtime objects:
 
 ```haxe
-flash().set("notice", "Todo queued");
+flash.notice("Todo queued");
 session().set("lastTodoTitle", attrs);
 var remembered = session().get("lastTodoTitle");
 cookies().delete("staleFilter");
