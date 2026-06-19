@@ -74,6 +74,13 @@ unmarked guesses, keep uncertain APIs as TODO/review markers, and pass the same
 Ruby syntax, Rails runtime, route/schema/helper parity, and security checks as
 hand-written contracts.
 
+For DeviseHx specifically, use
+[`railshx-devisehx-gpt55-prompt.md`](railshx-devisehx-gpt55-prompt.md) before
+implementation. That prompt asks GPT 5.5 Pro for the focused design review
+required by `haxe.ruby-bjv.6.4`: reusable package boundaries, deterministic
+metadata inputs, typed model/controller/route APIs, current-user typing,
+escape-hatch policy, tests, docs, and bead mutations.
+
 For a reusable gem layer such as Devise:
 
 ```bash
@@ -91,6 +98,13 @@ The reusable DeviseHx companion package is future-facing, but the contract is
 stable: Rails does normal Devise setup, then RailsHx generates or consumes typed
 Haxe contracts around Devise routes, helpers, controllers, model mixins, params,
 and test helpers.
+
+The todoapp intentionally uses first-party Rails sessions rather than Devise.
+That keeps the canonical compiler dogfood app small and dependency-light while
+the reusable DeviseHx design hardens separately. A future DeviseHx example should
+show the full auth story: login, logout, login-as-guest/sample user, protected
+controllers, typed `currentUser<User>(this)`, Devise route helpers, and HHX
+templates that remain ordinary Rails/Devise output.
 
 ## DeviseHx Shape
 

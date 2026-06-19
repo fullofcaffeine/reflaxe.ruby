@@ -113,7 +113,9 @@ try {
     "bundle add devise",
     "bin/rails generate hxruby:adopt --gem devise --discover",
     "bin/rails generate hxruby:adopt --gem devise --write contracts",
+    "railshx-devisehx-gpt55-prompt.md",
     "Uncertain APIs should stay review-marked",
+    "login/logout/login-as-guest",
   ]);
   expectFile("lib/tasks/hxruby.rake", [
     'require "hxruby/tasks"',

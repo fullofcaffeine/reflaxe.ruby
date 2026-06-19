@@ -84,7 +84,7 @@ Generated Ruby requires the matching ActiveSupport core extension files and call
 
 Raw `__ruby__` injection exists as an escape hatch, but examples and production-style code should prefer typed externs or std/runtime wrappers. The strict boundary defines enforce that policy.
 
-See [Ruby Extension Interop](docs/ruby-extension-interop.md) for examples ranging from simple module include/extend through existing gem wrapping, gradual adoption, Haxe-owned libraries, and metaprogramming-heavy contract generation. For installed Rails gems such as Devise, see [RailsHx Gem Layers](docs/railshx-gem-layers.md): Ruby/Bundler owns the runtime gem, while RailsHx provides typed contracts, macros, generators, and reusable companion packages when a gem is common enough.
+See [Ruby Extension Interop](docs/ruby-extension-interop.md) for examples ranging from simple module include/extend through existing gem wrapping, gradual adoption, Haxe-owned libraries, and metaprogramming-heavy contract generation. For installed Rails gems such as Devise, see [RailsHx Gem Layers](docs/railshx-gem-layers.md): Ruby/Bundler owns the runtime gem, while RailsHx provides typed contracts, macros, generators, and reusable companion packages when a gem is common enough. The reusable DeviseHx layer must start from the [GPT 5.5 Pro design prompt](docs/railshx-devisehx-gpt55-prompt.md) before implementation.
 
 ## Rails Workflow
 
