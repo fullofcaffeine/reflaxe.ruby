@@ -61,7 +61,10 @@ class ControllerDsl {
 
 	#if macro
 	static function filter(kind:String, handler:Expr, options:Null<Expr>):Expr {
-		var method = methodReference(handler, kind, 0, false);
+		var method = authFilterReference(handler);
+		if (method == null) {
+			method = methodReference(handler, kind, 0, false);
+		}
 		var only:Array<String> = [];
 		var except:Array<String> = [];
 		if (options != null) {
@@ -107,6 +110,57 @@ class ControllerDsl {
 				Context.error(context + ' reference "$name" is not a method.', expr.pos);
 		}
 		return name;
+	}
+
+	static function authFilterReference(expr:Expr):Null<String> {
+		switch (unwrap(expr).expr) {
+			case EConst(CIdent(_)):
+				return null;
+			case _:
+		}
+		var typed = Context.typeExpr(expr);
+		var field = switch (typed.expr) {
+			case TField(_, FStatic(_, fieldRef)):
+				fieldRef.get();
+			case _:
+				null;
+		}
+		if (field == null) {
+			return null;
+		}
+		var entries = field.meta.extract(":deviseHxAuthFilter");
+		if (entries.length == 0) {
+			return null;
+		}
+		if (entries[0].params == null || entries[0].params.length != 1) {
+			Context.error("@:deviseHxAuthFilter expects one object-literal metadata argument.", expr.pos);
+		}
+		var scope = metadataString(entries[0].params[0], "mappingScope", expr.pos);
+		if (!~/^[a-z][a-z0-9_]*$/.match(scope)) {
+			Context.error("DeviseHx auth filter mappingScope must be a safe snake_case Devise scope.", expr.pos);
+		}
+		return "authenticate_" + scope + "!";
+	}
+
+	static function metadataString(expr:Expr, key:String, pos:Position):String {
+		return switch (unwrap(expr).expr) {
+			case EObjectDecl(fields):
+				for (field in fields) {
+					if (field.field == key) {
+						return switch (field.expr.expr) {
+							case EConst(CString(value, _)): value;
+							case _:
+								Context.error('DeviseHx metadata "$key" must be a string literal.', field.expr.pos);
+								"";
+						}
+					}
+				}
+				Context.error('DeviseHx metadata is missing "$key".', pos);
+				"";
+			case _:
+				Context.error("DeviseHx auth filter metadata must be an object literal.", pos);
+				"";
+		}
 	}
 
 	static function methodArgCount(field:ClassField):Null<Int> {
