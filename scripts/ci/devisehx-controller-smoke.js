@@ -9,18 +9,42 @@ const sourceDir = join(root, "test", ".generated", "devisehx_controller_src");
 const outputDir = join(root, "test", ".generated", "devisehx_controller_out");
 const invalidSourceDir = join(root, "test", ".generated", "devisehx_controller_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "devisehx_controller_invalid_out");
+const strictInvalidSourceDir = join(root, "test", ".generated", "devisehx_controller_strict_invalid_src");
+const strictInvalidOutputDir = join(root, "test", ".generated", "devisehx_controller_strict_invalid_out");
+const strictWrongScopeSourceDir = join(root, "test", ".generated", "devisehx_controller_strict_wrong_scope_src");
+const strictWrongScopeOutputDir = join(root, "test", ".generated", "devisehx_controller_strict_wrong_scope_out");
+const strictDirectSourceDir = join(root, "test", ".generated", "devisehx_controller_strict_direct_src");
+const strictDirectOutputDir = join(root, "test", ".generated", "devisehx_controller_strict_direct_out");
 const reflaxeSrc = join(root, "vendor", "reflaxe", "src");
 
-for (const dir of [sourceDir, outputDir, invalidSourceDir, invalidOutputDir]) {
+for (const dir of [
+  sourceDir,
+  outputDir,
+  invalidSourceDir,
+  invalidOutputDir,
+  strictInvalidSourceDir,
+  strictInvalidOutputDir,
+  strictWrongScopeSourceDir,
+  strictWrongScopeOutputDir,
+  strictDirectSourceDir,
+  strictDirectOutputDir,
+]) {
   rmSync(dir, { force: true, recursive: true });
 }
 
 writePositiveSources(sourceDir);
 compile(sourceDir, outputDir);
 assertControllerOutput();
+compile(sourceDir, outputDir, { strictCurrentRequired: true });
 
 writeInvalidSources(invalidSourceDir);
 expectCompileFailure(invalidSourceDir, invalidOutputDir, "direct generated Devise scope field");
+writeStrictUnguardedSources(strictInvalidSourceDir);
+expectCompileFailure(strictInvalidSourceDir, strictInvalidOutputDir, "requires a matching beforeAction", { strictCurrentRequired: true });
+writeStrictWrongScopeSources(strictWrongScopeSourceDir);
+expectCompileFailure(strictWrongScopeSourceDir, strictWrongScopeOutputDir, "requires a matching beforeAction", { strictCurrentRequired: true });
+writeStrictDirectSources(strictDirectSourceDir);
+expectCompileFailure(strictDirectSourceDir, strictDirectOutputDir, "requires a matching beforeAction", { strictCurrentRequired: true });
 
 function writePositiveSources(dir) {
   mkdirSync(join(dir, "app", "auth"), { recursive: true });
@@ -92,6 +116,49 @@ function writePositiveSources(dir) {
     "",
   ].join("\n"));
 
+  writeFileSync(join(dir, "models", "Admin.hx"), [
+    "package models;",
+    "",
+    "// Secondary Devise model used by strict-flow negative tests.",
+    "class Admin extends rails.active_record.Base<Admin> implements devisehx.model.DeviseResource<Admin> {",
+    "\tpublic function new() {",
+    "\t\tsuper();",
+    "\t}",
+    "",
+    "\tpublic var email:String;",
+    "}",
+    "",
+  ].join("\n"));
+
+  writeFileSync(join(dir, "app", "auth", "AdminAuth.hx"), [
+    "package app.auth;",
+    "",
+    "import devisehx.Auth;",
+    "import devisehx.AuthFilter;",
+    "import devisehx.DeviseScope;",
+    "import devisehx.RouteResource;",
+    "import devisehx.ScopeName;",
+    "import models.Admin;",
+    "import rails.action_controller.Base;",
+    "",
+    "// Generated DeviseHx contract for a second scope.",
+    "// Demonstrates: strict currentRequired flow checks are scope-specific, so an",
+    "// admin guard cannot prove a user currentRequired call is safe.",
+    "final class AdminAuth {",
+    "\t@:deviseHxRoute({schema: 1, routeAuthorable: true, resource: \"admins\", mappingScope: \"admin\", rubyClass: \"Admin\", haxeModel: \"models.Admin\"})",
+    "\tpublic static final scope:DeviseScope<Admin> = DeviseScope.of(ScopeName.named(\"admin\"), RouteResource.named(\"admins\"), Admin);",
+    "",
+    "\t@:deviseHxAuthFilter({schema: 1, mappingScope: \"admin\"})",
+    "\tpublic static final authenticate:AuthFilter<Admin> = Auth.require(scope);",
+    "",
+    "\t@:deviseHxHelper({schema: 1, kind: \"currentRequired\", mappingScope: \"admin\"})",
+    "\tpublic static inline function currentRequired(controller:Base):Admin {",
+    "\t\treturn Auth.currentRequired(controller, scope);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
   writeFileSync(join(dir, "controllers", "DashboardController.hx"), [
     "package controllers;",
     "",
@@ -157,8 +224,77 @@ function writeInvalidSources(dir) {
     "",
     "\tpublic function index():Void {",
     "\t\tvar scope = UserAuth.scope;",
-    "\t\tvar user = Auth.current(this, scope);",
-    "\t\trender({plain: user == null ? \"guest\" : user.email});",
+    "\t\tvar user = Auth.currentRequired(this, scope);",
+    "\t\trender({plain: user.email});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeStrictUnguardedSources(dir) {
+  writePositiveSources(dir);
+  writeFileSync(join(dir, "controllers", "DashboardController.hx"), [
+    "package controllers;",
+    "",
+    "import app.auth.UserAuth;",
+    "import rails.macros.ControllerDsl.*;",
+    "",
+    "@:railsController",
+    "class DashboardController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = [];",
+    "",
+    "\tpublic function index():Void {",
+    "\t\tvar user = UserAuth.currentRequired(this);",
+    "\t\trender({plain: user.email});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeStrictWrongScopeSources(dir) {
+  writePositiveSources(dir);
+  writeFileSync(join(dir, "controllers", "DashboardController.hx"), [
+    "package controllers;",
+    "",
+    "import app.auth.AdminAuth;",
+    "import app.auth.UserAuth;",
+    "import rails.macros.ControllerDsl.*;",
+    "",
+    "@:railsController",
+    "class DashboardController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = {",
+    "\t\tbeforeAction(AdminAuth.authenticate, {only: [index]});",
+    "\t}",
+    "",
+    "\tpublic function index():Void {",
+    "\t\tvar user = UserAuth.currentRequired(this);",
+    "\t\trender({plain: user.email});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeStrictDirectSources(dir) {
+  writePositiveSources(dir);
+  writeFileSync(join(dir, "controllers", "DashboardController.hx"), [
+    "package controllers;",
+    "",
+    "import app.auth.UserAuth;",
+    "import devisehx.Auth;",
+    "import rails.macros.ControllerDsl.*;",
+    "",
+    "@:railsController",
+    "class DashboardController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = {",
+    "\t\tbeforeAction(UserAuth.authenticate, {except: [index]});",
+    "\t}",
+    "",
+    "\tpublic function index():Void {",
+    "\t\tvar user = Auth.currentRequired(this, UserAuth.scope);",
+    "\t\trender({plain: user.email});",
     "\t}",
     "}",
     "",
@@ -190,8 +326,8 @@ function assertControllerOutput() {
   }
 }
 
-function compile(src, out) {
-  const result = run("haxe", haxeArgs(src, out));
+function compile(src, out, options = {}) {
+  const result = run("haxe", haxeArgs(src, out, options));
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
@@ -199,8 +335,8 @@ function compile(src, out) {
   }
 }
 
-function expectCompileFailure(src, out, expectedMessage) {
-  const result = run("haxe", haxeArgs(src, out));
+function expectCompileFailure(src, out, expectedMessage, options = {}) {
+  const result = run("haxe", haxeArgs(src, out, options));
   if (result.status === 0) {
     console.error("Expected invalid DeviseHx controller fixture to fail.");
     process.exit(1);
@@ -214,8 +350,8 @@ function expectCompileFailure(src, out, expectedMessage) {
   }
 }
 
-function haxeArgs(src, out) {
-  return [
+function haxeArgs(src, out, options = {}) {
+  const args = [
     "-D",
     `ruby_output=${out}`,
     "-D",
@@ -237,6 +373,10 @@ function haxeArgs(src, out) {
     "-main",
     "Main",
   ];
+  if (options.strictCurrentRequired) {
+    args.splice(6, 0, "-D", "railshx_devise_strict_current_required");
+  }
+  return args;
 }
 
 function run(command, args) {

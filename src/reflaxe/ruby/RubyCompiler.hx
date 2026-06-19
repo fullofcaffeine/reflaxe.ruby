@@ -13,6 +13,7 @@ import haxe.macro.Type.FieldAccess;
 import haxe.macro.Type.ModuleType;
 import haxe.macro.Type.TypedExpr;
 import haxe.macro.Type.TVar;
+import haxe.macro.TypedExprTools;
 import haxe.macro.TypeTools;
 import reflaxe.GenericCompiler;
 import reflaxe.data.ClassFuncData;
@@ -730,6 +731,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	function compileRailsControllerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
 			moduleRequires:RequireRegistry):RubyFile {
+		validateDeviseCurrentRequiredFlow(varFields, funcFields);
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		body = body.concat(railsControllerLifecycleLines(classType, varFields));
@@ -1250,6 +1252,116 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			options.push("except: [" + [for (action in decl.except) rubySymbolLiteral(RubyNaming.toMethodName(action))].join(", ") + "]");
 		}
 		return options.length == 0 ? "" : ", " + options.join(", ");
+	}
+
+	static function validateDeviseCurrentRequiredFlow(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Void {
+		if (!Context.defined("railshx_devise_strict_current_required")) {
+			return;
+		}
+		var protectedScopesByAction = deviseProtectedScopesByAction(varFields, funcFields);
+		for (field in funcFields) {
+			if (field.isStatic || field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
+				continue;
+			}
+			var action = field.field.name;
+			var scopes = protectedScopesByAction.get(action);
+			if (scopes == null) {
+				scopes = new Map();
+			}
+			iterTypedExprRecursive(field.expr, function(expr:TypedExpr) {
+				var requiredScope = deviseCurrentRequiredScope(expr);
+				if (requiredScope == null) {
+					return;
+				}
+				if (!scopes.exists(requiredScope)) {
+					Context.error('DeviseHx currentRequired for scope "$requiredScope" in action "$action" requires a matching beforeAction(UserAuth.authenticate) guard. Add the guard, narrow the lifecycle only/except options, or use current(...) and handle Null explicitly.',
+						expr.pos);
+				}
+			});
+		}
+	}
+
+	static function iterTypedExprRecursive(expr:TypedExpr, visit:TypedExpr->Void):Void {
+		visit(expr);
+		TypedExprTools.iter(expr, function(child:TypedExpr) {
+			iterTypedExprRecursive(child, visit);
+		});
+	}
+
+	static function deviseProtectedScopesByAction(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Map<String, Map<String, Bool>> {
+		var out:Map<String, Map<String, Bool>> = new Map();
+		var actions = [
+			for (field in funcFields)
+				if (!field.isStatic && field.expr != null && !hasMeta(field.field.meta, ":rubyExternStub")) field.field.name
+		];
+		var lifecycle = railsControllerLifecycleField(varFields);
+		if (lifecycle == null || lifecycle.field.expr() == null) {
+			return out;
+		}
+		for (entry in railsControllerLifecycleEntries(lifecycle.field.expr())) {
+			var decl = railsControllerLifecycleDecl(entry);
+			if (decl.kind != "before_action") {
+				continue;
+			}
+			var scope = deviseAuthenticateScope(decl.method);
+			if (scope == null) {
+				continue;
+			}
+			for (action in actions) {
+				if (!railsLifecycleCoversAction(decl.only, decl.except, action)) {
+					continue;
+				}
+				var scopes = out.get(action);
+				if (scopes == null) {
+					scopes = new Map();
+					out.set(action, scopes);
+				}
+				scopes.set(scope, true);
+			}
+		}
+		return out;
+	}
+
+	static function railsLifecycleCoversAction(only:Array<String>, except:Array<String>, action:String):Bool {
+		if (only.length > 0 && only.indexOf(action) == -1) {
+			return false;
+		}
+		if (except.indexOf(action) != -1) {
+			return false;
+		}
+		return true;
+	}
+
+	static function deviseAuthenticateScope(method:String):Null<String> {
+		var prefix = "authenticate_";
+		var suffix = "!";
+		if (!StringTools.startsWith(method, prefix) || !StringTools.endsWith(method, suffix)) {
+			return null;
+		}
+		var scope = method.substr(prefix.length, method.length - prefix.length - suffix.length);
+		return ~/^[a-z][a-z0-9_]*$/.match(scope) ? scope : null;
+	}
+
+	static function deviseCurrentRequiredScope(expr:TypedExpr):Null<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall(callee, params):
+				var info = staticFieldInfo(callee);
+				if (info != null) {
+					var meta = metadataObject(info.field.meta, ":deviseHxHelper");
+					if (meta != null && metadataObjectString(meta, "kind", info.field.pos) == "currentRequired") {
+						var scope = metadataObjectString(meta, "mappingScope", info.field.pos);
+						validateDeviseMappingScope(scope, info.field.pos);
+						return scope;
+					}
+				}
+				var call = staticCallInfo(callee);
+				if (call != null && call.owner == "devisehx.Auth" && call.name == "currentRequired" && params.length == 2) {
+					return deviseMappingScopeFromArg(params[1]);
+				}
+				null;
+			case _:
+				null;
+		}
 	}
 
 	static function railsControllerLifecycleStringValue(expr:TypedExpr, name:String):String {

@@ -162,8 +162,15 @@ Nullability rule:
 - `current(...)` returns `Null<T>`.
 - `currentRequired(...)` is allowed when the action is protected by the matching
   auth filter, or when the app deliberately accepts a runtime assertion
-  boundary. Strict compile-time flow checks can harden this after the first
-  implementation slice.
+  boundary.
+- `-D railshx_devise_strict_current_required` enables compile-time flow checks
+  for this stronger claim. In strict mode the compiler walks each RailsHx
+  controller action, finds generated `UserAuth.currentRequired(this)` calls and
+  low-level `Auth.currentRequired(this, UserAuth.scope)` calls, and requires a
+  matching `beforeAction(UserAuth.authenticate)` lifecycle guard that covers the
+  action. `only` and `except` options are respected, and an admin guard does not
+  prove a user `currentRequired` call safe. Use nullable `current(...)` when an
+  action is public or intentionally handles guests.
 
 Compiler diagnostics:
 
@@ -174,6 +181,10 @@ Compiler diagnostics:
   `@:deviseHxAuthFilter` metadata. Plain strings are not accepted.
 - Cross-scope misuse is caught by Haxe types, for example
   `Auth.signIn(this, UserAuth.scope, admin)` fails when `admin` is not `User`.
+- Strict `currentRequired` diagnostics are intentionally opt-in while the
+  DeviseHx flow analyzer hardens; canonical app code should still write the
+  matching lifecycle guard because generated Ruby remains ordinary Devise
+  `current_user` calls.
 
 ## Model Modules
 
