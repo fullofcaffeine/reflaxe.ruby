@@ -17,6 +17,17 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, "Devise owns Warden"
   end
 
+  test "failed devise login shows the typed HHX flash message" do
+    create_user!(name: "owner", email: "owner-flash@example.test", role: "admin")
+
+    post "/users/sign_in", params: { user: { email: "owner-flash@example.test", password: "wrong-password" } }
+
+    assert_response :unprocessable_entity
+    assert_includes @response.body, "login-flash"
+    assert_includes @response.body, "Session message"
+    assert_match(/Invalid/i, @response.body)
+  end
+
   test "index renders the authenticated RailsHx todo page scoped to current user" do
     user = create_user!(name: "owner", email: "owner@example.test", role: "admin")
     other_user = create_user!(name: "member", email: "member@example.test", role: "member")

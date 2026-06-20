@@ -1,5 +1,6 @@
 package views;
 
+import rails.action_view.FlashMessages;
 import rails.action_view.HtmlNode;
 import routes.Routes;
 import shared.TodoHooks;
@@ -12,7 +13,8 @@ import shared.TodoHooks;
 // that calls typed `UserAuth.signIn`.
 // Type safety: `Routes.userSessionPath`, `Routes.guestSignInPath`, and
 // `Routes.newUserSessionPath` are generated route externs; `<password_field>`
-// lowers to Rails `form.password_field`; `TodoHooks.sessionAttr` lets the Haxe
+// lowers to Rails `form.password_field`; `FlashMessages` reads Devise's normal
+// Rails flash without authoring raw ERB; `TodoHooks.sessionAttr` lets the Haxe
 // client bind the same Turbo form feedback as the board logout.
 // IntelliSense: editors should complete route helpers, HHX form tags, and shared
 // hook constants.
@@ -46,6 +48,12 @@ class DeviseLoginView {
 					<h2>Welcome back.</h2>
 					<p>Use seeded credentials or enter through the guest workspace.</p>
 				</div>
+				<if ${FlashMessages.hasMessage()}>
+					<div class=${"login-flash is-" + FlashMessages.kind()} role="alert" aria-live="assertive">
+						<span>Session message</span>
+						<p>${FlashMessages.message()}</p>
+					</div>
+				</if>
 				<form_with url=${Routes.userSessionPath()} scope="user" local class="login-form" data-railshx-session>
 					<div>
 						<field_label name="email">Email</field_label>

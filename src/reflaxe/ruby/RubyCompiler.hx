@@ -6688,6 +6688,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TConst(TString(value)): quoteRubyStringForCode(value);
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, [value]) if (isStdStringCall(classRef.get(), fieldRef.get())):
 				printTemplateExpr(value, scope) + ".to_s";
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionViewFlashExpr(classRef.get(), fieldRef.get()) != null):
+				actionViewFlashExpr(classRef.get(), fieldRef.get());
 			case TField(_, FStatic(_, fieldRef)):
 				var staticValue = templateStaticFieldString(fieldRef.get());
 				if (staticValue != null) {
@@ -6731,6 +6733,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isStdStringCall(classType:ClassType, field:haxe.macro.Type.ClassField):Bool {
 		return classType.pack.length == 0 && classType.name == "Std" && field.name == "string";
+	}
+
+	static function actionViewFlashExpr(classType:ClassType, field:haxe.macro.Type.ClassField):Null<String> {
+		// `rails.action_view.FlashMessages` is an extern authoring facade, not a
+		// runtime Ruby class. Lowering it here keeps app HHX typed while emitting
+		// the same `flash[:alert]` / `flash[:notice]` reads a Rails view would use.
+		if (classType.pack.join(".") != "rails.action_view" || classType.name != "FlashMessages") {
+			return null;
+		}
+		return switch (field.name) {
+			case "alert": "flash[:alert]";
+			case "notice": "flash[:notice]";
+			case "message": "flash[:alert] || flash[:notice]";
+			case "hasMessage": "flash[:alert].present? || flash[:notice].present?";
+			case "kind": "(flash[:alert].present? ? \"alert\" : \"notice\")";
+			case _: null;
+		}
 	}
 
 	static function haxeSourceLocalName(name:String):String {

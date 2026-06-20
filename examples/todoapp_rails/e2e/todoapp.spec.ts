@@ -44,6 +44,20 @@ test('renders the designed DeviseHx login page before the protected board', asyn
   await expect(page.getByText('password123')).toBeVisible()
   await expect(page.locator(hooks.selectors.sessionForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
   await expect(page.getByRole('button', { name: 'Continue as guest' })).toBeVisible()
+  await expect(page.locator('.login-flash')).toBeVisible()
+  await expect(page.locator('.login-flash')).toContainText(/sign in/i)
+
+  await page.goto('/users/sign_in', { waitUntil: 'domcontentloaded', timeout: 15_000 })
+  await expect(page.locator('.login-flash')).toHaveCount(0)
+  await page.getByLabel('Email').fill('owner@example.test')
+  await page.getByLabel('Password').fill('wrong-password')
+  const failedLogin = page.waitForResponse(response =>
+    response.url().includes('/users/sign_in') && response.request().method() === 'POST'
+  )
+  await page.getByRole('button', { name: 'Log in' }).click()
+  await failedLogin
+  await expect(page.locator('.login-flash')).toBeVisible()
+  await expect(page.locator('.login-flash')).toContainText(/invalid/i)
 
   await loginAsOwner(page)
 })
