@@ -2,7 +2,6 @@ package mailers;
 
 import rails.action_mailer.MailAddress;
 import rails.action_mailer.MailLayout;
-import rails.action_mailer.MailParam;
 import rails.action_mailer.MessageDelivery;
 import rails.action_view.Template;
 import rails.macros.MailerMacro;
@@ -14,12 +13,6 @@ typedef WelcomeMailerParams = {
 	var email:String;
 	var name:String;
 	var message:String;
-}
-
-final class WelcomeMailerParam {
-	public static final email:MailParam<String> = "email";
-	public static final name:MailParam<String> = "name";
-	public static final message:MailParam<String> = "message";
 }
 
 // Typed ActionMailer fixture.
@@ -40,17 +33,13 @@ final class WelcomeMailerParam {
 // are generated as ordinary ERB under `app/views`.
 
 @:railsMailer
+@:railsMailerParams(WelcomeMailerParams)
 class UserMailer extends rails.action_mailer.Base {
-	// Rails parameterized mailers use `UserMailer.with(...).action`.
-	// This typed extern stub emits no Ruby method; it only gives Haxe callers a
-	// checked params object and lowers to the native Rails `.with(...)` class API.
-	@:native("with")
-	@:rubyKwargs
-	@:rubyExternStub
-	public static function withParams(params:WelcomeMailerParams):UserMailer {
-		return cast null;
-	}
-
+	// `@:railsMailerParams` generates:
+	// - `withParams(params:WelcomeMailerParams)`, a typed facade for Rails
+	//   `UserMailer.with(...)`;
+	// - `p.email` / `p.name` / `p.message`, typed param tokens that lower to
+	//   `params[:email]`, etc. inside the generated Ruby mailer.
 	public function welcome(email:String, name:String, message:String):Void {
 		attachments().add("welcome.txt", message);
 		var locals:WelcomeEmailLocals = {
@@ -71,9 +60,9 @@ class UserMailer extends rails.action_mailer.Base {
 	}
 
 	public function welcomeFromParams():MessageDelivery {
-		var email = param(WelcomeMailerParam.email);
-		var name = param(WelcomeMailerParam.name);
-		var message = param(WelcomeMailerParam.message);
+		var email = param(UserMailer.p.email);
+		var name = param(UserMailer.p.name);
+		var message = param(UserMailer.p.message);
 		attachments().add("welcome.txt", message);
 		var locals:WelcomeEmailLocals = {
 			name: name,

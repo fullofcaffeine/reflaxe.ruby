@@ -764,7 +764,7 @@
       "status": "implemented",
       "path": "std/rails/action_mailer/Base.hx",
       "surface": "rails.action_mailer.Base",
-      "reason": "Typed ActionMailer base surface for Rails mailer classes, including typed render options, attachments, and mail helpers."
+      "reason": "Typed ActionMailer base surface for Rails mailer classes, including typed render options, attachments, mail helpers, and @:railsMailerParams build-macro support."
     },
     {
       "id": "std.rails.action_mailer_mail_address",
@@ -836,7 +836,7 @@
       "status": "implemented",
       "path": "std/rails/macros/MailerMacro.hx",
       "surface": "rails.macros.MailerMacro",
-      "reason": "Macro expansion for typed ActionMailer template locals into Rails-native mail format render blocks."
+      "reason": "Macro expansion for typed ActionMailer template locals into Rails-native mail format render blocks, plus @:railsMailerParams generation of typed .with(...) wrappers and param tokens."
     },
     {
       "id": "std.rails.active_job",

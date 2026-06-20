@@ -809,6 +809,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		for (field in varFields) {
+			if (hasMeta(field.field.meta, ":rubyExternStub")) {
+				continue;
+			}
 			body = body.concat(renderStatements([compileVarField(field)]));
 		}
 		for (field in funcFields) {
@@ -3155,12 +3158,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				} else {
 					printInlineExpr(expr);
 				}
+			case TField(target, access) if (isActionMailerGeneratedParamTokenAccess(target)):
+				rubySymbolLiteral(RubyNaming.toMethodName(fieldAccessRawName(access)));
 			case TField(_, FStatic(_, fieldRef)):
 				var field = fieldRef.get();
 				var fieldExpr = field.expr();
 				fieldExpr == null ? rubySymbolLiteral(RubyNaming.toMethodName(field.name)) : actionMailerParamKey(fieldExpr);
 			case _:
 				printInlineExpr(expr);
+		}
+	}
+
+	static function isActionMailerGeneratedParamTokenAccess(target:TypedExpr):Bool {
+		return switch (unwrapTypedExpr(target).expr) {
+			case TField(_, FStatic(_, fieldRef)): var field = fieldRef.get(); field.name == "p" && hasMeta(field.meta, ":rubyExternStub");
+			case _:
+				false;
 		}
 	}
 

@@ -12,6 +12,47 @@ import haxe.macro.Expr;
 #end
 
 class MailerMacro {
+	#if macro
+	public static function build():Array<Field> {
+		var fields = Context.getBuildFields();
+		var local = Context.getLocalClass();
+		if (local == null) {
+			return fields;
+		}
+		var classType = local.get();
+		var entries = classType.meta.extract(":railsMailerParams");
+		if (entries.length == 0) {
+			return fields;
+		}
+		if (entries.length > 1) {
+			Context.error("@:railsMailerParams may be declared only once per mailer.", entries[1].pos);
+			return fields;
+		}
+		var entry = entries[0];
+		if (entry.params == null || entry.params.length != 1) {
+			Context.error("@:railsMailerParams expects one params typedef, for example @:railsMailerParams(WelcomeMailerParams).", entry.pos);
+			return fields;
+		}
+
+		var paramsType = resolveParamsTypedef(entry.params[0], classType);
+		var paramsComplex = paramsComplexType(entry.params[0], classType);
+		var selfType:ComplexType = TPath({
+			pack: classType.pack,
+			name: classType.name,
+			params: [],
+			sub: null
+		});
+
+		// This build macro turns one typed params typedef into the two Rails-facing
+		// conveniences RailsHx users need: a checked `.with(...)` wrapper and
+		// typed param tokens. Both are compiler facades; generated Ruby remains
+		// ordinary ActionMailer `.with(key: value)` and `params[:key]` code.
+		addWithParamsStub(fields, paramsComplex, selfType, classType.pos);
+		addParamTokenField(fields, paramsType, classType.pos);
+		return fields;
+	}
+	#end
+
 	public static macro function mailHtml<TLocals>(mailer:Expr, options:ExprOf<rails.action_mailer.MailOptions>,
 			template:ExprOf<rails.action_view.Template<TLocals>>, locals:ExprOf<TLocals>):Expr {
 		#if macro
@@ -72,6 +113,158 @@ class MailerMacro {
 	}
 
 	#if macro
+	static function addWithParamsStub(fields:Array<Field>, paramsType:ComplexType, selfType:ComplexType, pos:Position):Void {
+		if (hasField(fields, "withParams")) {
+			return;
+		}
+		fields.push({
+			name: "withParams",
+			access: [APublic, AStatic],
+			kind: FFun({
+				args: [{name: "params", type: paramsType}],
+				ret: selfType,
+				expr: macro return cast null
+			}),
+			meta: [
+				{name: ":native", params: [macro "with"], pos: pos},
+				{name: ":rubyKwargs", params: [], pos: pos},
+				{name: ":rubyExternStub", params: [], pos: pos}
+			],
+			pos: pos
+		});
+	}
+
+	static function addParamTokenField(fields:Array<Field>, paramsType:Type, pos:Position):Void {
+		if (hasField(fields, "p")) {
+			return;
+		}
+		var paramsFields = typedParamsFields(paramsType, pos);
+		if (paramsFields.length == 0) {
+			Context.error("@:railsMailerParams typedef must declare at least one params field.", pos);
+			return;
+		}
+		var objectFields:Array<Field> = [];
+		var values:Array<ObjectField> = [];
+		for (field in paramsFields) {
+			var valueType = TypeTools.toComplexType(field.type);
+			objectFields.push({
+				name: field.name,
+				access: [],
+				kind: FVar(TPath({
+					pack: ["rails", "action_mailer"],
+					name: "MailParam",
+					params: [TPType(valueType)],
+					sub: null
+				}), null),
+				pos: pos
+			});
+			values.push({
+				field: field.name,
+				expr: macro rails.action_mailer.MailParam.named($v{RubyNaming.toLocalName(field.name)}),
+				quotes: null
+			});
+		}
+		fields.push({
+			name: "p",
+			access: [APublic, AStatic, AFinal],
+			kind: FVar(TAnonymous(objectFields), {expr: EObjectDecl(values), pos: pos}),
+			meta: [{name: ":rubyExternStub", params: [], pos: pos}],
+			pos: pos
+		});
+	}
+
+	static function hasField(fields:Array<Field>, name:String):Bool {
+		for (field in fields) {
+			if (field.name == name) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static function typedParamsFields(paramsType:Type, pos:Position):Array<ClassField> {
+		return switch (TypeTools.follow(paramsType)) {
+			case TAnonymous(anonRef):
+				anonRef.get().fields;
+			case _:
+				Context.error("@:railsMailerParams expects a typedef or anonymous object type.", pos);
+				[];
+		}
+	}
+
+	static function resolveParamsTypedef(expr:Expr, owner:ClassType):Type {
+		var candidates = typeNameCandidates(expr, owner);
+		for (candidate in candidates) {
+			try {
+				return Context.getType(candidate);
+			} catch (_:Dynamic) {}
+		}
+		Context.error("@:railsMailerParams could not resolve params typedef `" + typeNameForError(expr) + "`.", expr.pos);
+		return Context.getType("Dynamic");
+	}
+
+	static function paramsComplexType(expr:Expr, owner:ClassType):ComplexType {
+		return switch (typePathParts(expr)) {
+			case null:
+				Context.error("@:railsMailerParams expects a type path, not an arbitrary expression.", expr.pos);
+				macro :Dynamic;
+			case parts:
+				var name = parts.pop();
+				if (name == null) {
+					Context.error("@:railsMailerParams expects a non-empty type path.", expr.pos);
+					macro :Dynamic;
+				} else if (parts.length == 0) {
+					TPath({
+						pack: [],
+						name: name,
+						params: [],
+						sub: null
+					});
+				} else {
+					TPath({
+						pack: parts,
+						name: name,
+						params: [],
+						sub: null
+					});
+				}
+		}
+	}
+
+	static function typeNameCandidates(expr:Expr, owner:ClassType):Array<String> {
+		return switch (typePathParts(expr)) {
+			case null: [];
+			case parts:
+				var explicit = parts.join(".");
+				if (parts.length == 1 && owner.pack.length > 0) {
+					[owner.pack.concat(parts).join("."), explicit];
+				} else {
+					[explicit];
+				}
+		}
+	}
+
+	static function typePathParts(expr:Expr):Null<Array<String>> {
+		return switch (expr.expr) {
+			case EConst(CIdent(name)):
+				[name];
+			case EField(target, name):
+				var targetParts = typePathParts(target);
+				targetParts == null ? null : targetParts.concat([name]);
+			case EParenthesis(inner) | ECheckType(inner, _):
+				typePathParts(inner);
+			case _:
+				null;
+		}
+	}
+
+	static function typeNameForError(expr:Expr):String {
+		return switch (typePathParts(expr)) {
+			case null: "<invalid>";
+			case parts: parts.join(".");
+		}
+	}
+
 	static function extractTemplatePath(template:Expr):String {
 		return switch (unwrapTypedMarker(template).expr) {
 			case ECall(callee, [path]):

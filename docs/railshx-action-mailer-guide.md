@@ -134,13 +134,13 @@ runtime dependencies fail instead of silently skipping.
 ## Parameterized Mailers And Previews
 
 Rails parameterized mailers are supported through a typed Rails-shaped seam:
-declare a typed params object, expose a checked `withParams(...)` extern stub
-for Rails' `.with(...)` class API, and read values inside the mailer through
-`param(MailParam<T>)`. This gives Haxe call sites completion/type-checking while
-the compiler emits ordinary Rails `params[:key]` access.
+declare a typed params object, attach it with `@:railsMailerParams(...)`, and
+read values inside the mailer through generated `p.<field>` tokens. The build
+macro generates a checked `withParams(...)` facade for Rails' `.with(...)` class
+API and typed `MailParam<T>` tokens for `params[:key]` reads, so Haxe call sites
+get completion/type-checking while Ruby output stays ordinary ActionMailer.
 
 ```haxe
-import rails.action_mailer.MailParam;
 import rails.action_mailer.MessageDelivery;
 
 typedef WelcomeMailerParams = {
@@ -149,27 +149,17 @@ typedef WelcomeMailerParams = {
 	var message:String;
 }
 
-final class WelcomeMailerParam {
-	public static final email:MailParam<String> = "email";
-	public static final name:MailParam<String> = "name";
-	public static final message:MailParam<String> = "message";
-}
-
 @:railsMailer
+@:railsMailerParams(WelcomeMailerParams)
 class UserMailer extends rails.action_mailer.Base {
-	// Compiler-only Haxe declaration for Rails' native `.with(...)` API.
-	// It emits no Ruby method; calls lower to `UserMailer.with(email: ..., ...)`.
-	@:native("with")
-	@:rubyKwargs
-	@:rubyExternStub
-	public static function withParams(params:WelcomeMailerParams):UserMailer {
-		return cast null;
-	}
+	// The macro generates `withParams(...)` and `p.email` / `p.name` /
+	// `p.message`. These Haxe fields emit no Ruby; they only type-check and
+	// lower to Rails `.with(...)` and `params[:...]`.
 
 	public function welcomeFromParams():MessageDelivery {
-		var email = param(WelcomeMailerParam.email);
-		var name = param(WelcomeMailerParam.name);
-		var message = param(WelcomeMailerParam.message);
+		var email = param(UserMailer.p.email);
+		var name = param(UserMailer.p.name);
+		var message = param(UserMailer.p.message);
 		var locals:WelcomeEmailLocals = {
 			name: name,
 			message: message,
@@ -214,10 +204,9 @@ That call lowers to Rails' `UserMailer.with(email: ..., name: ..., message:
 "...").welcome_from_params.deliver_later`, while Haxe checks that every
 required param is present and has the expected type.
 
-Generated `withParams(...)` wrappers from `@:railsMailerParams(...)` remain
-future work. Today, author the small `@:rubyExternStub` yourself or let a future
-generator create it. The unchecked Rails escape hatch, if needed, must be named
-explicitly, for example `withUnchecked(...)`.
+Unchecked Rails parameterized-mailer escapes, if needed later, must be named
+explicitly, for example `withUnchecked(...)`, and covered by the escape-hatch
+audit. The canonical app-facing API is `@:railsMailerParams(...)`.
 
 Preview classes can also be Haxe-authored and compiler-erased into normal
 Rails preview artifacts:

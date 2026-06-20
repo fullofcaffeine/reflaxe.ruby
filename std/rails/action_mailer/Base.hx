@@ -1,5 +1,6 @@
 package rails.action_mailer;
 
+@:autoBuild(rails.macros.MailerMacro.build())
 class Base {
 	public function new() {}
 
