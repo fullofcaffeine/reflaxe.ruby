@@ -202,6 +202,7 @@ bin/rails generate hxruby:install MyApp
 bin/rails generate hxruby:routes
 bin/rails generate hxruby:controller Todos index show --templates
 bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
+bin/rails generate hxruby:scaffold Todo title:String --controller --skip-tests
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 bin/rails generate hxruby:adopt --discover
@@ -442,6 +443,12 @@ Greenfield app/scaffold generators default to Haxe-owned routes. Pass
 `haxe` emits typed `@:railsRoutes`, `rails` keeps route helper extern generation
 for an existing Rails-owned `config/routes.rb`, `snippet` writes reviewable
 instructions, and `none` leaves route files untouched.
+
+Scaffolds also generate a small Haxe-authored Rails model test by default under
+`test_haxe/**`. The Haxe test compiles through `@:railsTest` into normal
+Minitest output under `test/generated/**`, so the starter app exercises both
+typed source and Rails-native test artifacts. Use `--skip-tests` only when an
+existing test layout owns that boundary already.
 
 Plain `require "hxruby"` has no gem runtime dependencies. The task entrypoint requires `rake`, which is available in the supported CI Rubies and normal Rails applications.
 

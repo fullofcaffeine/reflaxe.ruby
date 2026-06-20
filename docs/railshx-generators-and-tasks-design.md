@@ -512,9 +512,16 @@ bin/rails generate hxruby:scaffold Todo title:String --controller --routes=haxe
 bin/rails generate hxruby:scaffold Todo title:String --controller --routes=snippet
 bin/rails generate hxruby:scaffold Todo title:String --controller --routes=rails
 bin/rails generate hxruby:scaffold Todo title:String --controller --routes=none
+bin/rails generate hxruby:scaffold Todo title:String --controller --skip-tests
 ```
 
 The scaffold default is `haxe` for greenfield code and emits a typed
 `resources(Model, Controller, ...)` declaration. Use `rails` when adopting an
 existing Rails-owned `config/routes.rb`; use `snippet` when you want a
 reviewable patch instead of generated route ownership.
+
+Scaffolded projects generate a Haxe-authored model test by default under
+`test_haxe/**`. This mirrors the RailsHx testing strategy: app authors keep
+typed test source in Haxe, while the compiler emits ordinary Rails/Minitest
+files under `test/generated/**` for Rails to run. `--skip-tests` is an explicit
+adoption option for apps that already have a different test source of truth.

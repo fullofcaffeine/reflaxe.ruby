@@ -176,7 +176,10 @@ module HXRuby
             args += ["--fields", ENV["FIELDS"]] if ENV["FIELDS"]
             args += ["--validate", ENV["VALIDATE"]] if ENV["VALIDATE"]
             args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
+            args += ["--routes", ENV["ROUTES"]] if ENV["ROUTES"]
             args << "--controller" if truthy?(ENV["CONTROLLER"])
+            args << "--skip-tests" if truthy?(ENV["SKIP_TESTS"])
+            args << "--force" if truthy?(ENV["FORCE"])
             HXRuby::Generators::Scaffold.run(args)
           end
 
