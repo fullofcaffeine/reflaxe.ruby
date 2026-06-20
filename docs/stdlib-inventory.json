@@ -231,6 +231,38 @@
       "reason": "Compiler-erased HHX form field refs for Devise auth keys such as email, password, password confirmation, and reset password token."
     },
     {
+      "id": "std.devisehx.mailer_confirmation_token",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/mailer/ConfirmationToken.hx",
+      "surface": "devisehx.mailer.ConfirmationToken",
+      "reason": "Opaque Devise confirmation token type for typed custom mailer hook signatures."
+    },
+    {
+      "id": "std.devisehx.mailer_devise_mailer",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/mailer/DeviseMailer.hx",
+      "surface": "devisehx.mailer.DeviseMailer",
+      "reason": "Typed extern contract for Devise::Mailer hooks without reimplementing Devise mail delivery."
+    },
+    {
+      "id": "std.devisehx.mailer_reset_password_token",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/mailer/ResetPasswordToken.hx",
+      "surface": "devisehx.mailer.ResetPasswordToken",
+      "reason": "Opaque Devise reset-password token type for typed custom mailer hook signatures."
+    },
+    {
+      "id": "std.devisehx.mailer_unlock_token",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/mailer/UnlockToken.hx",
+      "surface": "devisehx.mailer.UnlockToken",
+      "reason": "Opaque Devise unlock token type for typed custom mailer hook signatures."
+    },
+    {
       "id": "std.devisehx.mapping",
       "owner": "std",
       "status": "implemented",

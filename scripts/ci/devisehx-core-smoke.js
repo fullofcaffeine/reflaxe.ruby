@@ -21,6 +21,8 @@ const invalidSanitizerDynamicDir = join(root, "test", ".generated", "devisehx_co
 const invalidSanitizerDynamicOut = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_dynamic_out");
 const invalidSanitizerModelDir = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_model_src");
 const invalidSanitizerModelOut = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_model_out");
+const invalidMailerTokenDir = join(root, "test", ".generated", "devisehx_core_invalid_mailer_token_src");
+const invalidMailerTokenOut = join(root, "test", ".generated", "devisehx_core_invalid_mailer_token_out");
 const invalidSchemaDir = join(root, "test", ".generated", "devisehx_core_invalid_schema_src");
 const invalidSchemaOut = join(root, "test", ".generated", "devisehx_core_invalid_schema_out");
 const invalidCustomModuleDir = join(root, "test", ".generated", "devisehx_core_invalid_custom_module_src");
@@ -46,6 +48,8 @@ for (const dir of [
   invalidSanitizerDynamicOut,
   invalidSanitizerModelDir,
   invalidSanitizerModelOut,
+  invalidMailerTokenDir,
+  invalidMailerTokenOut,
   invalidSchemaDir,
   invalidSchemaOut,
   invalidCustomModuleDir,
@@ -117,6 +121,11 @@ writePositiveSources(invalidSanitizerModelDir, {
 });
 expectCompileFailure(invalidSanitizerModelDir, invalidSanitizerModelOut, "models.Admin should be models.User");
 
+writePositiveSources(invalidMailerTokenDir, {
+  invalidMailerToken: true,
+});
+expectCompileFailure(invalidMailerTokenDir, invalidMailerTokenOut, "devisehx.mailer.ResetPasswordToken should be devisehx.mailer.ConfirmationToken");
+
 writePositiveSources(invalidSchemaDir, {
   omitEncryptedPassword: true,
   extraMainLines: [
@@ -147,6 +156,7 @@ expectCompileFailure(invalidUnknownModuleDir, invalidUnknownModuleOut, "Unsuppor
 function writePositiveSources(dir, options = {}) {
   mkdirSync(join(dir, "models"), { recursive: true });
   mkdirSync(join(dir, "app", "auth"), { recursive: true });
+  mkdirSync(join(dir, "mailers"), { recursive: true });
   mkdirSync(join(dir, "views"), { recursive: true });
 
   writeFileSync(join(dir, "models", "User.hx"), [
@@ -250,6 +260,46 @@ function writePositiveSources(dir, options = {}) {
     "",
   ].join("\n"));
 
+  writeFileSync(join(dir, "mailers", "UserDeviseMailer.hx"), [
+    "package mailers;",
+    "",
+    "import devisehx.mailer.ConfirmationToken;",
+    "import devisehx.mailer.DeviseMailer;",
+    "import devisehx.mailer.ResetPasswordToken;",
+    "import devisehx.mailer.UnlockToken;",
+    "import models.User;",
+    "import rails.action_mailer.MailOptions;",
+    "",
+    "// DeviseHx mailer contract fixture: these hook signatures type-check the",
+    "// Devise record and opaque token kinds while Devise/Rails remain runtime",
+    "// owners of delivery, token generation, and the actual Devise::Mailer class.",
+    "class UserDeviseMailer extends DeviseMailer<User> {",
+    "\tpublic override function confirmationInstructions(record:User, token:ConfirmationToken, opts:MailOptions):Void {",
+    "\t\tsuper.confirmationInstructions(record, token, opts);",
+    "\t}",
+    "",
+    "\tpublic override function resetPasswordInstructions(record:User, token:ResetPasswordToken, opts:MailOptions):Void {",
+    "\t\tsuper.resetPasswordInstructions(record, token, opts);",
+    "\t}",
+    "",
+    "\tpublic override function unlockInstructions(record:User, token:UnlockToken, opts:MailOptions):Void {",
+    "\t\tsuper.unlockInstructions(record, token, opts);",
+    "\t}",
+    "",
+    "\tpublic function previewConfirmation(record:User, token:ConfirmationToken, opts:MailOptions):Void {",
+    "\t\tconfirmationInstructions(record, token, opts);",
+    "\t}",
+    "",
+    ...(options.invalidMailerToken ? [
+      "\tpublic function invalidTokenSwap(record:User, token:ResetPasswordToken, opts:MailOptions):Void {",
+      "\t\tconfirmationInstructions(record, token, opts);",
+      "\t}",
+      "",
+    ] : []),
+    "}",
+    "",
+  ].join("\n"));
+
   const authLinksViewBody = options.authLinksUseLocalScope ? [
     "\tpublic static function render():HtmlNode {",
     "\t\tvar scope = UserAuth.scope;",
@@ -328,6 +378,7 @@ function writePositiveSources(dir, options = {}) {
     "import devisehx.params.SanitizerAction;",
     "import devisehx.test.IntegrationHelpers;",
     "import devisehx.warden.WardenAccess;",
+    "import mailers.UserDeviseMailer;",
     "import models.Admin;",
     "import models.User;",
     "import rails.action_controller.Base;",
@@ -343,6 +394,7 @@ function writePositiveSources(dir, options = {}) {
     "\t\tvar requiredUser:User = Auth.currentRequired(controller, UserAuth.scope);",
     "\t\tvar signedIn:Bool = Auth.signedIn(controller, UserAuth.scope);",
     "\t\tvar authLinks:HtmlNode = AuthLinksView.render({resource: user});",
+    "\t\tvar deviseMailer = new UserDeviseMailer();",
     "\t\tAuth.signIn(controller, UserAuth.scope, user);",
     "\t\tAuth.bypassSignIn(controller, UserAuth.scope, user);",
     "\t\tAuth.signOut(controller, UserAuth.scope);",
@@ -357,7 +409,7 @@ function writePositiveSources(dir, options = {}) {
     "\t\tIntegrationHelpers.signOut(UserAuth.scope);",
     "\t\tvar adminScope:DeviseScope<Admin> = AdminAuth.scope;",
     "\t\tvar mapping:DeviseMapping<User> = null;",
-    "\t\tSys.println(filter != null || maybeUser != null || requiredUser != null || signedIn || authLinks != null || specs.length > 0 || wardenUser != null || authenticated || adminScope != null || mapping != null);",
+    "\t\tSys.println(filter != null || maybeUser != null || requiredUser != null || signedIn || authLinks != null || deviseMailer != null || specs.length > 0 || wardenUser != null || authenticated || adminScope != null || mapping != null);",
     "\t\tvar modelClass:Class<User> = User;",
     "\t\tSys.println(modelClass != null);",
     ...(options.extraMainLines ?? []),

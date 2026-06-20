@@ -264,6 +264,33 @@ DeviseParams.unsafePermit(UserAuth.scope, SanitizerAction.accountUpdate, ["time_
 `permit(...)` string keys fail during Haxe compilation, keeping custom sanitizer
 holes searchable and auditable.
 
+Custom Devise mailer code should use the typed mailer extern and opaque token
+types when overriding Devise hooks:
+
+```haxe
+import devisehx.mailer.ConfirmationToken;
+import devisehx.mailer.DeviseMailer;
+import devisehx.mailer.ResetPasswordToken;
+import models.User;
+import rails.action_mailer.MailOptions;
+
+class UserDeviseMailer extends DeviseMailer<User> {
+	public override function confirmationInstructions(record:User, token:ConfirmationToken, opts:MailOptions):Void {
+		super.confirmationInstructions(record, token, opts);
+	}
+
+	public override function resetPasswordInstructions(record:User, token:ResetPasswordToken, opts:MailOptions):Void {
+		super.resetPasswordInstructions(record, token, opts);
+	}
+}
+```
+
+The token abstracts intentionally have no public string constructor. Devise owns
+token generation and validation; Haxe owns hook typing so confirmation,
+reset-password, and unlock tokens cannot be swapped accidentally. Broader
+Haxe-owned Devise mailer emission remains a follow-up; this surface is the
+typed contract used by generated app-local externs and future mailer lowering.
+
 Generated Ruby should remain familiar:
 
 ```ruby
