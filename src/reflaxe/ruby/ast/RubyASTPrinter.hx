@@ -33,6 +33,10 @@ class RubyASTPrinter {
 				lines.push(indent + "class " + name);
 				writeBody(lines, body, indentLevel + 1);
 				lines.push(indent + "end");
+			case RubyClassDeclWithSuper(name, superclass, body):
+				lines.push(indent + "class " + name + " < " + superclass);
+				writeBody(lines, body, indentLevel + 1);
+				lines.push(indent + "end");
 			case RubyMethodDecl(name, args, body):
 				lines.push(indent + "def " + name + "(" + (args == null ? "" : args.join(", ")) + ")");
 				writeBody(lines, body, indentLevel + 1);

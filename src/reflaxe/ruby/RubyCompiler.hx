@@ -384,7 +384,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (isRubyModuleType(classType) || fullTypeName(classType.pack, classType.name) == "Math") {
 			return RubyModuleDecl(isRubyModuleType(classType) ? rubyModuleDeclarationName(classType) : constant, body);
 		}
-		return RubyClassDecl(constant, body);
+		var superclass = nativeExternSuperclassName(classType);
+		return superclass == null ? RubyClassDecl(constant, body) : RubyClassDeclWithSuper(constant, superclass, body);
+	}
+
+	static function nativeExternSuperclassName(classType:ClassType):Null<String> {
+		if (classType.superClass == null) {
+			return null;
+		}
+		var superclass = classType.superClass.t.get();
+		if (!superclass.isExtern) {
+			return null;
+		}
+		var native = rubyNativeName(superclass.meta);
+		if (native == null) {
+			return null;
+		}
+		if (!isSafeRubyConstantPath(native)) {
+			Context.error('@:native superclass "$native" is not a safe Ruby constant path for ${fullTypeName(classType.pack, classType.name)}.',
+				classType.pos);
+			return null;
+		}
+		return native;
 	}
 
 	static function isRubyModuleType(classType:ClassType):Bool {
@@ -3881,7 +3902,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var valueExpr = eq < 0 ? "" : valueAssign.substr(eq + " = ".length);
 				var boxLocal = lines[2].substr(firstPrefix.length, lines[2].length - firstPrefix.length - nilSuffix.length);
 				if (valueLocal != "" && boxLocal != "" && lines[3] == boxLocal + " = " + valueLocal && lines[4] == boxLocal) {
-					return simplifyRubyCompilerLocalNames(valueExpr);
+					return valueExpr;
 				}
 			}
 		}
@@ -3898,11 +3919,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (local == "" || !StringTools.startsWith(lines[2], assignPrefix) || lines[3] != prefix + local) {
 			return code;
 		}
-		return simplifyRubyCompilerLocalNames(lines[2].substr(assignPrefix.length));
-	}
-
-	static function simplifyRubyCompilerLocalNames(code:String):String {
-		return ~/\b([a-z][A-Za-z0-9_]*)__hx[0-9]+\b/g.replace(code, "$1");
+		return lines[2].substr(assignPrefix.length);
 	}
 
 	static function printRailsLocalsHash(expr:TypedExpr):Null<String> {
@@ -6856,7 +6873,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				if (staticValue != null) {
 					quoteRubyStringForCode(staticValue);
 				} else {
-					simplifyRubyIdentityBegin(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped)));
+					simplifyTemplateRubyIdentityBegin(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped)));
 				}
 			case TArray(target, index): printTemplateExpr(target, scope) + "[" + printTemplateExpr(index, scope) + "]";
 			case TArrayDecl(values): "[" + [for (value in values) printTemplateExpr(value, scope)].join(", ") + "]";
@@ -6888,8 +6905,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				+ (eElse == null ? "nil" : printTemplateExpr(eElse, scope))
 				+ " end)";
 			case _:
-				simplifyRubyIdentityBegin(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped)));
+				simplifyTemplateRubyIdentityBegin(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped)));
 		}
+	}
+
+	static function simplifyTemplateRubyIdentityBegin(code:String):String {
+		return simplifyRubyCompilerLocalNames(simplifyRubyIdentityBegin(code));
+	}
+
+	static function simplifyRubyCompilerLocalNames(code:String):String {
+		return ~/\b([a-z][A-Za-z0-9_]*)__hx[0-9]+\b/g.replace(code, "$1");
 	}
 
 	static function isStdStringCall(classType:ClassType, field:haxe.macro.Type.ClassField):Bool {

@@ -10,6 +10,7 @@ enum RubyStatement {
 	RubyRawStatement(code:String);
 	RubyModuleDecl(name:String, body:Array<RubyStatement>);
 	RubyClassDecl(name:String, body:Array<RubyStatement>);
+	RubyClassDeclWithSuper(name:String, superclass:String, body:Array<RubyStatement>);
 	RubyMethodDecl(name:String, args:Array<String>, body:Array<RubyStatement>);
 	RubyExprStatement(expr:RubyExpr);
 	RubyAssign(target:RubyExpr, value:RubyExpr);

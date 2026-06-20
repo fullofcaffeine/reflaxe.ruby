@@ -4,6 +4,7 @@ require "active_record"
 module Models
   class User < ::ApplicationRecord
     self.table_name = "users"
+    devise :database_authenticatable, :validatable
     def self.__hx_rails_schema()
       {
         table_name: "users",
@@ -12,6 +13,7 @@ module Models
           {name: :id, haxe_name: "id", ruby_name: "id", haxe_type: "Int", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint},
           {name: :name, haxe_name: "name", ruby_name: "name", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil},
           {name: :email, haxe_name: "email", ruby_name: "email", haxe_type: "String", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil},
+          {name: :encrypted_password, haxe_name: "encryptedPassword", ruby_name: "encrypted_password", haxe_type: "String", rails_type: :string, nullable: false, default: "", primary_key: false, index: false, unique: false, db_type: :string},
           {name: :role, haxe_name: "role", ruby_name: "role", haxe_type: "String", rails_type: :string, nullable: false, default: "member", primary_key: false, index: true, unique: false, db_type: nil}
         ]
       }
@@ -24,6 +26,7 @@ module Models
     # haxe column id: Int
     # haxe column name: String
     # haxe column email: String
+    # haxe column encrypted_password: String
     # haxe column role: String
     validates :name, presence: true
     validates :email, presence: true
@@ -32,7 +35,10 @@ module Models
       super(*args)
     end
     def role_label()
-      return (if (self.role == "admin") then "Admin" else (if (self.role == "maintainer") then "Maintainer" else "Member" end) end)
+      return (if (self.role == "admin") then "Admin" else (if (self.role == "maintainer") then "Maintainer" else (if (self.role == "guest") then "Guest" else "Member" end) end) end)
+    end
+    def can_manage_users()
+      return (self.role == "admin")
     end
     def initials()
       trimmed__hx0 = self.name.strip()

@@ -3,6 +3,7 @@
 # Do not edit directly unless you intend to take RailsHx ownership.
 
 Rails.application.routes.draw do
+  devise_for :users, class_name: "Models::User", only: [:sessions]
   root "controllers/todos#index"
   resources :todos, controller: "controllers/todos", only: [:index, :create] do
     collection do
@@ -13,12 +14,8 @@ Rails.application.routes.draw do
     end
   end
   resources :chat_messages, controller: "controllers/chat_messages", only: [:index, :create]
-  get "users", to: "controllers/users#index", as: :users
-  post "session", to: "controllers/sessions#create", as: :sign_in
-  delete "session", to: "controllers/sessions#destroy", as: :sign_out
-  namespace :admin do
-    get "users", to: "controllers/users#index"
-  end
+  resources :users, controller: "controllers/users", only: [:index, :create, :update, :destroy]
+  post "guest", to: "controllers/sessions#create_guest", as: :guest_sign_in
   get "reports(/:year)", to: "controllers/todos#optional_report", as: :optional_report
   get "files/*path", to: "controllers/todos#file", as: :file
 end

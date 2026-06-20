@@ -2,7 +2,27 @@
   "output": "config/routes.rb",
   "declarations": [
     {
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1001-1027",
+      "options": {
+        "only": [
+          "sessions"
+        ]
+      },
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1145-1159",
+      "contract": {
+        "schema": 1,
+        "field": "scope",
+        "type": "app.auth.UserAuth"
+      },
+      "expectedMapping": {
+        "name": "user",
+        "path": "users",
+        "className": "Models::User"
+      },
+      "kind": "deviseFor",
+      "resource": "users"
+    },
+    {
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1189-1215",
       "target": "controllers/todos#index",
       "kind": "root"
     },
@@ -12,16 +32,16 @@
         "index",
         "create"
       ],
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1042-1046",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1230-1234",
       "controller": "controllers/todos",
       "kind": "resources",
       "children": [
         {
-          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1106-1166",
+          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1294-1354",
           "kind": "collection",
           "children": [
             {
-              "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1116-1127",
+              "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1304-1315",
               "target": "controllers/todos#completed",
               "path": "completed",
               "kind": "verb",
@@ -30,11 +50,11 @@
           ]
         },
         {
-          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1179-1239",
+          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1367-1427",
           "kind": "member",
           "children": [
             {
-              "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1191-1201",
+              "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1379-1389",
               "target": "controllers/todos#complete",
               "path": "complete",
               "kind": "verb",
@@ -50,51 +70,33 @@
         "index",
         "create"
       ],
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1260-1271",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1448-1459",
       "controller": "controllers/chat_messages",
       "kind": "resources"
     },
     {
       "name": "users",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1329-1336",
-      "target": "controllers/users#index",
-      "path": "users",
-      "kind": "verb",
-      "verb": "get"
+      "only": [
+        "index",
+        "create",
+        "update",
+        "destroy"
+      ],
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1523-1527",
+      "controller": "controllers/users",
+      "kind": "resources"
     },
     {
-      "name": "sign_in",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1404-1413",
-      "target": "controllers/sessions#create",
-      "path": "session",
+      "name": "guest_sign_in",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1596-1603",
+      "target": "controllers/sessions#create_guest",
+      "path": "guest",
       "kind": "verb",
       "verb": "post"
     },
     {
-      "name": "sign_out",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1489-1498",
-      "target": "controllers/sessions#destroy",
-      "path": "session",
-      "kind": "verb",
-      "verb": "delete"
-    },
-    {
-      "name": "admin",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1579-1586",
-      "kind": "namespace",
-      "children": [
-        {
-          "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1597-1604",
-          "target": "controllers/users#index",
-          "path": "users",
-          "kind": "verb",
-          "verb": "get"
-        }
-      ]
-    },
-    {
       "name": "optional_report",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1647-1664",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1687-1704",
       "target": "controllers/todos#optional_report",
       "path": "reports(/:year)",
       "kind": "verb",
@@ -102,7 +104,7 @@
     },
     {
       "name": "file",
-      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1750-1763",
+      "position": "examples/todoapp_rails/src_haxe/routes/AppRoutes.hx:1790-1803",
       "target": "controllers/todos#file",
       "path": "files/*path",
       "kind": "verb",

@@ -468,6 +468,7 @@ function assertGeneratedShape(out) {
     "app/haxe_gen/app/auth/user_auth.rb",
     "app/haxe_gen/app/auth/admin_auth.rb",
     "app/haxe_gen/models/user.rb",
+    "app/haxe_gen/mailers/user_devise_mailer.rb",
     "app/views/auth_links/show.html.erb",
   ]) {
     if (!existsSync(join(out, file))) {
@@ -515,6 +516,11 @@ function assertGeneratedShape(out) {
       console.error(`DeviseHx sanitizer output missing expected Rails helper shape: ${expected}`);
       process.exit(1);
     }
+  }
+  const mailer = readFileSync(join(out, "app/haxe_gen/mailers/user_devise_mailer.rb"), "utf8");
+  if (!mailer.includes("class UserDeviseMailer < Devise::Mailer")) {
+    console.error("DeviseHx mailer output missing native Devise superclass shape.");
+    process.exit(1);
   }
 }
 

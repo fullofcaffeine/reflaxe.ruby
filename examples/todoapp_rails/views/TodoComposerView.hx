@@ -22,8 +22,6 @@ typedef TodoComposerLocals = {
 @:railsTemplateAst("render")
 class TodoComposerView {
 	public static function render(locals:TodoComposerLocals):HtmlNode {
-		return <>
-			<partial template=${(Template.of(TodoFormView) : Template<TodoFormLocals>)} locals=${{currentUserName: locals.currentUser.name}} />
-		</>;
+		return <><partial template=${(Template.of(TodoFormView) : Template<TodoFormLocals>)} locals=${{currentUserName: locals.currentUser.name}} /></>;
 	}
 }

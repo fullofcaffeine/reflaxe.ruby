@@ -1,5 +1,5 @@
 <%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>
-			<%= form.hidden_field :user_id, value: sample_user_id %>
+			<p class="form-owner-note">New tasks will be assigned to <%= current_user_name %>.</p>
 			<div>
 				<%= form.label :title, "What should ship next?" %>
 				<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>

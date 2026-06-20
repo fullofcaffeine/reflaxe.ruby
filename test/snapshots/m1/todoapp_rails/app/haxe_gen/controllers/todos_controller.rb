@@ -4,22 +4,25 @@ require "action_controller/railtie"
 require "turbo-rails"
 module Controllers
   class TodosController < ActionController::Base
+    before_action :authenticate_user!
     def initialize()
       super()
     end
     def index()
-      todos__hx0 = Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()
+      current_user__hx0 = current_user()
+      todos__hx0 = Models::Todo.where(is_completed: false, user_id: current_user__hx0.id).includes(:user).order(title: :asc).limit(10).to_a()
       users__hx0 = Models::User.order(name: :asc).to_a()
       chat_messages__hx0 = Models::ChatMessage.latest().to_a()
-      current_user__hx0 = Controllers::UserSession.current_user(self)
-      self.render(template: "controllers/todos/index", locals: {todos: todos__hx0, users: users__hx0, chat_messages: chat_messages__hx0, todo_count: todos__hx0.length, typed_column_count: Models::Todo.typed_column_count(), sample_user: current_user__hx0, current_user: current_user__hx0}, layout: "application")
+      self.render(template: "controllers/todos/index", locals: {todos: todos__hx0, users: users__hx0, chat_messages: chat_messages__hx0, todo_count: todos__hx0.length, typed_column_count: Models::Todo.typed_column_count(), current_user: current_user__hx0}, layout: "application")
     end
     def create()
       gthis__hx0 = self
-      attrs__hx0 = self.params().require("todo").permit([:title, :notes, :user_id])
+      current_user__hx0 = current_user()
+      attrs__hx0 = self.params().require("todo").permit([:title, :notes])
+      attrs__hx0 = attrs__hx0.merge(user_id: current_user__hx0.id)
       todo__hx0 = Models::Todo.create(attrs__hx0)
       self.respond_to() do |format__hx0|
-        format__hx0.turbo_stream() { gthis__hx0.render(turbo_stream: turbo_stream.replace("railshx-todo-list", partial: "controllers/todos/list", locals: {todos: Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()})) }
+        format__hx0.turbo_stream() { gthis__hx0.render(turbo_stream: turbo_stream.replace("railshx-todo-list", partial: "controllers/todos/list", locals: {todos: Models::Todo.where(is_completed: false, user_id: current_user__hx0.id).includes(:user).order(title: :asc).limit(10).to_a()})) }
         format__hx0.html() { gthis__hx0.redirect_to(self.todos_path(), status: :see_other) }
       end
     end

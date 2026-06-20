@@ -1,7 +1,1 @@
-<% if sample_user != nil %>
-			<%= render partial: "controllers/todos/typed_form", locals: {sample_user_id: sample_user.id} %>
-		<% else %>
-			<div class="empty-state">
-				Create a user first; the integration fixture seeds one before exercising this page.
-			</div>
-		<% end %>
+<%= render partial: "controllers/todos/typed_form", locals: {current_user_name: current_user.name} %>

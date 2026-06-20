@@ -3,6 +3,7 @@
 				<meta name="railshx-template" content="todo-index">
 			<% end %>
 			<main class="todo-shell">
+				<%= render partial: "controllers/todos/app_top_bar", locals: {current_user: current_user} %>
 				<div class="railshx-flash" data-railshx-flash role="status" aria-live="polite" hidden></div>
 				<section class="hero">
 					<div class="card">
@@ -26,12 +27,12 @@
 					</aside>
 				</section>
 
-				<%= render partial: "controllers/todos/user_switcher", locals: {users: users, current_user: current_user} %>
+				<turbo-frame id="railshx-user-frame" class="user-management-frame"></turbo-frame>
 
 				<section class="workspace">
 					<div class="card">
 						<h2>Add a task</h2>
-						<%= render partial: "controllers/todos/composer", locals: {sample_user: sample_user} %>
+						<%= render partial: "controllers/todos/composer", locals: {current_user: current_user} %>
 					</div>
 
 					<div id="open-work" class="card open-work-card" tabindex="-1">
@@ -42,5 +43,5 @@
 
 				<%= render partial: "controllers/todos/chat_panel", locals: {messages: chat_messages, current_user: current_user, users: users} %>
 
-				<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, sample_user: sample_user, current_user: current_user} %>
+				<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, current_user: current_user} %>
 			</main>
