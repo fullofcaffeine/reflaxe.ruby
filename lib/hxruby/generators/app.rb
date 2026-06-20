@@ -72,6 +72,9 @@ module HXRuby
         puts "[rails:app] Next:"
         puts "  bundle exec rake hxruby:start"
         puts "  bundle exec rake hxruby:start:watch"
+        puts "  bundle exec rake hxruby:doctor"
+        puts "  bundle exec rake hxruby:check"
+        puts "  bundle exec rake hxruby:clean"
         puts "  bundle exec rake hxruby:gen:routes"
         puts "  bin/railshx-dev"
         puts "  bin/railshx-prod"
@@ -195,6 +198,9 @@ module HXRuby
           "",
           "- Prefer `bundle exec rake hxruby:start` for a one-command compile-and-run loop.",
           "- Prefer `bundle exec rake hxruby:start:watch` while editing Haxe/HHX/Haxe JS.",
+          "- Use `bundle exec rake hxruby:doctor` for non-mutating Haxe/build-file/manifest/output-root diagnostics while onboarding or debugging.",
+          "- Use `bundle exec rake hxruby:check` for a fast compile plus generated Ruby `ruby -c` gate; add `CLIENT=1`, `ROUTES=1`, or `ZEITWERK=1` when that lane should cover more RailsHx/Rails seams.",
+          "- Use `bundle exec rake hxruby:clean` only when you want to remove manifest-owned RailsHx generated artifacts; it must not delete Rails-owned files.",
           "- Prefer `bundle exec rake hxruby:db:migrate`, `bundle exec rake hxruby:db:prepare`, and `bundle exec rake hxruby:test` when Rails should consume generated artifacts; these wrappers compile first, then delegate to ordinary Rails.",
           "- Use `bundle exec rake hxruby:rails TASK=zeitwerk:check` for less common Rails tasks that should run after Haxe-owned artifacts are refreshed.",
           "- Run `bundle exec rake hxruby:compile`, `bundle exec rake hxruby:compile:client`, `bundle exec rake hxruby:gen:routes`, and Rails tests before landing changes that affect generated artifacts.",

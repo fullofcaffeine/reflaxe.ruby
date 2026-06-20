@@ -193,6 +193,9 @@ bundle exec rake hxruby:db:prepare    # compile server/migrations, then rails db
 bundle exec rake hxruby:test          # compile server/client, then rails test
 bundle exec rake hxruby:rails TASK=zeitwerk:check
 bundle exec rake hxruby:gen:routes    # regenerate typed Routes.hx from Rails
+bundle exec rake hxruby:doctor        # non-mutating environment/artifact health report
+bundle exec rake hxruby:check         # compile and ruby -c generated Ruby
+bundle exec rake hxruby:clean         # remove manifest-owned generated artifacts
 bundle exec rake hxruby:production    # compile, zeitwerk:check, assets
 ```
 
@@ -413,9 +416,14 @@ Keep RailsHx tasks as composition and validation helpers:
   the Haxe-owned lane when `src_haxe/routes/AppRoutes.hx` or an existing route
   manifest is present.
 - `hxruby:doctor`: environment, manifest, output-root, route freshness, and
-  collision diagnostics.
+  collision diagnostics. It is intentionally non-mutating: it checks Haxe,
+  build files, JSON manifests, Rails command availability, and configured
+  generated Ruby roots without compiling.
 - `hxruby:check`: compile, syntax-check generated Ruby, and optionally run
-  Rails-owned checks such as `zeitwerk:check`.
+  Rails-owned checks such as `zeitwerk:check`. Set `CLIENT=1` to compile the
+  Haxe-authored JavaScript lane, `ROUTES=1` to run route extern/parity sync, and
+  `ZEITWERK=1` to delegate to Rails' `zeitwerk:check` after generated Ruby
+  passes `ruby -c`.
 - `hxruby:clean`: remove only manifest-owned generated artifacts.
 - `hxruby:production`: compile RailsHx outputs, then delegate to Rails-owned
   production checks and asset compilation.

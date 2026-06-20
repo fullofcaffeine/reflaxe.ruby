@@ -232,12 +232,22 @@ bundle exec rake hxruby:db:migrate   # compile Haxe migrations, then rails db:mi
 bundle exec rake hxruby:db:prepare   # compile Haxe artifacts, then rails db:prepare
 bundle exec rake hxruby:test         # compile server/client artifacts, then rails test
 bundle exec rake hxruby:rails TASK=zeitwerk:check
+bundle exec rake hxruby:doctor       # non-mutating health report for Haxe/build files/manifests
+bundle exec rake hxruby:check        # compile and ruby -c generated Ruby
+bundle exec rake hxruby:clean        # remove manifest-owned generated artifacts
 ```
 
 Raw `bin/rails db:migrate`, `bin/rails test`, and other Rails tasks still work
 when artifacts are already current. The `hxruby:*` variants are the safer daily
 path because they refresh generated Ruby, ERB, migrations, route files, and
 client JS before Rails consumes them.
+
+Use `hxruby:doctor` when onboarding or debugging a generated app: it verifies
+Haxe availability, build files, JSON manifests, Rails command availability, and
+configured output roots without mutating the app. Use `hxruby:check` in CI for a
+fast generated-artifact gate; add `CLIENT=1`, `ROUTES=1`, or `ZEITWERK=1` when
+that CI lane should also compile Haxe-authored JavaScript, sync route externs, or
+delegate to Rails' `zeitwerk:check`.
 
 For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, generated `db/migrate/**` files, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
 
@@ -408,6 +418,9 @@ rake hxruby:db:rollback
 rake hxruby:start
 rake hxruby:start:watch
 rake hxruby:routes
+rake hxruby:doctor
+rake hxruby:check
+rake hxruby:clean
 rake hxruby:test
 rake hxruby:rails TASK=zeitwerk:check
 rake hxruby:production

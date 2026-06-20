@@ -79,12 +79,15 @@ try {
   const tasksCheck = [
     "require 'rake'",
     "require 'hxruby/tasks'",
-    "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+    "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:doctor hxruby:check hxruby:clean hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
     "names = Rake::Task.tasks.map(&:name)",
     "missing = expected - names",
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
   ].join("; ");
   run("ruby", ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
+  smokeDoctorTask(unpackedRoot);
+  smokeCheckTask(unpackedRoot);
+  smokeCleanTask(unpackedRoot);
   smokeProductionTask(unpackedRoot);
 
   if (rubySupportsGemInstallCheck()) {
@@ -118,7 +121,7 @@ try {
       "require 'rubygems'",
       `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
       "require 'hxruby/tasks'",
-      "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+      "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:doctor hxruby:check hxruby:clean hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
       "names = Rake::Task.tasks.map(&:name)",
       "missing = expected - names",
       "abort \"installed gem missing tasks: #{missing.join(', ')}\" unless missing.empty?",
@@ -134,6 +137,96 @@ try {
 }
 
 console.log(`[gem-package] OK: ${gemName}`);
+
+function smokeDoctorTask(unpackedRoot) {
+  const appRoot = join(tempRoot, "doctor-smoke-app");
+  const fakeBin = join(appRoot, "fake-bin");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(join(appRoot, ".railshx"), { recursive: true });
+  mkdirSync(join(appRoot, "generated"), { recursive: true });
+  writeFileSync(join(appRoot, "build.hxml"), "-D ruby_output=generated\n# fake server build\n");
+  writeFileSync(join(appRoot, "build-client.hxml"), "# fake client build\n");
+  writeFileSync(join(appRoot, ".railshx", "manifest.json"), '{"version":1,"outputs":[]}\n');
+  writeExecutable(join(fakeBin, "haxe"), [
+    "#!/usr/bin/env ruby",
+    "exit 0",
+  ]);
+  writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
+
+  run("rake", ["hxruby:doctor"], {
+    cwd: appRoot,
+    env: {
+      ...process.env,
+      RUBYLIB: [join(unpackedRoot, "lib"), process.env.RUBYLIB].filter(Boolean).join(delimiter),
+      PATH: [fakeBin, process.env.PATH].filter(Boolean).join(delimiter),
+    },
+  });
+}
+
+function smokeCheckTask(unpackedRoot) {
+  const appRoot = join(tempRoot, "check-smoke-app");
+  const fakeBin = join(appRoot, "fake-bin");
+  const logPath = join(appRoot, "task.log");
+  mkdirSync(fakeBin, { recursive: true });
+  writeFileSync(join(appRoot, "build.hxml"), "-D ruby_output=generated\n# fake server build\n");
+  writeExecutable(join(fakeBin, "haxe"), [
+    "#!/usr/bin/env ruby",
+    `File.open(ENV.fetch("HXRUBY_TASK_LOG"), "a") { |file| file.puts("haxe #{ARGV.join(' ')}") }`,
+    `Dir.mkdir("generated") unless Dir.exist?("generated")`,
+    `File.write("generated/ok.rb", "class GeneratedOk; end\\n")`,
+  ]);
+  writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
+
+  run("rake", ["hxruby:check"], {
+    cwd: appRoot,
+    env: {
+      ...process.env,
+      HXRUBY_TASK_LOG: logPath,
+      RUBYLIB: [join(unpackedRoot, "lib"), process.env.RUBYLIB].filter(Boolean).join(delimiter),
+      PATH: [fakeBin, process.env.PATH].filter(Boolean).join(delimiter),
+    },
+  });
+
+  const actual = readFileSync(logPath, "utf8");
+  if (actual !== "haxe build.hxml\n") {
+    fail(`hxruby:check task compile order mismatch:\n${actual}`);
+  }
+}
+
+function smokeCleanTask(unpackedRoot) {
+  const appRoot = join(tempRoot, "clean-smoke-app");
+  mkdirSync(join(appRoot, ".railshx"), { recursive: true });
+  mkdirSync(join(appRoot, "generated"), { recursive: true });
+  writeFileSync(join(appRoot, "generated", "owned.rb"), "class Owned; end\n");
+  writeFileSync(join(appRoot, "generated", "rails_owned.rb"), "class RailsOwned; end\n");
+  writeFileSync(join(appRoot, ".railshx", "manifest.json"), JSON.stringify({
+    version: 1,
+    outputs: [
+      {
+        output: "generated/owned.rb",
+        kind: "ruby",
+        source: "test",
+        sha256: "ignored-by-clean",
+      },
+    ],
+  }, null, 2) + "\n");
+  writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
+
+  run("rake", ["hxruby:clean"], {
+    cwd: appRoot,
+    env: {
+      ...process.env,
+      RUBYLIB: [join(unpackedRoot, "lib"), process.env.RUBYLIB].filter(Boolean).join(delimiter),
+    },
+  });
+
+  if (existsSync(join(appRoot, "generated", "owned.rb"))) {
+    fail("hxruby:clean did not remove manifest-owned output");
+  }
+  if (!existsSync(join(appRoot, "generated", "rails_owned.rb"))) {
+    fail("hxruby:clean removed a non-manifest-owned file");
+  }
+}
 
 function smokeProductionTask(unpackedRoot) {
   const appRoot = join(tempRoot, "production-smoke-app");

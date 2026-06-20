@@ -106,6 +106,21 @@ module HXRuby
           sync_routes
         end
 
+        desc "Check RailsHx local environment, build files, manifests, and configured output roots"
+        task :doctor do
+          doctor
+        end
+
+        desc "Compile RailsHx artifacts and syntax-check generated Ruby. CLIENT=1 ROUTES=1 ZEITWERK=1 for optional gates"
+        task :check do
+          check
+        end
+
+        desc "Remove only manifest-owned RailsHx generated artifacts. ROOT=. by default"
+        task :clean do
+          clean
+        end
+
         desc "Compile RailsHx server/client artifacts and run production Rails checks"
         task :production do
           compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
@@ -293,6 +308,52 @@ module HXRuby
       )
     end
 
+    def doctor
+      hxml = ENV.fetch("HXRUBY_HXML", "build.hxml")
+      client_hxml = ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml")
+      errors = []
+      warnings = []
+
+      errors << "haxe executable is not available on PATH" unless executable_available?("haxe")
+      errors << "server Haxe build file is missing: #{hxml}" unless File.file?(hxml)
+      warnings << "client Haxe build file is missing: #{client_hxml}" unless File.file?(client_hxml)
+      warnings << "Rails command is missing: #{rails_command}" unless File.executable?(rails_command) || executable_available?(rails_command)
+      errors.concat(validate_json_file(".railshx/manifest.json", required: false))
+      errors.concat(validate_json_file(ENV.fetch("HXRUBY_ROUTES_MANIFEST", ".railshx/routes.haxe.json"), required: false))
+
+      generated_ruby_roots(hxml).each do |root|
+        if unsafe_output_root?(root)
+          errors << "unsafe generated Ruby output root: #{root.inspect}"
+        elsif !File.exist?(root)
+          warnings << "generated Ruby output root does not exist yet: #{root}"
+        end
+      end
+
+      warnings.each { |message| puts "[hxruby:doctor] WARN: #{message}" }
+      if errors.empty?
+        puts "[hxruby:doctor] OK"
+      else
+        errors.each { |message| warn "[hxruby:doctor] ERROR: #{message}" }
+        abort("[hxruby:doctor] failed")
+      end
+    end
+
+    def check
+      hxml = ENV.fetch("HXRUBY_HXML", "build.hxml")
+      compile_haxe(hxml)
+      compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml")) if truthy?(ENV["CLIENT"])
+      sync_routes if truthy?(ENV["ROUTES"])
+      syntax_check_generated_ruby(generated_ruby_roots(hxml))
+      rails(["zeitwerk:check"], env: ENV["RAILS_ENV"] ? { "RAILS_ENV" => ENV["RAILS_ENV"] } : {}) if truthy?(ENV["ZEITWERK"])
+      puts "[hxruby:check] OK"
+    end
+
+    def clean
+      root = ENV.fetch("ROOT", ".")
+      HXRuby::Generators::Common.clean_owned_outputs(root)
+      puts "[hxruby:clean] removed manifest-owned generated artifacts under #{File.expand_path(root)}"
+    end
+
     def rails(args, env: {})
       sh(env.map { |key, value| "#{key}=#{value.to_s.shellescape}" }.concat([rails_command.shellescape, *args.map(&:shellescape)]).join(" "))
     end
@@ -362,6 +423,69 @@ module HXRuby
         end
         File.write(path, rewritten) if rewritten != original
       end
+    end
+
+    def executable_available?(command)
+      return File.executable?(command) if command.include?(File::SEPARATOR)
+
+      ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
+        File.executable?(File.join(dir, command))
+      end
+    end
+
+    def validate_json_file(path, required:)
+      expanded = File.expand_path(path)
+      return required ? ["required JSON file is missing: #{path}"] : [] unless File.file?(expanded)
+
+      JSON.parse(File.read(expanded))
+      []
+    rescue JSON::ParserError => error
+      ["invalid JSON in #{path}: #{error.message}"]
+    end
+
+    def generated_ruby_roots(hxml)
+      explicit = ENV["HXRUBY_CHECK_ROOTS"]
+      return split_paths(explicit) if explicit && !explicit.empty?
+
+      output = ENV["HXRUBY_RUBY_OUTPUT_ROOT"] || ruby_output_define(hxml)
+      roots = []
+      roots << output if output && !output.empty?
+      roots << "app/haxe_gen" if roots.empty?
+      roots.uniq
+    end
+
+    def split_paths(value)
+      value.split(File::PATH_SEPARATOR).flat_map { |part| part.split(",") }.map(&:strip).reject(&:empty?)
+    end
+
+    def ruby_output_define(hxml)
+      return nil unless File.file?(hxml)
+
+      tokens = Shellwords.split(File.read(hxml))
+      tokens.each_with_index do |token, index|
+        return token.delete_prefix("-D").delete_prefix("ruby_output=") if token.start_with?("-Druby_output=")
+        return token.delete_prefix("ruby_output=") if token.start_with?("ruby_output=")
+        return tokens[index + 1].to_s.delete_prefix("ruby_output=") if ["-D", "--define"].include?(token) && tokens[index + 1].to_s.start_with?("ruby_output=")
+      end
+      nil
+    end
+
+    def unsafe_output_root?(root)
+      expanded = File.expand_path(root)
+      expanded == "/" || expanded == Dir.home || !expanded.start_with?(Dir.pwd)
+    end
+
+    def syntax_check_generated_ruby(roots)
+      checked = 0
+      roots.each do |root|
+        next unless File.directory?(root)
+
+        Dir.glob(File.join(root, "**", "*.rb")).sort.each do |path|
+          sh(["ruby", "-c", path].map(&:shellescape).join(" "))
+          checked += 1
+        end
+      end
+      puts "[hxruby:check] ruby -c checked #{checked} generated Ruby files"
     end
 
     def watch_task(task_name)
