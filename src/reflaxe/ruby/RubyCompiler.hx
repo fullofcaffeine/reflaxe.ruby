@@ -3122,13 +3122,92 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch [info.owner, info.name] {
 			case [owner, "add" | "addUnchecked"] if (params.length == 3 && isActionMailerAttachmentsOwner(owner)):
 				compileActionMailerAttachmentAssign(params[0], params[1], params[2]);
+			case [owner, "ofString"] if (params.length == 1 && isActionMailerAttachmentValueOwner(owner)):
+				RubyRawExpr(printInlineExpr(params[0]));
+			case [owner, "content"] if ((params.length == 1 || params.length == 2) && isActionMailerAttachmentValueOwner(owner)):
+				RubyRawExpr(printActionMailerAttachmentHash(params[0], params.length == 2 ? params[1] : null));
+			case [owner, "unchecked"] if (params.length == 1 && isActionMailerAttachmentValueOwner(owner)):
+				RubyRawExpr(printInlineExpr(params[0]));
 			case _:
 				null;
 		}
 	}
 
 	static function compileActionMailerAttachmentAssign(target:TypedExpr, name:TypedExpr, value:TypedExpr):RubyExpr {
-		return RubyRawExpr(printInlineExpr(target) + "[" + printInlineExpr(name) + "] = " + printInlineExpr(value));
+		return RubyRawExpr(printActionMailerAttachmentTarget(target)
+			+ "["
+			+ printInlineExpr(name)
+			+ "] = "
+			+ printActionMailerAttachmentValue(value));
+	}
+
+	static function printActionMailerAttachmentTarget(target:TypedExpr):String {
+		return switch (unwrapTypedExpr(target).expr) {
+			case TCall(callee, params):
+				var info = staticCallInfo(callee);
+				if (info != null
+					&& (info.name == "inlineAttachments" || info.name == "inline")
+					&& params.length == 1
+					&& isActionMailerAttachmentsOwner(info.owner)) {
+					printInlineExpr(params[0]) + ".inline()";
+				} else {
+					printInlineExpr(target);
+				}
+			case _:
+				printInlineExpr(target);
+		}
+	}
+
+	static function printActionMailerAttachmentValue(value:TypedExpr):String {
+		return switch (unwrapTypedExpr(value).expr) {
+			case TCall(callee, params):
+				var info = staticCallInfo(callee);
+				if (info == null || !isActionMailerAttachmentValueOwner(info.owner)) {
+					printInlineExpr(value);
+				} else {
+					switch (info.name) {
+						case "ofString" if (params.length == 1):
+							printInlineExpr(params[0]);
+						case "content" if (params.length == 1 || params.length == 2):
+							printActionMailerAttachmentHash(params[0], params.length == 2 ? params[1] : null);
+						case "unchecked" if (params.length == 1):
+							printInlineExpr(params[0]);
+						case _:
+							printInlineExpr(value);
+					}
+				}
+			case _:
+				printInlineExpr(value);
+		}
+	}
+
+	static function printActionMailerAttachmentHash(content:TypedExpr, options:Null<TypedExpr>):String {
+		var fields = ["content: " + printInlineExpr(content)];
+		if (options != null) {
+			for (field in actionMailerAttachmentOptionFields(options)) {
+				switch (field.name) {
+					case "mimeType":
+						fields.push("mime_type: " + printInlineExpr(field.expr));
+					case "encoding":
+						fields.push("encoding: " + printInlineExpr(field.expr));
+					case _:
+						Context.error("AttachmentValue.content options support only mimeType and encoding.", field.expr.pos);
+				}
+			}
+		}
+		return "{" + fields.join(", ") + "}";
+	}
+
+	static function actionMailerAttachmentOptionFields(options:TypedExpr):Array<{name:String, expr:TypedExpr}> {
+		return switch (unwrapTypedExpr(options).expr) {
+			case TObjectDecl(fields):
+				fields;
+			case TConst(TNull):
+				[];
+			case _:
+				Context.error("AttachmentValue.content options must be an object literal so RailsHx can emit deterministic Rails attachment kwargs.",
+					options.pos);
+		}
 	}
 
 	static function isActionMailerAttachmentsType(type:haxe.macro.Type):Bool {
@@ -3141,7 +3220,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function isActionMailerAttachmentsOwner(owner:String):Bool {
-		return owner == "rails.action_mailer.Attachments" || StringTools.endsWith(owner, ".Attachments_Impl_");
+		return owner == "rails.action_mailer.Attachments"
+			|| owner == "rails.action_mailer.Attachments.AttachmentsImpl"
+			|| StringTools.endsWith(owner, ".Attachments_Impl_")
+			|| StringTools.endsWith(owner, ".Attachments.AttachmentsImpl");
+	}
+
+	static function isActionMailerAttachmentValueOwner(owner:String):Bool {
+		return owner == "rails.action_mailer.AttachmentValue" || StringTools.endsWith(owner, ".AttachmentValue_Impl_");
 	}
 
 	static function actionMailerParamKey(expr:TypedExpr):String {

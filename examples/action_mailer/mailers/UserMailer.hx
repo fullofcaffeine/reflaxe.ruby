@@ -1,5 +1,6 @@
 package mailers;
 
+import rails.action_mailer.AttachmentValue;
 import rails.action_mailer.MailAddress;
 import rails.action_mailer.MailLayout;
 import rails.action_mailer.MessageDelivery;
@@ -31,6 +32,8 @@ typedef WelcomeMailerParams = {
 // Ruby output: a Rails-native mailer with `mail(to:, from:, subject:)` and
 // format-specific `render(template:, locals:)` calls. The templates themselves
 // are generated as ordinary ERB under `app/views`.
+// Attachments demonstrate both typed paths: a terse string body and Rails'
+// hash/inline attachment form through `AttachmentValue.content(...)`.
 
 @:railsMailer
 @:railsMailerParams(WelcomeMailerParams)
@@ -42,6 +45,7 @@ class UserMailer extends rails.action_mailer.Base {
 	//   `params[:email]`, etc. inside the generated Ruby mailer.
 	public function welcome(email:String, name:String, message:String):Void {
 		attachments().add("welcome.txt", message);
+		attachments().inlineAttachments().add("welcome.csv", AttachmentValue.content("name,message\n" + name + "," + message, {mimeType: "text/csv"}));
 		var locals:WelcomeEmailLocals = {
 			name: name,
 			message: message,
@@ -64,6 +68,7 @@ class UserMailer extends rails.action_mailer.Base {
 		var name = param(UserMailer.p.name);
 		var message = param(UserMailer.p.message);
 		attachments().add("welcome.txt", message);
+		attachments().inlineAttachments().add("welcome.csv", AttachmentValue.content("name,message\n" + name + "," + message, {mimeType: "text/csv"}));
 		var locals:WelcomeEmailLocals = {
 			name: name,
 			message: message,

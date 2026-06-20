@@ -756,7 +756,15 @@
       "status": "implemented",
       "path": "std/rails/action_mailer/Attachments.hx",
       "surface": "rails.action_mailer.Attachments",
-      "reason": "Typed ActionMailer attachments proxy facade with add(name, content) for common string attachments and explicit addUnchecked for raw Rails attachment shapes."
+      "reason": "Typed ActionMailer attachments proxy facade with add(name, AttachmentValue), inlineAttachments(), typed content/hash builders, and explicit addUnchecked for raw Rails attachment shapes."
+    },
+    {
+      "id": "std.rails.action_mailer_attachment_value",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/AttachmentValue.hx",
+      "surface": "rails.action_mailer.AttachmentValue",
+      "reason": "Typed ActionMailer attachment value abstraction with String conversion, Rails attachment-hash content builders, mimeType/encoding options, and explicit unchecked interop."
     },
     {
       "id": "std.rails.action_mailer_base",
@@ -820,7 +828,7 @@
       "status": "implemented",
       "path": "std/rails/action_mailer/MessageDelivery.hx",
       "surface": "rails.action_mailer.MessageDelivery",
-      "reason": "Typed facade for Rails ActionMailer::MessageDelivery with deliverNow/deliverLater helpers."
+      "reason": "Typed facade for Rails ActionMailer::MessageDelivery with deliverNow and ActiveJob-typed deliverLater helpers."
     },
     {
       "id": "std.rails.action_mailer_preview",

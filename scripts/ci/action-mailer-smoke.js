@@ -81,6 +81,7 @@ for (const expected of [
   /def welcome\(email__hx\d+, name__hx\d+, message__hx\d+\)/,
   /self\.attachments\(\)/,
   /self\.attachments\(\)\["welcome\.txt"\] = message__hx\d+/,
+  /self\.attachments\(\)\.inline\(\)\["welcome\.csv"\] = \{content: .*name,message\\n.*name__hx\d+.*message__hx\d+.*mime_type: "text\/csv"\}/,
   /self\.mail\(to: email__hx\d+, from: "team@example.test", cc: \["ops@example.test"\], reply_to: "reply@example.test", subject: "Welcome to typed RailsHx mail", layout: false\) do \|format__hx\d+\|/,
   /format__hx\d+\.html\(\) \{/,
   /render\(template: "mailers\/user_mailer\/welcome", locals: \{message: locals_message__hx\d+, name: locals_name__hx\d+, product_name: locals_product_name__hx\d+\}\)/,
@@ -99,8 +100,8 @@ for (const expected of [
 }
 
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
-if (!/Mailers::UserMailer\.with\(email: "reader@example.test", name: "Ada", message: "Typed parameterized RailsHx mailers are ready\."\)\.welcome_from_params\(\)/.test(mainRuby)) {
-  console.error("ActionMailer main output missing typed parameterized .with(...) call.");
+if (!/Mailers::UserMailer\.with\(email: "reader@example.test", name: "Ada", message: "Typed parameterized RailsHx mailers are ready\."\)\.welcome_from_params\(\)\.deliver_later\(\)/.test(mainRuby)) {
+  console.error("ActionMailer main output missing typed parameterized .with(...).deliver_later call.");
   process.exit(1);
 }
 
@@ -410,6 +411,12 @@ class UserMailerTest < ActiveSupport::TestCase
     attachment = mail.attachments["welcome.txt"]
     assert attachment
     assert_equal "Typed RailsHx mailers are ready.", attachment.body.decoded
+
+    inline_attachment = mail.attachments["welcome.csv"]
+    assert inline_attachment
+    assert_equal "inline", inline_attachment.content_disposition
+    assert_equal "text/csv", inline_attachment.mime_type
+    assert_includes inline_attachment.body.decoded, "Ada,Typed RailsHx mailers are ready."
   end
 
   test "deliver_now uses the Rails test delivery collection" do
@@ -435,6 +442,7 @@ class UserMailerTest < ActiveSupport::TestCase
     assert_includes mail.html_part.body.decoded, "Typed RailsHx parameterized mailers are ready."
     assert_includes mail.text_part.body.decoded, "Typed RailsHx parameterized mailers are ready."
     assert_equal "Typed RailsHx parameterized mailers are ready.", mail.attachments["welcome.txt"].body.decoded
+    assert_equal "text/csv", mail.attachments["welcome.csv"].mime_type
   end
 
   test "loads typed ActionMailer preview artifact" do

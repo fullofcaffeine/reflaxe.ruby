@@ -116,6 +116,7 @@ for (const required of [
   "std/rails/active_support/NotificationEvent.hx",
   "std/rails/active_support/Notifications.hx",
   "std/rails/active_support/Subscription.hx",
+  "std/rails/action_mailer/AttachmentValue.hx",
   "std/rails/action_mailer/Attachments.hx",
   "std/rails/action_mailer/Base.hx",
   "std/rails/action_mailer/MailAddress.hx",

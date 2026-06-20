@@ -11,6 +11,7 @@ Annotate a Haxe class with `@:railsMailer` and extend
 
 ```haxe
 import rails.action_mailer.MailAddress;
+import rails.action_mailer.AttachmentValue;
 import rails.action_mailer.MailLayout;
 
 @:railsMailer
@@ -23,6 +24,10 @@ class UserMailer extends rails.action_mailer.Base {
 		};
 
 		attachments().add("welcome.txt", message);
+		attachments().inlineAttachments().add("welcome.csv",
+			AttachmentValue.content("name,message\n" + name + "," + message, {
+				mimeType: "text/csv"
+			}));
 		MailerMacro.mailMultipart(this, {
 			to: email,
 			from: "team@example.test",
@@ -42,6 +47,8 @@ Generated Ruby stays Rails-shaped:
 class UserMailer < ActionMailer::Base
   def welcome(email, name, message)
     attachments["welcome.txt"] = message
+    attachments.inline["welcome.csv"] = { content: "name,message\n#{name},#{message}",
+      mime_type: "text/csv" }
     mail(to: email, from: "team@example.test", cc: ["ops@example.test"],
       reply_to: "reply@example.test", subject: "Welcome to typed RailsHx mail",
       layout: false) do |format|
@@ -94,10 +101,18 @@ ActionMailer keyword arguments:
 - arbitrary recipient/layout objects require `MailAddress.unchecked(...)` or
   `MailLayout.unchecked(...)` at a reviewed interop boundary.
 
-Mailer attachments use `attachments().add(name, content)` for common string
-attachments and emit Rails' standard `attachments["name"] = content`. More
-complex Rails attachment hashes should use
-`attachments().addUnchecked(name, value)` until a typed builder exists.
+Mailer attachments use typed Rails-shaped values:
+
+- `attachments().add(name, "body")` emits Rails' standard
+  `attachments["name"] = body`.
+- `attachments().add(name, AttachmentValue.content(body, {mimeType:
+  "text/csv"}))` emits Rails' attachment hash form with `content:` and
+  `mime_type:`.
+- `attachments().inlineAttachments().add(...)` emits Rails'
+  `attachments.inline[...] = ...` API for inline attachments.
+- unusual ActionMailer-owned shapes should use
+  `attachments().addUnchecked(name, value)` or `AttachmentValue.unchecked(...)`
+  at an explicit interop boundary.
 
 ## Runtime Strategy
 
@@ -109,8 +124,8 @@ checks:
 - `mail(...)` object literals lower to Ruby keyword args.
 - recipient/layout options reject object-shaped raw values unless an explicit
   unchecked wrapper is used.
-- attachments lower to Rails' attachment proxy and reject non-string content on
-  the typed `add(...)` path.
+- attachments lower to Rails' attachment proxy, support typed string/hash/inline
+  forms, and reject arbitrary object-shaped values on the typed `add(...)` path.
 - multipart format blocks render checked templates and locals.
 - generated HTML and text ERB files exist.
 - bad template locals fail during Haxe compilation.
@@ -123,7 +138,8 @@ and runs Rails tests against the real `ActionMailer::Base` behavior:
   mail object.
 - HTML and text bodies render the HHX-authored ERB templates with checked
   locals.
-- `attachments().add(...)` produces a real ActionMailer attachment.
+- `attachments().add(...)` and `attachments().inlineAttachments().add(...)`
+  produce real ActionMailer attachments, including typed content-type metadata.
 - `deliver_now` writes to the Rails test delivery collection.
 
 If the generated app bundle is unavailable, the local fast lane prints a staged
@@ -193,7 +209,7 @@ end
 App code can call the Rails parameterized API without writing raw hashes:
 
 ```haxe
-UserMailer.withParams({
+var queuedDelivery:rails.active_job.Base = UserMailer.withParams({
 	email: user.email,
 	name: user.name,
 	message: "Typed params stay checked."
@@ -202,11 +218,41 @@ UserMailer.withParams({
 
 That call lowers to Rails' `UserMailer.with(email: ..., name: ..., message:
 "...").welcome_from_params.deliver_later`, while Haxe checks that every
-required param is present and has the expected type.
+required param is present and has the expected type. `deliverLater()` returns a
+typed `rails.active_job.Base` enqueue handle. Rails still owns the concrete
+ActionMailer delivery job class, queue adapter, serialization, retries, and
+execution.
 
 Unchecked Rails parameterized-mailer escapes, if needed later, must be named
 explicitly, for example `withUnchecked(...)`, and covered by the escape-hatch
 audit. The canonical app-facing API is `@:railsMailerParams(...)`.
+
+## ActiveJob Delivery Boundary
+
+ActionMailer delivery through ActiveJob is intentionally Rails-native:
+
+```haxe
+var delivery:rails.active_job.Base = UserMailer.withParams({
+	email: "reader@example.test",
+	name: "Ada",
+	message: "Queued through Rails ActiveJob."
+}).welcomeFromParams().deliverLater();
+```
+
+RailsHx does not generate a parallel mail-delivery job runtime. The generated
+Ruby is ordinary Rails:
+
+```ruby
+Mailers::UserMailer.with(
+  email: "reader@example.test",
+  name: "Ada",
+  message: "Queued through Rails ActiveJob."
+).welcome_from_params.deliver_later
+```
+
+Typed scheduling options such as `wait`, `waitUntil`, queue override, and
+priority should be added as explicit typed follow-ups rather than passed as raw
+hashes.
 
 To scaffold this full shape in a Rails app, use the Rails-native generator:
 
@@ -248,12 +294,13 @@ adoption/interop boundaries until they have typed contracts.
 
 The supported production path today is ordinary Rails mailer delivery from a
 Haxe-authored `@:railsMailer`, typed mail kwargs, typed HHX HTML/text templates,
-and string attachments through `attachments().add(...)`.
+and typed string/hash/inline attachments through `attachments().add(...)`.
 
 Parameterized mailers are supported for typed `.with(...)` call sites and typed
 `params[:key]` reads inside Haxe-authored mailers. Haxe-authored preview classes
 are supported as generated `ActionMailer::Preview` artifacts. The
 `hxruby:mailer` generator can create the supported mailer/preview/test workflow.
-Richer attachment hashes and mailer/job integration remain deferred. Do not
-represent those as supported just because the lower-level Rails API can be
-reached with unchecked interop.
+`deliverLater()` is typed as the Rails ActiveJob enqueue seam. Unusual
+attachment shapes and richer mailer/job options remain explicit interop or
+follow-up surfaces. Do not represent those as supported just because the
+lower-level Rails API can be reached with unchecked interop.
