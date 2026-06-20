@@ -791,6 +791,14 @@
       "reason": "Typed ActionMailer layout option supporting named layouts, layout false, and explicit unchecked interop."
     },
     {
+      "id": "std.rails.action_mailer_mail_param",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/MailParam.hx",
+      "surface": "rails.action_mailer.MailParam",
+      "reason": "Typed token for Rails parameterized mailer params that lowers Base.param(token) to Rails-native params[:key] access."
+    },
+    {
       "id": "std.rails.action_mailer_mail_options",
       "owner": "std",
       "status": "implemented",
@@ -805,6 +813,14 @@
       "path": "std/rails/action_mailer/MailRenderOptions.hx",
       "surface": "rails.action_mailer.MailRenderOptions",
       "reason": "Typed render kwargs surface for ActionMailer template rendering used by mailer macros."
+    },
+    {
+      "id": "std.rails.action_mailer_message_delivery",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_mailer/MessageDelivery.hx",
+      "surface": "rails.action_mailer.MessageDelivery",
+      "reason": "Typed facade for Rails ActionMailer::MessageDelivery with deliverNow/deliverLater helpers."
     },
     {
       "id": "std.rails.mailer_macro",

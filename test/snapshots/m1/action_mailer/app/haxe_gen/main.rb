@@ -7,6 +7,7 @@ class Main
   def self.main()
     mailer__hx0 = Mailers::UserMailer.new()
     mailer__hx0.welcome("reader@example.test", "Ada", "Typed RailsHx mailers are ready.")
+    Mailers::UserMailer.with(email: "reader@example.test", name: "Ada", message: "Typed parameterized RailsHx mailers are ready.").welcome_from_params()
   end
 end
 if __FILE__ == $PROGRAM_NAME

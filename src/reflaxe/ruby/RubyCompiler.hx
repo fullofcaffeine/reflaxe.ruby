@@ -3095,6 +3095,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActionMailerCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
+			case TField(target, access) if (fieldAccessRawName(access) == "param"
+				&& params.length == 1
+				&& isActionMailerBaseType(target.t)):
+				RubyRawExpr("params[" + actionMailerParamKey(params[0]) + "]");
 			case TField(target, access)
 				if ((fieldAccessRawName(access) == "add" || fieldAccessRawName(access) == "addUnchecked")
 					&& params.length == 2
@@ -3129,6 +3133,78 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isActionMailerAttachmentsOwner(owner:String):Bool {
 		return owner == "rails.action_mailer.Attachments" || StringTools.endsWith(owner, ".Attachments_Impl_");
+	}
+
+	static function actionMailerParamKey(expr:TypedExpr):String {
+		var literal = actionMailerStaticString(expr);
+		if (literal != null) {
+			return rubySymbolLiteral(RubyNaming.toMethodName(literal));
+		}
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall(callee, params) if (params.length == 1):
+				var info = staticCallInfo(callee);
+				var value = staticString(params[0]);
+				if (info != null && info.name == "named" && isActionMailerParamOwner(info.owner) && value != null) {
+					rubySymbolLiteral(RubyNaming.toMethodName(value));
+				} else {
+					printInlineExpr(expr);
+				}
+			case TField(_, FStatic(_, fieldRef)):
+				var field = fieldRef.get();
+				var fieldExpr = field.expr();
+				fieldExpr == null ? rubySymbolLiteral(RubyNaming.toMethodName(field.name)) : actionMailerParamKey(fieldExpr);
+			case _:
+				printInlineExpr(expr);
+		}
+	}
+
+	static function actionMailerStaticString(expr:TypedExpr):Null<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)):
+				value;
+			case TBlock(exprs):
+				var locals = new Map<Int, String>();
+				for (entry in exprs) {
+					switch (unwrapTypedExpr(entry).expr) {
+						case TVar(v, init):
+							if (init != null) {
+								var value = actionMailerStaticString(init);
+								if (value != null) {
+									locals.set(v.id, value);
+								}
+							}
+						case TBinop(OpAssign, {expr: TLocal(v)}, rhs):
+							var value = actionMailerStaticString(rhs);
+							if (value != null) {
+								locals.set(v.id, value);
+							}
+						case _:
+					}
+				}
+				if (exprs.length == 0) {
+					null;
+				} else {
+					switch (unwrapTypedExpr(exprs[exprs.length - 1]).expr) {
+						case TLocal(v): locals.get(v.id);
+						case _: actionMailerStaticString(exprs[exprs.length - 1]);
+					}
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function isActionMailerParamOwner(owner:String):Bool {
+		return owner == "rails.action_mailer.MailParam" || StringTools.endsWith(owner, ".MailParam_Impl_");
+	}
+
+	static function isActionMailerBaseType(type:haxe.macro.Type):Bool {
+		return switch (TypeTools.follow(type)) {
+			case TInst(classRef, _): var classType = classRef.get(); fullTypeName(classType.pack,
+					classType.name) == "rails.action_mailer.Base" || classExtends(classType, "rails.action_mailer.Base");
+			case _:
+				false;
+		}
 	}
 
 	static function isActionCableStreamOwner(owner:String):Bool {

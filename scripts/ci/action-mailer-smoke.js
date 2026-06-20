@@ -85,11 +85,22 @@ for (const expected of [
   /render\(template: "mailers\/user_mailer\/welcome", locals: \{message: locals_message__hx\d+, name: locals_name__hx\d+, product_name: locals_product_name__hx\d+\}\)/,
   /format__hx\d+\.text\(\) \{/,
   /render\(template: "mailers\/user_mailer\/welcome.text", locals: \{message: locals_message__hx\d+, name: locals_name__hx\d+, product_name: locals_product_name__hx\d+\}\)/,
+  /def welcome_from_params\(\)/,
+  /email__hx\d+ = params\[:email\]/,
+  /name__hx\d+ = params\[:name\]/,
+  /message__hx\d+ = params\[:message\]/,
+  /subject: "Welcome to typed RailsHx parameterized mail"/,
 ]) {
   if (!expected.test(mailerRuby)) {
     console.error(`ActionMailer output missing expected line: ${expected}`);
     process.exit(1);
   }
+}
+
+const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
+if (!/Mailers::UserMailer\.with\(email: "reader@example.test", name: "Ada", message: "Typed parameterized RailsHx mailers are ready\."\)\.welcome_from_params\(\)/.test(mainRuby)) {
+  console.error("ActionMailer main output missing typed parameterized .with(...) call.");
+  process.exit(1);
 }
 
 const htmlErb = readFileSync(join(outputDir, "app", "views", "mailers", "user_mailer", "welcome.html.erb"), "utf8");
@@ -174,6 +185,22 @@ if (!/String|Cannot unify/.test(invalidAttachment.stderr + invalidAttachment.std
   process.stdout.write(invalidAttachment.stdout);
   process.stderr.write(invalidAttachment.stderr);
   console.error("Invalid ActionMailer attachment compile failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidParams = compileActionMailer(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidMailerParamsMain",
+  allowFailure: true,
+});
+if (invalidParams.status === 0) {
+  console.error("Expected invalid ActionMailer parameterized params compile to fail.");
+  process.exit(1);
+}
+if (!/WelcomeMailerParams|has no field message|requires field message|String|Cannot unify/.test(invalidParams.stderr + invalidParams.stdout)) {
+  process.stdout.write(invalidParams.stdout);
+  process.stderr.write(invalidParams.stderr);
+  console.error("Invalid ActionMailer parameterized params compile failed for an unexpected reason.");
   process.exit(1);
 }
 
@@ -287,6 +314,19 @@ function writeInvalidFixture() {
       "",
     ].join("\n"),
   );
+  writeFileSync(
+    join(invalidSourceDir, "InvalidMailerParamsMain.hx"),
+    [
+      "import mailers.UserMailer;",
+      "",
+      "class InvalidMailerParamsMain {",
+      "\tstatic function main():Void {",
+      "\t\tUserMailer.withParams({email: \"reader@example.test\", name: \"Ada\"}).welcomeFromParams();",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
 }
 
 function materializeRuntimeRailsApp() {
@@ -361,6 +401,21 @@ class UserMailerTest < ActiveSupport::TestCase
     delivered = ActionMailer::Base.deliveries.last
     assert_equal "Welcome to typed RailsHx mail", delivered.subject
     assert_equal ["reader@example.test"], delivered.to
+  end
+
+  test "builds typed parameterized mail through ActionMailer with params" do
+    mail = Mailers::UserMailer.with(
+      email: "reader@example.test",
+      name: "Ada",
+      message: "Typed RailsHx parameterized mailers are ready."
+    ).welcome_from_params
+
+    assert_equal "Welcome to typed RailsHx parameterized mail", mail.subject
+    assert_equal ["reader@example.test"], mail.to
+    assert_includes mail.html_part.body.decoded, "Hello Ada"
+    assert_includes mail.html_part.body.decoded, "Typed RailsHx parameterized mailers are ready."
+    assert_includes mail.text_part.body.decoded, "Typed RailsHx parameterized mailers are ready."
+    assert_equal "Typed RailsHx parameterized mailers are ready.", mail.attachments["welcome.txt"].body.decoded
   end
 end
 `);
