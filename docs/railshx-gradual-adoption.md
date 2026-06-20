@@ -155,6 +155,18 @@ owns the database, historical migrations, and `bin/rails db:migrate`. Ambiguous
 associations are emitted as review comments instead of guessed `belongsTo`
 metadata, and unsupported DB types fail unless `--allow-dynamic` is explicit.
 
+Historical migrations can be inventoried, but RailsHx does not translate them
+by default:
+
+```bash
+bin/rails generate hxruby:adopt --migrations --discover
+```
+
+That report classifies Rails-owned versus RailsHx-owned migration files and
+prints duplicate timestamps/classes before you generate new Haxe migration
+snapshots. Prefer schema adoption for current model contracts; keep old
+Rails migrations as history.
+
 ## Generator Design
 
 RailsHx public generators are Ruby-native because they run inside Rails projects, package with the `hxruby` gem, and should feel like normal Rails tooling. Prefer `bin/rails generate hxruby:*` inside Rails apps. This mirrors the PhoenixHx split: host-app scaffolding is implemented as Mix tasks, while Haxe project creation is a separate bootstrap path.

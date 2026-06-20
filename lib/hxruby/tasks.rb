@@ -194,6 +194,14 @@ module HXRuby
             args += ["--template", ENV["TEMPLATE"]] if ENV["TEMPLATE"]
             args += ["--extension-source", ENV["EXTENSION_SOURCE"]] if ENV["EXTENSION_SOURCE"]
             args += ["--extension-module", ENV["EXTENSION_MODULE"]] if ENV["EXTENSION_MODULE"]
+            args += ["--gem", ENV["GEM"]] if ENV["GEM"]
+            args += ["--write", ENV["WRITE"]] if ENV["WRITE"]
+            args << "--devise-hhx-views" if truthy?(ENV["DEVISE_HHX_VIEWS"])
+            args << "--schema" if truthy?(ENV["SCHEMA"])
+            args += ["--models", ENV["MODELS"]] if ENV["MODELS"]
+            args += ["--from", ENV["FROM"]] if ENV["FROM"]
+            args << "--allow-dynamic" if truthy?(ENV["ALLOW_DYNAMIC"])
+            args << "--migrations" if truthy?(ENV["MIGRATIONS"])
             args += ["--locals", ENV["LOCALS"]] if ENV["LOCALS"]
             args << "--force" if truthy?(ENV["FORCE"])
             HXRuby::Generators::Adopt.run(args)

@@ -20,6 +20,7 @@ if defined?(Rails::Generators::Base)
       class_option :models, type: :string, desc: "Schema model name(s) to generate, comma-separated"
       class_option :from, type: :string, default: "db/schema.rb", desc: "Schema file to adopt from"
       class_option :allow_dynamic, type: :boolean, default: false, desc: "Allow review-marked Dynamic fields for unsupported DB column types"
+      class_option :migrations, type: :boolean, default: false, desc: "Discover migration history and collisions without translating migrations"
       class_option :write, type: :string, desc: "Write mode for gem adoption; currently supports contracts"
       class_option :devise_hhx_views, type: :boolean, default: false, desc: "With --gem devise --write contracts, generate Devise HHX view skeletons"
       class_option :locals, type: :string, default: "", desc: "Template locals as name:Type,name:Type"
@@ -44,6 +45,7 @@ if defined?(Rails::Generators::Base)
         args += ["--models", hxruby_option(:models)] if hxruby_option(:models)
         args += ["--from", hxruby_option(:from, "db/schema.rb")] if hxruby_option(:from, "db/schema.rb") != "db/schema.rb"
         args << "--allow-dynamic" if hxruby_flag?(:allow_dynamic)
+        args << "--migrations" if hxruby_flag?(:migrations)
         args += ["--write", hxruby_option(:write)] if hxruby_option(:write)
         args << "--devise-hhx-views" if hxruby_flag?(:devise_hhx_views)
         args += ["--locals", hxruby_option(:locals, "")] unless hxruby_option(:locals, "").to_s.empty?

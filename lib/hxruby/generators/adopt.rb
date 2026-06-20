@@ -26,6 +26,7 @@ module HXRuby
           schema_models: [],
           schema_from: "db/schema.rb",
           allow_dynamic: false,
+          migrations: false,
           write: nil,
           locals: "",
           devise_hhx_views: false,
@@ -46,6 +47,7 @@ module HXRuby
           parser.on("--models LIST") { |value| options[:schema_models].concat(Common.split_csv(value)) }
           parser.on("--from PATH") { |value| options[:schema_from] = value }
           parser.on("--allow-dynamic") { options[:allow_dynamic] = true }
+          parser.on("--migrations") { options[:migrations] = true }
           parser.on("--write WHAT") { |value| options[:write] = value }
           parser.on("--locals FIELDS") { |value| options[:locals] = value }
           parser.on("--devise-hhx-views") { options[:devise_hhx_views] = true }
@@ -70,7 +72,10 @@ module HXRuby
         if options[:schema] && !options[:discover] && options[:schema_models].empty?
           raise Error, "--schema requires --discover or --models ModelName[,OtherModel]."
         end
-        if !options[:discover] && options[:services].empty? && options[:templates].empty? && options[:extension_sources].empty? && options[:gems].empty? && !options[:schema]
+        if options[:migrations] && !options[:discover]
+          raise Error, "--migrations is a discover-only adoption report; use --migrations --discover."
+        end
+        if !options[:discover] && options[:services].empty? && options[:templates].empty? && options[:extension_sources].empty? && options[:gems].empty? && !options[:schema] && !options[:migrations]
           raise Error, "Provide at least one --service, --template, or --extension-source boundary to adopt."
         end
 
@@ -91,6 +96,7 @@ module HXRuby
         @schema_models = options.fetch(:schema_models).map { |model| checked_schema_model_name(model) }
         @schema_from = options.fetch(:schema_from)
         @allow_dynamic = options.fetch(:allow_dynamic)
+        @migrations = options.fetch(:migrations)
         @write_mode = options.fetch(:write)
         @locals = parse_locals(options.fetch(:locals))
         @devise_hhx_views = options.fetch(:devise_hhx_views)
@@ -102,6 +108,7 @@ module HXRuby
         discover_boundaries if @discover
         discover_gems if @discover && @gems.any?
         discover_schema if @discover && @schema
+        discover_migrations if @discover && @migrations
         write_gem_contracts if @write_mode == "contracts"
         write_schema_models if @schema && @schema_models.any?
         @services.each { |service| write_service(service) }
@@ -184,6 +191,24 @@ module HXRuby
         end
         puts "  (no tables found)" if inventory.fetch(:tables).empty?
         puts "  next: bin/rails generate hxruby:adopt --schema --models #{inventory.fetch(:tables).map { |table| table.fetch(:model) }.join(",")}"
+      end
+
+      def discover_migrations
+        inventory = migration_inventory
+        puts "[rails:adopt:migrations] db/migrate"
+        inventory.fetch(:files).each do |migration|
+          classes = migration.fetch(:classes)
+          class_label = classes.empty? ? "unknown" : classes.join(",")
+          puts "  migration: #{migration.fetch(:timestamp) || "no_timestamp"} #{migration.fetch(:file)} class=#{class_label} owner=#{migration.fetch(:owner)}"
+        end
+        puts "  (no migrations found)" if inventory.fetch(:files).empty?
+        inventory.fetch(:timestamp_collisions).each do |timestamp, files|
+          puts "  collision: duplicate timestamp #{timestamp}: #{files.join(", ")}"
+        end
+        inventory.fetch(:class_collisions).each do |class_name, files|
+          puts "  collision: duplicate class #{class_name}: #{files.join(", ")}"
+        end
+        puts "  next: prefer --schema adoption for current model contracts; Rails-owned historical migrations are not translated."
       end
 
       def parse_locals(raw)
@@ -503,6 +528,32 @@ module HXRuby
 
       def schema_path
         @schema_path ||= checked_input_file(@schema_from, "--schema --from")
+      end
+
+      def migration_inventory
+        root = File.join(@output_dir, "db", "migrate")
+        files = Dir.exist?(root) ? Dir.glob(File.join(root, "*.rb")).sort : []
+        timestamps = Hash.new { |hash, key| hash[key] = [] }
+        classes = Hash.new { |hash, key| hash[key] = [] }
+        entries = files.map do |path|
+          relative = relative_output_path(path)
+          timestamp = File.basename(path)[/\A([0-9]{14})_/, 1]
+          body = File.read(path)
+          class_names = body.scan(/^\s*class\s+([A-Z][A-Za-z0-9_:]*)\s*</).flatten
+          timestamps[timestamp] << relative if timestamp
+          class_names.each { |class_name| classes[class_name] << relative }
+          {
+            file: relative,
+            timestamp: timestamp,
+            classes: class_names,
+            owner: Common.owned_file?(path, @output_dir) ? "railshx" : "rails",
+          }
+        end
+        {
+          files: entries,
+          timestamp_collisions: timestamps.select { |_timestamp, paths| paths.length > 1 },
+          class_collisions: classes.select { |_class_name, paths| paths.length > 1 },
+        }
       end
 
       def write_gem_contracts

@@ -7,6 +7,8 @@ const { spawnSync } = require("node:child_process");
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "migration_generator");
 const collisionDir = join(root, "test", ".generated", "migration_generator_collision");
+const timestampCollisionDir = join(root, "test", ".generated", "migration_generator_timestamp_collision");
+const classCollisionDir = join(root, "test", ".generated", "migration_generator_class_collision");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -16,6 +18,8 @@ const reflaxeCandidates = [
 
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(collisionDir, { force: true, recursive: true });
+rmSync(timestampCollisionDir, { force: true, recursive: true });
+rmSync(classCollisionDir, { force: true, recursive: true });
 
 run("ruby", [
   "-I",
@@ -183,6 +187,50 @@ if (collision.status === 0 || !collision.stderr.includes("already exists and is 
   process.stdout.write(collision.stdout);
   process.stderr.write(collision.stderr);
   console.error("Migration generator did not protect a non-owned db/migrate collision.");
+  process.exit(1);
+}
+
+run("ruby", [
+  "-e",
+  `require 'fileutils'; FileUtils.mkdir_p(${JSON.stringify(join(timestampCollisionDir, "db", "migrate"))}); File.write(${JSON.stringify(join(timestampCollisionDir, "db", "migrate", "20260101010106_existing_name.rb"))}, "class ExistingName < ActiveRecord::Migration[7.1]\\nend\\n")`,
+]);
+const timestampCollision = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "AddAgeToUsers",
+  "age:integer",
+  "--timestamp",
+  "20260101010106",
+  "--output",
+  timestampCollisionDir,
+], { allowFailure: true });
+if (timestampCollision.status === 0 || !timestampCollision.stderr.includes("Migration timestamp 20260101010106 is already used by db/migrate/20260101010106_existing_name.rb")) {
+  process.stdout.write(timestampCollision.stdout);
+  process.stderr.write(timestampCollision.stderr);
+  console.error("Migration generator did not reject an existing timestamp with a different filename.");
+  process.exit(1);
+}
+
+run("ruby", [
+  "-e",
+  `require 'fileutils'; FileUtils.mkdir_p(${JSON.stringify(join(classCollisionDir, "db", "migrate"))}); File.write(${JSON.stringify(join(classCollisionDir, "db", "migrate", "20260101010107_existing_email.rb"))}, "class AddEmailToUsers < ActiveRecord::Migration[7.1]\\nend\\n")`,
+]);
+const classCollision = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "AddEmailToUsers",
+  "email:string",
+  "--timestamp",
+  "20260101010108",
+  "--output",
+  classCollisionDir,
+], { allowFailure: true });
+if (classCollision.status === 0 || !classCollision.stderr.includes("Migration class AddEmailToUsers is already used by db/migrate/20260101010107_existing_email.rb")) {
+  process.stdout.write(classCollision.stdout);
+  process.stderr.write(classCollision.stderr);
+  console.error("Migration generator did not reject an existing migration class.");
   process.exit(1);
 }
 

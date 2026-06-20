@@ -264,10 +264,23 @@ module HXRuby
         end
 
         ruby_path = File.join(@output_dir, "db", "migrate", "#{@timestamp}_#{Common.file_name(@name)}.rb")
-        return unless File.exist?(ruby_path)
-        return if @force || Common.owned_file?(ruby_path, @output_dir)
+        if File.exist?(ruby_path) && !@force && !Common.owned_file?(ruby_path, @output_dir)
+          raise Error, "Refusing to generate migration because db/migrate/#{@timestamp}_#{Common.file_name(@name)}.rb already exists and is not RailsHx-owned."
+        end
 
-        raise Error, "Refusing to generate migration because db/migrate/#{@timestamp}_#{Common.file_name(@name)}.rb already exists and is not RailsHx-owned."
+        Dir.glob(File.join(@output_dir, "db", "migrate", "*.rb")).sort.each do |path|
+          next if File.expand_path(path) == File.expand_path(ruby_path) && (@force || Common.owned_file?(path, @output_dir))
+
+          basename = File.basename(path)
+          if basename.start_with?("#{@timestamp}_")
+            raise Error, "Migration timestamp #{@timestamp} is already used by #{Common.relative_path(@output_dir, path)}"
+          end
+
+          classes = File.read(path).scan(/^\s*class\s+([A-Z][A-Za-z0-9_:]*)\s*</).flatten
+          if classes.include?(@name)
+            raise Error, "Migration class #{@name} is already used by #{Common.relative_path(@output_dir, path)}"
+          end
+        end
       end
 
       def parse_attribute(entry)

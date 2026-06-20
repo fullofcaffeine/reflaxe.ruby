@@ -207,6 +207,7 @@ bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 bin/rails generate hxruby:adopt --schema --discover
 bin/rails generate hxruby:adopt --schema --models Todo,User
+bin/rails generate hxruby:adopt --migrations --discover
 bin/rails generate hxruby:adopt --discover
 ```
 
@@ -419,6 +420,7 @@ bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 bin/rails generate hxruby:adopt --schema --discover
 bin/rails generate hxruby:adopt --schema --models Todo,User
+bin/rails generate hxruby:adopt --migrations --discover
 rake hxruby:compile
 rake hxruby:compile:client
 rake hxruby:db:migrate

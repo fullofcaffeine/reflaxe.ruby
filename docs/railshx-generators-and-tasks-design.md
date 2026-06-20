@@ -447,6 +447,7 @@ The adoption generator should support:
 ```bash
 bin/rails generate hxruby:adopt --schema --discover
 bin/rails generate hxruby:adopt --schema --models Todo,User
+bin/rails generate hxruby:adopt --migrations --discover
 bin/rails generate hxruby:adopt --template legacy/badge --locals label:String,tone:String
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --rbs sig/legacy_price_formatter.rbs
 ```
@@ -454,6 +455,12 @@ bin/rails generate hxruby:adopt --service LegacyPriceFormatter --rbs sig/legacy_
 Unknown DB types, ambiguous associations, unsupported `structure.sql` input, and
 missing metadata should fail or produce review-marked contracts only with an
 explicit opt-in such as `--allow-dynamic`.
+
+Migration-history discovery is deliberately report-only. It should classify
+Rails-owned and RailsHx-owned files, flag duplicate timestamps/classes, and
+point users back to current-schema adoption rather than translating old
+migrations. New `hxruby:migration --timestamp ...` runs must refuse timestamps
+and classes already present under `db/migrate`.
 
 ## PhoenixHx Comparison
 
