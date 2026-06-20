@@ -8,6 +8,7 @@ import rails.action_controller.Status;
 import rails.test.Assert.*;
 import rails.test.Dsl.*;
 import rails.test.Request.*;
+import rails.test.RequestParams;
 import rails.test.RequestTestCase;
 import routes.Routes;
 
@@ -52,12 +53,10 @@ class TodosHaxeRequestTest extends RequestTestCase {
 			IntegrationHelpers.signIn(UserAuth.scope, user);
 			assertDifference(() -> Todo.count(), 1, () -> {
 				post(Routes.todosPath(), {
-					params: {
-						todo: {
-							title: "from haxe request",
-							notes: "typed request params"
-						}
-					}
+					params: RequestParams.model(Todo.railsParamKey, {
+						title: "from haxe request",
+						notes: "typed request params"
+					})
 				});
 			});
 

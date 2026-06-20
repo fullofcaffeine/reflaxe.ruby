@@ -575,6 +575,14 @@
       "reason": "Typed request helper facade for Haxe-authored Rails integration tests lowered to ordinary get/post/patch/delete ActionDispatch calls."
     },
     {
+      "id": "std.rails.test_request_params",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/RequestParams.hx",
+      "surface": "rails.test.RequestParams",
+      "reason": "Macro-backed request params helper that validates model param keys against @:railsColumn fields and lowers to Rails-native params hashes."
+    },
+    {
       "id": "std.rails.test_description",
       "owner": "std",
       "status": "implemented",

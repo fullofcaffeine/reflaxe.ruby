@@ -158,6 +158,7 @@ import rails.action_controller.Status;
 import rails.test.RequestTestCase;
 import rails.test.Assert.*;
 import rails.test.Request.*;
+import rails.test.RequestParams;
 import models.Todo;
 import models.User;
 import routes.Routes;
@@ -198,15 +199,17 @@ get(Routes.todosPath());
 assertResponse(Status.ok);
 
 post(Routes.todosPath(), {
-	params: {
-		todo: {
-			title: "from haxe request",
-			notes: "typed request params"
-		}
-	}
+	params: RequestParams.model(Todo.railsParamKey, {
+		title: "from haxe request",
+		notes: "typed request params"
+	})
 });
 assertRedirectedTo(Routes.todosPath());
 ```
+
+`RequestParams.model(Todo.railsParamKey, {...})` validates that the object keys
+are real `@:railsColumn` fields on `Todo`, then lowers to a normal Rails params
+hash with the model root and snake_case column keys.
 
 `assertDifference(() -> Todo.count(), 1, () -> { ... })` and
 `assertNoDifference(() -> Todo.count(), () -> { ... })` lower to Rails'
@@ -215,7 +218,7 @@ Haxe model/query expressions inside the measurement lambdas.
 
 Route helpers, model refs, assertions, and Devise test helper scopes remain
 typed Haxe inputs; Rails still receives normal Minitest/ActionDispatch output.
-Strongly typed request-param builders remain follow-up work under
+Richer nested/non-model request-param builders remain follow-up work under
 `haxe.ruby-skz`.
 
 Possible generated Minitest:

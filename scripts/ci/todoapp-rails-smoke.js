@@ -38,6 +38,8 @@ const typedParamsInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const typedParamsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_params_invalid_out");
 const typedParamsUnknownSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_params_unknown_src");
 const typedParamsUnknownOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_params_unknown_out");
+const typedRequestParamsUnknownSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_request_params_unknown_src");
+const typedRequestParamsUnknownOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_request_params_unknown_out");
 const migrationDuplicateTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_table_src");
 const migrationDuplicateTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_table_out");
 const migrationDuplicateFileSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_file_src");
@@ -180,6 +182,8 @@ rmSync(typedParamsInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedParamsInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedParamsUnknownSourceDir, { force: true, recursive: true });
 rmSync(typedParamsUnknownOutputDir, { force: true, recursive: true });
+rmSync(typedRequestParamsUnknownSourceDir, { force: true, recursive: true });
+rmSync(typedRequestParamsUnknownOutputDir, { force: true, recursive: true });
 rmSync(migrationDuplicateTableSourceDir, { force: true, recursive: true });
 rmSync(migrationDuplicateTableOutputDir, { force: true, recursive: true });
 rmSync(migrationDuplicateFileSourceDir, { force: true, recursive: true });
@@ -390,7 +394,7 @@ for (const expected of [
   "assert_response(:ok)",
   "assert_no_difference(-> { Models::Todo.count() }) do",
   "assert_difference(-> { Models::Todo.count() }, 1) { post(self.todos_path(), params:",
-  "post(self.todos_path(), params:",
+  'post(self.todos_path(), params: {"todo" => {title: "from haxe request", notes: "typed request params"}})',
   "assert_redirected_to(self.todos_path())",
   'assert_equal(["from haxe request"], Models::Todo.where(user_id:',
 ]) {
@@ -1210,6 +1214,7 @@ expectRawLayoutStringFailure();
 expectUnknownTypedFormFieldFailure();
 expectUnknownStrongParamsFieldFailure();
 expectMixedModelStrongParamsFailure();
+expectUnknownRequestParamsFieldFailure();
 expectMigrationDuplicateTableFailure();
 expectMigrationDuplicateFileFailure();
 expectMigrationNonModelFailure();
@@ -3307,6 +3312,82 @@ function expectUnknownStrongParamsFieldFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid unknown strong params field check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectUnknownRequestParamsFieldFailure() {
+  mkdirSync(join(typedRequestParamsUnknownSourceDir, "tests"), { recursive: true });
+  writeFileSync(join(typedRequestParamsUnknownSourceDir, "InvalidRequestParamsMain.hx"), [
+    "import tests.BadRequestParamsTest;",
+    "",
+    "class InvalidRequestParamsMain {",
+    "\tstatic function main() {",
+    "\t\tvar testClass:Class<BadRequestParamsTest> = BadRequestParamsTest;",
+    "\t\tSys.println(testClass != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(typedRequestParamsUnknownSourceDir, "tests", "BadRequestParamsTest.hx"), [
+    "package tests;",
+    "",
+    "import models.Todo;",
+    "import rails.test.RequestParams;",
+    "",
+    "class BadRequestParamsTest {",
+    "\tpublic static function build():Dynamic {",
+    "\t\treturn RequestParams.model(Todo.railsParamKey, {missing: \"nope\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${typedRequestParamsUnknownOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      join(exampleDir, "src_haxe"),
+      "-cp",
+      typedRequestParamsUnknownSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "InvalidRequestParamsMain",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      console.error("Unknown RequestParams.model field compiled successfully.");
+      process.exit(1);
+    }
+    const output = `${result.stdout}\n${result.stderr}`;
+    if (!output.includes('RequestParams.model field "missing" is not a @:railsColumn field on Todo')) {
+      console.error("Unknown RequestParams.model field failed, but not with the expected missing field error.");
+      process.stdout.write(result.stdout);
+      process.stderr.write(result.stderr);
+      process.exit(1);
+    }
+    return;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run invalid request params field check; no Reflaxe candidate found.");
     process.exit(1);
   }
 }

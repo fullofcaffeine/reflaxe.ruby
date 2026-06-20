@@ -2113,6 +2113,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (railsTestRequest != null) {
 			return railsTestRequest;
 		}
+		var railsTestRequestParams = compileRailsTestRequestParamsCall(info, params);
+		if (railsTestRequestParams != null) {
+			return railsTestRequestParams;
+		}
 		var deviseTestHelperCall = compileDeviseTestHelperCall(info, params);
 		if (deviseTestHelperCall != null) {
 			return deviseTestHelperCall;
@@ -2525,6 +2529,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					args = args.concat(renderKeywordArgs(params[1]));
 				}
 				RubyRawExpr(info.name + "(" + args.join(", ") + ")");
+			case _:
+				null;
+		}
+	}
+
+	static function compileRailsTestRequestParamsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (info.owner != "rails.test.RequestParams") {
+			return null;
+		}
+		return switch info.name {
+			case "modelRoot" if (params.length == 2):
+				var root = typedStringLiteral(params[0]);
+				var attrs = activeRecordCriteriaArg(params[1]);
+				if (root == null || attrs == null) {
+					Context.error("RequestParams.model must lower to a literal root and object-literal attrs.", params[0].pos);
+					RubyNil;
+				} else {
+					RubyRawExpr("{" + quoteRubyStringForCode(root) + " => {" + attrs + "}}");
+				}
 			case _:
 				null;
 		}
