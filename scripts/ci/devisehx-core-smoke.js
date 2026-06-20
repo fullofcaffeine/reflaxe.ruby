@@ -15,6 +15,12 @@ const invalidAuthLinksLocalDir = join(root, "test", ".generated", "devisehx_core
 const invalidAuthLinksLocalOut = join(root, "test", ".generated", "devisehx_core_invalid_auth_links_local_out");
 const invalidTestHelpersLocalDir = join(root, "test", ".generated", "devisehx_core_invalid_test_helpers_local_src");
 const invalidTestHelpersLocalOut = join(root, "test", ".generated", "devisehx_core_invalid_test_helpers_local_out");
+const invalidSanitizerStringDir = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_string_src");
+const invalidSanitizerStringOut = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_string_out");
+const invalidSanitizerDynamicDir = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_dynamic_src");
+const invalidSanitizerDynamicOut = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_dynamic_out");
+const invalidSanitizerModelDir = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_model_src");
+const invalidSanitizerModelOut = join(root, "test", ".generated", "devisehx_core_invalid_sanitizer_model_out");
 const invalidSchemaDir = join(root, "test", ".generated", "devisehx_core_invalid_schema_src");
 const invalidSchemaOut = join(root, "test", ".generated", "devisehx_core_invalid_schema_out");
 const invalidCustomModuleDir = join(root, "test", ".generated", "devisehx_core_invalid_custom_module_src");
@@ -34,6 +40,12 @@ for (const dir of [
   invalidAuthLinksLocalOut,
   invalidTestHelpersLocalDir,
   invalidTestHelpersLocalOut,
+  invalidSanitizerStringDir,
+  invalidSanitizerStringOut,
+  invalidSanitizerDynamicDir,
+  invalidSanitizerDynamicOut,
+  invalidSanitizerModelDir,
+  invalidSanitizerModelOut,
   invalidSchemaDir,
   invalidSchemaOut,
   invalidCustomModuleDir,
@@ -82,6 +94,28 @@ writePositiveSources(invalidTestHelpersLocalDir, {
   ],
 });
 expectCompileFailure(invalidTestHelpersLocalDir, invalidTestHelpersLocalOut, "DeviseHx auth helpers expect a direct generated Devise scope field");
+
+writePositiveSources(invalidSanitizerStringDir, {
+  extraMainLines: [
+    "\t\tDeviseParams.permit(UserAuth.scope, SanitizerAction.signUp, [\"email\"]);",
+  ],
+});
+expectCompileFailure(invalidSanitizerStringDir, invalidSanitizerStringOut, "String should be rails.active_record.Field<models.User, Dynamic>");
+
+writePositiveSources(invalidSanitizerDynamicDir, {
+  extraMainLines: [
+    "\t\tvar customKey = \"time_zone\";",
+    "\t\tDeviseParams.unsafePermit(UserAuth.scope, SanitizerAction.accountUpdate, [customKey]);",
+  ],
+});
+expectCompileFailure(invalidSanitizerDynamicDir, invalidSanitizerDynamicOut, "DeviseParams.unsafePermit keys must be literal strings");
+
+writePositiveSources(invalidSanitizerModelDir, {
+  extraMainLines: [
+    "\t\tDeviseParams.permit(UserAuth.scope, SanitizerAction.signUp, [Admin.f.email]);",
+  ],
+});
+expectCompileFailure(invalidSanitizerModelDir, invalidSanitizerModelOut, "models.Admin should be models.User");
 
 writePositiveSources(invalidSchemaDir, {
   omitEncryptedPassword: true,
@@ -148,11 +182,13 @@ function writePositiveSources(dir, options = {}) {
   writeFileSync(join(dir, "models", "Admin.hx"), [
     "package models;",
     "",
+    "@:railsModel(\"admins\")",
     "class Admin extends rails.active_record.Base<Admin> implements devisehx.model.DeviseResource<Admin> {",
     "\tpublic function new() {",
     "\t\tsuper();",
     "\t}",
     "",
+    "\t@:railsColumn",
     "\tpublic var email:String;",
     "}",
     "",
@@ -288,6 +324,8 @@ function writePositiveSources(dir, options = {}) {
     "import devisehx.mapping.DeviseMapping;",
     "import devisehx.model.DeviseModule.*;",
     "import devisehx.model.DeviseModuleSpec;",
+    "import devisehx.params.DeviseParams;",
+    "import devisehx.params.SanitizerAction;",
     "import devisehx.test.IntegrationHelpers;",
     "import devisehx.warden.WardenAccess;",
     "import models.Admin;",
@@ -313,6 +351,8 @@ function writePositiveSources(dir, options = {}) {
     "\t\tvar proxy = WardenAccess.unsafeWarden(controller);",
     "\t\tvar wardenUser:Null<User> = proxy.user(UserAuth.scope);",
     "\t\tvar authenticated:Bool = proxy.authenticated(UserAuth.scope);",
+    "\t\tDeviseParams.permit(UserAuth.scope, SanitizerAction.signUp, [User.f.email]);",
+    "\t\tDeviseParams.unsafePermit(UserAuth.scope, SanitizerAction.accountUpdate, [\"time_zone\"]);",
     "\t\tIntegrationHelpers.signIn(UserAuth.scope, user);",
     "\t\tIntegrationHelpers.signOut(UserAuth.scope);",
     "\t\tvar adminScope:DeviseScope<Admin> = AdminAuth.scope;",
@@ -414,6 +454,15 @@ function assertGeneratedShape(out) {
   if (!main.includes("sign_out(:user)")) {
     console.error("DeviseHx test helper output missing expected Rails helper shape: sign_out(:user)");
     process.exit(1);
+  }
+  for (const expected of [
+    "devise_parameter_sanitizer.permit(:sign_up, keys: [:email])",
+    "devise_parameter_sanitizer.permit(:account_update, keys: [:time_zone])",
+  ]) {
+    if (!main.includes(expected)) {
+      console.error(`DeviseHx sanitizer output missing expected Rails helper shape: ${expected}`);
+      process.exit(1);
+    }
   }
 }
 

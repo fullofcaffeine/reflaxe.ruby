@@ -2092,6 +2092,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (deviseTestHelperCall != null) {
 			return deviseTestHelperCall;
 		}
+		var deviseParamsCall = compileDeviseParamsCall(info, params);
+		if (deviseParamsCall != null) {
+			return deviseParamsCall;
+		}
 		var generatedDeviseHelperCall = compileGeneratedDeviseHelperCall(callee, params);
 		if (generatedDeviseHelperCall != null) {
 			return generatedDeviseHelperCall;
@@ -2299,6 +2303,138 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error('Unsupported DeviseHx test helper devisehx.test.IntegrationHelpers.${info.name}.', params.length > 0 ? params[0].pos : Context.currentPos());
 				RubyNil;
 		}
+	}
+
+	static function compileDeviseParamsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (info.owner != "devisehx.params.DeviseParams") {
+			return null;
+		}
+		return switch info.name {
+			case "permit" if (params.length == 3):
+				deviseMappingScopeFromArg(params[0]);
+				var scopeModel = deviseScopeModelNameFromType(params[0].t);
+				var action = deviseSanitizerActionFromArg(params[1]);
+				var keys = deviseSanitizerKeys(params[2], false, scopeModel);
+				RubyRawExpr("devise_parameter_sanitizer.permit(" + rubySymbolLiteral(action) + ", keys: [" + [for (key in keys) rubySymbolLiteral(key)].join(", ")
+					+ "])");
+			case "unsafePermit" if (params.length == 3):
+				deviseMappingScopeFromArg(params[0]);
+				var action = deviseSanitizerActionFromArg(params[1]);
+				var keys = deviseSanitizerKeys(params[2], true, null);
+				RubyRawExpr("devise_parameter_sanitizer.permit(" + rubySymbolLiteral(action) + ", keys: [" + [for (key in keys) rubySymbolLiteral(key)].join(", ")
+					+ "])");
+			case _:
+				Context.error('Unsupported DeviseHx params helper devisehx.params.DeviseParams.${info.name}.', params.length > 0 ? params[0].pos : Context.currentPos());
+				RubyNil;
+		}
+	}
+
+	static function deviseSanitizerActionFromArg(expr:TypedExpr):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, access):
+				var action = fieldAccessDeviseSanitizerAction(access);
+				if (action == null) {
+					Context.error("DeviseParams.permit expects a typed SanitizerAction such as SanitizerAction.signUp.", expr.pos);
+					"sign_up";
+				} else {
+					validateDeviseMappingScope(action, expr.pos);
+					action;
+				}
+			case _:
+				Context.error("DeviseParams.permit expects a typed SanitizerAction such as SanitizerAction.signUp.", expr.pos);
+				"sign_up";
+		}
+	}
+
+	static function deviseSanitizerKeys(expr:TypedExpr, allowStrings:Bool, expectedModel:Null<String>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				[for (value in values) deviseSanitizerKey(value, allowStrings, expectedModel)];
+			case _:
+				Context.error("DeviseParams.permit keys must be an array literal of generated model field refs.", expr.pos);
+				[];
+		}
+	}
+
+	static function deviseSanitizerKey(expr:TypedExpr, allowStrings:Bool, expectedModel:Null<String>):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, access):
+				var name = fieldAccessRailsFieldName(access);
+				if (name == null) {
+					Context.error("DeviseParams.permit keys must use generated RailsHx model field refs such as User.f.name.", expr.pos);
+					"";
+				} else {
+					var fieldModel = activeRecordFieldModelNameFromType(expr.t);
+					if (expectedModel != null && fieldModel != null && !sameHaxeModelName(expectedModel, fieldModel)) {
+						Context.error("DeviseParams.permit field refs must belong to the same model as the generated Devise scope.", expr.pos);
+					}
+					RubyNaming.toMethodName(name);
+				}
+			case TConst(TString(value)) if (allowStrings):
+				RubyNaming.toMethodName(value);
+			case TConst(TString(_)):
+				Context.error("DeviseParams.permit keys must use generated RailsHx model field refs; use unsafePermit(...) for reviewed custom string keys.", expr.pos);
+				"";
+			case _:
+				Context.error(allowStrings
+					? "DeviseParams.unsafePermit keys must be literal strings."
+					: "DeviseParams.permit keys must use generated RailsHx model field refs such as User.f.name.",
+					expr.pos);
+				"";
+		}
+	}
+
+	static function fieldAccessDeviseSanitizerAction(access:haxe.macro.Type.FieldAccess):Null<String> {
+		var meta = switch (access) {
+			case FInstance(_, _, field) | FStatic(_, field): field.get().meta;
+			case FAnon(fieldRef) | FClosure(_, fieldRef): fieldRef.get().meta;
+			case FEnum(_, field): field.meta;
+			case FDynamic(_): null;
+		}
+		return metaStringParam(meta, ":deviseHxSanitizerAction", 0);
+	}
+
+	static function deviseScopeModelNameFromType(type:haxe.macro.Type):Null<String> {
+		return switch (TypeTools.follow(type)) {
+			case TInst(ref, params):
+				var classType = ref.get();
+				if (fullTypeName(classType.pack, classType.name) == "devisehx.DeviseScope" && params.length > 0) {
+					haxeModelNameFromType(params[0]);
+				} else {
+					null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function activeRecordFieldModelNameFromType(type:haxe.macro.Type):Null<String> {
+		return switch (TypeTools.follow(type)) {
+			case TAbstract(ref, params):
+				var abstractType = ref.get();
+				var name = fullTypeName(abstractType.pack, abstractType.name);
+				if ((name == "rails.active_record.Field" || name == "rails.active_record.NullableField") && params.length > 0) {
+					haxeModelNameFromType(params[0]);
+				} else {
+					null;
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function haxeModelNameFromType(type:haxe.macro.Type):Null<String> {
+		return switch (TypeTools.follow(type)) {
+			case TInst(ref, _):
+				var classType = ref.get();
+				fullTypeName(classType.pack, classType.name);
+			case _:
+				null;
+		}
+	}
+
+	static function sameHaxeModelName(left:String, right:String):Bool {
+		return left == right || left.split(".").pop() == right.split(".").pop();
 	}
 
 	static function compileRailsTestAssertionCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {

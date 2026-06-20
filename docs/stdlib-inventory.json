@@ -263,6 +263,22 @@
       "reason": "Typed marker for models that participate in Devise authentication."
     },
     {
+      "id": "std.devisehx.params",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/params/DeviseParams.hx",
+      "surface": "devisehx.params.DeviseParams",
+      "reason": "Typed Devise parameter sanitizer facade that validates generated model field refs before lowering to devise_parameter_sanitizer.permit."
+    },
+    {
+      "id": "std.devisehx.sanitizer_action",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/params/SanitizerAction.hx",
+      "surface": "devisehx.params.SanitizerAction",
+      "reason": "Typed Devise sanitizer action tokens such as signUp/accountUpdate, avoiding repeated Ruby symbol strings in Haxe app code."
+    },
+    {
       "id": "std.devisehx.route_group",
       "owner": "std",
       "status": "implemented",

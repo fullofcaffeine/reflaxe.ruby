@@ -82,6 +82,8 @@ for (const required of [
   "std/devisehx/model/DeviseModule.hx",
   "std/devisehx/model/DeviseModuleSpec.hx",
   "std/devisehx/model/DeviseResource.hx",
+  "std/devisehx/params/DeviseParams.hx",
+  "std/devisehx/params/SanitizerAction.hx",
   "std/devisehx/routes/DeviseRouteGroup.hx",
   "std/devisehx/routes/DeviseRoutes.hx",
   "std/devisehx/test/IntegrationHelpers.hx",

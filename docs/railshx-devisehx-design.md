@@ -233,6 +233,37 @@ refs like `DeviseFormFields.passwordConfirmation`; the compiler emits Rails'
 ordinary snake_case keys such as `:password_confirmation`. This keeps the
 generated ERB familiar while preventing repeated unchecked strings in HHX.
 
+Devise parameter sanitizer customization should use typed model field refs by
+default:
+
+```haxe
+import app.auth.UserAuth;
+import devisehx.params.DeviseParams;
+import devisehx.params.SanitizerAction;
+import models.User;
+
+DeviseParams.permit(UserAuth.scope, SanitizerAction.signUp, [User.f.name, User.f.timeZone]);
+DeviseParams.permit(UserAuth.scope, SanitizerAction.accountUpdate, [User.f.name, User.f.timeZone]);
+```
+
+The compiler validates that `User.f.*` belongs to the same model as
+`UserAuth.scope`, then emits ordinary Devise Ruby:
+
+```ruby
+devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :time_zone])
+```
+
+When an app has a reviewed custom key that is not represented by model metadata
+yet, use the noisy escape hatch:
+
+```haxe
+DeviseParams.unsafePermit(UserAuth.scope, SanitizerAction.accountUpdate, ["time_zone"]);
+```
+
+`unsafePermit(...)` accepts literal strings only. Dynamic key arrays and normal
+`permit(...)` string keys fail during Haxe compilation, keeping custom sanitizer
+holes searchable and auditable.
+
 Generated Ruby should remain familiar:
 
 ```ruby
