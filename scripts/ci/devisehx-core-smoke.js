@@ -157,6 +157,7 @@ function writePositiveSources(dir, options = {}) {
   mkdirSync(join(dir, "models"), { recursive: true });
   mkdirSync(join(dir, "app", "auth"), { recursive: true });
   mkdirSync(join(dir, "mailers"), { recursive: true });
+  mkdirSync(join(dir, "test_haxe"), { recursive: true });
   mkdirSync(join(dir, "views"), { recursive: true });
 
   writeFileSync(join(dir, "models", "User.hx"), [
@@ -365,6 +366,34 @@ function writePositiveSources(dir, options = {}) {
     "",
   ].join("\n"));
 
+  writeFileSync(join(dir, "test_haxe", "AuthRequestTest.hx"), [
+    "package test_haxe;",
+    "",
+    "import app.auth.UserAuth;",
+    "import devisehx.test.IntegrationHelpers;",
+    "import models.User;",
+    "import rails.test.Assert.*;",
+    "import rails.test.Dsl.*;",
+    "import rails.test.RequestTestCase;",
+    "",
+    "// DeviseHx Rails test fixture: RequestTestCase selects the Rails",
+    "// ActionDispatch::IntegrationTest superclass, while typed scope helpers",
+    "// lower to ordinary Devise::Test::IntegrationHelpers calls.",
+    "@:railsTest(\"controllers/devise_auth_haxe_test\")",
+    "class AuthRequestTest extends RequestTestCase {",
+    "\t@:railsTests",
+    "\tstatic function define():Void {",
+    "\t\ttest(\"typed devise helpers lower to Rails integration helpers\", () -> {",
+    "\t\t\tvar user = new User();",
+    "\t\t\tIntegrationHelpers.signIn(UserAuth.scope, user);",
+    "\t\t\tIntegrationHelpers.signOut(UserAuth.scope);",
+    "\t\t\ttruthy(user != null);",
+    "\t\t});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
   writeFileSync(join(dir, "Main.hx"), [
     "import app.auth.AdminAuth;",
     "import app.auth.UserAuth;",
@@ -383,6 +412,7 @@ function writePositiveSources(dir, options = {}) {
     "import models.User;",
     "import rails.action_controller.Base;",
     "import rails.action_view.HtmlNode;",
+    "import test_haxe.AuthRequestTest;",
     "import views.AuthLinksView;",
     "",
     "class Main {",
@@ -409,7 +439,8 @@ function writePositiveSources(dir, options = {}) {
     "\t\tIntegrationHelpers.signOut(UserAuth.scope);",
     "\t\tvar adminScope:DeviseScope<Admin> = AdminAuth.scope;",
     "\t\tvar mapping:DeviseMapping<User> = null;",
-    "\t\tSys.println(filter != null || maybeUser != null || requiredUser != null || signedIn || authLinks != null || deviseMailer != null || specs.length > 0 || wardenUser != null || authenticated || adminScope != null || mapping != null);",
+    "\t\tvar requestTestClass:Class<AuthRequestTest> = AuthRequestTest;",
+    "\t\tSys.println(filter != null || maybeUser != null || requiredUser != null || signedIn || authLinks != null || deviseMailer != null || specs.length > 0 || wardenUser != null || authenticated || adminScope != null || mapping != null || requestTestClass != null);",
     "\t\tvar modelClass:Class<User> = User;",
     "\t\tSys.println(modelClass != null);",
     ...(options.extraMainLines ?? []),
@@ -470,6 +501,7 @@ function assertGeneratedShape(out) {
     "app/haxe_gen/models/user.rb",
     "app/haxe_gen/mailers/user_devise_mailer.rb",
     "app/views/auth_links/show.html.erb",
+    "test/generated/controllers/devise_auth_haxe_test.rb",
   ]) {
     if (!existsSync(join(out, file))) {
       console.error(`Expected DeviseHx generated Ruby file missing: ${file}`);
@@ -477,6 +509,7 @@ function assertGeneratedShape(out) {
     }
   }
   const authLinks = readFileSync(join(out, "app/views/auth_links/show.html.erb"), "utf8");
+  const authRequestTest = readFileSync(join(out, "test/generated/controllers/devise_auth_haxe_test.rb"), "utf8");
   const main = readFileSync(join(out, "app/haxe_gen/main.rb"), "utf8");
   for (const expected of [
     "new_user_session_path()",
@@ -506,6 +539,21 @@ function assertGeneratedShape(out) {
   }
   if (!main.includes("sign_out(:user)")) {
     console.error("DeviseHx test helper output missing expected Rails helper shape: sign_out(:user)");
+    process.exit(1);
+  }
+  for (const expected of [
+    "class AuthRequestTest < ActionDispatch::IntegrationTest",
+    "include Devise::Test::IntegrationHelpers",
+    "test \"typed devise helpers lower to Rails integration helpers\" do",
+    "sign_out(:user)",
+  ]) {
+    if (!authRequestTest.includes(expected)) {
+      console.error(`DeviseHx generated Rails request test missing expected shape: ${expected}`);
+      process.exit(1);
+    }
+  }
+  if (!/sign_in\(:user,\s*user__hx\d+\)/.test(authRequestTest)) {
+    console.error("DeviseHx generated Rails request test missing expected shape: sign_in(:user, user)");
     process.exit(1);
   }
   for (const expected of [

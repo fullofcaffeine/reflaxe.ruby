@@ -559,6 +559,14 @@
       "reason": "Typed marker base class for Haxe-authored ActiveSupport::TestCase model tests emitted as Rails test artifacts."
     },
     {
+      "id": "std.rails.test_request_test_case",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/RequestTestCase.hx",
+      "surface": "rails.test.RequestTestCase",
+      "reason": "Typed marker base class for Haxe-authored ActionDispatch::IntegrationTest request tests emitted as Rails test artifacts."
+    },
+    {
       "id": "std.rails.test_description",
       "owner": "std",
       "status": "implemented",

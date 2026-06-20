@@ -154,15 +154,30 @@ test setup scoped and typed while still emitting ordinary Devise test helpers:
 ```haxe
 import app.auth.UserAuth;
 import devisehx.test.IntegrationHelpers;
+import models.User;
+import rails.test.Dsl.*;
+import rails.test.RequestTestCase;
 
-IntegrationHelpers.signIn(UserAuth.scope, user);
-IntegrationHelpers.signOut(UserAuth.scope);
+@:railsTest("controllers/devise_auth_test")
+class DeviseAuthTest extends RequestTestCase {
+	@:railsTests
+	static function define():Void {
+		test("signed-in users can reach the dashboard", () -> {
+			var user = new User();
+			IntegrationHelpers.signIn(UserAuth.scope, user);
+			IntegrationHelpers.signOut(UserAuth.scope);
+		});
+	}
+}
 ```
 
 The scope argument must be a direct generated field such as `UserAuth.scope`.
 This lets the compiler read the app-local Devise metadata and lower the calls to
 Rails-native `sign_in(:user, user)` / `sign_out(:user)` without evaluating
-runtime Haxe values or accepting loose strings.
+runtime Haxe values or accepting loose strings. Extending
+`rails.test.RequestTestCase` emits an ordinary `ActionDispatch::IntegrationTest`
+artifact and adds `include Devise::Test::IntegrationHelpers` only when the
+generated test body uses Devise's test helper calls.
 
 HHX templates should use the typed `devisehx.hhx.AuthLinks` facade for Devise
 session paths instead of spelling route helper names or strings by hand:
