@@ -38,7 +38,7 @@ bin/rails generate some_gem:install
 bin/rails generate hxruby:adopt --gem some_gem --discover
 bin/rails generate hxruby:adopt --gem some_gem --write contracts
 bundle exec rake hxruby:compile
-bin/rails test
+bundle exec rake hxruby:test
 ```
 
 The `--gem` lane fails closed when the app `Gemfile` is missing, the gem is not
@@ -66,7 +66,7 @@ bin/rails generate hxruby:adopt --gem devise --write contracts
 # Ask an LLM to draft patches using tmp/devisehx-prompt.md, the deterministic
 # inventory, the gem docs/source, and the RailsHx companion-layer templates.
 bundle exec rake hxruby:compile
-bin/rails test
+bundle exec rake hxruby:test
 ```
 
 LLM-generated code must be treated as a reviewable patch. It must compile, avoid
@@ -98,7 +98,7 @@ haxelib install devisehx
 bin/rails generate hxruby:adopt --gem devise --write contracts
 bundle exec rake hxruby:routes
 bundle exec rake hxruby:compile
-bin/rails test
+bundle exec rake hxruby:test
 ```
 
 The reusable DeviseHx companion package is hardening incrementally, and the

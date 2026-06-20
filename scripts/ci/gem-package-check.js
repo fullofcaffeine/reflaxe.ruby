@@ -79,7 +79,7 @@ try {
   const tasksCheck = [
     "require 'rake'",
     "require 'hxruby/tasks'",
-    "expected = %w[hxruby:compile hxruby:compile:client hxruby:start hxruby:start:watch hxruby:routes hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+    "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
     "names = Rake::Task.tasks.map(&:name)",
     "missing = expected - names",
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
@@ -118,7 +118,7 @@ try {
       "require 'rubygems'",
       `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
       "require 'hxruby/tasks'",
-      "expected = %w[hxruby:compile hxruby:compile:client hxruby:start hxruby:start:watch hxruby:routes hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+      "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
       "names = Rake::Task.tasks.map(&:name)",
       "missing = expected - names",
       "abort \"installed gem missing tasks: #{missing.join(', ')}\" unless missing.empty?",

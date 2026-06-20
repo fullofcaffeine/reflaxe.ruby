@@ -135,8 +135,8 @@ For a generated or adopted Rails app, also run:
 ```bash
 bundle exec rake hxruby:compile
 bundle exec rake hxruby:compile:client
-bundle exec rails db:migrate
-bundle exec rails test
+bundle exec rake hxruby:db:migrate
+bundle exec rake hxruby:test
 bundle exec rails zeitwerk:check
 RAILS_ENV=production bundle exec rake hxruby:production
 ```

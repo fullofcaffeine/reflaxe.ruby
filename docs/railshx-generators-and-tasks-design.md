@@ -25,14 +25,18 @@ bundle exec rake 'hxruby:start[watch]'
 ```
 
 After the starter, RailsHx generators should continue to compose with normal
-Rails tasks:
+Rails tasks through compile-then-delegate Rake wrappers:
 
 ```bash
 bin/rails generate hxruby:model Todo title:string completed:boolean
-bundle exec rake hxruby:compile
-bin/rails db:migrate
-bin/rails test
+bundle exec rake hxruby:db:migrate
+bundle exec rake hxruby:test
 ```
+
+Raw `bin/rails db:migrate` and `bin/rails test` remain valid when generated
+artifacts are already current. The `hxruby:*` wrappers are the recommended
+RailsHx path because they compile Haxe-owned Ruby, ERB, migrations, routes, and
+client artifacts before Rails consumes them.
 
 Existing Rails apps should adopt incrementally:
 
@@ -42,7 +46,7 @@ bin/rails generate hxruby:adopt --schema --discover
 bin/rails generate hxruby:adopt --schema --models Todo,User
 bin/rails generate hxruby:routes
 bundle exec rake hxruby:compile
-bin/rails test
+bundle exec rake hxruby:test
 ```
 
 Production and CI should compose RailsHx compilation before Rails-owned checks:
@@ -50,15 +54,16 @@ Production and CI should compose RailsHx compilation before Rails-owned checks:
 ```bash
 bundle exec rake hxruby:compile
 bundle exec rake hxruby:compile:client
-bin/rails db:migrate
-bin/rails test
+bundle exec rake hxruby:db:migrate
+bundle exec rake hxruby:test
 bin/rails zeitwerk:check
 RAILS_ENV=production bundle exec rake hxruby:production
 ```
 
-Do not add a canonical `hxruby:migrate` task. That name suggests RailsHx owns
-database execution. Rails owns migration execution; RailsHx emits normal
-timestamped ActiveRecord migration files that Rails runs.
+Do not override raw Rails tasks or add ambiguous names such as `hxruby:migrate`.
+Rails owns migration execution; RailsHx emits normal timestamped ActiveRecord
+migration files that Rails runs. RailsHx-prefixed task names should be explicit
+composition helpers: compile artifacts first, then delegate to Rails.
 
 ## Ownership Model
 
@@ -183,6 +188,10 @@ bundle exec rake hxruby:start         # compile server/client, then run Rails
 bundle exec rake hxruby:start:watch   # compile once, then run Rails + watchers
 bundle exec rake hxruby:compile       # lower-level server compile
 bundle exec rake hxruby:compile:client
+bundle exec rake hxruby:db:migrate    # compile server/migrations, then rails db:migrate
+bundle exec rake hxruby:db:prepare    # compile server/migrations, then rails db:prepare
+bundle exec rake hxruby:test          # compile server/client, then rails test
+bundle exec rake hxruby:rails TASK=zeitwerk:check
 bundle exec rake hxruby:gen:routes    # regenerate typed Routes.hx from Rails
 bundle exec rake hxruby:production    # compile, zeitwerk:check, assets
 ```
@@ -382,6 +391,14 @@ Keep RailsHx tasks as composition and validation helpers:
 - `hxruby:start:watch`: compile once, then run Rails, the server Haxe watcher,
   and the client Haxe watcher together.
 - `hxruby:watch` and `hxruby:watch:client`: developer loops.
+- `hxruby:db:migrate`, `hxruby:db:prepare`, and `hxruby:db:rollback`: compile
+  RailsHx server/migration artifacts, then delegate to the corresponding Rails
+  database task. Rails still performs the database operation.
+- `hxruby:test`: compile RailsHx server/client artifacts, then delegate to
+  `rails test`.
+- `hxruby:rails TASK=... ARGS='...'`: generic compile-then-delegate escape for
+  Rails tasks not covered by a named helper. Set `CLIENT=1` when the task also
+  needs freshly compiled Haxe-authored JavaScript.
 - `hxruby:routes`: route extern regeneration and route parity. Use
   `MODE=rails-owned` for adoption apps where `config/routes.rb` is the source of
   truth, `MODE=haxe-owned` to compile Haxe-owned `@:railsRoutes` first and then
@@ -397,7 +414,8 @@ Keep RailsHx tasks as composition and validation helpers:
   production checks and asset compilation.
 
 Avoid task names that imply RailsHx owns Rails runtime behavior, especially
-database migration execution.
+database migration execution. The pattern is always: compile generated artifacts
+first, then run ordinary Rails.
 
 ## Adoption Direction
 

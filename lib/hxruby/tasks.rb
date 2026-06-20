@@ -48,6 +48,41 @@ module HXRuby
           end
         end
 
+        desc "Compile RailsHx server artifacts, then run a Rails task. Use TASK=db:migrate ARGS='...'"
+        task :rails do
+          task_name = ENV["TASK"] || abort("TASK is required, for example: bundle exec rake hxruby:rails TASK=db:migrate")
+          compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+          compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml")) if truthy?(ENV["CLIENT"])
+          rails([task_name, *Shellwords.split(ENV.fetch("ARGS", ""))])
+        end
+
+        namespace :db do
+          desc "Compile RailsHx migration artifacts, then run Rails db:migrate"
+          task :migrate do
+            compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+            rails(["db:migrate"])
+          end
+
+          desc "Compile RailsHx migration artifacts, then run Rails db:prepare"
+          task :prepare do
+            compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+            rails(["db:prepare"])
+          end
+
+          desc "Compile RailsHx migration artifacts, then run Rails db:rollback"
+          task :rollback do
+            compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+            rails(["db:rollback", *Shellwords.split(ENV.fetch("ARGS", ""))])
+          end
+        end
+
+        desc "Compile RailsHx server/client artifacts, then run Rails tests"
+        task :test do
+          compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
+          compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
+          rails(["test", *Shellwords.split(ENV.fetch("ARGS", ""))])
+        end
+
         desc "Compile RailsHx server/client artifacts and start Rails. Use WATCH=1 for server + watchers"
         task :start, [:mode] do |_task, args|
           if truthy?(ENV["WATCH"]) || args[:mode] == "watch"

@@ -224,6 +224,21 @@ bundle exec rake 'hxruby:start[watch]'
 
 Generated apps also include `bin/railshx-dev`, which starts Rails, the server Haxe watcher, and the client Haxe watcher through `foreman` or `overmind` when either tool is installed. Without those tools it falls back to `bundle exec rake hxruby:start:watch`. If you need the lower-level pieces for CI debugging, use `bundle exec rake hxruby:compile`, `bundle exec rake hxruby:compile:client`, `bundle exec rake hxruby:watch`, and `bundle exec rake hxruby:watch:client` directly.
 
+For Rails tasks that consume generated artifacts, use the RailsHx-prefixed
+compile-then-delegate tasks:
+
+```bash
+bundle exec rake hxruby:db:migrate   # compile Haxe migrations, then rails db:migrate
+bundle exec rake hxruby:db:prepare   # compile Haxe artifacts, then rails db:prepare
+bundle exec rake hxruby:test         # compile server/client artifacts, then rails test
+bundle exec rake hxruby:rails TASK=zeitwerk:check
+```
+
+Raw `bin/rails db:migrate`, `bin/rails test`, and other Rails tasks still work
+when artifacts are already current. The `hxruby:*` variants are the safer daily
+path because they refresh generated Ruby, ERB, migrations, route files, and
+client JS before Rails consumes them.
+
 For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, generated `db/migrate/**` files, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
 
 ```bash
@@ -387,9 +402,14 @@ bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 rake hxruby:compile
 rake hxruby:compile:client
+rake hxruby:db:migrate
+rake hxruby:db:prepare
+rake hxruby:db:rollback
 rake hxruby:start
 rake hxruby:start:watch
 rake hxruby:routes
+rake hxruby:test
+rake hxruby:rails TASK=zeitwerk:check
 rake hxruby:production
 rake hxruby:watch
 rake hxruby:watch:client

@@ -111,6 +111,7 @@ try {
     "RailsHx Gem Layers",
     "Run a deterministic inventory before asking an LLM for help.",
     "bundle add devise",
+    "bundle exec rake hxruby:test",
     "bin/rails generate hxruby:adopt --gem devise --discover",
     "bin/rails generate hxruby:adopt --gem devise --write contracts",
     "railshx-devisehx-gpt55-prompt.md",
@@ -119,6 +120,12 @@ try {
   ]);
   expectFile("lib/tasks/hxruby.rake", [
     'require "hxruby/tasks"',
+  ]);
+  expectFile("AGENTS.md", [
+    "hxruby:db:migrate",
+    "hxruby:db:prepare",
+    "hxruby:test",
+    "hxruby:rails TASK=zeitwerk:check",
   ]);
   expectFile("Procfile.railshx.dev", [
     "rails: bundle exec rails server",

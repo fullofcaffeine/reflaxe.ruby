@@ -39,8 +39,9 @@ Official Rails behavior remains the output contract. RailsHx should follow Rails
 Rails runtime tasks remain Rails-owned. RailsHx generators should create or adopt
 typed Haxe source and checked contracts, then the compiler emits normal
 Rails-shaped artifacts. The public workflow is `bin/rails generate hxruby:*`,
-`bundle exec rake hxruby:compile`, then Rails-owned commands such as
-`bin/rails db:migrate`, `bin/rails test`, `bin/rails zeitwerk:check`, and
+RailsHx compile-then-delegate tasks such as `bundle exec rake hxruby:db:migrate`
+and `bundle exec rake hxruby:test`, then Rails-owned checks such as
+`bin/rails zeitwerk:check` and
 `assets:precompile`. See [RailsHx Generators And Rails Tasks Design](railshx-generators-and-tasks-design.md).
 
 ## Typed DSL Rule

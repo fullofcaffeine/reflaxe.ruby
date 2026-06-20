@@ -111,6 +111,23 @@ The watcher recompiles Haxe/HHX and Haxe-authored JavaScript, then refreshes the
 generated Rails app. Rails keeps serving normal Rails files, so most controller
 and template changes need only a browser refresh.
 
+When a Rails task consumes generated artifacts, prefer the RailsHx-prefixed
+compile-then-delegate wrappers:
+
+```bash
+bundle exec rake hxruby:db:migrate
+bundle exec rake hxruby:db:prepare
+bundle exec rake hxruby:test
+bundle exec rake hxruby:rails TASK=zeitwerk:check
+```
+
+These tasks compile Haxe-owned Ruby, HHX/ERB, migrations, routes, and client JS
+where needed before handing control back to ordinary Rails. Raw `bin/rails`
+commands are still valid when generated artifacts are already current; the
+wrappers are the safer daily workflow. `hxruby:start:watch` keeps target
+artifacts current while you edit, so a separate manual compile is usually not
+needed during the dev loop.
+
 ## Edit The Skeleton
 
 A generated RailsHx skeleton starts with a small set of source files. The names
@@ -418,4 +435,3 @@ assets, tests, and deployment packaging run.
 
 The production rule is simple: Rails runs the app; Haxe makes the app safer to
 author.
-
