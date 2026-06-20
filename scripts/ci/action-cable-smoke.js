@@ -53,6 +53,7 @@ if (!reflaxeSrc) {
 compileActionCable(outputDir);
 
 for (const file of [
+  "app/haxe_gen/channels/application_cable_connection.rb",
   "app/haxe_gen/channels/todos_channel.rb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
@@ -61,6 +62,22 @@ for (const file of [
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     fail(`Expected ActionCable output file missing: ${fullPath}`);
+  }
+}
+
+const connectionRuby = readFileSync(join(outputDir, "app", "haxe_gen", "channels", "application_cable_connection.rb"), "utf8");
+for (const expected of [
+  /require "action_cable\/engine"/,
+  /module Channels/,
+  /class ApplicationCableConnection < ActionCable::Connection::Base/,
+  /identified_by :current_user/,
+  /def connect\(\)/,
+  /request\.params\["token"\]/,
+  /self\.reject_unauthorized_connection\(\)/,
+  /self\.current_user = \{"id" => 42\}/,
+]) {
+  if (!expected.test(connectionRuby)) {
+    fail(`ActionCable connection output missing expected line: ${expected}`);
   }
 }
 
@@ -74,6 +91,7 @@ for (const expected of [
   /if \(list_id__hx\d+ == "reject"\)/,
   /self\.reject\(\)/,
   /self\.stream_from/,
+  /current_user/,
   /def unsubscribed\(\)/,
   /self\.stop_all_streams\(\)/,
   /def ping\(\)/,
@@ -92,7 +110,7 @@ if (!/Channels::TodosChannel\.announce\("open", "Typed cable payload"\)/.test(ma
   fail("ActionCable main output missing typed broadcast call.");
 }
 
-for (const file of ["app/haxe_gen/channels/todos_channel.rb", "app/haxe_gen/main.rb", "run.rb"]) {
+for (const file of ["app/haxe_gen/channels/application_cable_connection.rb", "app/haxe_gen/channels/todos_channel.rb", "app/haxe_gen/main.rb", "run.rb"]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
@@ -177,6 +195,20 @@ if (!/String should be rails\.action_cable\.Stream|Stream|Cannot unify/.test(inv
   fail("Raw string ActionCable stream failed for an unexpected reason.");
 }
 
+const invalidRawIdentifier = compileActionCable(invalidRawStringOutputDir, {
+  classPath: invalidRawStringSourceDir,
+  main: "InvalidRawIdentifierMain",
+  allowFailure: true,
+});
+if (invalidRawIdentifier.status === 0) {
+  fail("Expected raw string ActionCable connection identifier compile to fail.");
+}
+if (!/String should be rails\.action_cable\.ConnectionIdentifier|ConnectionIdentifier|Cannot unify/.test(invalidRawIdentifier.stderr + invalidRawIdentifier.stdout)) {
+  process.stdout.write(invalidRawIdentifier.stdout);
+  process.stderr.write(invalidRawIdentifier.stderr);
+  fail("Raw string ActionCable connection identifier failed for an unexpected reason.");
+}
+
 const invalidConsumer = compileClient({
   classPath: invalidConsumerSourceDir,
   main: "InvalidConsumerMain",
@@ -222,9 +254,11 @@ if (!/has no field title|title|Cannot unify/.test(invalidPerformPayload.stderr +
 stage("runtime materialization", materializeRuntimeRailsApp);
 stage("runtime ruby syntax", () => syntaxCheck([
   "app/haxe_gen/channels/todos_channel.rb",
+  "app/haxe_gen/channels/application_cable_connection.rb",
   "config/application.rb",
   "config/environment.rb",
   "test/channels/todos_channel_test.rb",
+  "test/channels/application_cable_connection_test.rb",
 ]));
 
 const bundleProbe = stage("runtime bundle probe", () => run("bundle", ["check"], {
@@ -386,6 +420,19 @@ function writeInvalidRawStringFixtures() {
     "}",
     "",
   ].join("\n"));
+  writeFileSync(join(invalidRawStringSourceDir, "InvalidRawIdentifierMain.hx"), [
+    "import rails.action_cable.Connection;",
+    "import rails.macros.CableConnectionDsl.*;",
+    "@:railsCableConnection",
+    "class RawIdentifierConnection extends Connection {",
+    "\tstatic final identifiers = {",
+    "\t\tidentifiedBy(\"currentUser\");",
+    "\t};",
+    "\tpublic function connect():Void {}",
+    "}",
+    "class InvalidRawIdentifierMain { static function main():Void {} }",
+    "",
+  ].join("\n"));
 }
 
 function writeInvalidConsumerFixtures() {
@@ -458,9 +505,32 @@ Rails.application.initialize!
 require_relative "../config/environment"
 require "rails/test_help"
 require "action_cable/channel/test_case"
+require "action_cable/connection/test_case"
+`);
+
+  writeFile("test/channels/application_cable_connection_test.rb", `require "test_helper"
+require Rails.root.join("app/haxe_gen/channels/application_cable_connection")
+
+class ApplicationCableConnectionTest < ActionCable::Connection::TestCase
+  tests Channels::ApplicationCableConnection
+
+  test "accepts a typed connection and assigns the typed identifier" do
+    connect params: { token: "ok" }
+
+    assert_equal({"id" => 42}, connection.current_user)
+    assert_includes connection.identifiers, :current_user
+  end
+
+  test "rejects unauthorized typed connections" do
+    assert_reject_connection do
+      connect params: { token: "reject" }
+    end
+  end
+end
 `);
 
   writeFile("test/channels/todos_channel_test.rb", `require "test_helper"
+require Rails.root.join("app/haxe_gen/channels/application_cable_connection")
 require Rails.root.join("app/haxe_gen/channels/todos_channel")
 
 class TodosChannelTest < ActionCable::Channel::TestCase

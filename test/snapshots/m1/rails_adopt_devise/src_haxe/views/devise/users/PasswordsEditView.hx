@@ -15,6 +15,7 @@ typedef PasswordsEditLocals = {
 // The typed `locals.resource.resetPasswordToken` value comes from the
 // recoverable schema column and lowers to Devise's conventional
 // `reset_password_token` hidden form key in the generated Rails ERB.
+
 @:railsTemplate("devise/passwords/edit")
 @:railsTemplateAst("render")
 class PasswordsEditView {

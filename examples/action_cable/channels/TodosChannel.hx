@@ -53,6 +53,7 @@ class TodoCable {
 @:railsChannel
 class TodosChannel extends Channel<TodoSubscriptionParams, TodoBroadcast> {
 	public function subscribed():Void {
+		var user = connection(ApplicationCableConnection.currentUser);
 		var listId = param(TodoCable.listId());
 		if (listId == "reject") {
 			reject();

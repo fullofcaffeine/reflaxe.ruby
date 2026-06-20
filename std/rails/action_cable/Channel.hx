@@ -21,6 +21,11 @@ class Channel<TParams, TPayload> {
 		return cast null;
 	}
 
+	@:railsActionCableConnectionAccess
+	public function connection<TValue>(identifier:ConnectionIdentifier<TValue>):TValue {
+		return cast null;
+	}
+
 	public function transmit(payload:TPayload):Void {}
 
 	public function reject():Void {}

@@ -4,6 +4,7 @@ require "action_cable/engine"
 module Channels
   class TodosChannel < ActionCable::Channel::Base
     def subscribed()
+      user__hx0 = current_user
       list_id__hx0 = params["list_id"]
       if (list_id__hx0 == "reject")
         self.reject()

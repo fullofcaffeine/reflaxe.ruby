@@ -781,7 +781,8 @@ private class RailsMarkupParser {
 				var label = attrValueOrTextChildren(attrs, children, name, pos);
 				var buttonAttrs = attrsExcept(attrs, ["scope", "text", "method"]);
 				buttonAttrs.unshift(staticAttr("method", "delete", pos));
-				macro @:pos(pos) rails.action_view.HtmlNode.ButtonTo($label, devisehx.hhx.AuthLinks.signOutPath($scope), ${mkArray(buttonAttrs.map(mkAttr), pos)});
+				macro @:pos(pos) rails.action_view.HtmlNode.ButtonTo($label, devisehx.hhx.AuthLinks.signOutPath($scope),
+					${mkArray(buttonAttrs.map(mkAttr), pos)});
 			case "partial":
 				var template = requireAttrValue(attrs, "template", pos);
 				var locals = requireAttrValue(attrs, "locals", pos);

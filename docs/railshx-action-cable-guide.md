@@ -176,6 +176,8 @@ import app.auth.UserAuth;
 import models.User;
 import rails.action_cable.Connection;
 import rails.action_cable.ConnectionIdentifier;
+import rails.action_cable.ConnectionParam;
+import rails.macros.CableConnectionDsl.*;
 
 @:railsCableConnection
 class ApplicationCableConnection extends Connection {
@@ -183,15 +185,14 @@ class ApplicationCableConnection extends Connection {
 	// Rails' `identified_by :current_user`. The typed identifier token lets
 	// channels later read `currentUser()` without repeating a string key.
 	static final identifiers = {
-		identifiedBy(currentUser());
+		identifiedBy(currentUser);
 	};
 
-	public static inline function currentUser():ConnectionIdentifier<User> {
-		return ConnectionIdentifier.named("currentUser");
-	}
+	public static final currentUser:ConnectionIdentifier<User> = ConnectionIdentifier.named("currentUser");
+	public static final token:ConnectionParam<String> = ConnectionParam.named("token");
 
 	public function connect():Void {
-		assign(currentUser(), findVerifiedUser());
+		assign(currentUser, findVerifiedUser());
 	}
 
 	function findVerifiedUser():User {
@@ -234,6 +235,8 @@ The exact auth helper can vary by app. The important RailsHx contract is:
   class-level `identified_by`.
 - `ConnectionIdentifier<T>` carries the identifier value type. A channel that
   needs the current user can read the same token and get `User`, not `Dynamic`.
+- `ConnectionParam<T>` gives common connection request params the same
+  typed-token treatment as channel subscription params.
 - `rejectUnauthorizedConnection()` lowers to Rails'
   `reject_unauthorized_connection`.
 - Cookies, request env, Warden/Devise, and session seams should be exposed
@@ -246,7 +249,7 @@ Channel access should use the same token:
 @:railsChannel
 class PresenceChannel extends Channel<PresenceParams, PresencePayload> {
 	public function subscribed():Void {
-		var user = connection(ApplicationCableConnection.currentUser());
+		var user = connection(ApplicationCableConnection.currentUser);
 		streamFrom(PresenceContract.userStream(user.id));
 	}
 }
@@ -266,7 +269,7 @@ The first implementation slice should support:
 - `connection(identifier)` inside channels lowering to `current_user`.
 - `rejectUnauthorizedConnection()` lowering to
   `reject_unauthorized_connection`.
-- Typed cookies/request facades for common auth reads, plus explicit unsafe
+- Typed request-param facades for common auth reads, plus explicit unsafe
   boundaries for custom Warden/session logic.
 - Rails `ActionCable::Connection::TestCase` coverage for accepted and rejected
   connections.

@@ -884,7 +884,39 @@
       "status": "implemented",
       "path": "std/rails/action_cable/Channel.hx",
       "surface": "rails.action_cable.Channel",
-      "reason": "Typed ActionCable channel base surface for railsChannel classes, subscription params, streams, transmit, reject, and stream cleanup helpers."
+      "reason": "Typed ActionCable channel base surface for railsChannel classes, subscription params, typed connection identifiers, streams, transmit, reject, and stream cleanup helpers."
+    },
+    {
+      "id": "std.rails.action_cable_connection",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/Connection.hx",
+      "surface": "rails.action_cable.Connection",
+      "reason": "Typed ActionCable connection base surface for railsCableConnection classes, identifier assignment, request params, and reject_unauthorized_connection."
+    },
+    {
+      "id": "std.rails.action_cable_connection_identifier",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/ConnectionIdentifier.hx",
+      "surface": "rails.action_cable.ConnectionIdentifier",
+      "reason": "Typed connection identifier token lowered to Rails identified_by/current_user-style methods without raw string repetition."
+    },
+    {
+      "id": "std.rails.action_cable_connection_decl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/ConnectionDecl.hx",
+      "surface": "rails.action_cable.ConnectionDecl",
+      "reason": "Compiler-owned marker carrier for ActionCable connection identifier declarations, erased into Rails identified_by output."
+    },
+    {
+      "id": "std.rails.action_cable_connection_param",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/ConnectionParam.hx",
+      "surface": "rails.action_cable.ConnectionParam",
+      "reason": "Typed connection request-param token for ActionCable auth seams without app-facing raw request strings."
     },
     {
       "id": "std.rails.action_cable_consumer",
@@ -925,6 +957,22 @@
       "path": "std/rails/action_cable/SubscriptionCallbacks.hx",
       "surface": "rails.action_cable.SubscriptionCallbacks",
       "reason": "Typed callback shape for Haxe-authored ActionCable client subscriptions."
+    },
+    {
+      "id": "std.rails.action_cable_connection_macro",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/ConnectionMacro.hx",
+      "surface": "rails.macros.ConnectionMacro",
+      "reason": "Build macro for railsCableConnection classes that enforces connect() and the typed identifiers declaration host."
+    },
+    {
+      "id": "std.rails.action_cable_connection_dsl",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/CableConnectionDsl.hx",
+      "surface": "rails.macros.CableConnectionDsl",
+      "reason": "Contextual ActionCable connection DSL that validates identifiedBy declarations before compiler lowering to Rails identified_by."
     },
     {
       "id": "std.rails.dom_forms",

@@ -14,6 +14,7 @@ typedef RegistrationsNewLocals = {
 // Generated DeviseHx HHX registration view skeleton.
 // The compiler checks that DeviseErrors receives a DeviseResource<User>
 // and DeviseFormFields emits Rails' expected snake_case form keys.
+
 @:railsTemplate("devise/registrations/new")
 @:railsTemplateAst("render")
 class RegistrationsNewView {
