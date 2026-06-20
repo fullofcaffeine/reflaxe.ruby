@@ -492,6 +492,26 @@ assertManifest([
   ["docs/railshx/gems/devise.md", "docs"],
 ]);
 
+// A second run should be able to rewrite manifest-owned Devise HHX skeletons.
+// This proves `--devise-hhx-views` participates in the same ownership model as
+// other RailsHx adoption outputs instead of treating generated views as one-off
+// files.
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--package",
+  "interop",
+  "--gem",
+  "devise",
+  "--write",
+  "contracts",
+  "--devise-hhx-views",
+]);
+assertSnapshot("src_haxe/views/devise/users/SessionsNewView.hx");
+
 const erbAfter = readFileSync(existingErb, "utf8");
 if (erbAfter !== "<strong><%= label %></strong>\n") {
   fail("adoption generator overwrote Rails-owned ERB source");
@@ -627,6 +647,34 @@ if (overwrite.status === 0 || !overwrite.stderr.includes("Refusing to overwrite 
   process.stdout.write(overwrite.stdout);
   process.stderr.write(overwrite.stderr);
   fail("adoption generator did not protect non-owned wrapper files");
+}
+
+const deviseHhxCollisionOutput = createDeviseFailureFixture("rails_adopt_generator_devise_hhx_collision");
+mkdirSync(join(deviseHhxCollisionOutput, "src_haxe", "views", "devise", "users"), { recursive: true });
+writeFileSync(
+  join(deviseHhxCollisionOutput, "src_haxe", "views", "devise", "users", "SessionsNewView.hx"),
+  "// hand-written Devise HHX session view\n"
+);
+const deviseHhxOverwrite = spawnSync("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  deviseHhxCollisionOutput,
+  "--gem",
+  "devise",
+  "--write",
+  "contracts",
+  "--devise-hhx-views",
+], {
+  cwd: root,
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"],
+});
+if (deviseHhxOverwrite.status === 0 || !deviseHhxOverwrite.stderr.includes("Refusing to overwrite non-RailsHx-owned file")) {
+  process.stdout.write(deviseHhxOverwrite.stdout);
+  process.stderr.write(deviseHhxOverwrite.stderr);
+  fail("DeviseHx HHX view generation did not protect non-owned view source");
 }
 
 const missingSource = spawnSync("ruby", [
