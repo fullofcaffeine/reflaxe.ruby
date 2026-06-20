@@ -171,6 +171,9 @@ module HXRuby
           puts "  table: #{table.fetch(:name)} -> models.#{table.fetch(:model)}"
           puts "    columns: #{table.fetch(:columns).length}"
           puts "    timestamps: #{table.fetch(:timestamps)}"
+          table.fetch(:columns).each do |column|
+            column.fetch(:review_notes).each { |note| puts "    review: #{note}" }
+          end
           table.fetch(:indexes).each do |index|
             puts "    index: #{index.fetch(:columns).join(",")}#{index.fetch(:unique) ? " unique" : ""}"
           end
@@ -1484,24 +1487,55 @@ module HXRuby
             rails_type = match[1]
             name = match[2]
             options = match[3]
-            type = haxe_type(rails_type)
-            nullable = !options.match?(/\bnull:\s*false\b/)
-            default_haxe = default_literal(options)
-            single_column_indexes = indexes.select { |index| index.fetch(:columns) == [name] }
-            {
-              name: name,
-              haxe_name: haxe_identifier(name),
-              rails_type: rails_type,
-              haxe_type: nullable ? "Null<#{type.fetch(:haxe)}>" : type.fetch(:haxe),
-              nullable: nullable,
-              default_haxe: default_haxe,
-              db_type: type.fetch(:db_type),
-              index: single_column_indexes.any?,
-              unique: single_column_indexes.any? { |index| index.fetch(:unique) },
-              timestamp_column: %w[created_at updated_at].include?(name),
-              review_notes: review_notes_for_column(name, rails_type, type),
-            }
+            if reference_type?(rails_type)
+              reference_column(name, rails_type, options, indexes)
+            else
+              scalar_column(name, rails_type, options, indexes)
+            end
           end
+        end
+
+        def scalar_column(name, rails_type, options, indexes)
+          type = haxe_type(rails_type)
+          nullable = !options.match?(/\bnull:\s*false\b/)
+          default_haxe = default_literal(options)
+          single_column_indexes = indexes.select { |index| index.fetch(:columns) == [name] }
+          {
+            name: name,
+            haxe_name: haxe_identifier(name),
+            rails_type: rails_type,
+            haxe_type: nullable ? "Null<#{type.fetch(:haxe)}>" : type.fetch(:haxe),
+            nullable: nullable,
+            default_haxe: default_haxe,
+            db_type: type.fetch(:db_type),
+            index: single_column_indexes.any?,
+            unique: single_column_indexes.any? { |index| index.fetch(:unique) },
+            timestamp_column: %w[created_at updated_at].include?(name),
+            review_notes: review_notes_for_column(name, rails_type, type, options),
+          }
+        end
+
+        def reference_column(name, rails_type, options, indexes)
+          column_name = name.end_with?("_id") ? name : "#{name}_id"
+          nullable = !options.match?(/\bnull:\s*false\b/)
+          single_column_indexes = indexes.select { |index| index.fetch(:columns) == [column_name] }
+          explicit_index = bool_option(options, "index")
+          {
+            name: column_name,
+            haxe_name: haxe_identifier(column_name),
+            rails_type: "bigint",
+            haxe_type: nullable ? "Null<Int>" : "Int",
+            nullable: nullable,
+            default_haxe: nil,
+            db_type: true,
+            index: explicit_index.nil? ? single_column_indexes.any? : explicit_index,
+            unique: single_column_indexes.any? { |index| index.fetch(:unique) },
+            timestamp_column: false,
+            review_notes: [
+              "Reference #{name} from t.#{rails_type} generated #{column_name}; add a typed association after reviewing the target model.",
+              ("Reference #{name} declares foreign_key: true; verify the target table before adding belongsTo metadata." if bool_option(options, "foreign_key")),
+            ].compact,
+          }
         end
 
         def parse_indexes(body)
@@ -1548,11 +1582,30 @@ module HXRuby
           nil
         end
 
-        def review_notes_for_column(name, rails_type, type)
+        def review_notes_for_column(name, rails_type, type, options)
           notes = []
           notes << "Column #{name} used unsupported type #{rails_type}; generated Dynamic because --allow-dynamic was explicit." if type[:dynamic]
+          precision = int_option(options, "precision")
+          scale = int_option(options, "scale")
+          notes << "Column #{name} declares decimal precision #{precision} and scale #{scale}; RailsHx preserves dbType now, but typed precision/scale metadata is a follow-up." if precision || scale
           notes << "Column #{name} looks like a foreign key; add a typed association after reviewing the target model." if name.end_with?("_id")
           notes
+        end
+
+        def reference_type?(rails_type)
+          rails_type == "references" || rails_type == "belongs_to"
+        end
+
+        def bool_option(options, name)
+          match = options.match(/\b#{Regexp.escape(name)}:\s*(true|false)\b/)
+          return nil unless match
+
+          match[1] == "true"
+        end
+
+        def int_option(options, name)
+          value = options[/\b#{Regexp.escape(name)}:\s*([0-9]+)/, 1]
+          value&.to_i
         end
 
         def haxe_identifier(value)
