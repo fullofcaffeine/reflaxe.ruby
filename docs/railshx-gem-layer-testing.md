@@ -90,7 +90,8 @@ Positive tests should compile:
 - model metadata / mixin metadata
 - typed route declarations
 - typed HHX helpers
-- typed test helpers
+- typed test helpers, with output checks proving they lower to the target gem's
+  ordinary test helpers rather than a RailsHx runtime shim
 
 Negative tests should fail with source-positioned diagnostics:
 
@@ -115,7 +116,8 @@ Use Rails runtime tests for:
 - generated migrations and schema assumptions
 - generated controllers calling real gem helpers
 - generated HHX/ERB template lookup and locals
-- generated test helper usage
+- generated test helper usage, such as DeviseHx `IntegrationHelpers.signIn`
+  lowering to normal Devise `sign_in(:scope, resource)` calls
 - custom Rails integration points, such as ActionCable/Turbo/ActionMailer
 
 For DeviseHx, a small runtime suite is enough for the core layer:

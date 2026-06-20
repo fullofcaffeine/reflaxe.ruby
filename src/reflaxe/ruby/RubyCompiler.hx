@@ -2088,6 +2088,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (railsTestAssertion != null) {
 			return railsTestAssertion;
 		}
+		var deviseTestHelperCall = compileDeviseTestHelperCall(info, params);
+		if (deviseTestHelperCall != null) {
+			return deviseTestHelperCall;
+		}
 		var generatedDeviseHelperCall = compileGeneratedDeviseHelperCall(callee, params);
 		if (generatedDeviseHelperCall != null) {
 			return generatedDeviseHelperCall;
@@ -2278,6 +2282,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var scope = metadataObjectString(meta, "mappingScope", expr.pos);
 		validateDeviseMappingScope(scope, expr.pos);
 		return scope;
+	}
+
+	static function compileDeviseTestHelperCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (info.owner != "devisehx.test.IntegrationHelpers") {
+			return null;
+		}
+		return switch info.name {
+			case "signIn" if (params.length == 2):
+				var scope = deviseMappingScopeFromArg(params[0]);
+				RubyCall(null, "sign_in", [RubyRawExpr(rubySymbolLiteral(scope)), compileExpr(params[1])]);
+			case "signOut" if (params.length == 1):
+				var scope = deviseMappingScopeFromArg(params[0]);
+				RubyCall(null, "sign_out", [RubyRawExpr(rubySymbolLiteral(scope))]);
+			case _:
+				Context.error('Unsupported DeviseHx test helper devisehx.test.IntegrationHelpers.${info.name}.', params.length > 0 ? params[0].pos : Context.currentPos());
+				RubyNil;
+		}
 	}
 
 	static function compileRailsTestAssertionCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {

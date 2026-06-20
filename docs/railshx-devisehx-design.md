@@ -148,6 +148,22 @@ Auth.signOut(this, UserAuth.scope);
 Auth.signOutAll(this);
 ```
 
+Haxe-authored Rails tests can use `devisehx.test.IntegrationHelpers` to keep
+test setup scoped and typed while still emitting ordinary Devise test helpers:
+
+```haxe
+import app.auth.UserAuth;
+import devisehx.test.IntegrationHelpers;
+
+IntegrationHelpers.signIn(UserAuth.scope, user);
+IntegrationHelpers.signOut(UserAuth.scope);
+```
+
+The scope argument must be a direct generated field such as `UserAuth.scope`.
+This lets the compiler read the app-local Devise metadata and lower the calls to
+Rails-native `sign_in(:user, user)` / `sign_out(:user)` without evaluating
+runtime Haxe values or accepting loose strings.
+
 HHX templates should use the typed `devisehx.hhx.AuthLinks` facade for Devise
 session paths instead of spelling route helper names or strings by hand:
 

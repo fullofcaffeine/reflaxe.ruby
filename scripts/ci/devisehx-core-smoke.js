@@ -13,6 +13,8 @@ const invalidScopeDir = join(root, "test", ".generated", "devisehx_core_invalid_
 const invalidScopeOut = join(root, "test", ".generated", "devisehx_core_invalid_scope_out");
 const invalidAuthLinksLocalDir = join(root, "test", ".generated", "devisehx_core_invalid_auth_links_local_src");
 const invalidAuthLinksLocalOut = join(root, "test", ".generated", "devisehx_core_invalid_auth_links_local_out");
+const invalidTestHelpersLocalDir = join(root, "test", ".generated", "devisehx_core_invalid_test_helpers_local_src");
+const invalidTestHelpersLocalOut = join(root, "test", ".generated", "devisehx_core_invalid_test_helpers_local_out");
 const invalidSchemaDir = join(root, "test", ".generated", "devisehx_core_invalid_schema_src");
 const invalidSchemaOut = join(root, "test", ".generated", "devisehx_core_invalid_schema_out");
 const invalidCustomModuleDir = join(root, "test", ".generated", "devisehx_core_invalid_custom_module_src");
@@ -30,6 +32,8 @@ for (const dir of [
   invalidScopeOut,
   invalidAuthLinksLocalDir,
   invalidAuthLinksLocalOut,
+  invalidTestHelpersLocalDir,
+  invalidTestHelpersLocalOut,
   invalidSchemaDir,
   invalidSchemaOut,
   invalidCustomModuleDir,
@@ -70,6 +74,14 @@ writePositiveSources(invalidAuthLinksLocalDir, {
   authLinksUseLocalScope: true,
 });
 expectCompileFailure(invalidAuthLinksLocalDir, invalidAuthLinksLocalOut, "DeviseHx auth helpers expect a direct generated Devise scope field");
+
+writePositiveSources(invalidTestHelpersLocalDir, {
+  extraMainLines: [
+    "\t\tvar localUserScope = UserAuth.scope;",
+    "\t\tIntegrationHelpers.signIn(localUserScope, user);",
+  ],
+});
+expectCompileFailure(invalidTestHelpersLocalDir, invalidTestHelpersLocalOut, "DeviseHx auth helpers expect a direct generated Devise scope field");
 
 writePositiveSources(invalidSchemaDir, {
   omitEncryptedPassword: true,
@@ -372,6 +384,7 @@ function assertGeneratedShape(out) {
     }
   }
   const authLinks = readFileSync(join(out, "app/views/auth_links/show.html.erb"), "utf8");
+  const main = readFileSync(join(out, "app/haxe_gen/main.rb"), "utf8");
   for (const expected of [
     "new_user_session_path()",
     "new_user_registration_path()",
@@ -393,6 +406,14 @@ function assertGeneratedShape(out) {
       console.error(`DeviseHx HHX output missing expected Rails helper shape: ${expected}`);
       process.exit(1);
     }
+  }
+  if (!/sign_in\(:user,\s*user__hx\d+\)/.test(main)) {
+    console.error("DeviseHx test helper output missing expected Rails helper shape: sign_in(:user, user)");
+    process.exit(1);
+  }
+  if (!main.includes("sign_out(:user)")) {
+    console.error("DeviseHx test helper output missing expected Rails helper shape: sign_out(:user)");
+    process.exit(1);
   }
 }
 
