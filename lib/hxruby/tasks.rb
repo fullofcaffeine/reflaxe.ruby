@@ -7,6 +7,7 @@ require "open3"
 require "shellwords"
 require "pathname"
 require "tempfile"
+require "digest"
 require "hxruby/generators/adopt"
 require "hxruby/generators/app"
 require "hxruby/generators/common"
@@ -320,6 +321,16 @@ module HXRuby
       warnings << "Rails command is missing: #{rails_command}" unless File.executable?(rails_command) || executable_available?(rails_command)
       errors.concat(validate_json_file(".railshx/manifest.json", required: false))
       errors.concat(validate_json_file(ENV.fetch("HXRUBY_ROUTES_MANIFEST", ".railshx/routes.haxe.json"), required: false))
+      manifest_errors, manifest_warnings = diagnose_manifest_outputs(".railshx/manifest.json")
+      errors.concat(manifest_errors)
+      warnings.concat(manifest_warnings)
+      route_errors, route_warnings = diagnose_route_freshness(ENV.fetch("HXRUBY_ROUTES_MANIFEST", ".railshx/routes.haxe.json"))
+      errors.concat(route_errors)
+      warnings.concat(route_warnings)
+      migration_errors, migration_warnings = diagnose_migration_history
+      errors.concat(migration_errors)
+      warnings.concat(migration_warnings)
+      warnings.concat(diagnose_client_importmap(client_hxml))
 
       generated_ruby_roots(hxml).each do |root|
         if unsafe_output_root?(root)
@@ -344,6 +355,7 @@ module HXRuby
       compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml")) if truthy?(ENV["CLIENT"])
       sync_routes if truthy?(ENV["ROUTES"])
       syntax_check_generated_ruby(generated_ruby_roots(hxml))
+      validate_generated_artifacts_for_check
       rails(["zeitwerk:check"], env: ENV["RAILS_ENV"] ? { "RAILS_ENV" => ENV["RAILS_ENV"] } : {}) if truthy?(ENV["ZEITWERK"])
       puts "[hxruby:check] OK"
     end
@@ -443,6 +455,132 @@ module HXRuby
       ["invalid JSON in #{path}: #{error.message}"]
     end
 
+    def read_optional_json(path)
+      expanded = File.expand_path(path)
+      return nil unless File.file?(expanded)
+
+      JSON.parse(File.read(expanded))
+    end
+
+    def diagnose_manifest_outputs(path)
+      manifest = read_optional_json(path)
+      return [[], []] unless manifest
+
+      errors = []
+      warnings = []
+      outputs = manifest["outputs"]
+      unless outputs.is_a?(Array)
+        return [["manifest #{path} must contain an outputs array"], warnings]
+      end
+
+      outputs.each do |entry|
+        output = entry["output"].to_s
+        if unsafe_relative_output?(output)
+          errors << "manifest output path is unsafe: #{output.inspect}"
+          next
+        end
+
+        absolute = File.expand_path(output)
+        if !File.file?(absolute)
+          warnings << "manifest output is missing: #{output} (run bundle exec rake hxruby:compile or hxruby:clean)"
+          next
+        end
+
+        expected_sha = entry["sha256"].to_s
+        next if expected_sha.empty?
+
+        actual_sha = Digest::SHA256.file(absolute).hexdigest
+        if actual_sha != expected_sha
+          warnings << "manifest output checksum drifted: #{output} (regenerate it or take Rails ownership intentionally)"
+        end
+      end
+
+      [errors, warnings]
+    rescue JSON::ParserError => error
+      [["invalid JSON in #{path}: #{error.message}"], []]
+    end
+
+    def unsafe_relative_output?(path)
+      path.empty? || path.include?("\\") || path.start_with?("/") || path.split("/").any? { |part| part.empty? || part == "." || part == ".." }
+    end
+
+    def diagnose_route_freshness(manifest_path)
+      errors = []
+      warnings = []
+      app_routes = "src_haxe/routes/AppRoutes.hx"
+      routes_extern = ENV.fetch("HXRUBY_ROUTES_OUTPUT", "src_haxe/routes/Routes.hx")
+
+      if File.file?(app_routes) && !File.file?(manifest_path)
+        warnings << "Haxe-owned routes exist but #{manifest_path} is missing (run bundle exec rake hxruby:routes MODE=haxe-owned)"
+      end
+      if File.file?(manifest_path) && !File.file?(routes_extern)
+        warnings << "route manifest exists but typed route extern is missing: #{routes_extern} (run bundle exec rake hxruby:routes)"
+      end
+      if File.file?(app_routes) && File.file?(manifest_path) && File.mtime(app_routes) > File.mtime(manifest_path)
+        warnings << "Haxe-owned route source is newer than #{manifest_path} (run bundle exec rake hxruby:routes MODE=haxe-owned)"
+      end
+      if File.file?(manifest_path) && File.file?(routes_extern) && File.mtime(manifest_path) > File.mtime(routes_extern)
+        warnings << "route manifest is newer than #{routes_extern} (run bundle exec rake hxruby:routes)"
+      end
+
+      [errors, warnings]
+    end
+
+    def diagnose_migration_history
+      errors = []
+      warnings = []
+      migrations = Dir.glob("db/migrate/*.rb").sort
+      return [errors, warnings] if migrations.empty?
+
+      timestamps = Hash.new { |hash, key| hash[key] = [] }
+      classes = Hash.new { |hash, key| hash[key] = [] }
+      migrations.each do |path|
+        basename = File.basename(path)
+        if (match = basename.match(/\A([0-9]{14})_/))
+          timestamps[match[1]] << path
+        else
+          warnings << "migration file does not start with a 14-digit Rails timestamp: #{path}"
+        end
+
+        File.read(path).scan(/^\s*class\s+([A-Z][A-Za-z0-9_:]*)\s*</).flatten.each do |class_name|
+          classes[class_name] << path
+        end
+      end
+
+      timestamps.each do |timestamp, paths|
+        errors << "duplicate Rails migration timestamp #{timestamp}: #{paths.join(', ')}" if paths.length > 1
+      end
+      classes.each do |class_name, paths|
+        errors << "duplicate Rails migration class #{class_name}: #{paths.join(', ')}" if paths.length > 1
+      end
+
+      [errors, warnings]
+    end
+
+    def diagnose_client_importmap(client_hxml)
+      return [] unless File.file?(client_hxml)
+
+      warnings = []
+      module_root = ENV.fetch("HXRUBY_CLIENT_MODULE_ROOT", "app/javascript/railshx")
+      import_root = ENV.fetch("HXRUBY_CLIENT_IMPORT_ROOT", "railshx")
+      application_js = "app/javascript/application.js"
+      importmap = "config/importmap.rb"
+
+      if Dir.exist?(module_root)
+        warnings << "client module root exists but #{application_js} is missing" unless File.file?(application_js)
+        if File.file?(importmap)
+          importmap_body = File.read(importmap)
+          unless importmap_body.include?(%Q(pin "#{import_root}")) || importmap_body.include?(%Q(pin_all_from "#{module_root}")) || importmap_body.include?(%Q(pin_all_from "app/javascript/#{import_root}"))
+            warnings << "config/importmap.rb does not appear to pin #{import_root} modules"
+          end
+        else
+          warnings << "client module root exists but #{importmap} is missing"
+        end
+      end
+
+      warnings
+    end
+
     def generated_ruby_roots(hxml)
       explicit = ENV["HXRUBY_CHECK_ROOTS"]
       return split_paths(explicit) if explicit && !explicit.empty?
@@ -486,6 +624,17 @@ module HXRuby
         end
       end
       puts "[hxruby:check] ruby -c checked #{checked} generated Ruby files"
+    end
+
+    def validate_generated_artifacts_for_check
+      return unless File.file?(".railshx/manifest.json")
+
+      errors, warnings = diagnose_manifest_outputs(".railshx/manifest.json")
+      problems = errors + warnings
+      return if problems.empty?
+
+      problems.each { |message| warn "[hxruby:check] ERROR: #{message}" }
+      abort("[hxruby:check] generated artifact validation failed")
     end
 
     def watch_task(task_name)

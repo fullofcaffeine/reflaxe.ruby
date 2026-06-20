@@ -22,7 +22,7 @@ function run(command, args, options = {}) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
-  if (result.status !== 0) {
+  if (result.status !== 0 && !options.allowFailure) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
@@ -86,6 +86,7 @@ try {
   ].join("; ");
   run("ruby", ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
   smokeDoctorTask(unpackedRoot);
+  smokeDoctorFailureTask(unpackedRoot);
   smokeCheckTask(unpackedRoot);
   smokeCleanTask(unpackedRoot);
   smokeProductionTask(unpackedRoot);
@@ -161,6 +162,38 @@ function smokeDoctorTask(unpackedRoot) {
       PATH: [fakeBin, process.env.PATH].filter(Boolean).join(delimiter),
     },
   });
+}
+
+function smokeDoctorFailureTask(unpackedRoot) {
+  const appRoot = join(tempRoot, "doctor-failure-smoke-app");
+  const fakeBin = join(appRoot, "fake-bin");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(join(appRoot, "db", "migrate"), { recursive: true });
+  writeFileSync(join(appRoot, "build.hxml"), "-D ruby_output=generated\n# fake server build\n");
+  writeFileSync(join(appRoot, "build-client.hxml"), "# fake client build\n");
+  writeFileSync(join(appRoot, "db", "migrate", "20260101000000_create_users.rb"), "class CreateUsers < ActiveRecord::Migration[7.1]\nend\n");
+  writeFileSync(join(appRoot, "db", "migrate", "20260101000000_create_members.rb"), "class CreateUsers < ActiveRecord::Migration[7.1]\nend\n");
+  writeExecutable(join(fakeBin, "haxe"), [
+    "#!/usr/bin/env ruby",
+    "exit 0",
+  ]);
+  writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
+
+  const result = run("rake", ["hxruby:doctor"], {
+    cwd: appRoot,
+    allowFailure: true,
+    env: {
+      ...process.env,
+      RUBYLIB: [join(unpackedRoot, "lib"), process.env.RUBYLIB].filter(Boolean).join(delimiter),
+      PATH: [fakeBin, process.env.PATH].filter(Boolean).join(delimiter),
+    },
+  });
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (result.status === 0 || !output.includes("duplicate Rails migration timestamp") || !output.includes("duplicate Rails migration class")) {
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    fail("hxruby:doctor did not fail on duplicate migration timestamp/class diagnostics");
+  }
 }
 
 function smokeCheckTask(unpackedRoot) {

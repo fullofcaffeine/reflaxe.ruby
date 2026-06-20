@@ -418,7 +418,10 @@ Keep RailsHx tasks as composition and validation helpers:
 - `hxruby:doctor`: environment, manifest, output-root, route freshness, and
   collision diagnostics. It is intentionally non-mutating: it checks Haxe,
   build files, JSON manifests, Rails command availability, and configured
-  generated Ruby roots without compiling.
+  generated Ruby roots without compiling. It also reports manifest-owned output
+  drift/missing files, Haxe-owned route manifest/extern freshness, duplicate
+  Rails migration timestamps/classes, and common Haxe-authored client JS/importmap
+  setup gaps.
 - `hxruby:check`: compile, syntax-check generated Ruby, and optionally run
   Rails-owned checks such as `zeitwerk:check`. Set `CLIENT=1` to compile the
   Haxe-authored JavaScript lane, `ROUTES=1` to run route extern/parity sync, and

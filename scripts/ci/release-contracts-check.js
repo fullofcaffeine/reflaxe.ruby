@@ -179,6 +179,7 @@ expectIncludes(hxrubyTasks, "task :routes", "hxruby tasks");
 expectIncludes(hxrubyTasks, "task :doctor", "hxruby tasks");
 expectIncludes(hxrubyTasks, "task :check", "hxruby tasks");
 expectIncludes(hxrubyTasks, "syntax_check_generated_ruby", "hxruby tasks");
+expectIncludes(hxrubyTasks, "validate_generated_artifacts_for_check", "hxruby tasks");
 expectIncludes(hxrubyTasks, "task :clean", "hxruby tasks");
 expectIncludes(hxrubyTasks, "clean_owned_outputs", "hxruby tasks");
 expectIncludes(hxrubyTasks, "task :production", "hxruby tasks");

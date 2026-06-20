@@ -244,10 +244,12 @@ client JS before Rails consumes them.
 
 Use `hxruby:doctor` when onboarding or debugging a generated app: it verifies
 Haxe availability, build files, JSON manifests, Rails command availability, and
-configured output roots without mutating the app. Use `hxruby:check` in CI for a
-fast generated-artifact gate; add `CLIENT=1`, `ROUTES=1`, or `ZEITWERK=1` when
-that CI lane should also compile Haxe-authored JavaScript, sync route externs, or
-delegate to Rails' `zeitwerk:check`.
+configured output roots without mutating the app. It also reports manifest output
+drift/missing files, stale Haxe-owned route externs, duplicate Rails migration
+timestamps/classes, and likely Haxe-authored client JS/importmap gaps. Use
+`hxruby:check` in CI for a fast generated-artifact gate; add `CLIENT=1`,
+`ROUTES=1`, or `ZEITWERK=1` when that CI lane should also compile Haxe-authored
+JavaScript, sync route externs, or delegate to Rails' `zeitwerk:check`.
 
 For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, generated `db/migrate/**` files, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
 
