@@ -16,7 +16,7 @@ import shared.TodoHooks;
 // IntelliSense: editors should complete user fields, `TodoHooks.userFrameId`,
 // `Routes.userPath`, and Rails HHX form tags.
 // Ruby/Rails output: `controllers/users/index.html.erb` containing a normal
-// `<turbo-frame id="railshx-user-frame">`, `form_with`, and `button_to` output
+// `<turbo-frame id="railshx-user-frame">` and resourceful `form_with` output
 // that Turbo can extract into the todo board.
 @:railsTemplate("controllers/users/index")
 @:railsTemplateAst("render")
@@ -96,9 +96,9 @@ class UserManagementView {
 									<submit type="submit">Save user</submit>
 								</form_with>
 								<if ${locals.currentUser.id != user.id}>
-									<button_to url=${Routes.userPath(user.id)} method="delete" class="user-delete-form">
-										Remove user
-									</button_to>
+									<form_with url=${Routes.userPath(user.id)} scope=${User.railsParamKey} method="delete" local class="user-delete-form">
+										<submit type="submit">Remove user</submit>
+									</form_with>
 								</if>
 							</article>
 						</for>

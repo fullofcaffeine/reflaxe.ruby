@@ -1,5 +1,31 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { hooks } from './todo_hooks'
+
+async function expectPolishedButton(control: Locator) {
+  await expect(control).toBeVisible()
+  const styles = await control.evaluate(element => {
+    const html = element as HTMLElement
+    const computed = window.getComputedStyle(html)
+    const box = html.getBoundingClientRect()
+    return {
+      backgroundColor: computed.backgroundColor,
+      backgroundImage: computed.backgroundImage,
+      borderRadius: Number.parseFloat(computed.borderRadius),
+      boxShadow: computed.boxShadow,
+      cursor: computed.cursor,
+      fontWeight: computed.fontWeight,
+      height: box.height,
+      textTransform: computed.textTransform
+    }
+  })
+
+  expect(styles.height).toBeGreaterThan(30)
+  expect(styles.borderRadius).toBeGreaterThan(8)
+  expect(styles.cursor).toBe('pointer')
+  expect(styles.textTransform).toBe('uppercase')
+  expect(Number.parseInt(styles.fontWeight, 10)).toBeGreaterThanOrEqual(700)
+  expect(styles.backgroundImage !== 'none' || styles.backgroundColor !== 'rgba(0, 0, 0, 0)').toBeTruthy()
+}
 
 async function gotoLogin(page: Page) {
   await page.goto('/todos', { waitUntil: 'domcontentloaded', timeout: 15_000 })
@@ -60,6 +86,40 @@ test('renders the designed DeviseHx login page before the protected board', asyn
   await expect(page.locator('.login-flash')).toContainText(/invalid/i)
 
   await loginAsOwner(page)
+})
+
+test('keeps DeviseHx session controls styled and functional', async ({ page }) => {
+  await gotoLogin(page)
+  await expectPolishedButton(page.getByRole('button', { name: 'Log in' }))
+  await expectPolishedButton(page.getByRole('button', { name: 'Continue as guest' }))
+
+  await page.getByLabel('Email').fill('owner@example.test')
+  await page.getByLabel('Password').fill('password123')
+  await page.getByRole('button', { name: 'Log in' }).click()
+
+  await expect(page).toHaveURL(/\/todos$/)
+  await expectPolishedButton(page.getByRole('button', { name: 'Log out' }))
+
+  await page.getByRole('button', { name: 'Log out' }).click()
+  await expect(page).toHaveURL(/\/users\/sign_in$/)
+  await expect(page.locator('.login-shell')).toBeVisible()
+
+  await page.goto('/todos', { waitUntil: 'domcontentloaded', timeout: 15_000 })
+  await expect(page).toHaveURL(/\/users\/sign_in$/)
+  await expect(page.locator('.login-flash')).toContainText(/sign in/i)
+})
+
+test('keeps user management admin-only for guest sessions', async ({ page }) => {
+  await gotoLogin(page)
+  await continueAsGuest(page)
+  await expect(page.getByRole('link', { name: 'Users' })).toHaveCount(0)
+
+  await page.goto('/users', { waitUntil: 'domcontentloaded', timeout: 15_000 })
+
+  await expect(page).toHaveURL(/\/todos$/)
+  await expect(page.locator(hooks.selectors.userFrame)).toHaveCount(1)
+  await expect(page.locator(hooks.selectors.userFrame)).not.toContainText('Admin-only RailsHx user management')
+  await expect(page.getByRole('link', { name: 'Users' })).toHaveCount(0)
 })
 
 test('renders the typed RailsHx todo page through real browser assets', async ({ page }) => {
@@ -126,6 +186,10 @@ test('loads typed user management through a standard Turbo Frame', async ({ page
   await expect(frame).toContainText('Admin-only RailsHx user management', { timeout: 20_000 })
   await expect(frame).toContainText('Typed users, ordinary Rails CRUD.')
   await expect(frame.locator('.user-management-card')).toHaveCount(4)
+  await expectPolishedButton(frame.getByRole('button', { name: 'Create user' }))
+  await expectPolishedButton(frame.locator('.user-management-card').filter({ hasText: 'member@example.test' }).getByRole('button', { name: 'Save user' }))
+  await expectPolishedButton(frame.locator('.user-management-card').filter({ hasText: 'member@example.test' }).getByRole('button', { name: 'Remove user' }))
+  await expect(frame.locator('.user-management-card.is-current').getByRole('button', { name: 'Remove user' })).toHaveCount(0)
   await expect(page).toHaveURL(/\/todos$/)
 })
 
