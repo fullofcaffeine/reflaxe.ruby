@@ -817,6 +817,30 @@ expectGeneratorFailure("missing Devise schema", [
   "contracts",
 ], "db/schema.rb not found");
 
+const missingConfirmableColumnsOutput = createDeviseFailureFixture("rails_adopt_devise_missing_confirmable_columns", {
+  modules: ["database_authenticatable", "confirmable"],
+});
+expectGeneratorFailure("missing Devise confirmable columns", [
+  "--output",
+  missingConfirmableColumnsOutput,
+  "--gem",
+  "devise",
+  "--write",
+  "contracts",
+], "confirmation_token");
+
+const missingLockableColumnsOutput = createDeviseFailureFixture("rails_adopt_devise_missing_lockable_columns", {
+  modules: ["database_authenticatable", "lockable"],
+});
+expectGeneratorFailure("missing Devise lockable columns", [
+  "--output",
+  missingLockableColumnsOutput,
+  "--gem",
+  "devise",
+  "--write",
+  "contracts",
+], "failed_attempts");
+
 const ambiguousDeviseOutput = createDeviseFailureFixture("rails_adopt_devise_ambiguous", { duplicateRoutes: true });
 expectGeneratorFailure("ambiguous Devise scopes", [
   "--output",
@@ -954,9 +978,10 @@ function createDeviseFailureFixture(name, options = {}) {
   ];
   writeFileSync(join(target, "config", "routes.rb"), routesLines.join("\n"));
   if (options.model !== false) {
+    const modules = options.modules || ["database_authenticatable"];
     writeFileSync(join(target, "app", "models", "user.rb"), [
       "class User < ApplicationRecord",
-      "  devise :database_authenticatable",
+      `  devise ${modules.map((mod) => `:${mod}`).join(", ")}`,
       "end",
       "",
     ].join("\n"));
