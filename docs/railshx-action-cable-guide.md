@@ -159,6 +159,130 @@ compilation. Use `subscription.performUnchecked("legacy_action", rawPayload)`
 only for reviewed interop with Rails channels that do not have a typed action
 contract yet.
 
+## Connection Auth And Identifiers
+
+Rails ActionCable has two layers: the connection and the channel. Channels are
+where `subscribed`, `stream_from`, `reject`, `perform`, and `broadcast` live.
+Connections are where Rails apps identify the socket and accept or reject it.
+RailsHx should model both layers, but keep the runtime output exactly
+Rails-native.
+
+The intended Haxe-owned connection shape is:
+
+```haxe
+package channels;
+
+import app.auth.UserAuth;
+import models.User;
+import rails.action_cable.Connection;
+import rails.action_cable.ConnectionIdentifier;
+
+@:railsCableConnection
+class ApplicationCableConnection extends Connection {
+	// `identifiedBy(...)` is a compile-time lifecycle declaration, analogous to
+	// Rails' `identified_by :current_user`. The typed identifier token lets
+	// channels later read `currentUser()` without repeating a string key.
+	static final identifiers = {
+		identifiedBy(currentUser());
+	};
+
+	public static inline function currentUser():ConnectionIdentifier<User> {
+		return ConnectionIdentifier.named("currentUser");
+	}
+
+	public function connect():Void {
+		assign(currentUser(), findVerifiedUser());
+	}
+
+	function findVerifiedUser():User {
+		var user = UserAuth.currentFromCableCookies(this);
+		if (user == null) {
+			rejectUnauthorizedConnection();
+		}
+		return user;
+	}
+}
+```
+
+Generated Ruby should look like ordinary Rails:
+
+```ruby
+module ApplicationCable
+  class Connection < ActionCable::Connection::Base
+    identified_by :current_user
+
+    def connect
+      self.current_user = find_verified_user
+    end
+
+    private
+
+    def find_verified_user
+      user = User.find_by(id: cookies.encrypted[:user_id])
+      reject_unauthorized_connection unless user
+      user
+    end
+  end
+end
+```
+
+The exact auth helper can vary by app. The important RailsHx contract is:
+
+- `@:railsCableConnection` emits `ActionCable::Connection::Base`, not a custom
+  websocket runtime.
+- `static final identifiers = { identifiedBy(...); }` lowers to Rails'
+  class-level `identified_by`.
+- `ConnectionIdentifier<T>` carries the identifier value type. A channel that
+  needs the current user can read the same token and get `User`, not `Dynamic`.
+- `rejectUnauthorizedConnection()` lowers to Rails'
+  `reject_unauthorized_connection`.
+- Cookies, request env, Warden/Devise, and session seams should be exposed
+  through typed facades where deterministic, with explicit unsafe helpers for
+  application-specific auth.
+
+Channel access should use the same token:
+
+```haxe
+@:railsChannel
+class PresenceChannel extends Channel<PresenceParams, PresencePayload> {
+	public function subscribed():Void {
+		var user = connection(ApplicationCableConnection.currentUser());
+		streamFrom(PresenceContract.userStream(user.id));
+	}
+}
+```
+
+This should lower to direct Rails receiver access such as `current_user`; there
+should be no RailsHx runtime lookup object.
+
+### Supported MVP
+
+The first implementation slice should support:
+
+- One `@:railsCableConnection` class emitted as `ActionCable::Connection::Base`.
+- `static final identifiers = { identifiedBy(ConnectionIdentifier.named(...)); }`.
+- `connect()` and private helper methods.
+- `assign(identifier, value)` lowering to `self.current_user = value`.
+- `connection(identifier)` inside channels lowering to `current_user`.
+- `rejectUnauthorizedConnection()` lowering to
+  `reject_unauthorized_connection`.
+- Typed cookies/request facades for common auth reads, plus explicit unsafe
+  boundaries for custom Warden/session logic.
+- Rails `ActionCable::Connection::TestCase` coverage for accepted and rejected
+  connections.
+
+### Deferred Patterns
+
+These should remain explicit follow-up work rather than half-supported magic:
+
+- Multiple connection classes mounted under different Cable servers.
+- Arbitrary Rack env/Warden strategy inference.
+- Devise/Warden-specific helpers beyond generated DeviseHx contracts.
+- Connection identifiers derived from dynamic strings.
+- Per-channel authorization DSLs that hide Rails' normal `reject` semantics.
+- Cross-process presence/state tracking; RailsHx should type the boundary, not
+  invent an ActionCable presence runtime.
+
 ## Tests
 
 Use the static ActionCable smoke for compiler and generated-output coverage:
