@@ -215,6 +215,14 @@
       "reason": "Compiler-erased HHX facade for typed Devise session and registration route helpers used by Rails HHX auth tags."
     },
     {
+      "id": "std.devisehx.hhx_errors",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/hhx/DeviseErrors.hx",
+      "surface": "devisehx.hhx.DeviseErrors",
+      "reason": "Compiler-erased HHX facade for typed Devise/ActiveModel resource error rendering."
+    },
+    {
       "id": "std.devisehx.mapping",
       "owner": "std",
       "status": "implemented",

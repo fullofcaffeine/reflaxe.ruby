@@ -76,6 +76,7 @@ for (const required of [
   "std/devisehx/ScopeName.hx",
   "std/devisehx/SignInOptions.hx",
   "std/devisehx/hhx/AuthLinks.hx",
+  "std/devisehx/hhx/DeviseErrors.hx",
   "std/devisehx/mapping/DeviseMapping.hx",
   "std/devisehx/model/DeviseModule.hx",
   "std/devisehx/model/DeviseModuleSpec.hx",

@@ -6692,6 +6692,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				actionViewFlashExpr(classRef.get(), fieldRef.get());
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params) if (deviseAuthLinkPathExpr(classRef.get(), fieldRef.get(), params) != null):
 				deviseAuthLinkPathExpr(classRef.get(), fieldRef.get(), params);
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params) if (deviseErrorsExpr(classRef.get(), fieldRef.get(), params, scope) != null):
+				deviseErrorsExpr(classRef.get(), fieldRef.get(), params, scope);
 			case TField(_, FStatic(_, fieldRef)):
 				var staticValue = templateStaticFieldString(fieldRef.get());
 				if (staticValue != null) {
@@ -6778,6 +6780,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				scope + "_registration_path()";
 			case "cancelRegistrationPath":
 				"cancel_" + scope + "_registration_path()";
+			case _:
+				null;
+		}
+	}
+
+	static function deviseErrorsExpr(classType:ClassType, field:haxe.macro.Type.ClassField, params:Array<TypedExpr>, scope:RailsTemplateScope):Null<String> {
+		if (classType.pack.join(".") != "devisehx.hhx" || classType.name != "DeviseErrors") {
+			return null;
+		}
+		if (params.length != 1) {
+			Context.error("DeviseErrors helpers expect one typed Devise resource argument.", field.pos);
+			return "nil";
+		}
+		var target = printTemplateExpr(params[0], scope) + ".errors";
+		return switch (field.name) {
+			case "hasAny":
+				target + ".any?";
+			case "count":
+				target + ".count";
+			case "fullMessages":
+				target + ".full_messages";
 			case _:
 				null;
 		}

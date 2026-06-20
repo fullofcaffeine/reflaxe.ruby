@@ -154,9 +154,11 @@ session paths instead of spelling route helper names or strings by hand:
 ```haxe
 import app.auth.UserAuth;
 import devisehx.hhx.AuthLinks;
+import devisehx.hhx.DeviseErrors;
+import models.User;
 
 class DeviseLoginView {
-	public static function render():HtmlNode {
+	public static function render(resource:User):HtmlNode {
 		return <main>
 			<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope="user" local>
 				<text_field name="email" />
@@ -171,6 +173,16 @@ class DeviseLoginView {
 			<devise_sign_out_button scope=${UserAuth.scope}>
 				Sign out
 			</devise_sign_out_button>
+			<if ${DeviseErrors.hasAny(resource)}>
+				<section class="devise-errors">
+					<strong>${DeviseErrors.count(resource)}</strong>
+					<ul>
+						<for ${message in DeviseErrors.fullMessages(resource)}>
+							<li>${message}</li>
+						</for>
+					</ul>
+				</section>
+			</if>
 		</main>;
 	}
 }
@@ -187,6 +199,13 @@ Rails helpers: sign-in/sign-up/edit-registration tags emit `link_to`, and
 the sign-out flow remains Turbo-safe and Rails-native. Use lower-level
 `AuthLinks.*Path(...)` with `<link_to>`/`<button_to>` when a template needs a
 custom shape the tags do not expose yet.
+
+`DeviseErrors` follows the same compiler-erased pattern for form error blocks:
+Haxe verifies a `DeviseResource<T>` value and the generated ERB uses normal
+ActiveModel APIs such as `resource.errors.any?`,
+`resource.errors.count`, and `resource.errors.full_messages`. This is meant for
+generated registration/password/confirmation HHX views and app-owned auth forms;
+it does not replace ActiveModel validations or Devise's runtime error behavior.
 
 Generated Ruby should remain familiar:
 

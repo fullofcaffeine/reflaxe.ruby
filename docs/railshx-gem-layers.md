@@ -118,8 +118,8 @@ and sign-out semantics, while Haxe owns `UserAuth`, typed `@:devise(...)` model
 metadata, `beforeAction(UserAuth.authenticate)`, typed current-user helpers,
 `DeviseRoutes.deviseFor(UserAuth.scope, {only: [Sessions]})`, a Haxe-owned
 guest sign-in route, `AuthLinks.sessionPath(UserAuth.scope)` plus
-`<devise_sign_out_button>` in HHX, and auth composition around normal Rails
-helpers. A later dedicated
+`<devise_sign_out_button>`/`DeviseErrors` in HHX, and auth composition around
+normal Rails helpers. A later dedicated
 DeviseHx app can still expand into registrations, password reset, confirmable,
 OmniAuth, and multi-scope matrices without making the todoapp huge.
 
