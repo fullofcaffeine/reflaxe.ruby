@@ -11,9 +11,28 @@ const invalidResourceDir = join(root, "test", ".generated", "devisehx_core_inval
 const invalidResourceOut = join(root, "test", ".generated", "devisehx_core_invalid_resource_out");
 const invalidScopeDir = join(root, "test", ".generated", "devisehx_core_invalid_scope_src");
 const invalidScopeOut = join(root, "test", ".generated", "devisehx_core_invalid_scope_out");
+const invalidSchemaDir = join(root, "test", ".generated", "devisehx_core_invalid_schema_src");
+const invalidSchemaOut = join(root, "test", ".generated", "devisehx_core_invalid_schema_out");
+const invalidCustomModuleDir = join(root, "test", ".generated", "devisehx_core_invalid_custom_module_src");
+const invalidCustomModuleOut = join(root, "test", ".generated", "devisehx_core_invalid_custom_module_out");
+const invalidUnknownModuleDir = join(root, "test", ".generated", "devisehx_core_invalid_unknown_module_src");
+const invalidUnknownModuleOut = join(root, "test", ".generated", "devisehx_core_invalid_unknown_module_out");
 const reflaxeSrc = join(root, "vendor", "reflaxe", "src");
 
-for (const dir of [sourceDir, outputDir, invalidResourceDir, invalidResourceOut, invalidScopeDir, invalidScopeOut]) {
+for (const dir of [
+  sourceDir,
+  outputDir,
+  invalidResourceDir,
+  invalidResourceOut,
+  invalidScopeDir,
+  invalidScopeOut,
+  invalidSchemaDir,
+  invalidSchemaOut,
+  invalidCustomModuleDir,
+  invalidCustomModuleOut,
+  invalidUnknownModuleDir,
+  invalidUnknownModuleOut,
+]) {
   rmSync(dir, { force: true, recursive: true });
 }
 
@@ -25,6 +44,7 @@ if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
 writePositiveSources(sourceDir);
 compile(sourceDir, outputDir);
 assertGeneratedShape(outputDir);
+assertDeviseModelGeneratedShape(outputDir);
 assertNoAppFacingDynamic();
 
 writePositiveSources(invalidResourceDir, {
@@ -42,6 +62,33 @@ writePositiveSources(invalidScopeDir, {
 });
 expectCompileFailure(invalidScopeDir, invalidScopeOut, "models.User should be models.Admin");
 
+writePositiveSources(invalidSchemaDir, {
+  omitEncryptedPassword: true,
+  extraMainLines: [
+    "\t\tvar modelClass:Class<User> = User;",
+    "\t\tSys.println(modelClass != null);",
+  ],
+});
+expectCompileFailure(invalidSchemaDir, invalidSchemaOut, "requires typed @:railsColumn field(s) for Devise module schema: encrypted_password");
+
+writePositiveSources(invalidCustomModuleDir, {
+  customModuleName: "MagicAuth",
+  extraMainLines: [
+    "\t\tvar modelClass:Class<User> = User;",
+    "\t\tSys.println(modelClass != null);",
+  ],
+});
+expectCompileFailure(invalidCustomModuleDir, invalidCustomModuleOut, "unsafeCustom(...) requires a safe snake_case custom module name literal");
+
+writePositiveSources(invalidUnknownModuleDir, {
+  moduleExpression: "magicAuth",
+  extraMainLines: [
+    "\t\tvar modelClass:Class<User> = User;",
+    "\t\tSys.println(modelClass != null);",
+  ],
+});
+expectCompileFailure(invalidUnknownModuleDir, invalidUnknownModuleOut, "Unsupported @:devise module token \"magicAuth\"");
+
 function writePositiveSources(dir, options = {}) {
   mkdirSync(join(dir, "models"), { recursive: true });
   mkdirSync(join(dir, "app", "auth"), { recursive: true });
@@ -49,12 +96,29 @@ function writePositiveSources(dir, options = {}) {
   writeFileSync(join(dir, "models", "User.hx"), [
     "package models;",
     "",
+    "import app.auth.UserAuth;",
+    "import devisehx.model.DeviseModule.*;",
+    "",
+    "// Haxe-owned model fixture: @:devise emits a normal Ruby `devise` macro,",
+    "// while compile-time schema validation proves required Devise columns exist.",
+    "@:railsModel(\"users\")",
+    `@:devise(UserAuth.scope, [databaseAuthenticatable, validatable, ${options.moduleExpression ?? `unsafeCustom("${options.customModuleName ?? "magic_auth"}")`}])`,
     "class User extends rails.active_record.Base<User> implements devisehx.model.DeviseResource<User> {",
     "\tpublic function new() {",
     "\t\tsuper();",
     "\t}",
     "",
+    "\t@:railsColumn",
+    "\tpublic var id:Int;",
+    "",
+    "\t@:railsColumn",
     "\tpublic var email:String;",
+    "",
+    ...(options.omitEncryptedPassword ? [] : [
+      "\t@:railsColumn({dbType: \"string\", nullable: false, defaultValue: \"\"})",
+      "\tpublic var encryptedPassword:String;",
+      "",
+    ]),
     "}",
     "",
   ].join("\n"));
@@ -164,6 +228,8 @@ function writePositiveSources(dir, options = {}) {
     "\t\tvar adminScope:DeviseScope<Admin> = AdminAuth.scope;",
     "\t\tvar mapping:DeviseMapping<User> = null;",
     "\t\tSys.println(filter != null || maybeUser != null || requiredUser != null || signedIn || specs.length > 0 || wardenUser != null || authenticated || adminScope != null || mapping != null);",
+    "\t\tvar modelClass:Class<User> = User;",
+    "\t\tSys.println(modelClass != null);",
     ...(options.extraMainLines ?? []),
     "\t}",
     "}",
@@ -212,9 +278,23 @@ function haxeArgs(src, out) {
 }
 
 function assertGeneratedShape(out) {
-  for (const file of ["hxruby/core.rb", "main.rb", "app/auth/user_auth.rb", "app/auth/admin_auth.rb"]) {
+  for (const file of ["hxruby/core.rb", "main.rb", "app/auth/user_auth.rb", "app/auth/admin_auth.rb", "models/user.rb"]) {
     if (!existsSync(join(out, file))) {
       console.error(`Expected DeviseHx generated Ruby file missing: ${file}`);
+      process.exit(1);
+    }
+  }
+}
+
+function assertDeviseModelGeneratedShape(out) {
+  const userModel = readFileSync(join(out, "models", "user.rb"), "utf8");
+  for (const expected of [
+    "devise :database_authenticatable, :validatable, :magic_auth",
+    "# haxe column email: String",
+    "# haxe column encrypted_password: String",
+  ]) {
+    if (!userModel.includes(expected)) {
+      console.error(`DeviseHx model output missing expected shape: ${expected}`);
       process.exit(1);
     }
   }

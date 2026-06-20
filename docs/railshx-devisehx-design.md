@@ -210,7 +210,8 @@ import devisehx.model.DeviseModule.*;
 ])
 class User extends rails.active_record.Base<User>
 	implements devisehx.model.DeviseResource<User> {
-	@:deviseAuthKey public var email:String;
+	@:railsColumn public var email:String;
+	@:railsColumn({dbType: "string", nullable: false, defaultValue: ""})
 	public var encryptedPassword:String;
 }
 ```
@@ -250,21 +251,28 @@ Known Devise modules should be represented as typed specs:
 
 ```haxe
 enum DeviseModuleSpec {
-	databaseAuthenticatable(?options:DatabaseAuthenticatableOptions);
-	registerable(?options:RegisterableOptions);
-	recoverable(?options:RecoverableOptions);
-	rememberable(?options:RememberableOptions);
-	validatable(?options:ValidatableOptions);
-	confirmable(?options:ConfirmableOptions);
-	lockable(?options:LockableOptions);
-	trackable;
-	timeoutable(?options:TimeoutableOptions);
-	omniauthable(options:OmniauthableOptions);
-	unsafeCustom(name:String);
+	DatabaseAuthenticatable(?options:DatabaseAuthenticatableOptions);
+	Registerable(?options:RegisterableOptions);
+	Recoverable(?options:RecoverableOptions);
+	Rememberable(?options:RememberableOptions);
+	Validatable(?options:ValidatableOptions);
+	Confirmable(?options:ConfirmableOptions);
+	Lockable(?options:LockableOptions);
+	Trackable;
+	Timeoutable(?options:TimeoutableOptions);
+	Omniauthable(options:OmniauthableOptions);
+	UnsafeCustom(name:String);
 }
 ```
 
-Schema checks should fail closed for known module requirements:
+App code normally imports `devisehx.model.DeviseModule.*` and writes ergonomic
+tokens such as `databaseAuthenticatable` and `recoverable`. The compiler accepts
+those known tokens, accepts `unsafeCustom("magic_auth")` as a deliberately loud
+escape hatch, emits ordinary Ruby symbols, and validates Haxe-owned
+`@:railsColumn` fields for deterministic schema requirements before Ruby is
+generated.
+
+Schema checks fail closed for known module requirements:
 
 | Module | Required deterministic checks |
 | --- | --- |
@@ -275,6 +283,10 @@ Schema checks should fail closed for known module requirements:
 | `lockable` | `failed_attempts`, `unlock_token`, `locked_at` depending options |
 | `trackable` | sign-in count/time/ip columns |
 | `omniauthable` | literal providers and callback routes; provider model fields require explicit review |
+
+Rails-owned/adopted models are validated by the deterministic adoption
+generator against `db/schema.rb` and literal Ruby `devise :...` declarations
+instead of pretending Haxe owns their Ruby source.
 
 ## Routes
 

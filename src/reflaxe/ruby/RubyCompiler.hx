@@ -1120,6 +1120,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return ~/^[A-Z][A-Za-z0-9_]*(::[A-Z][A-Za-z0-9_]*)*$/.match(value);
 	}
 
+	static function isSafeRubyIdentifier(value:String):Bool {
+		return ~/^[a-z][a-z0-9_]*$/.match(value);
+	}
+
 	static function railsControllerLifecycleLines(classType:ClassType, varFields:Array<ClassVarData>):Array<String> {
 		var lifecycle = railsControllerLifecycleField(varFields);
 		if (lifecycle == null) {
@@ -1519,7 +1523,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			body.push("self.table_name = " + quoteRubyStringForCode(tableName));
 		}
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
-		body = body.concat(railsDeviseModelLines(classType));
+		body = body.concat(railsDeviseModelLines(classType, varFields));
 		body = body.concat(railsSchemaRegistryLines(tableName, varFields, classType));
 		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":belongsTo")) {
@@ -1600,7 +1604,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		};
 	}
 
-	static function railsDeviseModelLines(classType:ClassType):Array<String> {
+	static function railsDeviseModelLines(classType:ClassType, varFields:Array<ClassVarData>):Array<String> {
 		var entries = classType.meta.extract(":devise");
 		if (entries.length == 0) {
 			return [];
@@ -1616,6 +1620,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (modules.length == 0) {
 			Context.error("@:devise requires at least one Devise module token.", entry.pos);
 		}
+		validateRailsDeviseSchema(classType, varFields, modules, entry.pos);
 		return ["devise " + [for (name in modules) rubySymbolLiteral(name)].join(", ")];
 	}
 
@@ -1635,8 +1640,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				railsDeviseKnownModule(name, expr.pos);
 			case EField(_, name):
 				railsDeviseKnownModule(name, expr.pos);
+			case ECall(callee, args):
+				railsDeviseCalledModuleSymbol(callee, args, expr.pos);
 			case _:
 				Context.error("@:devise module entries must be known DeviseHx module tokens imported from devisehx.model.DeviseModule.", expr.pos);
+				"database_authenticatable";
+		}
+	}
+
+	static function railsDeviseCalledModuleSymbol(callee:haxe.macro.Expr, args:Array<haxe.macro.Expr>, pos:haxe.macro.Expr.Position):String {
+		return switch callee.expr {
+			case EConst(CIdent("omniauthable")) | EField(_, "omniauthable"):
+				if (args.length != 1) {
+					Context.error("@:devise omniauthable(...) expects one providers array argument.", pos);
+				}
+				"omniauthable";
+			case EConst(CIdent("unsafeCustom")) | EField(_, "unsafeCustom"):
+				if (args.length != 1) {
+					Context.error("@:devise unsafeCustom(...) expects one custom module name literal.", pos);
+				}
+				switch args[0].expr {
+					case EConst(CString(name, _)) if (isSafeRubyIdentifier(name)):
+						RubyNaming.toMethodName(name);
+					case _:
+						Context.error("@:devise unsafeCustom(...) requires a safe snake_case custom module name literal.", args[0].pos);
+						"database_authenticatable";
+				}
+			case _:
+				Context.error("@:devise module calls must be supported DeviseHx tokens such as omniauthable([...]) or unsafeCustom(\"magic_auth\").",
+					pos);
 				"database_authenticatable";
 		}
 	}
@@ -1653,9 +1685,45 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case "trackable": "trackable";
 			case "timeoutable": "timeoutable";
 			case _:
-				Context.error('Unsupported @:devise module token "$name". Use a known devisehx.model.DeviseModule token or keep the model Rails-owned until custom module metadata is implemented.',
+				Context.error('Unsupported @:devise module token "$name". Use a known devisehx.model.DeviseModule token, unsafeCustom("..."), or keep the model Rails-owned.',
 					pos);
 				"database_authenticatable";
+		}
+	}
+
+	static function validateRailsDeviseSchema(classType:ClassType, varFields:Array<ClassVarData>, modules:Array<String>, pos:Position):Void {
+		var columns:Map<String, Position> = [];
+		for (field in varFields) {
+			if (hasMeta(field.field.meta, ":railsColumn")) {
+				columns.set(railsColumnInfo(field).rubyName, field.field.pos);
+			}
+		}
+		var required:Array<String> = [];
+		for (moduleName in modules) {
+			for (column in railsDeviseRequiredColumns(moduleName)) {
+				if (required.indexOf(column) < 0) {
+					required.push(column);
+				}
+			}
+		}
+		var missing = [for (column in required) if (!columns.exists(column)) column];
+		if (missing.length > 0) {
+			Context.error("@:devise on " + classType.name + " requires typed @:railsColumn field(s) for Devise module schema: "
+				+ missing.join(", ")
+				+ ". Add the fields to the Haxe model or keep this model Rails-owned through a generated extern/adoption contract.",
+				pos);
+		}
+	}
+
+	static function railsDeviseRequiredColumns(moduleName:String):Array<String> {
+		return switch moduleName {
+			case "database_authenticatable": ["email", "encrypted_password"];
+			case "recoverable": ["reset_password_token", "reset_password_sent_at"];
+			case "rememberable": ["remember_created_at"];
+			case "confirmable": ["confirmation_token", "confirmed_at", "confirmation_sent_at"];
+			case "lockable": ["failed_attempts", "unlock_token", "locked_at"];
+			case "trackable": ["sign_in_count", "current_sign_in_at", "last_sign_in_at", "current_sign_in_ip", "last_sign_in_ip"];
+			case _: [];
 		}
 	}
 
