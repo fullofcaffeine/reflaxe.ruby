@@ -2294,6 +2294,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (activeStorageStaticCall != null) {
 			return activeStorageStaticCall;
 		}
+		var activeJobStaticCall = compileActiveJobStaticCall(info, params);
+		if (activeJobStaticCall != null) {
+			return activeJobStaticCall;
+		}
 		var actionMailerStaticCall = compileActionMailerStaticCall(info, params);
 		if (actionMailerStaticCall != null) {
 			return actionMailerStaticCall;
@@ -3096,6 +3100,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr(printActiveStorageAttachablesArray(params[0]));
 			case "unchecked" if (params.length == 1):
 				RubyRawExpr(printInlineExpr(params[0]));
+			case _:
+				null;
+		}
+	}
+
+	static function compileActiveJobStaticCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch [info.owner, info.name] {
+			case [
+				"rails.active_job.DeserializationError" | "ActiveJob::DeserializationError",
+				"raise"
+			] if (params.length == 0):
+				RubyRawExpr("(raise ActiveJob::DeserializationError.new)");
+			case [
+				"rails.active_job.DeserializationError" | "ActiveJob::DeserializationError",
+				"raise"
+			] if (params.length == 1):
+				RubyRawExpr("(raise ActiveJob::DeserializationError.new(" + printInlineExpr(params[0]) + "))");
 			case _:
 				null;
 		}

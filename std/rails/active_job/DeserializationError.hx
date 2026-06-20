@@ -8,4 +8,14 @@ package rails.active_job;
 	time instead of requiring a repeated string literal.
 **/
 @:native("ActiveJob::DeserializationError")
-extern class DeserializationError {}
+extern class DeserializationError {
+	/**
+		Raises Rails' own `ActiveJob::DeserializationError`.
+
+		This is a tiny typed facade for runtime discard tests and app code that
+		needs to deliberately trigger Rails' discard path. The Ruby compiler
+		lowers this method directly to `raise ActiveJob::DeserializationError...`
+		so examples do not need raw `__ruby__` to exercise a Rails exception.
+	**/
+	public static function raise(?message:String):Void;
+}

@@ -104,6 +104,28 @@ StandardError` handles it normally. The generated Rails test performs the job
 through `ActiveJob::TestHelper` and asserts that the failed work is re-enqueued
 on the typed retry queue.
 
+The same runtime lane includes a discard probe:
+
+```haxe
+@:railsJob
+class DiscardProbeJob extends rails.active_job.Base {
+	static final lifecycle = {
+		queueAs("critical");
+		discardOn(DeserializationError);
+	}
+
+	public function perform(recordId:Int):Void {
+		DeserializationError.raise("discard:" + Std.string(recordId));
+	}
+}
+```
+
+`DeserializationError.raise(...)` is a typed RailsHx facade that lowers directly
+to `raise ActiveJob::DeserializationError.new(...)`. It exists so examples and
+apps can exercise Rails' own discard path without app-level `__ruby__`. The
+generated Rails test uses `ActiveJob::TestHelper` and asserts that the job is
+recorded as discarded by Rails' test adapter.
+
 ## Runtime Strategy
 
 `npm run test:active-job` is the fast compiler/static lane. It checks:
@@ -120,10 +142,12 @@ on the typed retry queue.
   class and typed perform arguments.
 - generated Rails retry behavior re-enqueues a failed typed Haxe job on the
   configured retry queue.
+- generated Rails discard behavior records a failed typed Haxe job through
+  Rails' test adapter.
 - when Rails gems are available, a generated Rails app uses
   `ActiveJob::TestHelper` to assert queue name, enqueue behavior,
-  serialization/deserialization, retry behavior, and `perform_enqueued_jobs`
-  execution.
+  serialization/deserialization, retry behavior, discard behavior, and
+  `perform_enqueued_jobs` execution.
 
 Local `npm run test:active-job` skips the runtime Rails pass if the generated
 app bundle is unavailable. `npm run test:rails-runtime` includes
@@ -138,10 +162,10 @@ authoring. RailsHx does not wrap adapters; generated jobs use whichever
 `config.active_job.queue_adapter` the Rails app configures.
 
 Current runtime coverage uses Rails' test adapter because it is deterministic
-and available in a generated app. Adapter-specific behavior for Sidekiq,
-Solid Queue, Delayed Job, GoodJob, or custom adapters is intentionally deferred
-to app/runtime integration tests unless a future RailsHx API needs adapter-aware
-typing.
+and available in a generated app. It proves Rails consumes the generated
+`queue_as`, `retry_on`, and `discard_on` artifacts correctly. Adapter-specific
+behavior for Sidekiq, Solid Queue, Delayed Job, GoodJob, or custom adapters is
+intentionally app-owned unless a future RailsHx API needs adapter-aware typing.
 
 Queue names are checked non-empty literals in `queueAs(...)` and retry `queue`
 options, then lowered to Rails symbols. If an app wants centralized queue names,
@@ -149,6 +173,7 @@ prefer a shared Haxe constant or typed wrapper consumed by `queueAs(...)`; a
 future RailsHx queue-token API should preserve the same literal validation and
 generated Rails `queue_as :name` output.
 
-`discardOn(...)` is compiler-lowered and statically checked today. Runtime
-coverage currently proves retry behavior; richer discard assertions and
-adapter-specific failure diagnostics remain follow-up production-hardening work.
+`discardOn(...)` is compiler-lowered, statically checked, and covered by a
+Rails runtime discard assertion. Broader adapter-specific failure diagnostics
+remain a production integration concern for applications or future
+adapter-aware RailsHx helpers.

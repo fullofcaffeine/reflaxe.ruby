@@ -868,7 +868,7 @@
       "status": "implemented",
       "path": "std/rails/active_job/DeserializationError.hx",
       "surface": "rails.active_job.DeserializationError",
-      "reason": "Typed extern for ActiveJob::DeserializationError used by retry/discard lifecycle declarations."
+      "reason": "Typed extern for ActiveJob::DeserializationError used by retry/discard lifecycle declarations and runtime discard probes."
     },
     {
       "id": "std.rails.active_job_lifecycle_decl",

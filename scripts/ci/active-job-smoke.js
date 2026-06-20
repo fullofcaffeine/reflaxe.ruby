@@ -67,6 +67,7 @@ if (!reflaxeSrc) {
 compileActiveJob(outputDir);
 
 for (const file of [
+  "app/haxe_gen/jobs/discard_probe_job.rb",
   "app/haxe_gen/jobs/retry_probe_job.rb",
   "app/haxe_gen/jobs/send_welcome_email_job.rb",
   "app/haxe_gen/main.rb",
@@ -111,11 +112,26 @@ for (const expected of [
   }
 }
 
+const discardJobRuby = readFileSync(join(outputDir, "app", "haxe_gen", "jobs", "discard_probe_job.rb"), "utf8");
+for (const expected of [
+  /class DiscardProbeJob < ActiveJob::Base/,
+  /queue_as :critical/,
+  /discard_on ActiveJob::DeserializationError/,
+  /def perform\(record_id__hx\d+\)/,
+  /raise ActiveJob::DeserializationError\.new\(\("discard:" \+ HXRuby\.stringify\(record_id__hx\d+\)\)\)/,
+]) {
+  if (!expected.test(discardJobRuby)) {
+    console.error(`ActiveJob discard output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
 const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
 for (const expected of [
   /Jobs::SendWelcomeEmailJob\.perform_later\(42, "reader@example.test"\)/,
   /Jobs::SendWelcomeEmailJob\.perform_now\(7, "now@example.test"\)/,
   /Jobs::RetryProbeJob\.perform_later\(1\)/,
+  /Jobs::DiscardProbeJob\.perform_later\(9\)/,
 ]) {
   if (!expected.test(mainRuby)) {
     console.error(`ActiveJob enqueue output missing expected call: ${expected}`);
@@ -123,7 +139,13 @@ for (const expected of [
   }
 }
 
-for (const file of ["app/haxe_gen/jobs/send_welcome_email_job.rb", "app/haxe_gen/jobs/retry_probe_job.rb", "app/haxe_gen/main.rb", "run.rb"]) {
+for (const file of [
+  "app/haxe_gen/jobs/send_welcome_email_job.rb",
+  "app/haxe_gen/jobs/retry_probe_job.rb",
+  "app/haxe_gen/jobs/discard_probe_job.rb",
+  "app/haxe_gen/main.rb",
+  "run.rb",
+]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
@@ -193,6 +215,7 @@ stage("runtime materialization", materializeRuntimeRailsApp);
 stage("runtime ruby syntax", () => syntaxCheck([
   "app/haxe_gen/jobs/send_welcome_email_job.rb",
   "app/haxe_gen/jobs/retry_probe_job.rb",
+  "app/haxe_gen/jobs/discard_probe_job.rb",
   "config/application.rb",
   "config/environment.rb",
   "test/jobs/send_welcome_email_job_test.rb",
@@ -359,6 +382,7 @@ require "active_job/test_helper"
   writeFile("test/jobs/send_welcome_email_job_test.rb", `require "test_helper"
 require Rails.root.join("app/haxe_gen/jobs/send_welcome_email_job")
 require Rails.root.join("app/haxe_gen/jobs/retry_probe_job")
+require Rails.root.join("app/haxe_gen/jobs/discard_probe_job")
 
 class SendWelcomeEmailJobTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
@@ -402,6 +426,14 @@ class SendWelcomeEmailJobTest < ActiveSupport::TestCase
     assert_enqueued_with(job: Jobs::RetryProbeJob, args: [1], queue: "retries") do
       perform_enqueued_jobs(only: Jobs::RetryProbeJob) do
         Jobs::RetryProbeJob.perform_later(1)
+      end
+    end
+  end
+
+  test "discard_on records discarded generated work through Rails test adapter" do
+    assert_discarded_jobs 1 do
+      perform_enqueued_jobs(only: Jobs::DiscardProbeJob) do
+        Jobs::DiscardProbeJob.perform_later(9)
       end
     end
   end
