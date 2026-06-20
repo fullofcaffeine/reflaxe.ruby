@@ -430,6 +430,11 @@ Keep RailsHx tasks as composition and validation helpers:
 - `hxruby:clean`: remove only manifest-owned generated artifacts.
 - `hxruby:production`: compile RailsHx outputs, then delegate to Rails-owned
   production checks and asset compilation.
+- `hxruby:gen:template`: generate a typed Rails HHX source skeleton for a view
+  or partial. It creates Haxe only; ERB remains compiler output.
+- `hxruby:gen:test`: generate a Haxe-authored Rails/Minitest source using
+  `@:railsTests static function define():Void`. Rails still runs the generated
+  Ruby test through `hxruby:test` / `bin/rails test`.
 
 Avoid task names that imply RailsHx owns Rails runtime behavior, especially
 database migration execution. The pattern is always: compile generated artifacts

@@ -248,6 +248,58 @@ paths.
 Failure example: missing template refs or wrong typed locals fail at Haxe compile
 time instead of becoming late ActionView errors.
 
+For focused template work without generating a controller, use:
+
+```bash
+bin/rails generate hxruby:template controllers/todos/_card \
+  --locals title:String,count:Int
+```
+
+This writes `src_haxe/views/controllers/todos/CardView.hx`, not ERB. The
+generated source uses `@:railsTemplate("controllers/todos/_card")` and
+`@:railsTemplateAst("render")`, so app authors keep editing typed HHX while the
+compiler emits the Rails-native `app/views/controllers/todos/_card.html.erb`
+artifact. Use this when Haxe owns the template. For existing Rails-owned ERB,
+prefer adoption contracts such as `Template.existing("controllers/todos/card")`
+instead of rewriting the file blindly.
+
+Failure example: paths such as `../admin` or `controllers/todos/show.html.erb`
+are rejected because generator-owned Haxe sources must map to checked Rails
+template paths, not arbitrary filesystem writes.
+
+## Haxe-Authored Rails Tests
+
+```bash
+bin/rails generate hxruby:test models/todo
+bin/rails generate hxruby:test controllers/todos_request --type request
+```
+
+These commands create `test_haxe/**/*.hx` sources using the canonical
+compiler-erased test DSL:
+
+```haxe
+@:railsTest("models/todo_haxe_test")
+class TodoHaxeTest extends ModelTestCase {
+	@:railsTests
+	static function define():Void {
+		test("generated model test works", () -> {
+			truthy(true);
+		});
+	}
+}
+```
+
+Rails still runs the generated Ruby test:
+
+```bash
+bundle exec rake hxruby:test
+```
+
+Use Haxe-authored tests when the test benefits from typed model fields, route
+helpers, request params, DeviseHx scopes, template refs, or RailsHx contracts.
+Keep vanilla Rails/Minitest tests first-class for Rails-owned behavior,
+third-party gem runtime behavior, or cases where a plain Ruby test is clearer.
+
 ## Scaffold
 
 ```bash
@@ -350,4 +402,3 @@ The focused examples are:
 - `examples/todoapp_rails`: canonical RailsHx dogfood app.
 - `examples/rails_interop_app`: mixed Ruby/ERB adoption.
 - `examples/rails_routes_dsl`: Haxe-owned route DSL snapshot fixture.
-

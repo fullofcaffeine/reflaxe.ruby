@@ -202,6 +202,7 @@ module HXRuby
           "- Use `bundle exec rake hxruby:check` for a fast compile plus generated Ruby `ruby -c` gate; add `CLIENT=1`, `ROUTES=1`, or `ZEITWERK=1` when that lane should cover more RailsHx/Rails seams.",
           "- Use `bundle exec rake hxruby:clean` only when you want to remove manifest-owned RailsHx generated artifacts; it must not delete Rails-owned files.",
           "- Prefer `bundle exec rake hxruby:db:migrate`, `bundle exec rake hxruby:db:prepare`, and `bundle exec rake hxruby:test` when Rails should consume generated artifacts; these wrappers compile first, then delegate to ordinary Rails.",
+          "- Use `bundle exec rake hxruby:gen:template PATH=... LOCALS=...` for focused Haxe-owned HHX views/partials and `bundle exec rake hxruby:gen:test NAME=... TYPE=model|request` when a Rails test benefits from typed Haxe contracts. Vanilla Rails tests/templates remain valid for Rails-owned/adoption seams.",
           "- Use `bundle exec rake hxruby:rails TASK=zeitwerk:check` for less common Rails tasks that should run after Haxe-owned artifacts are refreshed.",
           "- Run `bundle exec rake hxruby:compile`, `bundle exec rake hxruby:compile:client`, `bundle exec rake hxruby:gen:routes`, and Rails tests before landing changes that affect generated artifacts.",
           "- Generated Rails files are build output unless they are explicitly Rails-owned adoption files. Do not hand-edit generated `app/haxe_gen/**`, generated HHX ERB, generated importmap client modules, or RailsHx-owned migration artifacts.",

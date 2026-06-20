@@ -16,6 +16,8 @@ require "hxruby/generators/mailer"
 require "hxruby/generators/routes"
 require "hxruby/generators/routes_parity"
 require "hxruby/generators/scaffold"
+require "hxruby/generators/template"
+require "hxruby/generators/test"
 
 module HXRuby
   module Tasks
@@ -188,6 +190,31 @@ module HXRuby
             args << "--skip-test" if truthy?(ENV["SKIP_TEST"])
             args << "--force" if truthy?(ENV["FORCE"])
             HXRuby::Generators::Mailer.run(args)
+          end
+
+          desc "Generate a typed RailsHx HHX template or partial"
+          task :template do
+            path = ENV["PATH"] || abort("PATH is required, for example: rake hxruby:gen:template PATH=controllers/todos/index LOCALS=title:String")
+            args = [path]
+            args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
+            args += ["--haxe-dir", ENV["HAXE_DIR"]] if ENV["HAXE_DIR"]
+            args += ["--package", ENV["PACKAGE"]] if ENV["PACKAGE"]
+            args += ["--locals", ENV["LOCALS"]] if ENV["LOCALS"]
+            args << "--force" if truthy?(ENV["FORCE"])
+            HXRuby::Generators::Template.run(args)
+          end
+
+          desc "Generate a Haxe-authored Rails/Minitest source"
+          task :test do
+            name = ENV["NAME"] || abort("NAME is required, for example: rake hxruby:gen:test NAME=models/todo")
+            args = [name]
+            args += ["--type", ENV["TYPE"]] if ENV["TYPE"]
+            args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
+            args += ["--haxe-dir", ENV["HAXE_DIR"]] if ENV["HAXE_DIR"]
+            args += ["--package", ENV["PACKAGE"]] if ENV["PACKAGE"]
+            args += ["--description", ENV["DESCRIPTION"]] if ENV["DESCRIPTION"]
+            args << "--force" if truthy?(ENV["FORCE"])
+            HXRuby::Generators::Test.run(args)
           end
 
           desc "Generate a Rails-oriented Haxe model/controller scaffold"

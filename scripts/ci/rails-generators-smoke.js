@@ -82,6 +82,10 @@ module Rails
       def class_name
         name.to_s.split(/[_-]/).map { |part| part[0].upcase + part[1..] }.join
       end
+
+      def file_path
+        name.to_s
+      end
     end
   end
 end
@@ -91,6 +95,8 @@ require "generators/hxruby/routes/routes_generator"
 require "generators/hxruby/migration/migration_generator"
 require "generators/hxruby/model/model_generator"
 require "generators/hxruby/mailer/mailer_generator"
+require "generators/hxruby/template/template_generator"
+require "generators/hxruby/test/test_generator"
 require "generators/hxruby/controller/controller_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
@@ -142,6 +148,16 @@ begin
   assert(File.exist?(File.join(temp, "mailer", "src_haxe", "previews", "UserMailerPreview.hx")), "mailer generator did not write preview")
   assert(File.exist?(File.join(temp, "mailer", "test_haxe", "mailers", "UserMailerHaxeTest.hx")), "mailer generator did not write Haxe-authored Rails test")
 
+  template = Hxruby::TemplateGenerator.new(["controllers/todos/_card"], {"output" => "template", "locals" => "title:String"})
+  template.destination_root = temp
+  template.generate_template
+  assert(File.exist?(File.join(temp, "template", "src_haxe", "views", "controllers", "todos", "CardView.hx")), "template generator did not write typed HHX source")
+
+  test_generator = Hxruby::TestGenerator.new(["controllers/todos_request"], {"output" => "test", "type" => "request"})
+  test_generator.destination_root = temp
+  test_generator.generate_test
+  assert(File.exist?(File.join(temp, "test", "test_haxe", "controllers", "TodosRequestHaxeTest.hx")), "test generator did not write Haxe-authored Rails test source")
+
   controller = Hxruby::ControllerGenerator.new(["Todos", "index", "show"], {"templates" => true, "output" => "controller"})
   controller.destination_root = temp
   controller.generate_controller
@@ -184,6 +200,8 @@ require "generators/hxruby/routes/routes_generator"
 require "generators/hxruby/migration/migration_generator"
 require "generators/hxruby/model/model_generator"
 require "generators/hxruby/mailer/mailer_generator"
+require "generators/hxruby/template/template_generator"
+require "generators/hxruby/test/test_generator"
 require "generators/hxruby/controller/controller_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
@@ -194,6 +212,8 @@ expected = {
   Hxruby::MigrationGenerator => "hxruby:migration",
   Hxruby::ModelGenerator => "hxruby:model",
   Hxruby::MailerGenerator => "hxruby:mailer",
+  Hxruby::TemplateGenerator => "hxruby:template",
+  Hxruby::TestGenerator => "hxruby:test",
   Hxruby::ControllerGenerator => "hxruby:controller",
   Hxruby::ScaffoldGenerator => "hxruby:scaffold",
   Hxruby::AdoptGenerator => "hxruby:adopt"

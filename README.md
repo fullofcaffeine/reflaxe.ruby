@@ -444,6 +444,8 @@ rake hxruby:gen:adopt SERVICE=RbsPriceFormatter RBS=sig/rbs_price_formatter.rbs
 rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
 rake hxruby:gen:mailer MAILER=UserMailer ACTION=welcome
+rake hxruby:gen:template PATH=controllers/todos/_card LOCALS=title:String,count:Int
+rake hxruby:gen:test NAME=models/todo
 ```
 
 Greenfield app/scaffold generators default to Haxe-owned routes. Pass

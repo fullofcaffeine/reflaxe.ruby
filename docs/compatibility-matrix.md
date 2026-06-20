@@ -93,6 +93,8 @@ Unsafe boundary policy is tracked in
 | Route helper generator | `bin/rails generate hxruby:routes` / `rake hxruby:gen:routes` | Hardened for named Rails routes, nested/resource params, namespaces, member/collection routes, optional segments, globs, and mount-like rows |
 | Haxe-owned route DSL | `@:railsRoutes` + `static final routes = { root(...); get(...); resources(...); }` | Initial slice: root, verb routes including `options`/`head`, typed `match(..., [GET, POST])`, typed controller/action refs, checked route aliases/path literals including optional and glob segments, resources/resource `only`/`except`/`param`, checked legacy `resourceName(...)`, nested `member`/`collection`, `namespace`, `scope`, `controller`, `defaults`, `constraints`, and generated `config/routes.rb` |
 | ActionMailer generator | `bin/rails generate hxruby:mailer` / `rake hxruby:gen:mailer` | Generates Haxe-owned `@:railsMailer`, `@:railsMailerParams`, typed HHX html/text templates, `@:railsMailerPreview`, and Haxe-authored Rails test source |
+| Template generator | `bin/rails generate hxruby:template` / `rake hxruby:gen:template` | Generates typed HHX view/partial source with checked Rails template paths and typed locals; raw ERB remains compiler output |
+| Haxe-authored test generator | `bin/rails generate hxruby:test` / `rake hxruby:gen:test` | Generates `@:railsTest` sources using `@:railsTests static function define():Void`, lowering to ordinary Rails/Minitest files |
 | Scaffold generator | `bin/rails generate hxruby:scaffold` / `rake hxruby:gen:model` | Implemented |
 | Rails engine/plugin affordances | `--rails-output-root`, engine-local `reflaxe_ruby_rails_output_root`, generated autoload initializer | Initial engine-local output and host-consumption slice |
 
