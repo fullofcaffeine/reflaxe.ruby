@@ -63,6 +63,7 @@ remains the gatekeeper:
 ```bash
 bin/rails generate hxruby:adopt --gem devise --discover
 bin/rails generate hxruby:adopt --gem devise --write contracts
+bin/rails generate hxruby:adopt --gem devise --write contracts --devise-hhx-views
 # Ask an LLM to draft patches using tmp/devisehx-prompt.md, the deterministic
 # inventory, the gem docs/source, and the RailsHx companion-layer templates.
 bundle exec rake hxruby:compile
@@ -96,6 +97,8 @@ bin/rails generate devise:install
 bin/rails generate devise User
 haxelib install devisehx
 bin/rails generate hxruby:adopt --gem devise --write contracts
+# Optional: generate RailsHx-owned HHX skeletons for supported Devise views.
+bin/rails generate hxruby:adopt --gem devise --write contracts --devise-hhx-views
 bundle exec rake hxruby:routes
 bundle exec rake hxruby:compile
 bundle exec rake hxruby:test
@@ -105,6 +108,12 @@ The reusable DeviseHx companion package is hardening incrementally, and the
 contract is stable: Rails does normal Devise setup, then RailsHx generates or
 consumes typed Haxe contracts around Devise routes, helpers, controllers, model
 mixins, params, and test helpers.
+
+`--devise-hhx-views` is intentionally separate from plain contract adoption:
+plain adoption does not claim view ownership, while the flag writes
+manifest-owned HHX view skeletons such as Devise sessions and registrations
+templates. Existing Rails/Devise ERB files remain Rails-owned unless a
+manifest/header/force flow explicitly transfers that artifact.
 
 Reusable gem layers should use the testing pyramid in
 [`railshx-gem-layer-testing.md`](railshx-gem-layer-testing.md): deterministic

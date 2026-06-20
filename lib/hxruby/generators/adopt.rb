@@ -24,6 +24,7 @@ module HXRuby
           gems: [],
           write: nil,
           locals: "",
+          devise_hhx_views: false,
           force: false,
           discover: false,
         }
@@ -39,6 +40,7 @@ module HXRuby
           parser.on("--gem NAME") { |value| options[:gems].concat(Common.split_csv(value)) }
           parser.on("--write WHAT") { |value| options[:write] = value }
           parser.on("--locals FIELDS") { |value| options[:locals] = value }
+          parser.on("--devise-hhx-views") { options[:devise_hhx_views] = true }
           parser.on("--force") { options[:force] = true }
           parser.on("--discover") { options[:discover] = true }
         end.parse!(argv)
@@ -73,6 +75,7 @@ module HXRuby
         @gems = options.fetch(:gems).map { |gem_name| checked_gem_name(gem_name) }
         @write_mode = options.fetch(:write)
         @locals = parse_locals(options.fetch(:locals))
+        @devise_hhx_views = options.fetch(:devise_hhx_views)
         @force = options.fetch(:force)
         @discover = options.fetch(:discover)
       end
@@ -531,8 +534,27 @@ module HXRuby
             render_devise_auth_contract(scope),
             kind: "devise_auth_contract"
           )
+          write_devise_hhx_views(scope) if @devise_hhx_views
         end
         write_owned(File.join(@output_dir, "docs", "railshx", "gems", "devise.md"), render_devise_doc(inventory), kind: "docs")
+      end
+
+      def write_devise_hhx_views(scope)
+        model = scope.fetch(:model)
+        view_dir = File.join(@output_dir, "src_haxe", "views", "devise", scope.fetch(:route_resource))
+        write_owned(
+          File.join(view_dir, "SessionsNewView.hx"),
+          render_devise_sessions_new_view(scope),
+          kind: "devise_hhx_view"
+        )
+        if scope.fetch(:modules).include?("registerable")
+          write_owned(
+            File.join(view_dir, "RegistrationsNewView.hx"),
+            render_devise_registrations_new_view(scope),
+            kind: "devise_hhx_view"
+          )
+        end
+        puts "[rails:adopt:devise] wrote HHX view skeletons for #{model}; compile Haxe to emit Rails ERB artifacts."
       end
 
       def devise_inventory(gem_name)
@@ -853,6 +875,124 @@ module HXRuby
           "\t@:deviseHxHelper({schema: 1, kind: \"signOut\", mappingScope: #{Common.haxe_string(scope.fetch(:scope))}})",
           "\tpublic static inline function signOut(controller:Base):Void {",
           "\t\tAuth.signOut(controller, scope);",
+          "\t}",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_devise_sessions_new_view(scope)
+        model = scope.fetch(:model)
+        auth_class = "#{model}Auth"
+        route_resource = scope.fetch(:route_resource)
+        [
+          "package views.devise.#{route_resource};",
+          "",
+          "import app.auth.#{auth_class};",
+          "import devisehx.hhx.AuthLinks;",
+          "import models.#{model};",
+          "import rails.action_view.FlashMessages;",
+          "import rails.action_view.HtmlNode;",
+          "",
+          "typedef SessionsNewLocals = {",
+          "\tvar resource:#{model};",
+          "}",
+          "",
+          "// Generated DeviseHx HHX session view skeleton.",
+          "// Devise/Rails still owns authentication runtime behavior; this Haxe file",
+          "// owns the typed template source and compiles to app/views/devise/sessions/new.html.erb.",
+          "// Type safety: AuthLinks.sessionPath validates #{auth_class}.scope metadata and",
+          "// FlashMessages reads ordinary Rails flash without authoring raw ERB.",
+          "@:railsTemplate(\"devise/sessions/new\")",
+          "@:railsTemplateAst(\"render\")",
+          "class SessionsNewView {",
+          "\tpublic static function render(locals:SessionsNewLocals):HtmlNode {",
+          "\t\treturn <main class=\"devisehx-auth-shell\">",
+          "\t\t\t<section class=\"devisehx-auth-card\">",
+          "\t\t\t\t<span class=\"eyebrow\">DeviseHx session</span>",
+          "\t\t\t\t<h1>Sign in</h1>",
+          "\t\t\t\t<p>Devise owns Warden and password verification; RailsHx owns this typed HHX source.</p>",
+          "\t\t\t\t<if ${FlashMessages.hasMessage()}>",
+          "\t\t\t\t\t<div class=${\"devisehx-flash is-\" + FlashMessages.kind()} role=\"alert\">",
+          "\t\t\t\t\t\t${FlashMessages.message()}",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t</if>",
+          "\t\t\t\t<form_with url=${AuthLinks.sessionPath(#{auth_class}.scope)} scope=\"#{scope.fetch(:scope)}\" local class=\"devisehx-auth-form\">",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"email\">Email</field_label>",
+          "\t\t\t\t\t\t<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"password\">Password</field_label>",
+          "\t\t\t\t\t\t<password_field name=\"password\" autocomplete=\"current-password\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<submit type=\"submit\">Sign in</submit>",
+          "\t\t\t\t</form_with>",
+          "\t\t\t\t<devise_sign_up_link scope=${#{auth_class}.scope} class=\"devisehx-secondary-link\">Create an account</devise_sign_up_link>",
+          "\t\t\t</section>",
+          "\t\t</main>;",
+          "\t}",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_devise_registrations_new_view(scope)
+        model = scope.fetch(:model)
+        auth_class = "#{model}Auth"
+        route_resource = scope.fetch(:route_resource)
+        [
+          "package views.devise.#{route_resource};",
+          "",
+          "import app.auth.#{auth_class};",
+          "import devisehx.hhx.AuthLinks;",
+          "import devisehx.hhx.DeviseErrors;",
+          "import models.#{model};",
+          "import rails.action_view.HtmlNode;",
+          "",
+          "typedef RegistrationsNewLocals = {",
+          "\tvar resource:#{model};",
+          "}",
+          "",
+          "// Generated DeviseHx HHX registration view skeleton.",
+          "// The compiler checks that DeviseErrors receives a DeviseResource<#{model}>",
+          "// and emits ordinary Rails ActiveModel error reads in the generated ERB.",
+          "@:railsTemplate(\"devise/registrations/new\")",
+          "@:railsTemplateAst(\"render\")",
+          "class RegistrationsNewView {",
+          "\tpublic static function render(locals:RegistrationsNewLocals):HtmlNode {",
+          "\t\treturn <main class=\"devisehx-auth-shell\">",
+          "\t\t\t<section class=\"devisehx-auth-card\">",
+          "\t\t\t\t<span class=\"eyebrow\">DeviseHx registration</span>",
+          "\t\t\t\t<h1>Create your account</h1>",
+          "\t\t\t\t<if ${DeviseErrors.hasAny(locals.resource)}>",
+          "\t\t\t\t\t<section class=\"devisehx-errors\" aria-label=\"Registration errors\">",
+          "\t\t\t\t\t\t<strong>${DeviseErrors.count(locals.resource)}</strong>",
+          "\t\t\t\t\t\t<ul>",
+          "\t\t\t\t\t\t\t<for ${message in DeviseErrors.fullMessages(locals.resource)}>",
+          "\t\t\t\t\t\t\t\t<li>${message}</li>",
+          "\t\t\t\t\t\t\t</for>",
+          "\t\t\t\t\t\t</ul>",
+          "\t\t\t\t\t</section>",
+          "\t\t\t\t</if>",
+          "\t\t\t\t<form_with url=${AuthLinks.registrationPath(#{auth_class}.scope)} scope=\"#{scope.fetch(:scope)}\" local class=\"devisehx-auth-form\">",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"email\">Email</field_label>",
+          "\t\t\t\t\t\t<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"password\">Password</field_label>",
+          "\t\t\t\t\t\t<password_field name=\"password\" autocomplete=\"new-password\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"passwordConfirmation\">Confirm password</field_label>",
+          "\t\t\t\t\t\t<password_field name=\"passwordConfirmation\" autocomplete=\"new-password\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<submit type=\"submit\">Create account</submit>",
+          "\t\t\t\t</form_with>",
+          "\t\t\t\t<devise_sign_in_link scope=${#{auth_class}.scope} class=\"devisehx-secondary-link\">Already have an account?</devise_sign_in_link>",
+          "\t\t\t</section>",
+          "\t\t</main>;",
           "\t}",
           "}",
           "",

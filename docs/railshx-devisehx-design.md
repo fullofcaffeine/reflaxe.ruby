@@ -492,6 +492,7 @@ Keep the generic lane:
 ```bash
 bin/rails generate hxruby:adopt --gem devise --discover
 bin/rails generate hxruby:adopt --gem devise --write contracts
+bin/rails generate hxruby:adopt --gem devise --write contracts --devise-hhx-views
 ```
 
 Add a Devise-specific lane:
@@ -506,6 +507,15 @@ bundle exec rake hxruby:devise:check
 
 The generic lane remains good for quick app-local wrappers. The Devise-specific
 lane owns stronger Devise semantics and reusable package behavior.
+
+`--devise-hhx-views` is deliberately opt-in. Without it, adoption writes only
+typed auth contracts plus inventory/diagnostics docs. With it, the generator
+writes RailsHx-owned HHX skeletons such as
+`src_haxe/views/devise/users/SessionsNewView.hx` and
+`src_haxe/views/devise/users/RegistrationsNewView.hx`; compiling Haxe then emits
+normal `app/views/devise/**/*.html.erb` artifacts. Existing Rails/Devise ERB
+views remain Rails-owned unless the file is already manifest/header-owned or the
+user explicitly chooses a force/repair flow.
 
 ## LLM-Assisted Adoption
 

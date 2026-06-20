@@ -17,6 +17,7 @@ if defined?(Rails::Generators::Base)
       class_option :extension_module, type: :string, desc: "Ruby module name(s) to generate from extension source, comma-separated"
       class_option :gem, type: :string, desc: "Bundler-installed gem name(s) to inventory/adopt, comma-separated"
       class_option :write, type: :string, desc: "Write mode for gem adoption; currently supports contracts"
+      class_option :devise_hhx_views, type: :boolean, default: false, desc: "With --gem devise --write contracts, generate Devise HHX view skeletons"
       class_option :locals, type: :string, default: "", desc: "Template locals as name:Type,name:Type"
       class_option :package, type: :string, default: "interop", desc: "Haxe package for generated wrappers"
       class_option :output, type: :string, default: ".", desc: "Output root"
@@ -36,6 +37,7 @@ if defined?(Rails::Generators::Base)
         args += ["--extension-module", hxruby_option(:extension_module)] if hxruby_option(:extension_module)
         args += ["--gem", hxruby_option(:gem)] if hxruby_option(:gem)
         args += ["--write", hxruby_option(:write)] if hxruby_option(:write)
+        args << "--devise-hhx-views" if hxruby_flag?(:devise_hhx_views)
         args += ["--locals", hxruby_option(:locals, "")] unless hxruby_option(:locals, "").to_s.empty?
         args << "--force" if hxruby_flag?(:force)
         args << "--discover" if hxruby_flag?(:discover)

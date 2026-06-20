@@ -7,6 +7,15 @@ const { spawnSync } = require("node:child_process");
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "rails_adopt_generator");
 const existingErb = join(outputDir, "app", "views", "legacy", "_badge.html.erb");
+const reflaxeSrc = [
+  join(root, "vendor", "reflaxe", "src"),
+  resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
+  resolve(root, "..", "haxe.rust", "vendor", "reflaxe", "src"),
+].find((candidate) => existsSync(join(candidate, "reflaxe", "ReflectCompiler.hx")));
+
+if (!reflaxeSrc) {
+  fail("Unable to find vendored Reflaxe source for Rails adoption generator smoke.");
+}
 
 rmSync(outputDir, { force: true, recursive: true });
 mkdirSync(join(outputDir, "app", "views", "legacy"), { recursive: true });
@@ -360,6 +369,7 @@ run("ruby", [
   "devise",
   "--write",
   "contracts",
+  "--devise-hhx-views",
 ]);
 assertIncludes("src_haxe/app/auth/UserAuth.hx", [
   "package app.auth;",
@@ -372,6 +382,24 @@ assertIncludes("src_haxe/app/auth/UserAuth.hx", [
   "public static final authenticate:AuthFilter<User> = Auth.require(scope);",
   "public static inline function current(controller:Base):Null<User>",
   "public static inline function signIn(controller:Base, resource:User):Void",
+]);
+assertIncludes("src_haxe/views/devise/users/SessionsNewView.hx", [
+  "package views.devise.users;",
+  "// Generated DeviseHx HHX session view skeleton.",
+  '@:railsTemplate("devise/sessions/new")',
+  "class SessionsNewView",
+  "<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
+  "<password_field name=\"password\" autocomplete=\"current-password\" required />",
+  "<devise_sign_up_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Create an account</devise_sign_up_link>",
+]);
+assertIncludes("src_haxe/views/devise/users/RegistrationsNewView.hx", [
+  "package views.devise.users;",
+  "// Generated DeviseHx HHX registration view skeleton.",
+  '@:railsTemplate("devise/registrations/new")',
+  "class RegistrationsNewView",
+  "<if ${DeviseErrors.hasAny(locals.resource)}>",
+  "<form_with url=${AuthLinks.registrationPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
+  "<password_field name=\"passwordConfirmation\" autocomplete=\"new-password\" required />",
 ]);
 assertIncludes(".railshx/gems/devise/inventory.json", [
   '"kind": "devise_inventory"',
@@ -396,6 +424,8 @@ assertIncludes("docs/railshx/gems/devise.md", [
   "Run `bundle exec rake hxruby:routes` after changing Devise routes",
 ]);
 assertSnapshot("src_haxe/app/auth/UserAuth.hx");
+assertSnapshot("src_haxe/views/devise/users/SessionsNewView.hx");
+assertSnapshot("src_haxe/views/devise/users/RegistrationsNewView.hx");
 assertSnapshot(".railshx/gems/devise/inventory.json");
 assertSnapshot(".railshx/gems/devise/diagnostics.json");
 assertSnapshot("docs/railshx/gems/devise.md");
@@ -403,6 +433,8 @@ assertManifest([
   [".railshx/gems/devise/inventory.json", "devise_inventory"],
   [".railshx/gems/devise/diagnostics.json", "devise_diagnostics"],
   ["src_haxe/app/auth/UserAuth.hx", "devise_auth_contract"],
+  ["src_haxe/views/devise/users/SessionsNewView.hx", "devise_hhx_view"],
+  ["src_haxe/views/devise/users/RegistrationsNewView.hx", "devise_hhx_view"],
   ["docs/railshx/gems/devise.md", "docs"],
 ]);
 
@@ -422,6 +454,9 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "import interop.templates.LegacyBadgeTemplate;",
   "import models.User;",
   "import rails.action_controller.Base;",
+  "import rails.action_view.HtmlNode;",
+  "import views.devise.users.RegistrationsNewView;",
+  "import views.devise.users.SessionsNewView;",
   "",
   "class Main {",
   "\tstatic function main() {",
@@ -445,6 +480,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\t\tUserAuth.signOut(controller);",
   "\t\t\tvar current:Null<User> = UserAuth.current(controller);",
   "\t\t\tvar required:User = UserAuth.currentRequired(controller);",
+  "\t\t\tvar sessionView:HtmlNode = SessionsNewView.render({resource: user});",
+  "\t\t\tvar registrationView:HtmlNode = RegistrationsNewView.render({resource: user});",
   "\t\t\tSys.println(UserAuth.signedIn(controller));",
   "\t\t}",
   "\t\tSys.println(service != null);",
@@ -460,17 +497,38 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "",
 ].join("\n"));
 
+const compiledOut = join(outputDir, ".compiled");
+rmSync(compiledOut, { force: true, recursive: true });
 run("haxe", [
+  "-D",
+  `ruby_output=${compiledOut}`,
+  "-D",
+  "reflaxe_ruby_rails",
+  "-D",
+  "reflaxe_runtime",
   "-cp",
   join(root, "src"),
   "-cp",
   join(root, "std"),
   "-cp",
   join(outputDir, "src_haxe"),
+  "-cp",
+  reflaxeSrc,
+  "--macro",
+  "reflaxe.ruby.CompilerBootstrap.Start()",
+  "--macro",
+  "reflaxe.ruby.CompilerInit.Start()",
   "-main",
   "Main",
-  "--interp",
 ]);
+for (const file of [
+  "app/views/devise/sessions/new.html.erb",
+  "app/views/devise/registrations/new.html.erb",
+]) {
+  if (!existsSync(join(compiledOut, file))) {
+    fail(`generated DeviseHx HHX compile output missing ${file}`);
+  }
+}
 
 run("ruby", [
   "-I",
