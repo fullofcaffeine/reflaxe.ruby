@@ -155,14 +155,15 @@ session paths instead of spelling route helper names or strings by hand:
 import app.auth.UserAuth;
 import devisehx.hhx.AuthLinks;
 import devisehx.hhx.DeviseErrors;
+import devisehx.hhx.DeviseFormFields;
 import models.User;
 
 class DeviseLoginView {
 	public static function render(resource:User):HtmlNode {
 		return <main>
 			<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope="user" local>
-				<text_field name="email" />
-				<password_field name="password" />
+				<text_field name=${DeviseFormFields.email} />
+				<password_field name=${DeviseFormFields.password} />
 				<submit type="submit">Log in</submit>
 			</form_with>
 			<devise_sign_in_link scope=${UserAuth.scope}>Sign in</devise_sign_in_link>
@@ -208,6 +209,13 @@ ActiveModel APIs such as `resource.errors.any?`,
 `resource.errors.count`, and `resource.errors.full_messages`. This is meant for
 generated registration/password/confirmation HHX views and app-owned auth forms;
 it does not replace ActiveModel validations or Devise's runtime error behavior.
+
+`DeviseFormFields` carries RailsHx `@:railsField` metadata for Devise auth form
+keys that are not always normal model fields, such as `password`,
+`passwordConfirmation`, and `resetPasswordToken`. In Haxe/HHX, authors use typed
+refs like `DeviseFormFields.passwordConfirmation`; the compiler emits Rails'
+ordinary snake_case keys such as `:password_confirmation`. This keeps the
+generated ERB familiar while preventing repeated unchecked strings in HHX.
 
 Generated Ruby should remain familiar:
 

@@ -396,7 +396,8 @@ assertIncludes("src_haxe/views/devise/users/SessionsNewView.hx", [
   '@:railsTemplate("devise/sessions/new")',
   "class SessionsNewView",
   "<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
-  "<password_field name=\"password\" autocomplete=\"current-password\" required />",
+  "import devisehx.hhx.DeviseFormFields;",
+  "<password_field name=${DeviseFormFields.password} autocomplete=\"current-password\" required />",
   "<devise_sign_up_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Create an account</devise_sign_up_link>",
 ]);
 assertIncludes("src_haxe/views/devise/users/RegistrationsNewView.hx", [
@@ -406,7 +407,7 @@ assertIncludes("src_haxe/views/devise/users/RegistrationsNewView.hx", [
   "class RegistrationsNewView",
   "<if ${DeviseErrors.hasAny(locals.resource)}>",
   "<form_with url=${AuthLinks.registrationPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
-  "<password_field name=\"passwordConfirmation\" autocomplete=\"new-password\" required />",
+  "<password_field name=${DeviseFormFields.passwordConfirmation} autocomplete=\"new-password\" required />",
 ]);
 assertIncludes("src_haxe/views/devise/users/PasswordsNewView.hx", [
   "package views.devise.users;",
@@ -414,7 +415,7 @@ assertIncludes("src_haxe/views/devise/users/PasswordsNewView.hx", [
   '@:railsTemplate("devise/passwords/new")',
   "class PasswordsNewView",
   "<form_with url=${AuthLinks.passwordPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
-  "<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+  "<text_field name=${DeviseFormFields.email} type=\"email\" autocomplete=\"email\" required />",
   "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
 ]);
 assertIncludes("src_haxe/views/devise/users/PasswordsEditView.hx", [
@@ -423,8 +424,8 @@ assertIncludes("src_haxe/views/devise/users/PasswordsEditView.hx", [
   '@:railsTemplate("devise/passwords/edit")',
   "class PasswordsEditView",
   "<form_with url=${AuthLinks.passwordPath(UserAuth.scope)} scope=\"user\" method=\"patch\" local class=\"devisehx-auth-form\">",
-  "<hidden_field name=\"resetPasswordToken\" value=${locals.resource.resetPasswordToken} />",
-  "<password_field name=\"passwordConfirmation\" autocomplete=\"new-password\" required />",
+  "<hidden_field name=${DeviseFormFields.resetPasswordToken} value=${locals.resource.resetPasswordToken} />",
+  "<password_field name=${DeviseFormFields.passwordConfirmation} autocomplete=\"new-password\" required />",
 ]);
 assertIncludes("src_haxe/views/devise/users/ConfirmationsNewView.hx", [
   "package views.devise.users;",
@@ -432,7 +433,7 @@ assertIncludes("src_haxe/views/devise/users/ConfirmationsNewView.hx", [
   '@:railsTemplate("devise/confirmations/new")',
   "class ConfirmationsNewView",
   "<form_with url=${AuthLinks.confirmationPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
-  "<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+  "<text_field name=${DeviseFormFields.email} type=\"email\" autocomplete=\"email\" required />",
   "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
 ]);
 assertIncludes("src_haxe/views/devise/users/UnlocksNewView.hx", [
@@ -441,7 +442,7 @@ assertIncludes("src_haxe/views/devise/users/UnlocksNewView.hx", [
   '@:railsTemplate("devise/unlocks/new")',
   "class UnlocksNewView",
   "<form_with url=${AuthLinks.unlockPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
-  "<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+  "<text_field name=${DeviseFormFields.email} type=\"email\" autocomplete=\"email\" required />",
   "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
 ]);
 assertIncludes(".railshx/gems/devise/inventory.json", [

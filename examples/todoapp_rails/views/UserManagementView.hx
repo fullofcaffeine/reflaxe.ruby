@@ -1,6 +1,7 @@
 package views;
 
 import controllers.UsersController.UserIndexLocals;
+import devisehx.hhx.DeviseFormFields;
 import models.User;
 import rails.action_view.HtmlNode;
 import routes.Routes;
@@ -12,7 +13,8 @@ import shared.TodoHooks;
 // as the matching response body for the todo board's `<turbo_frame>`.
 // Type safety: `UserIndexLocals` carries an admin `currentUser` and the
 // `users:Array<User>` loop; CRUD forms use `User.railsParamKey`, `User.f.*`,
-// and `Routes.userPath(user.id)` instead of hand-written Rails names.
+// DeviseFormFields for transient password params, and `Routes.userPath(user.id)`
+// instead of hand-written Rails names.
 // IntelliSense: editors should complete user fields, `TodoHooks.userFrameId`,
 // `Routes.userPath`, and Rails HHX form tags.
 // Ruby/Rails output: `controllers/users/index.html.erb` containing a normal
@@ -58,12 +60,12 @@ class UserManagementView {
 								<text_field name=${User.f.role} placeholder="member" value="member" required />
 							</div>
 							<div>
-								<field_label name="password">Password</field_label>
-								<password_field name="password" placeholder="password123" required />
+								<field_label name=${DeviseFormFields.password}>Password</field_label>
+								<password_field name=${DeviseFormFields.password} placeholder="password123" required />
 							</div>
 							<div>
-								<field_label name="passwordConfirmation">Confirm password</field_label>
-								<password_field name="passwordConfirmation" placeholder="password123" required />
+								<field_label name=${DeviseFormFields.passwordConfirmation}>Confirm password</field_label>
+								<password_field name=${DeviseFormFields.passwordConfirmation} placeholder="password123" required />
 							</div>
 							<submit type="submit">Create user</submit>
 						</form_with>

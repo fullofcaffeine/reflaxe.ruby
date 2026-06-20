@@ -3,6 +3,7 @@ package views;
 import rails.action_view.FlashMessages;
 import app.auth.UserAuth;
 import devisehx.hhx.AuthLinks;
+import devisehx.hhx.DeviseFormFields;
 import rails.action_view.HtmlNode;
 import routes.Routes;
 import shared.TodoHooks;
@@ -16,8 +17,8 @@ import shared.TodoHooks;
 // Type safety: `AuthLinks.sessionPath(UserAuth.scope)` validates the generated
 // Devise scope before emitting Rails' ordinary `user_session_path`;
 // `Routes.guestSignInPath` is generated from Rails route output;
-// `<password_field>` lowers to Rails `form.password_field`; `FlashMessages`
-// reads Devise's normal Rails flash without authoring raw ERB;
+// `DeviseFormFields.email/password` lower to Rails' expected Devise form keys;
+// `FlashMessages` reads Devise's normal Rails flash without authoring raw ERB;
 // `TodoHooks.sessionAttr` lets the Haxe client bind the same Turbo form
 // feedback as the board logout.
 // IntelliSense: editors should complete route helpers, HHX form tags, and shared
@@ -60,12 +61,12 @@ class DeviseLoginView {
 				</if>
 				<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope="user" local class="login-form" data-railshx-session>
 					<div>
-						<field_label name="email">Email</field_label>
-						<text_field name="email" type="email" autocomplete="email" placeholder="owner@example.test" autofocus required />
+						<field_label name=${DeviseFormFields.email}>Email</field_label>
+						<text_field name=${DeviseFormFields.email} type="email" autocomplete="email" placeholder="owner@example.test" autofocus required />
 					</div>
 					<div>
-						<field_label name="password">Password</field_label>
-						<password_field name="password" autocomplete="current-password" placeholder="password123" required />
+						<field_label name=${DeviseFormFields.password}>Password</field_label>
+						<password_field name=${DeviseFormFields.password} autocomplete="current-password" placeholder="password123" required />
 					</div>
 					<submit type="submit">Log in</submit>
 				</form_with>

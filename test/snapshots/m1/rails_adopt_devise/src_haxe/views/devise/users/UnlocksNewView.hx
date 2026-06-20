@@ -3,6 +3,7 @@ package views.devise.users;
 import app.auth.UserAuth;
 import devisehx.hhx.AuthLinks;
 import devisehx.hhx.DeviseErrors;
+import devisehx.hhx.DeviseFormFields;
 import models.User;
 import rails.action_view.HtmlNode;
 
@@ -12,7 +13,7 @@ typedef UnlocksNewLocals = {
 
 // Generated DeviseHx HHX unlock request view skeleton.
 // Lockable account state stays in Devise/Rails; this checked HHX view
-// emits the ordinary `user_unlock_path` request form.
+// emits the ordinary `user_unlock_path` request form with typed field refs.
 @:railsTemplate("devise/unlocks/new")
 @:railsTemplateAst("render")
 class UnlocksNewView {
@@ -33,8 +34,8 @@ class UnlocksNewView {
 				</if>
 				<form_with url=${AuthLinks.unlockPath(UserAuth.scope)} scope="user" local class="devisehx-auth-form">
 					<div>
-						<field_label name="email">Email</field_label>
-						<text_field name="email" type="email" autocomplete="email" required />
+						<field_label name=${DeviseFormFields.email}>Email</field_label>
+						<text_field name=${DeviseFormFields.email} type="email" autocomplete="email" required />
 					</div>
 					<submit type="submit">Resend unlock instructions</submit>
 				</form_with>

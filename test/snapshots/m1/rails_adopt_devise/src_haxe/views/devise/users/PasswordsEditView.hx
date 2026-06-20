@@ -3,6 +3,7 @@ package views.devise.users;
 import app.auth.UserAuth;
 import devisehx.hhx.AuthLinks;
 import devisehx.hhx.DeviseErrors;
+import devisehx.hhx.DeviseFormFields;
 import models.User;
 import rails.action_view.HtmlNode;
 
@@ -33,14 +34,14 @@ class PasswordsEditView {
 					</section>
 				</if>
 				<form_with url=${AuthLinks.passwordPath(UserAuth.scope)} scope="user" method="patch" local class="devisehx-auth-form">
-					<hidden_field name="resetPasswordToken" value=${locals.resource.resetPasswordToken} />
+					<hidden_field name=${DeviseFormFields.resetPasswordToken} value=${locals.resource.resetPasswordToken} />
 					<div>
-						<field_label name="password">New password</field_label>
-						<password_field name="password" autocomplete="new-password" required />
+						<field_label name=${DeviseFormFields.password}>New password</field_label>
+						<password_field name=${DeviseFormFields.password} autocomplete="new-password" required />
 					</div>
 					<div>
-						<field_label name="passwordConfirmation">Confirm new password</field_label>
-						<password_field name="passwordConfirmation" autocomplete="new-password" required />
+						<field_label name=${DeviseFormFields.passwordConfirmation}>Confirm new password</field_label>
+						<password_field name=${DeviseFormFields.passwordConfirmation} autocomplete="new-password" required />
 					</div>
 					<submit type="submit">Change password</submit>
 				</form_with>

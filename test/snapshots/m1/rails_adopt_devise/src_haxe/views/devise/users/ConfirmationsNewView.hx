@@ -3,6 +3,7 @@ package views.devise.users;
 import app.auth.UserAuth;
 import devisehx.hhx.AuthLinks;
 import devisehx.hhx.DeviseErrors;
+import devisehx.hhx.DeviseFormFields;
 import models.User;
 import rails.action_view.HtmlNode;
 
@@ -12,7 +13,7 @@ typedef ConfirmationsNewLocals = {
 
 // Generated DeviseHx HHX confirmation request view skeleton.
 // Confirmable remains Devise-owned at runtime; RailsHx owns the checked
-// HHX source, typed Devise route helper, and typed resource error block.
+// HHX source, typed Devise route helper, typed field refs, and typed resource error block.
 @:railsTemplate("devise/confirmations/new")
 @:railsTemplateAst("render")
 class ConfirmationsNewView {
@@ -33,8 +34,8 @@ class ConfirmationsNewView {
 				</if>
 				<form_with url=${AuthLinks.confirmationPath(UserAuth.scope)} scope="user" local class="devisehx-auth-form">
 					<div>
-						<field_label name="email">Email</field_label>
-						<text_field name="email" type="email" autocomplete="email" required />
+						<field_label name=${DeviseFormFields.email}>Email</field_label>
+						<text_field name=${DeviseFormFields.email} type="email" autocomplete="email" required />
 					</div>
 					<submit type="submit">Resend confirmation</submit>
 				</form_with>

@@ -127,8 +127,12 @@ and sign-out semantics, while Haxe owns `UserAuth`, typed `@:devise(...)` model
 metadata, `beforeAction(UserAuth.authenticate)`, typed current-user helpers,
 `DeviseRoutes.deviseFor(UserAuth.scope, {only: [Sessions]})`, a Haxe-owned
 guest sign-in route, `AuthLinks.sessionPath(UserAuth.scope)` plus
-`<devise_sign_out_button>`/`DeviseErrors` in HHX, and auth composition around
-normal Rails helpers. The reusable adoption lane can also generate opt-in
+`<devise_sign_out_button>`/`DeviseErrors`/`DeviseFormFields` in HHX, and auth
+composition around normal Rails helpers. `DeviseFormFields` is the companion
+layer pattern for framework-owned transient params: expose a tiny typed Haxe ref
+such as `DeviseFormFields.passwordConfirmation`, then lower it to the normal
+Rails key `:password_confirmation` instead of repeating unchecked strings. The
+reusable adoption lane can also generate opt-in
 RailsHx-owned HHX skeletons for sessions, registrations, and recoverable
 password reset/edit views, plus confirmable confirmation requests and lockable
 unlock requests, while keeping existing Devise ERB Rails-owned unless manifest

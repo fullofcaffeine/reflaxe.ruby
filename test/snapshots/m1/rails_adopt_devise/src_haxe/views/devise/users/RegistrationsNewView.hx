@@ -3,6 +3,7 @@ package views.devise.users;
 import app.auth.UserAuth;
 import devisehx.hhx.AuthLinks;
 import devisehx.hhx.DeviseErrors;
+import devisehx.hhx.DeviseFormFields;
 import models.User;
 import rails.action_view.HtmlNode;
 
@@ -12,7 +13,7 @@ typedef RegistrationsNewLocals = {
 
 // Generated DeviseHx HHX registration view skeleton.
 // The compiler checks that DeviseErrors receives a DeviseResource<User>
-// and emits ordinary Rails ActiveModel error reads in the generated ERB.
+// and DeviseFormFields emits Rails' expected snake_case form keys.
 @:railsTemplate("devise/registrations/new")
 @:railsTemplateAst("render")
 class RegistrationsNewView {
@@ -33,16 +34,16 @@ class RegistrationsNewView {
 				</if>
 				<form_with url=${AuthLinks.registrationPath(UserAuth.scope)} scope="user" local class="devisehx-auth-form">
 					<div>
-						<field_label name="email">Email</field_label>
-						<text_field name="email" type="email" autocomplete="email" required />
+						<field_label name=${DeviseFormFields.email}>Email</field_label>
+						<text_field name=${DeviseFormFields.email} type="email" autocomplete="email" required />
 					</div>
 					<div>
-						<field_label name="password">Password</field_label>
-						<password_field name="password" autocomplete="new-password" required />
+						<field_label name=${DeviseFormFields.password}>Password</field_label>
+						<password_field name=${DeviseFormFields.password} autocomplete="new-password" required />
 					</div>
 					<div>
-						<field_label name="passwordConfirmation">Confirm password</field_label>
-						<password_field name="passwordConfirmation" autocomplete="new-password" required />
+						<field_label name=${DeviseFormFields.passwordConfirmation}>Confirm password</field_label>
+						<password_field name=${DeviseFormFields.passwordConfirmation} autocomplete="new-password" required />
 					</div>
 					<submit type="submit">Create account</submit>
 				</form_with>

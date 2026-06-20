@@ -3,6 +3,7 @@ package views.devise.users;
 import app.auth.UserAuth;
 import devisehx.hhx.AuthLinks;
 import devisehx.hhx.DeviseErrors;
+import devisehx.hhx.DeviseFormFields;
 import models.User;
 import rails.action_view.HtmlNode;
 
@@ -12,7 +13,7 @@ typedef PasswordsNewLocals = {
 
 // Generated DeviseHx HHX password reset request view skeleton.
 // Recoverable remains Devise-owned at runtime; this view only gives Haxe
-// authors typed route helpers, typed resource errors, and HHX source.
+// authors typed route helpers, typed field refs, typed resource errors, and HHX source.
 @:railsTemplate("devise/passwords/new")
 @:railsTemplateAst("render")
 class PasswordsNewView {
@@ -33,8 +34,8 @@ class PasswordsNewView {
 				</if>
 				<form_with url=${AuthLinks.passwordPath(UserAuth.scope)} scope="user" local class="devisehx-auth-form">
 					<div>
-						<field_label name="email">Email</field_label>
-						<text_field name="email" type="email" autocomplete="email" required />
+						<field_label name=${DeviseFormFields.email}>Email</field_label>
+						<text_field name=${DeviseFormFields.email} type="email" autocomplete="email" required />
 					</div>
 					<submit type="submit">Send reset instructions</submit>
 				</form_with>

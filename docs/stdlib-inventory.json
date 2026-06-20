@@ -223,6 +223,14 @@
       "reason": "Compiler-erased HHX facade for typed Devise/ActiveModel resource error rendering."
     },
     {
+      "id": "std.devisehx.hhx_form_fields",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/hhx/DeviseFormFields.hx",
+      "surface": "devisehx.hhx.DeviseFormFields",
+      "reason": "Compiler-erased HHX form field refs for Devise auth keys such as email, password, password confirmation, and reset password token."
+    },
+    {
       "id": "std.devisehx.mapping",
       "owner": "std",
       "status": "implemented",
@@ -917,6 +925,14 @@
       "path": "std/rails/action_view/Component.hx",
       "surface": "rails.action_view.Component",
       "reason": "Typed RailsHx component token binding a Rails partial/template path and safe slot name to a Haxe locals contract while lowering to ActionView capture plus render partial; checked existing components fail closed when the Rails ERB file is missing."
+    },
+    {
+      "id": "std.rails.action_view_flash_messages",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_view/FlashMessages.hx",
+      "surface": "rails.action_view.FlashMessages",
+      "reason": "Compiler-erased ActionView facade for reading Rails flash messages from HHX without raw ERB."
     },
     {
       "id": "std.rails.action_view_html_attr",
