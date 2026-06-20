@@ -201,6 +201,30 @@ test('posts a typed RailsHx room note through Turbo-backed Haxe client hooks', a
   await expect.poll(async () => page.locator(hooks.selectors.chatMessages).count()).toBeGreaterThanOrEqual(beforeCount)
 })
 
+test('submits chat composer with Enter and preserves Shift+Enter newlines', async ({ page }) => {
+  await gotoAuthenticatedTodos(page)
+  await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
+  await expect(page.locator('turbo-cable-stream-source[connected]')).toBeVisible()
+
+  const beforeCount = await page.locator(hooks.selectors.chatMessages).count()
+  const firstLine = `Keyboard note ${Date.now()}`
+  const secondLine = 'second line stays multiline before submit'
+  const composer = page.getByLabel('Add a typed room note')
+
+  await composer.fill(firstLine)
+  await composer.press('Shift+Enter')
+  await composer.type(secondLine)
+  await expect(composer).toHaveValue(`${firstLine}\n${secondLine}`)
+
+  await composer.press('Enter')
+
+  await expect(page.locator(hooks.selectors.chatPanel)).toContainText(firstLine, { timeout: 20_000 })
+  await expect(page.locator(hooks.selectors.chatPanel)).toContainText(secondLine)
+  await expect(page.getByText('Room note posted')).toBeVisible()
+  await expect(composer).toHaveValue('')
+  await expect.poll(async () => page.locator(hooks.selectors.chatMessages).count()).toBeGreaterThanOrEqual(beforeCount)
+})
+
 test('broadcasts typed Turbo Stream room notes to another browser session', async ({ browser }) => {
   const sender = await browser.newPage()
   const receiver = await browser.newPage()
