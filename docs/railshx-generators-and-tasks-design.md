@@ -514,6 +514,28 @@ authoring format. Standalone controller generation defaults to not mutating
 routes, while scaffold can still opt into Haxe-owned, Rails-owned, snippet, or
 none route modes.
 
+## Mailer Generator Contract
+
+```bash
+bin/rails generate hxruby:mailer UserMailer welcome
+```
+
+The mailer generator writes only Haxe-owned source:
+
+- `src_haxe/mailers/UserMailer.hx` with `@:railsMailer` and
+  `@:railsMailerParams(WelcomeMailerParams)`.
+- Typed HHX html/text mail templates under `src_haxe/views/user_mailer/**`.
+- A Haxe-authored `@:railsMailerPreview` under `src_haxe/previews/**` unless
+  `--skip-preview` is passed.
+- A Haxe-authored `@:railsTest` under `test_haxe/mailers/**` unless
+  `--skip-test` is passed.
+
+After `bundle exec rake hxruby:compile`, Rails receives normal
+`ActionMailer::Base`, `ActionMailer::Preview`, ERB template, and Minitest
+artifacts. The generator does not replace Rails preview servers or test
+runners; it gives app authors a typed Haxe source path for the same Rails
+workflow.
+
 ```bash
 bin/rails generate hxruby:scaffold Todo title:String --controller --routes=haxe
 bin/rails generate hxruby:scaffold Todo title:String --controller --routes=snippet

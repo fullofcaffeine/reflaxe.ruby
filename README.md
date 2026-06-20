@@ -201,6 +201,7 @@ In an installed Rails app, prefer the Rails generator entrypoints:
 bin/rails generate hxruby:install MyApp
 bin/rails generate hxruby:routes
 bin/rails generate hxruby:controller Todos index show --templates
+bin/rails generate hxruby:mailer UserMailer welcome
 bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
 bin/rails generate hxruby:scaffold Todo title:String --controller --skip-tests
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
@@ -442,6 +443,7 @@ rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=
 rake hxruby:gen:adopt SERVICE=RbsPriceFormatter RBS=sig/rbs_price_formatter.rbs
 rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
+rake hxruby:gen:mailer MAILER=UserMailer ACTION=welcome
 ```
 
 Greenfield app/scaffold generators default to Haxe-owned routes. Pass

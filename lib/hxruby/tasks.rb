@@ -12,6 +12,7 @@ require "hxruby/generators/adopt"
 require "hxruby/generators/app"
 require "hxruby/generators/common"
 require "hxruby/generators/controller"
+require "hxruby/generators/mailer"
 require "hxruby/generators/routes"
 require "hxruby/generators/routes_parity"
 require "hxruby/generators/scaffold"
@@ -167,6 +168,26 @@ module HXRuby
             args << "--templates" if truthy?(ENV["TEMPLATES"])
             args << "--force" if truthy?(ENV["FORCE"])
             HXRuby::Generators::Controller.run(args)
+          end
+
+          desc "Generate a typed RailsHx ActionMailer, HHX templates, preview, and test"
+          task :mailer do
+            mailer = ENV["MAILER"] || abort("MAILER is required, for example: rake hxruby:gen:mailer MAILER=UserMailer ACTION=welcome")
+            args = [mailer]
+            args << ENV.fetch("ACTION", "welcome")
+            args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
+            args += ["--haxe-dir", ENV["HAXE_DIR"]] if ENV["HAXE_DIR"]
+            args += ["--package", ENV["PACKAGE"]] if ENV["PACKAGE"]
+            args += ["--views-dir", ENV["VIEWS_DIR"]] if ENV["VIEWS_DIR"]
+            args += ["--views-package", ENV["VIEWS_PACKAGE"]] if ENV["VIEWS_PACKAGE"]
+            args += ["--previews-dir", ENV["PREVIEWS_DIR"]] if ENV["PREVIEWS_DIR"]
+            args += ["--previews-package", ENV["PREVIEWS_PACKAGE"]] if ENV["PREVIEWS_PACKAGE"]
+            args += ["--tests-dir", ENV["TESTS_DIR"]] if ENV["TESTS_DIR"]
+            args += ["--tests-package", ENV["TESTS_PACKAGE"]] if ENV["TESTS_PACKAGE"]
+            args << "--skip-preview" if truthy?(ENV["SKIP_PREVIEW"])
+            args << "--skip-test" if truthy?(ENV["SKIP_TEST"])
+            args << "--force" if truthy?(ENV["FORCE"])
+            HXRuby::Generators::Mailer.run(args)
           end
 
           desc "Generate a Rails-oriented Haxe model/controller scaffold"

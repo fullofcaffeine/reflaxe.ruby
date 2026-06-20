@@ -76,6 +76,7 @@
     "rails:generate-routes": "ruby -I lib scripts/rails/generate-routes.rb",
     "rails:migration": "ruby -I lib scripts/rails/migration.rb",
     "rails:model": "ruby -I lib scripts/rails/model.rb",
+    "rails:mailer": "ruby -I lib scripts/rails/mailer.rb",
     "rails:controller": "ruby -I lib scripts/rails/controller.rb",
     "rails:scaffold": "ruby -I lib scripts/rails/scaffold.rb",
     "todoapp:compile": "node scripts/rails/todoapp.js compile",

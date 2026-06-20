@@ -208,6 +208,19 @@ Unchecked Rails parameterized-mailer escapes, if needed later, must be named
 explicitly, for example `withUnchecked(...)`, and covered by the escape-hatch
 audit. The canonical app-facing API is `@:railsMailerParams(...)`.
 
+To scaffold this full shape in a Rails app, use the Rails-native generator:
+
+```bash
+bin/rails generate hxruby:mailer UserMailer welcome
+bundle exec rake hxruby:compile
+bin/rails test test/generated/mailers/user_mailer_haxe_test.rb
+```
+
+The generator writes Haxe-owned mailer source, typed HHX html/text templates, a
+Haxe-authored preview, and a Haxe-authored Rails test. Rails still owns the
+runtime: after compile, Rails discovers normal `ActionMailer::Base`,
+`ActionMailer::Preview`, ERB templates, and Minitest artifacts.
+
 Preview classes can also be Haxe-authored and compiler-erased into normal
 Rails preview artifacts:
 
@@ -239,8 +252,8 @@ and string attachments through `attachments().add(...)`.
 
 Parameterized mailers are supported for typed `.with(...)` call sites and typed
 `params[:key]` reads inside Haxe-authored mailers. Haxe-authored preview classes
-are supported as generated `ActionMailer::Preview` artifacts. Generated
-`withParams(...)` wrappers, richer attachment hashes, mailer/job integration,
-and preview/test-helper generators remain deferred. Do not represent those as
-supported just because the lower-level Rails API can be reached with unchecked
-interop.
+are supported as generated `ActionMailer::Preview` artifacts. The
+`hxruby:mailer` generator can create the supported mailer/preview/test workflow.
+Richer attachment hashes and mailer/job integration remain deferred. Do not
+represent those as supported just because the lower-level Rails API can be
+reached with unchecked interop.

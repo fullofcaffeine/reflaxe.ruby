@@ -90,9 +90,10 @@ Unsafe boundary policy is tracked in
 | Mixed Rails/RailsHx adoption sample | `examples/rails_interop_app` + `npm run test:rails-interop` | Initial compile/static smoke |
 | Existing Rails boundary adoption generator | `bin/rails generate hxruby:adopt` / `rake hxruby:gen:adopt` | Explicit service/template wrappers, source-backed service signature inference, source-backed extension contracts, plus suggest-only discovery |
 | Rails app install generator | `bin/rails generate hxruby:install` / `rake hxruby:gen:app` | Implemented with typed starter controller, HHX layout/page, Haxe-owned root route, client JS, CSS/importmap, `hxruby:start`, and `hxruby:start:watch` |
-| Route helper generator | `bin/rails generate hxruby:routes` / `rake rails:routes` | Hardened for named Rails routes, nested/resource params, namespaces, member/collection routes, optional segments, globs, and mount-like rows |
+| Route helper generator | `bin/rails generate hxruby:routes` / `rake hxruby:gen:routes` | Hardened for named Rails routes, nested/resource params, namespaces, member/collection routes, optional segments, globs, and mount-like rows |
 | Haxe-owned route DSL | `@:railsRoutes` + `static final routes = { root(...); get(...); resources(...); }` | Initial slice: root, verb routes including `options`/`head`, typed `match(..., [GET, POST])`, typed controller/action refs, checked route aliases/path literals including optional and glob segments, resources/resource `only`/`except`/`param`, checked legacy `resourceName(...)`, nested `member`/`collection`, `namespace`, `scope`, `controller`, `defaults`, `constraints`, and generated `config/routes.rb` |
-| Scaffold generator | `bin/rails generate hxruby:scaffold` / `rake rails:scaffold` | Implemented |
+| ActionMailer generator | `bin/rails generate hxruby:mailer` / `rake hxruby:gen:mailer` | Generates Haxe-owned `@:railsMailer`, `@:railsMailerParams`, typed HHX html/text templates, `@:railsMailerPreview`, and Haxe-authored Rails test source |
+| Scaffold generator | `bin/rails generate hxruby:scaffold` / `rake hxruby:gen:model` | Implemented |
 | Rails engine/plugin affordances | `--rails-output-root`, engine-local `reflaxe_ruby_rails_output_root`, generated autoload initializer | Initial engine-local output and host-consumption slice |
 
 The rows above describe the current Rails MVP. The deeper typed Rails compiler layer is tracked as RailsHx; see `docs/railshx-roadmap.md`, [RailsHx Typed ActiveRecord Query Guide](railshx-query-guide.md), and the `haxe.ruby-wpi` bead epic.

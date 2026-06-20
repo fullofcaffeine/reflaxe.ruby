@@ -23,6 +23,8 @@ if (railsCheck.status === 0) {
   process.stdout.write("[rails-generators] Skipped real Rails generator load smoke; railties unavailable.\n");
 }
 
+generatedMailerCompileSmoke();
+
 console.log("[rails-generators] OK");
 
 function noRailsSmokeSource() {
@@ -88,6 +90,7 @@ require "generators/hxruby/install/install_generator"
 require "generators/hxruby/routes/routes_generator"
 require "generators/hxruby/migration/migration_generator"
 require "generators/hxruby/model/model_generator"
+require "generators/hxruby/mailer/mailer_generator"
 require "generators/hxruby/controller/controller_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
@@ -131,6 +134,14 @@ begin
   model.generate_model
   assert(File.read(File.join(temp, "model", "src_haxe", "models", "Todo.hx")).include?("@:validates({presence: true})"), "model generator did not write typed validation")
 
+  mailer = Hxruby::MailerGenerator.new(["User", "welcome"], {"output" => "mailer"})
+  mailer.destination_root = temp
+  mailer.generate_mailer
+  assert(File.read(File.join(temp, "mailer", "src_haxe", "mailers", "UserMailer.hx")).include?("@:railsMailerParams(WelcomeMailerParams)"), "mailer generator did not write typed parameterized mailer")
+  assert(File.exist?(File.join(temp, "mailer", "src_haxe", "views", "user_mailer", "WelcomeEmailHtmlView.hx")), "mailer generator did not write HHX html view")
+  assert(File.exist?(File.join(temp, "mailer", "src_haxe", "previews", "UserMailerPreview.hx")), "mailer generator did not write preview")
+  assert(File.exist?(File.join(temp, "mailer", "test_haxe", "mailers", "UserMailerHaxeTest.hx")), "mailer generator did not write Haxe-authored Rails test")
+
   controller = Hxruby::ControllerGenerator.new(["Todos", "index", "show"], {"templates" => true, "output" => "controller"})
   controller.destination_root = temp
   controller.generate_controller
@@ -172,6 +183,7 @@ require "generators/hxruby/install/install_generator"
 require "generators/hxruby/routes/routes_generator"
 require "generators/hxruby/migration/migration_generator"
 require "generators/hxruby/model/model_generator"
+require "generators/hxruby/mailer/mailer_generator"
 require "generators/hxruby/controller/controller_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
@@ -181,6 +193,7 @@ expected = {
   Hxruby::RoutesGenerator => "hxruby:routes",
   Hxruby::MigrationGenerator => "hxruby:migration",
   Hxruby::ModelGenerator => "hxruby:model",
+  Hxruby::MailerGenerator => "hxruby:mailer",
   Hxruby::ControllerGenerator => "hxruby:controller",
   Hxruby::ScaffoldGenerator => "hxruby:scaffold",
   Hxruby::AdoptGenerator => "hxruby:adopt"
@@ -205,6 +218,59 @@ function run(command, args) {
     process.exit(result.status ?? 1);
   }
   return result;
+}
+
+function assert(condition, message) {
+  if (!condition) fail(message);
+}
+
+function generatedMailerCompileSmoke() {
+  const temp = mkdtempSync(join(tmpdir(), "hxruby-mailer-generator."));
+  const generated = join(temp, "app");
+  const output = join(temp, "out");
+  try {
+    run("ruby", ["-I", join(root, "lib"), join(root, "scripts", "rails", "mailer.rb"), "UserMailer", "welcome", "--output", generated]);
+    writeFileSync(
+      join(generated, "SmokeMain.hx"),
+      [
+        "import mailers.UserMailer;",
+        "class SmokeMain {",
+        "  static function main() {",
+        '    UserMailer.withParams({email: "reader@example.test", name: "Reader", message: "Generated mailer compile"}).welcome();',
+        "  }",
+        "}",
+        "",
+      ].join("\n"),
+    );
+
+    const reflaxeCandidates = [
+      join(root, "vendor", "reflaxe", "src"),
+      join(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
+      join(root, "..", "haxe.rust", "vendor", "reflaxe", "src"),
+    ];
+    const reflaxeSrc = reflaxeCandidates.find((candidate) => existsSync(join(candidate, "reflaxe", "ReflectCompiler.hx")));
+    assert(reflaxeSrc, "unable to find vendored Reflaxe source for generated mailer compile smoke");
+
+    run("haxe", [
+      "-D", `ruby_output=${output}`,
+      "-D", "reflaxe_runtime",
+      "-D", "reflaxe_ruby_rails",
+      "-cp", join(root, "src"),
+      "-cp", generated,
+      "-cp", join(generated, "src_haxe"),
+      "-cp", join(generated, "test_haxe"),
+      "-cp", reflaxeSrc,
+      "--macro", "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro", "reflaxe.ruby.CompilerInit.Start()",
+      "--macro", 'include("previews")',
+      "--macro", 'include("test_haxe")',
+      "-main", "SmokeMain",
+    ]);
+    run("ruby", ["-c", join(output, "app", "haxe_gen", "mailers", "user_mailer.rb")]);
+    run("ruby", ["-c", join(output, "test", "mailers", "previews", "user_mailer_preview.rb")]);
+  } finally {
+    rmSync(temp, { force: true, recursive: true });
+  }
 }
 
 function fail(message) {
