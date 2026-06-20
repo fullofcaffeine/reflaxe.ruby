@@ -10,6 +10,7 @@ class Main
     user_auth__hx0 = App::Auth::UserAuth
     routes__hx0 = nil
     haxe_authored_test__hx0 = TestHaxe::Models::TodoHaxeTest
+    haxe_request_test__hx0 = TestHaxe::Controllers::TodosHaxeRequestTest
     devise_migration__hx0 = Migrations::AddDeviseToUsers
     chat_migration__hx0 = Migrations::CreateChatMessages
     migration__hx0 = Migrations::CreateTodos
@@ -37,6 +38,7 @@ class Main
     puts(HXRuby.stringify((user_auth__hx0 != nil)))
     puts(HXRuby.stringify((routes__hx0 == nil)))
     puts(HXRuby.stringify((haxe_authored_test__hx0 != nil)))
+    puts(HXRuby.stringify((haxe_request_test__hx0 != nil)))
     puts(HXRuby.stringify((devise_migration__hx0 != nil)))
     puts(HXRuby.stringify((chat_migration__hx0 != nil)))
     puts(HXRuby.stringify((migration__hx0 != nil)))

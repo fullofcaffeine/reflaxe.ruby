@@ -1,5 +1,7 @@
 package rails.test;
 
+import rails.action_controller.Status;
+
 /**
 	Typed Rails/Minitest assertion facade.
 
@@ -71,6 +73,14 @@ class Assert {
 
 	public static function assertNotNil(value:Dynamic):Void {
 		unlowered("assertNotNil");
+	}
+
+	public static function assertResponse(status:Status):Void {
+		unlowered("assertResponse");
+	}
+
+	public static function assertRedirectedTo(path:String):Void {
+		unlowered("assertRedirectedTo");
 	}
 
 	static function unlowered(name:String):Void {

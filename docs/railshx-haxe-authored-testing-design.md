@@ -154,8 +154,10 @@ Example source:
 ```haxe
 package test.controllers;
 
+import rails.action_controller.Status;
 import rails.test.RequestTestCase;
 import rails.test.Assert.*;
+import rails.test.Request.*;
 import models.Todo;
 import models.User;
 import routes.Routes;
@@ -186,6 +188,30 @@ class TodosControllerTest extends RequestTestCase {
 	}
 }
 ```
+
+The first implemented request helper slice exposes `rails.test.Request.get`,
+`post`, `patch`, and `delete` as compiler-erased Haxe calls. These lower to
+ordinary ActionDispatch request helpers and accept a Rails-shaped options object:
+
+```haxe
+get(Routes.todosPath());
+assertResponse(Status.ok);
+
+post(Routes.todosPath(), {
+	params: {
+		todo: {
+			title: "from haxe request",
+			notes: "typed request params"
+		}
+	}
+});
+assertRedirectedTo(Routes.todosPath());
+```
+
+Route helpers, model refs, assertions, and Devise test helper scopes remain
+typed Haxe inputs; Rails still receives normal Minitest/ActionDispatch output.
+Broader helpers such as `assertDifference` and strongly typed request-param
+builders remain follow-up work under `haxe.ruby-skz`.
 
 Possible generated Minitest:
 

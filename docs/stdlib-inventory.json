@@ -567,6 +567,14 @@
       "reason": "Typed marker base class for Haxe-authored ActionDispatch::IntegrationTest request tests emitted as Rails test artifacts."
     },
     {
+      "id": "std.rails.test_request",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/Request.hx",
+      "surface": "rails.test.Request",
+      "reason": "Typed request helper facade for Haxe-authored Rails integration tests lowered to ordinary get/post/patch/delete ActionDispatch calls."
+    },
+    {
       "id": "std.rails.test_description",
       "owner": "std",
       "status": "implemented",

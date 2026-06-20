@@ -2109,6 +2109,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (railsTestAssertion != null) {
 			return railsTestAssertion;
 		}
+		var railsTestRequest = compileRailsTestRequestCall(info, params);
+		if (railsTestRequest != null) {
+			return railsTestRequest;
+		}
 		var deviseTestHelperCall = compileDeviseTestHelperCall(info, params);
 		if (deviseTestHelperCall != null) {
 			return deviseTestHelperCall;
@@ -2496,6 +2500,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(null, "assert_not_nil", args);
 			case "assertNotNil":
 				RubyCall(null, "assert_not_nil", args);
+			case "assertResponse" if (params.length == 1):
+				var status = railsStatusArg(params[0]);
+				status == null ? RubyCall(null, "assert_response", args) : RubyCall(null, "assert_response", [RubyRawExpr(status)]);
+			case "assertRedirectedTo":
+				RubyCall(null, "assert_redirected_to", args);
+			case _:
+				null;
+		}
+	}
+
+	static function compileRailsTestRequestCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (info.owner != "rails.test.Request") {
+			return null;
+		}
+		return switch info.name {
+			case "get" | "post" | "patch" | "delete" if (params.length == 1 || params.length == 2):
+				var args = [simplifyRubyIdentityBegin(printInlineExpr(params[0]))];
+				if (params.length == 2) {
+					args = args.concat(renderKeywordArgs(params[1]));
+				}
+				RubyRawExpr(info.name + "(" + args.join(", ") + ")");
 			case _:
 				null;
 		}

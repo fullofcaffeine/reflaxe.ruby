@@ -11,6 +11,7 @@ import migrations.UpdateUsers;
 import models.ChatMessage;
 import models.Todo;
 import routes.AppRoutes;
+import test_haxe.controllers.TodosHaxeRequestTest;
 import test_haxe.models.TodoHaxeTest;
 import views.ApplicationLayoutView;
 import views.AppTopBarView;
@@ -44,6 +45,7 @@ class Main {
 		var userAuth:Class<UserAuth> = UserAuth;
 		var routes:Class<AppRoutes> = null;
 		var haxeAuthoredTest:Class<TodoHaxeTest> = TodoHaxeTest;
+		var haxeRequestTest:Class<TodosHaxeRequestTest> = TodosHaxeRequestTest;
 		var deviseMigration:Class<AddDeviseToUsers> = AddDeviseToUsers;
 		var chatMigration:Class<CreateChatMessages> = CreateChatMessages;
 		var migration:Class<CreateTodos> = CreateTodos;
@@ -71,6 +73,7 @@ class Main {
 		Sys.println(userAuth != null);
 		Sys.println(routes == null);
 		Sys.println(haxeAuthoredTest != null);
+		Sys.println(haxeRequestTest != null);
 		Sys.println(deviseMigration != null);
 		Sys.println(chatMigration != null);
 		Sys.println(migration != null);
