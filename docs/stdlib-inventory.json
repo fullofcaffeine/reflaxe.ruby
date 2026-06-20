@@ -540,7 +540,7 @@
       "status": "implemented",
       "path": "std/rails/test/Assert.hx",
       "surface": "rails.test.Assert",
-      "reason": "Typed Haxe-authored Rails test assertion facade lowered by the compiler to ordinary Minitest helpers without a RailsHx runtime assertion layer."
+      "reason": "Typed Haxe-authored Rails test assertion facade lowered by the compiler to ordinary Minitest and ActionDispatch helpers without a RailsHx runtime assertion layer."
     },
     {
       "id": "std.rails.test_dsl",

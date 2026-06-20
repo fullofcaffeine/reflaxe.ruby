@@ -169,7 +169,7 @@ class TodosControllerTest extends RequestTestCase {
 		test("create permits typed params and redirects", () -> {
 			var user = User.create({name: "owner"});
 
-			assertDifference(function() return Todo.count(), 1, function() {
+			assertDifference(() -> Todo.count(), 1, () -> {
 				post(Routes.todosPath(), {
 					todo: Todo.params({
 						title: "from params",
@@ -208,10 +208,15 @@ post(Routes.todosPath(), {
 assertRedirectedTo(Routes.todosPath());
 ```
 
+`assertDifference(() -> Todo.count(), 1, () -> { ... })` and
+`assertNoDifference(() -> Todo.count(), () -> { ... })` lower to Rails'
+native `assert_difference` / `assert_no_difference` block helpers with typed
+Haxe model/query expressions inside the measurement lambdas.
+
 Route helpers, model refs, assertions, and Devise test helper scopes remain
 typed Haxe inputs; Rails still receives normal Minitest/ActionDispatch output.
-Broader helpers such as `assertDifference` and strongly typed request-param
-builders remain follow-up work under `haxe.ruby-skz`.
+Strongly typed request-param builders remain follow-up work under
+`haxe.ruby-skz`.
 
 Possible generated Minitest:
 

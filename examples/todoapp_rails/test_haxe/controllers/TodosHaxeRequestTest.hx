@@ -33,9 +33,10 @@ class TodosHaxeRequestTest extends RequestTestCase {
 			});
 
 			IntegrationHelpers.signIn(UserAuth.scope, user);
-			get(Routes.todosPath());
-
-			assertResponse(Status.ok);
+			assertNoDifference(() -> Todo.count(), () -> {
+				get(Routes.todosPath());
+				assertResponse(Status.ok);
+			});
 			IntegrationHelpers.signOut(UserAuth.scope);
 		});
 
@@ -49,13 +50,15 @@ class TodosHaxeRequestTest extends RequestTestCase {
 			});
 
 			IntegrationHelpers.signIn(UserAuth.scope, user);
-			post(Routes.todosPath(), {
-				params: {
-					todo: {
-						title: "from haxe request",
-						notes: "typed request params"
+			assertDifference(() -> Todo.count(), 1, () -> {
+				post(Routes.todosPath(), {
+					params: {
+						todo: {
+							title: "from haxe request",
+							notes: "typed request params"
+						}
 					}
-				}
+				});
 			});
 
 			assertRedirectedTo(Routes.todosPath());

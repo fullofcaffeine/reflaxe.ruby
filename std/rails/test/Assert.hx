@@ -83,6 +83,14 @@ class Assert {
 		unlowered("assertRedirectedTo");
 	}
 
+	public static function assertDifference(measure:Void->Dynamic, difference:Int, body:Void->Void):Void {
+		unlowered("assertDifference");
+	}
+
+	public static function assertNoDifference(measure:Void->Dynamic, body:Void->Void):Void {
+		unlowered("assertNoDifference");
+	}
+
 	static function unlowered(name:String):Void {
 		throw 'rails.test.Assert.$name must be lowered by reflaxe.ruby.';
 	}

@@ -2505,6 +2505,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				status == null ? RubyCall(null, "assert_response", args) : RubyCall(null, "assert_response", [RubyRawExpr(status)]);
 			case "assertRedirectedTo":
 				RubyCall(null, "assert_redirected_to", args);
+			case "assertDifference" if (params.length == 3):
+				RubyRawExpr("assert_difference(" + renderRubyProc(params[0]) + ", " + printInlineExpr(params[1]) + ") " + renderRubyBlock(params[2]));
+			case "assertNoDifference" if (params.length == 2):
+				RubyRawExpr("assert_no_difference(" + renderRubyProc(params[0]) + ") " + renderRubyBlock(params[1]));
 			case _:
 				null;
 		}
@@ -4002,6 +4006,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 			case _:
 				"{ |value| " + printInlineExpr(expr) + ".call(value) }";
+		}
+	}
+
+	static function renderRubyProc(expr:TypedExpr):String {
+		return switch (expr.expr) {
+			case TFunction(fn):
+				var args = [for (arg in fn.args) localName(arg.v)].join(", ");
+				var body = renderStatements(compileRubyBlockBody(fn.expr));
+				if (canRenderInlineBlock(body)) {
+					var prefix = args == "" ? "" : "|" + args + "| ";
+					"-> { " + prefix + body[0] + " }";
+				} else {
+					var lines = [args == "" ? "-> do" : "-> do |" + args + "|"];
+					appendIndentedLines(lines, body, 1);
+					lines.push("end");
+					lines.join("\n");
+				}
+			case _:
+				printInlineExpr(expr);
 		}
 	}
 

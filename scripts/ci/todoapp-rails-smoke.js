@@ -388,6 +388,8 @@ for (const expected of [
   'test "create accepts typed route and request params" do',
   "get(self.todos_path())",
   "assert_response(:ok)",
+  "assert_no_difference(-> { Models::Todo.count() }) do",
+  "assert_difference(-> { Models::Todo.count() }, 1) { post(self.todos_path(), params:",
   "post(self.todos_path(), params:",
   "assert_redirected_to(self.todos_path())",
   'assert_equal(["from haxe request"], Models::Todo.where(user_id:',
