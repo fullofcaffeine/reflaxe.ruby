@@ -22,6 +22,10 @@ module HXRuby
           extension_sources: [],
           extension_modules: [],
           gems: [],
+          schema: false,
+          schema_models: [],
+          schema_from: "db/schema.rb",
+          allow_dynamic: false,
           write: nil,
           locals: "",
           devise_hhx_views: false,
@@ -38,6 +42,10 @@ module HXRuby
           parser.on("--extension-source PATH") { |value| options[:extension_sources].concat(Common.split_csv(value)) }
           parser.on("--extension-module NAME") { |value| options[:extension_modules].concat(Common.split_csv(value)) }
           parser.on("--gem NAME") { |value| options[:gems].concat(Common.split_csv(value)) }
+          parser.on("--schema") { options[:schema] = true }
+          parser.on("--models LIST") { |value| options[:schema_models].concat(Common.split_csv(value)) }
+          parser.on("--from PATH") { |value| options[:schema_from] = value }
+          parser.on("--allow-dynamic") { options[:allow_dynamic] = true }
           parser.on("--write WHAT") { |value| options[:write] = value }
           parser.on("--locals FIELDS") { |value| options[:locals] = value }
           parser.on("--devise-hhx-views") { options[:devise_hhx_views] = true }
@@ -56,7 +64,13 @@ module HXRuby
         if options[:write] && options[:write] != "contracts"
           raise Error, "--write only supports contracts for gem adoption."
         end
-        if !options[:discover] && options[:services].empty? && options[:templates].empty? && options[:extension_sources].empty? && options[:gems].empty?
+        if options[:schema_models].any? && !options[:schema]
+          raise Error, "--models is only supported with --schema adoption."
+        end
+        if options[:schema] && !options[:discover] && options[:schema_models].empty?
+          raise Error, "--schema requires --discover or --models ModelName[,OtherModel]."
+        end
+        if !options[:discover] && options[:services].empty? && options[:templates].empty? && options[:extension_sources].empty? && options[:gems].empty? && !options[:schema]
           raise Error, "Provide at least one --service, --template, or --extension-source boundary to adopt."
         end
 
@@ -73,6 +87,10 @@ module HXRuby
         @extension_sources = options.fetch(:extension_sources)
         @extension_modules = options.fetch(:extension_modules).map { |mod| checked_constant_path(mod, "--extension-module") }
         @gems = options.fetch(:gems).map { |gem_name| checked_gem_name(gem_name) }
+        @schema = options.fetch(:schema)
+        @schema_models = options.fetch(:schema_models).map { |model| checked_schema_model_name(model) }
+        @schema_from = options.fetch(:schema_from)
+        @allow_dynamic = options.fetch(:allow_dynamic)
         @write_mode = options.fetch(:write)
         @locals = parse_locals(options.fetch(:locals))
         @devise_hhx_views = options.fetch(:devise_hhx_views)
@@ -83,7 +101,9 @@ module HXRuby
       def run
         discover_boundaries if @discover
         discover_gems if @discover && @gems.any?
+        discover_schema if @discover && @schema
         write_gem_contracts if @write_mode == "contracts"
+        write_schema_models if @schema && @schema_models.any?
         @services.each { |service| write_service(service) }
         @templates.each { |template| write_template(template) }
         @extension_sources.each { |source| write_extension_contracts(source) }
@@ -142,6 +162,25 @@ module HXRuby
           basename = File.basename(relative).sub(/\A_/, "")
           dirname == "." ? basename : File.join(dirname, basename)
         end.uniq.sort
+      end
+
+      def discover_schema
+        inventory = schema_inventory
+        puts "[rails:adopt:schema] #{relative_output_path(schema_path)}"
+        inventory.fetch(:tables).each do |table|
+          puts "  table: #{table.fetch(:name)} -> models.#{table.fetch(:model)}"
+          puts "    columns: #{table.fetch(:columns).length}"
+          puts "    timestamps: #{table.fetch(:timestamps)}"
+          table.fetch(:indexes).each do |index|
+            puts "    index: #{index.fetch(:columns).join(",")}#{index.fetch(:unique) ? " unique" : ""}"
+          end
+          table.fetch(:foreign_keys).each do |foreign_key|
+            puts "    foreign_key: #{foreign_key.fetch(:column)} -> #{foreign_key.fetch(:to_table)}"
+          end
+          table.fetch(:review_notes).each { |note| puts "    review: #{note}" }
+        end
+        puts "  (no tables found)" if inventory.fetch(:tables).empty?
+        puts "  next: bin/rails generate hxruby:adopt --schema --models #{inventory.fetch(:tables).map { |table| table.fetch(:model) }.join(",")}"
       end
 
       def parse_locals(raw)
@@ -356,6 +395,14 @@ module HXRuby
         name
       end
 
+      def checked_schema_model_name(value)
+        model = value.to_s.strip
+        unless model.match?(/\A[A-Z][A-Za-z0-9_]*\z/)
+          raise Error, "--models entries must be safe Haxe/Ruby model class names"
+        end
+        model
+      end
+
       def checked_input_file(value, label)
         path = File.expand_path(value, @output_dir)
         unless path == @output_dir || path.start_with?("#{@output_dir}#{File::SEPARATOR}")
@@ -387,6 +434,72 @@ module HXRuby
 
       def write_owned(path, content, kind:)
         Common.write_file(path, content, force: @force, root: @output_dir, kind: kind, source: "hxruby:adopt")
+      end
+
+      def write_schema_models
+        inventory = schema_inventory
+        by_model = inventory.fetch(:tables).to_h { |table| [table.fetch(:model), table] }
+        missing = @schema_models.reject { |model| by_model.key?(model) }
+        raise Error, "--schema --models requested model(s) not found in #{relative_output_path(schema_path)}: #{missing.join(", ")}" if missing.any?
+
+        @schema_models.each do |model|
+          table = by_model.fetch(model)
+          path = File.join(@output_dir, "src_haxe", "models", "#{model}.hx")
+          write_owned(path, render_schema_model(table), kind: "haxe_adopted_schema_model")
+        end
+      end
+
+      def render_schema_model(table)
+        lines = [
+          "package models;",
+          "",
+          "// Rails-owned table adopted from #{relative_output_path(schema_path)}.",
+          "// Runtime owner: Rails/database schema. Haxe owner: typed contract for",
+          "// queries, params, templates, and gradual migration into RailsHx.",
+          "@:railsModel(#{Common.haxe_string(table.fetch(:name))})",
+        ]
+        lines << "@:railsTimestamps" if table.fetch(:timestamps)
+        lines += [
+          "class #{table.fetch(:model)} extends rails.active_record.Base<#{table.fetch(:model)}> {",
+          "\t@:railsColumn({primaryKey: true, dbType: \"bigint\"})",
+          "\tpublic var id:Int;",
+        ]
+        table.fetch(:columns).each do |column|
+          next if column.fetch(:timestamp_column)
+          next if column.fetch(:name) == "id"
+
+          lines << ""
+          column.fetch(:review_notes).each { |note| lines << "\t// TODO: #{note}" }
+          lines << "\t@:railsColumn#{schema_column_metadata(column)}"
+          lines << "\tpublic var #{column.fetch(:haxe_name)}:#{column.fetch(:haxe_type)};"
+        end
+        table.fetch(:review_notes).each do |note|
+          lines << ""
+          lines << "\t// TODO: #{note}"
+        end
+        lines << "}"
+        lines << ""
+        lines.join("\n")
+      end
+
+      def schema_column_metadata(column)
+        options = []
+        options << "nullable: false" unless column.fetch(:nullable)
+        options << "dbType: #{Common.haxe_string(column.fetch(:rails_type))}" if column.fetch(:db_type)
+        options << "defaultValue: #{column.fetch(:default_haxe)}" if column.fetch(:default_haxe)
+        options << "index: true" if column.fetch(:index)
+        options << "unique: true" if column.fetch(:unique)
+        return "" if options.empty?
+
+        "({#{options.join(", ")}})"
+      end
+
+      def schema_inventory
+        @schema_inventory ||= SchemaParser.new(schema_path, allow_dynamic: @allow_dynamic).inventory
+      end
+
+      def schema_path
+        @schema_path ||= checked_input_file(@schema_from, "--schema --from")
       end
 
       def write_gem_contracts
@@ -1302,6 +1415,161 @@ module HXRuby
 
       def ruby_identifier_pattern
         "[A-Za-z_][A-Za-z0-9_]*"
+      end
+
+      class SchemaParser
+        COLUMN_TYPE_MAP = {
+          "string" => ["String", false],
+          "text" => ["String", true],
+          "integer" => ["Int", false],
+          "bigint" => ["Int", true],
+          "boolean" => ["Bool", false],
+          "float" => ["Float", false],
+          "decimal" => ["Float", true],
+          "datetime" => ["Date", true],
+          "date" => ["Date", true],
+          "time" => ["Date", true],
+        }.freeze
+
+        def initialize(path, allow_dynamic:)
+          @path = path
+          @allow_dynamic = allow_dynamic
+          raise Error, "Schema file does not exist: #{path}" unless File.file?(path)
+
+          @source = File.read(path)
+        end
+
+        def inventory
+          tables = parse_tables
+          foreign_keys = parse_foreign_keys
+          tables.each do |table|
+            table_foreign_keys = foreign_keys.fetch(table.fetch(:name), [])
+            table[:foreign_keys] = table_foreign_keys
+            table_foreign_keys.each do |foreign_key|
+              table[:review_notes] << "Foreign key #{foreign_key.fetch(:column)} points to #{foreign_key.fetch(:to_table)}; association inference is intentionally review-only in this adoption slice."
+            end
+          end
+          {
+            version: 1,
+            source: @path,
+            tables: tables,
+          }
+        end
+
+        private
+
+        def parse_tables
+          @source.scan(/^\s*create_table\s+["']([^"']+)["'][^\n]*do\s+\|t\|([\s\S]*?)^\s*end\b/m).map do |name, body|
+            indexes = parse_indexes(body)
+            columns = parse_columns(body, indexes)
+            timestamps = columns.any? { |column| column.fetch(:name) == "created_at" } &&
+              columns.any? { |column| column.fetch(:name) == "updated_at" }
+            {
+              name: name,
+              model: class_name(singular(name)),
+              columns: columns,
+              indexes: indexes,
+              foreign_keys: [],
+              timestamps: timestamps,
+              review_notes: [],
+            }
+          end
+        end
+
+        def parse_columns(body, indexes)
+          body.lines.filter_map do |line|
+            match = line.match(/^\s*t[.](\w+)\s+["']([^"']+)["'](.*)$/)
+            next unless match
+
+            rails_type = match[1]
+            name = match[2]
+            options = match[3]
+            type = haxe_type(rails_type)
+            nullable = !options.match?(/\bnull:\s*false\b/)
+            default_haxe = default_literal(options)
+            single_column_indexes = indexes.select { |index| index.fetch(:columns) == [name] }
+            {
+              name: name,
+              haxe_name: haxe_identifier(name),
+              rails_type: rails_type,
+              haxe_type: nullable ? "Null<#{type.fetch(:haxe)}>" : type.fetch(:haxe),
+              nullable: nullable,
+              default_haxe: default_haxe,
+              db_type: type.fetch(:db_type),
+              index: single_column_indexes.any?,
+              unique: single_column_indexes.any? { |index| index.fetch(:unique) },
+              timestamp_column: %w[created_at updated_at].include?(name),
+              review_notes: review_notes_for_column(name, rails_type, type),
+            }
+          end
+        end
+
+        def parse_indexes(body)
+          body.lines.filter_map do |line|
+            match = line.match(/^\s*t[.]index\s+\[([^\]]+)\](.*)$/)
+            next unless match
+
+            columns = match[1].scan(/["']([^"']+)["']/).flatten
+            next if columns.empty?
+
+            {
+              columns: columns,
+              unique: match[2].match?(/\bunique:\s*true\b/),
+            }
+          end
+        end
+
+        def parse_foreign_keys
+          @source.scan(/^\s*add_foreign_key\s+["']([^"']+)["'],\s+["']([^"']+)["'](.*)$/).each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(from, to, options), by_table|
+            column = options[/\bcolumn:\s+["']([^"']+)["']/, 1] || "#{singular(to)}_id"
+            by_table[from] << { column: column, to_table: to }
+          end
+        end
+
+        def haxe_type(rails_type)
+          mapped = COLUMN_TYPE_MAP[rails_type]
+          return { haxe: mapped[0], db_type: mapped[1] } if mapped
+          if @allow_dynamic
+            return { haxe: "Dynamic", db_type: true, dynamic: true }
+          end
+
+          raise Error, "Unsupported schema column type #{rails_type.inspect} in #{@path}; pass --allow-dynamic to generate reviewed Dynamic fields."
+        end
+
+        def default_literal(options)
+          raw = options[/\bdefault:\s+([^,]+)(?:,|\z)/, 1]&.strip
+          return nil unless raw
+          return nil if raw.start_with?("->")
+          return raw if %w[true false nil].include?(raw)
+          return raw if raw.match?(/\A-?[0-9]+(?:[.][0-9]+)?\z/)
+          string = raw[/\A["'](.*)["']\z/, 1]
+          return JSON.generate(string) if string
+
+          nil
+        end
+
+        def review_notes_for_column(name, rails_type, type)
+          notes = []
+          notes << "Column #{name} used unsupported type #{rails_type}; generated Dynamic because --allow-dynamic was explicit." if type[:dynamic]
+          notes << "Column #{name} looks like a foreign key; add a typed association after reviewing the target model." if name.end_with?("_id")
+          notes
+        end
+
+        def haxe_identifier(value)
+          Common.haxe_identifier(Common.haxe_method_name(value))
+        end
+
+        def class_name(value)
+          value.to_s.split("_").map { |part| part[0].upcase + part[1..] }.join
+        end
+
+        def singular(value)
+          name = value.to_s
+          return "#{name[0...-3]}y" if name.end_with?("ies")
+          return name[0...-1] if name.end_with?("s")
+
+          name
+        end
       end
 
       class GemSourceInventory

@@ -142,6 +142,19 @@ bin/rails generate hxruby:adopt --discover
 
 Discovery prints candidate Ruby constants and ERB templates but does not write guessed contracts.
 
+Schema adoption uses the same discover-first workflow for the current
+Rails-owned database snapshot:
+
+```bash
+bin/rails generate hxruby:adopt --schema --discover
+bin/rails generate hxruby:adopt --schema --models Todo,User
+```
+
+The generated Haxe models are typed contracts over `db/schema.rb`; Rails still
+owns the database, historical migrations, and `bin/rails db:migrate`. Ambiguous
+associations are emitted as review comments instead of guessed `belongsTo`
+metadata, and unsupported DB types fail unless `--allow-dynamic` is explicit.
+
 ## Generator Design
 
 RailsHx public generators are Ruby-native because they run inside Rails projects, package with the `hxruby` gem, and should feel like normal Rails tooling. Prefer `bin/rails generate hxruby:*` inside Rails apps. This mirrors the PhoenixHx split: host-app scaffolding is implemented as Mix tasks, while Haxe project creation is a separate bootstrap path.

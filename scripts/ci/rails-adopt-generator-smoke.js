@@ -129,6 +129,16 @@ writeFileSync(join(outputDir, "db", "schema.rb"), [
   '    t.datetime "created_at", null: false',
   '    t.datetime "updated_at", null: false',
   "  end",
+  '  create_table "todos", force: :cascade do |t|',
+  '    t.string "title", null: false',
+  '    t.boolean "is_completed", default: false, null: false',
+  '    t.text "notes"',
+  '    t.bigint "user_id", null: false',
+  '    t.datetime "created_at", null: false',
+  '    t.datetime "updated_at", null: false',
+  '    t.index ["user_id"], name: "index_todos_on_user_id"',
+  "  end",
+  '  add_foreign_key "todos", "users"',
   "end",
   "",
 ].join("\n"));
@@ -276,6 +286,117 @@ assertManifest([
   ["src_haxe/interop/templates/LegacyBadgeTemplate.hx", "haxe_adopted_template"],
   ["src_haxe/interop/extensions/SluggableInstance.hx", "haxe_adopted_extension"],
   ["src_haxe/interop/extensions/SluggableClassMethods.hx", "haxe_adopted_extension"],
+]);
+
+const schemaDiscover = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--schema",
+  "--discover",
+]);
+for (const expected of [
+  "[rails:adopt:schema] db/schema.rb",
+  "table: users -> models.User",
+  "table: todos -> models.Todo",
+  "columns: 6",
+  "timestamps: true",
+  "index: user_id",
+  "foreign_key: user_id -> users",
+  "review: Foreign key user_id points to users",
+  "next: bin/rails generate hxruby:adopt --schema --models User,Todo",
+]) {
+  if (!schemaDiscover.stdout.includes(expected)) {
+    process.stdout.write(schemaDiscover.stdout);
+    process.stderr.write(schemaDiscover.stderr);
+    fail(`schema discovery missing ${expected}`);
+  }
+}
+
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--schema",
+  "--models",
+  "Todo",
+]);
+assertIncludes("src_haxe/models/Todo.hx", [
+  "package models;",
+  "// Rails-owned table adopted from db/schema.rb.",
+  "// Runtime owner: Rails/database schema. Haxe owner: typed contract for",
+  '@:railsModel("todos")',
+  "@:railsTimestamps",
+  "class Todo extends rails.active_record.Base<Todo>",
+  '@:railsColumn({primaryKey: true, dbType: "bigint"})',
+  "public var id:Int;",
+  "@:railsColumn({nullable: false})",
+  "public var title:String;",
+  "@:railsColumn({nullable: false, defaultValue: false})",
+  "public var isCompleted:Bool;",
+  '@:railsColumn({dbType: "text"})',
+  "public var notes:Null<String>;",
+  '@:railsColumn({nullable: false, dbType: "bigint", index: true})',
+  "public var userId:Int;",
+  "TODO: Column user_id looks like a foreign key",
+  "TODO: Foreign key user_id points to users",
+]);
+assertManifest([
+  ["src_haxe/models/Todo.hx", "haxe_adopted_schema_model"],
+]);
+
+expectGeneratorFailure("non-owned schema model collision", [
+  "--output",
+  outputDir,
+  "--schema",
+  "--models",
+  "User",
+], "Refusing to overwrite non-RailsHx-owned file");
+
+writeFileSync(join(outputDir, "db", "schema_unknown.rb"), [
+  "ActiveRecord::Schema[7.2].define(version: 2026_01_01_000002) do",
+  '  create_table "widgets", force: :cascade do |t|',
+  '    t.citext "slug", null: false',
+  "  end",
+  "end",
+  "",
+].join("\n"));
+expectGeneratorFailure("unknown schema column type", [
+  "--output",
+  outputDir,
+  "--schema",
+  "--from",
+  "db/schema_unknown.rb",
+  "--discover",
+], "Unsupported schema column type");
+
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "adopt.rb"),
+  "--output",
+  outputDir,
+  "--schema",
+  "--from",
+  "db/schema_unknown.rb",
+  "--models",
+  "Widget",
+  "--allow-dynamic",
+]);
+assertIncludes("src_haxe/models/Widget.hx", [
+  "package models;",
+  '@:railsModel("widgets")',
+  "class Widget extends rails.active_record.Base<Widget>",
+  "TODO: Column slug used unsupported type citext; generated Dynamic because --allow-dynamic was explicit.",
+  '@:railsColumn({nullable: false, dbType: "citext"})',
+  "public var slug:Dynamic;",
+]);
+assertManifest([
+  ["src_haxe/models/Widget.hx", "haxe_adopted_schema_model"],
 ]);
 
 const gemDiscover = run("ruby", [
@@ -526,6 +647,7 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "import interop.gems.demo_auth.GemLayer;",
   "import interop.gems.demo_auth.SessionManager;",
   "import interop.templates.LegacyBadgeTemplate;",
+  "import models.Todo;",
   "import models.User;",
   "import rails.action_controller.Base;",
   "import rails.action_view.HtmlNode;",
@@ -544,6 +666,7 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\tvar classMethods:Class<SluggableClassMethods> = SluggableClassMethods;",
   "\t\tvar gemLayer:Class<GemLayer> = GemLayer;",
   "\t\tvar sessionManager:Class<SessionManager> = SessionManager;",
+  "\t\tvar todoModel:Class<Todo> = Todo;",
   "\t\tvar userAuth:Class<UserAuth> = UserAuth;",
   "\t\tvar instanceContract:Dynamic = (null : SluggableInstance);",
   "\t\tif (false) {",
@@ -554,6 +677,10 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\t\trbsFormatter.labelFor(\"ok\", 1);",
   "\t\t\tRbsPriceFormatter.call(100);",
   "\t\t\tvar user = new User();",
+  "\t\t\tvar todo = new Todo();",
+  "\t\t\ttodo.title = \"typed\";",
+  "\t\t\ttodo.userId = 1;",
+  "\t\t\tTodo.where({title: \"typed\"}).order(Todo.f.title.asc()).limit(1).toArray();",
   "\t\t\tUserAuth.signIn(controller, user);",
   "\t\t\tUserAuth.signOut(controller);",
   "\t\t\tvar current:Null<User> = UserAuth.current(controller);",
@@ -571,6 +698,7 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\tSys.println(classMethods != null);",
   "\t\tSys.println(gemLayer != null);",
   "\t\tSys.println(sessionManager != null);",
+  "\t\tSys.println(todoModel != null);",
   "\t\tSys.println(userAuth != null);",
   "\t\tSys.println(instanceContract == null);",
   "\t\tSys.println(LegacyBadgeTemplate.template.templatePath);",
