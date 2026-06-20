@@ -111,6 +111,22 @@
       "reason": "Typed Kernel externs for direct Ruby interop."
     },
     {
+      "id": "std.ruby.file",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/File.hx",
+      "surface": "ruby.File",
+      "reason": "Typed extern for Ruby File APIs used by Haxe-authored Ruby tooling cores while keeping generated Ruby direct and idiomatic."
+    },
+    {
+      "id": "std.ruby.json",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Json.hx",
+      "surface": "ruby.Json",
+      "reason": "Typed JSON.parse extern over Ruby's JSON constant, including require metadata, for Haxe-authored Ruby tooling that consumes JSON manifests without raw Ruby glue."
+    },
+    {
       "id": "std.ruby.prelude",
       "owner": "std",
       "status": "implemented",
@@ -141,6 +157,126 @@
       "path": "std/ruby/NativeIterator.hx",
       "surface": "ruby.NativeIterator",
       "reason": "Target-local iterator wrapper for Ruby arrays returned by std collection helpers."
+    },
+    {
+      "id": "std.devisehx.auth",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/Auth.hx",
+      "surface": "devisehx.Auth",
+      "reason": "Typed Devise controller helper facade for current-user, sign-in, sign-out, mapping, and lifecycle authentication seams."
+    },
+    {
+      "id": "std.devisehx.auth_filter",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/AuthFilter.hx",
+      "surface": "devisehx.AuthFilter",
+      "reason": "Typed Devise before_action filter token used by RailsHx lifecycle lowering."
+    },
+    {
+      "id": "std.devisehx.scope",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/DeviseScope.hx",
+      "surface": "devisehx.DeviseScope",
+      "reason": "Typed Devise scope token coupling scope name, route resource, and model type for app-local auth contracts."
+    },
+    {
+      "id": "std.devisehx.route_resource",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/RouteResource.hx",
+      "surface": "devisehx.RouteResource",
+      "reason": "Typed abstract for Devise route resources such as users, avoiding loose strings in route contracts."
+    },
+    {
+      "id": "std.devisehx.scope_name",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/ScopeName.hx",
+      "surface": "devisehx.ScopeName",
+      "reason": "Typed abstract for Devise mapping scope names such as user/admin."
+    },
+    {
+      "id": "std.devisehx.sign_in_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/SignInOptions.hx",
+      "surface": "devisehx.SignInOptions",
+      "reason": "Typed options boundary for Devise sign_in calls."
+    },
+    {
+      "id": "std.devisehx.mapping",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/mapping/DeviseMapping.hx",
+      "surface": "devisehx.mapping.DeviseMapping",
+      "reason": "Typed Devise mapping extern for app-local generated auth contracts and mapping validation seams."
+    },
+    {
+      "id": "std.devisehx.model_module",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/model/DeviseModule.hx",
+      "surface": "devisehx.model.DeviseModule",
+      "reason": "Typed Devise module tokens used by model metadata and generated Devise contracts."
+    },
+    {
+      "id": "std.devisehx.model_module_spec",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/model/DeviseModuleSpec.hx",
+      "surface": "devisehx.model.DeviseModuleSpec",
+      "reason": "Typed Devise model module specification surface for future option-bearing module validation."
+    },
+    {
+      "id": "std.devisehx.model_resource",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/model/DeviseResource.hx",
+      "surface": "devisehx.model.DeviseResource",
+      "reason": "Typed marker for models that participate in Devise authentication."
+    },
+    {
+      "id": "std.devisehx.route_group",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/routes/DeviseRouteGroup.hx",
+      "surface": "devisehx.routes.DeviseRouteGroup",
+      "reason": "Typed Devise route group tokens for the supported Haxe-owned devise_for subset and future only/skip options."
+    },
+    {
+      "id": "std.devisehx.routes",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/routes/DeviseRoutes.hx",
+      "surface": "devisehx.routes.DeviseRoutes",
+      "reason": "Typed Devise route macro facade that lowers supported Haxe-owned Devise mappings to normal Rails devise_for declarations."
+    },
+    {
+      "id": "std.devisehx.test_helpers",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/test/IntegrationHelpers.hx",
+      "surface": "devisehx.test.IntegrationHelpers",
+      "reason": "Typed Devise test helper facade for generated Rails test seams."
+    },
+    {
+      "id": "std.devisehx.warden_access",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/warden/WardenAccess.hx",
+      "surface": "devisehx.warden.WardenAccess",
+      "reason": "Explicit unsafe seam for custom Warden access when typed Auth helpers are insufficient."
+    },
+    {
+      "id": "std.devisehx.warden_proxy",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/warden/WardenProxy.hx",
+      "surface": "devisehx.warden.WardenProxy",
+      "reason": "Typed Warden proxy extern for advanced Devise/Warden interop boundaries."
     },
     {
       "id": "std.rails.active_record",
@@ -391,12 +527,28 @@
       "reason": "Typed Rails params wrapper for require/permit flows."
     },
     {
+      "id": "std.rails.action_controller_flash_store",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/FlashStore.hx",
+      "surface": "rails.action_controller.FlashStore",
+      "reason": "Typed Rails flash facade with intent-named notice/alert helpers lowering to normal flash hash assignment."
+    },
+    {
       "id": "std.rails.action_controller_permit_spec",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/action_controller/PermitSpec.hx",
       "surface": "rails.action_controller.PermitSpec",
       "reason": "Typed strong-params permit entry lowered to Rails symbols and nested permit hashes."
+    },
+    {
+      "id": "std.rails.action_controller_params_runtime",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/ParamsRuntime.hx",
+      "surface": "rails.action_controller.ParamsRuntime",
+      "reason": "Compiler-recognized params merge helper for server-owned values such as authenticated user ids."
     },
     {
       "id": "std.rails.action_controller_request",

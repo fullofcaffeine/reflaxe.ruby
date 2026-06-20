@@ -84,8 +84,12 @@ Use this checklist when adding or reviewing a smoke test:
   output belongs in `scripts/ci/snapshot-harness.js` instead.
 - `test:route-parity-dogfood` is a generated-source freshness check, not a broad
   runtime test: it recompiles `tools/route_parity_hx` and byte-compares the
-  committed generated Ruby parity core. The surrounding `test:routes-generator`
-  smoke owns the route helper/parity behavior and diagnostics.
+  committed generated Ruby parity core snapshot files under
+  `lib/hxruby/generated/route_parity`. That Haxe-authored core is the first
+  serious Ruby tooling dogfood slice: it uses typed `ruby.Json`/`ruby.File`
+  externs to emit direct `JSON.parse`/`File.read` Ruby while a Ruby-native
+  adapter keeps Rails/Rake UX. The surrounding `test:routes-generator` smoke
+  owns the route helper/parity behavior and diagnostics.
 
 ## Todoapp Dogfood Coverage
 

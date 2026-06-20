@@ -1,5 +1,7 @@
 package hxruby.generators.routes;
 
+import ruby.File;
+import ruby.Json;
 import ruby.NativeHash;
 
 class ManifestRoute {
@@ -34,8 +36,29 @@ class RailsRoute {
 	}
 }
 
+class DeviseExpectedField {
+	public final name:String;
+	public final value:String;
+
+	public function new(name:String, value:String) {
+		this.name = name;
+		this.value = value;
+	}
+}
+
 class ParityCore {
 	public static function main():Void {}
+
+	public static function compareManifestFile(manifestPath:String, railsRoutes:String, ?deviseFactsPath:String):Array<String> {
+		var deviseFactsJson = deviseFactsPath == null ? null : File.read(deviseFactsPath);
+		return compareManifestJson(File.read(manifestPath), railsRoutes, deviseFactsJson);
+	}
+
+	public static function compareManifestJson(manifestJson:String, railsRoutes:String, ?deviseFactsJson:String):Array<String> {
+		var manifest = Json.parse(manifestJson);
+		var errors = compareManifest(manifest, railsRoutes);
+		return errors.concat(validateDeviseMappings(manifest, deviseFactsJson));
+	}
 
 	public static function compareManifest(manifest:Dynamic, railsRoutes:String):Array<String> {
 		var manifestErrors = validateManifest(manifest);
@@ -83,6 +106,72 @@ class ParityCore {
 			case "collection" | "constraints" | "controller" | "defaults" | "deviseFor" | "match" | "member" | "mount" | "namespace" | "rawRuby" | "resource" | "resources" | "root" | "scope" | "verb": true;
 			case _: false;
 		}
+	}
+
+	static function validateDeviseMappings(manifest:Dynamic, ?deviseFactsJson:String):Array<String> {
+		var declarations = deviseDeclarations(hashArray(manifest, "declarations"));
+		if (declarations.length == 0) {
+			return [];
+		}
+		if (deviseFactsJson == null || deviseFactsJson == "") {
+			return ["Devise route manifest entries require Devise mapping facts from a fresh Rails boot"];
+		}
+
+		var facts = Json.parse(deviseFactsJson);
+		var mappings:Dynamic = NativeHash.get(facts, "mappings");
+		var errors:Array<String> = [];
+		for (declaration in declarations) {
+			var expected:Dynamic = NativeHash.get(declaration, "expectedMapping");
+			var scope = hashString(expected, "name");
+			var mapping:Dynamic = mappings == null || scope == null ? null : NativeHash.get(mappings, scope);
+			if (mapping == null) {
+				errors.push('missing Devise mapping ${quote(scope == null ? "" : scope)} for ${declarationPosition(declaration)}');
+			} else {
+				errors = errors.concat(compareDeviseMapping(scope, expected, mapping, declaration));
+			}
+		}
+		return errors;
+	}
+
+	static function deviseDeclarations(declarations:Array<Dynamic>):Array<Dynamic> {
+		var out:Array<Dynamic> = [];
+		for (declaration in declarations) {
+			if (hashString(declaration, "kind") == "deviseFor") {
+				out.push(declaration);
+			}
+			out = out.concat(deviseDeclarations(childrenOf(declaration)));
+		}
+		return out;
+	}
+
+	static function compareDeviseMapping(scope:String, expected:Dynamic, mapping:Dynamic, declaration:Dynamic):Array<String> {
+		var errors:Array<String> = [];
+		var expectedClass = hashString(expected, "className");
+		var expectedPath = hashString(expected, "path");
+		var expectedValues = [
+			new DeviseExpectedField("name", scope),
+			new DeviseExpectedField("className", expectedClass == null ? "" : expectedClass),
+			new DeviseExpectedField("path", expectedPath == null ? "" : expectedPath),
+			new DeviseExpectedField("scopedPath", expectedPath == null ? "" : expectedPath),
+		];
+
+		for (field in expectedValues) {
+			var actualValue = hashString(mapping, field.name);
+			if (actualValue != field.value) {
+				errors.push('wrong Devise mapping ${quote(scope)} ${field.name} for ${declarationPosition(declaration)}: expected ${quote(field.value)}, saw ${quote(actualValue == null ? "" : actualValue)}');
+			}
+		}
+
+		if (hashValue(mapping, "modelHasDevise") != true) {
+			errors.push('Devise mapping ${quote(scope)} does not point at a model with Devise modules for ${declarationPosition(declaration)}');
+		}
+
+		return errors;
+	}
+
+	static function declarationPosition(declaration:Dynamic):String {
+		var position = hashString(declaration, "position");
+		return position == null || position == "" ? "unknown route position" : position;
 	}
 
 	static function parseRoutes(input:String):Array<RailsRoute> {
@@ -329,6 +418,10 @@ class ParityCore {
 		}
 	}
 
+	static function quote(value:String):String {
+		return '"' + value + '"';
+	}
+
 	static function unique(values:Array<String>):Array<String> {
 		var out:Array<String> = [];
 		for (value in values) {
@@ -349,14 +442,23 @@ class ParityCore {
 	}
 
 	static function hashString(hash:Dynamic, key:String):Null<String> {
+		if (hash == null) {
+			return null;
+		}
 		return NativeHash.get(hash, key);
 	}
 
 	static function hashValue(hash:Dynamic, key:String):Dynamic {
+		if (hash == null) {
+			return null;
+		}
 		return NativeHash.get(hash, key);
 	}
 
 	static function hashArray(hash:Dynamic, key:String):Array<Dynamic> {
+		if (hash == null) {
+			return [];
+		}
 		var value:Array<Dynamic> = NativeHash.get(hash, key);
 		return value == null ? [] : value;
 	}

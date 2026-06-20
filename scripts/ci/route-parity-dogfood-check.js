@@ -11,6 +11,7 @@ const update = process.env.UPDATE_ROUTE_PARITY_GENERATED === "1";
 
 const trackedFiles = [
   "ruby/native_hash.rb",
+  "hxruby/generators/routes/devise_expected_field.rb",
   "hxruby/generators/routes/manifest_route.rb",
   "hxruby/generators/routes/rails_route.rb",
   "hxruby/generators/routes/parity_core.rb",
@@ -69,6 +70,20 @@ for (const relativePath of trackedFiles) {
   if (readFileSync(compiled, "utf8") !== readFileSync(committed, "utf8")) {
     console.error(`Committed route parity generated Ruby is stale: ${relativePath}`);
     console.error("Run `UPDATE_ROUTE_PARITY_GENERATED=1 npm run test:route-parity-dogfood` and commit the regenerated files.");
+    process.exit(1);
+  }
+}
+
+const parityCore = readFileSync(join(generatedRoot, "hxruby/generators/routes/parity_core.rb"), "utf8");
+for (const expectedSnippet of [
+  'require "json"',
+  "JSON.parse(manifest_json",
+  "JSON.parse(devise_facts_json",
+  "File.read(manifest_path",
+  "File.read(devise_facts_path",
+]) {
+  if (!parityCore.includes(expectedSnippet)) {
+    console.error(`Generated route parity core no longer dogfoods Ruby API usage: missing ${expectedSnippet}`);
     process.exit(1);
   }
 }

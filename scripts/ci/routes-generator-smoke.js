@@ -311,7 +311,7 @@ function runParitySmoke() {
   }));
   const malformedFactsPath = join(parityRoot, "devise-malformed-facts.json");
   writeFileSync(malformedFactsPath, "{not-json");
-  expectParityFailure("devise-malformed-facts", deviseManifest, routesPath, "Invalid Devise mapping facts", malformedFactsPath);
+  expectParityFailure("devise-malformed-facts", deviseManifest, routesPath, "Invalid Haxe-owned route manifest or Devise mapping facts", malformedFactsPath);
 }
 
 function expectParitySuccess(name, manifest, routesPath, factsPath = null) {
