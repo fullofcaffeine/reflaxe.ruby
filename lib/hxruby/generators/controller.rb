@@ -161,9 +161,14 @@ module HXRuby
       end
 
       def render_action(action)
-        body = if @model_name && action == "index"
+        body = if @model_name && action == "index" && @with_templates
                  [
-                   "\t\tvar #{@table_name} = #{@model_name}.where({});",
+                   "\t\tvar #{@table_name} = #{@model_name}.all().toArray();",
+                   "\t\tViewMacro.renderTemplate(this, (Template.of(#{view_class(action)}) : Template<#{locals_type(action)}>), {title: #{Common.haxe_string("#{@controller_name}##{action}")}, #{@table_name}: #{@table_name}});",
+                 ]
+               elsif @model_name && action == "index"
+                 [
+                   "\t\tvar #{@table_name} = #{@model_name}.all().toArray();",
                    "\t\trender({json: #{@table_name}});",
                  ]
                elsif @model_name && action == "create"
@@ -200,6 +205,16 @@ module HXRuby
       end
 
       def render_view(action)
+        body = if @model_name && action == "index"
+                 render_model_index_view_body
+               else
+                 [
+                   "\t\treturn <main class=\"railshx-generated-view\">",
+                   "\t\t\t<h1>${locals.title}</h1>",
+                   "\t\t\t<p>This view is authored in typed Rails HHX and emitted as Rails ERB.</p>",
+                   "\t\t</main>;",
+                 ]
+               end
         [
           "package #{@views_package}.#{controller_view_package};",
           "",
@@ -214,23 +229,42 @@ module HXRuby
           "@:railsTemplateAst(\"render\")",
           "class #{view_class(action)} {",
           "\tpublic static function render(locals:#{locals_type(action)}):HtmlNode {",
-          "\t\treturn <main class=\"railshx-generated-view\">",
-          "\t\t\t<h1>${locals.title}</h1>",
-          "\t\t\t<p>This view is authored in typed Rails HHX and emitted as Rails ERB.</p>",
-          "\t\t</main>;",
+          *body,
           "\t}",
           "}",
           "",
         ].join("\n")
       end
 
-      def render_locals_typedef(action)
+      def render_model_index_view_body
+        row = if @fields.first
+                "\t\t\t\t\t<li>\${#{@resource_name}.#{@fields.first}}</li>"
+              else
+                "\t\t\t\t\t<li>Generated #{@model_name} row</li>"
+              end
         [
+          "\t\treturn <main class=\"railshx-generated-view\">",
+          "\t\t\t<h1>${locals.title}</h1>",
+          "\t\t\t<p>This scaffold view receives typed #{@model_name} records from the controller.</p>",
+          "\t\t\t<ul>",
+          "\t\t\t\t<for \${#{@resource_name} in locals.#{@table_name}}>",
+          row,
+          "\t\t\t\t</for>",
+          "\t\t\t</ul>",
+          "\t\t</main>;",
+        ]
+      end
+
+      def render_locals_typedef(action)
+        fields = [
           "typedef #{locals_type(action)} = {",
           "\tvar title:String;",
+        ]
+        fields << "\tvar #{@table_name}:Array<#{@model_name}>;" if @model_name && action == "index"
+        fields.concat([
           "}",
           "",
-        ]
+        ])
       end
 
       def controller_view_dir

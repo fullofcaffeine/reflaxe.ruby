@@ -153,6 +153,7 @@ module HXRuby
           "--model", @model_name,
           "--fields", @fields.map { |field| field.fetch(:name) }.join(","),
           "--routes", @route_mode,
+          "--templates",
           ("--force" if @force),
         ].compact)
       end

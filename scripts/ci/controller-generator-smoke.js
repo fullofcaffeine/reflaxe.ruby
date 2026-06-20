@@ -94,7 +94,7 @@ for (const expected of [
   "import models.Todo;",
   "import rails.macros.ParamsMacro;",
   "import routes.Routes;",
-  "var todos = Todo.where({});",
+  "var todos = Todo.all().toArray();",
   'ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"])',
   "redirectTo(Routes.todosPath());",
 ]) {

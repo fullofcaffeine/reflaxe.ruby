@@ -525,3 +525,7 @@ Scaffolded projects generate a Haxe-authored model test by default under
 typed test source in Haxe, while the compiler emits ordinary Rails/Minitest
 files under `test/generated/**` for Rails to run. `--skip-tests` is an explicit
 adoption option for apps that already have a different test source of truth.
+
+With `--controller`, scaffold composes the controller generator's typed HHX
+view path: the index action renders `Template.of(IndexView)` with typed locals,
+and Rails receives normal `app/views/**/*.html.erb` output from the compiler.

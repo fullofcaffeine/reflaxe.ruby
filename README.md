@@ -450,6 +450,10 @@ Minitest output under `test/generated/**`, so the starter app exercises both
 typed source and Rails-native test artifacts. Use `--skip-tests` only when an
 existing test layout owns that boundary already.
 
+When `--controller` is enabled, the scaffold composes the controller generator's
+typed HHX view path too: the index action renders `Template.of(IndexView)` with
+typed locals, and the compiler emits ordinary Rails ERB under `app/views/**`.
+
 Plain `require "hxruby"` has no gem runtime dependencies. The task entrypoint requires `rake`, which is available in the supported CI Rubies and normal Rails applications.
 
 Semantic-release builds the gem during release preparation and attaches `dist/hxruby-*.gem` to the GitHub release.
