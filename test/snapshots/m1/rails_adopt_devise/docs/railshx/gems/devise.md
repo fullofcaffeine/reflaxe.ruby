@@ -13,7 +13,7 @@ DeviseHx does not replace Devise. It records deterministic app metadata and emit
 
 - Scope: `user`
 - Route resource: `users`
-- Modules: `database_authenticatable`, `registerable`, `recoverable`, `rememberable`, `validatable`
+- Modules: `database_authenticatable`, `registerable`, `recoverable`, `rememberable`, `confirmable`, `lockable`, `validatable`
 - Schema status: `ok`
 - Generated contract: `app.auth.UserAuth`
 - Typed helpers: `current`, `currentRequired`, `signedIn`, `signIn`, `signOut`, `authenticate`.

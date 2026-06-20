@@ -130,10 +130,10 @@ guest sign-in route, `AuthLinks.sessionPath(UserAuth.scope)` plus
 `<devise_sign_out_button>`/`DeviseErrors` in HHX, and auth composition around
 normal Rails helpers. The reusable adoption lane can also generate opt-in
 RailsHx-owned HHX skeletons for sessions, registrations, and recoverable
-password reset/edit views while keeping existing Devise ERB Rails-owned unless
-manifest ownership is explicit. A later dedicated DeviseHx app can still expand
-into confirmable, unlockable, OmniAuth, and multi-scope matrices without making
-the todoapp huge.
+password reset/edit views, plus confirmable confirmation requests and lockable
+unlock requests, while keeping existing Devise ERB Rails-owned unless manifest
+ownership is explicit. A later dedicated DeviseHx app can still expand into
+OmniAuth and multi-scope matrices without making the todoapp huge.
 
 ## DeviseHx Shape
 

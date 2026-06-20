@@ -108,7 +108,7 @@ writeFileSync(join(outputDir, "config", "initializers", "devise.rb"), [
 ].join("\n"));
 writeFileSync(join(outputDir, "app", "models", "user.rb"), [
   "class User < ApplicationRecord",
-  "  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :validatable",
+  "  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :confirmable, :lockable, :validatable",
   "end",
   "",
 ].join("\n"));
@@ -120,6 +120,12 @@ writeFileSync(join(outputDir, "db", "schema.rb"), [
   '    t.string "reset_password_token"',
   '    t.datetime "reset_password_sent_at"',
   '    t.datetime "remember_created_at"',
+  '    t.string "confirmation_token"',
+  '    t.datetime "confirmed_at"',
+  '    t.datetime "confirmation_sent_at"',
+  '    t.integer "failed_attempts"',
+  '    t.string "unlock_token"',
+  '    t.datetime "locked_at"',
   '    t.datetime "created_at", null: false',
   '    t.datetime "updated_at", null: false',
   "  end",
@@ -420,6 +426,24 @@ assertIncludes("src_haxe/views/devise/users/PasswordsEditView.hx", [
   "<hidden_field name=\"resetPasswordToken\" value=${locals.resource.resetPasswordToken} />",
   "<password_field name=\"passwordConfirmation\" autocomplete=\"new-password\" required />",
 ]);
+assertIncludes("src_haxe/views/devise/users/ConfirmationsNewView.hx", [
+  "package views.devise.users;",
+  "// Generated DeviseHx HHX confirmation request view skeleton.",
+  '@:railsTemplate("devise/confirmations/new")',
+  "class ConfirmationsNewView",
+  "<form_with url=${AuthLinks.confirmationPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
+  "<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+  "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
+]);
+assertIncludes("src_haxe/views/devise/users/UnlocksNewView.hx", [
+  "package views.devise.users;",
+  "// Generated DeviseHx HHX unlock request view skeleton.",
+  '@:railsTemplate("devise/unlocks/new")',
+  "class UnlocksNewView",
+  "<form_with url=${AuthLinks.unlockPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
+  "<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+  "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
+]);
 assertIncludes(".railshx/gems/devise/inventory.json", [
   '"kind": "devise_inventory"',
   '"name": "devise"',
@@ -428,7 +452,9 @@ assertIncludes(".railshx/gems/devise/inventory.json", [
   '"route_resource": "users"',
   '"model": "User"',
   '"database_authenticatable"',
+  '"confirmable"',
   '"encrypted_password"',
+  '"lockable"',
 ]);
 assertIncludes(".railshx/gems/devise/diagnostics.json", [
   '"kind": "devise_diagnostics"',
@@ -447,6 +473,8 @@ assertSnapshot("src_haxe/views/devise/users/SessionsNewView.hx");
 assertSnapshot("src_haxe/views/devise/users/RegistrationsNewView.hx");
 assertSnapshot("src_haxe/views/devise/users/PasswordsNewView.hx");
 assertSnapshot("src_haxe/views/devise/users/PasswordsEditView.hx");
+assertSnapshot("src_haxe/views/devise/users/ConfirmationsNewView.hx");
+assertSnapshot("src_haxe/views/devise/users/UnlocksNewView.hx");
 assertSnapshot(".railshx/gems/devise/inventory.json");
 assertSnapshot(".railshx/gems/devise/diagnostics.json");
 assertSnapshot("docs/railshx/gems/devise.md");
@@ -458,6 +486,8 @@ assertManifest([
   ["src_haxe/views/devise/users/RegistrationsNewView.hx", "devise_hhx_view"],
   ["src_haxe/views/devise/users/PasswordsNewView.hx", "devise_hhx_view"],
   ["src_haxe/views/devise/users/PasswordsEditView.hx", "devise_hhx_view"],
+  ["src_haxe/views/devise/users/ConfirmationsNewView.hx", "devise_hhx_view"],
+  ["src_haxe/views/devise/users/UnlocksNewView.hx", "devise_hhx_view"],
   ["docs/railshx/gems/devise.md", "docs"],
 ]);
 
@@ -478,10 +508,12 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "import models.User;",
   "import rails.action_controller.Base;",
   "import rails.action_view.HtmlNode;",
+  "import views.devise.users.ConfirmationsNewView;",
   "import views.devise.users.PasswordsEditView;",
   "import views.devise.users.PasswordsNewView;",
   "import views.devise.users.RegistrationsNewView;",
   "import views.devise.users.SessionsNewView;",
+  "import views.devise.users.UnlocksNewView;",
   "",
   "class Main {",
   "\tstatic function main() {",
@@ -509,6 +541,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\t\tvar registrationView:HtmlNode = RegistrationsNewView.render({resource: user});",
   "\t\t\tvar passwordNewView:HtmlNode = PasswordsNewView.render({resource: user});",
   "\t\t\tvar passwordEditView:HtmlNode = PasswordsEditView.render({resource: user});",
+  "\t\t\tvar confirmationView:HtmlNode = ConfirmationsNewView.render({resource: user});",
+  "\t\t\tvar unlockView:HtmlNode = UnlocksNewView.render({resource: user});",
   "\t\t\tSys.println(UserAuth.signedIn(controller));",
   "\t\t}",
   "\t\tSys.println(service != null);",
@@ -553,6 +587,8 @@ for (const file of [
   "app/views/devise/registrations/new.html.erb",
   "app/views/devise/passwords/new.html.erb",
   "app/views/devise/passwords/edit.html.erb",
+  "app/views/devise/confirmations/new.html.erb",
+  "app/views/devise/unlocks/new.html.erb",
 ]) {
   if (!existsSync(join(compiledOut, file))) {
     fail(`generated DeviseHx HHX compile output missing ${file}`);

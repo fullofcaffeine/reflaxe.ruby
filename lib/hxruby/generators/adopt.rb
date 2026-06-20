@@ -566,6 +566,20 @@ module HXRuby
             kind: "devise_hhx_view"
           )
         end
+        if scope.fetch(:modules).include?("confirmable")
+          write_owned(
+            File.join(view_dir, "ConfirmationsNewView.hx"),
+            render_devise_confirmations_new_view(scope),
+            kind: "devise_hhx_view"
+          )
+        end
+        if scope.fetch(:modules).include?("lockable")
+          write_owned(
+            File.join(view_dir, "UnlocksNewView.hx"),
+            render_devise_unlocks_new_view(scope),
+            kind: "devise_hhx_view"
+          )
+        end
         puts "[rails:adopt:devise] wrote HHX view skeletons for #{model}; compile Haxe to emit Rails ERB artifacts."
       end
 
@@ -1116,6 +1130,114 @@ module HXRuby
           "\t\t\t\t\t</div>",
           "\t\t\t\t\t<submit type=\"submit\">Change password</submit>",
           "\t\t\t\t</form_with>",
+          "\t\t\t</section>",
+          "\t\t</main>;",
+          "\t}",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_devise_confirmations_new_view(scope)
+        model = scope.fetch(:model)
+        auth_class = "#{model}Auth"
+        route_resource = scope.fetch(:route_resource)
+        [
+          "package views.devise.#{route_resource};",
+          "",
+          "import app.auth.#{auth_class};",
+          "import devisehx.hhx.AuthLinks;",
+          "import devisehx.hhx.DeviseErrors;",
+          "import models.#{model};",
+          "import rails.action_view.HtmlNode;",
+          "",
+          "typedef ConfirmationsNewLocals = {",
+          "\tvar resource:#{model};",
+          "}",
+          "",
+          "// Generated DeviseHx HHX confirmation request view skeleton.",
+          "// Confirmable remains Devise-owned at runtime; RailsHx owns the checked",
+          "// HHX source, typed Devise route helper, and typed resource error block.",
+          "@:railsTemplate(\"devise/confirmations/new\")",
+          "@:railsTemplateAst(\"render\")",
+          "class ConfirmationsNewView {",
+          "\tpublic static function render(locals:ConfirmationsNewLocals):HtmlNode {",
+          "\t\treturn <main class=\"devisehx-auth-shell\">",
+          "\t\t\t<section class=\"devisehx-auth-card\">",
+          "\t\t\t\t<span class=\"eyebrow\">DeviseHx confirmation</span>",
+          "\t\t\t\t<h1>Resend confirmation instructions</h1>",
+          "\t\t\t\t<p>Devise owns confirmation tokens; RailsHx keeps this request form typed.</p>",
+          "\t\t\t\t<if ${DeviseErrors.hasAny(locals.resource)}>",
+          "\t\t\t\t\t<section class=\"devisehx-errors\" aria-label=\"Confirmation errors\">",
+          "\t\t\t\t\t\t<ul>",
+          "\t\t\t\t\t\t\t<for ${message in DeviseErrors.fullMessages(locals.resource)}>",
+          "\t\t\t\t\t\t\t\t<li>${message}</li>",
+          "\t\t\t\t\t\t\t</for>",
+          "\t\t\t\t\t\t</ul>",
+          "\t\t\t\t\t</section>",
+          "\t\t\t\t</if>",
+          "\t\t\t\t<form_with url=${AuthLinks.confirmationPath(#{auth_class}.scope)} scope=\"#{scope.fetch(:scope)}\" local class=\"devisehx-auth-form\">",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"email\">Email</field_label>",
+          "\t\t\t\t\t\t<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<submit type=\"submit\">Resend confirmation</submit>",
+          "\t\t\t\t</form_with>",
+          "\t\t\t\t<devise_sign_in_link scope=${#{auth_class}.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
+          "\t\t\t</section>",
+          "\t\t</main>;",
+          "\t}",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_devise_unlocks_new_view(scope)
+        model = scope.fetch(:model)
+        auth_class = "#{model}Auth"
+        route_resource = scope.fetch(:route_resource)
+        [
+          "package views.devise.#{route_resource};",
+          "",
+          "import app.auth.#{auth_class};",
+          "import devisehx.hhx.AuthLinks;",
+          "import devisehx.hhx.DeviseErrors;",
+          "import models.#{model};",
+          "import rails.action_view.HtmlNode;",
+          "",
+          "typedef UnlocksNewLocals = {",
+          "\tvar resource:#{model};",
+          "}",
+          "",
+          "// Generated DeviseHx HHX unlock request view skeleton.",
+          "// Lockable account state stays in Devise/Rails; this checked HHX view",
+          "// emits the ordinary `user_unlock_path` request form.",
+          "@:railsTemplate(\"devise/unlocks/new\")",
+          "@:railsTemplateAst(\"render\")",
+          "class UnlocksNewView {",
+          "\tpublic static function render(locals:UnlocksNewLocals):HtmlNode {",
+          "\t\treturn <main class=\"devisehx-auth-shell\">",
+          "\t\t\t<section class=\"devisehx-auth-card\">",
+          "\t\t\t\t<span class=\"eyebrow\">DeviseHx unlock</span>",
+          "\t\t\t\t<h1>Resend unlock instructions</h1>",
+          "\t\t\t\t<p>Devise owns lock/unlock semantics; RailsHx keeps the route and errors typed.</p>",
+          "\t\t\t\t<if ${DeviseErrors.hasAny(locals.resource)}>",
+          "\t\t\t\t\t<section class=\"devisehx-errors\" aria-label=\"Unlock errors\">",
+          "\t\t\t\t\t\t<ul>",
+          "\t\t\t\t\t\t\t<for ${message in DeviseErrors.fullMessages(locals.resource)}>",
+          "\t\t\t\t\t\t\t\t<li>${message}</li>",
+          "\t\t\t\t\t\t\t</for>",
+          "\t\t\t\t\t\t</ul>",
+          "\t\t\t\t\t</section>",
+          "\t\t\t\t</if>",
+          "\t\t\t\t<form_with url=${AuthLinks.unlockPath(#{auth_class}.scope)} scope=\"#{scope.fetch(:scope)}\" local class=\"devisehx-auth-form\">",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"email\">Email</field_label>",
+          "\t\t\t\t\t\t<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<submit type=\"submit\">Resend unlock instructions</submit>",
+          "\t\t\t\t</form_with>",
+          "\t\t\t\t<devise_sign_in_link scope=${#{auth_class}.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
           "\t\t\t</section>",
           "\t\t</main>;",
           "\t}",

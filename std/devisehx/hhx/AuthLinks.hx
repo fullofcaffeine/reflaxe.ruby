@@ -22,6 +22,10 @@ extern class AuthLinks {
 	public static function newPasswordPath<TModel>(scope:DeviseScope<TModel>):String;
 	public static function editPasswordPath<TModel>(scope:DeviseScope<TModel>):String;
 	public static function passwordPath<TModel>(scope:DeviseScope<TModel>):String;
+	public static function newConfirmationPath<TModel>(scope:DeviseScope<TModel>):String;
+	public static function confirmationPath<TModel>(scope:DeviseScope<TModel>):String;
+	public static function newUnlockPath<TModel>(scope:DeviseScope<TModel>):String;
+	public static function unlockPath<TModel>(scope:DeviseScope<TModel>):String;
 
 	public static function signInPath<TModel>(scope:DeviseScope<TModel>):String;
 	public static function signOutPath<TModel>(scope:DeviseScope<TModel>):String;

@@ -21,6 +21,8 @@
         "registerable",
         "recoverable",
         "rememberable",
+        "confirmable",
+        "lockable",
         "validatable"
       ],
       "helpers": [
@@ -30,6 +32,18 @@
       ],
       "schema_status": "ok",
       "schema_columns": [
+        {
+          "name": "confirmation_sent_at",
+          "type": "datetime"
+        },
+        {
+          "name": "confirmation_token",
+          "type": "string"
+        },
+        {
+          "name": "confirmed_at",
+          "type": "datetime"
+        },
         {
           "name": "created_at",
           "type": "datetime"
@@ -41,6 +55,14 @@
         {
           "name": "encrypted_password",
           "type": "string"
+        },
+        {
+          "name": "failed_attempts",
+          "type": "integer"
+        },
+        {
+          "name": "locked_at",
+          "type": "datetime"
         },
         {
           "name": "remember_created_at",
@@ -55,16 +77,26 @@
           "type": "string"
         },
         {
+          "name": "unlock_token",
+          "type": "string"
+        },
+        {
           "name": "updated_at",
           "type": "datetime"
         }
       ],
       "required_columns": [
+        "confirmation_sent_at",
+        "confirmation_token",
+        "confirmed_at",
         "email",
         "encrypted_password",
+        "failed_attempts",
+        "locked_at",
         "remember_created_at",
         "reset_password_sent_at",
-        "reset_password_token"
+        "reset_password_token",
+        "unlock_token"
       ]
     }
   ]
