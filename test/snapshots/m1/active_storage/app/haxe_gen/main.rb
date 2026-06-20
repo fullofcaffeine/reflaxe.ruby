@@ -8,11 +8,21 @@ class Main
     profile__hx0 = Models::Profile.new()
     has_avatar__hx0 = profile__hx0.avatar().attached?()
     profile__hx0.avatar().attach("avatar.png")
-    profile__hx0.avatar().attach({"io" => "raw", "filename" => "avatar.png"})
+    profile__hx0.avatar().attach({"io" => File.open("avatar.png"), "filename" => "avatar.png", "content_type" => "image/png"})
+    uploaded_blob__hx0 = nil
+    uploaded_signed_id__hx0 = uploaded_blob__hx0.signed_id()
+    uploaded_filename__hx0 = uploaded_blob__hx0.filename().to_s()
+    uploaded_content_type__hx0 = uploaded_blob__hx0.content_type()
+    direct_upload_url__hx0 = uploaded_blob__hx0.service_url_for_direct_upload()
+    direct_upload_headers__hx0 = uploaded_blob__hx0.service_headers_for_direct_upload()
+    profile__hx0.avatar().attach(uploaded_signed_id__hx0)
+    profile__hx0.avatar().attach(uploaded_blob__hx0)
     profile__hx0.avatar().purge()
     has_gallery__hx0 = profile__hx0.gallery().attached?()
     profile__hx0.gallery().attach(["one.png", "two.png"])
+    profile__hx0.gallery().attach([{"io" => File.open("one.png"), "filename" => "one.png", "content_type" => "image/png"}, {"io" => File.open("two.png"), "filename" => "two.png", "content_type" => "image/png"}])
     profile__hx0.gallery().purge()
+    upload_form__hx0 = Views::ProfileUploadView.render({"profile" => profile__hx0})
   end
 end
 if __FILE__ == $PROGRAM_NAME

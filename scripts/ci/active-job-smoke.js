@@ -139,6 +139,14 @@ for (const expected of [
   }
 }
 
+const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
+for (const forbidden of [/require_relative "haxe\/macro\//, /require_relative "rails\/macros\//]) {
+  if (forbidden.test(runRuby)) {
+    console.error(`ActiveJob run.rb should not require macro-only runtime files: ${forbidden}`);
+    process.exit(1);
+  }
+}
+
 for (const file of [
   "app/haxe_gen/jobs/send_welcome_email_job.rb",
   "app/haxe_gen/jobs/retry_probe_job.rb",

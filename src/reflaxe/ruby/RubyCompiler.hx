@@ -222,6 +222,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	public function compileClassImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Null<RubyFile> {
+		if (isMacroOnlyRuntimeType(classType.pack)) {
+			return null;
+		}
 		if (hasMeta(classType.meta, ":railsTest")) {
 			emitRailsTestArtifact(classType, funcFields);
 			return null;
@@ -337,6 +340,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	public function compileEnumImpl(enumType:EnumType, options:Array<EnumOptionData>):Null<RubyFile> {
+		if (isMacroOnlyRuntimeType(enumType.pack)) {
+			return null;
+		}
 		setRubyOutputPath(enumType.pack, enumType.name);
 		var moduleRequires = collectModuleRequires(enumType.meta);
 		needsDataDefine = true;
@@ -357,6 +363,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	override public function compileTypedefImpl(typedefType:DefType):Null<RubyFile> {
+		if (isMacroOnlyRuntimeType(typedefType.pack)) {
+			return null;
+		}
 		setRubyOutputPath(typedefType.pack, typedefType.name);
 		return typeShell(typedefType.pack, typedefType.name, RubyModuleDecl(RubyNaming.toConstantName(typedefType.name), [
 			RubyComment("Haxe typedef " + fullTypeName(typedefType.pack, typedefType.name) + " has no Ruby runtime body.")
@@ -364,6 +373,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	override public function compileAbstractImpl(abstractType:AbstractType):Null<RubyFile> {
+		if (isMacroOnlyRuntimeType(abstractType.pack)) {
+			return null;
+		}
 		setRubyOutputPath(abstractType.pack, abstractType.name);
 		return typeShell(abstractType.pack, abstractType.name, RubyModuleDecl(RubyNaming.toConstantName(abstractType.name), [
 			RubyComment("Haxe abstract " + fullTypeName(abstractType.pack, abstractType.name) + " has no Ruby runtime body.")
@@ -739,6 +751,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			out.push(RubyComment("empty enum"));
 		}
 		return out;
+	}
+
+	static function isMacroOnlyRuntimeType(pack:Array<String>):Bool {
+		return pack.length >= 2 && ((pack[0] == "haxe" && pack[1] == "macro") || (pack[0] == "rails" && pack[1] == "macros"));
 	}
 
 	function setRubyOutputPath(pack:Array<String>, typeName:String):Void {
