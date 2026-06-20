@@ -117,9 +117,10 @@ Devise as the runtime owner for Warden, encrypted passwords, routes, sessions,
 and sign-out semantics, while Haxe owns `UserAuth`, typed `@:devise(...)` model
 metadata, `beforeAction(UserAuth.authenticate)`, typed current-user helpers,
 `DeviseRoutes.deviseFor(UserAuth.scope, {only: [Sessions]})`, a Haxe-owned
-guest sign-in route, and HHX auth composition. A later dedicated DeviseHx app
-can still expand into registrations, password reset, confirmable, OmniAuth, and
-multi-scope matrices without making the todoapp huge.
+guest sign-in route, `AuthLinks.sessionPath/signOutPath(UserAuth.scope)` in
+HHX, and auth composition around normal Rails helpers. A later dedicated
+DeviseHx app can still expand into registrations, password reset, confirmable,
+OmniAuth, and multi-scope matrices without making the todoapp huge.
 
 ## DeviseHx Shape
 

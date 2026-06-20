@@ -288,6 +288,9 @@ The app uses real Devise runtime ownership:
 - `views/AppTopBarView.hx` owns the authenticated topbar.
 - `controllers/SessionsController.hx` adds a Haxe-owned guest action that calls
   typed `UserAuth.signIn(this, guest)`.
+- `devisehx.hhx.AuthLinks` validates the generated `UserAuth.scope` contract in
+  HHX and lowers to normal Rails Devise route helpers such as
+  `user_session_path` and `destroy_user_session_path`.
 
 The board is protected with:
 
@@ -305,7 +308,8 @@ before_action :authenticate_user!
 
 The result should feel like Rails: unauthenticated users see a Devise login
 page, signed-in users see the board, and logout is a standard Rails `button_to`.
-Haxe adds typed route helpers, typed current-user access, and checked HHX.
+Haxe adds typed route helpers, typed current-user access, and checked HHX without
+making Devise a RailsHx runtime.
 
 ### Server-Owned User Assignment
 

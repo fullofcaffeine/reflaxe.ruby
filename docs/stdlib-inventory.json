@@ -207,6 +207,14 @@
       "reason": "Typed options boundary for Devise sign_in calls."
     },
     {
+      "id": "std.devisehx.hhx_auth_links",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/hhx/AuthLinks.hx",
+      "surface": "devisehx.hhx.AuthLinks",
+      "reason": "Compiler-erased HHX facade for typed Devise session route helpers that emit normal Rails path helpers."
+    },
+    {
       "id": "std.devisehx.mapping",
       "owner": "std",
       "status": "implemented",

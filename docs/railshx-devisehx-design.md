@@ -148,6 +148,39 @@ Auth.signOut(this, UserAuth.scope);
 Auth.signOutAll(this);
 ```
 
+HHX templates should use the typed `devisehx.hhx.AuthLinks` facade for Devise
+session paths instead of spelling route helper names or strings by hand:
+
+```haxe
+import app.auth.UserAuth;
+import devisehx.hhx.AuthLinks;
+
+class DeviseLoginView {
+	public static function render():HtmlNode {
+		return <main>
+			<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope="user" local>
+				<text_field name="email" />
+				<password_field name="password" />
+				<submit type="submit">Log in</submit>
+			</form_with>
+			<link_to url=${AuthLinks.signInPath(UserAuth.scope)}>Sign in</link_to>
+			<button_to url=${AuthLinks.signOutPath(UserAuth.scope)} method="delete">
+				Sign out
+			</button_to>
+		</main>;
+	}
+}
+```
+
+`AuthLinks` is not a runtime widget. The compiler requires a direct generated
+scope field such as `UserAuth.scope`, reads its `@:deviseHxRoute` metadata, and
+emits ordinary Rails helpers: `user_session_path`, `new_user_session_path`, and
+`destroy_user_session_path`. Local aliases, dynamically constructed scopes, and
+function-returned scopes fail closed because the compiler cannot safely prove
+which Devise mapping they describe. Use Rails' normal `button_to ... method:
+"delete"` for sign-out until a richer typed HHX button tag lands; the generated
+artifact should still look like hand-written Rails.
+
 Generated Ruby should remain familiar:
 
 ```ruby

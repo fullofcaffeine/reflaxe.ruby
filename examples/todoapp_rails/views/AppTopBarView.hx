@@ -1,6 +1,8 @@
 package views;
 
 import models.User;
+import app.auth.UserAuth;
+import devisehx.hhx.AuthLinks;
 import rails.action_view.HtmlNode;
 import routes.Routes;
 import shared.TodoHooks;
@@ -16,9 +18,11 @@ typedef AppTopBarLocals = {
 // standard Rails `button_to` logout form.
 // Type safety: `currentUser` is non-null because `TodosController` is protected
 // by `UserAuth.authenticate`; `Routes.*` helpers are generated from Rails route
-// output; `TodoHooks.userFrameId` keeps the users frame target centralized.
+// output; `AuthLinks.signOutPath(UserAuth.scope)` validates the generated
+// Devise scope before emitting Rails' ordinary `destroy_user_session_path`;
+// `TodoHooks.userFrameId` keeps the users frame target centralized.
 // IntelliSense: editors should complete `currentUser.initials`,
-// `currentUser.roleLabel`, `Routes.destroyUserSessionPath`, and
+// `currentUser.roleLabel`, `UserAuth.scope`, `AuthLinks.signOutPath`, and
 // `TodoHooks.userFrameId`.
 // Ruby/Rails output: normal `link_to`, `button_to`, and HTML header markup.
 @:railsTemplate("controllers/todos/_app_top_bar")
@@ -49,7 +53,7 @@ class AppTopBarView {
 					<strong>${locals.currentUser.name}</strong>
 					<em>${locals.currentUser.roleLabel()} · ${locals.currentUser.email}</em>
 				</span>
-				<button_to url=${Routes.destroyUserSessionPath()} method="delete" class="session-clear-form topbar-logout" data-railshx-session>
+				<button_to url=${AuthLinks.signOutPath(UserAuth.scope)} method="delete" class="session-clear-form topbar-logout" data-railshx-session>
 					Log out
 				</button_to>
 			</div>

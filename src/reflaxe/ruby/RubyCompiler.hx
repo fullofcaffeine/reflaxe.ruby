@@ -6690,6 +6690,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				printTemplateExpr(value, scope) + ".to_s";
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionViewFlashExpr(classRef.get(), fieldRef.get()) != null):
 				actionViewFlashExpr(classRef.get(), fieldRef.get());
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params) if (deviseAuthLinkPathExpr(classRef.get(), fieldRef.get(), params) != null):
+				deviseAuthLinkPathExpr(classRef.get(), fieldRef.get(), params);
 			case TField(_, FStatic(_, fieldRef)):
 				var staticValue = templateStaticFieldString(fieldRef.get());
 				if (staticValue != null) {
@@ -6749,6 +6751,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case "hasMessage": "flash[:alert].present? || flash[:notice].present?";
 			case "kind": "(flash[:alert].present? ? \"alert\" : \"notice\")";
 			case _: null;
+		}
+	}
+
+	static function deviseAuthLinkPathExpr(classType:ClassType, field:haxe.macro.Type.ClassField, params:Array<TypedExpr>):Null<String> {
+		if (classType.pack.join(".") != "devisehx.hhx" || classType.name != "AuthLinks") {
+			return null;
+		}
+		if (params.length != 1) {
+			Context.error("DeviseHx HHX auth route helpers expect one generated Devise scope argument, such as UserAuth.scope.", field.pos);
+			return "nil";
+		}
+		var scope = deviseMappingScopeFromArg(params[0]);
+		return switch (field.name) {
+			case "newSessionPath" | "signInPath":
+				"new_" + scope + "_session_path()";
+			case "sessionPath":
+				scope + "_session_path()";
+			case "destroySessionPath" | "signOutPath":
+				"destroy_" + scope + "_session_path()";
+			case _:
+				null;
 		}
 	}
 

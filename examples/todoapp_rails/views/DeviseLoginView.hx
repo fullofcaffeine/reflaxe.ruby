@@ -1,6 +1,8 @@
 package views;
 
 import rails.action_view.FlashMessages;
+import app.auth.UserAuth;
+import devisehx.hhx.AuthLinks;
 import rails.action_view.HtmlNode;
 import routes.Routes;
 import shared.TodoHooks;
@@ -11,11 +13,13 @@ import shared.TodoHooks;
 // while RailsHx owns the generated login template. The form posts to Devise's
 // real `user_session_path`; the guest CTA posts to the Haxe-owned guest action
 // that calls typed `UserAuth.signIn`.
-// Type safety: `Routes.userSessionPath`, `Routes.guestSignInPath`, and
-// `Routes.newUserSessionPath` are generated route externs; `<password_field>`
-// lowers to Rails `form.password_field`; `FlashMessages` reads Devise's normal
-// Rails flash without authoring raw ERB; `TodoHooks.sessionAttr` lets the Haxe
-// client bind the same Turbo form feedback as the board logout.
+// Type safety: `AuthLinks.sessionPath(UserAuth.scope)` validates the generated
+// Devise scope before emitting Rails' ordinary `user_session_path`;
+// `Routes.guestSignInPath` is generated from Rails route output;
+// `<password_field>` lowers to Rails `form.password_field`; `FlashMessages`
+// reads Devise's normal Rails flash without authoring raw ERB;
+// `TodoHooks.sessionAttr` lets the Haxe client bind the same Turbo form
+// feedback as the board logout.
 // IntelliSense: editors should complete route helpers, HHX form tags, and shared
 // hook constants.
 // Ruby/Rails output: `app/views/devise/sessions/new.html.erb`, consumed by
@@ -54,7 +58,7 @@ class DeviseLoginView {
 						<p>${FlashMessages.message()}</p>
 					</div>
 				</if>
-				<form_with url=${Routes.userSessionPath()} scope="user" local class="login-form" data-railshx-session>
+				<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope="user" local class="login-form" data-railshx-session>
 					<div>
 						<field_label name="email">Email</field_label>
 						<text_field name="email" type="email" autocomplete="email" placeholder="owner@example.test" autofocus required />

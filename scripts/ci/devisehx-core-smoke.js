@@ -11,6 +11,8 @@ const invalidResourceDir = join(root, "test", ".generated", "devisehx_core_inval
 const invalidResourceOut = join(root, "test", ".generated", "devisehx_core_invalid_resource_out");
 const invalidScopeDir = join(root, "test", ".generated", "devisehx_core_invalid_scope_src");
 const invalidScopeOut = join(root, "test", ".generated", "devisehx_core_invalid_scope_out");
+const invalidAuthLinksLocalDir = join(root, "test", ".generated", "devisehx_core_invalid_auth_links_local_src");
+const invalidAuthLinksLocalOut = join(root, "test", ".generated", "devisehx_core_invalid_auth_links_local_out");
 const invalidSchemaDir = join(root, "test", ".generated", "devisehx_core_invalid_schema_src");
 const invalidSchemaOut = join(root, "test", ".generated", "devisehx_core_invalid_schema_out");
 const invalidCustomModuleDir = join(root, "test", ".generated", "devisehx_core_invalid_custom_module_src");
@@ -26,6 +28,8 @@ for (const dir of [
   invalidResourceOut,
   invalidScopeDir,
   invalidScopeOut,
+  invalidAuthLinksLocalDir,
+  invalidAuthLinksLocalOut,
   invalidSchemaDir,
   invalidSchemaOut,
   invalidCustomModuleDir,
@@ -62,6 +66,11 @@ writePositiveSources(invalidScopeDir, {
 });
 expectCompileFailure(invalidScopeDir, invalidScopeOut, "models.User should be models.Admin");
 
+writePositiveSources(invalidAuthLinksLocalDir, {
+  authLinksUseLocalScope: true,
+});
+expectCompileFailure(invalidAuthLinksLocalDir, invalidAuthLinksLocalOut, "DeviseHx auth helpers expect a direct generated Devise scope field");
+
 writePositiveSources(invalidSchemaDir, {
   omitEncryptedPassword: true,
   extraMainLines: [
@@ -92,6 +101,7 @@ expectCompileFailure(invalidUnknownModuleDir, invalidUnknownModuleOut, "Unsuppor
 function writePositiveSources(dir, options = {}) {
   mkdirSync(join(dir, "models"), { recursive: true });
   mkdirSync(join(dir, "app", "auth"), { recursive: true });
+  mkdirSync(join(dir, "views"), { recursive: true });
 
   writeFileSync(join(dir, "models", "User.hx"), [
     "package models;",
@@ -192,6 +202,43 @@ function writePositiveSources(dir, options = {}) {
     "",
   ].join("\n"));
 
+  const authLinksViewBody = options.authLinksUseLocalScope ? [
+    "\tpublic static function render():HtmlNode {",
+    "\t\tvar scope = UserAuth.scope;",
+    "\t\treturn <nav>",
+    "\t\t\t<link_to url=${AuthLinks.signInPath(scope)} class=\"login-link\">Sign in</link_to>",
+    "\t\t</nav>;",
+    "\t}",
+  ] : [
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <nav>",
+    "\t\t\t<link_to url=${AuthLinks.signInPath(UserAuth.scope)} class=\"login-link\">Sign in</link_to>",
+    "\t\t\t<button_to url=${AuthLinks.signOutPath(UserAuth.scope)} method=\"delete\" class=\"logout-button\">Sign out</button_to>",
+    "\t\t\t<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope=\"user\" local class=\"login-form\">",
+    "\t\t\t\t<submit type=\"submit\">Log in</submit>",
+    "\t\t\t</form_with>",
+    "\t\t</nav>;",
+    "\t}",
+  ];
+
+  writeFileSync(join(dir, "views", "AuthLinksView.hx"), [
+    "package views;",
+    "",
+    "import app.auth.UserAuth;",
+    "import devisehx.hhx.AuthLinks;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "// DeviseHx HHX fixture: typed auth path helpers validate the generated",
+    "// `UserAuth.scope` field, then the compiler emits normal Rails route",
+    "// helpers inside ordinary `link_to`, `button_to`, and `form_with` output.",
+    "@:railsTemplate(\"auth_links/show\")",
+    "@:railsTemplateAst(\"render\")",
+    "class AuthLinksView {",
+    ...authLinksViewBody,
+    "}",
+    "",
+  ].join("\n"));
+
   writeFileSync(join(dir, "Main.hx"), [
     "import app.auth.AdminAuth;",
     "import app.auth.UserAuth;",
@@ -206,6 +253,8 @@ function writePositiveSources(dir, options = {}) {
     "import models.Admin;",
     "import models.User;",
     "import rails.action_controller.Base;",
+    "import rails.action_view.HtmlNode;",
+    "import views.AuthLinksView;",
     "",
     "class Main {",
     "\tstatic function main() {",
@@ -215,6 +264,7 @@ function writePositiveSources(dir, options = {}) {
     "\t\tvar maybeUser:Null<User> = Auth.current(controller, UserAuth.scope);",
     "\t\tvar requiredUser:User = Auth.currentRequired(controller, UserAuth.scope);",
     "\t\tvar signedIn:Bool = Auth.signedIn(controller, UserAuth.scope);",
+    "\t\tvar authLinks:HtmlNode = AuthLinksView.render();",
     "\t\tAuth.signIn(controller, UserAuth.scope, user);",
     "\t\tAuth.bypassSignIn(controller, UserAuth.scope, user);",
     "\t\tAuth.signOut(controller, UserAuth.scope);",
@@ -227,7 +277,7 @@ function writePositiveSources(dir, options = {}) {
     "\t\tIntegrationHelpers.signOut(UserAuth.scope);",
     "\t\tvar adminScope:DeviseScope<Admin> = AdminAuth.scope;",
     "\t\tvar mapping:DeviseMapping<User> = null;",
-    "\t\tSys.println(filter != null || maybeUser != null || requiredUser != null || signedIn || specs.length > 0 || wardenUser != null || authenticated || adminScope != null || mapping != null);",
+    "\t\tSys.println(filter != null || maybeUser != null || requiredUser != null || signedIn || authLinks != null || specs.length > 0 || wardenUser != null || authenticated || adminScope != null || mapping != null);",
     "\t\tvar modelClass:Class<User> = User;",
     "\t\tSys.println(modelClass != null);",
     ...(options.extraMainLines ?? []),
@@ -261,6 +311,8 @@ function haxeArgs(src, out) {
     "-D",
     `ruby_output=${out}`,
     "-D",
+    "reflaxe_ruby_rails",
+    "-D",
     "reflaxe_runtime",
     "-cp",
     join(root, "src"),
@@ -278,16 +330,35 @@ function haxeArgs(src, out) {
 }
 
 function assertGeneratedShape(out) {
-  for (const file of ["hxruby/core.rb", "main.rb", "app/auth/user_auth.rb", "app/auth/admin_auth.rb", "models/user.rb"]) {
+  for (const file of [
+    "app/haxe_gen/hxruby/core.rb",
+    "app/haxe_gen/main.rb",
+    "app/haxe_gen/app/auth/user_auth.rb",
+    "app/haxe_gen/app/auth/admin_auth.rb",
+    "app/haxe_gen/models/user.rb",
+    "app/views/auth_links/show.html.erb",
+  ]) {
     if (!existsSync(join(out, file))) {
       console.error(`Expected DeviseHx generated Ruby file missing: ${file}`);
+      process.exit(1);
+    }
+  }
+  const authLinks = readFileSync(join(out, "app/views/auth_links/show.html.erb"), "utf8");
+  for (const expected of [
+    "new_user_session_path()",
+    "destroy_user_session_path()",
+    "user_session_path()",
+    "method: \"delete\"",
+  ]) {
+    if (!authLinks.includes(expected)) {
+      console.error(`DeviseHx HHX output missing expected Rails helper shape: ${expected}`);
       process.exit(1);
     }
   }
 }
 
 function assertDeviseModelGeneratedShape(out) {
-  const userModel = readFileSync(join(out, "models", "user.rb"), "utf8");
+  const userModel = readFileSync(join(out, "app/haxe_gen/models/user.rb"), "utf8");
   for (const expected of [
     "devise :database_authenticatable, :validatable, :magic_auth",
     "# haxe column email: String",
@@ -309,6 +380,7 @@ function assertNoAppFacingDynamic() {
     "std/devisehx/RouteResource.hx",
     "std/devisehx/ScopeName.hx",
     "std/devisehx/SignInOptions.hx",
+    "std/devisehx/hhx/AuthLinks.hx",
     "std/devisehx/mapping/DeviseMapping.hx",
     "std/devisehx/model/DeviseModule.hx",
     "std/devisehx/model/DeviseModuleSpec.hx",
