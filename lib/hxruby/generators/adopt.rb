@@ -554,6 +554,18 @@ module HXRuby
             kind: "devise_hhx_view"
           )
         end
+        if scope.fetch(:modules).include?("recoverable")
+          write_owned(
+            File.join(view_dir, "PasswordsNewView.hx"),
+            render_devise_passwords_new_view(scope),
+            kind: "devise_hhx_view"
+          )
+          write_owned(
+            File.join(view_dir, "PasswordsEditView.hx"),
+            render_devise_passwords_edit_view(scope),
+            kind: "devise_hhx_view"
+          )
+        end
         puts "[rails:adopt:devise] wrote HHX view skeletons for #{model}; compile Haxe to emit Rails ERB artifacts."
       end
 
@@ -991,6 +1003,119 @@ module HXRuby
           "\t\t\t\t\t<submit type=\"submit\">Create account</submit>",
           "\t\t\t\t</form_with>",
           "\t\t\t\t<devise_sign_in_link scope=${#{auth_class}.scope} class=\"devisehx-secondary-link\">Already have an account?</devise_sign_in_link>",
+          "\t\t\t</section>",
+          "\t\t</main>;",
+          "\t}",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_devise_passwords_new_view(scope)
+        model = scope.fetch(:model)
+        auth_class = "#{model}Auth"
+        route_resource = scope.fetch(:route_resource)
+        [
+          "package views.devise.#{route_resource};",
+          "",
+          "import app.auth.#{auth_class};",
+          "import devisehx.hhx.AuthLinks;",
+          "import devisehx.hhx.DeviseErrors;",
+          "import models.#{model};",
+          "import rails.action_view.HtmlNode;",
+          "",
+          "typedef PasswordsNewLocals = {",
+          "\tvar resource:#{model};",
+          "}",
+          "",
+          "// Generated DeviseHx HHX password reset request view skeleton.",
+          "// Recoverable remains Devise-owned at runtime; this view only gives Haxe",
+          "// authors typed route helpers, typed resource errors, and HHX source.",
+          "@:railsTemplate(\"devise/passwords/new\")",
+          "@:railsTemplateAst(\"render\")",
+          "class PasswordsNewView {",
+          "\tpublic static function render(locals:PasswordsNewLocals):HtmlNode {",
+          "\t\treturn <main class=\"devisehx-auth-shell\">",
+          "\t\t\t<section class=\"devisehx-auth-card\">",
+          "\t\t\t\t<span class=\"eyebrow\">DeviseHx password reset</span>",
+          "\t\t\t\t<h1>Reset your password</h1>",
+          "\t\t\t\t<p>Devise sends reset instructions; RailsHx keeps the form action and errors typed.</p>",
+          "\t\t\t\t<if ${DeviseErrors.hasAny(locals.resource)}>",
+          "\t\t\t\t\t<section class=\"devisehx-errors\" aria-label=\"Password reset errors\">",
+          "\t\t\t\t\t\t<ul>",
+          "\t\t\t\t\t\t\t<for ${message in DeviseErrors.fullMessages(locals.resource)}>",
+          "\t\t\t\t\t\t\t\t<li>${message}</li>",
+          "\t\t\t\t\t\t\t</for>",
+          "\t\t\t\t\t\t</ul>",
+          "\t\t\t\t\t</section>",
+          "\t\t\t\t</if>",
+          "\t\t\t\t<form_with url=${AuthLinks.passwordPath(#{auth_class}.scope)} scope=\"#{scope.fetch(:scope)}\" local class=\"devisehx-auth-form\">",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"email\">Email</field_label>",
+          "\t\t\t\t\t\t<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<submit type=\"submit\">Send reset instructions</submit>",
+          "\t\t\t\t</form_with>",
+          "\t\t\t\t<devise_sign_in_link scope=${#{auth_class}.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
+          "\t\t\t</section>",
+          "\t\t</main>;",
+          "\t}",
+          "}",
+          "",
+        ].join("\n")
+      end
+
+      def render_devise_passwords_edit_view(scope)
+        model = scope.fetch(:model)
+        auth_class = "#{model}Auth"
+        route_resource = scope.fetch(:route_resource)
+        [
+          "package views.devise.#{route_resource};",
+          "",
+          "import app.auth.#{auth_class};",
+          "import devisehx.hhx.AuthLinks;",
+          "import devisehx.hhx.DeviseErrors;",
+          "import models.#{model};",
+          "import rails.action_view.HtmlNode;",
+          "",
+          "typedef PasswordsEditLocals = {",
+          "\tvar resource:#{model};",
+          "}",
+          "",
+          "// Generated DeviseHx HHX password edit view skeleton.",
+          "// The typed `locals.resource.resetPasswordToken` value comes from the",
+          "// recoverable schema column and lowers to Devise's conventional",
+          "// `reset_password_token` hidden form key in the generated Rails ERB.",
+          "@:railsTemplate(\"devise/passwords/edit\")",
+          "@:railsTemplateAst(\"render\")",
+          "class PasswordsEditView {",
+          "\tpublic static function render(locals:PasswordsEditLocals):HtmlNode {",
+          "\t\treturn <main class=\"devisehx-auth-shell\">",
+          "\t\t\t<section class=\"devisehx-auth-card\">",
+          "\t\t\t\t<span class=\"eyebrow\">DeviseHx password reset</span>",
+          "\t\t\t\t<h1>Choose a new password</h1>",
+          "\t\t\t\t<if ${DeviseErrors.hasAny(locals.resource)}>",
+          "\t\t\t\t\t<section class=\"devisehx-errors\" aria-label=\"Password update errors\">",
+          "\t\t\t\t\t\t<strong>${DeviseErrors.count(locals.resource)}</strong>",
+          "\t\t\t\t\t\t<ul>",
+          "\t\t\t\t\t\t\t<for ${message in DeviseErrors.fullMessages(locals.resource)}>",
+          "\t\t\t\t\t\t\t\t<li>${message}</li>",
+          "\t\t\t\t\t\t\t</for>",
+          "\t\t\t\t\t\t</ul>",
+          "\t\t\t\t\t</section>",
+          "\t\t\t\t</if>",
+          "\t\t\t\t<form_with url=${AuthLinks.passwordPath(#{auth_class}.scope)} scope=\"#{scope.fetch(:scope)}\" method=\"patch\" local class=\"devisehx-auth-form\">",
+          "\t\t\t\t\t<hidden_field name=\"resetPasswordToken\" value=${locals.resource.resetPasswordToken} />",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"password\">New password</field_label>",
+          "\t\t\t\t\t\t<password_field name=\"password\" autocomplete=\"new-password\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<div>",
+          "\t\t\t\t\t\t<field_label name=\"passwordConfirmation\">Confirm new password</field_label>",
+          "\t\t\t\t\t\t<password_field name=\"passwordConfirmation\" autocomplete=\"new-password\" required />",
+          "\t\t\t\t\t</div>",
+          "\t\t\t\t\t<submit type=\"submit\">Change password</submit>",
+          "\t\t\t\t</form_with>",
           "\t\t\t</section>",
           "\t\t</main>;",
           "\t}",

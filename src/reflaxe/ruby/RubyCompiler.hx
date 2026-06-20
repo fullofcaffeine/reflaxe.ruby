@@ -6780,6 +6780,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				scope + "_registration_path()";
 			case "cancelRegistrationPath":
 				"cancel_" + scope + "_registration_path()";
+			case "newPasswordPath":
+				"new_" + scope + "_password_path()";
+			case "editPasswordPath":
+				"edit_" + scope + "_password_path()";
+			case "passwordPath":
+				scope + "_password_path()";
 			case _:
 				null;
 		}

@@ -128,9 +128,12 @@ metadata, `beforeAction(UserAuth.authenticate)`, typed current-user helpers,
 `DeviseRoutes.deviseFor(UserAuth.scope, {only: [Sessions]})`, a Haxe-owned
 guest sign-in route, `AuthLinks.sessionPath(UserAuth.scope)` plus
 `<devise_sign_out_button>`/`DeviseErrors` in HHX, and auth composition around
-normal Rails helpers. A later dedicated
-DeviseHx app can still expand into registrations, password reset, confirmable,
-OmniAuth, and multi-scope matrices without making the todoapp huge.
+normal Rails helpers. The reusable adoption lane can also generate opt-in
+RailsHx-owned HHX skeletons for sessions, registrations, and recoverable
+password reset/edit views while keeping existing Devise ERB Rails-owned unless
+manifest ownership is explicit. A later dedicated DeviseHx app can still expand
+into confirmable, unlockable, OmniAuth, and multi-scope matrices without making
+the todoapp huge.
 
 ## DeviseHx Shape
 

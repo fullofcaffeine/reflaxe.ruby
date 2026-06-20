@@ -131,6 +131,7 @@ writeFileSync(join(outputDir, "src_haxe", "models", "User.hx"), [
   "",
   "class User extends rails.active_record.Base<User> implements devisehx.model.DeviseResource<User> {",
   "\tpublic var email:String;",
+  "\tpublic var resetPasswordToken:Null<String>;",
   "}",
   "",
 ].join("\n"));
@@ -401,6 +402,24 @@ assertIncludes("src_haxe/views/devise/users/RegistrationsNewView.hx", [
   "<form_with url=${AuthLinks.registrationPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
   "<password_field name=\"passwordConfirmation\" autocomplete=\"new-password\" required />",
 ]);
+assertIncludes("src_haxe/views/devise/users/PasswordsNewView.hx", [
+  "package views.devise.users;",
+  "// Generated DeviseHx HHX password reset request view skeleton.",
+  '@:railsTemplate("devise/passwords/new")',
+  "class PasswordsNewView",
+  "<form_with url=${AuthLinks.passwordPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
+  "<text_field name=\"email\" type=\"email\" autocomplete=\"email\" required />",
+  "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
+]);
+assertIncludes("src_haxe/views/devise/users/PasswordsEditView.hx", [
+  "package views.devise.users;",
+  "// Generated DeviseHx HHX password edit view skeleton.",
+  '@:railsTemplate("devise/passwords/edit")',
+  "class PasswordsEditView",
+  "<form_with url=${AuthLinks.passwordPath(UserAuth.scope)} scope=\"user\" method=\"patch\" local class=\"devisehx-auth-form\">",
+  "<hidden_field name=\"resetPasswordToken\" value=${locals.resource.resetPasswordToken} />",
+  "<password_field name=\"passwordConfirmation\" autocomplete=\"new-password\" required />",
+]);
 assertIncludes(".railshx/gems/devise/inventory.json", [
   '"kind": "devise_inventory"',
   '"name": "devise"',
@@ -426,6 +445,8 @@ assertIncludes("docs/railshx/gems/devise.md", [
 assertSnapshot("src_haxe/app/auth/UserAuth.hx");
 assertSnapshot("src_haxe/views/devise/users/SessionsNewView.hx");
 assertSnapshot("src_haxe/views/devise/users/RegistrationsNewView.hx");
+assertSnapshot("src_haxe/views/devise/users/PasswordsNewView.hx");
+assertSnapshot("src_haxe/views/devise/users/PasswordsEditView.hx");
 assertSnapshot(".railshx/gems/devise/inventory.json");
 assertSnapshot(".railshx/gems/devise/diagnostics.json");
 assertSnapshot("docs/railshx/gems/devise.md");
@@ -435,6 +456,8 @@ assertManifest([
   ["src_haxe/app/auth/UserAuth.hx", "devise_auth_contract"],
   ["src_haxe/views/devise/users/SessionsNewView.hx", "devise_hhx_view"],
   ["src_haxe/views/devise/users/RegistrationsNewView.hx", "devise_hhx_view"],
+  ["src_haxe/views/devise/users/PasswordsNewView.hx", "devise_hhx_view"],
+  ["src_haxe/views/devise/users/PasswordsEditView.hx", "devise_hhx_view"],
   ["docs/railshx/gems/devise.md", "docs"],
 ]);
 
@@ -455,6 +478,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "import models.User;",
   "import rails.action_controller.Base;",
   "import rails.action_view.HtmlNode;",
+  "import views.devise.users.PasswordsEditView;",
+  "import views.devise.users.PasswordsNewView;",
   "import views.devise.users.RegistrationsNewView;",
   "import views.devise.users.SessionsNewView;",
   "",
@@ -482,6 +507,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\t\tvar required:User = UserAuth.currentRequired(controller);",
   "\t\t\tvar sessionView:HtmlNode = SessionsNewView.render({resource: user});",
   "\t\t\tvar registrationView:HtmlNode = RegistrationsNewView.render({resource: user});",
+  "\t\t\tvar passwordNewView:HtmlNode = PasswordsNewView.render({resource: user});",
+  "\t\t\tvar passwordEditView:HtmlNode = PasswordsEditView.render({resource: user});",
   "\t\t\tSys.println(UserAuth.signedIn(controller));",
   "\t\t}",
   "\t\tSys.println(service != null);",
@@ -524,6 +551,8 @@ run("haxe", [
 for (const file of [
   "app/views/devise/sessions/new.html.erb",
   "app/views/devise/registrations/new.html.erb",
+  "app/views/devise/passwords/new.html.erb",
+  "app/views/devise/passwords/edit.html.erb",
 ]) {
   if (!existsSync(join(compiledOut, file))) {
     fail(`generated DeviseHx HHX compile output missing ${file}`);

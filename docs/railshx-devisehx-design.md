@@ -190,8 +190,9 @@ class DeviseLoginView {
 
 `AuthLinks` is not a runtime widget. The compiler requires a direct generated
 scope field such as `UserAuth.scope`, reads its `@:deviseHxRoute` metadata, and
-emits ordinary Rails helpers: `user_session_path`, `new_user_session_path`, and
-`destroy_user_session_path`. Local aliases, dynamically constructed scopes, and
+emits ordinary Rails helpers: `user_session_path`, `new_user_session_path`,
+`destroy_user_session_path`, `user_password_path`, and the matching Devise
+password helpers. Local aliases, dynamically constructed scopes, and
 function-returned scopes fail closed because the compiler cannot safely prove
 which Devise mapping they describe. The HHX tags are syntax sugar over normal
 Rails helpers: sign-in/sign-up/edit-registration tags emit `link_to`, and
@@ -512,10 +513,16 @@ lane owns stronger Devise semantics and reusable package behavior.
 typed auth contracts plus inventory/diagnostics docs. With it, the generator
 writes RailsHx-owned HHX skeletons such as
 `src_haxe/views/devise/users/SessionsNewView.hx` and
-`src_haxe/views/devise/users/RegistrationsNewView.hx`; compiling Haxe then emits
+`src_haxe/views/devise/users/RegistrationsNewView.hx`; when the deterministic
+inventory includes `recoverable`, it also writes
+`src_haxe/views/devise/users/PasswordsNewView.hx` and
+`src_haxe/views/devise/users/PasswordsEditView.hx`. Compiling Haxe then emits
 normal `app/views/devise/**/*.html.erb` artifacts. Existing Rails/Devise ERB
 views remain Rails-owned unless the file is already manifest/header-owned or the
-user explicitly chooses a force/repair flow.
+user explicitly chooses a force/repair flow. The password edit skeleton uses the
+checked HHX form field `resetPasswordToken`, which lowers to Devise's
+conventional `reset_password_token` form key; richer field-specific Devise form
+refs remain a follow-up, not a reason to author raw ERB.
 
 ## LLM-Assisted Adoption
 
