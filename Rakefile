@@ -207,6 +207,11 @@ namespace :rails do
     ruby_script("scripts/rails/model.rb", *args_env)
   end
 
+  desc 'Generate a typed RailsHx controller. Pass args with ARGS="Todos index show --templates"'
+  task :controller do
+    ruby_script("scripts/rails/controller.rb", *args_env)
+  end
+
   desc 'Generate a RailsHx scaffold. Pass args with ARGS="--model Todo --fields title:String --controller"'
   task :scaffold do
     ruby_script("scripts/rails/scaffold.rb", *args_env)

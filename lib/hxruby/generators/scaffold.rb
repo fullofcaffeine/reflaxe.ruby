@@ -2,6 +2,7 @@
 
 require "optparse"
 require_relative "common"
+require_relative "controller"
 
 module HXRuby
   module Generators
@@ -55,7 +56,7 @@ module HXRuby
         write_route_files
         write("src_haxe/Main.hx", render_main)
         write("build.hxml", render_build)
-        write("src_haxe/controllers/#{@controller_name}.hx", render_controller) if @with_controller
+        write_controller if @with_controller
       end
 
       private
@@ -137,38 +138,17 @@ module HXRuby
         lines.join("\n")
       end
 
-      def render_controller
-        permitted = @fields.map { |field| Common.haxe_string(field.fetch(:name)) }.join(", ")
-        redirect_line = if @route_mode == "rails"
-                          method_prefix = Common.pluralize(@model_name[0].downcase + @model_name[1..])
-                          "\t\tredirectTo(Routes.#{method_prefix}Path());"
-                        else
-                          "\t\tredirectToOptions({action: \"index\"});"
-                        end
-        [
-          "package controllers;",
-          "",
-          "import models.#{@model_name};",
-          "import rails.macros.ParamsMacro;",
-          ("import routes.Routes;" if @route_mode == "rails"),
-          "",
-          "@:railsController",
-          "class #{@controller_name} extends rails.action_controller.Base {",
-          "\tstatic final lifecycle = [];",
-          "",
-          "\tpublic function index() {",
-          "\t\tvar #{@table_name} = #{@model_name}.where({});",
-          "\t\trender({json: #{@table_name}});",
-          "\t}",
-          "",
-          "\tpublic function create() {",
-          "\t\tvar attrs = ParamsMacro.requirePermit(this.params(), #{Common.haxe_string(@resource_name)}, [#{permitted}]);",
-          "\t\tvar #{@resource_name} = #{@model_name}.create(attrs);",
-          redirect_line,
-          "\t}",
-          "}",
-          "",
-        ].compact.join("\n")
+      def write_controller
+        Controller.run([
+          @controller_name,
+          "index",
+          "create",
+          "--output", @output_dir,
+          "--model", @model_name,
+          "--fields", @fields.map { |field| field.fetch(:name) }.join(","),
+          "--routes", @route_mode,
+          ("--force" if @force),
+        ].compact)
       end
 
       def render_app_routes

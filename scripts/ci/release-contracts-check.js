@@ -199,6 +199,7 @@ expectIncludes(rootRakefile, "start_todoapp_with_watch", "root Rakefile todoapp 
 expectIncludes(rootRakefile, "task :production", "root Rakefile todoapp tasks");
 expectIncludes(rootRakefile, "namespace :rails", "root Rakefile");
 expectIncludes(rootRakefile, "task :routes", "root Rakefile Rails generator tasks");
+expectIncludes(rootRakefile, "task :controller", "root Rakefile Rails generator tasks");
 expectIncludes(rootRakefile, "namespace :package", "root Rakefile package tasks");
 expectIncludes(readme, "rake package:haxelib:build", "README Haxelib package docs");
 expectIncludes(readme, "rake package:haxelib:test", "README Haxelib package docs");

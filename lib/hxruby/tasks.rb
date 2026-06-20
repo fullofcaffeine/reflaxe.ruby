@@ -11,6 +11,7 @@ require "digest"
 require "hxruby/generators/adopt"
 require "hxruby/generators/app"
 require "hxruby/generators/common"
+require "hxruby/generators/controller"
 require "hxruby/generators/routes"
 require "hxruby/generators/routes_parity"
 require "hxruby/generators/scaffold"
@@ -150,6 +151,22 @@ module HXRuby
             class_name = ENV.fetch("CLASS", "Routes")
             routes = capture_rails_routes
             HXRuby::Generators::Routes.run(["--output", output, "--package", package_name, "--class", class_name], input: routes)
+          end
+
+          desc "Generate a typed RailsHx controller and optional HHX views"
+          task :controller do
+            controller = ENV["CONTROLLER"] || abort("CONTROLLER is required, for example: rake hxruby:gen:controller CONTROLLER=Todos ACTIONS=index,show")
+            args = [controller]
+            args.concat(ENV.fetch("ACTIONS", "").split(",").map(&:strip).reject(&:empty?))
+            args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
+            args += ["--haxe-dir", ENV["HAXE_DIR"]] if ENV["HAXE_DIR"]
+            args += ["--package", ENV["PACKAGE"]] if ENV["PACKAGE"]
+            args += ["--model", ENV["MODEL"]] if ENV["MODEL"]
+            args += ["--fields", ENV["FIELDS"]] if ENV["FIELDS"]
+            args += ["--routes", ENV["ROUTES"]] if ENV["ROUTES"]
+            args << "--templates" if truthy?(ENV["TEMPLATES"])
+            args << "--force" if truthy?(ENV["FORCE"])
+            HXRuby::Generators::Controller.run(args)
           end
 
           desc "Generate a Rails-oriented Haxe model/controller scaffold"

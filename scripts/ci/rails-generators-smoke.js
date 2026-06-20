@@ -88,6 +88,7 @@ require "generators/hxruby/install/install_generator"
 require "generators/hxruby/routes/routes_generator"
 require "generators/hxruby/migration/migration_generator"
 require "generators/hxruby/model/model_generator"
+require "generators/hxruby/controller/controller_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
 
@@ -130,6 +131,12 @@ begin
   model.generate_model
   assert(File.read(File.join(temp, "model", "src_haxe", "models", "Todo.hx")).include?("@:validates({presence: true})"), "model generator did not write typed validation")
 
+  controller = Hxruby::ControllerGenerator.new(["Todos", "index", "show"], {"templates" => true, "output" => "controller"})
+  controller.destination_root = temp
+  controller.generate_controller
+  assert(File.exist?(File.join(temp, "controller", "src_haxe", "controllers", "TodosController.hx")), "controller generator did not write controller")
+  assert(File.exist?(File.join(temp, "controller", "src_haxe", "views", "todos", "IndexView.hx")), "controller generator did not write HHX view")
+
   adopt_root = File.join(temp, "adopt")
   FileUtils.mkdir_p(File.join(adopt_root, "app", "services"))
   FileUtils.mkdir_p(File.join(adopt_root, "app", "views", "legacy"))
@@ -165,6 +172,7 @@ require "generators/hxruby/install/install_generator"
 require "generators/hxruby/routes/routes_generator"
 require "generators/hxruby/migration/migration_generator"
 require "generators/hxruby/model/model_generator"
+require "generators/hxruby/controller/controller_generator"
 require "generators/hxruby/scaffold/scaffold_generator"
 require "generators/hxruby/adopt/adopt_generator"
 
@@ -173,6 +181,7 @@ expected = {
   Hxruby::RoutesGenerator => "hxruby:routes",
   Hxruby::MigrationGenerator => "hxruby:migration",
   Hxruby::ModelGenerator => "hxruby:model",
+  Hxruby::ControllerGenerator => "hxruby:controller",
   Hxruby::ScaffoldGenerator => "hxruby:scaffold",
   Hxruby::AdoptGenerator => "hxruby:adopt"
 }

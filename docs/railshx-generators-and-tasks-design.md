@@ -113,7 +113,7 @@ bin/rails generate hxruby:routes
 bin/rails generate hxruby:adopt
 bin/rails generate hxruby:migration AddStatusToTodos status:string
 bin/rails generate hxruby:model Todo title:string completed:boolean
-bin/rails generate hxruby:controller Todos index show
+bin/rails generate hxruby:controller Todos index show --templates
 bin/rails generate hxruby:scaffold Todo title:string completed:boolean
 ```
 
@@ -495,6 +495,17 @@ or future marker blocks. The focused compiler fixture is
 `examples/rails_routes_dsl`; the full app fixture is `examples/todoapp_rails`.
 
 Scaffold follows the same mode names:
+
+```bash
+bin/rails generate hxruby:controller Todos index show --templates
+```
+
+The controller generator writes a typed `@:railsController` source file and,
+with `--templates`, matching typed HHX view skeletons. Those view classes use
+`@:railsTemplateAst("render")`; ERB remains compiler output, not the generator's
+authoring format. Standalone controller generation defaults to not mutating
+routes, while scaffold can still opt into Haxe-owned, Rails-owned, snippet, or
+none route modes.
 
 ```bash
 bin/rails generate hxruby:scaffold Todo title:String --controller --routes=haxe

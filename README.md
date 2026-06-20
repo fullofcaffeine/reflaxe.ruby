@@ -200,6 +200,7 @@ In an installed Rails app, prefer the Rails generator entrypoints:
 ```bash
 bin/rails generate hxruby:install MyApp
 bin/rails generate hxruby:routes
+bin/rails generate hxruby:controller Todos index show --templates
 bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
@@ -280,6 +281,7 @@ Useful tooling:
 
 ```bash
 rake rails:routes ARGS="--input routes.txt --output src_haxe/routes/Routes.hx"
+rake rails:controller ARGS="Todos index show --templates --output tmp/todo"
 rake rails:scaffold ARGS="--model Todo --fields title:String,isCompleted:Bool --validate title --controller --output tmp/todo"
 rake rails:adopt ARGS="--service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String --output tmp/rails_app"
 rake rails:app ARGS="--output tmp/rails_app --name TodoApp"

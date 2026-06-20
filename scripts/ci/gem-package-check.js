@@ -51,6 +51,7 @@ try {
     "lib/generators/hxruby/adopt/adopt_generator.rb",
     "lib/generators/hxruby/install/install_generator.rb",
     "lib/generators/hxruby/routes/routes_generator.rb",
+    "lib/generators/hxruby/controller/controller_generator.rb",
     "lib/generators/hxruby/scaffold/scaffold_generator.rb",
     "runtime/hxruby/core.rb",
     "runtime/hxruby/data_define.rb",
@@ -59,6 +60,7 @@ try {
     "vendor/genes/haxelib.json",
     "scripts/rails/adopt.rb",
     "scripts/rails/app.rb",
+    "scripts/rails/controller.rb",
     "scripts/rails/generate-routes.rb",
     "scripts/rails/scaffold.rb",
   ]) {
@@ -79,7 +81,7 @@ try {
   const tasksCheck = [
     "require 'rake'",
     "require 'hxruby/tasks'",
-    "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:doctor hxruby:check hxruby:clean hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:model hxruby:gen:routes]",
+    "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:doctor hxruby:check hxruby:clean hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:controller hxruby:gen:model hxruby:gen:routes]",
     "names = Rake::Task.tasks.map(&:name)",
     "missing = expected - names",
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
