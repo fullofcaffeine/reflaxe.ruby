@@ -322,6 +322,13 @@ boundary explicit for gradual adoption. `--from-schema db/schema.rb` is accepted
 as a fail-closed checked input boundary and reserved for richer schema-backed
 validation.
 
+`knownModels` validates against the current typed model contract, but migrations
+are historical snapshots. An `AddColumn("todos", "status", ...)` migration remains
+valid after `models.Todo` grows a `status` field because the current model is used
+to prove the table and follow-up references are real, not to rewrite migration
+history. RailsHx still rejects duplicate additions inside the same migration
+snapshot, so a generator cannot emit the same column twice by accident.
+
 Example Haxe source:
 
 ```haxe

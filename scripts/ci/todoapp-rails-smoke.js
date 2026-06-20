@@ -72,6 +72,10 @@ const migrationDropTableSourceDir = join(root, "test", ".generated", "todoapp_ra
 const migrationDropTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_out");
 const migrationSnapshotOpsSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_snapshot_ops_src");
 const migrationSnapshotOpsOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_snapshot_ops_out");
+const migrationHistoricalAddColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_historical_add_column_src");
+const migrationHistoricalAddColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_historical_add_column_out");
+const migrationDuplicateAddColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_add_column_src");
+const migrationDuplicateAddColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_add_column_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -216,6 +220,10 @@ rmSync(migrationDropTableSourceDir, { force: true, recursive: true });
 rmSync(migrationDropTableOutputDir, { force: true, recursive: true });
 rmSync(migrationSnapshotOpsSourceDir, { force: true, recursive: true });
 rmSync(migrationSnapshotOpsOutputDir, { force: true, recursive: true });
+rmSync(migrationHistoricalAddColumnSourceDir, { force: true, recursive: true });
+rmSync(migrationHistoricalAddColumnOutputDir, { force: true, recursive: true });
+rmSync(migrationDuplicateAddColumnSourceDir, { force: true, recursive: true });
+rmSync(migrationDuplicateAddColumnOutputDir, { force: true, recursive: true });
 rmSync(clientOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
@@ -1231,6 +1239,8 @@ expectMigrationExternalTableAllowed();
 expectMigrationUnsafeExternalTableFailure();
 expectMigrationDropTableReversibleOutput();
 expectMigrationSnapshotOperationsOutput();
+expectMigrationHistoricalAddColumnAllowed();
+expectMigrationDuplicateAddColumnFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -2139,6 +2149,100 @@ function expectMigrationSnapshotOperationsOutput() {
       process.exit(1);
     }
   }
+}
+
+function expectMigrationHistoricalAddColumnAllowed() {
+  mkdirSync(join(migrationHistoricalAddColumnSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationHistoricalAddColumnSourceDir, "HistoricalAddColumnMigrationMain.hx"), [
+    "import migrations.HistoricalAddColumnMigration;",
+    "",
+    "class HistoricalAddColumnMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<HistoricalAddColumnMigration> = HistoricalAddColumnMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationHistoricalAddColumnSourceDir, "migrations", "HistoricalAddColumnMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Demonstrates the historical-snapshot rule: knownModels validates that",
+    "// table/column references are real in today's typed model contract, but it",
+    "// does not mean every current model field already existed when this old",
+    "// migration ran. AddColumn(\"todos\", \"title\", ...) stays valid even",
+    "// though models.Todo now declares title.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000016\",",
+    "\tclassName: \"HistoricalAddColumnMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class HistoricalAddColumnMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddColumn(\"todos\", \"title\", StringColumn({nullable: false}))",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  compileValidMigration(
+    migrationHistoricalAddColumnSourceDir,
+    migrationHistoricalAddColumnOutputDir,
+    "HistoricalAddColumnMigrationMain"
+  );
+  const migrationRuby = readFileSync(join(migrationHistoricalAddColumnOutputDir, "db", "migrate", "20260101000016_historical_add_column_migration.rb"), "utf8");
+  if (!migrationRuby.includes("add_column :todos, :title, :string, null: false")) {
+    console.error("Historical AddColumn migration did not emit the expected add_column statement.");
+    process.exit(1);
+  }
+}
+
+function expectMigrationDuplicateAddColumnFailure() {
+  mkdirSync(join(migrationDuplicateAddColumnSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationDuplicateAddColumnSourceDir, "InvalidDuplicateAddColumnMigrationMain.hx"), [
+    "import migrations.BadDuplicateAddColumnMigration;",
+    "",
+    "class InvalidDuplicateAddColumnMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadDuplicateAddColumnMigration> = BadDuplicateAddColumnMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationDuplicateAddColumnSourceDir, "migrations", "BadDuplicateAddColumnMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Demonstrates same-snapshot duplicate detection. The first AddColumn is a",
+    "// valid historical operation; the second is rejected because this migration",
+    "// snapshot would emit the same column twice.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000017\",",
+    "\tclassName: \"BadDuplicateAddColumnMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadDuplicateAddColumnMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddColumn(\"todos\", \"title\", StringColumn({nullable: false})),",
+    "\t\tAddColumn(\"todos\", \"title\", StringColumn({nullable: false}))",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationDuplicateAddColumnSourceDir,
+    migrationDuplicateAddColumnOutputDir,
+    "InvalidDuplicateAddColumnMigrationMain",
+    "Duplicate AddColumn RailsHx migration compiled successfully.",
+    "@:railsMigration AddColumn name references column \"title\" already emitted by this migration snapshot on table \"todos\""
+  );
 }
 
 function expectInvalidTemplateLocalsFailure() {

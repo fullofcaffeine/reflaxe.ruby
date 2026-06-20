@@ -62,8 +62,11 @@ enum MigrationOperation {
 
 		When `@:railsMigration({knownModels: [...]})` is present, the compiler
 		validates table, column, index, and foreign-key column references against
-		the referenced `@:railsModel` metadata. Use `externalTables` for deliberate
-		interop with Rails-owned tables that Haxe does not own.
+		the referenced `@:railsModel` metadata. `knownModels` describes today's
+		typed schema, so historical `AddColumn` operations may still add a column
+		that now exists on the model; duplicate additions inside the same migration
+		snapshot are still rejected. Use `externalTables` for deliberate interop
+		with Rails-owned tables that Haxe does not own.
 	**/
 	CreateTable(table:String, options:{
 		var columns:Array<CreateTableItem>;

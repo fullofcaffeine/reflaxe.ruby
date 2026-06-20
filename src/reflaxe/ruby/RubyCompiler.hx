@@ -80,6 +80,7 @@ typedef RailsMigrationForeignKeyRef = {
 
 typedef RailsMigrationValidationContext = {
 	columnsByTable:Map<String, Map<String, Bool>>,
+	snapshotColumnsByTable:Map<String, Map<String, Bool>>,
 	externalTables:Map<String, Bool>,
 	strictTables:Bool
 }
@@ -4365,7 +4366,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var tableNames:Map<String, String> = [];
 		var models = railsMigrationResolveModels(modelPaths, tableNames, classType, false);
 		var knownModels = railsMigrationResolveModels(knownModelPaths, tableNames, classType, true);
-		var validationContext = railsMigrationValidationContext(models.concat(knownModels), externalTables);
+		var validationContext = railsMigrationValidationContext(models, knownModels, externalTables);
 		var operations = railsMigrationOperations(varFields, classType, validationContext);
 		if (modelPaths.length == 0 && operations.length == 0) {
 			Context.error("@:railsMigration models must include at least one model path unless typed operations are provided.", classType.pos);
@@ -4417,29 +4418,48 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return models;
 	}
 
-	static function railsMigrationValidationContext(models:Array<ClassType>, externalTables:Array<String>):Null<RailsMigrationValidationContext> {
-		if (models.length == 0) {
+	static function railsMigrationValidationContext(models:Array<ClassType>, knownModels:Array<ClassType>,
+			externalTables:Array<String>):Null<RailsMigrationValidationContext> {
+		if (models.length == 0 && knownModels.length == 0) {
 			return null;
 		}
 		var columnsByTable:Map<String, Map<String, Bool>> = [];
+		var snapshotColumnsByTable:Map<String, Map<String, Bool>> = [];
 		for (model in models) {
 			var table = railsModelTableName(model);
-			var columns:Map<String, Bool> = [];
-			for (field in model.fields.get()) {
-				if (hasMeta(field.meta, ":railsColumn")) {
-					columns.set(railsColumnInfoFromField(field).rubyName, true);
-				}
-			}
-			for (assoc in railsBelongsToInfo(model)) {
-				columns.set(assoc.columnName, true);
-			}
+			var columns = railsMigrationModelColumns(model);
 			columnsByTable.set(table, columns);
+			snapshotColumnsByTable.set(table, columns.copy());
+		}
+		for (model in knownModels) {
+			var table = railsModelTableName(model);
+			if (!columnsByTable.exists(table)) {
+				columnsByTable.set(table, railsMigrationModelColumns(model));
+			}
 		}
 		var external:Map<String, Bool> = [];
 		for (table in externalTables) {
 			external.set(table, true);
 		}
-		return {columnsByTable: columnsByTable, externalTables: external, strictTables: true};
+		return {
+			columnsByTable: columnsByTable,
+			snapshotColumnsByTable: snapshotColumnsByTable,
+			externalTables: external,
+			strictTables: true
+		};
+	}
+
+	static function railsMigrationModelColumns(model:ClassType):Map<String, Bool> {
+		var columns:Map<String, Bool> = [];
+		for (field in model.fields.get()) {
+			if (hasMeta(field.meta, ":railsColumn")) {
+				columns.set(railsColumnInfoFromField(field).rubyName, true);
+			}
+		}
+		for (assoc in railsBelongsToInfo(model)) {
+			columns.set(assoc.columnName, true);
+		}
+		return columns;
 	}
 
 	static function railsMigrationBody(config:RailsMigrationConfig):String {
@@ -4825,9 +4845,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (validation == null || validation.externalTables.exists(table)) {
 			return;
 		}
-		var columns = validation.columnsByTable.get(table);
-		if (columns != null && columns.exists(column)) {
-			Context.error('@:railsMigration ${label} references existing column "$column" on table "$table". Use ChangeColumn for existing known columns.',
+		var snapshotColumns = validation.snapshotColumnsByTable.get(table);
+		if (snapshotColumns != null && snapshotColumns.exists(column)) {
+			Context.error('@:railsMigration ${label} references column "$column" already emitted by this migration snapshot on table "$table". Use ChangeColumn for existing same-snapshot columns.',
 				expr.pos);
 		}
 	}
@@ -4843,6 +4863,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		if (columns != null) {
 			columns.set(column, true);
+		}
+		var snapshotColumns = validation.snapshotColumnsByTable.get(table);
+		if (snapshotColumns == null) {
+			snapshotColumns = [];
+			validation.snapshotColumnsByTable.set(table, snapshotColumns);
+		}
+		if (snapshotColumns != null) {
+			snapshotColumns.set(column, true);
 		}
 	}
 

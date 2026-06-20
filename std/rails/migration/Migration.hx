@@ -9,7 +9,9 @@ package rails.migration;
 	Options:
 	- `models`: typed `@:railsModel` classes to create in this migration.
 	- `knownModels`: typed `@:railsModel` classes used only for validation of
-	  follow-up operations. They are not emitted as `create_table`.
+	  table and existing-column references. They are not emitted as `create_table`,
+	  and they do not make historical `AddColumn` snapshots invalid just because
+	  today's model metadata now contains that column.
 	- `externalTables`: Rails-owned table names that should remain unchecked when
 	  Haxe does not own their schema, such as legacy tables or engine tables.
 **/
