@@ -3077,7 +3077,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActiveStorageAttachableStaticCall(name:String, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch name {
-			case "signedId" if (params.length == 1):
+			case "signedId" | "typedSignedId" | "blob" if (params.length == 1):
 				RubyRawExpr(printInlineExpr(params[0]));
 			case "io" if (params.length == 2 || params.length == 3):
 				RubyRawExpr(printActiveStorageAttachableHash(params[0], params[1], params.length == 3 ? params[2] : null));
@@ -3090,7 +3090,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActiveStorageAttachablesStaticCall(name:String, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch name {
-			case "signedIds" if (params.length == 1):
+			case "signedIds" | "typedSignedIds" if (params.length == 1):
 				RubyRawExpr(printInlineExpr(params[0]));
 			case "of" if (params.length == 1):
 				RubyRawExpr(printActiveStorageAttachablesArray(params[0]));
@@ -3107,7 +3107,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var info = staticCallInfo(callee);
 				if (info != null && isActiveStorageAttachableOwner(info.owner)) {
 					switch (info.name) {
-						case "signedId" if (params.length == 1):
+						case "signedId" | "typedSignedId" | "blob" if (params.length == 1):
 							printInlineExpr(params[0]);
 						case "io" if (params.length == 2 || params.length == 3):
 							printActiveStorageAttachableHash(params[0], params[1], params.length == 3 ? params[2] : null);
@@ -3118,7 +3118,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					}
 				} else if (info != null && isActiveStorageAttachablesOwner(info.owner)) {
 					switch (info.name) {
-						case "signedIds" if (params.length == 1):
+						case "signedIds" | "typedSignedIds" if (params.length == 1):
 							printInlineExpr(params[0]);
 						case "of" if (params.length == 1):
 							printActiveStorageAttachablesArray(params[0]);
@@ -6915,6 +6915,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFormPasswordField(params[0], params[1], scope);
 						}
+					case "FormFileField":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormFileField expects name and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormFileField(params[0], params[1], scope);
+						}
 					case "FormTextArea":
 						if (params.length != 2) {
 							Context.error("HtmlNode.FormTextArea expects name and attrs arguments.", node.pos);
@@ -7120,6 +7127,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			rubySymbolLiteral(expectTemplateFieldName(name, "H.passwordField name must be a string literal or RailsHx model field ref."))
 		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".password_field " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFormFileField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.fileField name must be a string literal, RailsHx model field ref, or RailsHx attachment ref."))
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= " + form + ".file_field " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormTextArea(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
@@ -7475,6 +7490,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyNaming.toMethodName(value);
 			case TField(_, access):
 				var value = fieldAccessRailsFieldName(access);
+				if (value == null) {
+					value = fieldAccessRailsAttachmentName(access);
+				}
 				if (value == null) {
 					Context.error(message, expr.pos);
 					"";

@@ -61,6 +61,7 @@ compileActiveStorage(outputDir);
 for (const file of [
   "app/haxe_gen/models/profile.rb",
   "app/haxe_gen/main.rb",
+  "app/views/profiles/_upload_form.html.erb",
   "config/initializers/hxruby_autoload.rb",
   "run.rb",
 ]) {
@@ -93,6 +94,13 @@ for (const expected of [
   /has_avatar__hx\d+ = profile__hx\d+\.avatar\(\)\.attached\?\(\)/,
   /profile__hx\d+\.avatar\(\)\.attach\("avatar.png"\)/,
   /profile__hx\d+\.avatar\(\)\.attach\(\{"io" => File\.open\("avatar.png"\), "filename" => "avatar.png", "content_type" => "image\/png"\}\)/,
+  /uploaded_signed_id__hx\d+ = uploaded_blob__hx\d+\.signed_id\(\)/,
+  /uploaded_filename__hx\d+ = uploaded_blob__hx\d+\.filename\(\)\.to_s\(\)/,
+  /uploaded_content_type__hx\d+ = uploaded_blob__hx\d+\.content_type\(\)/,
+  /direct_upload_url__hx\d+ = uploaded_blob__hx\d+\.service_url_for_direct_upload\(\)/,
+  /direct_upload_headers__hx\d+ = uploaded_blob__hx\d+\.service_headers_for_direct_upload\(\)/,
+  /profile__hx\d+\.avatar\(\)\.attach\(uploaded_signed_id__hx\d+\)/,
+  /profile__hx\d+\.avatar\(\)\.attach\(uploaded_blob__hx\d+\)/,
   /profile__hx\d+\.avatar\(\)\.purge\(\)/,
   /has_gallery__hx\d+ = profile__hx\d+\.gallery\(\)\.attached\?\(\)/,
   /profile__hx\d+\.gallery\(\)\.attach\(\["one.png", "two.png"\]\)/,
@@ -101,6 +109,18 @@ for (const expected of [
 ]) {
   if (!expected.test(mainRuby)) {
     console.error(`ActiveStorage helper output missing expected call: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const uploadFormErb = readFileSync(join(outputDir, "app", "views", "profiles", "_upload_form.html.erb"), "utf8");
+for (const expected of [
+  '<%= form_with url: "/profiles", scope: :profile, local: true, multipart: true, class: "profile-upload-form" do |form| %>',
+  '<%= form.label :avatar, "Avatar" %>',
+  '<%= form.file_field :avatar, direct_upload: true, accept: "image/png,image/jpeg" %>',
+]) {
+  if (!uploadFormErb.includes(expected)) {
+    console.error(`ActiveStorage upload form output missing expected line: ${expected}`);
     process.exit(1);
   }
 }
@@ -365,6 +385,7 @@ ActiveRecord::Migration.maintain_test_schema!
 `);
 
   writeFile("test/models/profile_attachment_test.rb", `require "test_helper"
+require "digest/md5"
 require "stringio"
 require Rails.root.join("app/haxe_gen/models/profile")
 
@@ -417,6 +438,38 @@ class ProfileAttachmentTest < ActiveSupport::TestCase
     assert_equal "hash-avatar.txt", profile.avatar.filename.to_s
     assert_equal "text/plain", profile.avatar.content_type
     assert_equal "hash-avatar-body", profile.avatar.download
+  end
+
+  test "direct upload blob helpers attach through signed ids" do
+    profile = Models::Profile.create!(name: "Dorothy")
+    body = "direct-upload-body"
+    blob = ActiveStorage::Blob.create_before_direct_upload!(
+      filename: "direct.txt",
+      byte_size: body.bytesize,
+      checksum: Digest::MD5.base64digest(body),
+      content_type: "text/plain"
+    )
+
+    assert blob.signed_id
+    assert_equal "direct.txt", blob.filename.to_s
+    assert_equal "text/plain", blob.content_type
+    assert_match(/rails\\/active_storage\\/disk/, blob.service_url_for_direct_upload)
+    assert_equal({"Content-Type" => "text/plain"}, blob.service_headers_for_direct_upload)
+
+    profile.avatar.attach(blob.signed_id)
+
+    assert profile.avatar.attached?
+    assert_equal "direct.txt", profile.avatar.filename.to_s
+  end
+
+  test "direct upload file field renders through Rails helpers" do
+    profile = Models::Profile.create!(name: "Mary")
+    html = ApplicationController.render(partial: "profiles/upload_form", locals: { profile: profile })
+
+    assert_includes html, "type=\\"file\\""
+    assert_includes html, "name=\\"profile[avatar]\\""
+    assert_includes html, "data-direct-upload-url="
+    assert_includes html, "/rails/active_storage/direct_uploads"
   end
 
   private

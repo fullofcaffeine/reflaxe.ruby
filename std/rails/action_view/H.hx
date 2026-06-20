@@ -116,6 +116,10 @@ class H {
 		return macro rails.action_view.HtmlNode.FormPasswordField($name, $attrs);
 	}
 
+	public static macro function fileField(name:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormFileField($name, $attrs);
+	}
+
 	public static macro function textArea(name:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.FormTextArea($name, $attrs);
 	}

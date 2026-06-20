@@ -1036,7 +1036,7 @@
       "status": "implemented",
       "path": "std/rails/ActiveStorage.hx",
       "surface": "rails.ActiveStorage",
-      "reason": "Top-level ActiveStorage marker module plus one/many attachment typedefs for Rails model metadata."
+      "reason": "Top-level ActiveStorage marker module plus attachment, blob, filename, and signed-id typedefs for Rails model/direct-upload metadata."
     },
     {
       "id": "std.rails.active_storage_one",
@@ -1052,7 +1052,31 @@
       "status": "implemented",
       "path": "std/rails/active_storage/Attachable.hx",
       "surface": "rails.active_storage.Attachable",
-      "reason": "Typed ActiveStorage attachable abstraction for signed IDs and common Rails io/filename/content_type hash attachables, plus explicit unchecked interop."
+      "reason": "Typed ActiveStorage attachable abstraction for signed IDs, typed blob objects, and common Rails io/filename/content_type hash attachables, plus explicit unchecked interop."
+    },
+    {
+      "id": "std.rails.active_storage_blob",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_storage/Blob.hx",
+      "surface": "rails.active_storage.Blob",
+      "reason": "Typed facade for Rails ActiveStorage::Blob metadata, signed id, and direct-upload service URL/header helpers."
+    },
+    {
+      "id": "std.rails.active_storage_filename",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_storage/Filename.hx",
+      "surface": "rails.active_storage.Filename",
+      "reason": "Typed facade for Rails ActiveStorage::Filename values returned from blob metadata."
+    },
+    {
+      "id": "std.rails.active_storage_signed_id",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_storage/SignedId.hx",
+      "surface": "rails.active_storage.SignedId",
+      "reason": "Opaque direct-upload signed blob id type for attaching verified blob references without treating every string as the same boundary."
     },
     {
       "id": "std.rails.active_storage_attachables",

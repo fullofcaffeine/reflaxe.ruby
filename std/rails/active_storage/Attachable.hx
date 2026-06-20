@@ -12,7 +12,7 @@ typedef AttachableOptions = {
 	Typed ActiveStorage attachable value.
 
 	String conversion keeps the direct-upload/signed-id handoff terse:
-	`Profile.attachments.avatar.attach(profile, blob.signedId)`.
+	`Profile.attachments.avatar.attach(profile, blob.signedId())`.
 
 	`io(...)` models Rails' common hash attachable shape without letting app code
 	pass arbitrary object literals to `attach(...)`. The IO value is supplied by
@@ -26,6 +26,16 @@ abstract Attachable(Dynamic) to Dynamic {
 
 	@:from
 	public static function signedId(value:String):Attachable {
+		return new Attachable(value);
+	}
+
+	@:from
+	public static function typedSignedId(value:SignedId):Attachable {
+		return new Attachable(value);
+	}
+
+	@:from
+	public static function blob(value:Blob):Attachable {
 		return new Attachable(value);
 	}
 

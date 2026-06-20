@@ -720,6 +720,10 @@ private class RailsMarkupParser {
 				var passwordFieldName = requireAttrValue(attrs, "name", pos);
 				var passwordFieldAttrs = attrsExcept(attrs, ["name"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.FormPasswordField($passwordFieldName, ${mkArray(passwordFieldAttrs.map(mkAttr), pos)});
+			case "file_field":
+				var fileFieldName = requireAttrValue(attrs, "name", pos);
+				var fileFieldAttrs = attrsExcept(attrs, ["name"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.FormFileField($fileFieldName, ${mkArray(fileFieldAttrs.map(mkAttr), pos)});
 			case "text_area":
 				var textAreaName = requireAttrValue(attrs, "name", pos);
 				var textAreaAttrs = attrsExcept(attrs, ["name"]);

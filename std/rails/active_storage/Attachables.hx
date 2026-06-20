@@ -17,6 +17,11 @@ abstract Attachables(Dynamic) to Dynamic {
 		return new Attachables(values);
 	}
 
+	@:from
+	public static function typedSignedIds(values:Array<SignedId>):Attachables {
+		return new Attachables(values);
+	}
+
 	public static function of(values:Array<Attachable>):Attachables {
 		return new Attachables(values);
 	}

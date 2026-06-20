@@ -45,6 +45,9 @@ Profile.attachments.avatar.attach(profile, "avatar.png");
 Profile.attachments.gallery.attach(profile, ["one.png", "two.png"]);
 Profile.attachments.avatar.attach(profile,
 	Attachable.io(File.open("avatar.png"), "avatar.png", {contentType: "image/png"}));
+var blob:rails.active_storage.Blob = uploadResult.blob;
+Profile.attachments.avatar.attach(profile, blob.signedId());
+Profile.attachments.avatar.attach(profile, blob);
 var hasAvatar = Profile.attachments.avatar.attached(profile);
 Profile.attachments.avatar.purge(profile);
 ```
@@ -56,6 +59,8 @@ profile.avatar.attach("avatar.png")
 profile.gallery.attach(["one.png", "two.png"])
 profile.avatar.attach({"io" => File.open("avatar.png"),
   "filename" => "avatar.png", "content_type" => "image/png"})
+profile.avatar.attach(blob.signed_id)
+profile.avatar.attach(blob)
 profile.avatar.attached?
 profile.avatar.purge
 ```
@@ -69,6 +74,42 @@ that string path is primarily for signed blob IDs such as `blob.signed_id`; it
 is not a promise that arbitrary filenames are valid attachables. Keeping this
 path typed prevents accidental object-shaped `Dynamic` values from flowing into
 Rails while preserving the common direct-upload/signed-id handoff.
+
+Prefer `rails.active_storage.SignedId` or `rails.active_storage.Blob` when the
+value came from Rails' direct-upload flow:
+
+```haxe
+var blob:rails.active_storage.Blob = uploadResult.blob;
+var signedId:rails.active_storage.SignedId = blob.signedId();
+
+Profile.attachments.avatar.attach(profile, signedId);
+Profile.attachments.avatar.attach(profile, blob);
+```
+
+Those calls lower to ordinary Rails:
+
+```ruby
+profile.avatar.attach(blob.signed_id)
+profile.avatar.attach(blob)
+```
+
+`Blob` also exposes typed metadata and direct-upload service helpers:
+
+```haxe
+var filename = blob.filename().toString();
+var contentType = blob.contentType();
+var byteSize = blob.byteSize();
+var uploadUrl = blob.serviceUrlForDirectUpload();
+var uploadHeaders = blob.serviceHeadersForDirectUpload();
+```
+
+```ruby
+blob.filename.to_s
+blob.content_type
+blob.byte_size
+blob.service_url_for_direct_upload
+blob.service_headers_for_direct_upload
+```
 
 For `has_many_attached`, use `Attachables.of(...)` when the array contains typed
 hash attachables instead of only signed IDs:
@@ -96,6 +137,35 @@ profile.avatar.attach({"io" => "raw", "filename" => "avatar.png"})
 Use `attachUnchecked(...)` only at reviewed interop boundaries. Common
 `io`/`filename`/`content_type` hashes should use `Attachable.io(...)` instead.
 
+## Direct Upload Fields
+
+RailsHx-owned templates should author direct-upload inputs in HHX and let the
+compiler emit the normal Rails helper call:
+
+```haxe
+@:railsTemplate("profiles/_upload_form")
+@:railsTemplateAst("render")
+class ProfileUploadView {
+	public static function render(locals:{profile:Profile}):HtmlNode {
+		return <form_with url="/profiles" scope="profile" local multipart>
+			<field_label name=${Profile.attachments.avatar}>Avatar</field_label>
+			<file_field name=${Profile.attachments.avatar} direct_upload accept="image/png,image/jpeg" />
+			<submit>Upload avatar</submit>
+		</form_with>;
+	}
+}
+```
+
+The field name is a typed attachment ref, not a repeated string. Generated ERB
+is Rails-native:
+
+```erb
+<%= form.file_field :avatar, direct_upload: true, accept: "image/png,image/jpeg" %>
+```
+
+Rails' own ActiveStorage JavaScript and route helper then add
+`data-direct-upload-url` at render time, exactly like a hand-written Rails app.
+
 ## Runtime Strategy
 
 `npm run test:active-storage` is both the fast compiler/static lane and, when a
@@ -107,6 +177,8 @@ checks:
 - single vs many metadata type validation.
 - helper lowering for `attached`, `attach`, and `purge`.
 - typed `Attachable.io(...)` and `Attachables.of(...)` hash attachable lowering.
+- typed blob metadata/direct-upload helper lowering.
+- generated HHX direct-upload file fields lowering to `form.file_field`.
 - unknown attachment refs failing during Haxe compilation.
 - object-shaped values failing on typed `attach(...)`, with
   `attachUnchecked(...)` reserved as the explicit raw Rails attachable escape.
@@ -122,6 +194,11 @@ migrates the generated `Profile` model, and asserts:
 - each gallery attachment can be read back and the collection can be purged.
 - a normal Rails hash attachable with `io`, `filename`, and `content_type` can
   attach a file through the same Rails receiver API.
+- `ActiveStorage::Blob.create_before_direct_upload!` exposes a signed id,
+  filename, content type, service URL, and service headers that match the typed
+  `Blob` facade.
+- a generated HHX partial renders a direct-upload file field with Rails'
+  `data-direct-upload-url`.
 
 If the generated app bundle is unavailable, the local fast lane prints a staged
 skip so compiler work stays lightweight. `REQUIRE_RAILS=1 npm run
@@ -131,12 +208,12 @@ runtime dependencies fail instead of silently skipping.
 ## Current Production Boundary
 
 The supported production path today is model metadata for one/many attachments,
-typed attachment refs, `attached`, signed-ID `attach`, and `purge` over the
-normal Rails ActiveStorage receiver API. `Attachable.io(...)` and
-`Attachables.of(...)` cover the common Rails hash attachable path without raw
-object literals.
+typed attachment refs, `attached`, signed-ID/blob `attach`, typed
+`Blob` metadata/direct-upload helpers, HHX direct-upload file fields, and
+`purge` over the normal Rails ActiveStorage receiver API. `Attachable.io(...)`
+and `Attachables.of(...)` cover the common Rails hash attachable path without
+raw object literals.
 
-Direct-upload helper generation, variants/previews, blob metadata facades,
-attachment validations, analyzer hooks, and richer attachable builders remain
-production follow-up work. Use `attachUnchecked(...)` only at reviewed Rails
-interop boundaries.
+Variants/previews, attachment validations, analyzer hooks, and richer attachable
+builders remain production follow-up work. Use `attachUnchecked(...)` only at
+reviewed Rails interop boundaries.
