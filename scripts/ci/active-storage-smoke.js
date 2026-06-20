@@ -92,10 +92,11 @@ const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "ut
 for (const expected of [
   /has_avatar__hx\d+ = profile__hx\d+\.avatar\(\)\.attached\?\(\)/,
   /profile__hx\d+\.avatar\(\)\.attach\("avatar.png"\)/,
-  /profile__hx\d+\.avatar\(\)\.attach\(\{"io" => "raw", "filename" => "avatar.png"\}\)/,
+  /profile__hx\d+\.avatar\(\)\.attach\(\{"io" => File\.open\("avatar.png"\), "filename" => "avatar.png", "content_type" => "image\/png"\}\)/,
   /profile__hx\d+\.avatar\(\)\.purge\(\)/,
   /has_gallery__hx\d+ = profile__hx\d+\.gallery\(\)\.attached\?\(\)/,
   /profile__hx\d+\.gallery\(\)\.attach\(\["one.png", "two.png"\]\)/,
+  /profile__hx\d+\.gallery\(\)\.attach\(\[\{"io" => File\.open\("one.png"\), "filename" => "one.png", "content_type" => "image\/png"\}, \{"io" => File\.open\("two.png"\), "filename" => "two.png", "content_type" => "image\/png"\}\]\)/,
   /profile__hx\d+\.gallery\(\)\.purge\(\)/,
 ]) {
   if (!expected.test(mainRuby)) {
@@ -401,6 +402,21 @@ class ProfileAttachmentTest < ActiveSupport::TestCase
     profile.gallery.purge
 
     assert_not profile.gallery.attached?
+  end
+
+  test "attaches a typed io filename content type hash" do
+    profile = Models::Profile.create!(name: "Katherine")
+
+    profile.avatar.attach(
+      io: StringIO.new("hash-avatar-body"),
+      filename: "hash-avatar.txt",
+      content_type: "text/plain"
+    )
+
+    assert profile.avatar.attached?
+    assert_equal "hash-avatar.txt", profile.avatar.filename.to_s
+    assert_equal "text/plain", profile.avatar.content_type
+    assert_equal "hash-avatar-body", profile.avatar.download
   end
 
   private

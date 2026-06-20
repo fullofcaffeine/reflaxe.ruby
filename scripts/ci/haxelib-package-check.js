@@ -98,6 +98,8 @@ for (const required of [
   "std/rails/ActionMailer.hx",
   "std/rails/ActionCable.hx",
   "std/rails/ActiveStorage.hx",
+  "std/rails/active_storage/Attachable.hx",
+  "std/rails/active_storage/Attachables.hx",
   "std/rails/active_job/Base.hx",
   "std/rails/active_job/DeserializationError.hx",
   "std/rails/active_job/LifecycleDecl.hx",

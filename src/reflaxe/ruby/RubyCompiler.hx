@@ -3036,7 +3036,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "attached":
 							RubyCall(receiver, "attached?", []);
 						case "attach" | "attachUnchecked" if (params.length == 2):
-							RubyCall(receiver, "attach", [compileExpr(params[1])]);
+							RubyCall(receiver, "attach", [RubyRawExpr(printActiveStorageAttachableValue(params[1]))]);
 						case "purge":
 							RubyCall(receiver, "purge", []);
 						case _:
@@ -3049,6 +3049,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileActiveStorageStaticCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (isActiveStorageAttachableOwner(info.owner)) {
+			return compileActiveStorageAttachableStaticCall(info.name, params);
+		}
+		if (isActiveStorageAttachablesOwner(info.owner)) {
+			return compileActiveStorageAttachablesStaticCall(info.name, params);
+		}
 		if (info.owner.indexOf("rails.active_storage") == -1 || params.length < 2) {
 			return null;
 		}
@@ -3061,12 +3067,120 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case "attached":
 				RubyCall(receiver, "attached?", []);
 			case "attach" | "attachUnchecked" if (params.length == 3):
-				RubyCall(receiver, "attach", [compileExpr(params[2])]);
+				RubyCall(receiver, "attach", [RubyRawExpr(printActiveStorageAttachableValue(params[2]))]);
 			case "purge":
 				RubyCall(receiver, "purge", []);
 			case _:
 				null;
 		}
+	}
+
+	static function compileActiveStorageAttachableStaticCall(name:String, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch name {
+			case "signedId" if (params.length == 1):
+				RubyRawExpr(printInlineExpr(params[0]));
+			case "io" if (params.length == 2 || params.length == 3):
+				RubyRawExpr(printActiveStorageAttachableHash(params[0], params[1], params.length == 3 ? params[2] : null));
+			case "unchecked" if (params.length == 1):
+				RubyRawExpr(printInlineExpr(params[0]));
+			case _:
+				null;
+		}
+	}
+
+	static function compileActiveStorageAttachablesStaticCall(name:String, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch name {
+			case "signedIds" if (params.length == 1):
+				RubyRawExpr(printInlineExpr(params[0]));
+			case "of" if (params.length == 1):
+				RubyRawExpr(printActiveStorageAttachablesArray(params[0]));
+			case "unchecked" if (params.length == 1):
+				RubyRawExpr(printInlineExpr(params[0]));
+			case _:
+				null;
+		}
+	}
+
+	static function printActiveStorageAttachableValue(value:TypedExpr):String {
+		return switch (unwrapTypedExpr(value).expr) {
+			case TCall(callee, params):
+				var info = staticCallInfo(callee);
+				if (info != null && isActiveStorageAttachableOwner(info.owner)) {
+					switch (info.name) {
+						case "signedId" if (params.length == 1):
+							printInlineExpr(params[0]);
+						case "io" if (params.length == 2 || params.length == 3):
+							printActiveStorageAttachableHash(params[0], params[1], params.length == 3 ? params[2] : null);
+						case "unchecked" if (params.length == 1):
+							printInlineExpr(params[0]);
+						case _:
+							printInlineExpr(value);
+					}
+				} else if (info != null && isActiveStorageAttachablesOwner(info.owner)) {
+					switch (info.name) {
+						case "signedIds" if (params.length == 1):
+							printInlineExpr(params[0]);
+						case "of" if (params.length == 1):
+							printActiveStorageAttachablesArray(params[0]);
+						case "unchecked" if (params.length == 1):
+							printInlineExpr(params[0]);
+						case _:
+							printInlineExpr(value);
+					}
+				} else {
+					printInlineExpr(value);
+				}
+			case TArrayDecl(_):
+				printInlineExpr(value);
+			case _:
+				printInlineExpr(value);
+		}
+	}
+
+	static function printActiveStorageAttachablesArray(values:TypedExpr):String {
+		return switch (unwrapTypedExpr(values).expr) {
+			case TArrayDecl(items):
+				"[" + [for (item in items) printActiveStorageAttachableValue(item)].join(", ") + "]";
+			case _:
+				Context.error("Attachables.of(...) expects an array literal so RailsHx can emit deterministic Rails attachables.", values.pos);
+		}
+	}
+
+	static function printActiveStorageAttachableHash(io:TypedExpr, filename:TypedExpr, options:Null<TypedExpr>):String {
+		var fields = [
+			quoteRubyStringForCode("io") + " => " + printInlineExpr(io),
+			quoteRubyStringForCode("filename") + " => " + printInlineExpr(filename)
+		];
+		if (options != null) {
+			for (field in activeStorageAttachableOptionFields(options)) {
+				switch field.name {
+					case "contentType":
+						fields.push(quoteRubyStringForCode("content_type") + " => " + printInlineExpr(field.expr));
+					case _:
+						Context.error("Attachable.io options support only contentType.", field.expr.pos);
+				}
+			}
+		}
+		return "{" + fields.join(", ") + "}";
+	}
+
+	static function activeStorageAttachableOptionFields(options:TypedExpr):Array<{name:String, expr:TypedExpr}> {
+		return switch (unwrapTypedExpr(options).expr) {
+			case TObjectDecl(fields):
+				fields;
+			case TConst(TNull):
+				[];
+			case _:
+				Context.error("Attachable.io options must be an object literal so RailsHx can emit deterministic Rails attachable kwargs.", options.pos);
+		}
+	}
+
+	static function isActiveStorageAttachableOwner(owner:String):Bool {
+		return owner == "rails.active_storage.Attachable" || StringTools.endsWith(owner, ".Attachable_Impl_");
+	}
+
+	static function isActiveStorageAttachablesOwner(owner:String):Bool {
+		return owner == "rails.active_storage.Attachables" || StringTools.endsWith(owner, ".Attachables_Impl_");
 	}
 
 	static function compileActionCableCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {

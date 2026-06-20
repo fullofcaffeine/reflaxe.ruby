@@ -116,7 +116,7 @@
       "status": "implemented",
       "path": "std/ruby/File.hx",
       "surface": "ruby.File",
-      "reason": "Typed extern for Ruby File APIs used by Haxe-authored Ruby tooling cores while keeping generated Ruby direct and idiomatic."
+      "reason": "Typed extern for Ruby File APIs used by Haxe-authored Ruby tooling cores and Rails attachable examples while keeping generated Ruby direct and idiomatic."
     },
     {
       "id": "std.ruby.json",
@@ -1044,7 +1044,23 @@
       "status": "implemented",
       "path": "std/rails/active_storage/One.hx",
       "surface": "rails.active_storage.One",
-      "reason": "Typed single ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls, plus explicit attachUnchecked for raw Rails attachable shapes not modeled yet."
+      "reason": "Typed single ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls, typed Attachable input, and explicit attachUnchecked for raw Rails attachable shapes not modeled yet."
+    },
+    {
+      "id": "std.rails.active_storage_attachable",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_storage/Attachable.hx",
+      "surface": "rails.active_storage.Attachable",
+      "reason": "Typed ActiveStorage attachable abstraction for signed IDs and common Rails io/filename/content_type hash attachables, plus explicit unchecked interop."
+    },
+    {
+      "id": "std.rails.active_storage_attachables",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_storage/Attachables.hx",
+      "surface": "rails.active_storage.Attachables",
+      "reason": "Typed collection abstraction for has_many_attached signed ID arrays and arrays of richer typed Attachable builders."
     },
     {
       "id": "std.rails.active_storage_many",
@@ -1052,7 +1068,7 @@
       "status": "implemented",
       "path": "std/rails/active_storage/Many.hx",
       "surface": "rails.active_storage.Many",
-      "reason": "Typed many ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls, plus explicit attachUnchecked for raw Rails attachable shapes not modeled yet."
+      "reason": "Typed many ActiveStorage attachment ref with attached/attach/purge helper surface lowered to Rails receiver calls, typed Attachables input, and explicit attachUnchecked for raw Rails attachable shapes not modeled yet."
     },
     {
       "id": "std.rails.action_view_template",

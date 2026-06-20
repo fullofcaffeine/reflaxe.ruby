@@ -19,7 +19,7 @@ abstract One<TModel>(String) from String to String {
 		return cast false;
 	}
 
-	public function attach(model:TModel, attachable:String):Void {}
+	public function attach(model:TModel, attachable:Attachable):Void {}
 
 	public function attachUnchecked(model:TModel, attachable:Dynamic):Void {}
 

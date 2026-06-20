@@ -19,7 +19,7 @@ abstract Many<TModel>(String) from String to String {
 		return cast false;
 	}
 
-	public function attach(model:TModel, attachables:Array<String>):Void {}
+	public function attach(model:TModel, attachables:Attachables):Void {}
 
 	public function attachUnchecked(model:TModel, attachables:Dynamic):Void {}
 
