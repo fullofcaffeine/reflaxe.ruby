@@ -212,7 +212,7 @@
       "status": "implemented",
       "path": "std/devisehx/hhx/AuthLinks.hx",
       "surface": "devisehx.hhx.AuthLinks",
-      "reason": "Compiler-erased HHX facade for typed Devise session route helpers that emit normal Rails path helpers."
+      "reason": "Compiler-erased HHX facade for typed Devise session and registration route helpers used by Rails HHX auth tags."
     },
     {
       "id": "std.devisehx.mapping",

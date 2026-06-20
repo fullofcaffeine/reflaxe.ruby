@@ -163,10 +163,14 @@ class DeviseLoginView {
 				<password_field name="password" />
 				<submit type="submit">Log in</submit>
 			</form_with>
-			<link_to url=${AuthLinks.signInPath(UserAuth.scope)}>Sign in</link_to>
-			<button_to url=${AuthLinks.signOutPath(UserAuth.scope)} method="delete">
+			<devise_sign_in_link scope=${UserAuth.scope}>Sign in</devise_sign_in_link>
+			<devise_sign_up_link scope=${UserAuth.scope}>Sign up</devise_sign_up_link>
+			<devise_edit_registration_link scope=${UserAuth.scope}>
+				Account settings
+			</devise_edit_registration_link>
+			<devise_sign_out_button scope=${UserAuth.scope}>
 				Sign out
-			</button_to>
+			</devise_sign_out_button>
 		</main>;
 	}
 }
@@ -177,9 +181,12 @@ scope field such as `UserAuth.scope`, reads its `@:deviseHxRoute` metadata, and
 emits ordinary Rails helpers: `user_session_path`, `new_user_session_path`, and
 `destroy_user_session_path`. Local aliases, dynamically constructed scopes, and
 function-returned scopes fail closed because the compiler cannot safely prove
-which Devise mapping they describe. Use Rails' normal `button_to ... method:
-"delete"` for sign-out until a richer typed HHX button tag lands; the generated
-artifact should still look like hand-written Rails.
+which Devise mapping they describe. The HHX tags are syntax sugar over normal
+Rails helpers: sign-in/sign-up/edit-registration tags emit `link_to`, and
+`<devise_sign_out_button>` emits `button_to ... method: "delete"` by default so
+the sign-out flow remains Turbo-safe and Rails-native. Use lower-level
+`AuthLinks.*Path(...)` with `<link_to>`/`<button_to>` when a template needs a
+custom shape the tags do not expose yet.
 
 Generated Ruby should remain familiar:
 

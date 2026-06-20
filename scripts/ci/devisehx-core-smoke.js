@@ -212,8 +212,10 @@ function writePositiveSources(dir, options = {}) {
   ] : [
     "\tpublic static function render():HtmlNode {",
     "\t\treturn <nav>",
-    "\t\t\t<link_to url=${AuthLinks.signInPath(UserAuth.scope)} class=\"login-link\">Sign in</link_to>",
-    "\t\t\t<button_to url=${AuthLinks.signOutPath(UserAuth.scope)} method=\"delete\" class=\"logout-button\">Sign out</button_to>",
+    "\t\t\t<devise_sign_in_link scope=${UserAuth.scope} class=\"login-link\">Sign in</devise_sign_in_link>",
+    "\t\t\t<devise_sign_up_link scope=${UserAuth.scope} class=\"signup-link\">Sign up</devise_sign_up_link>",
+    "\t\t\t<devise_edit_registration_link scope=${UserAuth.scope} class=\"settings-link\">Settings</devise_edit_registration_link>",
+    "\t\t\t<devise_sign_out_button scope=${UserAuth.scope} class=\"logout-button\">Sign out</devise_sign_out_button>",
     "\t\t\t<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope=\"user\" local class=\"login-form\">",
     "\t\t\t\t<submit type=\"submit\">Log in</submit>",
     "\t\t\t</form_with>",
@@ -346,6 +348,8 @@ function assertGeneratedShape(out) {
   const authLinks = readFileSync(join(out, "app/views/auth_links/show.html.erb"), "utf8");
   for (const expected of [
     "new_user_session_path()",
+    "new_user_registration_path()",
+    "edit_user_registration_path()",
     "destroy_user_session_path()",
     "user_session_path()",
     "method: \"delete\"",

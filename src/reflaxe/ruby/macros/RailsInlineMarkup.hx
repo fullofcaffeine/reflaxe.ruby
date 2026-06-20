@@ -449,6 +449,15 @@ private class RailsMarkupParser {
 		}
 	}
 
+	function staticAttr(name:String, value:String, pos:Position):RailsParsedAttr {
+		return {
+			name: name,
+			kind: Static(value),
+			expr: macro @:pos(pos) rails.action_view.HtmlAttr.Static($v{name}, $v{value}),
+			pos: pos
+		};
+	}
+
 	function parseTextNodesUntilTag():Array<Expr> {
 		var out:Array<Expr> = [];
 		var textStart = i;
@@ -757,6 +766,22 @@ private class RailsMarkupParser {
 						macro null;
 					}
 				}
+			case "devise_sign_in_link":
+				lowerDeviseLinkTag(name, "signInPath", attrs, children, pos);
+			case "devise_sign_up_link":
+				lowerDeviseLinkTag(name, "signUpPath", attrs, children, pos);
+			case "devise_edit_registration_link":
+				lowerDeviseLinkTag(name, "editRegistrationPath", attrs, children, pos);
+			case "devise_sign_out_button":
+				if (attrValue(attrs, "method") != null) {
+					Context.error("Rails HHX <devise_sign_out_button> always uses method=\"delete\". Remove the method attribute or use <button_to> with AuthLinks.signOutPath(...) for a lower-level override.",
+						pos);
+				}
+				var scope = requireAttrValue(attrs, "scope", pos);
+				var label = attrValueOrTextChildren(attrs, children, name, pos);
+				var buttonAttrs = attrsExcept(attrs, ["scope", "text", "method"]);
+				buttonAttrs.unshift(staticAttr("method", "delete", pos));
+				macro @:pos(pos) rails.action_view.HtmlNode.ButtonTo($label, devisehx.hhx.AuthLinks.signOutPath($scope), ${mkArray(buttonAttrs.map(mkAttr), pos)});
 			case "partial":
 				var template = requireAttrValue(attrs, "template", pos);
 				var locals = requireAttrValue(attrs, "locals", pos);
@@ -816,6 +841,24 @@ private class RailsMarkupParser {
 			default:
 				mkElement(name, attrs.map(mkAttr), children, pos);
 		}
+	}
+
+	function lowerDeviseLinkTag(tagName:String, helperName:String, attrs:Array<RailsParsedAttr>, children:Array<Expr>, pos:Position):Expr {
+		var scope = requireAttrValue(attrs, "scope", pos);
+		var label = attrValueOrTextChildren(attrs, children, tagName, pos);
+		var linkAttrs = attrsExcept(attrs, ["scope", "text"]);
+		var url = switch (helperName) {
+			case "signInPath":
+				macro @:pos(pos) devisehx.hhx.AuthLinks.signInPath($scope);
+			case "signUpPath":
+				macro @:pos(pos) devisehx.hhx.AuthLinks.signUpPath($scope);
+			case "editRegistrationPath":
+				macro @:pos(pos) devisehx.hhx.AuthLinks.editRegistrationPath($scope);
+			case _:
+				Context.error('Unsupported DeviseHx HHX link helper "$helperName".', pos);
+				macro null;
+		}
+		return macro @:pos(pos) rails.action_view.HtmlNode.LinkTo($label, $url, ${mkArray(linkAttrs.map(mkAttr), pos)});
 	}
 
 	function rejectAttrs(tagName:String, attrs:Array<RailsParsedAttr>, pos:Position):Void {
