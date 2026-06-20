@@ -219,7 +219,7 @@ future work. Today, author the small `@:rubyExternStub` yourself or let a future
 generator create it. The unchecked Rails escape hatch, if needed, must be named
 explicitly, for example `withUnchecked(...)`.
 
-Preview classes should also be Haxe-authored and compiler-erased into normal
+Preview classes can also be Haxe-authored and compiler-erased into normal
 Rails preview artifacts:
 
 ```haxe
@@ -237,10 +237,10 @@ class UserMailerPreview extends rails.action_mailer.Preview {
 ```
 
 The compiler should emit `ActionMailer::Preview` subclasses under
-`test/mailers/previews`, and the runtime lane should either load the preview or
-exercise the generated preview action in a tiny Rails app. Unsupported preview
-shapes, dynamic parameter hashes, or Rails-owned preview files should remain
-explicit adoption/interop boundaries until they have typed contracts.
+`test/mailers/previews`, and the runtime lane loads the generated preview and
+exercises the preview action in a tiny Rails app. Unsupported preview shapes,
+dynamic parameter hashes, or Rails-owned preview files should remain explicit
+adoption/interop boundaries until they have typed contracts.
 
 ## Current Production Boundary
 
@@ -249,8 +249,9 @@ Haxe-authored `@:railsMailer`, typed mail kwargs, typed HHX HTML/text templates,
 and string attachments through `attachments().add(...)`.
 
 Parameterized mailers are supported for typed `.with(...)` call sites and typed
-`params[:key]` reads inside Haxe-authored mailers. Generated `withParams(...)`
-wrappers, preview artifacts, richer attachment hashes, mailer/job integration,
+`params[:key]` reads inside Haxe-authored mailers. Haxe-authored preview classes
+are supported as generated `ActionMailer::Preview` artifacts. Generated
+`withParams(...)` wrappers, richer attachment hashes, mailer/job integration,
 and preview/test-helper generators remain deferred. Do not represent those as
 supported just because the lower-level Rails API can be reached with unchecked
 interop.

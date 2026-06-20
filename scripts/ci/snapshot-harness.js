@@ -75,12 +75,14 @@ const cases = [
   {
     name: "action_mailer",
     defines: ["reflaxe_ruby_rails"],
+    includePackages: ["previews"],
     files: [
       "app/haxe_gen/mailers/user_mailer.rb",
       "app/haxe_gen/views/welcome_email_html_view.rb",
       "app/haxe_gen/views/welcome_email_text_view.rb",
       "app/views/mailers/user_mailer/welcome.html.erb",
       "app/views/mailers/user_mailer/welcome.text.erb",
+      "test/mailers/previews/user_mailer_preview.rb",
       "app/haxe_gen/main.rb",
       "config/initializers/hxruby_autoload.rb",
       "run.rb",
@@ -341,9 +343,11 @@ function compileCase(testCase, outputDir) {
     "reflaxe.ruby.CompilerBootstrap.Start()",
     "--macro",
     "reflaxe.ruby.CompilerInit.Start()",
-    "-main",
-    "Main",
   );
+  for (const includePackage of testCase.includePackages ?? []) {
+    args.push("--macro", `include("${includePackage}")`);
+  }
+  args.push("-main", "Main");
   run("haxe", args);
 }
 

@@ -61,6 +61,7 @@ for (const file of [
   "app/haxe_gen/views/welcome_email_text_view.rb",
   "app/views/mailers/user_mailer/welcome.html.erb",
   "app/views/mailers/user_mailer/welcome.text.erb",
+  "test/mailers/previews/user_mailer_preview.rb",
   "app/haxe_gen/main.rb",
   "config/initializers/hxruby_autoload.rb",
   "run.rb",
@@ -103,6 +104,18 @@ if (!/Mailers::UserMailer\.with\(email: "reader@example.test", name: "Ada", mess
   process.exit(1);
 }
 
+const previewRuby = readFileSync(join(outputDir, "test", "mailers", "previews", "user_mailer_preview.rb"), "utf8");
+for (const expected of [
+  /class UserMailerPreview < ActionMailer::Preview/,
+  /def welcome\(\)/,
+  /Mailers::UserMailer\.with\(email: "preview@example.test", name: "Preview Ada", message: "Previewed through typed RailsHx params\."\)\.welcome_from_params\(\)/,
+]) {
+  if (!expected.test(previewRuby)) {
+    console.error(`ActionMailer preview output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
 const htmlErb = readFileSync(join(outputDir, "app", "views", "mailers", "user_mailer", "welcome.html.erb"), "utf8");
 for (const expected of [
   '<section class="email-shell">',
@@ -128,6 +141,7 @@ for (const file of [
   "app/haxe_gen/mailers/user_mailer.rb",
   "app/haxe_gen/views/welcome_email_html_view.rb",
   "app/haxe_gen/views/welcome_email_text_view.rb",
+  "test/mailers/previews/user_mailer_preview.rb",
   "app/haxe_gen/main.rb",
   "run.rb",
 ]) {
@@ -212,6 +226,7 @@ stage("runtime ruby syntax", () => syntaxCheck([
   "config/application.rb",
   "config/environment.rb",
   "test/mailers/user_mailer_test.rb",
+  "test/mailers/previews/user_mailer_preview.rb",
 ]));
 
 const bundleProbe = stage("runtime bundle probe", () => run("bundle", ["check"], {
@@ -255,6 +270,8 @@ function compileActionMailer(targetDir, options = {}) {
     "reflaxe.ruby.CompilerBootstrap.Start()",
     "--macro",
     "reflaxe.ruby.CompilerInit.Start()",
+    "--macro",
+    'include("previews")',
     "-main",
     options.main ?? "Main",
   ];
@@ -333,6 +350,7 @@ function materializeRuntimeRailsApp() {
   mkdirSync(runtimeAppDir, { recursive: true });
   copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
   copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
+  copyTree(join(outputDir, "test", "mailers", "previews"), join(runtimeAppDir, "test", "mailers", "previews"));
   copyGeneratedSupportIntoHaxeGen();
 
   writeFile("Gemfile", `source "https://rubygems.org"
@@ -366,6 +384,7 @@ require "rails/test_help"
 
   writeFile("test/mailers/user_mailer_test.rb", `require "test_helper"
 require Rails.root.join("app/haxe_gen/mailers/user_mailer")
+require Rails.root.join("test/mailers/previews/user_mailer_preview")
 
 class UserMailerTest < ActiveSupport::TestCase
   setup do
@@ -416,6 +435,14 @@ class UserMailerTest < ActiveSupport::TestCase
     assert_includes mail.html_part.body.decoded, "Typed RailsHx parameterized mailers are ready."
     assert_includes mail.text_part.body.decoded, "Typed RailsHx parameterized mailers are ready."
     assert_equal "Typed RailsHx parameterized mailers are ready.", mail.attachments["welcome.txt"].body.decoded
+  end
+
+  test "loads typed ActionMailer preview artifact" do
+    mail = UserMailerPreview.new.welcome
+
+    assert_equal "Welcome to typed RailsHx parameterized mail", mail.subject
+    assert_equal ["preview@example.test"], mail.to
+    assert_includes mail.html_part.body.decoded, "Previewed through typed RailsHx params."
   end
 end
 `);

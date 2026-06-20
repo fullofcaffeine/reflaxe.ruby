@@ -125,6 +125,7 @@ for (const required of [
   "std/rails/action_mailer/MailOptions.hx",
   "std/rails/action_mailer/MailRenderOptions.hx",
   "std/rails/action_mailer/MessageDelivery.hx",
+  "std/rails/action_mailer/Preview.hx",
   "std/rails/active_storage/Many.hx",
   "std/rails/active_storage/One.hx",
   "std/rails/action_controller/KeyValueStore.hx",
