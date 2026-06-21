@@ -40,6 +40,18 @@ class ControllerDsl {
 		return filter("around_action", handler, options);
 	}
 
+	public static macro function skipBeforeAction(handler:Expr, ?options:Expr):Expr {
+		return filter("skip_before_action", handler, options);
+	}
+
+	public static macro function skipAfterAction(handler:Expr, ?options:Expr):Expr {
+		return filter("skip_after_action", handler, options);
+	}
+
+	public static macro function skipAroundAction(handler:Expr, ?options:Expr):Expr {
+		return filter("skip_around_action", handler, options);
+	}
+
 	public static macro function rescueFrom(exception:Expr, handler:Expr):Expr {
 		#if macro
 		return rescue([rubyExceptionConstant(exception)], handler);

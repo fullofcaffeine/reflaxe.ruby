@@ -71,6 +71,7 @@ for (const expected of [
   /before_action :authenticate_user, only: \[:create\]/,
   /after_action :audit_response, only: \[:create\]/,
   /before_action :load_tenant, except: \[:index\]/,
+  /skip_before_action :load_tenant, only: \[:runtime_ok\]/,
   /rescue_from ActiveRecord::RecordNotFound, with: :not_found/,
   /rescue_from ActionController::InvalidAuthenticityToken, with: :csrf_failure/,
   /def authenticate_user\(\)/,
@@ -284,6 +285,23 @@ if (!/missing controller action/.test(invalidLifecycleAction.stderr + invalidLif
   process.exit(1);
 }
 
+const invalidSkipLifecycleHandler = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidSkipLifecycleHandlerMain",
+  allowFailure: true,
+});
+if (invalidSkipLifecycleHandler == null || invalidSkipLifecycleHandler.status === 0) {
+  console.error("Expected invalid ActionController skip lifecycle handler compile to fail.");
+  process.exit(1);
+}
+if (!/missing controller method|skip_before_action references/.test(invalidSkipLifecycleHandler.stderr + invalidSkipLifecycleHandler.stdout)) {
+  process.stdout.write(invalidSkipLifecycleHandler.stdout);
+  process.stderr.write(invalidSkipLifecycleHandler.stderr);
+  console.error("Invalid ActionController skip lifecycle handler failed for an unexpected reason.");
+  process.exit(1);
+}
+
 const invalidLifecycleContents = compileWithFirstAvailableReflaxe({
   outputDir: invalidOutputDir,
   classPath: invalidSourceDir,
@@ -489,6 +507,16 @@ function writeInvalidFixtures() {
     "}",
     "",
   ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidSkipLifecycleHandlerMain.hx"), [
+    "import invalid_controllers.BadSkipLifecycleHandlerController;",
+    "class InvalidSkipLifecycleHandlerMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller:BadSkipLifecycleHandlerController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
   writeFileSync(join(invalidSourceDir, "InvalidLifecycleContentsMain.hx"), [
     "import invalid_controllers.BadLifecycleContentsController;",
     "class InvalidLifecycleContentsMain {",
@@ -546,6 +574,21 @@ function writeInvalidFixtures() {
     "\t}",
     "",
     "\tfunction authenticateUser() {}",
+    "\tpublic function index() {}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "invalid_controllers", "BadSkipLifecycleHandlerController.hx"), [
+    "package invalid_controllers;",
+    "",
+    "import rails.macros.ControllerDsl.*;",
+    "",
+    "@:railsController",
+    "class BadSkipLifecycleHandlerController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = {",
+    "\t\tskipBeforeAction(missingHandler);",
+    "\t}",
+    "",
     "\tpublic function index() {}",
     "}",
     "",

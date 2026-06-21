@@ -51,6 +51,7 @@ class TodosController extends rails.action_controller.Base {
 		beforeAction(authenticateUser, {only: [create]});
 		afterAction(auditResponse, {only: [create]});
 		beforeAction(loadTenant, {except: [index]});
+		skipBeforeAction(loadTenant, {only: [runtimeOk]});
 		rescueFrom(RecordNotFound, notFound);
 		rescueFrom(InvalidAuthenticityToken, csrfFailure);
 	}

@@ -780,7 +780,7 @@
       "status": "implemented",
       "path": "std/rails/action_controller/LifecycleDecl.hx",
       "surface": "rails.action_controller.LifecycleDecl",
-      "reason": "Typed marker calls emitted by ControllerDsl macros and erased by the Ruby compiler into Rails class macros, including filters, rescues, and protect_from_forgery."
+      "reason": "Typed marker calls emitted by ControllerDsl macros and erased by the Ruby compiler into Rails class macros, including filters, skip filters, rescues, and protect_from_forgery."
     },
     {
       "id": "std.rails.action_controller_parameter_missing",
@@ -804,7 +804,7 @@
       "status": "implemented",
       "path": "std/rails/macros/ControllerDsl.hx",
       "surface": "rails.macros.ControllerDsl",
-      "reason": "Expression macros for contextual Rails controller lifecycle declarations using typed method/action/exception references and CSRF strategy tokens."
+      "reason": "Expression macros for contextual Rails controller lifecycle declarations using typed method/action/exception references, skip filters, and CSRF strategy tokens."
     },
     {
       "id": "std.rails.action_mailer",

@@ -1314,7 +1314,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		for (entry in railsControllerLifecycleEntries(expr)) {
 			var decl = railsControllerLifecycleDecl(entry);
 			switch (decl.kind) {
-				case "before_action" | "after_action" | "around_action":
+				case "before_action" | "after_action" | "around_action" | "skip_before_action" | "skip_after_action" | "skip_around_action":
 					lines.push(decl.kind + " " + railsControllerLifecycleMethodSymbol(decl.method) + railsControllerLifecycleOptions(decl));
 				case "protect_from_forgery":
 					lines.push("protect_from_forgery " + railsControllerForgeryProtectionOptions(decl));
@@ -1325,7 +1325,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						lines.push("rescue_from " + decl.exceptions.join(", ") + ", with: " + rubySymbolLiteral(RubyNaming.toMethodName(decl.method)));
 					}
 				case other:
-					Context.error('Unsupported Rails controller lifecycle declaration "$other". Use beforeAction, afterAction, aroundAction, protectFromForgery, or rescueFrom.',
+					Context.error('Unsupported Rails controller lifecycle declaration "$other". Use beforeAction, afterAction, aroundAction, skipBeforeAction, skipAfterAction, skipAroundAction, protectFromForgery, or rescueFrom.',
 						entry.pos);
 			}
 		}

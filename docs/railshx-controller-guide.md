@@ -173,6 +173,7 @@ static final lifecycle = {
 	beforeAction(authenticateUser, {only: [create]});
 	afterAction(auditResponse, {only: [create]});
 	beforeAction(loadTenant, {except: [index]});
+	skipBeforeAction(loadTenant, {only: [runtimeOk]});
 	rescueFrom(RecordNotFound, notFound);
 	rescueFrom(InvalidAuthenticityToken, csrfFailure);
 }
@@ -198,6 +199,7 @@ function csrfFailure(e:InvalidAuthenticityToken) {
 }
 
 public function create() {}
+public function runtimeOk() {}
 public function index() {}
 ```
 
@@ -208,6 +210,7 @@ protect_from_forgery with: :exception, prepend: true, except: [:index]
 before_action :authenticate_user, only: [:create]
 after_action :audit_response, only: [:create]
 before_action :load_tenant, except: [:index]
+skip_before_action :load_tenant, only: [:runtime_ok]
 rescue_from ActiveRecord::RecordNotFound, with: :not_found
 rescue_from ActionController::InvalidAuthenticityToken, with: :csrf_failure
 
@@ -221,6 +224,9 @@ This avoids stale lifecycle strings. `authenticateUser`, `create`, and
 rejects missing callback methods, missing action names in `only`/`except`, and
 malformed lifecycle block contents. `rescueFromNamed("Ruby::Constant", handler)`
 exists as a checked interop escape when no typed exception extern exists yet.
+`skipBeforeAction`, `skipAfterAction`, and `skipAroundAction` use the same typed
+method/action validation as the corresponding filter declarations and lower to
+ordinary Rails `skip_*_action` class macros.
 `protectFromForgery(...)` keeps the Rails concept recognizable while avoiding
 raw symbol strings in Haxe: `ForgeryProtectionStrategy.exception` lowers to
 `:exception`, and `only`/`except` entries are checked against real controller
