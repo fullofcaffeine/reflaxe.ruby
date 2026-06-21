@@ -24,6 +24,8 @@ import rails.macros.ParamsMacro;
 // `RequestVariant` inquirer returned by `request().variant()`. `sendFile(...)`
 // and `sendData(...)` expose Rails download helpers with typed `Status` and
 // `SendDisposition` options instead of raw status symbols.
+// `freshWhen(...)` and `stale(...)` expose Rails conditional GET helpers with
+// typed ETag/template kwargs, lowering to ordinary `fresh_when` and `stale?`.
 // `protectFromForgery(...)` exposes Rails' CSRF class macro with typed strategy
 // tokens and action refs, so app code avoids raw `:exception`/`:index` strings
 // while generated Ruby remains the ordinary `protect_from_forgery` call.
@@ -84,6 +86,8 @@ class TodosController extends rails.action_controller.Base {
 		var wantsPhoneVariant = requestVariant.phone();
 		var requestVariantName = requestVariant.toString();
 		var currentStatus = response().status();
+		freshWhen({etag: "todos-create"});
+		var cacheIsStale = stale({weakEtag: "todos-create", template: "controllers/todos/create"});
 		flash.notice("Todo queued");
 		session().set("lastTodoTitle", attrs);
 		var remembered = session().get("lastTodoTitle");

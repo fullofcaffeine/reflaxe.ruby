@@ -78,6 +78,8 @@ for (const expected of [
   /wants_phone_variant__hx\d+ = request_variant__hx\d+\.phone\?\(\)/,
   /request_variant_name__hx\d+ = request_variant__hx\d+\.to_s\(\)/,
   /current_status__hx\d+ = self\.response\(\)\.status\(\)/,
+  /self\.fresh_when\(etag: "todos-create"\)/,
+  /cache_is_stale__hx\d+ = self\.stale\?\(weak_etag: "todos-create", template: "controllers\/todos\/create"\)/,
   /self\.flash\(\)\[:notice\] = "Todo queued"/,
   /self\.session\(\)\[:last_todo_title\] = attrs__hx\d+/,
   /remembered__hx\d+ = self\.session\(\)\[:last_todo_title\]/,
@@ -145,6 +147,23 @@ if (!/Status|SendOptions|Cannot unify|String should be rails\.action_controller\
   process.stdout.write(invalidSend.stdout);
   process.stderr.write(invalidSend.stderr);
   console.error("Invalid ActionController send options failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidFreshness = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidFreshnessMain",
+  allowFailure: true,
+});
+if (invalidFreshness == null || invalidFreshness.status === 0) {
+  console.error("Expected invalid ActionController freshness options compile to fail.");
+  process.exit(1);
+}
+if (!/FreshnessOptions|String|Int should be String|Cannot unify/.test(invalidFreshness.stderr + invalidFreshness.stdout)) {
+  process.stdout.write(invalidFreshness.stdout);
+  process.stderr.write(invalidFreshness.stderr);
+  console.error("Invalid ActionController freshness options failed for an unexpected reason.");
   process.exit(1);
 }
 
@@ -344,6 +363,15 @@ function writeInvalidFixtures() {
     "\tstatic function main():Void {",
     "\t\tvar controller = new controllers.TodosController();",
     "\t\tcontroller.sendData(\"bad\", {filename: \"bad.txt\", status: \"ok\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidFreshnessMain.hx"), [
+    "class InvalidFreshnessMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tcontroller.freshWhen({etag: 1});",
     "\t}",
     "}",
     "",

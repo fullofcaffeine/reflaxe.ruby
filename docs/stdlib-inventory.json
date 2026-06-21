@@ -751,6 +751,14 @@
       "reason": "Typed Rails download disposition token for send_file/send_data, lowering to ordinary inline/attachment string values without app-level raw strings."
     },
     {
+      "id": "std.rails.action_controller_freshness_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/FreshnessOptions.hx",
+      "surface": "rails.action_controller.FreshnessOptions",
+      "reason": "Typed option-hash kwargs for ActionController fresh_when/stale? helpers, including common ETag/template keys lowered to Rails-native kwargs."
+    },
+    {
       "id": "std.rails.action_controller_forgery_protection_strategy",
       "owner": "std",
       "status": "implemented",

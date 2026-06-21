@@ -329,6 +329,25 @@ self.send_data(csv_body__hx0, filename: "todos.csv", type: "text/csv", dispositi
 Haxe's reserved `inline` keyword. Raw string statuses are rejected here too;
 use `Status.*` or `Status.named(...)`.
 
+Use `freshWhen(...)` and `stale(...)` for Rails conditional GET helpers:
+
+```haxe
+freshWhen({etag: "todos-index"});
+var cacheIsStale = stale({weakEtag: "todos-index", template: "controllers/todos/index"});
+```
+
+Generated Ruby remains ordinary Rails:
+
+```ruby
+self.fresh_when(etag: "todos-index")
+cache_is_stale__hx0 = self.stale?(weak_etag: "todos-index", template: "controllers/todos/index")
+```
+
+`FreshnessOptions` keeps the common ETag/template kwargs typed and lowers Haxe
+camelCase fields such as `weakEtag` to Rails `weak_etag:`. Broader Rails
+freshness shapes can be added as typed options instead of raw kwargs when the
+compiler has enough evidence to validate them.
+
 Rails `respond_to` blocks use the typed responder collector:
 
 ```haxe

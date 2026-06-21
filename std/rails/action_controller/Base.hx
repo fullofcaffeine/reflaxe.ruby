@@ -60,6 +60,16 @@ class Base {
 	@:rubyKwargs
 	public function sendData(data:String, options:SendOptions):Void {}
 
+	@:native("fresh_when")
+	@:rubyKwargs
+	public function freshWhen(options:FreshnessOptions):Void {}
+
+	@:native("stale?")
+	@:rubyKwargs
+	public function stale(options:FreshnessOptions):Bool {
+		return false;
+	}
+
 	@:native("respond_to")
 	@:rubyBlockArg
 	public function respondTo(block:Responder->Void):Void {}
