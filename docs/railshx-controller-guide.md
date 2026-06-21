@@ -178,15 +178,15 @@ static final lifecycle = {
 }
 
 function authenticateUser() {
-	var method = request().requestMethod();
+	var method = request.requestMethod();
 }
 
 function auditResponse() {
-	var status = response().status();
+	var status = response.status();
 }
 
 function loadTenant() {
-	var path = request().path();
+	var path = request.path();
 }
 
 function notFound(e:RecordNotFound) {
@@ -253,16 +253,16 @@ self.cookies().delete(:stale_filter)
 Request/response facades stay Rails-native:
 
 ```haxe
-var method = request().requestMethod();
-var path = request().path();
-var wantsJson = request().format().json();
-var formatName = request().format().toString();
-var negotiatedFormats = request().formats();
-var contentMimeType = request().contentMimeType();
-var mediaType = request().mediaType();
-var wantsPhone = request().variant().phone();
-var variantName = request().variant().toString();
-var status = response().status();
+var method = request.requestMethod();
+var path = request.path();
+var wantsJson = request.format().json();
+var formatName = request.format().toString();
+var negotiatedFormats = request.formats();
+var contentMimeType = request.contentMimeType();
+var mediaType = request.mediaType();
+var wantsPhone = request.variant().phone();
+var variantName = request.variant().toString();
+var status = response.status();
 ```
 
 Generated Ruby:
@@ -280,15 +280,15 @@ variant_name__hx0 = self.request().variant().to_s()
 status__hx0 = self.response().status()
 ```
 
-`request().format()` returns `RequestFormat`, not `Dynamic`, so common MIME
+`request.format()` returns `RequestFormat`, not `Dynamic`, so common MIME
 checks such as `html()`, `json()`, `turboStream()`, `xml()`, and `any()` are
 completed and type-checked while still lowering to Rails' normal MIME object.
-`request().formats()` returns `Array<RequestFormat>`, and
-`request().contentMimeType()` returns `Null<RequestFormat>`, so custom
-negotiation can stay typed without stringly MIME checks. `request().mediaType()`
+`request.formats()` returns `Array<RequestFormat>`, and
+`request.contentMimeType()` returns `Null<RequestFormat>`, so custom
+negotiation can stay typed without stringly MIME checks. `request.mediaType()`
 is intentionally `Null<String>` because Rails exposes the media type as a
 runtime string.
-`request().variant()` follows the same rule for Rails variants: `phone()`,
+`request.variant()` follows the same rule for Rails variants: `phone()`,
 `tablet()`, `desktop()`, and `nativeApp()` lower to the ordinary Rails
 `phone?`/`tablet?`/`desktop?`/`native_app?` variant inquirer methods.
 

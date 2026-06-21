@@ -18,10 +18,10 @@ import rails.macros.ParamsMacro;
 // refs such as `Todo.f.title` when a model schema is available. Nested permit
 // specs use Rails-shaped Haxe object literals, e.g. `{metadata: ["source"]}`.
 // `flash`, `session`, and `cookies` expose typed store helpers instead of raw
-// Dynamic bracket access. `request()` and `response()` expose typed facades
+// Dynamic bracket access. `request` and `response` expose typed facades
 // over the Rails runtime objects without wrapping them, including the
-// `RequestFormat` MIME facade returned by `request().format()` and the
-// `RequestVariant` inquirer returned by `request().variant()`. `sendFile(...)`
+// `RequestFormat` MIME facade returned by `request.format()` and the
+// `RequestVariant` inquirer returned by `request.variant()`. `sendFile(...)`
 // and `sendData(...)` expose Rails download helpers with typed `Status` and
 // `SendDisposition` options instead of raw status symbols.
 // `freshWhen(...)` and `stale(...)` expose Rails conditional GET helpers with
@@ -56,15 +56,15 @@ class TodosController extends rails.action_controller.Base {
 	}
 
 	function authenticateUser() {
-		var method = request().requestMethod();
+		var method = request.requestMethod();
 	}
 
 	function auditResponse() {
-		var status = response().status();
+		var status = response.status();
 	}
 
 	function loadTenant() {
-		var path = request().path();
+		var path = request.path();
 	}
 
 	function notFound(e:RecordNotFound) {
@@ -77,18 +77,18 @@ class TodosController extends rails.action_controller.Base {
 
 	public function create() {
 		var attrs = ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"], {metadata: ["source", "priority"], tags: []});
-		var requestMethod = request().requestMethod();
-		var requestPath = request().path();
-		var requestFormat = request().format();
+		var requestMethod = request.requestMethod();
+		var requestPath = request.path();
+		var requestFormat = request.format();
 		var wantsJson = requestFormat.json();
 		var requestFormatName = requestFormat.toString();
-		var requestFormats = request().formats();
-		var contentMimeType = request().contentMimeType();
-		var requestMediaType = request().mediaType();
-		var requestVariant = request().variant();
+		var requestFormats = request.formats();
+		var contentMimeType = request.contentMimeType();
+		var requestMediaType = request.mediaType();
+		var requestVariant = request.variant();
 		var wantsPhoneVariant = requestVariant.phone();
 		var requestVariantName = requestVariant.toString();
-		var currentStatus = response().status();
+		var currentStatus = response.status();
 		freshWhen({etag: "todos-create"});
 		var cacheIsStale = stale({weakEtag: "todos-create", template: "controllers/todos/create"});
 		flash.notice("Todo queued");

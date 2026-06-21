@@ -7,11 +7,19 @@ class Base {
 		return cast null;
 	}
 
-	public function request():Request {
+	@:native("request")
+	public var request(get, never):Request;
+
+	@:native("request")
+	function get_request():Request {
 		return cast null;
 	}
 
-	public function response():Response {
+	@:native("response")
+	public var response(get, never):Response;
+
+	@:native("response")
+	function get_response():Response {
 		return cast null;
 	}
 
