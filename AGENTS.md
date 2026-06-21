@@ -1,6 +1,6 @@
 # Agent Instructions
 
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
+This project uses **bd** (beads) for issue tracking. Run `bd prime` for current workflow context, or `bd onboard` for the minimal setup snippet.
 
 ## Quick Reference
 
@@ -9,8 +9,10 @@ bd ready              # Find available work
 bd show <id>          # View issue details
 bd update <id> --status in_progress  # Claim work
 bd close <id>         # Complete work
-bd sync               # Sync with git
+git push              # Share code plus tracked .beads/issues.jsonl changes
 ```
+
+This repo intentionally uses the simple git-tracked JSONL bead workflow: `.beads/issues.jsonl` is the shared issue state and should be committed like source. Current `bd` versions do not provide a top-level `bd sync` command here, and this repo should not require Dolt remotes. Commit bead JSONL changes together with the code/docs they describe and share them through normal `git push`. If local `bd` commands cannot see issues after a fresh clone or tool upgrade, hydrate the local ignored database from the tracked export with `bd bootstrap --yes` or `bd import .beads/issues.jsonl`; do not add `bd sync` back.
 
 ## Ruby Profile Contract
 
@@ -143,7 +145,6 @@ Rails work should follow `docs/railshx-roadmap.md`.
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```

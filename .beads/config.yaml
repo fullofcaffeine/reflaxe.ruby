@@ -10,7 +10,12 @@
 
 # Use no-db mode: load from JSONL, no SQLite, write back after each command
 # When true, bd will use .beads/issues.jsonl as the source of truth
-# instead of SQLite database
+# instead of SQLite database.
+#
+# Keep this disabled for bd 1.0.4 in this repo: the installed CLI still
+# expects a local database for normal commands. Collaboration stays simple by
+# tracking the auto-exported .beads/issues.jsonl in git and avoiding Dolt
+# remotes unless explicitly configured later.
 # no-db: false
 
 # Disable daemon for RPC communication (forces direct database access)
@@ -37,12 +42,11 @@
 # Debounce interval for auto-flush (can also use BEADS_FLUSH_DEBOUNCE)
 # flush-debounce: "5s"
 
-# Git branch for beads commits (bd sync will commit to this branch)
-# IMPORTANT: Set this for team projects so all clones use the same sync branch.
-# This setting persists across clones (unlike database config which is gitignored).
-# Can also use BEADS_SYNC_BRANCH env var for local override.
-# If not set, bd sync will require you to run 'bd config set sync.branch <branch>'.
-# sync-branch: "beads-sync"
+# Historical note: older bead workflows referenced a top-level `bd sync`.
+# The installed bd 1.0.4 CLI used by this repo does not provide that command.
+# Share bead state through the tracked .beads/issues.jsonl export and normal
+# git push. Do not introduce a Dolt remote or sync branch unless the team
+# explicitly decides to move away from the git-tracked JSONL workflow.
 
 # Multi-repo configuration (experimental - bd-307)
 # Allows hydrating from multiple repositories and routing writes to the correct JSONL
