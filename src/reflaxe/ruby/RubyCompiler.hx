@@ -6928,6 +6928,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplatePluralize(params[0], params[1], params[2], scope);
 						}
+					case "SimpleFormat":
+						if (params.length != 2) {
+							Context.error("HtmlNode.SimpleFormat expects text and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateSimpleFormat(params[0], params[1], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7338,6 +7345,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push(quoteRubyStringForCode(expectTemplateString(plural, "HtmlNode.Pluralize plural must be a string literal.")));
 		}
 		return "<%= pluralize " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateSimpleFormat(text:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(text, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= simple_format " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

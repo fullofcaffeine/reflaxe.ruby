@@ -782,6 +782,11 @@ private class RailsMarkupParser {
 				var plural = attrValue(attrs, "plural");
 				rejectUnknownAttrs(name, attrs, ["count", "singular", "plural"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Pluralize($count, $singular, ${plural == null ? (macro null) : plural});
+			case "simple_format":
+				rejectChildren(name, children, pos);
+				var text = requireAttrValue(attrs, "text", pos);
+				var simpleFormatAttrs = attrsExcept(attrs, ["text"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.SimpleFormat($text, ${mkArray(simpleFormatAttrs.map(mkAttr), pos)});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);

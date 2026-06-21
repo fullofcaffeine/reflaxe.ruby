@@ -73,6 +73,10 @@ class H {
 		return macro rails.action_view.HtmlNode.Pluralize($count, $singular, $plural);
 	}
 
+	public static macro function simpleFormat(text:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.SimpleFormat($text, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

@@ -2641,7 +2641,9 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<mail_to email=\"admin@example.test\" text=\"Email admin\" class=\"admin-link\" />,",
     "\t\t\t<mail_to email=\"ops@example.test\">Ops desk</mail_to>,",
     "\t\t\tH.pluralize(2, \"task\", null),",
-    "\t\t\t<pluralize count=${3} singular=\"person\" plural=\"people\" />",
+    "\t\t\t<pluralize count=${3} singular=\"person\" plural=\"people\" />,",
+    "\t\t\tH.simpleFormat(\"First line\\nSecond line\", [H.className(\"formatted-copy\")]),",
+    "\t\t\t<simple_format text=\"Inline copy\" class=\"inline-copy\" />",
     "\t\t]);",
     "\t}",
     "}",
@@ -2659,6 +2661,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= mail_to "ops@example.test", "Ops desk" %>',
     '<%= pluralize 2, "task" %>',
     '<%= pluralize 3, "person", "people" %>',
+    '<%= simple_format "First line\nSecond line", class: "formatted-copy" %>',
+    '<%= simple_format "Inline copy", class: "inline-copy" %>',
   ]) {
     if (!generated.includes(expected)) {
       console.error(`Checked H.data/H.aria helper fixture missing expected output: ${expected}`);
