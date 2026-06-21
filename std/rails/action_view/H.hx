@@ -61,6 +61,10 @@ class H {
 		return macro rails.action_view.HtmlNode.LinkToBlock($url, $attrs, $children);
 	}
 
+	public static macro function imageTag(source:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.ImageTag($source, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

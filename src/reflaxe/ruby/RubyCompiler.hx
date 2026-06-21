@@ -6907,6 +6907,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateLinkToBlock(params[0], params[1], params[2], scope);
 						}
+					case "ImageTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.ImageTag expects source and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateImageTag(params[0], params[1], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7287,6 +7294,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			out += lowerTemplateNode(child, scope);
 		}
 		return out + "<% end %>";
+	}
+
+	static function lowerTemplateImageTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= image_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
