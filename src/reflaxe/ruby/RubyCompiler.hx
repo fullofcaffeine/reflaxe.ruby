@@ -1316,6 +1316,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			switch (decl.kind) {
 				case "before_action" | "after_action" | "around_action":
 					lines.push(decl.kind + " " + railsControllerLifecycleMethodSymbol(decl.method) + railsControllerLifecycleOptions(decl));
+				case "protect_from_forgery":
+					lines.push("protect_from_forgery " + railsControllerForgeryProtectionOptions(decl));
 				case "rescue_from":
 					if (decl.exceptions.length == 0) {
 						Context.error("rescueFrom lifecycle declaration must include at least one exception.", entry.pos);
@@ -1323,7 +1325,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						lines.push("rescue_from " + decl.exceptions.join(", ") + ", with: " + rubySymbolLiteral(RubyNaming.toMethodName(decl.method)));
 					}
 				case other:
-					Context.error('Unsupported Rails controller lifecycle declaration "$other". Use beforeAction, afterAction, aroundAction, or rescueFrom.',
+					Context.error('Unsupported Rails controller lifecycle declaration "$other". Use beforeAction, afterAction, aroundAction, protectFromForgery, or rescueFrom.',
 						entry.pos);
 			}
 		}
@@ -1369,7 +1371,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		method:String,
 		only:Array<String>,
 		except:Array<String>,
-		exceptions:Array<String>
+		exceptions:Array<String>,
+		strategy:String,
+		prepend:Bool
 	} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall(callee, params) if (isRailsControllerLifecycleMarker(callee, "filter") && params.length == 4):
@@ -1380,7 +1384,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					method: method,
 					only: railsControllerLifecycleStringArray(params[2], "only"),
 					except: railsControllerLifecycleStringArray(params[3], "except"),
-					exceptions: []
+					exceptions: [],
+					strategy: "",
+					prepend: false
 				};
 			case TCall(callee, params) if (isRailsControllerLifecycleMarker(callee, "rescue") && params.length == 2):
 				{
@@ -1388,7 +1394,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					method: railsControllerLifecycleStringValue(params[0], "rescue method"),
 					only: [],
 					except: [],
-					exceptions: railsControllerLifecycleStringArray(params[1], "exceptions")
+					exceptions: railsControllerLifecycleStringArray(params[1], "exceptions"),
+					strategy: "",
+					prepend: false
+				};
+			case TCall(callee, params) if (isRailsControllerLifecycleMarker(callee, "protectFromForgery") && params.length == 4):
+				{
+					kind: "protect_from_forgery",
+					method: "",
+					only: railsControllerLifecycleStringArray(params[2], "only"),
+					except: railsControllerLifecycleStringArray(params[3], "except"),
+					exceptions: [],
+					strategy: railsControllerLifecycleStringValue(params[0], "forgery protection strategy"),
+					prepend: railsControllerLifecycleBoolValue(params[1], "forgery protection prepend")
 				};
 			case _:
 				Context.error("Rails controller lifecycle entries must be produced by rails.macros.ControllerDsl declarations.", expr.pos);
@@ -1397,7 +1415,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					method: "",
 					only: [],
 					except: [],
-					exceptions: []
+					exceptions: [],
+					strategy: "",
+					prepend: false
 				};
 		}
 	}
@@ -1426,6 +1446,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			options.push("except: [" + [for (action in decl.except) rubySymbolLiteral(RubyNaming.toMethodName(action))].join(", ") + "]");
 		}
 		return options.length == 0 ? "" : ", " + options.join(", ");
+	}
+
+	static function railsControllerForgeryProtectionOptions(decl:{
+		kind:String,
+		method:String,
+		only:Array<String>,
+		except:Array<String>,
+		exceptions:Array<String>,
+		strategy:String,
+		prepend:Bool
+	}):String {
+		var options:Array<String> = ["with: " + rubySymbolLiteral(decl.strategy)];
+		if (decl.prepend) {
+			options.push("prepend: true");
+		}
+		if (decl.only.length > 0) {
+			options.push("only: [" + [for (action in decl.only) rubySymbolLiteral(RubyNaming.toMethodName(action))].join(", ") + "]");
+		}
+		if (decl.except.length > 0) {
+			options.push("except: [" + [for (action in decl.except) rubySymbolLiteral(RubyNaming.toMethodName(action))].join(", ") + "]");
+		}
+		return options.join(", ");
 	}
 
 	static function validateDeviseCurrentRequiredFlow(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Void {
@@ -1544,6 +1586,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error('Rails controller lifecycle "$name" must be a string marker value.', expr.pos);
 				"";
+		}
+	}
+
+	static function railsControllerLifecycleBoolValue(expr:TypedExpr, name:String):Bool {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TBool(value)): value;
+			case _:
+				Context.error('Rails controller lifecycle "$name" must be a boolean marker value.', expr.pos);
+				false;
 		}
 	}
 

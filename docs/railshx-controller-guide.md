@@ -164,13 +164,17 @@ the field into Rails class macros.
 
 ```haxe
 import rails.active_record.RecordNotFound;
+import rails.action_controller.ForgeryProtectionStrategy;
+import rails.action_controller.InvalidAuthenticityToken;
 import rails.macros.ControllerDsl.*;
 
 static final lifecycle = {
+	protectFromForgery({with: ForgeryProtectionStrategy.exception, prepend: true, except: [index]});
 	beforeAction(authenticateUser, {only: [create]});
 	afterAction(auditResponse, {only: [create]});
 	beforeAction(loadTenant, {except: [index]});
 	rescueFrom(RecordNotFound, notFound);
+	rescueFrom(InvalidAuthenticityToken, csrfFailure);
 }
 
 function authenticateUser() {
@@ -189,6 +193,10 @@ function notFound(e:RecordNotFound) {
 	render({plain: "Todo not found", status: Status.notFound});
 }
 
+function csrfFailure(e:InvalidAuthenticityToken) {
+	render({plain: "Invalid CSRF token", status: Status.forbidden});
+}
+
 public function create() {}
 public function index() {}
 ```
@@ -196,10 +204,12 @@ public function index() {}
 Generated Ruby:
 
 ```ruby
+protect_from_forgery with: :exception, prepend: true, except: [:index]
 before_action :authenticate_user, only: [:create]
 after_action :audit_response, only: [:create]
 before_action :load_tenant, except: [:index]
 rescue_from ActiveRecord::RecordNotFound, with: :not_found
+rescue_from ActionController::InvalidAuthenticityToken, with: :csrf_failure
 
 def authenticate_user()
   method__hx0 = self.request().request_method()
@@ -211,6 +221,10 @@ This avoids stale lifecycle strings. `authenticateUser`, `create`, and
 rejects missing callback methods, missing action names in `only`/`except`, and
 malformed lifecycle block contents. `rescueFromNamed("Ruby::Constant", handler)`
 exists as a checked interop escape when no typed exception extern exists yet.
+`protectFromForgery(...)` keeps the Rails concept recognizable while avoiding
+raw symbol strings in Haxe: `ForgeryProtectionStrategy.exception` lowers to
+`:exception`, and `only`/`except` entries are checked against real controller
+actions.
 
 For lower-level Rails parity, `@:railsFilter("before_action", {except:
 ["index"]})` and method metadata such as `@:beforeAction` remain available for

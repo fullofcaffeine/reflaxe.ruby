@@ -743,6 +743,14 @@
       "reason": "Typed Rails download disposition token for send_file/send_data, lowering to ordinary inline/attachment string values without app-level raw strings."
     },
     {
+      "id": "std.rails.action_controller_forgery_protection_strategy",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/ForgeryProtectionStrategy.hx",
+      "surface": "rails.action_controller.ForgeryProtectionStrategy",
+      "reason": "Typed Rails CSRF protection strategy token for ControllerDsl protectFromForgery, lowering to ordinary protect_from_forgery symbols without app-level raw strings."
+    },
+    {
       "id": "std.rails.action_controller_responder",
       "owner": "std",
       "status": "implemented",
@@ -756,7 +764,7 @@
       "status": "implemented",
       "path": "std/rails/action_controller/LifecycleDecl.hx",
       "surface": "rails.action_controller.LifecycleDecl",
-      "reason": "Typed marker calls emitted by ControllerDsl macros and erased by the Ruby compiler into Rails class macros."
+      "reason": "Typed marker calls emitted by ControllerDsl macros and erased by the Ruby compiler into Rails class macros, including filters, rescues, and protect_from_forgery."
     },
     {
       "id": "std.rails.action_controller_parameter_missing",
@@ -780,7 +788,7 @@
       "status": "implemented",
       "path": "std/rails/macros/ControllerDsl.hx",
       "surface": "rails.macros.ControllerDsl",
-      "reason": "Expression macros for contextual Rails controller lifecycle declarations using typed method/action/exception references."
+      "reason": "Expression macros for contextual Rails controller lifecycle declarations using typed method/action/exception references and CSRF strategy tokens."
     },
     {
       "id": "std.rails.action_mailer",

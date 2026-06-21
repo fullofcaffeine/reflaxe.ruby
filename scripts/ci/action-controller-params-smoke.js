@@ -56,14 +56,18 @@ for (const expected of [
   /require "action_controller\/railtie"/,
   /module Controllers/,
   /class TodosController < ActionController::Base/,
+  /protect_from_forgery with: :exception, prepend: true, except: \[:index\]/,
   /before_action :authenticate_user, only: \[:create\]/,
   /after_action :audit_response, only: \[:create\]/,
   /before_action :load_tenant, except: \[:index\]/,
   /rescue_from ActiveRecord::RecordNotFound, with: :not_found/,
+  /rescue_from ActionController::InvalidAuthenticityToken, with: :csrf_failure/,
   /def authenticate_user\(\)/,
   /def audit_response\(\)/,
   /def load_tenant\(\)/,
   /def not_found\(e__hx\d+\)/,
+  /def csrf_failure\(e__hx\d+\)/,
+  /self\.render\(plain: "Invalid CSRF token", status: :forbidden\)/,
   /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, \{metadata: \[:source, :priority\]\}, \{tags: \[\]\}\]\)/,
   /request_method__hx\d+ = self\.request\(\)\.request_method\(\)/,
   /request_path__hx\d+ = self\.request\(\)\.path\(\)/,
@@ -236,6 +240,22 @@ if (!/lifecycle entries must be produced|lifecycle must be a Haxe block/.test(in
   console.error("Malformed ActionController lifecycle contents failed for an unexpected reason.");
   process.exit(1);
 }
+const invalidForgeryProtection = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidForgeryProtectionMain",
+  allowFailure: true,
+});
+if (invalidForgeryProtection == null || invalidForgeryProtection.status === 0) {
+  console.error("Expected invalid ActionController CSRF lifecycle options compile to fail.");
+  process.exit(1);
+}
+if (!/protectFromForgery unsupported option|with expects a ForgeryProtectionStrategy/.test(invalidForgeryProtection.stderr + invalidForgeryProtection.stdout)) {
+  process.stdout.write(invalidForgeryProtection.stdout);
+  process.stderr.write(invalidForgeryProtection.stderr);
+  console.error("Invalid ActionController CSRF lifecycle options failed for an unexpected reason.");
+  process.exit(1);
+}
 if (!/RequestFormat|String|Cannot unify/.test(invalidRequestFormat.stderr + invalidRequestFormat.stdout)) {
   process.stdout.write(invalidRequestFormat.stdout);
   process.stderr.write(invalidRequestFormat.stderr);
@@ -368,6 +388,16 @@ function writeInvalidFixtures() {
     "}",
     "",
   ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidForgeryProtectionMain.hx"), [
+    "import invalid_controllers.BadForgeryProtectionController;",
+    "class InvalidForgeryProtectionMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller:BadForgeryProtectionController = null;",
+    "\t\tSys.println(controller == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
   mkdirSync(join(invalidSourceDir, "invalid_controllers"), { recursive: true });
   writeFileSync(join(invalidSourceDir, "invalid_controllers", "MissingLifecycleController.hx"), [
     "package invalid_controllers;",
@@ -416,6 +446,22 @@ function writeInvalidFixtures() {
     "class BadLifecycleContentsController extends rails.action_controller.Base {",
     "\tstatic final lifecycle = {",
     "\t\t\"not a lifecycle declaration\";",
+    "\t}",
+    "",
+    "\tpublic function index() {}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "invalid_controllers", "BadForgeryProtectionController.hx"), [
+    "package invalid_controllers;",
+    "",
+    "import rails.action_controller.ForgeryProtectionStrategy;",
+    "import rails.macros.ControllerDsl.*;",
+    "",
+    "@:railsController",
+    "class BadForgeryProtectionController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = {",
+    "\t\tprotectFromForgery({with: ForgeryProtectionStrategy.exception, mode: \"bad\"});",
     "\t}",
     "",
     "\tpublic function index() {}",

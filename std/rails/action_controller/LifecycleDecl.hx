@@ -12,4 +12,6 @@ extern class LifecycleDecl {
 	public static function filter(kind:String, method:String, only:Array<String>, except:Array<String>):LifecycleDecl;
 
 	public static function rescue(method:String, exceptions:Array<String>):LifecycleDecl;
+
+	public static function protectFromForgery(strategy:String, prepend:Bool, only:Array<String>, except:Array<String>):LifecycleDecl;
 }

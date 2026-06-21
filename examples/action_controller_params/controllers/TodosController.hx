@@ -1,5 +1,7 @@
 package controllers;
 
+import rails.action_controller.ForgeryProtectionStrategy;
+import rails.action_controller.InvalidAuthenticityToken;
 import rails.action_controller.Status;
 import rails.action_controller.SendDisposition;
 import rails.active_record.RecordNotFound;
@@ -20,12 +22,16 @@ import rails.macros.ParamsMacro;
 // over the Rails runtime objects without wrapping them, including the
 // `RequestFormat` MIME facade returned by `request().format()`. `sendFile(...)`
 // and `sendData(...)` expose Rails download helpers with typed `Status` and
-// `SendDisposition` options instead of raw status symbols. `respondTo(...)`
-// exposes Rails' `respond_to do |format|` collector as typed format methods.
+// `SendDisposition` options instead of raw status symbols.
+// `protectFromForgery(...)` exposes Rails' CSRF class macro with typed strategy
+// tokens and action refs, so app code avoids raw `:exception`/`:index` strings
+// while generated Ruby remains the ordinary `protect_from_forgery` call.
+// `respondTo(...)` exposes Rails' `respond_to do |format|` collector as typed
+// format methods.
 // `lifecycle` is a contextual RailsHx controller block: the calls are valid
 // Haxe expressions, validated against real controller methods/actions, and
 // erased to normal Rails class macros such as `before_action` and
-// `rescue_from`.
+// `rescue_from`/`protect_from_forgery`.
 // IntelliSense: editors should complete `params`, `render`, `redirectTo`,
 // `respondTo`, and the `ParamsMacro` entrypoint, plus store methods `get`,
 // `set`, and `delete` and request/response helpers such as `requestMethod`,
@@ -38,10 +44,12 @@ import rails.macros.ParamsMacro;
 @:railsController
 class TodosController extends rails.action_controller.Base {
 	static final lifecycle = {
+		protectFromForgery({with: ForgeryProtectionStrategy.exception, prepend: true, except: [index]});
 		beforeAction(authenticateUser, {only: [create]});
 		afterAction(auditResponse, {only: [create]});
 		beforeAction(loadTenant, {except: [index]});
 		rescueFrom(RecordNotFound, notFound);
+		rescueFrom(InvalidAuthenticityToken, csrfFailure);
 	}
 
 	function authenticateUser() {
@@ -58,6 +66,10 @@ class TodosController extends rails.action_controller.Base {
 
 	function notFound(e:RecordNotFound) {
 		render({plain: "Todo not found", status: Status.notFound});
+	}
+
+	function csrfFailure(e:InvalidAuthenticityToken) {
+		render({plain: "Invalid CSRF token", status: Status.forbidden});
 	}
 
 	public function create() {

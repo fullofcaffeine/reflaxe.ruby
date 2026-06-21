@@ -59,6 +59,41 @@ class ControllerDsl {
 		#end
 	}
 
+	public static macro function protectFromForgery(?options:Expr):Expr {
+		#if macro
+		var strategy = "exception";
+		var prepend = false;
+		var only:Array<String> = [];
+		var except:Array<String> = [];
+		if (options != null) {
+			switch (unwrap(options).expr) {
+				case EConst(CIdent("null")) | EBlock([]):
+					// Same empty-options convenience as filter declarations.
+				case EObjectDecl(fields):
+					for (field in fields) {
+						switch (field.field) {
+							case "with":
+								strategy = forgeryProtectionStrategy(field.expr);
+							case "prepend":
+								prepend = boolLiteral(field.expr, "protectFromForgery prepend");
+							case "only":
+								only = actionList(field.expr, "protectFromForgery only");
+							case "except":
+								except = actionList(field.expr, "protectFromForgery except");
+							case other:
+								Context.error('protectFromForgery unsupported option "$other". Use with, prepend, only, or except.', field.expr.pos);
+						}
+					}
+				case _:
+					Context.error("protectFromForgery options must be an object literal.", options.pos);
+			}
+		}
+		return forgeryProtectionCarrier(strategy, prepend, only, except, options != null ? options.pos : Context.currentPos());
+		#else
+		return macro null;
+		#end
+	}
+
 	#if macro
 	static function filter(kind:String, handler:Expr, options:Null<Expr>):Expr {
 		var method = authFilterReference(handler);
@@ -202,6 +237,48 @@ class ControllerDsl {
 		return name;
 	}
 
+	static function boolLiteral(expr:Expr, context:String):Bool {
+		return switch (unwrap(expr).expr) {
+			case EConst(CIdent("true")):
+				true;
+			case EConst(CIdent("false")):
+				false;
+			case _:
+				Context.error(context + " must be a boolean literal.", expr.pos);
+				false;
+		}
+	}
+
+	static function forgeryProtectionStrategy(expr:Expr):String {
+		var typed = Context.typeExpr(expr);
+		var value = switch (unwrapTypedExpr(typed).expr) {
+			case TField(_, FStatic(classRef, fieldRef)) if (isForgeryProtectionStrategyType(classRef.get())):
+				RubyNaming.toMethodName(fieldRef.get().name);
+			case TConst(TString(value)):
+				// Abstract static inline tokens may type as their underlying string.
+				// Validate strictly so app code cannot smuggle Ruby fragments through
+				// the Rails symbol boundary.
+				value;
+			case _:
+				Context.error("protectFromForgery with expects a ForgeryProtectionStrategy token such as ForgeryProtectionStrategy.exception.", expr.pos);
+				"exception";
+		}
+		if (!~/^[a-z][a-z0-9_]*$/.match(value)) {
+			Context.error('protectFromForgery strategy "$value" is not a safe Rails symbol.', expr.pos);
+		}
+		return value;
+	}
+
+	static function isForgeryProtectionStrategyType(classType:ClassType):Bool {
+		var name = fullTypeName(classType.pack, classType.name);
+		return name == "rails.action_controller.ForgeryProtectionStrategy"
+			|| name == "rails.action_controller.ForgeryProtectionStrategy_Impl_";
+	}
+
+	static function fullTypeName(pack:Array<String>, name:String):String {
+		return pack.length == 0 ? name : pack.join(".") + "." + name;
+	}
+
 	static function identifier(expr:Expr, message:String):String {
 		return switch (unwrap(expr).expr) {
 			case EConst(CIdent(name)):
@@ -281,6 +358,11 @@ class ControllerDsl {
 		return macro @:pos(pos) rails.action_controller.LifecycleDecl.rescue($v{method}, $e{stringArray(exceptions, pos)});
 	}
 
+	static function forgeryProtectionCarrier(strategy:String, prepend:Bool, only:Array<String>, except:Array<String>, pos:Position):Expr {
+		return macro @:pos(pos) rails.action_controller.LifecycleDecl.protectFromForgery($v{strategy}, $v{prepend}, $e{stringArray(only, pos)},
+			$e{stringArray(except, pos)});
+	}
+
 	static function stringArray(values:Array<String>, pos:Position):Expr {
 		return {
 			expr: EArrayDecl([for (value in values) macro $v{value}]),
@@ -291,6 +373,13 @@ class ControllerDsl {
 	static function unwrap(expr:Expr):Expr {
 		return switch (expr.expr) {
 			case EParenthesis(inner) | ECheckType(inner, _) | EMeta(_, inner): unwrap(inner);
+			case _: expr;
+		}
+	}
+
+	static function unwrapTypedExpr(expr:TypedExpr):TypedExpr {
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): unwrapTypedExpr(inner);
 			case _: expr;
 		}
 	}
