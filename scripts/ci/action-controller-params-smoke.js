@@ -74,6 +74,9 @@ for (const expected of [
   /request_format__hx\d+ = self\.request\(\)\.format\(\)/,
   /wants_json__hx\d+ = request_format__hx\d+\.json\?\(\)/,
   /request_format_name__hx\d+ = request_format__hx\d+\.to_s\(\)/,
+  /request_formats__hx\d+ = self\.request\(\)\.formats\(\)/,
+  /content_mime_type__hx\d+ = self\.request\(\)\.content_mime_type\(\)/,
+  /request_media_type__hx\d+ = self\.request\(\)\.media_type\(\)/,
   /request_variant__hx\d+ = self\.request\(\)\.variant\(\)/,
   /wants_phone_variant__hx\d+ = request_variant__hx\d+\.phone\?\(\)/,
   /request_variant_name__hx\d+ = request_variant__hx\d+\.to_s\(\)/,
@@ -203,6 +206,17 @@ const invalidRequestVariant = compileWithFirstAvailableReflaxe({
 });
 if (invalidRequestVariant == null || invalidRequestVariant.status === 0) {
   console.error("Expected invalid ActionController request variant compile to fail.");
+  process.exit(1);
+}
+
+const invalidRequestFormats = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidRequestFormatsMain",
+  allowFailure: true,
+});
+if (invalidRequestFormats == null || invalidRequestFormats.status === 0) {
+  console.error("Expected invalid ActionController request formats compile to fail.");
   process.exit(1);
 }
 
@@ -401,6 +415,15 @@ function writeInvalidFixtures() {
     "\tstatic function main():Void {",
     "\t\tvar controller = new controllers.TodosController();",
     "\t\tvar variant:String = controller.request().variant();",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidRequestFormatsMain.hx"), [
+    "class InvalidRequestFormatsMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tvar formats:String = controller.request().formats();",
     "\t}",
     "}",
     "",

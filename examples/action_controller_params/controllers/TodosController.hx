@@ -82,6 +82,9 @@ class TodosController extends rails.action_controller.Base {
 		var requestFormat = request().format();
 		var wantsJson = requestFormat.json();
 		var requestFormatName = requestFormat.toString();
+		var requestFormats = request().formats();
+		var contentMimeType = request().contentMimeType();
+		var requestMediaType = request().mediaType();
 		var requestVariant = request().variant();
 		var wantsPhoneVariant = requestVariant.phone();
 		var requestVariantName = requestVariant.toString();

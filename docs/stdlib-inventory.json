@@ -676,7 +676,7 @@
       "status": "implemented",
       "path": "std/rails/action_controller/Request.hx",
       "surface": "rails.action_controller.Request",
-      "reason": "Typed extern facade over Rails request objects for request_method/path/fullpath/typed format/variant/xhr access."
+      "reason": "Typed extern facade over Rails request objects for request_method/path/fullpath/typed format/formats/content_mime_type/media_type/variant/xhr access."
     },
     {
       "id": "std.rails.action_controller_request_format",

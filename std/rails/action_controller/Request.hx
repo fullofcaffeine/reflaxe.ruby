@@ -17,6 +17,14 @@ extern class Request {
 
 	public function format():RequestFormat;
 
+	public function formats():Array<RequestFormat>;
+
+	@:native("content_mime_type")
+	public function contentMimeType():Null<RequestFormat>;
+
+	@:native("media_type")
+	public function mediaType():Null<String>;
+
 	public function variant():RequestVariant;
 
 	@:native("xhr?")
