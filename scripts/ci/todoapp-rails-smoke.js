@@ -2639,7 +2639,9 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
     "\t\t\tH.mailTo(\"support@example.test\", null, [H.className(\"support-link\")]),",
     "\t\t\t<mail_to email=\"admin@example.test\" text=\"Email admin\" class=\"admin-link\" />,",
-    "\t\t\t<mail_to email=\"ops@example.test\">Ops desk</mail_to>",
+    "\t\t\t<mail_to email=\"ops@example.test\">Ops desk</mail_to>,",
+    "\t\t\tH.pluralize(2, \"task\", null),",
+    "\t\t\t<pluralize count=${3} singular=\"person\" plural=\"people\" />",
     "\t\t]);",
     "\t}",
     "}",
@@ -2655,6 +2657,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= mail_to "support@example.test", nil, class: "support-link" %>',
     '<%= mail_to "admin@example.test", "Email admin", class: "admin-link" %>',
     '<%= mail_to "ops@example.test", "Ops desk" %>',
+    '<%= pluralize 2, "task" %>',
+    '<%= pluralize 3, "person", "people" %>',
   ]) {
     if (!generated.includes(expected)) {
       console.error(`Checked H.data/H.aria helper fixture missing expected output: ${expected}`);

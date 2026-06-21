@@ -6921,6 +6921,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateMailTo(params[0], params[1], params[2], scope);
 						}
+					case "Pluralize":
+						if (params.length != 3) {
+							Context.error("HtmlNode.Pluralize expects count, singular, and plural arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplatePluralize(params[0], params[1], params[2], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7320,6 +7327,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		args = args.concat(kwargs);
 		return "<%= mail_to " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplatePluralize(count:TypedExpr, singular:TypedExpr, plural:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [
+			printTemplateExpr(count, scope),
+			quoteRubyStringForCode(expectTemplateString(singular, "HtmlNode.Pluralize singular must be a string literal."))
+		];
+		if (!isTemplateNull(plural)) {
+			args.push(quoteRubyStringForCode(expectTemplateString(plural, "HtmlNode.Pluralize plural must be a string literal.")));
+		}
+		return "<%= pluralize " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

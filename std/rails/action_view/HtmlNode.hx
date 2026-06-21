@@ -21,6 +21,7 @@ enum HtmlNode {
 	LinkToBlock<TUrl>(url:TUrl, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	ImageTag<TSource>(source:TSource, attrs:Array<HtmlAttr>);
 	MailTo<TEmail, TLabel>(email:TEmail, label:Null<TLabel>, attrs:Array<HtmlAttr>);
+	Pluralize(count:Int, singular:String, plural:Null<String>);
 	// Rails `button_to` has both normal and block forms. Keeping separate AST
 	// nodes lets HHX lower simple labels to `button_to "Label", path` and
 	// nested markup to `button_to path do ... end` without runtime wrappers.

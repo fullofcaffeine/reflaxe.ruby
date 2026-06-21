@@ -775,6 +775,13 @@ private class RailsMarkupParser {
 				}
 				var mailAttrs = attrsExcept(attrs, ["email", "text"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.MailTo($email, ${label == null ? (macro null) : label}, ${mkArray(mailAttrs.map(mkAttr), pos)});
+			case "pluralize":
+				rejectChildren(name, children, pos);
+				var count = requireAttrValue(attrs, "count", pos);
+				var singular = requireAttrValue(attrs, "singular", pos);
+				var plural = attrValue(attrs, "plural");
+				rejectUnknownAttrs(name, attrs, ["count", "singular", "plural"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.Pluralize($count, $singular, ${plural == null ? (macro null) : plural});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);
@@ -891,6 +898,18 @@ private class RailsMarkupParser {
 	function rejectAttrs(tagName:String, attrs:Array<RailsParsedAttr>, pos:Position):Void {
 		if (attrs.length > 0) {
 			Context.error('Rails HHX <' + tagName + '> does not accept attributes yet.', pos);
+		}
+	}
+
+	function rejectUnknownAttrs(tagName:String, attrs:Array<RailsParsedAttr>, allowed:Array<String>, pos:Position):Void {
+		var known = new Map<String, Bool>();
+		for (name in allowed) {
+			known.set(name, true);
+		}
+		for (attr in attrs) {
+			if (!known.exists(attr.name)) {
+				Context.error('Rails HHX <' + tagName + '> does not accept attribute "' + attr.name + '".', attr.pos);
+			}
 		}
 	}
 
