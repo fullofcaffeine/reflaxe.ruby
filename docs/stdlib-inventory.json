@@ -727,6 +727,22 @@
       "reason": "Typed option-hash redirect kwargs for redirectToOptions, including Status-typed response status."
     },
     {
+      "id": "std.rails.action_controller_send_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/SendOptions.hx",
+      "surface": "rails.action_controller.SendOptions",
+      "reason": "Typed option-hash kwargs for ActionController send_file/send_data helpers, including Status-typed response status and typed disposition."
+    },
+    {
+      "id": "std.rails.action_controller_send_disposition",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/SendDisposition.hx",
+      "surface": "rails.action_controller.SendDisposition",
+      "reason": "Typed Rails download disposition token for send_file/send_data, lowering to ordinary inline/attachment string values without app-level raw strings."
+    },
+    {
       "id": "std.rails.action_controller_responder",
       "owner": "std",
       "status": "implemented",

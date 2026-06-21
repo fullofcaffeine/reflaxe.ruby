@@ -52,6 +52,14 @@ class Base {
 	@:native("head")
 	public function head(status:Status):Void {}
 
+	@:native("send_file")
+	@:rubyKwargs
+	public function sendFile(path:String, options:SendOptions):Void {}
+
+	@:native("send_data")
+	@:rubyKwargs
+	public function sendData(data:String, options:SendOptions):Void {}
+
 	@:native("respond_to")
 	@:rubyBlockArg
 	public function respondTo(block:Responder->Void):Void {}

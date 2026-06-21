@@ -79,6 +79,8 @@ for (const expected of [
   /self\.respond_to\(\) do \|format__hx\d+\|/,
   /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(action: "index"\) \}/,
   /format__hx\d+\.json\(\) \{ gthis__hx\d+\.render\(json: attrs__hx\d+, status: :created\) \}/,
+  /self\.send_file\("\/tmp\/todos\.csv", filename: "todos\.csv", type: "text\/csv", disposition: "attachment", status: :ok\)/,
+  /self\.send_data\("title,is_completed\\nShip,true\\n", filename: "todos\.csv", type: "text\/csv", disposition: "inline", status: :ok\)/,
   /self\.head\(:no_content\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
@@ -119,6 +121,23 @@ if (!/Status|RedirectOptions|Cannot unify|String should be rails\.action_control
   process.stdout.write(invalidRedirect.stdout);
   process.stderr.write(invalidRedirect.stderr);
   console.error("Invalid ActionController redirect options failed for an unexpected reason.");
+  process.exit(1);
+}
+
+const invalidSend = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidSendMain",
+  allowFailure: true,
+});
+if (invalidSend == null || invalidSend.status === 0) {
+  console.error("Expected invalid ActionController send options compile to fail.");
+  process.exit(1);
+}
+if (!/Status|SendOptions|Cannot unify|String should be rails\.action_controller\.Status/.test(invalidSend.stderr + invalidSend.stdout)) {
+  process.stdout.write(invalidSend.stdout);
+  process.stderr.write(invalidSend.stderr);
+  console.error("Invalid ActionController send options failed for an unexpected reason.");
   process.exit(1);
 }
 
@@ -276,6 +295,15 @@ function writeInvalidFixtures() {
     "\tstatic function main():Void {",
     "\t\tvar controller = new controllers.TodosController();",
     "\t\tcontroller.redirectToOptions({action: \"index\", status: \"see_other\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidSendMain.hx"), [
+    "class InvalidSendMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tcontroller.sendData(\"bad\", {filename: \"bad.txt\", status: \"ok\"});",
     "\t}",
     "}",
     "",

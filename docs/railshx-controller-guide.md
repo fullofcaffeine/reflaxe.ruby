@@ -279,6 +279,35 @@ Use `redirectTo("/path")` for location redirects and
 option-hash redirects. Raw string status values are rejected; use `Status.*` or
 `Status.named("custom_status")` at the typed boundary.
 
+Use `sendFile(...)` and `sendData(...)` for Rails download responses:
+
+```haxe
+sendFile("/tmp/todos.csv", {
+	filename: "todos.csv",
+	type: "text/csv",
+	disposition: SendDisposition.attachment,
+	status: Status.ok
+});
+
+sendData(csvBody, {
+	filename: "todos.csv",
+	type: "text/csv",
+	disposition: SendDisposition.inlineContent,
+	status: Status.ok
+});
+```
+
+Generated Ruby remains ordinary Rails:
+
+```ruby
+self.send_file("/tmp/todos.csv", filename: "todos.csv", type: "text/csv", disposition: "attachment", status: :ok)
+self.send_data(csv_body__hx0, filename: "todos.csv", type: "text/csv", disposition: "inline", status: :ok)
+```
+
+`SendDisposition.inlineContent` uses the Rails value `"inline"` while avoiding
+Haxe's reserved `inline` keyword. Raw string statuses are rejected here too;
+use `Status.*` or `Status.named(...)`.
+
 Rails `respond_to` blocks use the typed responder collector:
 
 ```haxe

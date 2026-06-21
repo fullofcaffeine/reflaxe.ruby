@@ -1,6 +1,7 @@
 package controllers;
 
 import rails.action_controller.Status;
+import rails.action_controller.SendDisposition;
 import rails.active_record.RecordNotFound;
 import rails.macros.ControllerDsl.*;
 import rails.macros.ParamsMacro;
@@ -17,8 +18,10 @@ import rails.macros.ParamsMacro;
 // `flash`, `session`, and `cookies` expose typed store helpers instead of raw
 // Dynamic bracket access. `request()` and `response()` expose typed facades
 // over the Rails runtime objects without wrapping them, including the
-// `RequestFormat` MIME facade returned by `request().format()`. `respondTo(...)` exposes
-// Rails' `respond_to do |format|` collector as typed format methods.
+// `RequestFormat` MIME facade returned by `request().format()`. `sendFile(...)`
+// and `sendData(...)` expose Rails download helpers with typed `Status` and
+// `SendDisposition` options instead of raw status symbols. `respondTo(...)`
+// exposes Rails' `respond_to do |format|` collector as typed format methods.
 // `lifecycle` is a contextual RailsHx controller block: the calls are valid
 // Haxe expressions, validated against real controller methods/actions, and
 // erased to normal Rails class macros such as `before_action` and
@@ -30,7 +33,8 @@ import rails.macros.ParamsMacro;
 // Ruby output: an `ActionController::Base` subclass with normal Rails
 // `params.require(...).permit(...)`, `flash[:key]`, `session[:key]`,
 // `cookies[:key]`, `render(..., status: :status)`, `redirect_to`,
-// `head(:status)`, `respond_to do |format|`, and Rails filter declarations.
+// `head(:status)`, `send_file`, `send_data`, `respond_to do |format|`, and
+// Rails filter declarations.
 @:railsController
 class TodosController extends rails.action_controller.Base {
 	static final lifecycle = {
@@ -76,6 +80,18 @@ class TodosController extends rails.action_controller.Base {
 			format.json(function() {
 				render({json: attrs, status: Status.created});
 			});
+		});
+		sendFile("/tmp/todos.csv", {
+			filename: "todos.csv",
+			type: "text/csv",
+			disposition: SendDisposition.attachment,
+			status: Status.ok
+		});
+		sendData("title,is_completed\nShip,true\n", {
+			filename: "todos.csv",
+			type: "text/csv",
+			disposition: SendDisposition.inlineContent,
+			status: Status.ok
 		});
 		head(Status.noContent);
 	}

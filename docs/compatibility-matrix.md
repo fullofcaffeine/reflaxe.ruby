@@ -65,6 +65,7 @@ Unsafe boundary policy is tracked in
 | ActiveJob lifecycle/runtime | `static final lifecycle = { queueAs("mailers"); retryOn(StandardError, {attempts: 3}); discardOn(DeserializationError); }`, `performLater(...)`, `performNow(...)` | Initial contextual lifecycle DSL plus typed enqueue helpers; runtime Rails lane covers queue/enqueue/perform, typed argument serialization/deserialization, retry re-enqueue behavior, and discard tracking through Rails' test adapter |
 | Controller stores | `flash.notice("...")`, `flash.alert("...")`, `session().get("key")`, `cookies().delete("key")` | Initial typed flash/session/cookies store slice |
 | Controller response statuses | `head(Status.noContent)`, `render({json: data, status: Status.created})` | Initial typed status-token slice lowering to Rails symbols |
+| Controller download responses | `sendFile(path, {filename: "todos.csv", disposition: SendDisposition.attachment, status: Status.ok})`, `sendData(csv, {...})` | Initial typed `send_file`/`send_data` kwargs slice |
 | Controller respond_to | `respondTo(function(format) { format.html(...); format.json(...); })` | Initial typed format collector slice |
 | Typed ActionView render locals | `ViewMacro.renderTemplate(...)` + `Template<TLocals>` | Implemented |
 | RailsHx-owned template refs | `Template.of(ViewClass) : Template<TLocals>`, `Template.layout(LayoutViewClass)` | Initial checked-template slice |
