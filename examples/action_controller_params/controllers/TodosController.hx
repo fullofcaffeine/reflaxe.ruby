@@ -21,9 +21,10 @@ import rails.macros.ParamsMacro;
 // Dynamic bracket access. `request` and `response` expose typed facades
 // over the Rails runtime objects without wrapping them, including the
 // `RequestFormat` MIME facade returned by `request.format()` and the
-// `RequestVariant` inquirer returned by `request.variant()`. `sendFile(...)`
-// and `sendData(...)` expose Rails download helpers with typed `Status` and
-// `SendDisposition` options instead of raw status symbols.
+// accepted/negotiated MIME arrays returned by `request.accepts()`/`formats()`,
+// plus the `RequestVariant` inquirer returned by `request.variant()`.
+// `sendFile(...)` and `sendData(...)` expose Rails download helpers with typed
+// `Status` and `SendDisposition` options instead of raw status symbols.
 // `freshWhen(...)` and `stale(...)` expose Rails conditional GET helpers with
 // typed ETag/template kwargs, lowering to ordinary `fresh_when` and `stale?`.
 // `protectFromForgery(...)` exposes Rails' CSRF class macro with typed strategy
@@ -83,6 +84,7 @@ class TodosController extends rails.action_controller.Base {
 		var requestFormat = request.format();
 		var wantsJson = requestFormat.json();
 		var requestFormatName = requestFormat.toString();
+		var acceptedFormats = request.accepts();
 		var requestFormats = request.formats();
 		var contentMimeType = request.contentMimeType();
 		var requestMediaType = request.mediaType();

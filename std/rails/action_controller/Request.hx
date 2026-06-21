@@ -17,6 +17,8 @@ extern class Request {
 
 	public function format():RequestFormat;
 
+	public function accepts():Array<RequestFormat>;
+
 	public function formats():Array<RequestFormat>;
 
 	@:native("content_mime_type")

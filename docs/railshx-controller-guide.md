@@ -263,6 +263,7 @@ var method = request.requestMethod();
 var path = request.path();
 var wantsJson = request.format().json();
 var formatName = request.format().toString();
+var acceptedFormats = request.accepts();
 var negotiatedFormats = request.formats();
 var contentMimeType = request.contentMimeType();
 var mediaType = request.mediaType();
@@ -278,6 +279,7 @@ method__hx0 = self.request().request_method()
 path__hx0 = self.request().path()
 wants_json__hx0 = self.request().format().json?()
 format_name__hx0 = self.request().format().to_s()
+accepted_formats__hx0 = self.request().accepts()
 negotiated_formats__hx0 = self.request().formats()
 content_mime_type__hx0 = self.request().content_mime_type()
 media_type__hx0 = self.request().media_type()
@@ -289,7 +291,7 @@ status__hx0 = self.response().status()
 `request.format()` returns `RequestFormat`, not `Dynamic`, so common MIME
 checks such as `html()`, `json()`, `turboStream()`, `xml()`, and `any()` are
 completed and type-checked while still lowering to Rails' normal MIME object.
-`request.formats()` returns `Array<RequestFormat>`, and
+`request.accepts()` and `request.formats()` return `Array<RequestFormat>`, and
 `request.contentMimeType()` returns `Null<RequestFormat>`, so custom
 negotiation can stay typed without stringly MIME checks. `request.mediaType()`
 is intentionally `Null<String>` because Rails exposes the media type as a
