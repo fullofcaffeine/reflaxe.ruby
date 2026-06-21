@@ -7344,6 +7344,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateHelperAttrs(attrs:TypedExpr, scope:RailsTemplateScope):Array<String> {
 		var out:Array<String> = [];
 		var dataAttrs:Array<String> = [];
+		var ariaAttrs:Array<String> = [];
 		for (attr in expectTemplateArray(attrs, "HtmlNode.LinkTo attrs must be an array literal.")) {
 			var unwrapped = unwrapTemplateExpr(attr);
 			switch (unwrapped.expr) {
@@ -7353,21 +7354,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (params.length != 2) {
 								Context.error("HtmlAttr.Static expects name and value arguments.", unwrapped.pos);
 							} else {
-								addTemplateHelperAttr(out, dataAttrs, expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal."),
+								addTemplateHelperAttr(out, dataAttrs, ariaAttrs,
+									expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal."),
 									quoteRubyStringForCode(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal.")));
 							}
 						case "Bool":
 							if (params.length != 1) {
 								Context.error("HtmlAttr.Bool expects one name argument.", unwrapped.pos);
 							} else {
-								addTemplateHelperAttr(out, dataAttrs, expectTemplateString(params[0], "HtmlAttr.Bool name must be a string literal."), "true");
+								addTemplateHelperAttr(out, dataAttrs, ariaAttrs,
+									expectTemplateString(params[0], "HtmlAttr.Bool name must be a string literal."), "true");
 							}
 						case "Expr":
 							if (params.length != 2) {
 								Context.error("HtmlAttr.Expr expects name and value arguments.", unwrapped.pos);
 							} else {
-								addTemplateHelperAttr(out, dataAttrs, expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal."),
-									printTemplateExpr(params[1], scope));
+								addTemplateHelperAttr(out, dataAttrs, ariaAttrs,
+									expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal."), printTemplateExpr(params[1], scope));
 							}
 						case other:
 							Context.error('Unsupported HtmlAttr constructor "$other" for HtmlNode.LinkTo.', unwrapped.pos);
@@ -7379,13 +7382,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (dataAttrs.length > 0) {
 			out.push("data: {" + dataAttrs.join(", ") + "}");
 		}
+		if (ariaAttrs.length > 0) {
+			out.push("aria: {" + ariaAttrs.join(", ") + "}");
+		}
 		return out;
 	}
 
-	static function addTemplateHelperAttr(out:Array<String>, dataAttrs:Array<String>, name:String, value:String):Void {
+	static function addTemplateHelperAttr(out:Array<String>, dataAttrs:Array<String>, ariaAttrs:Array<String>, name:String, value:String):Void {
 		if (StringTools.startsWith(name, "data-")) {
 			var dataName = RubyNaming.toLocalName(name.substr("data-".length));
 			dataAttrs.push(dataName + ": " + dataAttrValue(name, value));
+			return;
+		}
+		if (StringTools.startsWith(name, "aria-")) {
+			var ariaName = RubyNaming.toLocalName(name.substr("aria-".length));
+			ariaAttrs.push(ariaName + ": " + value);
 			return;
 		}
 		out.push(helperKwargName(name) + ": " + value);

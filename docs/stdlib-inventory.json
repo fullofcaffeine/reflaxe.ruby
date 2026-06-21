@@ -1204,7 +1204,7 @@
       "status": "implemented",
       "path": "std/rails/action_view/H.hx",
       "surface": "rails.action_view.H",
-      "reason": "Lower-level macro helper facade that expands explicit typed template calls, loops, attrs, typed partial renders, route-helper links/buttons, and form helpers into HtmlNode/HtmlAttr AST constructors."
+      "reason": "Lower-level macro helper facade that expands explicit typed template calls, loops, attrs, checked data/aria/role attrs, typed partial renders, route-helper links/buttons, and form helpers into HtmlNode/HtmlAttr AST constructors."
     },
     {
       "id": "std.rails.action_view_html_node",

@@ -1,6 +1,7 @@
 package rails.action_view;
 
 #if macro
+import haxe.macro.Context;
 import haxe.macro.Expr;
 #end
 
@@ -147,4 +148,108 @@ class H {
 	public static macro function attrExpr(name:Expr, value:Expr):Expr {
 		return macro rails.action_view.HtmlAttr.Expr($name, $value);
 	}
+
+	/**
+		Checked `data-*` attribute helper for lower-level `H.*` template code.
+
+		HHX markup can write `data-turbo-frame="..."` directly. This macro gives
+		manual `HtmlNode` authors the same Rails-facing output without repeating the
+		`data-` prefix or leaking unchecked hook strings. The suffix must be a
+		literal so Haxe can validate it before the Ruby compiler lowers helper attrs.
+	**/
+	public static macro function data(name:Expr, value:Expr):Expr {
+		return prefixedAttr("data", name, value, StaticAttr);
+	}
+
+	public static macro function dataBool(name:Expr):Expr {
+		return prefixedAttr("data", name, null, BoolAttr);
+	}
+
+	public static macro function dataExpr(name:Expr, value:Expr):Expr {
+		return prefixedAttr("data", name, value, ExprAttr);
+	}
+
+	/**
+		Checked `aria-*` attribute helper for lower-level `H.*` template code.
+
+		Use this when a template is authored with explicit `HtmlNode` values instead
+		of inline HHX. Keeping the suffix literal catches malformed accessibility
+		attributes during Haxe compilation while emitting normal HTML/Rails output.
+	**/
+	public static macro function aria(name:Expr, value:Expr):Expr {
+		return prefixedAttr("aria", name, value, StaticAttr);
+	}
+
+	public static macro function ariaBool(name:Expr):Expr {
+		return prefixedAttr("aria", name, null, BoolAttr);
+	}
+
+	public static macro function ariaExpr(name:Expr, value:Expr):Expr {
+		return prefixedAttr("aria", name, value, ExprAttr);
+	}
+
+	public static macro function role(value:Expr):Expr {
+		return macro rails.action_view.HtmlAttr.Static("role", $value);
+	}
+
+	#if macro
+	static function prefixedAttr(prefix:String, name:Expr, value:Null<Expr>, kind:CheckedAttrKind):Expr {
+		var fullName = prefix + "-" + checkedAttrSuffix(prefix, name);
+		return switch (kind) {
+			case StaticAttr:
+				macro rails.action_view.HtmlAttr.Static($v{fullName}, $value);
+			case BoolAttr:
+				macro rails.action_view.HtmlAttr.Bool($v{fullName});
+			case ExprAttr:
+				macro rails.action_view.HtmlAttr.Expr($v{fullName}, $value);
+		}
+	}
+
+	static function checkedAttrSuffix(prefix:String, name:Expr):String {
+		var suffix = switch (name.expr) {
+			case EConst(CString(value, _)):
+				value;
+			default:
+				Context.error('H.$prefix(...) expects a literal suffix such as "$prefix(\"live\", ...)"; dynamic attribute names must use H.attr(...) explicitly.',
+					name.pos);
+				return "";
+		}
+		if (StringTools.startsWith(suffix, prefix + "-")) {
+			Context.error('H.$prefix(...) expects the suffix only. Use H.$prefix("${suffix.substr(prefix.length + 1)}", ...) instead of "$suffix".', name.pos);
+		}
+		var normalized = StringTools.replace(suffix, "_", "-");
+		if (!isSafeAttrSuffix(normalized)) {
+			Context.error('Invalid $prefix-* attribute suffix "$suffix". Use lowercase letters, digits, and dashes, starting with a letter.', name.pos);
+		}
+		return normalized;
+	}
+
+	static function isSafeAttrSuffix(value:String):Bool {
+		if (value == null || value.length == 0) {
+			return false;
+		}
+		for (i in 0...value.length) {
+			var code = value.charCodeAt(i);
+			var lower = code >= "a".code && code <= "z".code;
+			var digit = code >= "0".code && code <= "9".code;
+			var dash = code == "-".code;
+			if (i == 0) {
+				if (!lower) {
+					return false;
+				}
+			} else if (!lower && !digit && !dash) {
+				return false;
+			}
+		}
+		return true;
+	}
+	#end
 }
+
+#if macro
+private enum CheckedAttrKind {
+	StaticAttr;
+	BoolAttr;
+	ExprAttr;
+}
+#end

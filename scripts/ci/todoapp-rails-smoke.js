@@ -16,6 +16,10 @@ const typedTemplateInvalidSourceDir = join(root, "test", ".generated", "todoapp_
 const typedTemplateInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_template_invalid_out");
 const typedPartialInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_src");
 const typedPartialInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_out");
+const checkedAttrSourceDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_src");
+const checkedAttrOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_out");
+const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_src");
+const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -164,6 +168,10 @@ rmSync(typedTemplateInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedTemplateInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedPartialInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedPartialInvalidOutputDir, { force: true, recursive: true });
+rmSync(checkedAttrSourceDir, { force: true, recursive: true });
+rmSync(checkedAttrOutputDir, { force: true, recursive: true });
+rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
+rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1211,6 +1219,8 @@ expectInvalidTemplateLocalsFailure();
 expectRawErbRequiresOptInFailure();
 expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
+expectCheckedAttrHelpersOutput();
+expectCheckedAttrHelpersFailure();
 expectTypedRouteHelperFailure();
 expectTypedRouteParamFailure();
 expectTypedFormFieldRequiresFormFailure();
@@ -2556,6 +2566,118 @@ function expectTypedPartialLocalsFailure() {
   }
   if (!sawCandidate) {
     console.error("Unable to run invalid H.partial locals check; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function compileCheckedAttrFixture(sourceDir, outputDir, mainClass, viewClass, viewBody, options = {}) {
+  mkdirSync(join(sourceDir, "views"), { recursive: true });
+  writeFileSync(join(sourceDir, `${mainClass}.hx`), [
+    `import views.${viewClass};`,
+    "",
+    `class ${mainClass} {`,
+    "\tstatic function main() {",
+    `\t\tvar view:Class<${viewClass}> = ${viewClass};`,
+    "\t\tSys.println(view != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(sourceDir, "views", `${viewClass}.hx`), viewBody.join("\n"));
+
+  let sawCandidate = false;
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    sawCandidate = true;
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${outputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      exampleDir,
+      "-cp",
+      sourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      mainClass,
+    ], { allowFailure: options.allowFailure === true });
+    return result;
+  }
+  if (!sawCandidate) {
+    console.error("Unable to run checked H.attr helper fixture; no Reflaxe candidate found.");
+    process.exit(1);
+  }
+}
+
+function expectCheckedAttrHelpersOutput() {
+  compileCheckedAttrFixture(checkedAttrSourceDir, checkedAttrOutputDir, "CheckedAttrMain", "CheckedAttrView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/checked_attrs\")",
+    "@:railsTemplateAst(\"render\")",
+    "class CheckedAttrView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.fragment([",
+    "\t\t\tH.el(\"section\", [H.role(\"status\"), H.aria(\"live\", \"polite\"), H.dataBool(\"railshx-scroll\")], [H.text(\"Ready\")]),",
+    "\t\t\tH.linkTo(\"Users\", \"/users\", [H.data(\"turbo_frame\", \"railshx-user-frame\"), H.aria(\"label\", \"Manage users\")])",
+    "\t\t]);",
+    "\t}",
+    "}",
+    "",
+  ]);
+
+  const generated = readFileSync(join(checkedAttrOutputDir, "app", "views", "controllers", "todos", "checked_attrs.html.erb"), "utf8");
+  for (const expected of [
+    '<section role="status" aria-live="polite" data-railshx-scroll>Ready</section>',
+    '<%= link_to "Users", "/users", data: {turbo_frame: "railshx-user-frame"}, aria: {label: "Manage users"} %>',
+  ]) {
+    if (!generated.includes(expected)) {
+      console.error(`Checked H.data/H.aria helper fixture missing expected output: ${expected}`);
+      process.exit(1);
+    }
+  }
+}
+
+function expectCheckedAttrHelpersFailure() {
+  const result = compileCheckedAttrFixture(checkedAttrInvalidSourceDir, checkedAttrInvalidOutputDir, "InvalidCheckedAttrMain", "InvalidCheckedAttrView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_checked_attrs\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidCheckedAttrView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.el(\"div\", [H.aria(\"aria-live\", \"polite\")], []);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid H.aria prefixed suffix compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("expects the suffix only")) {
+    console.error("Invalid H.aria suffix failed, but not with the expected checked attribute diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
     process.exit(1);
   }
 }
