@@ -13,6 +13,8 @@ const strictInvalidSourceDir = join(root, "test", ".generated", "devisehx_contro
 const strictInvalidOutputDir = join(root, "test", ".generated", "devisehx_controller_strict_invalid_out");
 const strictWrongScopeSourceDir = join(root, "test", ".generated", "devisehx_controller_strict_wrong_scope_src");
 const strictWrongScopeOutputDir = join(root, "test", ".generated", "devisehx_controller_strict_wrong_scope_out");
+const strictSkippedSourceDir = join(root, "test", ".generated", "devisehx_controller_strict_skipped_src");
+const strictSkippedOutputDir = join(root, "test", ".generated", "devisehx_controller_strict_skipped_out");
 const strictDirectSourceDir = join(root, "test", ".generated", "devisehx_controller_strict_direct_src");
 const strictDirectOutputDir = join(root, "test", ".generated", "devisehx_controller_strict_direct_out");
 const reflaxeSrc = join(root, "vendor", "reflaxe", "src");
@@ -26,6 +28,8 @@ for (const dir of [
   strictInvalidOutputDir,
   strictWrongScopeSourceDir,
   strictWrongScopeOutputDir,
+  strictSkippedSourceDir,
+  strictSkippedOutputDir,
   strictDirectSourceDir,
   strictDirectOutputDir,
 ]) {
@@ -43,6 +47,8 @@ writeStrictUnguardedSources(strictInvalidSourceDir);
 expectCompileFailure(strictInvalidSourceDir, strictInvalidOutputDir, "requires a matching beforeAction", { strictCurrentRequired: true });
 writeStrictWrongScopeSources(strictWrongScopeSourceDir);
 expectCompileFailure(strictWrongScopeSourceDir, strictWrongScopeOutputDir, "requires a matching beforeAction", { strictCurrentRequired: true });
+writeStrictSkippedSources(strictSkippedSourceDir);
+expectCompileFailure(strictSkippedSourceDir, strictSkippedOutputDir, "requires a matching beforeAction", { strictCurrentRequired: true });
 writeStrictDirectSources(strictDirectSourceDir);
 expectCompileFailure(strictDirectSourceDir, strictDirectOutputDir, "requires a matching beforeAction", { strictCurrentRequired: true });
 
@@ -266,6 +272,34 @@ function writeStrictWrongScopeSources(dir) {
     "class DashboardController extends rails.action_controller.Base {",
     "\tstatic final lifecycle = {",
     "\t\tbeforeAction(AdminAuth.authenticate, {only: [index]});",
+    "\t}",
+    "",
+    "\tpublic function index():Void {",
+    "\t\tvar user = UserAuth.currentRequired(this);",
+    "\t\trender({plain: user.email});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeStrictSkippedSources(dir) {
+  writePositiveSources(dir);
+  writeFileSync(join(dir, "controllers", "DashboardController.hx"), [
+    "package controllers;",
+    "",
+    "import app.auth.UserAuth;",
+    "import rails.macros.ControllerDsl.*;",
+    "",
+    "// Strict-flow negative fixture.",
+    "// Demonstrates: RailsHx must honor Rails skip_before_action semantics when",
+    "// proving Devise currentRequired safety. A skipped auth filter does not",
+    "// protect this action even if a broader beforeAction was declared earlier.",
+    "@:railsController",
+    "class DashboardController extends rails.action_controller.Base {",
+    "\tstatic final lifecycle = {",
+    "\t\tbeforeAction(UserAuth.authenticate, {});",
+    "\t\tskipBeforeAction(UserAuth.authenticate, {only: [index]});",
     "\t}",
     "",
     "\tpublic function index():Void {",

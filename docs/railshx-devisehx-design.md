@@ -332,9 +332,10 @@ Nullability rule:
   controller action, finds generated `UserAuth.currentRequired(this)` calls and
   low-level `Auth.currentRequired(this, UserAuth.scope)` calls, and requires a
   matching `beforeAction(UserAuth.authenticate)` lifecycle guard that covers the
-  action. `only` and `except` options are respected, and an admin guard does not
-  prove a user `currentRequired` call safe. Use nullable `current(...)` when an
-  action is public or intentionally handles guests.
+  action. `only`, `except`, and matching `skipBeforeAction(...)` declarations
+  are respected, and an admin guard does not prove a user `currentRequired` call
+  safe. Use nullable `current(...)` when an action is public or intentionally
+  handles guests.
 
 Compiler diagnostics:
 

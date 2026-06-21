@@ -1516,23 +1516,39 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		for (entry in railsControllerLifecycleEntries(lifecycle.field.expr())) {
 			var decl = railsControllerLifecycleDecl(entry);
-			if (decl.kind != "before_action") {
-				continue;
-			}
-			var scope = deviseAuthenticateScope(decl.method);
-			if (scope == null) {
-				continue;
-			}
-			for (action in actions) {
-				if (!railsLifecycleCoversAction(decl.only, decl.except, action)) {
+			switch (decl.kind) {
+				case "before_action":
+					var scope = deviseAuthenticateScope(decl.method);
+					if (scope == null) {
+						continue;
+					}
+					for (action in actions) {
+						if (!railsLifecycleCoversAction(decl.only, decl.except, action)) {
+							continue;
+						}
+						var scopes = out.get(action);
+						if (scopes == null) {
+							scopes = new Map();
+							out.set(action, scopes);
+						}
+						scopes.set(scope, true);
+					}
+				case "skip_before_action":
+					var scope = deviseAuthenticateScope(decl.method);
+					if (scope == null) {
+						continue;
+					}
+					for (action in actions) {
+						if (!railsLifecycleCoversAction(decl.only, decl.except, action)) {
+							continue;
+						}
+						var scopes = out.get(action);
+						if (scopes != null) {
+							scopes.remove(scope);
+						}
+					}
+				case _:
 					continue;
-				}
-				var scopes = out.get(action);
-				if (scopes == null) {
-					scopes = new Map();
-					out.set(action, scopes);
-				}
-				scopes.set(scope, true);
 			}
 		}
 		return out;
