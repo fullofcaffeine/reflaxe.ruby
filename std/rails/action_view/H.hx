@@ -77,6 +77,10 @@ class H {
 		return macro rails.action_view.HtmlNode.SimpleFormat($text, $attrs);
 	}
 
+	public static macro function truncate(text:Expr, length:Expr, omission:Expr):Expr {
+		return macro rails.action_view.HtmlNode.Truncate($text, $length, $omission);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

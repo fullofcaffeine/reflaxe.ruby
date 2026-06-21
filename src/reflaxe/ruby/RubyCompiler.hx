@@ -6935,6 +6935,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateSimpleFormat(params[0], params[1], scope);
 						}
+					case "Truncate":
+						if (params.length != 3) {
+							Context.error("HtmlNode.Truncate expects text, length, and omission arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateTruncate(params[0], params[1], params[2], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7350,6 +7357,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateSimpleFormat(text:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(text, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= simple_format " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateTruncate(text:TypedExpr, length:TypedExpr, omission:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(text, scope)];
+		if (!isTemplateNull(length)) {
+			args.push("length: " + printTemplateExpr(length, scope));
+		}
+		if (!isTemplateNull(omission)) {
+			args.push("omission: " + quoteRubyStringForCode(expectTemplateString(omission, "HtmlNode.Truncate omission must be a string literal.")));
+		}
+		return "<%= truncate " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

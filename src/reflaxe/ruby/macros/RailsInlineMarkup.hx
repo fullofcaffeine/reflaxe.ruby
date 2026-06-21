@@ -787,6 +787,14 @@ private class RailsMarkupParser {
 				var text = requireAttrValue(attrs, "text", pos);
 				var simpleFormatAttrs = attrsExcept(attrs, ["text"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.SimpleFormat($text, ${mkArray(simpleFormatAttrs.map(mkAttr), pos)});
+			case "truncate":
+				rejectChildren(name, children, pos);
+				var text = requireAttrValue(attrs, "text", pos);
+				var length = attrValue(attrs, "length");
+				var omission = attrValue(attrs, "omission");
+				rejectUnknownAttrs(name, attrs, ["text", "length", "omission"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.Truncate($text, ${length == null ? (macro null) : length},
+					${omission == null ? (macro null) : omission});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);

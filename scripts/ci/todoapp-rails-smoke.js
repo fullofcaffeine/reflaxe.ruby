@@ -2643,7 +2643,9 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\tH.pluralize(2, \"task\", null),",
     "\t\t\t<pluralize count=${3} singular=\"person\" plural=\"people\" />,",
     "\t\t\tH.simpleFormat(\"First line\\nSecond line\", [H.className(\"formatted-copy\")]),",
-    "\t\t\t<simple_format text=\"Inline copy\" class=\"inline-copy\" />",
+    "\t\t\t<simple_format text=\"Inline copy\" class=\"inline-copy\" />,",
+    "\t\t\tH.truncate(\"Ship the typed template helper surface\", 12, \"...\"),",
+    "\t\t\t<truncate text=\"Inline helper copy\" length=${10} omission=\"...\" />",
     "\t\t]);",
     "\t}",
     "}",
@@ -2663,6 +2665,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= pluralize 3, "person", "people" %>',
     '<%= simple_format "First line\nSecond line", class: "formatted-copy" %>',
     '<%= simple_format "Inline copy", class: "inline-copy" %>',
+    '<%= truncate "Ship the typed template helper surface", length: 12, omission: "..." %>',
+    '<%= truncate "Inline helper copy", length: 10, omission: "..." %>',
   ]) {
     if (!generated.includes(expected)) {
       console.error(`Checked H.data/H.aria helper fixture missing expected output: ${expected}`);
