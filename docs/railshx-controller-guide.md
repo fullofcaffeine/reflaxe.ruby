@@ -426,9 +426,11 @@ npm run test:rails-integration
 npm run test:rails-runtime
 ```
 
-`npm run test:rails-integration` always compiles and syntax-checks generated
-Rails Ruby. It runs `rails db:migrate` and Rails tests when local Rails gems are
-available. `npm run test:rails-runtime` sets `REQUIRE_RAILS=1` and makes missing
+`npm run test:action-controller-params` compiles the focused controller fixture,
+checks the generated Ruby shape, rejects invalid Haxe inputs, materializes a
+minimal Rails app, syntax-checks it, and runs a Rails request test when the app
+bundle is available. `npm run test:rails-integration` covers the larger todoapp
+Rails app. `npm run test:rails-runtime` sets `REQUIRE_RAILS=1` and makes missing
 Rails runtime dependencies fail instead of skip.
 
 For browser UX regression coverage:

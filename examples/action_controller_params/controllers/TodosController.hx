@@ -119,5 +119,9 @@ class TodosController extends rails.action_controller.Base {
 		head(Status.noContent);
 	}
 
+	public function runtimeOk() {
+		render({plain: "runtime ok", status: Status.ok});
+	}
+
 	public function index() {}
 }

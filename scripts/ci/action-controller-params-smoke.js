@@ -1,13 +1,23 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
-const { join, resolve } = require("node:path");
+const {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} = require("node:fs");
+const { dirname, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "action_controller_params");
+const runtimeAppDir = join(root, "test", ".generated", "action_controller_params_rails");
 const invalidSourceDir = join(root, "test", ".generated", "action_controller_params_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "action_controller_params_invalid_out");
+const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -17,8 +27,9 @@ const reflaxeCandidates = [
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
-    cwd: root,
+    cwd: options.cwd ?? root,
     encoding: "utf8",
+    env: options.env ?? process.env,
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0 && !options.allowFailure) {
@@ -94,6 +105,8 @@ for (const expected of [
   /self\.send_file\("\/tmp\/todos\.csv", filename: "todos\.csv", type: "text\/csv", disposition: "attachment", status: :ok\)/,
   /self\.send_data\("title,is_completed\\nShip,true\\n", filename: "todos\.csv", type: "text\/csv", disposition: "inline", status: :ok\)/,
   /self\.head\(:no_content\)/,
+  /def runtime_ok\(\)/,
+  /self\.render\(plain: "runtime ok", status: :ok\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`ActionController output missing expected line: ${expected}`);
@@ -315,6 +328,24 @@ if (!/RequestVariant|String|Cannot unify/.test(invalidRequestVariant.stderr + in
   console.error("Invalid ActionController request variant failed for an unexpected reason.");
   process.exit(1);
 }
+
+materializeRuntimeRailsApp();
+syntaxCheckRuntimeRailsApp();
+const bundleProbe = run("bundle", ["check"], { cwd: runtimeAppDir, allowFailure: true });
+if (bundleProbe.status !== 0) {
+  if (requireRails) {
+    process.stdout.write("[action-controller-params] Rails bundle missing; running bundle install because REQUIRE_RAILS=1.\n");
+    run("bundle", ["install"], { cwd: runtimeAppDir });
+  } else {
+    process.stdout.write("[action-controller-params] Rails bundle missing; skipped runtime Rails request pass.\n");
+    process.stdout.write("[action-controller-params] Set REQUIRE_RAILS=1 to install app gems and make this lane mandatory.\n");
+    process.exit(0);
+  }
+}
+run("bundle", ["exec", "rails", "test"], {
+  cwd: runtimeAppDir,
+  env: { ...process.env, RAILS_ENV: "test" },
+});
 
 function compileWithFirstAvailableReflaxe(options = {}) {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -548,4 +579,88 @@ function writeInvalidFixtures() {
     "}",
     "",
   ].join("\n"));
+}
+
+function materializeRuntimeRailsApp() {
+  rmSync(runtimeAppDir, { force: true, recursive: true });
+  copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
+  copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
+
+  writeFile("Gemfile", `source "https://rubygems.org"
+
+gem "rails", ">= 7.0", "< 8.0"
+`);
+
+  writeFile("config/application.rb", `require "rails"
+require "active_record"
+require "action_controller/railtie"
+
+module ActionControllerParamsRuntime
+  class Application < Rails::Application
+    config.load_defaults 7.0
+    config.eager_load = false
+    config.root = File.expand_path("..", __dir__)
+  end
+end
+`);
+
+  writeFile("config/environment.rb", `require_relative "application"
+
+Rails.application.initialize!
+`);
+
+  writeFile("config/routes.rb", `Rails.application.routes.draw do
+  get "/runtime", to: "controllers/todos#runtime_ok"
+end
+`);
+
+  writeFile("test/test_helper.rb", `ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
+require "rails/test_help"
+`);
+
+  writeFile("test/controllers/action_controller_params_runtime_test.rb", `require "test_helper"
+
+class ActionControllerParamsRuntimeTest < ActionDispatch::IntegrationTest
+  test "generated RailsHx controller handles a Rails request" do
+    get "/runtime"
+
+    assert_response :success
+    assert_equal "runtime ok", response.body
+  end
+end
+`);
+}
+
+function syntaxCheckRuntimeRailsApp() {
+  for (const file of [
+    "app/haxe_gen/controllers/todos_controller.rb",
+    "config/application.rb",
+    "config/environment.rb",
+    "config/routes.rb",
+    "config/initializers/hxruby_autoload.rb",
+    "test/controllers/action_controller_params_runtime_test.rb",
+  ]) {
+    run("ruby", ["-c", join(runtimeAppDir, file)]);
+  }
+}
+
+function copyTree(source, target) {
+  mkdirSync(target, { recursive: true });
+  for (const entry of readdirSync(source, { withFileTypes: true })) {
+    const sourcePath = join(source, entry.name);
+    const targetPath = join(target, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(sourcePath, targetPath);
+    } else if (entry.isFile()) {
+      mkdirSync(dirname(targetPath), { recursive: true });
+      copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
+function writeFile(relativePath, content) {
+  const path = join(runtimeAppDir, relativePath);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, content);
 }
