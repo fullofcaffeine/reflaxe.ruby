@@ -2647,7 +2647,9 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\tH.truncate(\"Ship the typed template helper surface\", 12, \"...\"),",
     "\t\t\t<truncate text=\"Inline helper copy\" length=${10} omission=\"...\" />,",
     "\t\t\tH.numberToCurrency(12.5, \"$\", 2),",
-    "\t\t\t<number_to_currency number=${99.95} unit=\"USD \" precision=${0} />",
+    "\t\t\t<number_to_currency number=${99.95} unit=\"USD \" precision=${0} />,",
+    "\t\t\tH.numberToPercentage(42.5, 1),",
+    "\t\t\t<number_to_percentage number=${87.25} precision=${2} />",
     "\t\t]);",
     "\t}",
     "}",
@@ -2671,6 +2673,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= truncate "Inline helper copy", length: 10, omission: "..." %>',
     '<%= number_to_currency 12.5, unit: "$", precision: 2 %>',
     '<%= number_to_currency 99.95, unit: "USD ", precision: 0 %>',
+    '<%= number_to_percentage 42.5, precision: 1 %>',
+    '<%= number_to_percentage 87.25, precision: 2 %>',
   ]) {
     if (!generated.includes(expected)) {
       console.error(`Checked H.data/H.aria helper fixture missing expected output: ${expected}`);

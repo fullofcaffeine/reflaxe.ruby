@@ -803,6 +803,12 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["number", "unit", "precision"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.NumberToCurrency($number, ${unit == null ? (macro null) : unit},
 					${precision == null ? (macro null) : precision});
+			case "number_to_percentage":
+				rejectChildren(name, children, pos);
+				var number = requireAttrValue(attrs, "number", pos);
+				var precision = attrValue(attrs, "precision");
+				rejectUnknownAttrs(name, attrs, ["number", "precision"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.NumberToPercentage($number, ${precision == null ? (macro null) : precision});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);
