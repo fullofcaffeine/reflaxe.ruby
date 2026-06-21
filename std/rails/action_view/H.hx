@@ -81,6 +81,10 @@ class H {
 		return macro rails.action_view.HtmlNode.Truncate($text, $length, $omission);
 	}
 
+	public static macro function numberToCurrency(number:Expr, unit:Expr, precision:Expr):Expr {
+		return macro rails.action_view.HtmlNode.NumberToCurrency($number, $unit, $precision);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

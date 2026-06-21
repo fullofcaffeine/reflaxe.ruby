@@ -795,6 +795,14 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["text", "length", "omission"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Truncate($text, ${length == null ? (macro null) : length},
 					${omission == null ? (macro null) : omission});
+			case "number_to_currency":
+				rejectChildren(name, children, pos);
+				var number = requireAttrValue(attrs, "number", pos);
+				var unit = attrValue(attrs, "unit");
+				var precision = attrValue(attrs, "precision");
+				rejectUnknownAttrs(name, attrs, ["number", "unit", "precision"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.NumberToCurrency($number, ${unit == null ? (macro null) : unit},
+					${precision == null ? (macro null) : precision});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);

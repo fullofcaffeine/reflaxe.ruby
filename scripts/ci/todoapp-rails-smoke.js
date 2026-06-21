@@ -2645,7 +2645,9 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\tH.simpleFormat(\"First line\\nSecond line\", [H.className(\"formatted-copy\")]),",
     "\t\t\t<simple_format text=\"Inline copy\" class=\"inline-copy\" />,",
     "\t\t\tH.truncate(\"Ship the typed template helper surface\", 12, \"...\"),",
-    "\t\t\t<truncate text=\"Inline helper copy\" length=${10} omission=\"...\" />",
+    "\t\t\t<truncate text=\"Inline helper copy\" length=${10} omission=\"...\" />,",
+    "\t\t\tH.numberToCurrency(12.5, \"$\", 2),",
+    "\t\t\t<number_to_currency number=${99.95} unit=\"USD \" precision=${0} />",
     "\t\t]);",
     "\t}",
     "}",
@@ -2667,6 +2669,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= simple_format "Inline copy", class: "inline-copy" %>',
     '<%= truncate "Ship the typed template helper surface", length: 12, omission: "..." %>',
     '<%= truncate "Inline helper copy", length: 10, omission: "..." %>',
+    '<%= number_to_currency 12.5, unit: "$", precision: 2 %>',
+    '<%= number_to_currency 99.95, unit: "USD ", precision: 0 %>',
   ]) {
     if (!generated.includes(expected)) {
       console.error(`Checked H.data/H.aria helper fixture missing expected output: ${expected}`);

@@ -6942,6 +6942,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateTruncate(params[0], params[1], params[2], scope);
 						}
+					case "NumberToCurrency":
+						if (params.length != 3) {
+							Context.error("HtmlNode.NumberToCurrency expects number, unit, and precision arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateNumberToCurrency(params[0], params[1], params[2], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7368,6 +7375,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("omission: " + quoteRubyStringForCode(expectTemplateString(omission, "HtmlNode.Truncate omission must be a string literal.")));
 		}
 		return "<%= truncate " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateNumberToCurrency(number:TypedExpr, unit:TypedExpr, precision:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(number, scope)];
+		if (!isTemplateNull(unit)) {
+			args.push("unit: " + quoteRubyStringForCode(expectTemplateString(unit, "HtmlNode.NumberToCurrency unit must be a string literal.")));
+		}
+		if (!isTemplateNull(precision)) {
+			args.push("precision: " + printTemplateExpr(precision, scope));
+		}
+		return "<%= number_to_currency " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
