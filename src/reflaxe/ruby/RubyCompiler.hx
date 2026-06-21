@@ -6914,6 +6914,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateImageTag(params[0], params[1], scope);
 						}
+					case "MailTo":
+						if (params.length != 3) {
+							Context.error("HtmlNode.MailTo expects email, label, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateMailTo(params[0], params[1], params[2], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7301,6 +7308,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "<%= image_tag " + args.join(", ") + " %>";
 	}
 
+	static function lowerTemplateMailTo(email:TypedExpr, label:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		var args = [printTemplateExpr(email, scope)];
+		if (isTemplateNull(label)) {
+			if (kwargs.length > 0) {
+				args.push("nil");
+			}
+		} else {
+			args.push(printTemplateExpr(label, scope));
+		}
+		args = args.concat(kwargs);
+		return "<%= mail_to " + args.join(", ") + " %>";
+	}
+
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(label, scope), printTemplateExpr(url, scope)];
 		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
@@ -7398,6 +7419,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			out.push("aria: {" + ariaAttrs.join(", ") + "}");
 		}
 		return out;
+	}
+
+	static function isTemplateNull(expr:TypedExpr):Bool {
+		return switch (unwrapTemplateExpr(expr).expr) {
+			case TConst(TNull):
+				true;
+			case _:
+				false;
+		}
 	}
 
 	static function addTemplateHelperAttr(out:Array<String>, dataAttrs:Array<String>, ariaAttrs:Array<String>, name:String, value:String):Void {

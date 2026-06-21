@@ -766,6 +766,15 @@ private class RailsMarkupParser {
 				var imageSource = src == null ? source : src;
 				var imageAttrs = attrsExcept(attrs, ["src", "source"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.ImageTag($imageSource, ${mkArray(imageAttrs.map(mkAttr), pos)});
+			case "mail_to":
+				var email = requireAttrValue(attrs, "email", pos);
+				var explicitText = attrValue(attrs, "text");
+				var label = explicitText == null ? textChildExpr(children, pos) : explicitText;
+				if (label == null && children.length > 0) {
+					Context.error('Rails HHX <mail_to> accepts only text/expression children when text=... is omitted.', pos);
+				}
+				var mailAttrs = attrsExcept(attrs, ["email", "text"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.MailTo($email, ${label == null ? (macro null) : label}, ${mkArray(mailAttrs.map(mkAttr), pos)});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);

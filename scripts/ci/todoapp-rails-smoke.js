@@ -2636,7 +2636,10 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\tH.el(\"section\", [H.role(\"status\"), H.aria(\"live\", \"polite\"), H.dataBool(\"railshx-scroll\")], [H.text(\"Ready\")]),",
     "\t\t\tH.linkTo(\"Users\", \"/users\", [H.data(\"turbo_frame\", \"railshx-user-frame\"), H.aria(\"label\", \"Manage users\")]),",
     "\t\t\tH.imageTag(\"avatar.png\", [H.attr(\"alt\", \"Profile avatar\"), H.className(\"avatar\"), H.data(\"direct-upload-url\", \"/rails/active_storage/direct_uploads\")]),",
-    "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />",
+    "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
+    "\t\t\tH.mailTo(\"support@example.test\", null, [H.className(\"support-link\")]),",
+    "\t\t\t<mail_to email=\"admin@example.test\" text=\"Email admin\" class=\"admin-link\" />,",
+    "\t\t\t<mail_to email=\"ops@example.test\">Ops desk</mail_to>",
     "\t\t]);",
     "\t}",
     "}",
@@ -2649,6 +2652,9 @@ function expectCheckedAttrHelpersOutput() {
     '<%= link_to "Users", "/users", data: {turbo_frame: "railshx-user-frame"}, aria: {label: "Manage users"} %>',
     '<%= image_tag "avatar.png", alt: "Profile avatar", class: "avatar", data: {direct_upload_url: "/rails/active_storage/direct_uploads"} %>',
     '<%= image_tag "badge.png", alt: "RailsHx badge", class: "badge" %>',
+    '<%= mail_to "support@example.test", nil, class: "support-link" %>',
+    '<%= mail_to "admin@example.test", "Email admin", class: "admin-link" %>',
+    '<%= mail_to "ops@example.test", "Ops desk" %>',
   ]) {
     if (!generated.includes(expected)) {
       console.error(`Checked H.data/H.aria helper fixture missing expected output: ${expected}`);

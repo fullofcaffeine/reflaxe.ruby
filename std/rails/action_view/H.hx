@@ -65,6 +65,10 @@ class H {
 		return macro rails.action_view.HtmlNode.ImageTag($source, $attrs);
 	}
 
+	public static macro function mailTo(email:Expr, label:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.MailTo($email, $label, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}
