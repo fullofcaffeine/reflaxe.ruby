@@ -23,6 +23,7 @@ log/
 # Browser test artifacts
 test-results/
 playwright-report/
+examples/todoapp_rails/e2e/generated/
 
 # Release artifacts
 dist/

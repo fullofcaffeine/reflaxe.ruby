@@ -138,6 +138,13 @@ improves developer experience:
 - Haxe-authored JS/browser tests can reuse shared Haxe DOM hooks, Turbo event
   contracts, route constants, and typed client payloads before lowering to
   Playwright/Vitest-compatible JavaScript or TypeScript.
+- The current todoapp browser slice uses
+  `examples/todoapp_rails/e2e_haxe/TodoappBrowserSpec.hx` plus
+  `examples/todoapp_rails/build-e2e.hxml` to emit Genes ES modules under
+  `examples/todoapp_rails/e2e/generated/**`. The full Playwright sentinel
+  compiles those Haxe specs before booting Rails, while
+  `npm run test:haxe-playwright` keeps the generated JavaScript shape pinned
+  without launching a browser.
 - The typed test layers should be additive, not mandatory. If a user prefers
   vanilla Rails tests, those tests should keep working against generated RailsHx
   code as if it had been hand-written.

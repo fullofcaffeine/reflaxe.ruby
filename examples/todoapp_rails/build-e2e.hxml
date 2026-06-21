@@ -1,0 +1,17 @@
+# Haxe-authored Playwright specs for the RailsHx todoapp.
+# This is intentionally optional: TypeScript Playwright specs in e2e/*.ts
+# remain first-class, while Haxe specs can reuse typed RailsHx app contracts.
+-cp examples/todoapp_rails
+-cp std
+
+-lib genes
+-D js-es=6
+--macro genes.Generator.use()
+--macro reflaxe.js.Async.enable()
+--macro addMetadata('@:genes.disableNativeAccessors', 'haxe.Exception')
+
+-main e2e_haxe.TodoappBrowserSpec
+-js examples/todoapp_rails/e2e/generated/haxe_todoapp/spec.js
+-D source-map
+-D js-unflatten
+--dce=full

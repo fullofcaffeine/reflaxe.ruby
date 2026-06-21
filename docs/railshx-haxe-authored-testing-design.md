@@ -249,56 +249,58 @@ end
 
 ## JS And Browser Test API Shape
 
-The first browser slice should target Playwright-compatible TypeScript because
-the todoapp already uses Playwright and typed Haxe hooks.
+The first browser slice targets Playwright-compatible JavaScript emitted by the
+existing Haxe-to-JS + Genes ES-module lane. Vanilla TypeScript Playwright specs
+remain first-class; Haxe-authored browser tests are an additive option for specs
+that benefit from typed RailsHx hooks, route constants, Turbo contracts, or
+shared client payloads.
 
 Example source:
 
 ```haxe
 package e2e;
 
-import rails.playwright.Test;
-import rails.playwright.Expect.*;
+import js.lib.Promise;
+import rails.test.playwright.Playwright.PW;
+import rails.test.playwright.Types.Page;
+import reflaxe.js.Async;
+import reflaxe.js.Async.await;
 import shared.TodoHooks;
 
 class TodoBrowserTest {
-	@:playwrightTest("creates a task through Turbo/importmap-backed Rails form flow")
-	public static function createsTask(page:Page):Void {
-		page.goto("/todos");
-		expect(page.locator(TodoHooks.shellSelector())).toBeVisible();
+	static function main():Void {
+		PW.testPage("creates a task through Turbo/importmap-backed Rails form flow", Async.async(function(page:Page):Promise<Void> {
+			await(page.goto("/todos"));
+			await(PW.see(page.locator(TodoHooks.classSelector(TodoHooks.shellClass))).toBeVisible());
 
-		page.getByLabel("What should ship next?").fill("Typed browser test");
-		page.getByLabel("Why does it matter?").fill("Haxe reused shared hooks.");
-		page.getByRole("button", {name: "Add task"}).click();
+			await(page.getByLabel("What should ship next?").fill("Typed browser test"));
+			await(page.getByLabel("Why does it matter?").fill("Haxe reused shared hooks."));
+			await(page.getByRole("button", {name: "Add task"}).click());
 
-		expect(page.getByText("Task added to open work")).toBeVisible();
-		expect(page.locator(TodoHooks.itemSelector()).filter({hasText: "Typed browser test"}).first()).toBeVisible();
+			await(PW.see(page.getByText("Task added to open work")).toBeVisible());
+			return Promise.resolve(null);
+		}));
 	}
 }
 ```
 
-Possible generated Playwright TypeScript:
+Generated Playwright-compatible JavaScript is ordinary ES module output:
 
-```ts
-import { expect, test, type Page } from "@playwright/test";
-import { hooks } from "./todo_hooks";
+```js
+import * as PlaywrightApi from "@playwright/test";
 
-test("creates a task through Turbo/importmap-backed Rails form flow", async ({ page }) => {
+PlaywrightApi.test("creates a task through Turbo/importmap-backed Rails form flow", async function ({ page }) {
   await page.goto("/todos");
-  await expect(page.locator(hooks.selectors.shell)).toBeVisible();
-
-  await page.getByLabel("What should ship next?").fill("Typed browser test");
-  await page.getByLabel("Why does it matter?").fill("Haxe reused shared hooks.");
-  await page.getByRole("button", { name: "Add task" }).click();
-
-  await expect(page.getByText("Task added to open work")).toBeVisible();
-  await expect(page.locator(hooks.selectors.items).filter({ hasText: "Typed browser test" }).first()).toBeVisible();
+  await PlaywrightApi.expect(page.locator(".todo-shell")).toBeVisible();
 });
 ```
 
-This should use the existing Haxe-to-JS compiler path where possible. If direct
-TypeScript emission is needed for Playwright ergonomics, it should be a narrow
-test-output mode with snapshots.
+The `rails.test.playwright.PW` facade owns the one JavaScript interop seam
+Playwright requires: fixture destructuring (`async ({ page }) => ...`). App
+tests call `PW.testPage(name, page -> ...)`, keep typed `Page`/`Locator`
+completion, and use `Async.async(...)` so Genes emits a native async callback.
+If direct TypeScript emission becomes necessary later, it should be a narrow
+test-output mode with snapshots rather than the default browser-test path.
 
 ## Output Ownership
 
@@ -306,8 +308,12 @@ Haxe-authored tests should have explicit output roots:
 
 - Rails tests: `test/generated/**/*_test.rb` by default.
 - RSpec, if supported later: `spec/generated/**/*_spec.rb`.
-- Playwright tests: `e2e/generated/**/*.spec.ts` or compiled JS next to a
-  generated TypeScript declaration layer.
+- Playwright tests: Genes emits the module tree under
+  `e2e/generated/<suite>/`, and the runner writes a tiny disposable
+  `e2e/generated/<suite>.spec.js` wrapper that imports the real entry so
+  Playwright's default discovery sees it. The generated
+  `e2e/generated/package.json` contains `{ "type": "module" }`. Direct `.ts`
+  emission remains a possible future mode.
 
 Generated test files should be safe to delete and regenerate. User-authored
 vanilla tests should live outside generated roots and must never be overwritten.
@@ -326,7 +332,7 @@ them:
 
 - `examples/todoapp_rails/test_haxe/models/TodoTest.hx`
 - `examples/todoapp_rails/test_haxe/controllers/TodosControllerTest.hx`
-- `examples/todoapp_rails/e2e_haxe/TodoBrowserTest.hx`
+- `examples/todoapp_rails/e2e_haxe/TodoappBrowserSpec.hx`
 
 The materializer should copy vanilla tests and generated tests into the
 disposable Rails app. This lets reviewers compare the vanilla and Haxe-authored
@@ -344,15 +350,16 @@ forms while Rails still executes ordinary test files.
 4. Add request-test helpers: `get`, `post`, `assertResponse`,
    `assertRedirectedTo`, `assertDifference`, and `assertNoDifference`.
 5. Add todoapp Haxe-authored tests in parallel with the existing Ruby fixtures.
-6. Add optional Playwright Haxe authoring after the Rails/Minitest path is
-   stable.
+6. Add optional Playwright Haxe authoring through Genes ES-module output; keep
+   vanilla TypeScript specs in parallel.
 
 ## Open Questions
 
 - Whether RSpec should be a first-class output mode or an extension after
   Minitest.
-- Whether Haxe-authored Playwright should emit TypeScript source directly or
-  compile Haxe to JavaScript plus generated typings.
+- Whether Haxe-authored Playwright needs a later TypeScript output mode for
+  richer editor integration, or whether Haxe-to-JS plus typed externs remains
+  sufficient.
 - How much Rails fixture/factory support belongs in RailsHx versus external
   typed wrappers for FactoryBot, fixtures, or fixtures-like builders.
 - Whether generated test output should be checked into app repos by default or

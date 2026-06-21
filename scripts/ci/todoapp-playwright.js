@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, readdirSync } = require("node:fs");
+const { existsSync, readdirSync, writeFileSync } = require("node:fs");
 const net = require("node:net");
 const { join, resolve } = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
@@ -38,6 +38,12 @@ async function main() {
   stage("browser app prepare", () => run(process.execPath, [join(root, "scripts", "rails", "todoapp.js"), "prepare"], {
     env: { ...process.env, PORT: port, BIND: bind, RAILSHX_TODOAPP_RESET_DB: "1" },
   }));
+  stage("browser haxe specs compile", () => {
+    run("haxe", ["examples/todoapp_rails/build-e2e.hxml"]);
+    const generatedDir = join(root, "examples", "todoapp_rails", "e2e", "generated");
+    writeFileSync(join(generatedDir, "package.json"), `${JSON.stringify({ type: "module" }, null, 2)}\n`);
+    writeFileSync(join(generatedDir, "haxe_todoapp.spec.js"), 'import "./haxe_todoapp/spec.js";\n');
+  });
 
   stage("browser install", ensurePlaywrightBrowser);
 

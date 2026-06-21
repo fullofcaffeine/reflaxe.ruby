@@ -157,6 +157,11 @@ rake todoapp:playwright
 ```
 
 That prepares the generated Rails app, boots Rails on a dedicated port, runs `examples/todoapp_rails/e2e/*.spec.ts`, and tears the server down.
+The browser lane also compiles the optional Haxe-authored Playwright spec from
+`examples/todoapp_rails/e2e_haxe/**` into disposable ES-module specs under
+`examples/todoapp_rails/e2e/generated/**`; vanilla TypeScript specs remain
+first-class. For the lightweight compile/output-shape check without booting
+Rails, run `npm run test:haxe-playwright`.
 
 For the tutorial-style walkthrough of the generated skeleton and todoapp
 patterns, see

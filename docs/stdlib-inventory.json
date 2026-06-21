@@ -583,6 +583,30 @@
       "reason": "Macro-backed request params helper that validates model param keys against @:railsColumn fields and lowers to Rails-native params hashes."
     },
     {
+      "id": "std.rails.test_playwright_api",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/playwright/PlaywrightApi.hx",
+      "surface": "rails.test.playwright.PlaywrightApi",
+      "reason": "Typed extern boundary for @playwright/test used by optional Haxe-authored RailsHx browser specs while keeping Playwright as the runtime owner."
+    },
+    {
+      "id": "std.rails.test_playwright_types",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/playwright/Types.hx",
+      "surface": "rails.test.playwright.Types",
+      "reason": "Minimal typed Playwright Page, Locator, Response, and Expectation contracts for Haxe-authored browser specs that reuse RailsHx hooks."
+    },
+    {
+      "id": "std.rails.test_playwright",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/playwright/Playwright.hx",
+      "surface": "rails.test.playwright.PW",
+      "reason": "Small Playwright facade that hides the required JavaScript fixture destructuring interop while preserving typed Haxe page/locator assertions."
+    },
+    {
       "id": "std.rails.test_description",
       "owner": "std",
       "status": "implemented",

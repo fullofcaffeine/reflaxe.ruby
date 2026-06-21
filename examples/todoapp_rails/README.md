@@ -153,7 +153,15 @@ Runs the deployability dogfood lane for this sample: compile Haxe/HHX, compile H
 rake todoapp:playwright
 ```
 
-Runs the RailsHx browser sentinel: compile/materialize the generated app, prepare and seed the SQLite DB, boot Rails on a dedicated port, run Playwright specs from `examples/todoapp_rails/e2e/*.spec.ts`, and shut Rails down. Override the port or spec when debugging:
+Runs the RailsHx browser sentinel: compile/materialize the generated app, compile the optional Haxe-authored Playwright spec from `e2e_haxe/**` into disposable ES modules under `e2e/generated/**`, prepare and seed the SQLite DB, boot Rails on a dedicated port, run Playwright specs from `examples/todoapp_rails/e2e`, and shut Rails down. Vanilla TypeScript specs remain first-class; Haxe-authored specs are useful when a browser test wants typed RailsHx hooks such as `shared.TodoHooks`.
+
+Use the lightweight compile/output-shape lane when you only need to verify the Haxe-authored browser test artifact:
+
+```bash
+npm run test:haxe-playwright
+```
+
+Override the port or spec when debugging:
 
 ```bash
 RAILSHX_PLAYWRIGHT_PORT=3101 RAILSHX_PLAYWRIGHT_SPEC=examples/todoapp_rails/e2e/todoapp.spec.ts rake todoapp:playwright
