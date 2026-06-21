@@ -126,6 +126,9 @@ try {
     "hxruby:db:prepare",
     "hxruby:test",
     "hxruby:rails TASK=zeitwerk:check",
+    "request.format().json()",
+    "response.status()",
+    "Target-shaped Haxe is valid when intentional",
   ]);
   expectFile("Procfile.railshx.dev", [
     "rails: bundle exec rails server",
