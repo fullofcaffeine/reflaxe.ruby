@@ -20,7 +20,8 @@ import rails.macros.ParamsMacro;
 // `flash`, `session`, and `cookies` expose typed store helpers instead of raw
 // Dynamic bracket access. `request()` and `response()` expose typed facades
 // over the Rails runtime objects without wrapping them, including the
-// `RequestFormat` MIME facade returned by `request().format()`. `sendFile(...)`
+// `RequestFormat` MIME facade returned by `request().format()` and the
+// `RequestVariant` inquirer returned by `request().variant()`. `sendFile(...)`
 // and `sendData(...)` expose Rails download helpers with typed `Status` and
 // `SendDisposition` options instead of raw status symbols.
 // `protectFromForgery(...)` exposes Rails' CSRF class macro with typed strategy
@@ -79,6 +80,9 @@ class TodosController extends rails.action_controller.Base {
 		var requestFormat = request().format();
 		var wantsJson = requestFormat.json();
 		var requestFormatName = requestFormat.toString();
+		var requestVariant = request().variant();
+		var wantsPhoneVariant = requestVariant.phone();
+		var requestVariantName = requestVariant.toString();
 		var currentStatus = response().status();
 		flash.notice("Todo queued");
 		session().set("lastTodoTitle", attrs);

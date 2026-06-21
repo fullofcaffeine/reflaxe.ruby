@@ -74,6 +74,9 @@ for (const expected of [
   /request_format__hx\d+ = self\.request\(\)\.format\(\)/,
   /wants_json__hx\d+ = request_format__hx\d+\.json\?\(\)/,
   /request_format_name__hx\d+ = request_format__hx\d+\.to_s\(\)/,
+  /request_variant__hx\d+ = self\.request\(\)\.variant\(\)/,
+  /wants_phone_variant__hx\d+ = request_variant__hx\d+\.phone\?\(\)/,
+  /request_variant_name__hx\d+ = request_variant__hx\d+\.to_s\(\)/,
   /current_status__hx\d+ = self\.response\(\)\.status\(\)/,
   /self\.flash\(\)\[:notice\] = "Todo queued"/,
   /self\.session\(\)\[:last_todo_title\] = attrs__hx\d+/,
@@ -173,6 +176,17 @@ if (invalidRequestFormat == null || invalidRequestFormat.status === 0) {
   process.exit(1);
 }
 
+const invalidRequestVariant = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidRequestVariantMain",
+  allowFailure: true,
+});
+if (invalidRequestVariant == null || invalidRequestVariant.status === 0) {
+  console.error("Expected invalid ActionController request variant compile to fail.");
+  process.exit(1);
+}
+
 const invalidLifecycleMissing = compileWithFirstAvailableReflaxe({
   outputDir: invalidOutputDir,
   classPath: invalidSourceDir,
@@ -262,6 +276,12 @@ if (!/RequestFormat|String|Cannot unify/.test(invalidRequestFormat.stderr + inva
   console.error("Invalid ActionController request format failed for an unexpected reason.");
   process.exit(1);
 }
+if (!/RequestVariant|String|Cannot unify/.test(invalidRequestVariant.stderr + invalidRequestVariant.stdout)) {
+  process.stdout.write(invalidRequestVariant.stdout);
+  process.stderr.write(invalidRequestVariant.stderr);
+  console.error("Invalid ActionController request variant failed for an unexpected reason.");
+  process.exit(1);
+}
 
 function compileWithFirstAvailableReflaxe(options = {}) {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -344,6 +364,15 @@ function writeInvalidFixtures() {
     "\tstatic function main():Void {",
     "\t\tvar controller = new controllers.TodosController();",
     "\t\tvar format:String = controller.request().format();",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidRequestVariantMain.hx"), [
+    "class InvalidRequestVariantMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tvar variant:String = controller.request().variant();",
     "\t}",
     "}",
     "",

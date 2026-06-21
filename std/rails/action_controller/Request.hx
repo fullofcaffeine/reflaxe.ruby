@@ -17,6 +17,8 @@ extern class Request {
 
 	public function format():RequestFormat;
 
+	public function variant():RequestVariant;
+
 	@:native("xhr?")
 	public function xhr():Bool;
 }
