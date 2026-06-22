@@ -6977,6 +6977,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							"<%= strip_links " + printTemplateExpr(params[0], scope) + " %>";
 						}
+					case "ToSentence":
+						if (params.length != 4) {
+							Context.error("HtmlNode.ToSentence expects items, wordsConnector, twoWordsConnector, and lastWordConnector arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateToSentence(params[0], params[1], params[2], params[3], scope);
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
@@ -7514,6 +7521,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("break_sequence: " + quoteRubyStringForCode(expectTemplateString(breakSequence, "HtmlNode.WordWrap breakSequence must be a string literal.")));
 		}
 		return "<%= word_wrap " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateToSentence(items:TypedExpr, wordsConnector:TypedExpr, twoWordsConnector:TypedExpr, lastWordConnector:TypedExpr,
+			scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(items, scope)];
+		if (!isTemplateNull(wordsConnector)) {
+			args.push("words_connector: "
+				+ quoteRubyStringForCode(expectTemplateString(wordsConnector, "HtmlNode.ToSentence wordsConnector must be a string literal.")));
+		}
+		if (!isTemplateNull(twoWordsConnector)) {
+			args.push("two_words_connector: "
+				+ quoteRubyStringForCode(expectTemplateString(twoWordsConnector, "HtmlNode.ToSentence twoWordsConnector must be a string literal.")));
+		}
+		if (!isTemplateNull(lastWordConnector)) {
+			args.push("last_word_connector: "
+				+ quoteRubyStringForCode(expectTemplateString(lastWordConnector, "HtmlNode.ToSentence lastWordConnector must be a string literal.")));
+		}
+		return "<%= to_sentence " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateTimeAgoInWords(fromTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {

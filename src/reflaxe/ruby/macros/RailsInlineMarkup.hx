@@ -831,6 +831,16 @@ private class RailsMarkupParser {
 				var html = requireAttrValue(attrs, "html", pos);
 				rejectUnknownAttrs(name, attrs, ["html"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.StripLinks($html);
+			case "to_sentence":
+				rejectChildren(name, children, pos);
+				var items = requireAttrValue(attrs, "items", pos);
+				var wordsConnector = attrValue(attrs, "words_connector");
+				var twoWordsConnector = attrValue(attrs, "two_words_connector");
+				var lastWordConnector = attrValue(attrs, "last_word_connector");
+				rejectUnknownAttrs(name, attrs, ["items", "words_connector", "two_words_connector", "last_word_connector"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.ToSentence($items, ${wordsConnector == null ? (macro null) : wordsConnector},
+					${twoWordsConnector == null ? (macro null) : twoWordsConnector},
+					${lastWordConnector == null ? (macro null) : lastWordConnector});
 			case "time_ago_in_words":
 				rejectChildren(name, children, pos);
 				var from = requireAttrValue(attrs, "from", pos);

@@ -30,6 +30,8 @@ const stripTagsInvalidSourceDir = join(root, "test", ".generated", "todoapp_rail
 const stripTagsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_out");
 const stripLinksInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_strip_links_invalid_src");
 const stripLinksInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_strip_links_invalid_out");
+const toSentenceInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_to_sentence_invalid_src");
+const toSentenceInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_to_sentence_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -206,6 +208,8 @@ rmSync(stripTagsInvalidSourceDir, { force: true, recursive: true });
 rmSync(stripTagsInvalidOutputDir, { force: true, recursive: true });
 rmSync(stripLinksInvalidSourceDir, { force: true, recursive: true });
 rmSync(stripLinksInvalidOutputDir, { force: true, recursive: true });
+rmSync(toSentenceInvalidSourceDir, { force: true, recursive: true });
+rmSync(toSentenceInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1274,6 +1278,7 @@ expectHighlightTypeFailure();
 expectWordWrapTypeFailure();
 expectStripTagsTypeFailure();
 expectStripLinksTypeFailure();
+expectToSentenceTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2716,6 +2721,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<strip_tags html=\"Inline copy\" />,",
     "\t\t\tH.stripLinks(\"Blog: <a href='https://example.test'>Visit</a>\"),",
     "\t\t\t<strip_links html=\"Plain link text\" />,",
+    "\t\t\tH.toSentence([\"Draft\", \"Review\", \"Ship\"], \", \", \" or \", \", or \"),",
+    "\t\t\t<to_sentence items=${[\"One\", \"Two\"]} two_words_connector=\" plus \" />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2769,6 +2776,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= strip_tags "Inline copy" %>',
     '<%= strip_links "Blog: <a href=\'https://example.test\'>Visit</a>" %>',
     '<%= strip_links "Plain link text" %>',
+    '<%= to_sentence ["Draft", "Review", "Ship"], words_connector: ", ", two_words_connector: " or ", last_word_connector: ", or " %>',
+    '<%= to_sentence ["One", "Two"], two_words_connector: " plus " %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -2967,6 +2976,35 @@ function expectStripLinksTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid strip_links value failed, but not with the expected String type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectToSentenceTypeFailure() {
+  const result = compileCheckedAttrFixture(toSentenceInvalidSourceDir, toSentenceInvalidOutputDir, "InvalidToSentenceMain", "InvalidToSentenceView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_to_sentence\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidToSentenceView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.toSentence([\"Draft\", 42], null, null, null);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid to_sentence item value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid to_sentence value failed, but not with the expected String item type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
