@@ -815,6 +815,12 @@ private class RailsMarkupParser {
 				var precision = attrValue(attrs, "precision");
 				rejectUnknownAttrs(name, attrs, ["number", "precision"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.NumberToHuman($number, ${precision == null ? (macro null) : precision});
+			case "number_to_human_size":
+				rejectChildren(name, children, pos);
+				var number = requireAttrValue(attrs, "number", pos);
+				var precision = attrValue(attrs, "precision");
+				rejectUnknownAttrs(name, attrs, ["number", "precision"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.NumberToHumanSize($number, ${precision == null ? (macro null) : precision});
 			case "number_to_delimited":
 				rejectChildren(name, children, pos);
 				var number = requireAttrValue(attrs, "number", pos);

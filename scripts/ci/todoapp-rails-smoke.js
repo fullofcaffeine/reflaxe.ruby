@@ -22,6 +22,8 @@ const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
 const numberToPhoneInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_to_phone_invalid_src");
 const numberToPhoneInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_to_phone_invalid_out");
+const numberToHumanSizeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_to_human_size_invalid_src");
+const numberToHumanSizeInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_to_human_size_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -176,6 +178,8 @@ rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
 rmSync(numberToPhoneInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberToPhoneInvalidOutputDir, { force: true, recursive: true });
+rmSync(numberToHumanSizeInvalidSourceDir, { force: true, recursive: true });
+rmSync(numberToHumanSizeInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1226,6 +1230,7 @@ expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
 expectNumberToPhoneTypeFailure();
+expectNumberToHumanSizeTypeFailure();
 expectTypedRouteHelperFailure();
 expectTypedRouteParamFailure();
 expectTypedFormFieldRequiresFormFailure();
@@ -2657,6 +2662,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<number_to_percentage number=${87.25} precision=${2} />,",
     "\t\t\tH.numberToHuman(1234567.0, 2),",
     "\t\t\t<number_to_human number=${987654.0} precision=${3} />,",
+    "\t\t\tH.numberToHumanSize(1048576.0, 2),",
+    "\t\t\t<number_to_human_size number=${1536000.0} precision=${3} />,",
     "\t\t\tH.numberToDelimited(1234567.89, \" \", \",\"),",
     "\t\t\t<number_to_delimited number=${987654.32} delimiter=\".\" separator=\",\" />,",
     "\t\t\tH.numberToPhone(\"5551234567\", true, \"-\", \"9\", 1),",
@@ -2688,6 +2695,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= number_to_percentage 87.25, precision: 2 %>',
     '<%= number_to_human 1234567.0, precision: 2 %>',
     '<%= number_to_human 987654.0, precision: 3 %>',
+    '<%= number_to_human_size 1048576.0, precision: 2 %>',
+    '<%= number_to_human_size 1536000.0, precision: 3 %>',
     '<%= number_to_delimited 1234567.89, delimiter: " ", separator: "," %>',
     '<%= number_to_delimited 987654.32, delimiter: ".", separator: "," %>',
     '<%= number_to_phone "5551234567", area_code: true, delimiter: "-", extension: "9", country_code: 1 %>',
@@ -2752,6 +2761,42 @@ function expectNumberToPhoneTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid number_to_phone value failed, but not with the expected String type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectNumberToHumanSizeTypeFailure() {
+  const result = compileCheckedAttrFixture(
+    numberToHumanSizeInvalidSourceDir,
+    numberToHumanSizeInvalidOutputDir,
+    "InvalidNumberToHumanSizeMain",
+    "InvalidNumberToHumanSizeView",
+    [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_number_to_human_size\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidNumberToHumanSizeView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.numberToHumanSize(\"large\", 2);",
+      "\t}",
+      "}",
+      "",
+    ],
+    { allowFailure: true },
+  );
+  if (result.status === 0) {
+    console.error("Invalid number_to_human_size numeric value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("String") || !output.includes("Float")) {
+    console.error("Invalid number_to_human_size value failed, but not with the expected Float type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

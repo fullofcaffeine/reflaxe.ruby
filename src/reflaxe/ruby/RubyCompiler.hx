@@ -6963,6 +6963,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateNumberToHuman(params[0], params[1], scope);
 						}
+					case "NumberToHumanSize":
+						if (params.length != 2) {
+							Context.error("HtmlNode.NumberToHumanSize expects number and precision arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateNumberToHumanSize(params[0], params[1], scope);
+						}
 					case "NumberToDelimited":
 						if (params.length != 3) {
 							Context.error("HtmlNode.NumberToDelimited expects number, delimiter, and separator arguments.", node.pos);
@@ -7430,6 +7437,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("precision: " + printTemplateExpr(precision, scope));
 		}
 		return "<%= number_to_human " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateNumberToHumanSize(number:TypedExpr, precision:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(number, scope)];
+		if (!isTemplateNull(precision)) {
+			args.push("precision: " + printTemplateExpr(precision, scope));
+		}
+		return "<%= number_to_human_size " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateNumberToDelimited(number:TypedExpr, delimiter:TypedExpr, separator:TypedExpr, scope:RailsTemplateScope):String {

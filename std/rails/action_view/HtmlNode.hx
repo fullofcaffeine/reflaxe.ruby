@@ -27,6 +27,7 @@ enum HtmlNode {
 	NumberToCurrency(number:Float, unit:Null<String>, precision:Null<Int>);
 	NumberToPercentage(number:Float, precision:Null<Int>);
 	NumberToHuman(number:Float, precision:Null<Int>);
+	NumberToHumanSize(number:Float, precision:Null<Int>);
 	NumberToDelimited(number:Float, delimiter:Null<String>, separator:Null<String>);
 	NumberToPhone(number:String, areaCode:Null<Bool>, delimiter:Null<String>, extension:Null<String>, countryCode:Null<Int>);
 	// Rails `button_to` has both normal and block forms. Keeping separate AST
