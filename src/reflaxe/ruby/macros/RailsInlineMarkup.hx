@@ -846,6 +846,11 @@ private class RailsMarkupParser {
 				var html = requireAttrValue(attrs, "html", pos);
 				rejectUnknownAttrs(name, attrs, ["html"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.EscapeOnce($html);
+			case "cdata_section":
+				rejectChildren(name, children, pos);
+				var content = requireAttrValue(attrs, "content", pos);
+				rejectUnknownAttrs(name, attrs, ["content"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.CdataSection($content);
 			case "time_ago_in_words":
 				rejectChildren(name, children, pos);
 				var from = requireAttrValue(attrs, "from", pos);

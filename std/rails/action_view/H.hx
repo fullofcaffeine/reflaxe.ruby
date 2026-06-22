@@ -109,6 +109,10 @@ class H {
 		return macro rails.action_view.HtmlNode.EscapeOnce($html);
 	}
 
+	public static macro function cdataSection(content:Expr):Expr {
+		return macro rails.action_view.HtmlNode.CdataSection($content);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}

@@ -34,6 +34,8 @@ const toSentenceInvalidSourceDir = join(root, "test", ".generated", "todoapp_rai
 const toSentenceInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_to_sentence_invalid_out");
 const escapeOnceInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_escape_once_invalid_src");
 const escapeOnceInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_escape_once_invalid_out");
+const cdataSectionInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_cdata_section_invalid_src");
+const cdataSectionInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_cdata_section_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -214,6 +216,8 @@ rmSync(toSentenceInvalidSourceDir, { force: true, recursive: true });
 rmSync(toSentenceInvalidOutputDir, { force: true, recursive: true });
 rmSync(escapeOnceInvalidSourceDir, { force: true, recursive: true });
 rmSync(escapeOnceInvalidOutputDir, { force: true, recursive: true });
+rmSync(cdataSectionInvalidSourceDir, { force: true, recursive: true });
+rmSync(cdataSectionInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1284,6 +1288,7 @@ expectStripTagsTypeFailure();
 expectStripLinksTypeFailure();
 expectToSentenceTypeFailure();
 expectEscapeOnceTypeFailure();
+expectCdataSectionTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2730,6 +2735,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<to_sentence items=${[\"One\", \"Two\"]} two_words_connector=\" plus \" />,",
     "\t\t\tH.escapeOnce(\"1 < 2 &amp; 3\"),",
     "\t\t\t<escape_once html=\"Accept & Checkout\" />,",
+    "\t\t\tH.cdataSection(\"<hello world>\"),",
+    "\t\t\t<cdata_section content=\"inline cdata\" />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2787,6 +2794,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= to_sentence ["One", "Two"], two_words_connector: " plus " %>',
     '<%= escape_once "1 < 2 &amp; 3" %>',
     '<%= escape_once "Accept & Checkout" %>',
+    '<%= cdata_section "<hello world>" %>',
+    '<%= cdata_section "inline cdata" %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -3043,6 +3052,35 @@ function expectEscapeOnceTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid escape_once value failed, but not with the expected String type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectCdataSectionTypeFailure() {
+  const result = compileCheckedAttrFixture(cdataSectionInvalidSourceDir, cdataSectionInvalidOutputDir, "InvalidCdataSectionMain", "InvalidCdataSectionView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_cdata_section\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidCdataSectionView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.cdataSection(42);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid cdata_section content value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid cdata_section value failed, but not with the expected String type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

@@ -6991,6 +6991,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							"<%= escape_once " + printTemplateExpr(params[0], scope) + " %>";
 						}
+					case "CdataSection":
+						if (params.length != 1) {
+							Context.error("HtmlNode.CdataSection expects one content argument.", node.pos);
+							"";
+						} else {
+							"<%= cdata_section " + printTemplateExpr(params[0], scope) + " %>";
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
