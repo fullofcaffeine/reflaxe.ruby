@@ -6949,6 +6949,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateTimeAgoInWords(params[0], params[1], scope);
 						}
+					case "DistanceOfTimeInWords":
+						if (params.length != 3) {
+							Context.error("HtmlNode.DistanceOfTimeInWords expects fromTime, toTime, and includeSeconds arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateDistanceOfTimeInWords(params[0], params[1], params[2], scope);
+						}
 					case "NumberToCurrency":
 						if (params.length != 3) {
 							Context.error("HtmlNode.NumberToCurrency expects number, unit, and precision arguments.", node.pos);
@@ -7425,6 +7432,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("include_seconds: " + printTemplateExpr(includeSeconds, scope));
 		}
 		return "<%= time_ago_in_words " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateDistanceOfTimeInWords(fromTime:TypedExpr, toTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(fromTime, scope), printTemplateExpr(toTime, scope)];
+		if (!isTemplateNull(includeSeconds)) {
+			args.push("include_seconds: " + printTemplateExpr(includeSeconds, scope));
+		}
+		return "<%= distance_of_time_in_words " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateNumberToCurrency(number:TypedExpr, unit:TypedExpr, precision:TypedExpr, scope:RailsTemplateScope):String {

@@ -85,6 +85,10 @@ class H {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}
 
+	public static macro function distanceOfTimeInWords(fromTime:Expr, toTime:Expr, includeSeconds:Expr):Expr {
+		return macro rails.action_view.HtmlNode.DistanceOfTimeInWords($fromTime, $toTime, $includeSeconds);
+	}
+
 	public static macro function numberToCurrency(number:Expr, unit:Expr, precision:Expr):Expr {
 		return macro rails.action_view.HtmlNode.NumberToCurrency($number, $unit, $precision);
 	}

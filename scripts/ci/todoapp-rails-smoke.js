@@ -22,6 +22,8 @@ const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
+const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
+const distanceOfTimeInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_out");
 const numberToPhoneInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_to_phone_invalid_src");
 const numberToPhoneInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_to_phone_invalid_out");
 const numberToHumanSizeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_to_human_size_invalid_src");
@@ -180,6 +182,8 @@ rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
+rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
+rmSync(distanceOfTimeInvalidOutputDir, { force: true, recursive: true });
 rmSync(numberToPhoneInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberToPhoneInvalidOutputDir, { force: true, recursive: true });
 rmSync(numberToHumanSizeInvalidSourceDir, { force: true, recursive: true });
@@ -1234,6 +1238,7 @@ expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
 expectTimeAgoInWordsTypeFailure();
+expectDistanceOfTimeInWordsTypeFailure();
 expectNumberToPhoneTypeFailure();
 expectNumberToHumanSizeTypeFailure();
 expectTypedRouteHelperFailure();
@@ -2663,6 +2668,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<truncate text=\"Inline helper copy\" length=${10} omission=\"...\" />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
+    "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
+    "\t\t\t<distance_of_time_in_words from=${Date.now()} to=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.numberToCurrency(12.5, \"$\", 2),",
     "\t\t\t<number_to_currency number=${99.95} unit=\"USD \" precision=${0} />,",
     "\t\t\tH.numberToPercentage(42.5, 1),",
@@ -2698,6 +2705,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= truncate "Inline helper copy", length: 10, omission: "..." %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
+    '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
+    '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: false %>',
     '<%= number_to_currency 12.5, unit: "$", precision: 2 %>',
     '<%= number_to_currency 99.95, unit: "USD ", precision: 0 %>',
     '<%= number_to_percentage 42.5, precision: 1 %>',
@@ -2770,6 +2779,35 @@ function expectTimeAgoInWordsTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("Date")) {
     console.error("Invalid time_ago_in_words value failed, but not with the expected Date type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectDistanceOfTimeInWordsTypeFailure() {
+  const result = compileCheckedAttrFixture(distanceOfTimeInvalidSourceDir, distanceOfTimeInvalidOutputDir, "InvalidDistanceOfTimeMain", "InvalidDistanceOfTimeView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_distance_of_time\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidDistanceOfTimeView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.distanceOfTimeInWords(Date.now(), 3600, true);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid distance_of_time_in_words numeric value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("Date")) {
+    console.error("Invalid distance_of_time_in_words value failed, but not with the expected Date type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
