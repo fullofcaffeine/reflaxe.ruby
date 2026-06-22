@@ -30,6 +30,7 @@ enum HtmlNode {
 	StripTags(html:String);
 	StripLinks(html:String);
 	ToSentence(items:Array<String>, wordsConnector:Null<String>, twoWordsConnector:Null<String>, lastWordConnector:Null<String>);
+	EscapeOnce(html:String);
 	TimeAgoInWords(fromTime:Date, includeSeconds:Null<Bool>);
 	DistanceOfTimeInWords(fromTime:Date, toTime:Date, includeSeconds:Null<Bool>);
 	TimeTag<TLabel>(time:Date, label:Null<TLabel>, attrs:Array<HtmlAttr>);

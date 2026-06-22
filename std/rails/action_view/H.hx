@@ -105,6 +105,10 @@ class H {
 		return macro rails.action_view.HtmlNode.ToSentence($items, $wordsConnector, $twoWordsConnector, $lastWordConnector);
 	}
 
+	public static macro function escapeOnce(html:Expr):Expr {
+		return macro rails.action_view.HtmlNode.EscapeOnce($html);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}

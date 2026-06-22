@@ -841,6 +841,11 @@ private class RailsMarkupParser {
 				macro @:pos(pos) rails.action_view.HtmlNode.ToSentence($items, ${wordsConnector == null ? (macro null) : wordsConnector},
 					${twoWordsConnector == null ? (macro null) : twoWordsConnector},
 					${lastWordConnector == null ? (macro null) : lastWordConnector});
+			case "escape_once":
+				rejectChildren(name, children, pos);
+				var html = requireAttrValue(attrs, "html", pos);
+				rejectUnknownAttrs(name, attrs, ["html"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.EscapeOnce($html);
 			case "time_ago_in_words":
 				rejectChildren(name, children, pos);
 				var from = requireAttrValue(attrs, "from", pos);

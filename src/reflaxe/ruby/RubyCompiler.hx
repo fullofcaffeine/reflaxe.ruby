@@ -6984,6 +6984,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateToSentence(params[0], params[1], params[2], params[3], scope);
 						}
+					case "EscapeOnce":
+						if (params.length != 1) {
+							Context.error("HtmlNode.EscapeOnce expects one html argument.", node.pos);
+							"";
+						} else {
+							"<%= escape_once " + printTemplateExpr(params[0], scope) + " %>";
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
