@@ -20,6 +20,8 @@ const checkedAttrSourceDir = join(root, "test", ".generated", "todoapp_rails_che
 const checkedAttrOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_out");
 const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_src");
 const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
+const excerptInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_src");
+const excerptInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -186,6 +188,8 @@ rmSync(checkedAttrSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrOutputDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
+rmSync(excerptInvalidSourceDir, { force: true, recursive: true });
+rmSync(excerptInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1249,6 +1253,7 @@ expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
+expectExcerptTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2681,6 +2686,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<simple_format text=\"Inline copy\" class=\"inline-copy\" />,",
     "\t\t\tH.truncate(\"Ship the typed template helper surface\", 12, \"...\"),",
     "\t\t\t<truncate text=\"Inline helper copy\" length=${10} omission=\"...\" />,",
+    "\t\t\tH.excerpt(\"This is a very beautiful morning\", \"very\", 3, \"...\"),",
+    "\t\t\t<excerpt text=\"This next thing is an example\" phrase=\"ex\" radius=${2} omission=\"...\" />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2724,6 +2731,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= simple_format "Inline copy", class: "inline-copy" %>',
     '<%= truncate "Ship the typed template helper surface", length: 12, omission: "..." %>',
     '<%= truncate "Inline helper copy", length: 10, omission: "..." %>',
+    '<%= excerpt "This is a very beautiful morning", "very", radius: 3, omission: "..." %>',
+    '<%= excerpt "This next thing is an example", "ex", radius: 2, omission: "..." %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -2777,6 +2786,35 @@ function expectCheckedAttrHelpersFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("expects the suffix only")) {
     console.error("Invalid H.aria suffix failed, but not with the expected checked attribute diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectExcerptTypeFailure() {
+  const result = compileCheckedAttrFixture(excerptInvalidSourceDir, excerptInvalidOutputDir, "InvalidExcerptMain", "InvalidExcerptView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_excerpt\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidExcerptView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.excerpt(\"This is an example\", 42, 5, \"...\");",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid excerpt phrase value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid excerpt value failed, but not with the expected String type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

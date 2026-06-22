@@ -795,6 +795,15 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["text", "length", "omission"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Truncate($text, ${length == null ? (macro null) : length},
 					${omission == null ? (macro null) : omission});
+			case "excerpt":
+				rejectChildren(name, children, pos);
+				var text = requireAttrValue(attrs, "text", pos);
+				var phrase = requireAttrValue(attrs, "phrase", pos);
+				var radius = attrValue(attrs, "radius");
+				var omission = attrValue(attrs, "omission");
+				rejectUnknownAttrs(name, attrs, ["text", "phrase", "radius", "omission"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.Excerpt($text, $phrase, ${radius == null ? (macro null) : radius},
+					${omission == null ? (macro null) : omission});
 			case "time_ago_in_words":
 				rejectChildren(name, children, pos);
 				var from = requireAttrValue(attrs, "from", pos);

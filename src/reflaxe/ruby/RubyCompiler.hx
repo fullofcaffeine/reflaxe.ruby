@@ -6942,6 +6942,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateTruncate(params[0], params[1], params[2], scope);
 						}
+					case "Excerpt":
+						if (params.length != 4) {
+							Context.error("HtmlNode.Excerpt expects text, phrase, radius, and omission arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateExcerpt(params[0], params[1], params[2], params[3], scope);
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
@@ -7446,6 +7453,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("omission: " + quoteRubyStringForCode(expectTemplateString(omission, "HtmlNode.Truncate omission must be a string literal.")));
 		}
 		return "<%= truncate " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateExcerpt(text:TypedExpr, phrase:TypedExpr, radius:TypedExpr, omission:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(text, scope), printTemplateExpr(phrase, scope)];
+		if (!isTemplateNull(radius)) {
+			args.push("radius: " + printTemplateExpr(radius, scope));
+		}
+		if (!isTemplateNull(omission)) {
+			args.push("omission: " + quoteRubyStringForCode(expectTemplateString(omission, "HtmlNode.Excerpt omission must be a string literal.")));
+		}
+		return "<%= excerpt " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateTimeAgoInWords(fromTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {

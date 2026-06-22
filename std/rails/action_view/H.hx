@@ -81,6 +81,10 @@ class H {
 		return macro rails.action_view.HtmlNode.Truncate($text, $length, $omission);
 	}
 
+	public static macro function excerpt(text:Expr, phrase:Expr, radius:Expr, omission:Expr):Expr {
+		return macro rails.action_view.HtmlNode.Excerpt($text, $phrase, $radius, $omission);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}
