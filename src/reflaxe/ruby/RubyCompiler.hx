@@ -6999,6 +6999,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateNumberWithPrecision(params[0], params[1], params[2], params[3], params[4], params[5], scope);
 						}
+					case "NumberWithDelimiter":
+						if (params.length != 3) {
+							Context.error("HtmlNode.NumberWithDelimiter expects number, delimiter, and separator arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateNumberWithDelimiter(params[0], params[1], params[2], scope);
+						}
 					case "NumberToDelimited":
 						if (params.length != 3) {
 							Context.error("HtmlNode.NumberToDelimited expects number, delimiter, and separator arguments.", node.pos);
@@ -7522,6 +7529,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("strip_insignificant_zeros: " + printTemplateExpr(stripInsignificantZeros, scope));
 		}
 		return "<%= number_with_precision " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateNumberWithDelimiter(number:TypedExpr, delimiter:TypedExpr, separator:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(number, scope)];
+		if (!isTemplateNull(delimiter)) {
+			args.push("delimiter: "
+				+ quoteRubyStringForCode(expectTemplateString(delimiter, "HtmlNode.NumberWithDelimiter delimiter must be a string literal.")));
+		}
+		if (!isTemplateNull(separator)) {
+			args.push("separator: "
+				+ quoteRubyStringForCode(expectTemplateString(separator, "HtmlNode.NumberWithDelimiter separator must be a string literal.")));
+		}
+		return "<%= number_with_delimiter " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateNumberToDelimited(number:TypedExpr, delimiter:TypedExpr, separator:TypedExpr, scope:RailsTemplateScope):String {

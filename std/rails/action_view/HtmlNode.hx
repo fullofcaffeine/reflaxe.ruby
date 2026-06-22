@@ -33,6 +33,7 @@ enum HtmlNode {
 	NumberToHumanSize(number:Float, precision:Null<Int>);
 	NumberWithPrecision(number:Float, precision:Null<Int>, significant:Null<Bool>, delimiter:Null<String>, separator:Null<String>,
 		stripInsignificantZeros:Null<Bool>);
+	NumberWithDelimiter(number:Float, delimiter:Null<String>, separator:Null<String>);
 	NumberToDelimited(number:Float, delimiter:Null<String>, separator:Null<String>);
 	NumberToPhone(number:String, areaCode:Null<Bool>, delimiter:Null<String>, extension:Null<String>, countryCode:Null<Int>);
 	// Rails `button_to` has both normal and block forms. Keeping separate AST

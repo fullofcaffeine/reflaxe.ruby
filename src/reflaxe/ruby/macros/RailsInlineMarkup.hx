@@ -854,6 +854,14 @@ private class RailsMarkupParser {
 				macro @:pos(pos) rails.action_view.HtmlNode.NumberWithPrecision($number, ${precision == null ? (macro null) : precision},
 					${significant == null ? (macro null) : significant}, ${delimiter == null ? (macro null) : delimiter},
 					${separator == null ? (macro null) : separator}, ${stripInsignificantZeros == null ? (macro null) : stripInsignificantZeros});
+			case "number_with_delimiter":
+				rejectChildren(name, children, pos);
+				var number = requireAttrValue(attrs, "number", pos);
+				var delimiter = attrValue(attrs, "delimiter");
+				var separator = attrValue(attrs, "separator");
+				rejectUnknownAttrs(name, attrs, ["number", "delimiter", "separator"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.NumberWithDelimiter($number, ${delimiter == null ? (macro null) : delimiter},
+					${separator == null ? (macro null) : separator});
 			case "number_to_delimited":
 				rejectChildren(name, children, pos);
 				var number = requireAttrValue(attrs, "number", pos);

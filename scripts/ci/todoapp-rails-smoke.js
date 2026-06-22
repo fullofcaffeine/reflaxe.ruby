@@ -32,6 +32,8 @@ const numberToHumanSizeInvalidSourceDir = join(root, "test", ".generated", "todo
 const numberToHumanSizeInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_to_human_size_invalid_out");
 const numberWithPrecisionInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_with_precision_invalid_src");
 const numberWithPrecisionInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_with_precision_invalid_out");
+const numberWithDelimiterInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_with_delimiter_invalid_src");
+const numberWithDelimiterInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_with_delimiter_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -196,6 +198,8 @@ rmSync(numberToHumanSizeInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberToHumanSizeInvalidOutputDir, { force: true, recursive: true });
 rmSync(numberWithPrecisionInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberWithPrecisionInvalidOutputDir, { force: true, recursive: true });
+rmSync(numberWithDelimiterInvalidSourceDir, { force: true, recursive: true });
+rmSync(numberWithDelimiterInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1251,6 +1255,7 @@ expectTimeTagTypeFailure();
 expectNumberToPhoneTypeFailure();
 expectNumberToHumanSizeTypeFailure();
 expectNumberWithPrecisionTypeFailure();
+expectNumberWithDelimiterTypeFailure();
 expectTypedRouteHelperFailure();
 expectTypedRouteParamFailure();
 expectTypedFormFieldRequiresFormFailure();
@@ -2692,6 +2697,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<number_to_human_size number=${1536000.0} precision=${3} />,",
     "\t\t\tH.numberWithPrecision(12345.6789, 2, false, \",\", \".\", true),",
     "\t\t\t<number_with_precision number=${9876.54321} precision=${3} significant=${true} delimiter=\" \" separator=\",\" strip_insignificant_zeros=${false} />,",
+    "\t\t\tH.numberWithDelimiter(1234567.89, \" \", \",\"),",
+    "\t\t\t<number_with_delimiter number=${987654.32} delimiter=\".\" separator=\",\" />,",
     "\t\t\tH.numberToDelimited(1234567.89, \" \", \",\"),",
     "\t\t\t<number_to_delimited number=${987654.32} delimiter=\".\" separator=\",\" />,",
     "\t\t\tH.numberToPhone(\"5551234567\", true, \"-\", \"9\", 1),",
@@ -2733,6 +2740,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= number_to_human_size 1536000.0, precision: 3 %>',
     '<%= number_with_precision 12345.6789, precision: 2, significant: false, delimiter: ",", separator: ".", strip_insignificant_zeros: true %>',
     '<%= number_with_precision 9876.54321, precision: 3, significant: true, delimiter: " ", separator: ",", strip_insignificant_zeros: false %>',
+    '<%= number_with_delimiter 1234567.89, delimiter: " ", separator: "," %>',
+    '<%= number_with_delimiter 987654.32, delimiter: ".", separator: "," %>',
     '<%= number_to_delimited 1234567.89, delimiter: " ", separator: "," %>',
     '<%= number_to_delimited 987654.32, delimiter: ".", separator: "," %>',
     '<%= number_to_phone "5551234567", area_code: true, delimiter: "-", extension: "9", country_code: 1 %>',
@@ -2956,6 +2965,42 @@ function expectNumberWithPrecisionTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("String") || !output.includes("Float")) {
     console.error("Invalid number_with_precision value failed, but not with the expected Float type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectNumberWithDelimiterTypeFailure() {
+  const result = compileCheckedAttrFixture(
+    numberWithDelimiterInvalidSourceDir,
+    numberWithDelimiterInvalidOutputDir,
+    "InvalidNumberWithDelimiterMain",
+    "InvalidNumberWithDelimiterView",
+    [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_number_with_delimiter\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidNumberWithDelimiterView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.numberWithDelimiter(\"large\", null, null);",
+      "\t}",
+      "}",
+      "",
+    ],
+    { allowFailure: true },
+  );
+  if (result.status === 0) {
+    console.error("Invalid number_with_delimiter numeric value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("String") || !output.includes("Float")) {
+    console.error("Invalid number_with_delimiter value failed, but not with the expected Float type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

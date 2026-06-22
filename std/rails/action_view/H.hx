@@ -114,6 +114,10 @@ class H {
 		return macro rails.action_view.HtmlNode.NumberWithPrecision($number, $precision, $significant, $delimiter, $separator, $stripInsignificantZeros);
 	}
 
+	public static macro function numberWithDelimiter(number:Expr, delimiter:Expr, separator:Expr):Expr {
+		return macro rails.action_view.HtmlNode.NumberWithDelimiter($number, $delimiter, $separator);
+	}
+
 	public static macro function numberToDelimited(number:Expr, delimiter:Expr, separator:Expr):Expr {
 		return macro rails.action_view.HtmlNode.NumberToDelimited($number, $delimiter, $separator);
 	}
