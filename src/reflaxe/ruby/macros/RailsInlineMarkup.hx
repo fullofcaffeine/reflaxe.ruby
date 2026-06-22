@@ -809,6 +809,13 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["from", "to", "include_seconds"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.DistanceOfTimeInWords($from, $to,
 					${includeSeconds == null ? (macro null) : includeSeconds});
+			case "time_tag":
+				rejectChildren(name, children, pos);
+				var time = requireAttrValue(attrs, "time", pos);
+				var label = attrValue(attrs, "text");
+				var timeTagAttrs = attrsExcept(attrs, ["time", "text"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.TimeTag($time, ${label == null ? (macro null) : label},
+					${mkArray(timeTagAttrs.map(mkAttr), pos)});
 			case "number_to_currency":
 				rejectChildren(name, children, pos);
 				var number = requireAttrValue(attrs, "number", pos);

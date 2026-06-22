@@ -6956,6 +6956,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateDistanceOfTimeInWords(params[0], params[1], params[2], scope);
 						}
+					case "TimeTag":
+						if (params.length != 3) {
+							Context.error("HtmlNode.TimeTag expects time, label, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateTimeTag(params[0], params[1], params[2], scope);
+						}
 					case "NumberToCurrency":
 						if (params.length != 3) {
 							Context.error("HtmlNode.NumberToCurrency expects number, unit, and precision arguments.", node.pos);
@@ -7440,6 +7447,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("include_seconds: " + printTemplateExpr(includeSeconds, scope));
 		}
 		return "<%= distance_of_time_in_words " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateTimeTag(time:TypedExpr, label:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(time, scope)];
+		if (!isTemplateNull(label)) {
+			args.push(printTemplateExpr(label, scope));
+		}
+		args = args.concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= time_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateNumberToCurrency(number:TypedExpr, unit:TypedExpr, precision:TypedExpr, scope:RailsTemplateScope):String {

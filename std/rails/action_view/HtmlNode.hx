@@ -26,6 +26,7 @@ enum HtmlNode {
 	Truncate<TText>(text:TText, length:Null<Int>, omission:Null<String>);
 	TimeAgoInWords(fromTime:Date, includeSeconds:Null<Bool>);
 	DistanceOfTimeInWords(fromTime:Date, toTime:Date, includeSeconds:Null<Bool>);
+	TimeTag<TLabel>(time:Date, label:Null<TLabel>, attrs:Array<HtmlAttr>);
 	NumberToCurrency(number:Float, unit:Null<String>, precision:Null<Int>);
 	NumberToPercentage(number:Float, precision:Null<Int>);
 	NumberToHuman(number:Float, precision:Null<Int>);
