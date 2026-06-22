@@ -16,6 +16,8 @@ git push              # Share code plus auto-exported .beads/issues.jsonl change
 
 The repo includes shared bd hook shims in `.beads-hooks/`. After cloning, run `bd hooks install --shared` once so git uses `core.hooksPath=.beads-hooks`; the hook shims run bd pre-commit/pre-push/post-merge/post-checkout logic and help keep the local Dolt store plus exported `.beads/issues.jsonl` aligned.
 
+When the hooks first run after a bd/tooling upgrade, `.beads/issues.jsonl` may be normalized to bd's current JSONL shape, including `_type:"issue"` records. Treat that as a schema/export migration only after verifying the issue ID set and `bd ready`; do not assume tasks were lost just because the JSON shape or ordering changed.
+
 ## Ruby Profile Contract
 
 The compiler has two public profile contracts: `ruby_first` and `portable`.
