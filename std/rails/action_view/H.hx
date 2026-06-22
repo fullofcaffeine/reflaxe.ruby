@@ -89,6 +89,10 @@ class H {
 		return macro rails.action_view.HtmlNode.Highlight($text, $phrase, $highlighter, $sanitize);
 	}
 
+	public static macro function wordWrap(text:Expr, lineWidth:Expr, breakSequence:Expr):Expr {
+		return macro rails.action_view.HtmlNode.WordWrap($text, $lineWidth, $breakSequence);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}

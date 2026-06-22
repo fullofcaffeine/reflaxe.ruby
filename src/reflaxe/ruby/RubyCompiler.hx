@@ -6956,6 +6956,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateHighlight(params[0], params[1], params[2], params[3], scope);
 						}
+					case "WordWrap":
+						if (params.length != 3) {
+							Context.error("HtmlNode.WordWrap expects text, lineWidth, and breakSequence arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateWordWrap(params[0], params[1], params[2], scope);
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
@@ -7482,6 +7489,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("sanitize: " + printTemplateExpr(sanitize, scope));
 		}
 		return "<%= highlight " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateWordWrap(text:TypedExpr, lineWidth:TypedExpr, breakSequence:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(text, scope)];
+		if (!isTemplateNull(lineWidth)) {
+			args.push("line_width: " + printTemplateExpr(lineWidth, scope));
+		}
+		if (!isTemplateNull(breakSequence)) {
+			args.push("break_sequence: " + quoteRubyStringForCode(expectTemplateString(breakSequence, "HtmlNode.WordWrap breakSequence must be a string literal.")));
+		}
+		return "<%= word_wrap " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateTimeAgoInWords(fromTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {

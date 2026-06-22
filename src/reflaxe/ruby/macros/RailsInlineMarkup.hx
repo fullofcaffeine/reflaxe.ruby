@@ -813,6 +813,14 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["text", "phrase", "highlighter", "sanitize"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Highlight($text, $phrase, ${highlighter == null ? (macro null) : highlighter},
 					${sanitize == null ? (macro null) : sanitize});
+			case "word_wrap":
+				rejectChildren(name, children, pos);
+				var text = requireAttrValue(attrs, "text", pos);
+				var lineWidth = attrValue(attrs, "line_width");
+				var breakSequence = attrValue(attrs, "break_sequence");
+				rejectUnknownAttrs(name, attrs, ["text", "line_width", "break_sequence"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.WordWrap($text, ${lineWidth == null ? (macro null) : lineWidth},
+					${breakSequence == null ? (macro null) : breakSequence});
 			case "time_ago_in_words":
 				rejectChildren(name, children, pos);
 				var from = requireAttrValue(attrs, "from", pos);

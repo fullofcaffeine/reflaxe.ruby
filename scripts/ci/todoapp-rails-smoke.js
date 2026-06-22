@@ -24,6 +24,8 @@ const excerptInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_
 const excerptInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_out");
 const highlightInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_highlight_invalid_src");
 const highlightInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_highlight_invalid_out");
+const wordWrapInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_word_wrap_invalid_src");
+const wordWrapInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_word_wrap_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -194,6 +196,8 @@ rmSync(excerptInvalidSourceDir, { force: true, recursive: true });
 rmSync(excerptInvalidOutputDir, { force: true, recursive: true });
 rmSync(highlightInvalidSourceDir, { force: true, recursive: true });
 rmSync(highlightInvalidOutputDir, { force: true, recursive: true });
+rmSync(wordWrapInvalidSourceDir, { force: true, recursive: true });
+rmSync(wordWrapInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1259,6 +1263,7 @@ expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
 expectExcerptTypeFailure();
 expectHighlightTypeFailure();
+expectWordWrapTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2695,6 +2700,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<excerpt text=\"This next thing is an example\" phrase=\"ex\" radius=${2} omission=\"...\" />,",
     "\t\t\tH.highlight(\"You searched for: rails\", \"rails\", \"<em>\\\\1</em>\", true),",
     "\t\t\t<highlight text=\"You searched for: ruby\" phrase=\"ruby\" highlighter=\"match: \\\\1\" sanitize=${false} />,",
+    "\t\t\tH.wordWrap(\"Once upon a time\", 8, \" / \"),",
+    "\t\t\t<word_wrap text=\"Typed helper output wraps neatly\" line_width=${12} break_sequence=\" | \" />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2742,6 +2749,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= excerpt "This next thing is an example", "ex", radius: 2, omission: "..." %>',
     '<%= highlight "You searched for: rails", "rails", highlighter: "<em>\\\\1</em>", sanitize: true %>',
     '<%= highlight "You searched for: ruby", "ruby", highlighter: "match: \\\\\\\\1", sanitize: false %>',
+    '<%= word_wrap "Once upon a time", line_width: 8, break_sequence: " / " %>',
+    '<%= word_wrap "Typed helper output wraps neatly", line_width: 12, break_sequence: " | " %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -2853,6 +2862,35 @@ function expectHighlightTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid highlight value failed, but not with the expected String type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectWordWrapTypeFailure() {
+  const result = compileCheckedAttrFixture(wordWrapInvalidSourceDir, wordWrapInvalidOutputDir, "InvalidWordWrapMain", "InvalidWordWrapView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_word_wrap\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidWordWrapView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.wordWrap(42, 8, \"\\n\");",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid word_wrap text value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid word_wrap value failed, but not with the expected String type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
