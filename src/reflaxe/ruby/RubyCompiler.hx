@@ -6991,6 +6991,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateNumberToHumanSize(params[0], params[1], scope);
 						}
+					case "NumberWithPrecision":
+						if (params.length != 6) {
+							Context.error("HtmlNode.NumberWithPrecision expects number, precision, significant, delimiter, separator, and stripInsignificantZeros arguments.",
+								node.pos);
+							"";
+						} else {
+							lowerTemplateNumberWithPrecision(params[0], params[1], params[2], params[3], params[4], params[5], scope);
+						}
 					case "NumberToDelimited":
 						if (params.length != 3) {
 							Context.error("HtmlNode.NumberToDelimited expects number, delimiter, and separator arguments.", node.pos);
@@ -7491,6 +7499,29 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("precision: " + printTemplateExpr(precision, scope));
 		}
 		return "<%= number_to_human_size " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateNumberWithPrecision(number:TypedExpr, precision:TypedExpr, significant:TypedExpr, delimiter:TypedExpr, separator:TypedExpr,
+			stripInsignificantZeros:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(number, scope)];
+		if (!isTemplateNull(precision)) {
+			args.push("precision: " + printTemplateExpr(precision, scope));
+		}
+		if (!isTemplateNull(significant)) {
+			args.push("significant: " + printTemplateExpr(significant, scope));
+		}
+		if (!isTemplateNull(delimiter)) {
+			args.push("delimiter: "
+				+ quoteRubyStringForCode(expectTemplateString(delimiter, "HtmlNode.NumberWithPrecision delimiter must be a string literal.")));
+		}
+		if (!isTemplateNull(separator)) {
+			args.push("separator: "
+				+ quoteRubyStringForCode(expectTemplateString(separator, "HtmlNode.NumberWithPrecision separator must be a string literal.")));
+		}
+		if (!isTemplateNull(stripInsignificantZeros)) {
+			args.push("strip_insignificant_zeros: " + printTemplateExpr(stripInsignificantZeros, scope));
+		}
+		return "<%= number_with_precision " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateNumberToDelimited(number:TypedExpr, delimiter:TypedExpr, separator:TypedExpr, scope:RailsTemplateScope):String {
