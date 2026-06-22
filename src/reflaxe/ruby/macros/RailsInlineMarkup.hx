@@ -823,6 +823,17 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["number", "delimiter", "separator"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.NumberToDelimited($number, ${delimiter == null ? (macro null) : delimiter},
 					${separator == null ? (macro null) : separator});
+			case "number_to_phone":
+				rejectChildren(name, children, pos);
+				var number = requireAttrValue(attrs, "number", pos);
+				var areaCode = attrValue(attrs, "area_code");
+				var delimiter = attrValue(attrs, "delimiter");
+				var extension = attrValue(attrs, "extension");
+				var countryCode = attrValue(attrs, "country_code");
+				rejectUnknownAttrs(name, attrs, ["number", "area_code", "delimiter", "extension", "country_code"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.NumberToPhone($number, ${areaCode == null ? (macro null) : areaCode},
+					${delimiter == null ? (macro null) : delimiter}, ${extension == null ? (macro null) : extension},
+					${countryCode == null ? (macro null) : countryCode});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);

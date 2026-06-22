@@ -6970,6 +6970,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateNumberToDelimited(params[0], params[1], params[2], scope);
 						}
+					case "NumberToPhone":
+						if (params.length != 5) {
+							Context.error("HtmlNode.NumberToPhone expects number, areaCode, delimiter, extension, and countryCode arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateNumberToPhone(params[0], params[1], params[2], params[3], params[4], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7436,6 +7443,26 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				+ quoteRubyStringForCode(expectTemplateString(separator, "HtmlNode.NumberToDelimited separator must be a string literal.")));
 		}
 		return "<%= number_to_delimited " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateNumberToPhone(number:TypedExpr, areaCode:TypedExpr, delimiter:TypedExpr, extension:TypedExpr, countryCode:TypedExpr,
+			scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(number, scope)];
+		if (!isTemplateNull(areaCode)) {
+			args.push("area_code: " + printTemplateExpr(areaCode, scope));
+		}
+		if (!isTemplateNull(delimiter)) {
+			args.push("delimiter: "
+				+ quoteRubyStringForCode(expectTemplateString(delimiter, "HtmlNode.NumberToPhone delimiter must be a string literal.")));
+		}
+		if (!isTemplateNull(extension)) {
+			args.push("extension: "
+				+ quoteRubyStringForCode(expectTemplateString(extension, "HtmlNode.NumberToPhone extension must be a string literal.")));
+		}
+		if (!isTemplateNull(countryCode)) {
+			args.push("country_code: " + printTemplateExpr(countryCode, scope));
+		}
+		return "<%= number_to_phone " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

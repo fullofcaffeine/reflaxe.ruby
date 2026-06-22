@@ -97,6 +97,10 @@ class H {
 		return macro rails.action_view.HtmlNode.NumberToDelimited($number, $delimiter, $separator);
 	}
 
+	public static macro function numberToPhone(number:Expr, areaCode:Expr, delimiter:Expr, extension:Expr, countryCode:Expr):Expr {
+		return macro rails.action_view.HtmlNode.NumberToPhone($number, $areaCode, $delimiter, $extension, $countryCode);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}
