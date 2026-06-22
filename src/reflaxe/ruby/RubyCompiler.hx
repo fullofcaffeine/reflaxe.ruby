@@ -6956,6 +6956,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateNumberToPercentage(params[0], params[1], scope);
 						}
+					case "NumberToHuman":
+						if (params.length != 2) {
+							Context.error("HtmlNode.NumberToHuman expects number and precision arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateNumberToHuman(params[0], params[1], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7401,6 +7408,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("precision: " + printTemplateExpr(precision, scope));
 		}
 		return "<%= number_to_percentage " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateNumberToHuman(number:TypedExpr, precision:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(number, scope)];
+		if (!isTemplateNull(precision)) {
+			args.push("precision: " + printTemplateExpr(precision, scope));
+		}
+		return "<%= number_to_human " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

@@ -89,6 +89,10 @@ class H {
 		return macro rails.action_view.HtmlNode.NumberToPercentage($number, $precision);
 	}
 
+	public static macro function numberToHuman(number:Expr, precision:Expr):Expr {
+		return macro rails.action_view.HtmlNode.NumberToHuman($number, $precision);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

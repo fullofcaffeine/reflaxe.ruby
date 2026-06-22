@@ -2649,7 +2649,9 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\tH.numberToCurrency(12.5, \"$\", 2),",
     "\t\t\t<number_to_currency number=${99.95} unit=\"USD \" precision=${0} />,",
     "\t\t\tH.numberToPercentage(42.5, 1),",
-    "\t\t\t<number_to_percentage number=${87.25} precision=${2} />",
+    "\t\t\t<number_to_percentage number=${87.25} precision=${2} />,",
+    "\t\t\tH.numberToHuman(1234567.0, 2),",
+    "\t\t\t<number_to_human number=${987654.0} precision=${3} />",
     "\t\t]);",
     "\t}",
     "}",
@@ -2675,6 +2677,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= number_to_currency 99.95, unit: "USD ", precision: 0 %>',
     '<%= number_to_percentage 42.5, precision: 1 %>',
     '<%= number_to_percentage 87.25, precision: 2 %>',
+    '<%= number_to_human 1234567.0, precision: 2 %>',
+    '<%= number_to_human 987654.0, precision: 3 %>',
   ]) {
     if (!generated.includes(expected)) {
       console.error(`Checked H.data/H.aria helper fixture missing expected output: ${expected}`);
