@@ -20,6 +20,8 @@ const checkedAttrSourceDir = join(root, "test", ".generated", "todoapp_rails_che
 const checkedAttrOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_out");
 const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_src");
 const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
+const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
+const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const numberToPhoneInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_to_phone_invalid_src");
 const numberToPhoneInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_to_phone_invalid_out");
 const numberToHumanSizeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_to_human_size_invalid_src");
@@ -176,6 +178,8 @@ rmSync(checkedAttrSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrOutputDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
+rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
+rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(numberToPhoneInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberToPhoneInvalidOutputDir, { force: true, recursive: true });
 rmSync(numberToHumanSizeInvalidSourceDir, { force: true, recursive: true });
@@ -1229,6 +1233,7 @@ expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
+expectTimeAgoInWordsTypeFailure();
 expectNumberToPhoneTypeFailure();
 expectNumberToHumanSizeTypeFailure();
 expectTypedRouteHelperFailure();
@@ -2656,6 +2661,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<simple_format text=\"Inline copy\" class=\"inline-copy\" />,",
     "\t\t\tH.truncate(\"Ship the typed template helper surface\", 12, \"...\"),",
     "\t\t\t<truncate text=\"Inline helper copy\" length=${10} omission=\"...\" />,",
+    "\t\t\tH.timeAgoInWords(Date.now(), true),",
+    "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.numberToCurrency(12.5, \"$\", 2),",
     "\t\t\t<number_to_currency number=${99.95} unit=\"USD \" precision=${0} />,",
     "\t\t\tH.numberToPercentage(42.5, 1),",
@@ -2689,6 +2696,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= simple_format "Inline copy", class: "inline-copy" %>',
     '<%= truncate "Ship the typed template helper surface", length: 12, omission: "..." %>',
     '<%= truncate "Inline helper copy", length: 10, omission: "..." %>',
+    '<%= time_ago_in_words Time.now, include_seconds: true %>',
+    '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= number_to_currency 12.5, unit: "$", precision: 2 %>',
     '<%= number_to_currency 99.95, unit: "USD ", precision: 0 %>',
     '<%= number_to_percentage 42.5, precision: 1 %>',
@@ -2732,6 +2741,35 @@ function expectCheckedAttrHelpersFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("expects the suffix only")) {
     console.error("Invalid H.aria suffix failed, but not with the expected checked attribute diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectTimeAgoInWordsTypeFailure() {
+  const result = compileCheckedAttrFixture(timeAgoInvalidSourceDir, timeAgoInvalidOutputDir, "InvalidTimeAgoMain", "InvalidTimeAgoView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_time_ago\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidTimeAgoView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.timeAgoInWords(3600, true);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid time_ago_in_words numeric value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("Date")) {
+    console.error("Invalid time_ago_in_words value failed, but not with the expected Date type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

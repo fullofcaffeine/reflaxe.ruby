@@ -6942,6 +6942,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateTruncate(params[0], params[1], params[2], scope);
 						}
+					case "TimeAgoInWords":
+						if (params.length != 2) {
+							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateTimeAgoInWords(params[0], params[1], scope);
+						}
 					case "NumberToCurrency":
 						if (params.length != 3) {
 							Context.error("HtmlNode.NumberToCurrency expects number, unit, and precision arguments.", node.pos);
@@ -7412,6 +7419,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "<%= truncate " + args.join(", ") + " %>";
 	}
 
+	static function lowerTemplateTimeAgoInWords(fromTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(fromTime, scope)];
+		if (!isTemplateNull(includeSeconds)) {
+			args.push("include_seconds: " + printTemplateExpr(includeSeconds, scope));
+		}
+		return "<%= time_ago_in_words " + args.join(", ") + " %>";
+	}
+
 	static function lowerTemplateNumberToCurrency(number:TypedExpr, unit:TypedExpr, precision:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(number, scope)];
 		if (!isTemplateNull(unit)) {
@@ -7869,6 +7884,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TConst(TInt(value)): Std.string(value);
 			case TConst(TFloat(value)): value;
 			case TConst(TString(value)): quoteRubyStringForCode(value);
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (isDateNowCall(classRef.get(), fieldRef.get())):
+				"Time.now";
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, [value]) if (isStdStringCall(classRef.get(), fieldRef.get())):
 				printTemplateExpr(value, scope) + ".to_s";
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionViewFlashExpr(classRef.get(), fieldRef.get()) != null):
@@ -7928,6 +7945,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isStdStringCall(classType:ClassType, field:haxe.macro.Type.ClassField):Bool {
 		return classType.pack.length == 0 && classType.name == "Std" && field.name == "string";
+	}
+
+	static function isDateNowCall(classType:ClassType, field:haxe.macro.Type.ClassField):Bool {
+		// Rails DateHelper methods want Time-like Ruby values; template lowering
+		// keeps Haxe Date.now() typed while emitting the Rails-native Time.now.
+		return classType.pack.length == 0 && classType.name == "Date" && field.name == "now";
 	}
 
 	static function actionViewFlashExpr(classType:ClassType, field:haxe.macro.Type.ClassField):Null<String> {

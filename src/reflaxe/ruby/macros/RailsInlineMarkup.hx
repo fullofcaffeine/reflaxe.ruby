@@ -795,6 +795,12 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["text", "length", "omission"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Truncate($text, ${length == null ? (macro null) : length},
 					${omission == null ? (macro null) : omission});
+			case "time_ago_in_words":
+				rejectChildren(name, children, pos);
+				var from = requireAttrValue(attrs, "from", pos);
+				var includeSeconds = attrValue(attrs, "include_seconds");
+				rejectUnknownAttrs(name, attrs, ["from", "include_seconds"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.TimeAgoInWords($from, ${includeSeconds == null ? (macro null) : includeSeconds});
 			case "number_to_currency":
 				rejectChildren(name, children, pos);
 				var number = requireAttrValue(attrs, "number", pos);

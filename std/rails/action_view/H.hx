@@ -81,6 +81,10 @@ class H {
 		return macro rails.action_view.HtmlNode.Truncate($text, $length, $omission);
 	}
 
+	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
+		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
+	}
+
 	public static macro function numberToCurrency(number:Expr, unit:Expr, precision:Expr):Expr {
 		return macro rails.action_view.HtmlNode.NumberToCurrency($number, $unit, $precision);
 	}
