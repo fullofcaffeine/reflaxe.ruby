@@ -6,7 +6,7 @@ authoring layer for ActiveRecord, ActionController, ActionView/HHX, routing,
 Turbo, ActionCable, generators, migrations, tests, and installed-gem companion
 contracts such as DeviseHx.
 
-The current `0.1.0-beta.2` baseline is beta software. It supports executable Ruby smoke
+The current `0.1.0-beta.2` baseline supports executable Ruby smoke
 fixtures, shared `hxruby` runtime files and gem packaging, Ruby interop
 metadata, typed extension/mixin contracts, and a RailsHx dogfood app with typed
 models, relations, migrations, controllers, params, HHX templates, Haxe-owned

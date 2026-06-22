@@ -17,7 +17,6 @@ typedef SessionsNewLocals = {
 // Type safety: AuthLinks.sessionPath validates UserAuth.scope metadata,
 // DeviseFormFields lowers checked Haxe refs to Devise's Rails form keys,
 // and FlashMessages reads ordinary Rails flash without authoring raw ERB.
-
 @:railsTemplate("devise/sessions/new")
 @:railsTemplateAst("render")
 class SessionsNewView {

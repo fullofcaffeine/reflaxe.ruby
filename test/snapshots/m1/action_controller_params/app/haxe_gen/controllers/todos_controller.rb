@@ -3,10 +3,13 @@
 require "action_controller/railtie"
 module Controllers
   class TodosController < ActionController::Base
+    protect_from_forgery with: :exception, prepend: true, except: [:index]
     before_action :authenticate_user, only: [:create]
     after_action :audit_response, only: [:create]
     before_action :load_tenant, except: [:index]
+    skip_before_action :load_tenant, only: [:runtime_ok]
     rescue_from ActiveRecord::RecordNotFound, with: :not_found
+    rescue_from ActionController::InvalidAuthenticityToken, with: :csrf_failure
     def initialize()
       super()
     end
@@ -22,6 +25,9 @@ module Controllers
     def not_found(e__hx0)
       self.render(plain: "Todo not found", status: :not_found)
     end
+    def csrf_failure(e__hx0)
+      self.render(plain: "Invalid CSRF token", status: :forbidden)
+    end
     def create()
       gthis__hx0 = self
       attrs__hx0 = self.params().require("todo").permit([:title, :is_completed, {metadata: [:source, :priority]}, {tags: []}])
@@ -30,7 +36,16 @@ module Controllers
       request_format__hx0 = self.request().format()
       wants_json__hx0 = request_format__hx0.json?()
       request_format_name__hx0 = request_format__hx0.to_s()
+      accepted_formats__hx0 = self.request().accepts()
+      request_formats__hx0 = self.request().formats()
+      content_mime_type__hx0 = self.request().content_mime_type()
+      request_media_type__hx0 = self.request().media_type()
+      request_variant__hx0 = self.request().variant()
+      wants_phone_variant__hx0 = request_variant__hx0.phone?()
+      request_variant_name__hx0 = request_variant__hx0.to_s()
       current_status__hx0 = self.response().status()
+      self.fresh_when(etag: "todos-create")
+      cache_is_stale__hx0 = self.stale?(weak_etag: "todos-create", template: "controllers/todos/create")
       self.flash()[:notice] = "Todo queued"
       self.session()[:last_todo_title] = attrs__hx0
       remembered__hx0 = self.session()[:last_todo_title]
@@ -40,7 +55,12 @@ module Controllers
         format__hx0.html() { gthis__hx0.redirect_to(action: "index") }
         format__hx0.json() { gthis__hx0.render(json: attrs__hx0, status: :created) }
       end
+      self.send_file("/tmp/todos.csv", filename: "todos.csv", type: "text/csv", disposition: "attachment", status: :ok)
+      self.send_data("title,is_completed\nShip,true\n", filename: "todos.csv", type: "text/csv", disposition: "inline", status: :ok)
       self.head(:no_content)
+    end
+    def runtime_ok()
+      self.render(plain: "runtime ok", status: :ok)
     end
     def index()
       nil

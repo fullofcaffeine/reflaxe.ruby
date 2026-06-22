@@ -44,6 +44,8 @@ const classNamesInvalidSourceDir = join(root, "test", ".generated", "todoapp_rai
 const classNamesInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_class_names_invalid_out");
 const cycleInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_cycle_invalid_src");
 const cycleInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_cycle_invalid_out");
+const currentCycleInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_current_cycle_invalid_src");
+const currentCycleInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_current_cycle_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -234,6 +236,8 @@ rmSync(classNamesInvalidSourceDir, { force: true, recursive: true });
 rmSync(classNamesInvalidOutputDir, { force: true, recursive: true });
 rmSync(cycleInvalidSourceDir, { force: true, recursive: true });
 rmSync(cycleInvalidOutputDir, { force: true, recursive: true });
+rmSync(currentCycleInvalidSourceDir, { force: true, recursive: true });
+rmSync(currentCycleInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1309,6 +1313,7 @@ expectSafeJoinTypeFailure();
 expectTokenListTypeFailure();
 expectClassNamesTypeFailure();
 expectCycleTypeFailure();
+expectCurrentCycleTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2765,6 +2770,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<class_names tokens=${[\"panel\", \"is-open\"]} />,",
     "\t\t\tH.cycle([\"odd\", \"even\"], null),",
     "\t\t\t<cycle values=${[\"red\", \"green\", \"blue\"]} name=\"colors\" />,",
+    "\t\t\tH.currentCycle(null),",
+    "\t\t\t<current_cycle name=\"colors\" />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2832,6 +2839,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= class_names ["panel", "is-open"] %>',
     '<%= cycle "odd", "even" %>',
     '<%= cycle "red", "green", "blue", name: "colors" %>',
+    '<%= current_cycle %>',
+    '<%= current_cycle "colors" %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -3233,6 +3242,42 @@ function expectCycleTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid cycle value failed, but not with the expected String value type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectCurrentCycleTypeFailure() {
+  const result = compileCheckedAttrFixture(
+    currentCycleInvalidSourceDir,
+    currentCycleInvalidOutputDir,
+    "InvalidCurrentCycleMain",
+    "InvalidCurrentCycleView",
+    [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_current_cycle\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidCurrentCycleView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.currentCycle(42);",
+      "\t}",
+      "}",
+      "",
+    ],
+    { allowFailure: true },
+  );
+  if (result.status === 0) {
+    console.error("Invalid current_cycle name compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid current_cycle value failed, but not with the expected String name type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

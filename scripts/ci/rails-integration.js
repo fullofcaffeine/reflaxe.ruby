@@ -46,9 +46,9 @@ stage("template materialization", () => viewContentCheck("app/views/controllers/
   "typed_column_count",
 ]));
 stage("template materialization", () => viewContentCheck("app/views/controllers/todos/_composer.html.erb", [
-  "if sample_user != nil",
+  "current_user.name",
   'render partial: "controllers/todos/typed_form"',
-  "sample_user_id",
+  "current_user_name",
 ]));
 
 const railsProbe = stage("bundle probe", () => run("bundle", ["exec", "ruby", "-e", "require 'rails'; puts Rails.version"], {

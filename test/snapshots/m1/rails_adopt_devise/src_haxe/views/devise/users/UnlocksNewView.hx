@@ -14,7 +14,6 @@ typedef UnlocksNewLocals = {
 // Generated DeviseHx HHX unlock request view skeleton.
 // Lockable account state stays in Devise/Rails; this checked HHX view
 // emits the ordinary `user_unlock_path` request form with typed field refs.
-
 @:railsTemplate("devise/unlocks/new")
 @:railsTemplateAst("render")
 class UnlocksNewView {

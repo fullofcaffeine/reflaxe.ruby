@@ -36,6 +36,7 @@ enum HtmlNode {
 	TokenList(tokens:Array<String>);
 	ClassNames(tokens:Array<String>);
 	Cycle(values:Array<String>, name:Null<String>);
+	CurrentCycle(name:Null<String>);
 	TimeAgoInWords(fromTime:Date, includeSeconds:Null<Bool>);
 	DistanceOfTimeInWords(fromTime:Date, toTime:Date, includeSeconds:Null<Bool>);
 	TimeTag<TLabel>(time:Date, label:Null<TLabel>, attrs:Array<HtmlAttr>);

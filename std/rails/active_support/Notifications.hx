@@ -1,5 +1,6 @@
 package rails.active_support;
 
+@:rubyRequire("active_support/isolated_execution_state")
 @:rubyRequire("active_support/notifications")
 class Notifications {
 	public static function instrument<TPayload, TResult>(event:EventName<TPayload>, payload:TPayload, block:Void->TResult):TResult {

@@ -7026,6 +7026,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateCycle(params[0], params[1], scope);
 						}
+					case "CurrentCycle":
+						if (params.length != 1) {
+							Context.error("HtmlNode.CurrentCycle expects one name argument.", node.pos);
+							"";
+						} else {
+							lowerTemplateCurrentCycle(params[0]);
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
@@ -7605,6 +7612,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("name: " + quoteRubyStringForCode(expectTemplateString(name, "HtmlNode.Cycle name must be a string literal.")));
 		}
 		return "<%= cycle " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateCurrentCycle(name:TypedExpr):String {
+		var args:Array<String> = [];
+		if (!isTemplateNull(name)) {
+			args.push(quoteRubyStringForCode(expectTemplateString(name, "HtmlNode.CurrentCycle name must be a string literal.")));
+		}
+		return "<%= current_cycle" + (args.length == 0 ? "" : " " + args.join(", ")) + " %>";
 	}
 
 	static function lowerTemplateTimeAgoInWords(fromTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {

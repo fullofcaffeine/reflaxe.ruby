@@ -14,7 +14,6 @@ typedef PasswordsNewLocals = {
 // Generated DeviseHx HHX password reset request view skeleton.
 // Recoverable remains Devise-owned at runtime; this view only gives Haxe
 // authors typed route helpers, typed field refs, typed resource errors, and HHX source.
-
 @:railsTemplate("devise/passwords/new")
 @:railsTemplateAst("render")
 class PasswordsNewView {
