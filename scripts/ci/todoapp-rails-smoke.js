@@ -26,6 +26,8 @@ const highlightInvalidSourceDir = join(root, "test", ".generated", "todoapp_rail
 const highlightInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_highlight_invalid_out");
 const wordWrapInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_word_wrap_invalid_src");
 const wordWrapInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_word_wrap_invalid_out");
+const stripTagsInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_src");
+const stripTagsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -198,6 +200,8 @@ rmSync(highlightInvalidSourceDir, { force: true, recursive: true });
 rmSync(highlightInvalidOutputDir, { force: true, recursive: true });
 rmSync(wordWrapInvalidSourceDir, { force: true, recursive: true });
 rmSync(wordWrapInvalidOutputDir, { force: true, recursive: true });
+rmSync(stripTagsInvalidSourceDir, { force: true, recursive: true });
+rmSync(stripTagsInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1264,6 +1268,7 @@ expectCheckedAttrHelpersFailure();
 expectExcerptTypeFailure();
 expectHighlightTypeFailure();
 expectWordWrapTypeFailure();
+expectStripTagsTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2702,6 +2707,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<highlight text=\"You searched for: ruby\" phrase=\"ruby\" highlighter=\"match: \\\\1\" sanitize=${false} />,",
     "\t\t\tH.wordWrap(\"Once upon a time\", 8, \" / \"),",
     "\t\t\t<word_wrap text=\"Typed helper output wraps neatly\" line_width=${12} break_sequence=\" | \" />,",
+    "\t\t\tH.stripTags(\"<b>Bold</b> no more\"),",
+    "\t\t\t<strip_tags html=\"Inline copy\" />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2751,6 +2758,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= highlight "You searched for: ruby", "ruby", highlighter: "match: \\\\\\\\1", sanitize: false %>',
     '<%= word_wrap "Once upon a time", line_width: 8, break_sequence: " / " %>',
     '<%= word_wrap "Typed helper output wraps neatly", line_width: 12, break_sequence: " | " %>',
+    '<%= strip_tags "<b>Bold</b> no more" %>',
+    '<%= strip_tags "Inline copy" %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -2891,6 +2900,35 @@ function expectWordWrapTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid word_wrap value failed, but not with the expected String type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectStripTagsTypeFailure() {
+  const result = compileCheckedAttrFixture(stripTagsInvalidSourceDir, stripTagsInvalidOutputDir, "InvalidStripTagsMain", "InvalidStripTagsView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_strip_tags\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidStripTagsView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.stripTags(42);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid strip_tags html value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid strip_tags value failed, but not with the expected String type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

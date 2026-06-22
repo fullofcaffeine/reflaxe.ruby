@@ -6963,6 +6963,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateWordWrap(params[0], params[1], params[2], scope);
 						}
+					case "StripTags":
+						if (params.length != 1) {
+							Context.error("HtmlNode.StripTags expects one html argument.", node.pos);
+							"";
+						} else {
+							"<%= strip_tags " + printTemplateExpr(params[0], scope) + " %>";
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);

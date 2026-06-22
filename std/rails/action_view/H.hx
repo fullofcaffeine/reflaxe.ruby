@@ -93,6 +93,10 @@ class H {
 		return macro rails.action_view.HtmlNode.WordWrap($text, $lineWidth, $breakSequence);
 	}
 
+	public static macro function stripTags(html:Expr):Expr {
+		return macro rails.action_view.HtmlNode.StripTags($html);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}
