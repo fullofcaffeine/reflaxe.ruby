@@ -28,6 +28,8 @@ const wordWrapInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails
 const wordWrapInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_word_wrap_invalid_out");
 const stripTagsInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_src");
 const stripTagsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_out");
+const stripLinksInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_strip_links_invalid_src");
+const stripLinksInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_strip_links_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -202,6 +204,8 @@ rmSync(wordWrapInvalidSourceDir, { force: true, recursive: true });
 rmSync(wordWrapInvalidOutputDir, { force: true, recursive: true });
 rmSync(stripTagsInvalidSourceDir, { force: true, recursive: true });
 rmSync(stripTagsInvalidOutputDir, { force: true, recursive: true });
+rmSync(stripLinksInvalidSourceDir, { force: true, recursive: true });
+rmSync(stripLinksInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1269,6 +1273,7 @@ expectExcerptTypeFailure();
 expectHighlightTypeFailure();
 expectWordWrapTypeFailure();
 expectStripTagsTypeFailure();
+expectStripLinksTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2709,6 +2714,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<word_wrap text=\"Typed helper output wraps neatly\" line_width=${12} break_sequence=\" | \" />,",
     "\t\t\tH.stripTags(\"<b>Bold</b> no more\"),",
     "\t\t\t<strip_tags html=\"Inline copy\" />,",
+    "\t\t\tH.stripLinks(\"Blog: <a href='https://example.test'>Visit</a>\"),",
+    "\t\t\t<strip_links html=\"Plain link text\" />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2760,6 +2767,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= word_wrap "Typed helper output wraps neatly", line_width: 12, break_sequence: " | " %>',
     '<%= strip_tags "<b>Bold</b> no more" %>',
     '<%= strip_tags "Inline copy" %>',
+    '<%= strip_links "Blog: <a href=\'https://example.test\'>Visit</a>" %>',
+    '<%= strip_links "Plain link text" %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -2929,6 +2938,35 @@ function expectStripTagsTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid strip_tags value failed, but not with the expected String type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectStripLinksTypeFailure() {
+  const result = compileCheckedAttrFixture(stripLinksInvalidSourceDir, stripLinksInvalidOutputDir, "InvalidStripLinksMain", "InvalidStripLinksView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_strip_links\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidStripLinksView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.stripLinks(42);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid strip_links html value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid strip_links value failed, but not with the expected String type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

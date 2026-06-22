@@ -28,6 +28,7 @@ enum HtmlNode {
 	Highlight(text:String, phrase:String, highlighter:Null<String>, sanitize:Null<Bool>);
 	WordWrap(text:String, lineWidth:Null<Int>, breakSequence:Null<String>);
 	StripTags(html:String);
+	StripLinks(html:String);
 	TimeAgoInWords(fromTime:Date, includeSeconds:Null<Bool>);
 	DistanceOfTimeInWords(fromTime:Date, toTime:Date, includeSeconds:Null<Bool>);
 	TimeTag<TLabel>(time:Date, label:Null<TLabel>, attrs:Array<HtmlAttr>);
