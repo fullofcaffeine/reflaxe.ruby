@@ -34,6 +34,7 @@ enum HtmlNode {
 	CdataSection(content:String);
 	SafeJoin(items:Array<String>, separator:Null<String>);
 	TokenList(tokens:Array<String>);
+	ClassNames(tokens:Array<String>);
 	TimeAgoInWords(fromTime:Date, includeSeconds:Null<Bool>);
 	DistanceOfTimeInWords(fromTime:Date, toTime:Date, includeSeconds:Null<Bool>);
 	TimeTag<TLabel>(time:Date, label:Null<TLabel>, attrs:Array<HtmlAttr>);

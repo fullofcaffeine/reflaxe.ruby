@@ -40,6 +40,8 @@ const safeJoinInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails
 const safeJoinInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_safe_join_invalid_out");
 const tokenListInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_token_list_invalid_src");
 const tokenListInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_token_list_invalid_out");
+const classNamesInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_class_names_invalid_src");
+const classNamesInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_class_names_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -226,6 +228,8 @@ rmSync(safeJoinInvalidSourceDir, { force: true, recursive: true });
 rmSync(safeJoinInvalidOutputDir, { force: true, recursive: true });
 rmSync(tokenListInvalidSourceDir, { force: true, recursive: true });
 rmSync(tokenListInvalidOutputDir, { force: true, recursive: true });
+rmSync(classNamesInvalidSourceDir, { force: true, recursive: true });
+rmSync(classNamesInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1299,6 +1303,7 @@ expectEscapeOnceTypeFailure();
 expectCdataSectionTypeFailure();
 expectSafeJoinTypeFailure();
 expectTokenListTypeFailure();
+expectClassNamesTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2751,6 +2756,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<safe_join items=${[\"One\", \"Two\"]} separator=\" + \" />,",
     "\t\t\tH.tokenList([\"btn\", \"btn-primary\", \"is-active\"]),",
     "\t\t\t<token_list tokens=${[\"card\", \"is-selected\"]} />,",
+    "\t\t\tH.classNames([\"btn\", \"is-disabled\"]),",
+    "\t\t\t<class_names tokens=${[\"panel\", \"is-open\"]} />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2814,6 +2821,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= safe_join ["One", "Two"], " + " %>',
     '<%= token_list ["btn", "btn-primary", "is-active"] %>',
     '<%= token_list ["card", "is-selected"] %>',
+    '<%= class_names ["btn", "is-disabled"] %>',
+    '<%= class_names ["panel", "is-open"] %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -3157,6 +3166,35 @@ function expectTokenListTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid token_list value failed, but not with the expected String token type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectClassNamesTypeFailure() {
+  const result = compileCheckedAttrFixture(classNamesInvalidSourceDir, classNamesInvalidOutputDir, "InvalidClassNamesMain", "InvalidClassNamesView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_class_names\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidClassNamesView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.classNames([\"btn\", 42]);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid class_names token value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid class_names value failed, but not with the expected String token type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

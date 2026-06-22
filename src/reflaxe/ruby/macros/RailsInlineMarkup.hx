@@ -862,6 +862,11 @@ private class RailsMarkupParser {
 				var tokens = requireAttrValue(attrs, "tokens", pos);
 				rejectUnknownAttrs(name, attrs, ["tokens"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.TokenList($tokens);
+			case "class_names":
+				rejectChildren(name, children, pos);
+				var tokens = requireAttrValue(attrs, "tokens", pos);
+				rejectUnknownAttrs(name, attrs, ["tokens"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.ClassNames($tokens);
 			case "time_ago_in_words":
 				rejectChildren(name, children, pos);
 				var from = requireAttrValue(attrs, "from", pos);
