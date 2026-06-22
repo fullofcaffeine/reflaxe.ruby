@@ -27,6 +27,7 @@ enum HtmlNode {
 	NumberToCurrency(number:Float, unit:Null<String>, precision:Null<Int>);
 	NumberToPercentage(number:Float, precision:Null<Int>);
 	NumberToHuman(number:Float, precision:Null<Int>);
+	NumberToDelimited(number:Float, delimiter:Null<String>, separator:Null<String>);
 	// Rails `button_to` has both normal and block forms. Keeping separate AST
 	// nodes lets HHX lower simple labels to `button_to "Label", path` and
 	// nested markup to `button_to path do ... end` without runtime wrappers.

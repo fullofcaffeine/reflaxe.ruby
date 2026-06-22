@@ -6963,6 +6963,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateNumberToHuman(params[0], params[1], scope);
 						}
+					case "NumberToDelimited":
+						if (params.length != 3) {
+							Context.error("HtmlNode.NumberToDelimited expects number, delimiter, and separator arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateNumberToDelimited(params[0], params[1], params[2], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7416,6 +7423,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("precision: " + printTemplateExpr(precision, scope));
 		}
 		return "<%= number_to_human " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateNumberToDelimited(number:TypedExpr, delimiter:TypedExpr, separator:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(number, scope)];
+		if (!isTemplateNull(delimiter)) {
+			args.push("delimiter: "
+				+ quoteRubyStringForCode(expectTemplateString(delimiter, "HtmlNode.NumberToDelimited delimiter must be a string literal.")));
+		}
+		if (!isTemplateNull(separator)) {
+			args.push("separator: "
+				+ quoteRubyStringForCode(expectTemplateString(separator, "HtmlNode.NumberToDelimited separator must be a string literal.")));
+		}
+		return "<%= number_to_delimited " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonTo(label:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

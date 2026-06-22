@@ -93,6 +93,10 @@ class H {
 		return macro rails.action_view.HtmlNode.NumberToHuman($number, $precision);
 	}
 
+	public static macro function numberToDelimited(number:Expr, delimiter:Expr, separator:Expr):Expr {
+		return macro rails.action_view.HtmlNode.NumberToDelimited($number, $delimiter, $separator);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}
