@@ -851,6 +851,12 @@ private class RailsMarkupParser {
 				var content = requireAttrValue(attrs, "content", pos);
 				rejectUnknownAttrs(name, attrs, ["content"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.CdataSection($content);
+			case "safe_join":
+				rejectChildren(name, children, pos);
+				var items = requireAttrValue(attrs, "items", pos);
+				var separator = attrValue(attrs, "separator");
+				rejectUnknownAttrs(name, attrs, ["items", "separator"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.SafeJoin($items, ${separator == null ? (macro null) : separator});
 			case "time_ago_in_words":
 				rejectChildren(name, children, pos);
 				var from = requireAttrValue(attrs, "from", pos);

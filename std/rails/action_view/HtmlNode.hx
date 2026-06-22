@@ -32,6 +32,7 @@ enum HtmlNode {
 	ToSentence(items:Array<String>, wordsConnector:Null<String>, twoWordsConnector:Null<String>, lastWordConnector:Null<String>);
 	EscapeOnce(html:String);
 	CdataSection(content:String);
+	SafeJoin(items:Array<String>, separator:Null<String>);
 	TimeAgoInWords(fromTime:Date, includeSeconds:Null<Bool>);
 	DistanceOfTimeInWords(fromTime:Date, toTime:Date, includeSeconds:Null<Bool>);
 	TimeTag<TLabel>(time:Date, label:Null<TLabel>, attrs:Array<HtmlAttr>);

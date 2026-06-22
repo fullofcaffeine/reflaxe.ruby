@@ -6998,6 +6998,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							"<%= cdata_section " + printTemplateExpr(params[0], scope) + " %>";
 						}
+					case "SafeJoin":
+						if (params.length != 2) {
+							Context.error("HtmlNode.SafeJoin expects items and separator arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateSafeJoin(params[0], params[1], scope);
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
@@ -7553,6 +7560,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				+ quoteRubyStringForCode(expectTemplateString(lastWordConnector, "HtmlNode.ToSentence lastWordConnector must be a string literal.")));
 		}
 		return "<%= to_sentence " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateSafeJoin(items:TypedExpr, separator:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(items, scope)];
+		if (!isTemplateNull(separator)) {
+			args.push(quoteRubyStringForCode(expectTemplateString(separator, "HtmlNode.SafeJoin separator must be a string literal.")));
+		}
+		return "<%= safe_join " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateTimeAgoInWords(fromTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {
