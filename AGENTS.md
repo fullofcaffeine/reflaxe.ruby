@@ -14,6 +14,8 @@ git push              # Share code plus auto-exported .beads/issues.jsonl change
 
 `bd 1.0.4` is Dolt-backed locally; the ignored `.beads/embeddeddolt`/database files are the working store for CLI commands. This repo does not currently configure or require a Dolt remote. Instead, `bd` auto-exports issue state to the tracked `.beads/issues.jsonl`, and that JSONL file is the git-reviewed interchange artifact. Commit bead JSONL changes together with the code/docs they describe and share them through normal `git push`. Current `bd` versions do not provide a top-level `bd sync` command here; do not add it back. If local `bd` commands cannot see issues after a fresh clone or tool upgrade, hydrate the local ignored database from the tracked export with `bd bootstrap --yes` or `bd import .beads/issues.jsonl`.
 
+The repo includes shared bd hook shims in `.beads-hooks/`. After cloning, run `bd hooks install --shared` once so git uses `core.hooksPath=.beads-hooks`; the hook shims run bd pre-commit/pre-push/post-merge/post-checkout logic and help keep the local Dolt store plus exported `.beads/issues.jsonl` aligned.
+
 ## Ruby Profile Contract
 
 The compiler has two public profile contracts: `ruby_first` and `portable`.

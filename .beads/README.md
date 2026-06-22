@@ -40,6 +40,10 @@ command here. If local bd commands cannot see issues after a fresh clone, run
 `bd bootstrap --yes` or import the tracked JSONL with
 `bd import .beads/issues.jsonl`.
 
+The repository commits shared bd hook shims in `.beads-hooks/`. Run
+`bd hooks install --shared` after cloning to set `core.hooksPath=.beads-hooks`
+and enable bd's pre-commit/pre-push/post-merge/post-checkout integration.
+
 ### Working with Issues
 
 Issues in Beads are:
