@@ -125,6 +125,10 @@ class H {
 		return macro rails.action_view.HtmlNode.ClassNames($tokens);
 	}
 
+	public static macro function cycle(values:Expr, name:Expr):Expr {
+		return macro rails.action_view.HtmlNode.Cycle($values, $name);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}

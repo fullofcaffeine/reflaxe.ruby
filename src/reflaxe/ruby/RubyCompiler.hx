@@ -7019,6 +7019,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							"<%= class_names " + printTemplateExpr(params[0], scope) + " %>";
 						}
+					case "Cycle":
+						if (params.length != 2) {
+							Context.error("HtmlNode.Cycle expects values and name arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateCycle(params[0], params[1], scope);
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
@@ -7582,6 +7589,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push(quoteRubyStringForCode(expectTemplateString(separator, "HtmlNode.SafeJoin separator must be a string literal.")));
 		}
 		return "<%= safe_join " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateCycle(values:TypedExpr, name:TypedExpr, scope:RailsTemplateScope):String {
+		var args = switch (unwrapTemplateExpr(values).expr) {
+			case TArrayDecl(items):
+				if (items.length == 0) {
+					Context.error("HtmlNode.Cycle values must include at least one string.", values.pos);
+				}
+				[for (item in items) printTemplateExpr(item, scope)];
+			case _:
+				["*" + printTemplateExpr(values, scope)];
+		}
+		if (!isTemplateNull(name)) {
+			args.push("name: " + quoteRubyStringForCode(expectTemplateString(name, "HtmlNode.Cycle name must be a string literal.")));
+		}
+		return "<%= cycle " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateTimeAgoInWords(fromTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {
