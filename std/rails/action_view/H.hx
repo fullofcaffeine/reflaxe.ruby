@@ -93,6 +93,10 @@ class H {
 		return macro rails.action_view.HtmlNode.WordWrap($text, $lineWidth, $breakSequence);
 	}
 
+	public static macro function sanitize(html:Expr, tags:Expr, attributes:Expr):Expr {
+		return macro rails.action_view.HtmlNode.Sanitize($html, $tags, $attributes);
+	}
+
 	public static macro function stripTags(html:Expr):Expr {
 		return macro rails.action_view.HtmlNode.StripTags($html);
 	}

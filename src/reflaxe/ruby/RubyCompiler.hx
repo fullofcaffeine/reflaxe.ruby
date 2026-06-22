@@ -6963,6 +6963,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateWordWrap(params[0], params[1], params[2], scope);
 						}
+					case "Sanitize":
+						if (params.length != 3) {
+							Context.error("HtmlNode.Sanitize expects html, tags, and attributes arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateSanitize(params[0], params[1], params[2], scope);
+						}
 					case "StripTags":
 						if (params.length != 1) {
 							Context.error("HtmlNode.StripTags expects one html argument.", node.pos);
@@ -7577,6 +7584,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("break_sequence: " + quoteRubyStringForCode(expectTemplateString(breakSequence, "HtmlNode.WordWrap breakSequence must be a string literal.")));
 		}
 		return "<%= word_wrap " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateSanitize(html:TypedExpr, tags:TypedExpr, attributes:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(html, scope)];
+		if (!isTemplateNull(tags)) {
+			args.push("tags: " + printTemplateExpr(tags, scope));
+		}
+		if (!isTemplateNull(attributes)) {
+			args.push("attributes: " + printTemplateExpr(attributes, scope));
+		}
+		return "<%= sanitize " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateToSentence(items:TypedExpr, wordsConnector:TypedExpr, twoWordsConnector:TypedExpr, lastWordConnector:TypedExpr,

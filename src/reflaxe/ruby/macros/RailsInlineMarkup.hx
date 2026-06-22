@@ -821,6 +821,14 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["text", "line_width", "break_sequence"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.WordWrap($text, ${lineWidth == null ? (macro null) : lineWidth},
 					${breakSequence == null ? (macro null) : breakSequence});
+			case "sanitize":
+				rejectChildren(name, children, pos);
+				var html = requireAttrValue(attrs, "html", pos);
+				var tags = attrValue(attrs, "tags");
+				var attributes = attrValue(attrs, "attributes");
+				rejectUnknownAttrs(name, attrs, ["html", "tags", "attributes"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.Sanitize($html, ${tags == null ? (macro null) : tags},
+					${attributes == null ? (macro null) : attributes});
 			case "strip_tags":
 				rejectChildren(name, children, pos);
 				var html = requireAttrValue(attrs, "html", pos);
