@@ -28,6 +28,8 @@ const wordWrapInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails
 const wordWrapInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_word_wrap_invalid_out");
 const sanitizeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_sanitize_invalid_src");
 const sanitizeInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_sanitize_invalid_out");
+const sanitizeCssInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_sanitize_css_invalid_src");
+const sanitizeCssInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_sanitize_css_invalid_out");
 const stripTagsInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_src");
 const stripTagsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_out");
 const stripLinksInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_strip_links_invalid_src");
@@ -224,6 +226,8 @@ rmSync(wordWrapInvalidSourceDir, { force: true, recursive: true });
 rmSync(wordWrapInvalidOutputDir, { force: true, recursive: true });
 rmSync(sanitizeInvalidSourceDir, { force: true, recursive: true });
 rmSync(sanitizeInvalidOutputDir, { force: true, recursive: true });
+rmSync(sanitizeCssInvalidSourceDir, { force: true, recursive: true });
+rmSync(sanitizeCssInvalidOutputDir, { force: true, recursive: true });
 rmSync(stripTagsInvalidSourceDir, { force: true, recursive: true });
 rmSync(stripTagsInvalidOutputDir, { force: true, recursive: true });
 rmSync(stripLinksInvalidSourceDir, { force: true, recursive: true });
@@ -1313,6 +1317,7 @@ expectExcerptTypeFailure();
 expectHighlightTypeFailure();
 expectWordWrapTypeFailure();
 expectSanitizeTypeFailure();
+expectSanitizeCssTypeFailure();
 expectStripTagsTypeFailure();
 expectStripLinksTypeFailure();
 expectToSentenceTypeFailure();
@@ -2764,6 +2769,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<word_wrap text=\"Typed helper output wraps neatly\" line_width=${12} break_sequence=\" | \" />,",
     "\t\t\tH.sanitize(\"<b data-safe='yes'>Bold</b><script>bad()</script>\", [\"b\"], [\"data-safe\"]),",
     "\t\t\t<sanitize html=\"Inline sanitize copy\" tags=${[\"i\"]} />,",
+    "\t\t\tH.sanitizeCss(\"width: 100%; background-image: url('http://example.test'); height: 100%;\"),",
+    "\t\t\t<sanitize_css style=\"color: red; position: absolute;\" />,",
     "\t\t\tH.stripTags(\"<b>Bold</b> no more\"),",
     "\t\t\t<strip_tags html=\"Inline copy\" />,",
     "\t\t\tH.stripLinks(\"Blog: <a href='https://example.test'>Visit</a>\"),",
@@ -2837,6 +2844,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= word_wrap "Typed helper output wraps neatly", line_width: 12, break_sequence: " | " %>',
     '<%= sanitize "<b data-safe=\'yes\'>Bold</b><script>bad()</script>", tags: ["b"], attributes: ["data-safe"] %>',
     '<%= sanitize "Inline sanitize copy", tags: ["i"] %>',
+    '<%= sanitize_css "width: 100%; background-image: url(\'http://example.test\'); height: 100%;" %>',
+    '<%= sanitize_css "color: red; position: absolute;" %>',
     '<%= strip_tags "<b>Bold</b> no more" %>',
     '<%= strip_tags "Inline copy" %>',
     '<%= strip_links "Blog: <a href=\'https://example.test\'>Visit</a>" %>',
@@ -3028,6 +3037,35 @@ function expectSanitizeTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid sanitize value failed, but not with the expected String tag type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectSanitizeCssTypeFailure() {
+  const result = compileCheckedAttrFixture(sanitizeCssInvalidSourceDir, sanitizeCssInvalidOutputDir, "InvalidSanitizeCssMain", "InvalidSanitizeCssView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_sanitize_css\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidSanitizeCssView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.sanitizeCss(42);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid sanitize_css style value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid sanitize_css value failed, but not with the expected String style type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

@@ -97,6 +97,10 @@ class H {
 		return macro rails.action_view.HtmlNode.Sanitize($html, $tags, $attributes);
 	}
 
+	public static macro function sanitizeCss(style:Expr):Expr {
+		return macro rails.action_view.HtmlNode.SanitizeCss($style);
+	}
+
 	public static macro function stripTags(html:Expr):Expr {
 		return macro rails.action_view.HtmlNode.StripTags($html);
 	}

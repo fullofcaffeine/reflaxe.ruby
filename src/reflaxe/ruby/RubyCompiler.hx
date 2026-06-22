@@ -6970,6 +6970,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateSanitize(params[0], params[1], params[2], scope);
 						}
+					case "SanitizeCss":
+						if (params.length != 1) {
+							Context.error("HtmlNode.SanitizeCss expects one style argument.", node.pos);
+							"";
+						} else {
+							"<%= sanitize_css " + printTemplateExpr(params[0], scope) + " %>";
+						}
 					case "StripTags":
 						if (params.length != 1) {
 							Context.error("HtmlNode.StripTags expects one html argument.", node.pos);

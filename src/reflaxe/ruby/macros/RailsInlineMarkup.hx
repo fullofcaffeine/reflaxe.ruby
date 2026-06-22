@@ -829,6 +829,11 @@ private class RailsMarkupParser {
 				rejectUnknownAttrs(name, attrs, ["html", "tags", "attributes"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.Sanitize($html, ${tags == null ? (macro null) : tags},
 					${attributes == null ? (macro null) : attributes});
+			case "sanitize_css":
+				rejectChildren(name, children, pos);
+				var style = requireAttrValue(attrs, "style", pos);
+				rejectUnknownAttrs(name, attrs, ["style"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.SanitizeCss($style);
 			case "strip_tags":
 				rejectChildren(name, children, pos);
 				var html = requireAttrValue(attrs, "html", pos);

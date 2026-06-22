@@ -28,6 +28,7 @@ enum HtmlNode {
 	Highlight(text:String, phrase:String, highlighter:Null<String>, sanitize:Null<Bool>);
 	WordWrap(text:String, lineWidth:Null<Int>, breakSequence:Null<String>);
 	Sanitize(html:String, tags:Null<Array<String>>, attributes:Null<Array<String>>);
+	SanitizeCss(style:String);
 	StripTags(html:String);
 	StripLinks(html:String);
 	ToSentence(items:Array<String>, wordsConnector:Null<String>, twoWordsConnector:Null<String>, lastWordConnector:Null<String>);
