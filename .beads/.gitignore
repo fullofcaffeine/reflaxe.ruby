@@ -20,6 +20,12 @@ last-touched
 db.sqlite
 bd.db
 
+# Embedded Dolt local working store and recovery artifacts.
+# bd 1.0.x uses these for local CLI state; shared issue state is exported to
+# the tracked issues.jsonl file instead of committing these machine-local dirs.
+embeddeddolt/
+backup/
+
 # Worktree redirect file (contains relative path to main repo's .beads/)
 # Must not be committed as paths would be wrong in other clones
 redirect

@@ -32,16 +32,18 @@ git commit -m "Update beads"
 git push
 ```
 
-This repository uses the git-tracked JSONL workflow: `.beads/issues.jsonl`
-is committed like normal source. The installed `bd` CLI does not provide a
-top-level `bd sync` command here. If local bd commands cannot see issues after
-a fresh clone, run `bd bootstrap --yes` or import the tracked JSONL with
+This repository uses `bd`'s Dolt-backed local working store, but does not
+configure a shared Dolt remote. `bd` auto-exports `.beads/issues.jsonl`, and
+that tracked JSONL file is committed like normal source for review and
+collaboration. The installed `bd` CLI does not provide a top-level `bd sync`
+command here. If local bd commands cannot see issues after a fresh clone, run
+`bd bootstrap --yes` or import the tracked JSONL with
 `bd import .beads/issues.jsonl`.
 
 ### Working with Issues
 
 Issues in Beads are:
-- **Git-native**: Stored in `.beads/issues.jsonl` and synced like code
+- **Git-native review artifact**: Auto-exported to `.beads/issues.jsonl` and synced like code
 - **AI-friendly**: CLI-first design works perfectly with AI coding agents
 - **Branch-aware**: Issues can follow your branch workflow
 - **Git-synced**: Commit `.beads/issues.jsonl` with the code/docs it describes

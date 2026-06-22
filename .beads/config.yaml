@@ -12,10 +12,11 @@
 # When true, bd will use .beads/issues.jsonl as the source of truth
 # instead of SQLite database.
 #
-# Keep this disabled for bd 1.0.4 in this repo: the installed CLI still
-# expects a local database for normal commands. Collaboration stays simple by
-# tracking the auto-exported .beads/issues.jsonl in git and avoiding Dolt
-# remotes unless explicitly configured later.
+# Keep this disabled for bd 1.0.4 in this repo: the installed CLI is
+# Dolt-backed locally and expects a local ignored database for normal commands.
+# Collaboration stays simple by tracking the auto-exported .beads/issues.jsonl
+# in git. No Dolt remote is configured or required unless the team explicitly
+# decides to add one later.
 # no-db: false
 
 # Disable daemon for RPC communication (forces direct database access)
@@ -46,7 +47,7 @@
 # The installed bd 1.0.4 CLI used by this repo does not provide that command.
 # Share bead state through the tracked .beads/issues.jsonl export and normal
 # git push. Do not introduce a Dolt remote or sync branch unless the team
-# explicitly decides to move away from the git-tracked JSONL workflow.
+# explicitly decides to add a shared Dolt backend.
 
 # Multi-repo configuration (experimental - bd-307)
 # Allows hydrating from multiple repositories and routing writes to the correct JSONL

@@ -9,10 +9,10 @@ bd ready              # Find available work
 bd show <id>          # View issue details
 bd update <id> --status in_progress  # Claim work
 bd close <id>         # Complete work
-git push              # Share code plus tracked .beads/issues.jsonl changes
+git push              # Share code plus auto-exported .beads/issues.jsonl changes
 ```
 
-This repo intentionally uses the simple git-tracked JSONL bead workflow: `.beads/issues.jsonl` is the shared issue state and should be committed like source. Current `bd` versions do not provide a top-level `bd sync` command here, and this repo should not require Dolt remotes. Commit bead JSONL changes together with the code/docs they describe and share them through normal `git push`. If local `bd` commands cannot see issues after a fresh clone or tool upgrade, hydrate the local ignored database from the tracked export with `bd bootstrap --yes` or `bd import .beads/issues.jsonl`; do not add `bd sync` back.
+`bd 1.0.4` is Dolt-backed locally; the ignored `.beads/embeddeddolt`/database files are the working store for CLI commands. This repo does not currently configure or require a Dolt remote. Instead, `bd` auto-exports issue state to the tracked `.beads/issues.jsonl`, and that JSONL file is the git-reviewed interchange artifact. Commit bead JSONL changes together with the code/docs they describe and share them through normal `git push`. Current `bd` versions do not provide a top-level `bd sync` command here; do not add it back. If local `bd` commands cannot see issues after a fresh clone or tool upgrade, hydrate the local ignored database from the tracked export with `bd bootstrap --yes` or `bd import .beads/issues.jsonl`.
 
 ## Ruby Profile Contract
 
