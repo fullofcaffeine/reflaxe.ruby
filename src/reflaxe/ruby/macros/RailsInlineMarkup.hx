@@ -878,6 +878,11 @@ private class RailsMarkupParser {
 				var cycleName = attrValue(attrs, "name");
 				rejectUnknownAttrs(name, attrs, ["name"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.CurrentCycle(${cycleName == null ? (macro null) : cycleName});
+			case "reset_cycle":
+				rejectChildren(name, children, pos);
+				var cycleName = attrValue(attrs, "name");
+				rejectUnknownAttrs(name, attrs, ["name"], pos);
+				macro @:pos(pos) rails.action_view.HtmlNode.ResetCycle(${cycleName == null ? (macro null) : cycleName});
 			case "time_ago_in_words":
 				rejectChildren(name, children, pos);
 				var from = requireAttrValue(attrs, "from", pos);

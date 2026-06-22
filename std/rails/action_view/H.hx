@@ -133,6 +133,10 @@ class H {
 		return macro rails.action_view.HtmlNode.CurrentCycle($name);
 	}
 
+	public static macro function resetCycle(name:Expr):Expr {
+		return macro rails.action_view.HtmlNode.ResetCycle($name);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}
