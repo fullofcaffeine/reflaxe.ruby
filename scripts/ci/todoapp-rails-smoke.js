@@ -38,6 +38,8 @@ const cdataSectionInvalidSourceDir = join(root, "test", ".generated", "todoapp_r
 const cdataSectionInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_cdata_section_invalid_out");
 const safeJoinInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_safe_join_invalid_src");
 const safeJoinInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_safe_join_invalid_out");
+const tokenListInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_token_list_invalid_src");
+const tokenListInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_token_list_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -222,6 +224,8 @@ rmSync(cdataSectionInvalidSourceDir, { force: true, recursive: true });
 rmSync(cdataSectionInvalidOutputDir, { force: true, recursive: true });
 rmSync(safeJoinInvalidSourceDir, { force: true, recursive: true });
 rmSync(safeJoinInvalidOutputDir, { force: true, recursive: true });
+rmSync(tokenListInvalidSourceDir, { force: true, recursive: true });
+rmSync(tokenListInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1294,6 +1298,7 @@ expectToSentenceTypeFailure();
 expectEscapeOnceTypeFailure();
 expectCdataSectionTypeFailure();
 expectSafeJoinTypeFailure();
+expectTokenListTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2744,6 +2749,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<cdata_section content=\"inline cdata\" />,",
     "\t\t\tH.safeJoin([\"Draft\", \"Review\", \"Ship\"], \" / \"),",
     "\t\t\t<safe_join items=${[\"One\", \"Two\"]} separator=\" + \" />,",
+    "\t\t\tH.tokenList([\"btn\", \"btn-primary\", \"is-active\"]),",
+    "\t\t\t<token_list tokens=${[\"card\", \"is-selected\"]} />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2805,6 +2812,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= cdata_section "inline cdata" %>',
     '<%= safe_join ["Draft", "Review", "Ship"], " / " %>',
     '<%= safe_join ["One", "Two"], " + " %>',
+    '<%= token_list ["btn", "btn-primary", "is-active"] %>',
+    '<%= token_list ["card", "is-selected"] %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -3119,6 +3128,35 @@ function expectSafeJoinTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid safe_join value failed, but not with the expected String item type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectTokenListTypeFailure() {
+  const result = compileCheckedAttrFixture(tokenListInvalidSourceDir, tokenListInvalidOutputDir, "InvalidTokenListMain", "InvalidTokenListView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_token_list\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidTokenListView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.tokenList([\"btn\", 42]);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid token_list token value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid token_list value failed, but not with the expected String token type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

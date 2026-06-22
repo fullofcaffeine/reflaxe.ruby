@@ -117,6 +117,10 @@ class H {
 		return macro rails.action_view.HtmlNode.SafeJoin($items, $separator);
 	}
 
+	public static macro function tokenList(tokens:Expr):Expr {
+		return macro rails.action_view.HtmlNode.TokenList($tokens);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}

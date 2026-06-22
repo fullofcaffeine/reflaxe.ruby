@@ -7005,6 +7005,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateSafeJoin(params[0], params[1], scope);
 						}
+					case "TokenList":
+						if (params.length != 1) {
+							Context.error("HtmlNode.TokenList expects one tokens argument.", node.pos);
+							"";
+						} else {
+							"<%= token_list " + printTemplateExpr(params[0], scope) + " %>";
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
