@@ -85,6 +85,10 @@ class H {
 		return macro rails.action_view.HtmlNode.Excerpt($text, $phrase, $radius, $omission);
 	}
 
+	public static macro function highlight(text:Expr, phrase:Expr, highlighter:Expr, sanitize:Expr):Expr {
+		return macro rails.action_view.HtmlNode.Highlight($text, $phrase, $highlighter, $sanitize);
+	}
+
 	public static macro function timeAgoInWords(fromTime:Expr, includeSeconds:Expr):Expr {
 		return macro rails.action_view.HtmlNode.TimeAgoInWords($fromTime, $includeSeconds);
 	}

@@ -25,6 +25,7 @@ enum HtmlNode {
 	SimpleFormat<TText>(text:TText, attrs:Array<HtmlAttr>);
 	Truncate<TText>(text:TText, length:Null<Int>, omission:Null<String>);
 	Excerpt(text:String, phrase:String, radius:Null<Int>, omission:Null<String>);
+	Highlight(text:String, phrase:String, highlighter:Null<String>, sanitize:Null<Bool>);
 	TimeAgoInWords(fromTime:Date, includeSeconds:Null<Bool>);
 	DistanceOfTimeInWords(fromTime:Date, toTime:Date, includeSeconds:Null<Bool>);
 	TimeTag<TLabel>(time:Date, label:Null<TLabel>, attrs:Array<HtmlAttr>);

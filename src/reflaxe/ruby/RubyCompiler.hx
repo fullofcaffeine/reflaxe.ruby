@@ -6949,6 +6949,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateExcerpt(params[0], params[1], params[2], params[3], scope);
 						}
+					case "Highlight":
+						if (params.length != 4) {
+							Context.error("HtmlNode.Highlight expects text, phrase, highlighter, and sanitize arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateHighlight(params[0], params[1], params[2], params[3], scope);
+						}
 					case "TimeAgoInWords":
 						if (params.length != 2) {
 							Context.error("HtmlNode.TimeAgoInWords expects fromTime and includeSeconds arguments.", node.pos);
@@ -7464,6 +7471,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("omission: " + quoteRubyStringForCode(expectTemplateString(omission, "HtmlNode.Excerpt omission must be a string literal.")));
 		}
 		return "<%= excerpt " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateHighlight(text:TypedExpr, phrase:TypedExpr, highlighter:TypedExpr, sanitize:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(text, scope), printTemplateExpr(phrase, scope)];
+		if (!isTemplateNull(highlighter)) {
+			args.push("highlighter: " + quoteRubyStringForCode(expectTemplateString(highlighter, "HtmlNode.Highlight highlighter must be a string literal.")));
+		}
+		if (!isTemplateNull(sanitize)) {
+			args.push("sanitize: " + printTemplateExpr(sanitize, scope));
+		}
+		return "<%= highlight " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateTimeAgoInWords(fromTime:TypedExpr, includeSeconds:TypedExpr, scope:RailsTemplateScope):String {

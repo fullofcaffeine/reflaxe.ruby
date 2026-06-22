@@ -22,6 +22,8 @@ const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
 const excerptInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_src");
 const excerptInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_out");
+const highlightInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_highlight_invalid_src");
+const highlightInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_highlight_invalid_out");
 const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
 const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
 const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
@@ -190,6 +192,8 @@ rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
 rmSync(excerptInvalidSourceDir, { force: true, recursive: true });
 rmSync(excerptInvalidOutputDir, { force: true, recursive: true });
+rmSync(highlightInvalidSourceDir, { force: true, recursive: true });
+rmSync(highlightInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeAgoInvalidOutputDir, { force: true, recursive: true });
 rmSync(distanceOfTimeInvalidSourceDir, { force: true, recursive: true });
@@ -1254,6 +1258,7 @@ expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
 expectExcerptTypeFailure();
+expectHighlightTypeFailure();
 expectTimeAgoInWordsTypeFailure();
 expectDistanceOfTimeInWordsTypeFailure();
 expectTimeTagTypeFailure();
@@ -2688,6 +2693,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<truncate text=\"Inline helper copy\" length=${10} omission=\"...\" />,",
     "\t\t\tH.excerpt(\"This is a very beautiful morning\", \"very\", 3, \"...\"),",
     "\t\t\t<excerpt text=\"This next thing is an example\" phrase=\"ex\" radius=${2} omission=\"...\" />,",
+    "\t\t\tH.highlight(\"You searched for: rails\", \"rails\", \"<em>\\\\1</em>\", true),",
+    "\t\t\t<highlight text=\"You searched for: ruby\" phrase=\"ruby\" highlighter=\"match: \\\\1\" sanitize=${false} />,",
     "\t\t\tH.timeAgoInWords(Date.now(), true),",
     "\t\t\t<time_ago_in_words from=${Date.now()} include_seconds=${false} />,",
     "\t\t\tH.distanceOfTimeInWords(Date.now(), Date.now(), true),",
@@ -2733,6 +2740,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= truncate "Inline helper copy", length: 10, omission: "..." %>',
     '<%= excerpt "This is a very beautiful morning", "very", radius: 3, omission: "..." %>',
     '<%= excerpt "This next thing is an example", "ex", radius: 2, omission: "..." %>',
+    '<%= highlight "You searched for: rails", "rails", highlighter: "<em>\\\\1</em>", sanitize: true %>',
+    '<%= highlight "You searched for: ruby", "ruby", highlighter: "match: \\\\\\\\1", sanitize: false %>',
     '<%= time_ago_in_words Time.now, include_seconds: true %>',
     '<%= time_ago_in_words Time.now, include_seconds: false %>',
     '<%= distance_of_time_in_words Time.now, Time.now, include_seconds: true %>',
@@ -2815,6 +2824,35 @@ function expectExcerptTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid excerpt value failed, but not with the expected String type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectHighlightTypeFailure() {
+  const result = compileCheckedAttrFixture(highlightInvalidSourceDir, highlightInvalidOutputDir, "InvalidHighlightMain", "InvalidHighlightView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_highlight\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidHighlightView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.highlight(\"You searched for: rails\", 42, null, true);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid highlight phrase value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid highlight value failed, but not with the expected String type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
