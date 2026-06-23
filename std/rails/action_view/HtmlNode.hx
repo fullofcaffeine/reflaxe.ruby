@@ -65,6 +65,7 @@ enum HtmlNode {
 	ButtonTag(content:String, attrs:Array<HtmlAttr>);
 	SubmitTag(value:String, attrs:Array<HtmlAttr>);
 	TextFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
+	SearchFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	PasswordFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	HiddenFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	FileFieldTag(name:String, attrs:Array<HtmlAttr>);
