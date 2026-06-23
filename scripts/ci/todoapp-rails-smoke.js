@@ -94,6 +94,8 @@ const textFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_r
 const textFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_text_field_tag_invalid_out");
 const searchFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_search_field_tag_invalid_src");
 const searchFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_search_field_tag_invalid_out");
+const emailFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_email_field_tag_invalid_src");
+const emailFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_email_field_tag_invalid_out");
 const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
 const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
@@ -332,6 +334,8 @@ rmSync(textFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(textFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(searchFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(searchFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(emailFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(emailFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidSourceDir, { force: true, recursive: true });
@@ -1397,6 +1401,7 @@ expectButtonTagTypeFailure();
 expectSubmitTagTypeFailure();
 expectTextFieldTagTypeFailure();
 expectSearchFieldTagTypeFailure();
+expectEmailFieldTagTypeFailure();
 expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
@@ -2858,6 +2863,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<text_field_tag name=\"query\" value=\"typed search\" placeholder=\"Search\" data-controller=\"search\" />,",
     "\t\t\tH.searchFieldTag(\"term\", \"rails\", [H.className(\"term-search\")]),",
     "\t\t\t<search_field_tag name=\"filter\" value=\"typed\" placeholder=\"Filter\" data-controller=\"filter\" />,",
+    "\t\t\tH.emailFieldTag(\"contact_email\", \"ops@example.test\", [H.className(\"email-input\")]),",
+    "\t\t\t<email_field_tag name=\"reply_to\" value=\"support@example.test\" placeholder=\"Email\" autocomplete=\"email\" />,",
     "\t\t\tH.passwordFieldTag(\"admin_password\", null, [H.attr(\"autocomplete\", \"current-password\")]),",
     "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.hiddenFieldTag(\"return_to\", \"/todos\", [H.data(\"tracked\", \"true\")]),",
@@ -2975,6 +2982,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= text_field_tag :query, "typed search", placeholder: "Search", data: {controller: "search"} %>',
     '<%= search_field_tag :term, "rails", class: "term-search" %>',
     '<%= search_field_tag :filter, "typed", placeholder: "Filter", data: {controller: "filter"} %>',
+    '<%= email_field_tag :contact_email, "ops@example.test", class: "email-input" %>',
+    '<%= email_field_tag :reply_to, "support@example.test", placeholder: "Email", autocomplete: "email" %>',
     '<%= password_field_tag :admin_password, nil, autocomplete: "current-password" %>',
     '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= hidden_field_tag :return_to, "/todos", data: {tracked: "true"} %>',
@@ -3223,6 +3232,36 @@ function expectSearchFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid search_field_tag name failed, but not with the expected String name type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectEmailFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(emailFieldTagInvalidSourceDir, emailFieldTagInvalidOutputDir, "InvalidEmailFieldTagMain",
+    "InvalidEmailFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_email_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidEmailFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.emailFieldTag(42, null, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid email_field_tag name compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid email_field_tag name failed, but not with the expected String name type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
