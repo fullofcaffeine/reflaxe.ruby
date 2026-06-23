@@ -7223,6 +7223,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateTextFieldTag(params[0], params[1], params[2], scope);
 						}
+					case "PasswordFieldTag":
+						if (params.length != 3) {
+							Context.error("HtmlNode.PasswordFieldTag expects name, value, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplatePasswordFieldTag(params[0], params[1], params[2], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7981,6 +7988,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push(isTemplateNull(value) ? "nil" : printTemplateExpr(value, scope));
 		}
 		return "<%= text_field_tag " + args.concat(kwargs).join(", ") + " %>";
+	}
+
+	static function lowerTemplatePasswordFieldTag(name:TypedExpr, value:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [
+			rubySymbolLiteral(expectTemplateString(name, "HtmlNode.PasswordFieldTag name must be a string literal."))
+		];
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		if (!isTemplateNull(value) || kwargs.length > 0) {
+			args.push(isTemplateNull(value) ? "nil" : printTemplateExpr(value, scope));
+		}
+		return "<%= password_field_tag " + args.concat(kwargs).join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonToBlock(url:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {

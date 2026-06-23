@@ -92,6 +92,8 @@ const submitTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rail
 const submitTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_submit_tag_invalid_out");
 const textFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_text_field_tag_invalid_src");
 const textFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_text_field_tag_invalid_out");
+const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
+const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -316,6 +318,8 @@ rmSync(submitTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(submitTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(textFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(textFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1368,6 +1372,7 @@ expectCheckedAttrHelpersFailure();
 expectButtonTagTypeFailure();
 expectSubmitTagTypeFailure();
 expectTextFieldTagTypeFailure();
+expectPasswordFieldTagTypeFailure();
 expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
@@ -2821,6 +2826,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<submit_tag value=\"Filter\" disabled=${true} />,",
     "\t\t\tH.textFieldTag(\"status\", \"open\", [H.className(\"status-filter\")]),",
     "\t\t\t<text_field_tag name=\"query\" value=\"typed search\" placeholder=\"Search\" data-controller=\"search\" />,",
+    "\t\t\tH.passwordFieldTag(\"admin_password\", null, [H.attr(\"autocomplete\", \"current-password\")]),",
+    "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.imageTag(\"avatar.png\", [H.attr(\"alt\", \"Profile avatar\"), H.className(\"avatar\"), H.data(\"direct-upload-url\", \"/rails/active_storage/direct_uploads\")]),",
     "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
     "\t\t\tH.pictureTag(\"hero.webp\", [H.attr(\"alt\", \"Hero image\"), H.className(\"hero-picture\")]),",
@@ -2924,6 +2931,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= submit_tag "Filter", disabled: true %>',
     '<%= text_field_tag :status, "open", class: "status-filter" %>',
     '<%= text_field_tag :query, "typed search", placeholder: "Search", data: {controller: "search"} %>',
+    '<%= password_field_tag :admin_password, nil, autocomplete: "current-password" %>',
+    '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= image_tag "avatar.png", alt: "Profile avatar", class: "avatar", data: {direct_upload_url: "/rails/active_storage/direct_uploads"} %>',
     '<%= image_tag "badge.png", alt: "RailsHx badge", class: "badge" %>',
     '<%= picture_tag "hero.webp", alt: "Hero image", class: "hero-picture" %>',
@@ -3130,6 +3139,36 @@ function expectTextFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid text_field_tag name failed, but not with the expected String name type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectPasswordFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(passwordFieldTagInvalidSourceDir, passwordFieldTagInvalidOutputDir, "InvalidPasswordFieldTagMain",
+    "InvalidPasswordFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_password_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidPasswordFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.passwordFieldTag(42, null, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid password_field_tag name compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid password_field_tag name failed, but not with the expected String name type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
