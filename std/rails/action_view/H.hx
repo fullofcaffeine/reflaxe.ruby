@@ -65,6 +65,10 @@ class H {
 		return macro rails.action_view.HtmlNode.ImageTag($source, $attrs);
 	}
 
+	public static macro function pictureTag(source:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.PictureTag($source, $attrs);
+	}
+
 	public static macro function faviconLinkTag(source:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.FaviconLinkTag($source, $attrs);
 	}

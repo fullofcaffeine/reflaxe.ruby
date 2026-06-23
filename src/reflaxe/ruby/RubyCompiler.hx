@@ -6914,6 +6914,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateImageTag(params[0], params[1], scope);
 						}
+					case "PictureTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.PictureTag expects source and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplatePictureTag(params[0], params[1], scope);
+						}
 					case "FaviconLinkTag":
 						if (params.length != 2) {
 							Context.error("HtmlNode.FaviconLinkTag expects source and attrs arguments.", node.pos);
@@ -7573,6 +7580,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateImageTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= image_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplatePictureTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= picture_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFaviconLinkTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

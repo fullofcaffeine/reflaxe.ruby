@@ -20,6 +20,8 @@ const checkedAttrSourceDir = join(root, "test", ".generated", "todoapp_rails_che
 const checkedAttrOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_out");
 const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_src");
 const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
+const pictureTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_picture_tag_invalid_src");
+const pictureTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_picture_tag_invalid_out");
 const faviconLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_favicon_link_tag_invalid_src");
 const faviconLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_favicon_link_tag_invalid_out");
 const preloadLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_src");
@@ -234,6 +236,8 @@ rmSync(checkedAttrSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrOutputDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
+rmSync(pictureTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(pictureTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(faviconLinkTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(faviconLinkTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(preloadLinkTagInvalidSourceDir, { force: true, recursive: true });
@@ -1345,6 +1349,7 @@ expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
+expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
 expectJavascriptIncludeTagTypeFailure();
@@ -2792,6 +2797,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\tH.linkTo(\"Users\", \"/users\", [H.data(\"turbo_frame\", \"railshx-user-frame\"), H.aria(\"label\", \"Manage users\")]),",
     "\t\t\tH.imageTag(\"avatar.png\", [H.attr(\"alt\", \"Profile avatar\"), H.className(\"avatar\"), H.data(\"direct-upload-url\", \"/rails/active_storage/direct_uploads\")]),",
     "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
+    "\t\t\tH.pictureTag(\"hero.webp\", [H.attr(\"alt\", \"Hero image\"), H.className(\"hero-picture\")]),",
+    "\t\t\t<picture_tag src=\"team.avif\" alt=\"Team photo\" class=\"team-picture\" />,",
     "\t\t\tH.faviconLinkTag(\"favicon.ico\", [H.attr(\"rel\", \"shortcut icon\")]),",
     "\t\t\t<favicon_link_tag src=\"touch-icon.png\" rel=\"apple-touch-icon\" type=\"image/png\" />,",
     "\t\t\tH.preloadLinkTag(\"application.css\", [H.attr(\"as\", \"style\"), H.attr(\"type\", \"text/css\")]),",
@@ -2885,6 +2892,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= link_to "Users", "/users", data: {turbo_frame: "railshx-user-frame"}, aria: {label: "Manage users"} %>',
     '<%= image_tag "avatar.png", alt: "Profile avatar", class: "avatar", data: {direct_upload_url: "/rails/active_storage/direct_uploads"} %>',
     '<%= image_tag "badge.png", alt: "RailsHx badge", class: "badge" %>',
+    '<%= picture_tag "hero.webp", alt: "Hero image", class: "hero-picture" %>',
+    '<%= picture_tag "team.avif", alt: "Team photo", class: "team-picture" %>',
     '<%= favicon_link_tag "favicon.ico", rel: "shortcut icon" %>',
     '<%= favicon_link_tag "touch-icon.png", rel: "apple-touch-icon", type: "image/png" %>',
     '<%= preload_link_tag "application.css", as: "style", type: "text/css" %>',
@@ -2997,6 +3006,35 @@ function expectCheckedAttrHelpersFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("expects the suffix only")) {
     console.error("Invalid H.aria suffix failed, but not with the expected checked attribute diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectPictureTagTypeFailure() {
+  const result = compileCheckedAttrFixture(pictureTagInvalidSourceDir, pictureTagInvalidOutputDir, "InvalidPictureTagMain", "InvalidPictureTagView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_picture_tag\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidPictureTagView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.pictureTag(42, []);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid picture_tag source value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid picture_tag source failed, but not with the expected String source type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

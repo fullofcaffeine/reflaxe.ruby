@@ -766,6 +766,19 @@ private class RailsMarkupParser {
 				var imageSource = src == null ? source : src;
 				var imageAttrs = attrsExcept(attrs, ["src", "source"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.ImageTag($imageSource, ${mkArray(imageAttrs.map(mkAttr), pos)});
+			case "picture_tag":
+				rejectChildren(name, children, pos);
+				var src = attrValue(attrs, "src");
+				var source = attrValue(attrs, "source");
+				if (src != null && source != null) {
+					Context.error('Rails HHX <picture_tag> accepts src=... or source=..., not both.', pos);
+				}
+				if (src == null && source == null) {
+					Context.error('Rails HHX <picture_tag> expects src=... or source=....', pos);
+				}
+				var pictureSource = src == null ? source : src;
+				var pictureAttrs = attrsExcept(attrs, ["src", "source"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.PictureTag($pictureSource, ${mkArray(pictureAttrs.map(mkAttr), pos)});
 			case "favicon_link_tag":
 				rejectChildren(name, children, pos);
 				var src = attrValue(attrs, "src");

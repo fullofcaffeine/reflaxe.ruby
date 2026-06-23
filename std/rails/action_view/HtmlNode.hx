@@ -20,6 +20,7 @@ enum HtmlNode {
 	LinkTo<TLabel, TUrl>(label:TLabel, url:TUrl, attrs:Array<HtmlAttr>);
 	LinkToBlock<TUrl>(url:TUrl, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	ImageTag<TSource>(source:TSource, attrs:Array<HtmlAttr>);
+	PictureTag(source:String, attrs:Array<HtmlAttr>);
 	FaviconLinkTag(source:String, attrs:Array<HtmlAttr>);
 	PreloadLinkTag(source:String, attrs:Array<HtmlAttr>);
 	JavascriptIncludeTag(source:String, attrs:Array<HtmlAttr>);
