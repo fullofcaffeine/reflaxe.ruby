@@ -1185,6 +1185,13 @@ private class RailsMarkupParser {
 				var fieldAttrs = attrsExcept(attrs, ["name", "value"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.DateFieldTag($fieldName, ${value == null ? (macro null) : value},
 					${mkArray(fieldAttrs.map(mkAttr), pos)});
+			case "time_field_tag":
+				rejectChildren(name, children, pos);
+				var fieldName = requireAttrValue(attrs, "name", pos);
+				var value = attrValue(attrs, "value");
+				var fieldAttrs = attrsExcept(attrs, ["name", "value"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.TimeFieldTag($fieldName, ${value == null ? (macro null) : value},
+					${mkArray(fieldAttrs.map(mkAttr), pos)});
 			case "password_field_tag":
 				rejectChildren(name, children, pos);
 				var fieldName = requireAttrValue(attrs, "name", pos);
