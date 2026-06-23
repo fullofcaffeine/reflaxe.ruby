@@ -104,6 +104,8 @@ const numberFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp
 const numberFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_field_tag_invalid_out");
 const rangeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_range_field_tag_invalid_src");
 const rangeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_range_field_tag_invalid_out");
+const colorFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_color_field_tag_invalid_src");
+const colorFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_color_field_tag_invalid_out");
 const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
 const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
@@ -352,6 +354,8 @@ rmSync(numberFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(rangeFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(rangeFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(colorFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(colorFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidSourceDir, { force: true, recursive: true });
@@ -1422,6 +1426,7 @@ expectTelephoneFieldTagTypeFailure();
 expectUrlFieldTagTypeFailure();
 expectNumberFieldTagTypeFailure();
 expectRangeFieldTagTypeFailure();
+expectColorFieldTagTypeFailure();
 expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
@@ -2893,6 +2898,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<number_field_tag name=\"priority\" value=${2.5} min=${0} step=\"0.5\" />,",
     "\t\t\tH.rangeFieldTag(\"completion\", 0.75, [H.attr(\"max\", \"1\")]),",
     "\t\t\t<range_field_tag name=\"progress\" value=${0.5} min=${0} max=${1} step=\"0.1\" />,",
+    "\t\t\tH.colorFieldTag(\"accent\", \"#336699\", [H.className(\"accent-picker\")]),",
+    "\t\t\t<color_field_tag name=\"brand_color\" value=\"#ffcc00\" data-controller=\"palette\" />,",
     "\t\t\tH.passwordFieldTag(\"admin_password\", null, [H.attr(\"autocomplete\", \"current-password\")]),",
     "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.hiddenFieldTag(\"return_to\", \"/todos\", [H.data(\"tracked\", \"true\")]),",
@@ -3020,6 +3027,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= number_field_tag :priority, 2.5, min: 0, step: "0.5" %>',
     '<%= range_field_tag :completion, 0.75, max: "1" %>',
     '<%= range_field_tag :progress, 0.5, min: 0, max: 1, step: "0.1" %>',
+    '<%= color_field_tag :accent, "#336699", class: "accent-picker" %>',
+    '<%= color_field_tag :brand_color, "#ffcc00", data: {controller: "palette"} %>',
     '<%= password_field_tag :admin_password, nil, autocomplete: "current-password" %>',
     '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= hidden_field_tag :return_to, "/todos", data: {tracked: "true"} %>',
@@ -3418,6 +3427,36 @@ function expectRangeFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("String") || !output.includes("Float")) {
     console.error("Invalid range_field_tag value failed, but not with the expected Float value type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectColorFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(colorFieldTagInvalidSourceDir, colorFieldTagInvalidOutputDir, "InvalidColorFieldTagMain",
+    "InvalidColorFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_color_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidColorFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.colorFieldTag(\"accent\", 336699, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid color_field_tag value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid color_field_tag value failed, but not with the expected String value type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
