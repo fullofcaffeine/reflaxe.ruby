@@ -7258,6 +7258,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateCheckBoxTag(params[0], params[1], params[2], params[3], scope);
 						}
+					case "RadioButtonTag":
+						if (params.length != 4) {
+							Context.error("HtmlNode.RadioButtonTag expects name, value, checked, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateRadioButtonTag(params[0], params[1], params[2], params[3], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -8070,6 +8077,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push(isTemplateNull(checked) ? "false" : printTemplateExpr(checked, scope));
 		}
 		return "<%= check_box_tag " + args.concat(kwargs).join(", ") + " %>";
+	}
+
+	static function lowerTemplateRadioButtonTag(name:TypedExpr, value:TypedExpr, checked:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [
+			rubySymbolLiteral(expectTemplateString(name, "HtmlNode.RadioButtonTag name must be a string literal.")),
+			printTemplateExpr(value, scope)
+		];
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		if (!isTemplateNull(checked) || kwargs.length > 0) {
+			args.push(isTemplateNull(checked) ? "false" : printTemplateExpr(checked, scope));
+		}
+		return "<%= radio_button_tag " + args.concat(kwargs).join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonToBlock(url:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {

@@ -102,6 +102,8 @@ const textAreaTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const textAreaTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_text_area_tag_invalid_out");
 const checkBoxTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_check_box_tag_invalid_src");
 const checkBoxTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_check_box_tag_invalid_out");
+const radioButtonTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_radio_button_tag_invalid_src");
+const radioButtonTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_radio_button_tag_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -336,6 +338,8 @@ rmSync(textAreaTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(textAreaTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(checkBoxTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkBoxTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(radioButtonTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(radioButtonTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1393,6 +1397,7 @@ expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
 expectTextAreaTagTypeFailure();
 expectCheckBoxTagTypeFailure();
+expectRadioButtonTagTypeFailure();
 expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
@@ -2856,6 +2861,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<text_area_tag name=\"comment\" rows=${3}>Typed comment</text_area_tag>,",
     "\t\t\tH.checkBoxTag(\"published\", \"1\", true, [H.className(\"published-check\")]),",
     "\t\t\t<check_box_tag name=\"archived\" value=\"yes\" checked=${false} data-controller=\"archive\" />,",
+    "\t\t\tH.radioButtonTag(\"visibility\", \"public\", true, [H.className(\"visibility-choice\")]),",
+    "\t\t\t<radio_button_tag name=\"visibility\" value=\"private\" checked=${false} data-controller=\"visibility\" />,",
     "\t\t\tH.imageTag(\"avatar.png\", [H.attr(\"alt\", \"Profile avatar\"), H.className(\"avatar\"), H.data(\"direct-upload-url\", \"/rails/active_storage/direct_uploads\")]),",
     "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
     "\t\t\tH.pictureTag(\"hero.webp\", [H.attr(\"alt\", \"Hero image\"), H.className(\"hero-picture\")]),",
@@ -2969,6 +2976,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= text_area_tag :comment, "Typed comment", rows: 3 %>',
     '<%= check_box_tag :published, "1", true, class: "published-check" %>',
     '<%= check_box_tag :archived, "yes", false, data: {controller: "archive"} %>',
+    '<%= radio_button_tag :visibility, "public", true, class: "visibility-choice" %>',
+    '<%= radio_button_tag :visibility, "private", false, data: {controller: "visibility"} %>',
     '<%= image_tag "avatar.png", alt: "Profile avatar", class: "avatar", data: {direct_upload_url: "/rails/active_storage/direct_uploads"} %>',
     '<%= image_tag "badge.png", alt: "RailsHx badge", class: "badge" %>',
     '<%= picture_tag "hero.webp", alt: "Hero image", class: "hero-picture" %>',
@@ -3325,6 +3334,36 @@ function expectCheckBoxTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid check_box_tag name failed, but not with the expected String name type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectRadioButtonTagTypeFailure() {
+  const result = compileCheckedAttrFixture(radioButtonTagInvalidSourceDir, radioButtonTagInvalidOutputDir, "InvalidRadioButtonTagMain",
+    "InvalidRadioButtonTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_radio_button_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidRadioButtonTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.radioButtonTag(\"visibility\", 42, null, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid radio_button_tag value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid radio_button_tag value failed, but not with the expected String value type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

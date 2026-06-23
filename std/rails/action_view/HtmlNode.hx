@@ -70,6 +70,7 @@ enum HtmlNode {
 	FileFieldTag(name:String, attrs:Array<HtmlAttr>);
 	TextAreaTag(name:String, content:Null<String>, attrs:Array<HtmlAttr>);
 	CheckBoxTag(name:String, value:Null<String>, checked:Null<Bool>, attrs:Array<HtmlAttr>);
+	RadioButtonTag(name:String, value:String, checked:Null<Bool>, attrs:Array<HtmlAttr>);
 	// Rails `button_to` has both normal and block forms. Keeping separate AST
 	// nodes lets HHX lower simple labels to `button_to "Label", path` and
 	// nested markup to `button_to path do ... end` without runtime wrappers.

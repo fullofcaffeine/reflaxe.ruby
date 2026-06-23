@@ -262,6 +262,10 @@ class H {
 		return macro rails.action_view.HtmlNode.CheckBoxTag($name, $value, $checked, $attrs);
 	}
 
+	public static macro function radioButtonTag(name:Expr, value:Expr, checked:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.RadioButtonTag($name, $value, $checked, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}
