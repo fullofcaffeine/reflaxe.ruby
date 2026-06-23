@@ -22,6 +22,7 @@ enum HtmlNode {
 	ImageTag<TSource>(source:TSource, attrs:Array<HtmlAttr>);
 	FaviconLinkTag(source:String, attrs:Array<HtmlAttr>);
 	PreloadLinkTag(source:String, attrs:Array<HtmlAttr>);
+	JavascriptIncludeTag(source:String, attrs:Array<HtmlAttr>);
 	AudioTag(source:String, attrs:Array<HtmlAttr>);
 	VideoTag(source:String, attrs:Array<HtmlAttr>);
 	MailTo<TEmail, TLabel>(email:TEmail, label:Null<TLabel>, attrs:Array<HtmlAttr>);

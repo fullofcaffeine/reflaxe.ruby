@@ -73,6 +73,10 @@ class H {
 		return macro rails.action_view.HtmlNode.PreloadLinkTag($source, $attrs);
 	}
 
+	public static macro function javascriptIncludeTag(source:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.JavascriptIncludeTag($source, $attrs);
+	}
+
 	public static macro function audioTag(source:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.AudioTag($source, $attrs);
 	}

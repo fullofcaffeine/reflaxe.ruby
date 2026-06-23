@@ -6928,6 +6928,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplatePreloadLinkTag(params[0], params[1], scope);
 						}
+					case "JavascriptIncludeTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.JavascriptIncludeTag expects source and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateJavascriptIncludeTag(params[0], params[1], scope);
+						}
 					case "AudioTag":
 						if (params.length != 2) {
 							Context.error("HtmlNode.AudioTag expects source and attrs arguments.", node.pos);
@@ -7569,6 +7576,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplatePreloadLinkTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= preload_link_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateJavascriptIncludeTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= javascript_include_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateAudioTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

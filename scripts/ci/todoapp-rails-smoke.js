@@ -24,6 +24,8 @@ const faviconLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp
 const faviconLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_favicon_link_tag_invalid_out");
 const preloadLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_src");
 const preloadLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_out");
+const javascriptIncludeTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_javascript_include_tag_invalid_src");
+const javascriptIncludeTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_javascript_include_tag_invalid_out");
 const audioTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_audio_tag_invalid_src");
 const audioTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_audio_tag_invalid_out");
 const videoTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_video_tag_invalid_src");
@@ -234,6 +236,8 @@ rmSync(faviconLinkTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(faviconLinkTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(preloadLinkTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(preloadLinkTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(javascriptIncludeTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(javascriptIncludeTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(audioTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(audioTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(videoTagInvalidSourceDir, { force: true, recursive: true });
@@ -1339,6 +1343,7 @@ expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
+expectJavascriptIncludeTagTypeFailure();
 expectAudioTagTypeFailure();
 expectVideoTagTypeFailure();
 expectPhoneToTypeFailure();
@@ -2786,6 +2791,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<favicon_link_tag src=\"touch-icon.png\" rel=\"apple-touch-icon\" type=\"image/png\" />,",
     "\t\t\tH.preloadLinkTag(\"application.css\", [H.attr(\"as\", \"style\"), H.attr(\"type\", \"text/css\")]),",
     "\t\t\t<preload_link_tag src=\"app.js\" as=\"script\" crossorigin=\"anonymous\" />,",
+    "\t\t\tH.javascriptIncludeTag(\"dashboard\", [H.boolAttr(\"defer\"), H.data(\"turbo-track\", \"reload\")]),",
+    "\t\t\t<javascript_include_tag src=\"analytics\" defer=${true} type=\"module\" />,",
     "\t\t\tH.audioTag(\"intro.mp3\", [H.boolAttr(\"controls\"), H.className(\"intro-audio\")]),",
     "\t\t\t<audio_tag src=\"notify.wav\" autoplay=${true} controls=${true} />,",
     "\t\t\tH.videoTag(\"demo.mp4\", [H.boolAttr(\"controls\"), H.attr(\"poster\", \"demo.png\")]),",
@@ -2875,6 +2882,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= favicon_link_tag "touch-icon.png", rel: "apple-touch-icon", type: "image/png" %>',
     '<%= preload_link_tag "application.css", as: "style", type: "text/css" %>',
     '<%= preload_link_tag "app.js", as: "script", crossorigin: "anonymous" %>',
+    '<%= javascript_include_tag "dashboard", defer: true, data: {turbo_track: "reload"} %>',
+    '<%= javascript_include_tag "analytics", defer: true, type: "module" %>',
     '<%= audio_tag "intro.mp3", controls: true, class: "intro-audio" %>',
     '<%= audio_tag "notify.wav", autoplay: true, controls: true %>',
     '<%= video_tag "demo.mp4", controls: true, poster: "demo.png" %>',
@@ -3039,6 +3048,36 @@ function expectPreloadLinkTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid preload_link_tag source failed, but not with the expected String source type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectJavascriptIncludeTagTypeFailure() {
+  const result = compileCheckedAttrFixture(javascriptIncludeTagInvalidSourceDir, javascriptIncludeTagInvalidOutputDir,
+    "InvalidJavascriptIncludeTagMain", "InvalidJavascriptIncludeTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_javascript_include_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidJavascriptIncludeTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.javascriptIncludeTag(42, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid javascript_include_tag source value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid javascript_include_tag source failed, but not with the expected String source type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

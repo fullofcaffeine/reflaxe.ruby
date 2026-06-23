@@ -792,6 +792,19 @@ private class RailsMarkupParser {
 				var preloadSource = src == null ? source : src;
 				var preloadAttrs = attrsExcept(attrs, ["src", "source"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.PreloadLinkTag($preloadSource, ${mkArray(preloadAttrs.map(mkAttr), pos)});
+			case "javascript_include_tag":
+				rejectChildren(name, children, pos);
+				var src = attrValue(attrs, "src");
+				var source = attrValue(attrs, "source");
+				if (src != null && source != null) {
+					Context.error('Rails HHX <javascript_include_tag> accepts src=... or source=..., not both.', pos);
+				}
+				if (src == null && source == null) {
+					Context.error('Rails HHX <javascript_include_tag> expects src=... or source=....', pos);
+				}
+				var scriptSource = src == null ? source : src;
+				var scriptAttrs = attrsExcept(attrs, ["src", "source"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.JavascriptIncludeTag($scriptSource, ${mkArray(scriptAttrs.map(mkAttr), pos)});
 			case "audio_tag":
 				rejectChildren(name, children, pos);
 				var src = attrValue(attrs, "src");
