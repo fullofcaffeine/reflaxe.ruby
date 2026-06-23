@@ -62,6 +62,7 @@ enum HtmlNode {
 	NumberWithDelimiter(number:Float, delimiter:Null<String>, separator:Null<String>);
 	NumberToDelimited(number:Float, delimiter:Null<String>, separator:Null<String>);
 	NumberToPhone(number:String, areaCode:Null<Bool>, delimiter:Null<String>, extension:Null<String>, countryCode:Null<Int>);
+	ButtonTag(content:String, attrs:Array<HtmlAttr>);
 	// Rails `button_to` has both normal and block forms. Keeping separate AST
 	// nodes lets HHX lower simple labels to `button_to "Label", path` and
 	// nested markup to `button_to path do ... end` without runtime wrappers.

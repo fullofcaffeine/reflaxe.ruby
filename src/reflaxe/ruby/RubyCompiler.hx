@@ -7202,6 +7202,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateNumberToPhone(params[0], params[1], params[2], params[3], params[4], scope);
 						}
+					case "ButtonTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.ButtonTag expects content and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateButtonTag(params[0], params[1], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7939,6 +7946,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args = args.concat(kwargs);
 		}
 		return "<%= button_to " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateButtonTag(content:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(content, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= button_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonToBlock(url:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {

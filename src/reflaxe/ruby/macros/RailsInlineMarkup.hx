@@ -1090,6 +1090,20 @@ private class RailsMarkupParser {
 				macro @:pos(pos) rails.action_view.HtmlNode.NumberToPhone($number, ${areaCode == null ? (macro null) : areaCode},
 					${delimiter == null ? (macro null) : delimiter}, ${extension == null ? (macro null) : extension},
 					${countryCode == null ? (macro null) : countryCode});
+			case "button_tag":
+				var buttonAttrs = attrsExcept(attrs, ["text"]);
+				var explicitText = attrValue(attrs, "text");
+				var content = explicitText == null ? textChildExpr(children, pos) : explicitText;
+				if (content == null) {
+					if (children.length > 0) {
+						Context.error('Rails HHX <button_tag> accepts only text/expression children when text="..." is omitted.', pos);
+					} else {
+						Context.error('Rails HHX <button_tag> expects text="..." or text/expression children.', pos);
+					}
+					macro null;
+				} else {
+					macro @:pos(pos) rails.action_view.HtmlNode.ButtonTag($content, ${mkArray(buttonAttrs.map(mkAttr), pos)});
+				}
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);

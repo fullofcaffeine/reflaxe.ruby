@@ -230,6 +230,10 @@ class H {
 		return macro rails.action_view.HtmlNode.NumberToPhone($number, $areaCode, $delimiter, $extension, $countryCode);
 	}
 
+	public static macro function buttonTag(content:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.ButtonTag($content, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

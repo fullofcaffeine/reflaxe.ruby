@@ -86,6 +86,8 @@ const numberWithPrecisionInvalidSourceDir = join(root, "test", ".generated", "to
 const numberWithPrecisionInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_with_precision_invalid_out");
 const numberWithDelimiterInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_with_delimiter_invalid_src");
 const numberWithDelimiterInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_with_delimiter_invalid_out");
+const buttonTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_button_tag_invalid_src");
+const buttonTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_button_tag_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -304,6 +306,8 @@ rmSync(numberWithPrecisionInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberWithPrecisionInvalidOutputDir, { force: true, recursive: true });
 rmSync(numberWithDelimiterInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberWithDelimiterInvalidOutputDir, { force: true, recursive: true });
+rmSync(buttonTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(buttonTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1353,6 +1357,7 @@ expectTypedTemplateAstFieldFailure();
 expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
+expectButtonTagTypeFailure();
 expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
@@ -2800,6 +2805,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\treturn H.fragment([",
     "\t\t\tH.el(\"section\", [H.role(\"status\"), H.aria(\"live\", \"polite\"), H.dataBool(\"railshx-scroll\")], [H.text(\"Ready\")]),",
     "\t\t\tH.linkTo(\"Users\", \"/users\", [H.data(\"turbo_frame\", \"railshx-user-frame\"), H.aria(\"label\", \"Manage users\")]),",
+    "\t\t\tH.buttonTag(\"Save draft\", [H.attr(\"type\", \"button\"), H.className(\"draft-button\")]),",
+    "\t\t\t<button_tag type=\"button\" data-confirm=\"Archive item?\">Archive</button_tag>,",
     "\t\t\tH.imageTag(\"avatar.png\", [H.attr(\"alt\", \"Profile avatar\"), H.className(\"avatar\"), H.data(\"direct-upload-url\", \"/rails/active_storage/direct_uploads\")]),",
     "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
     "\t\t\tH.pictureTag(\"hero.webp\", [H.attr(\"alt\", \"Hero image\"), H.className(\"hero-picture\")]),",
@@ -2897,6 +2904,8 @@ function expectCheckedAttrHelpersOutput() {
   for (const expected of [
     '<section role="status" aria-live="polite" data-railshx-scroll>Ready</section>',
     '<%= link_to "Users", "/users", data: {turbo_frame: "railshx-user-frame"}, aria: {label: "Manage users"} %>',
+    '<%= button_tag "Save draft", type: "button", class: "draft-button" %>',
+    '<%= button_tag "Archive", type: "button", data: {confirm: "Archive item?"} %>',
     '<%= image_tag "avatar.png", alt: "Profile avatar", class: "avatar", data: {direct_upload_url: "/rails/active_storage/direct_uploads"} %>',
     '<%= image_tag "badge.png", alt: "RailsHx badge", class: "badge" %>',
     '<%= picture_tag "hero.webp", alt: "Hero image", class: "hero-picture" %>',
@@ -3015,6 +3024,35 @@ function expectCheckedAttrHelpersFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("expects the suffix only")) {
     console.error("Invalid H.aria suffix failed, but not with the expected checked attribute diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectButtonTagTypeFailure() {
+  const result = compileCheckedAttrFixture(buttonTagInvalidSourceDir, buttonTagInvalidOutputDir, "InvalidButtonTagMain", "InvalidButtonTagView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_button_tag\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidButtonTagView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.buttonTag(42, []);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid button_tag content value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid button_tag content failed, but not with the expected String content type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
