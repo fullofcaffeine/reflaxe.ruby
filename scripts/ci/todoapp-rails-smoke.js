@@ -28,6 +28,8 @@ const preloadLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp
 const preloadLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_out");
 const javascriptIncludeTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_javascript_include_tag_invalid_src");
 const javascriptIncludeTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_javascript_include_tag_invalid_out");
+const javascriptTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_javascript_tag_invalid_src");
+const javascriptTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_javascript_tag_invalid_out");
 const autoDiscoveryLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_auto_discovery_link_tag_invalid_src");
 const autoDiscoveryLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_auto_discovery_link_tag_invalid_out");
 const audioTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_audio_tag_invalid_src");
@@ -244,6 +246,8 @@ rmSync(preloadLinkTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(preloadLinkTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(javascriptIncludeTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(javascriptIncludeTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(javascriptTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(javascriptTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(autoDiscoveryLinkTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(autoDiscoveryLinkTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(audioTagInvalidSourceDir, { force: true, recursive: true });
@@ -1353,6 +1357,7 @@ expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
 expectJavascriptIncludeTagTypeFailure();
+expectJavascriptTagTypeFailure();
 expectAutoDiscoveryLinkTagTypeFailure();
 expectAudioTagTypeFailure();
 expectVideoTagTypeFailure();
@@ -2805,6 +2810,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<preload_link_tag src=\"app.js\" as=\"script\" crossorigin=\"anonymous\" />,",
     "\t\t\tH.javascriptIncludeTag(\"dashboard\", [H.boolAttr(\"defer\"), H.data(\"turbo-track\", \"reload\")]),",
     "\t\t\t<javascript_include_tag src=\"analytics\" defer=${true} type=\"module\" />,",
+    "\t\t\tH.javascriptTag(\"window.RailsHxReady = true;\", [H.boolAttr(\"nonce\")]),",
+    "\t\t\t<javascript_tag content=\"console.log('typed helper');\" nonce=${true} />,",
     "\t\t\tH.autoDiscoveryLinkTag(\"rss\", \"/feed.xml\", [H.attr(\"title\", \"Todo feed\")]),",
     "\t\t\t<auto_discovery_link_tag type=\"atom\" url=\"/feed.atom\" title=\"Atom feed\" />,",
     "\t\t\tH.audioTag(\"intro.mp3\", [H.boolAttr(\"controls\"), H.className(\"intro-audio\")]),",
@@ -2900,6 +2907,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= preload_link_tag "app.js", as: "script", crossorigin: "anonymous" %>',
     '<%= javascript_include_tag "dashboard", defer: true, data: {turbo_track: "reload"} %>',
     '<%= javascript_include_tag "analytics", defer: true, type: "module" %>',
+    '<%= javascript_tag "window.RailsHxReady = true;", nonce: true %>',
+    '<%= javascript_tag "console.log(\'typed helper\');", nonce: true %>',
     '<%= auto_discovery_link_tag :rss, "/feed.xml", title: "Todo feed" %>',
     '<%= auto_discovery_link_tag :atom, "/feed.atom", title: "Atom feed" %>',
     '<%= audio_tag "intro.mp3", controls: true, class: "intro-audio" %>',
@@ -3125,6 +3134,36 @@ function expectJavascriptIncludeTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid javascript_include_tag source failed, but not with the expected String source type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectJavascriptTagTypeFailure() {
+  const result = compileCheckedAttrFixture(javascriptTagInvalidSourceDir, javascriptTagInvalidOutputDir, "InvalidJavascriptTagMain",
+    "InvalidJavascriptTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_javascript_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidJavascriptTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.javascriptTag(42, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid javascript_tag content value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid javascript_tag content failed, but not with the expected String content type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

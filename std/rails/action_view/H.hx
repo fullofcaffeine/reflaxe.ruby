@@ -81,6 +81,10 @@ class H {
 		return macro rails.action_view.HtmlNode.JavascriptIncludeTag($source, $attrs);
 	}
 
+	public static macro function javascriptTag(content:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.JavascriptTag($content, $attrs);
+	}
+
 	public static macro function autoDiscoveryLinkTag(feedType:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.AutoDiscoveryLinkTag($feedType, $url, $attrs);
 	}

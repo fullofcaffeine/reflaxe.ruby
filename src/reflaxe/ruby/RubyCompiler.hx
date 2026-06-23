@@ -6942,6 +6942,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateJavascriptIncludeTag(params[0], params[1], scope);
 						}
+					case "JavascriptTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.JavascriptTag expects content and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateJavascriptTag(params[0], params[1], scope);
+						}
 					case "AutoDiscoveryLinkTag":
 						if (params.length != 3) {
 							Context.error("HtmlNode.AutoDiscoveryLinkTag expects feed type, url, and attrs arguments.", node.pos);
@@ -7600,6 +7607,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateJavascriptIncludeTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= javascript_include_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateJavascriptTag(content:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(content, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= javascript_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateAutoDiscoveryLinkTag(feedType:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
