@@ -7209,6 +7209,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateButtonTag(params[0], params[1], scope);
 						}
+					case "SubmitTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.SubmitTag expects value and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateSubmitTag(params[0], params[1], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -7951,6 +7958,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateButtonTag(content:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(content, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= button_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateSubmitTag(value:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(value, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= submit_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonToBlock(url:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {

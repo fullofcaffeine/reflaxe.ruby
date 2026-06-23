@@ -1104,6 +1104,24 @@ private class RailsMarkupParser {
 				} else {
 					macro @:pos(pos) rails.action_view.HtmlNode.ButtonTag($content, ${mkArray(buttonAttrs.map(mkAttr), pos)});
 				}
+			case "submit_tag":
+				var submitAttrs = attrsExcept(attrs, ["value", "text"]);
+				var value = attrValue(attrs, "value");
+				var text = attrValue(attrs, "text");
+				if (value != null && text != null) {
+					Context.error('Rails HHX <submit_tag> accepts value=... or text=..., not both.', pos);
+				}
+				var submitValue = value != null ? value : (text != null ? text : textChildExpr(children, pos));
+				if (submitValue == null) {
+					if (children.length > 0) {
+						Context.error('Rails HHX <submit_tag> accepts only text/expression children when value=... or text=... is omitted.', pos);
+					} else {
+						Context.error('Rails HHX <submit_tag> expects value=..., text=..., or text/expression children.', pos);
+					}
+					macro null;
+				} else {
+					macro @:pos(pos) rails.action_view.HtmlNode.SubmitTag($submitValue, ${mkArray(submitAttrs.map(mkAttr), pos)});
+				}
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);
