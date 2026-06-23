@@ -278,6 +278,10 @@ class H {
 		return macro rails.action_view.HtmlNode.TimeFieldTag($name, $value, $attrs);
 	}
 
+	public static macro function datetimeFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.DatetimeFieldTag($name, $value, $attrs);
+	}
+
 	public static macro function passwordFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.PasswordFieldTag($name, $value, $attrs);
 	}

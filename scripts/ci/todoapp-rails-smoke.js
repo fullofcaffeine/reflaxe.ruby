@@ -110,6 +110,8 @@ const dateFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_r
 const dateFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_date_field_tag_invalid_out");
 const timeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_field_tag_invalid_src");
 const timeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_field_tag_invalid_out");
+const datetimeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_datetime_field_tag_invalid_src");
+const datetimeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_datetime_field_tag_invalid_out");
 const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
 const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
@@ -364,6 +366,8 @@ rmSync(dateFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(dateFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(timeFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(timeFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(datetimeFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(datetimeFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidSourceDir, { force: true, recursive: true });
@@ -1437,6 +1441,7 @@ expectRangeFieldTagTypeFailure();
 expectColorFieldTagTypeFailure();
 expectDateFieldTagTypeFailure();
 expectTimeFieldTagTypeFailure();
+expectDatetimeFieldTagTypeFailure();
 expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
@@ -2914,6 +2919,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<date_field_tag name=\"starts_on\" value=\"2026-07-01\" min=\"2026-01-01\" data-controller=\"date\" />,",
     "\t\t\tH.timeFieldTag(\"starts_at\", \"09:30\", [H.attrExpr(\"include_seconds\", true)]),",
     "\t\t\t<time_field_tag name=\"ends_at\" value=\"17:45\" min=\"08:00\" max=\"18:00\" step=${60} />,",
+    "\t\t\tH.datetimeFieldTag(\"scheduled_at\", \"2026-06-23T09:30\", [H.className(\"datetime-input\")]),",
+    "\t\t\t<datetime_field_tag name=\"published_at\" value=\"2026-07-01T17:45\" min=\"2026-01-01T00:00\" data-controller=\"datetime\" />,",
     "\t\t\tH.passwordFieldTag(\"admin_password\", null, [H.attr(\"autocomplete\", \"current-password\")]),",
     "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.hiddenFieldTag(\"return_to\", \"/todos\", [H.data(\"tracked\", \"true\")]),",
@@ -3047,6 +3054,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= date_field_tag :starts_on, "2026-07-01", min: "2026-01-01", data: {controller: "date"} %>',
     '<%= time_field_tag :starts_at, "09:30", include_seconds: true %>',
     '<%= time_field_tag :ends_at, "17:45", min: "08:00", max: "18:00", step: 60 %>',
+    '<%= datetime_field_tag :scheduled_at, "2026-06-23T09:30", class: "datetime-input" %>',
+    '<%= datetime_field_tag :published_at, "2026-07-01T17:45", min: "2026-01-01T00:00", data: {controller: "datetime"} %>',
     '<%= password_field_tag :admin_password, nil, autocomplete: "current-password" %>',
     '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= hidden_field_tag :return_to, "/todos", data: {tracked: "true"} %>',
@@ -3535,6 +3544,36 @@ function expectTimeFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid time_field_tag value failed, but not with the expected String value type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectDatetimeFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(datetimeFieldTagInvalidSourceDir, datetimeFieldTagInvalidOutputDir,
+    "InvalidDatetimeFieldTagMain", "InvalidDatetimeFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_datetime_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidDatetimeFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.datetimeFieldTag(\"scheduled_at\", 202606230930, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid datetime_field_tag value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Float") || !output.includes("String")) {
+    console.error("Invalid datetime_field_tag value failed, but not with the expected String value type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
