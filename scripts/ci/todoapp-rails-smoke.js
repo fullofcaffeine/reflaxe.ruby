@@ -106,6 +106,8 @@ const rangeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_
 const rangeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_range_field_tag_invalid_out");
 const colorFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_color_field_tag_invalid_src");
 const colorFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_color_field_tag_invalid_out");
+const dateFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_date_field_tag_invalid_src");
+const dateFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_date_field_tag_invalid_out");
 const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
 const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
@@ -356,6 +358,8 @@ rmSync(rangeFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(rangeFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(colorFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(colorFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(dateFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(dateFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidSourceDir, { force: true, recursive: true });
@@ -1427,6 +1431,7 @@ expectUrlFieldTagTypeFailure();
 expectNumberFieldTagTypeFailure();
 expectRangeFieldTagTypeFailure();
 expectColorFieldTagTypeFailure();
+expectDateFieldTagTypeFailure();
 expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
@@ -2900,6 +2905,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<range_field_tag name=\"progress\" value=${0.5} min=${0} max=${1} step=\"0.1\" />,",
     "\t\t\tH.colorFieldTag(\"accent\", \"#336699\", [H.className(\"accent-picker\")]),",
     "\t\t\t<color_field_tag name=\"brand_color\" value=\"#ffcc00\" data-controller=\"palette\" />,",
+    "\t\t\tH.dateFieldTag(\"due_on\", \"2026-06-23\", [H.className(\"date-input\")]),",
+    "\t\t\t<date_field_tag name=\"starts_on\" value=\"2026-07-01\" min=\"2026-01-01\" data-controller=\"date\" />,",
     "\t\t\tH.passwordFieldTag(\"admin_password\", null, [H.attr(\"autocomplete\", \"current-password\")]),",
     "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.hiddenFieldTag(\"return_to\", \"/todos\", [H.data(\"tracked\", \"true\")]),",
@@ -3029,6 +3036,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= range_field_tag :progress, 0.5, min: 0, max: 1, step: "0.1" %>',
     '<%= color_field_tag :accent, "#336699", class: "accent-picker" %>',
     '<%= color_field_tag :brand_color, "#ffcc00", data: {controller: "palette"} %>',
+    '<%= date_field_tag :due_on, "2026-06-23", class: "date-input" %>',
+    '<%= date_field_tag :starts_on, "2026-07-01", min: "2026-01-01", data: {controller: "date"} %>',
     '<%= password_field_tag :admin_password, nil, autocomplete: "current-password" %>',
     '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= hidden_field_tag :return_to, "/todos", data: {tracked: "true"} %>',
@@ -3457,6 +3466,36 @@ function expectColorFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid color_field_tag value failed, but not with the expected String value type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectDateFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(dateFieldTagInvalidSourceDir, dateFieldTagInvalidOutputDir, "InvalidDateFieldTagMain",
+    "InvalidDateFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_date_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidDateFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.dateFieldTag(\"due_on\", 20260623, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid date_field_tag value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid date_field_tag value failed, but not with the expected String value type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
