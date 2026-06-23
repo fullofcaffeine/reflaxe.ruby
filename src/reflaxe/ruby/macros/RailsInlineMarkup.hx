@@ -785,6 +785,15 @@ private class RailsMarkupParser {
 				var phoneAttrs = attrsExcept(attrs, ["phone", "text"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.PhoneTo($phone, ${label == null ? (macro null) : label},
 					${mkArray(phoneAttrs.map(mkAttr), pos)});
+			case "sms_to":
+				var phone = requireAttrValue(attrs, "phone", pos);
+				var explicitText = attrValue(attrs, "text");
+				var label = explicitText == null ? textChildExpr(children, pos) : explicitText;
+				if (label == null && children.length > 0) {
+					Context.error('Rails HHX <sms_to> accepts only text/expression children when text=... is omitted.', pos);
+				}
+				var smsAttrs = attrsExcept(attrs, ["phone", "text"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.SmsTo($phone, ${label == null ? (macro null) : label}, ${mkArray(smsAttrs.map(mkAttr), pos)});
 			case "pluralize":
 				rejectChildren(name, children, pos);
 				var count = requireAttrValue(attrs, "count", pos);

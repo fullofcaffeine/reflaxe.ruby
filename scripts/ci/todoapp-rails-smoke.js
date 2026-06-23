@@ -22,6 +22,8 @@ const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
 const phoneToInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_phone_to_invalid_src");
 const phoneToInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_phone_to_invalid_out");
+const smsToInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_sms_to_invalid_src");
+const smsToInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_sms_to_invalid_out");
 const excerptInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_src");
 const excerptInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_out");
 const highlightInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_highlight_invalid_src");
@@ -222,6 +224,8 @@ rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
 rmSync(phoneToInvalidSourceDir, { force: true, recursive: true });
 rmSync(phoneToInvalidOutputDir, { force: true, recursive: true });
+rmSync(smsToInvalidSourceDir, { force: true, recursive: true });
+rmSync(smsToInvalidOutputDir, { force: true, recursive: true });
 rmSync(excerptInvalidSourceDir, { force: true, recursive: true });
 rmSync(excerptInvalidOutputDir, { force: true, recursive: true });
 rmSync(highlightInvalidSourceDir, { force: true, recursive: true });
@@ -1318,6 +1322,7 @@ expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
 expectPhoneToTypeFailure();
+expectSmsToTypeFailure();
 expectExcerptTypeFailure();
 expectHighlightTypeFailure();
 expectWordWrapTypeFailure();
@@ -2763,6 +2768,9 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\tH.phoneTo(\"1234567890\", null, [H.className(\"phone-link\"), H.attr(\"country_code\", \"01\")]),",
     "\t\t\t<phone_to phone=\"5551234567\" text=\"Call support\" class=\"support-phone\" />,",
     "\t\t\t<phone_to phone=\"8005551212\" country_code=\"1\">Call sales</phone_to>,",
+    "\t\t\tH.smsTo(\"5155555785\", null, [H.className(\"sms-link\"), H.attr(\"body\", \"Status update\")]),",
+    "\t\t\t<sms_to phone=\"5155555785\" text=\"Text support\" class=\"support-sms\" />,",
+    "\t\t\t<sms_to phone=\"8005551212\" country_code=\"1\" body=\"Need help\">Text sales</sms_to>,",
     "\t\t\tH.pluralize(2, \"task\", null),",
     "\t\t\t<pluralize count=${3} singular=\"person\" plural=\"people\" />,",
     "\t\t\tH.simpleFormat(\"First line\\nSecond line\", [H.className(\"formatted-copy\")]),",
@@ -2841,6 +2849,9 @@ function expectCheckedAttrHelpersOutput() {
     '<%= phone_to "1234567890", nil, class: "phone-link", country_code: "01" %>',
     '<%= phone_to "5551234567", "Call support", class: "support-phone" %>',
     '<%= phone_to "8005551212", "Call sales", country_code: "1" %>',
+    '<%= sms_to "5155555785", nil, class: "sms-link", body: "Status update" %>',
+    '<%= sms_to "5155555785", "Text support", class: "support-sms" %>',
+    '<%= sms_to "8005551212", "Text sales", country_code: "1", body: "Need help" %>',
     '<%= pluralize 2, "task" %>',
     '<%= pluralize 3, "person", "people" %>',
     '<%= simple_format "First line\nSecond line", class: "formatted-copy" %>',
@@ -2961,6 +2972,35 @@ function expectPhoneToTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid phone_to value failed, but not with the expected String phone type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectSmsToTypeFailure() {
+  const result = compileCheckedAttrFixture(smsToInvalidSourceDir, smsToInvalidOutputDir, "InvalidSmsToMain", "InvalidSmsToView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_sms_to\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidSmsToView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.smsTo(42, null, []);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid sms_to phone value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid sms_to value failed, but not with the expected String phone type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

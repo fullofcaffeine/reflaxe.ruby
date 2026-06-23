@@ -6928,6 +6928,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplatePhoneTo(params[0], params[1], params[2], scope);
 						}
+					case "SmsTo":
+						if (params.length != 3) {
+							Context.error("HtmlNode.SmsTo expects phone, label, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateSmsTo(params[0], params[1], params[2], scope);
+						}
 					case "Pluralize":
 						if (params.length != 3) {
 							Context.error("HtmlNode.Pluralize expects count, singular, and plural arguments.", node.pos);
@@ -7552,6 +7559,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		args = args.concat(kwargs);
 		return "<%= phone_to " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateSmsTo(phone:TypedExpr, label:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		var args = [printTemplateExpr(phone, scope)];
+		if (isTemplateNull(label)) {
+			if (kwargs.length > 0) {
+				args.push("nil");
+			}
+		} else {
+			args.push(printTemplateExpr(label, scope));
+		}
+		args = args.concat(kwargs);
+		return "<%= sms_to " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplatePluralize(count:TypedExpr, singular:TypedExpr, plural:TypedExpr, scope:RailsTemplateScope):String {

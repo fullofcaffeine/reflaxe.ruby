@@ -73,6 +73,10 @@ class H {
 		return macro rails.action_view.HtmlNode.PhoneTo($phone, $label, $attrs);
 	}
 
+	public static macro function smsTo(phone:Expr, label:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.SmsTo($phone, $label, $attrs);
+	}
+
 	public static macro function pluralize(count:Expr, singular:Expr, plural:Expr):Expr {
 		return macro rails.action_view.HtmlNode.Pluralize($count, $singular, $plural);
 	}

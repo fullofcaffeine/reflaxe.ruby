@@ -22,6 +22,7 @@ enum HtmlNode {
 	ImageTag<TSource>(source:TSource, attrs:Array<HtmlAttr>);
 	MailTo<TEmail, TLabel>(email:TEmail, label:Null<TLabel>, attrs:Array<HtmlAttr>);
 	PhoneTo<TLabel>(phone:String, label:Null<TLabel>, attrs:Array<HtmlAttr>);
+	SmsTo<TLabel>(phone:String, label:Null<TLabel>, attrs:Array<HtmlAttr>);
 	Pluralize(count:Int, singular:String, plural:Null<String>);
 	SimpleFormat<TText>(text:TText, attrs:Array<HtmlAttr>);
 	Truncate<TText>(text:TText, length:Null<Int>, omission:Null<String>);
