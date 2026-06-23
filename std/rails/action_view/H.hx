@@ -238,6 +238,10 @@ class H {
 		return macro rails.action_view.HtmlNode.SubmitTag($value, $attrs);
 	}
 
+	public static macro function textFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.TextFieldTag($name, $value, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

@@ -1122,6 +1122,13 @@ private class RailsMarkupParser {
 				} else {
 					macro @:pos(pos) rails.action_view.HtmlNode.SubmitTag($submitValue, ${mkArray(submitAttrs.map(mkAttr), pos)});
 				}
+			case "text_field_tag":
+				rejectChildren(name, children, pos);
+				var fieldName = requireAttrValue(attrs, "name", pos);
+				var value = attrValue(attrs, "value");
+				var fieldAttrs = attrsExcept(attrs, ["name", "value"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.TextFieldTag($fieldName, ${value == null ? (macro null) : value},
+					${mkArray(fieldAttrs.map(mkAttr), pos)});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);
