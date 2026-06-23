@@ -246,6 +246,10 @@ class H {
 		return macro rails.action_view.HtmlNode.PasswordFieldTag($name, $value, $attrs);
 	}
 
+	public static macro function hiddenFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.HiddenFieldTag($name, $value, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

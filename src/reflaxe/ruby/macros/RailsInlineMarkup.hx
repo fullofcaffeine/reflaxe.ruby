@@ -1136,6 +1136,13 @@ private class RailsMarkupParser {
 				var fieldAttrs = attrsExcept(attrs, ["name", "value"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.PasswordFieldTag($fieldName, ${value == null ? (macro null) : value},
 					${mkArray(fieldAttrs.map(mkAttr), pos)});
+			case "hidden_field_tag":
+				rejectChildren(name, children, pos);
+				var fieldName = requireAttrValue(attrs, "name", pos);
+				var value = attrValue(attrs, "value");
+				var fieldAttrs = attrsExcept(attrs, ["name", "value"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.HiddenFieldTag($fieldName, ${value == null ? (macro null) : value},
+					${mkArray(fieldAttrs.map(mkAttr), pos)});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);
