@@ -7237,6 +7237,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateEmailFieldTag(params[0], params[1], params[2], scope);
 						}
+					case "TelephoneFieldTag":
+						if (params.length != 3) {
+							Context.error("HtmlNode.TelephoneFieldTag expects name, value, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateTelephoneFieldTag(params[0], params[1], params[2], scope);
+						}
 					case "PasswordFieldTag":
 						if (params.length != 3) {
 							Context.error("HtmlNode.PasswordFieldTag expects name, value, and attrs arguments.", node.pos);
@@ -8059,6 +8066,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push(isTemplateNull(value) ? "nil" : printTemplateExpr(value, scope));
 		}
 		return "<%= email_field_tag " + args.concat(kwargs).join(", ") + " %>";
+	}
+
+	static function lowerTemplateTelephoneFieldTag(name:TypedExpr, value:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [
+			rubySymbolLiteral(expectTemplateString(name, "HtmlNode.TelephoneFieldTag name must be a string literal."))
+		];
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		if (!isTemplateNull(value) || kwargs.length > 0) {
+			args.push(isTemplateNull(value) ? "nil" : printTemplateExpr(value, scope));
+		}
+		return "<%= telephone_field_tag " + args.concat(kwargs).join(", ") + " %>";
 	}
 
 	static function lowerTemplatePasswordFieldTag(name:TypedExpr, value:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

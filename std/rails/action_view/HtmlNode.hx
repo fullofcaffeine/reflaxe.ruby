@@ -67,6 +67,7 @@ enum HtmlNode {
 	TextFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	SearchFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	EmailFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
+	TelephoneFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	PasswordFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	HiddenFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	FileFieldTag(name:String, attrs:Array<HtmlAttr>);

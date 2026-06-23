@@ -96,6 +96,8 @@ const searchFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp
 const searchFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_search_field_tag_invalid_out");
 const emailFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_email_field_tag_invalid_src");
 const emailFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_email_field_tag_invalid_out");
+const telephoneFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_telephone_field_tag_invalid_src");
+const telephoneFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_telephone_field_tag_invalid_out");
 const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
 const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
@@ -336,6 +338,8 @@ rmSync(searchFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(searchFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(emailFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(emailFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(telephoneFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(telephoneFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidSourceDir, { force: true, recursive: true });
@@ -1402,6 +1406,7 @@ expectSubmitTagTypeFailure();
 expectTextFieldTagTypeFailure();
 expectSearchFieldTagTypeFailure();
 expectEmailFieldTagTypeFailure();
+expectTelephoneFieldTagTypeFailure();
 expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
@@ -2865,6 +2870,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<search_field_tag name=\"filter\" value=\"typed\" placeholder=\"Filter\" data-controller=\"filter\" />,",
     "\t\t\tH.emailFieldTag(\"contact_email\", \"ops@example.test\", [H.className(\"email-input\")]),",
     "\t\t\t<email_field_tag name=\"reply_to\" value=\"support@example.test\" placeholder=\"Email\" autocomplete=\"email\" />,",
+    "\t\t\tH.telephoneFieldTag(\"contact_phone\", \"5551234567\", [H.className(\"phone-input\")]),",
+    "\t\t\t<telephone_field_tag name=\"support_phone\" value=\"8005551212\" placeholder=\"Phone\" autocomplete=\"tel\" />,",
     "\t\t\tH.passwordFieldTag(\"admin_password\", null, [H.attr(\"autocomplete\", \"current-password\")]),",
     "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.hiddenFieldTag(\"return_to\", \"/todos\", [H.data(\"tracked\", \"true\")]),",
@@ -2984,6 +2991,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= search_field_tag :filter, "typed", placeholder: "Filter", data: {controller: "filter"} %>',
     '<%= email_field_tag :contact_email, "ops@example.test", class: "email-input" %>',
     '<%= email_field_tag :reply_to, "support@example.test", placeholder: "Email", autocomplete: "email" %>',
+    '<%= telephone_field_tag :contact_phone, "5551234567", class: "phone-input" %>',
+    '<%= telephone_field_tag :support_phone, "8005551212", placeholder: "Phone", autocomplete: "tel" %>',
     '<%= password_field_tag :admin_password, nil, autocomplete: "current-password" %>',
     '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= hidden_field_tag :return_to, "/todos", data: {tracked: "true"} %>',
@@ -3262,6 +3271,36 @@ function expectEmailFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid email_field_tag name failed, but not with the expected String name type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectTelephoneFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(telephoneFieldTagInvalidSourceDir, telephoneFieldTagInvalidOutputDir, "InvalidTelephoneFieldTagMain",
+    "InvalidTelephoneFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_telephone_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidTelephoneFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.telephoneFieldTag(42, null, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid telephone_field_tag name compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid telephone_field_tag name failed, but not with the expected String name type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
