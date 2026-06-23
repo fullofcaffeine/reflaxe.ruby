@@ -1164,6 +1164,14 @@ private class RailsMarkupParser {
 					macro @:pos(pos) rails.action_view.HtmlNode.TextAreaTag($fieldName, ${content == null ? (macro null) : content},
 						${mkArray(fieldAttrs.map(mkAttr), pos)});
 				}
+			case "check_box_tag":
+				rejectChildren(name, children, pos);
+				var fieldName = requireAttrValue(attrs, "name", pos);
+				var value = attrValue(attrs, "value");
+				var checked = attrValue(attrs, "checked");
+				var fieldAttrs = attrsExcept(attrs, ["name", "value", "checked"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.CheckBoxTag($fieldName, ${value == null ? (macro null) : value},
+					${checked == null ? (macro null) : checked}, ${mkArray(fieldAttrs.map(mkAttr), pos)});
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);

@@ -100,6 +100,8 @@ const fileFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_r
 const fileFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_file_field_tag_invalid_out");
 const textAreaTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_text_area_tag_invalid_src");
 const textAreaTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_text_area_tag_invalid_out");
+const checkBoxTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_check_box_tag_invalid_src");
+const checkBoxTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_check_box_tag_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -332,6 +334,8 @@ rmSync(fileFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(fileFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(textAreaTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(textAreaTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(checkBoxTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(checkBoxTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1388,6 +1392,7 @@ expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
 expectTextAreaTagTypeFailure();
+expectCheckBoxTagTypeFailure();
 expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
@@ -2849,6 +2854,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<file_field_tag name=\"attachment\" multiple=${true} direct_upload=${true} />,",
     "\t\t\tH.textAreaTag(\"notes\", \"Draft note\", [H.attr(\"rows\", \"4\")]),",
     "\t\t\t<text_area_tag name=\"comment\" rows=${3}>Typed comment</text_area_tag>,",
+    "\t\t\tH.checkBoxTag(\"published\", \"1\", true, [H.className(\"published-check\")]),",
+    "\t\t\t<check_box_tag name=\"archived\" value=\"yes\" checked=${false} data-controller=\"archive\" />,",
     "\t\t\tH.imageTag(\"avatar.png\", [H.attr(\"alt\", \"Profile avatar\"), H.className(\"avatar\"), H.data(\"direct-upload-url\", \"/rails/active_storage/direct_uploads\")]),",
     "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
     "\t\t\tH.pictureTag(\"hero.webp\", [H.attr(\"alt\", \"Hero image\"), H.className(\"hero-picture\")]),",
@@ -2960,6 +2967,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= file_field_tag :attachment, multiple: true, direct_upload: true %>',
     '<%= text_area_tag :notes, "Draft note", rows: "4" %>',
     '<%= text_area_tag :comment, "Typed comment", rows: 3 %>',
+    '<%= check_box_tag :published, "1", true, class: "published-check" %>',
+    '<%= check_box_tag :archived, "yes", false, data: {controller: "archive"} %>',
     '<%= image_tag "avatar.png", alt: "Profile avatar", class: "avatar", data: {direct_upload_url: "/rails/active_storage/direct_uploads"} %>',
     '<%= image_tag "badge.png", alt: "RailsHx badge", class: "badge" %>',
     '<%= picture_tag "hero.webp", alt: "Hero image", class: "hero-picture" %>',
@@ -3286,6 +3295,36 @@ function expectTextAreaTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid text_area_tag name failed, but not with the expected String name type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectCheckBoxTagTypeFailure() {
+  const result = compileCheckedAttrFixture(checkBoxTagInvalidSourceDir, checkBoxTagInvalidOutputDir, "InvalidCheckBoxTagMain",
+    "InvalidCheckBoxTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_check_box_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidCheckBoxTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.checkBoxTag(42, null, null, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid check_box_tag name compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid check_box_tag name failed, but not with the expected String name type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
