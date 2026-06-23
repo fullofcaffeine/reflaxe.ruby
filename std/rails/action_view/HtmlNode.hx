@@ -75,6 +75,7 @@ enum HtmlNode {
 	DateFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	TimeFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	DatetimeFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
+	MonthFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	PasswordFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	HiddenFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	FileFieldTag(name:String, attrs:Array<HtmlAttr>);
