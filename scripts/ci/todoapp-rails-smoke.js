@@ -102,6 +102,8 @@ const urlFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const urlFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_url_field_tag_invalid_out");
 const numberFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_field_tag_invalid_src");
 const numberFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_field_tag_invalid_out");
+const rangeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_range_field_tag_invalid_src");
+const rangeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_range_field_tag_invalid_out");
 const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
 const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
@@ -348,6 +350,8 @@ rmSync(urlFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(urlFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(numberFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(numberFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(rangeFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(rangeFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidSourceDir, { force: true, recursive: true });
@@ -1417,6 +1421,7 @@ expectEmailFieldTagTypeFailure();
 expectTelephoneFieldTagTypeFailure();
 expectUrlFieldTagTypeFailure();
 expectNumberFieldTagTypeFailure();
+expectRangeFieldTagTypeFailure();
 expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
@@ -2886,6 +2891,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<url_field_tag name=\"callback_url\" value=\"https://example.test/callback\" placeholder=\"URL\" data-controller=\"url\" />,",
     "\t\t\tH.numberFieldTag(\"quantity\", 3.5, [H.attr(\"min\", \"0\")]),",
     "\t\t\t<number_field_tag name=\"priority\" value=${2.5} min=${0} step=\"0.5\" />,",
+    "\t\t\tH.rangeFieldTag(\"completion\", 0.75, [H.attr(\"max\", \"1\")]),",
+    "\t\t\t<range_field_tag name=\"progress\" value=${0.5} min=${0} max=${1} step=\"0.1\" />,",
     "\t\t\tH.passwordFieldTag(\"admin_password\", null, [H.attr(\"autocomplete\", \"current-password\")]),",
     "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.hiddenFieldTag(\"return_to\", \"/todos\", [H.data(\"tracked\", \"true\")]),",
@@ -3011,6 +3018,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= url_field_tag :callback_url, "https://example.test/callback", placeholder: "URL", data: {controller: "url"} %>',
     '<%= number_field_tag :quantity, 3.5, min: "0" %>',
     '<%= number_field_tag :priority, 2.5, min: 0, step: "0.5" %>',
+    '<%= range_field_tag :completion, 0.75, max: "1" %>',
+    '<%= range_field_tag :progress, 0.5, min: 0, max: 1, step: "0.1" %>',
     '<%= password_field_tag :admin_password, nil, autocomplete: "current-password" %>',
     '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= hidden_field_tag :return_to, "/todos", data: {tracked: "true"} %>',
@@ -3379,6 +3388,36 @@ function expectNumberFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("String") || !output.includes("Float")) {
     console.error("Invalid number_field_tag value failed, but not with the expected Float value type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectRangeFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(rangeFieldTagInvalidSourceDir, rangeFieldTagInvalidOutputDir, "InvalidRangeFieldTagMain",
+    "InvalidRangeFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_range_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidRangeFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.rangeFieldTag(\"completion\", \"half\", []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid range_field_tag value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("String") || !output.includes("Float")) {
+    console.error("Invalid range_field_tag value failed, but not with the expected Float value type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

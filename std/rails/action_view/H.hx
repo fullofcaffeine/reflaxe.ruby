@@ -262,6 +262,10 @@ class H {
 		return macro rails.action_view.HtmlNode.NumberFieldTag($name, $value, $attrs);
 	}
 
+	public static macro function rangeFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.RangeFieldTag($name, $value, $attrs);
+	}
+
 	public static macro function passwordFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.PasswordFieldTag($name, $value, $attrs);
 	}

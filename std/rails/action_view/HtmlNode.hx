@@ -70,6 +70,7 @@ enum HtmlNode {
 	TelephoneFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	UrlFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	NumberFieldTag(name:String, value:Null<Float>, attrs:Array<HtmlAttr>);
+	RangeFieldTag(name:String, value:Null<Float>, attrs:Array<HtmlAttr>);
 	PasswordFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	HiddenFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	FileFieldTag(name:String, attrs:Array<HtmlAttr>);
