@@ -77,6 +77,10 @@ class H {
 		return macro rails.action_view.HtmlNode.JavascriptIncludeTag($source, $attrs);
 	}
 
+	public static macro function autoDiscoveryLinkTag(feedType:Expr, url:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.AutoDiscoveryLinkTag($feedType, $url, $attrs);
+	}
+
 	public static macro function audioTag(source:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.AudioTag($source, $attrs);
 	}

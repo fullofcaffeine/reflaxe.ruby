@@ -805,6 +805,12 @@ private class RailsMarkupParser {
 				var scriptSource = src == null ? source : src;
 				var scriptAttrs = attrsExcept(attrs, ["src", "source"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.JavascriptIncludeTag($scriptSource, ${mkArray(scriptAttrs.map(mkAttr), pos)});
+			case "auto_discovery_link_tag":
+				rejectChildren(name, children, pos);
+				var feedType = requireAttrValue(attrs, "type", pos);
+				var url = requireAttrValue(attrs, "url", pos);
+				var feedAttrs = attrsExcept(attrs, ["type", "url"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.AutoDiscoveryLinkTag($feedType, $url, ${mkArray(feedAttrs.map(mkAttr), pos)});
 			case "audio_tag":
 				rejectChildren(name, children, pos);
 				var src = attrValue(attrs, "src");

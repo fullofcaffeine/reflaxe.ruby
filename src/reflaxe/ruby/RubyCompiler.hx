@@ -6935,6 +6935,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateJavascriptIncludeTag(params[0], params[1], scope);
 						}
+					case "AutoDiscoveryLinkTag":
+						if (params.length != 3) {
+							Context.error("HtmlNode.AutoDiscoveryLinkTag expects feed type, url, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateAutoDiscoveryLinkTag(params[0], params[1], params[2], scope);
+						}
 					case "AudioTag":
 						if (params.length != 2) {
 							Context.error("HtmlNode.AudioTag expects source and attrs arguments.", node.pos);
@@ -7581,6 +7588,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateJavascriptIncludeTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= javascript_include_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateAutoDiscoveryLinkTag(feedType:TypedExpr, url:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [
+			rubySymbolLiteral(expectTemplateString(feedType, "HtmlNode.AutoDiscoveryLinkTag feed type must be a string literal.")),
+			printTemplateExpr(url, scope)
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= auto_discovery_link_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateAudioTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
