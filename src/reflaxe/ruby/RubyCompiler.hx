@@ -6914,6 +6914,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateImageTag(params[0], params[1], scope);
 						}
+					case "FaviconLinkTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FaviconLinkTag expects source and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFaviconLinkTag(params[0], params[1], scope);
+						}
 					case "MailTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.MailTo expects email, label, and attrs arguments.", node.pos);
@@ -7531,6 +7538,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplateImageTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= image_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFaviconLinkTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= favicon_link_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateMailTo(email:TypedExpr, label:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
