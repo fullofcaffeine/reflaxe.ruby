@@ -792,6 +792,19 @@ private class RailsMarkupParser {
 				var preloadSource = src == null ? source : src;
 				var preloadAttrs = attrsExcept(attrs, ["src", "source"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.PreloadLinkTag($preloadSource, ${mkArray(preloadAttrs.map(mkAttr), pos)});
+			case "audio_tag":
+				rejectChildren(name, children, pos);
+				var src = attrValue(attrs, "src");
+				var source = attrValue(attrs, "source");
+				if (src != null && source != null) {
+					Context.error('Rails HHX <audio_tag> accepts src=... or source=..., not both.', pos);
+				}
+				if (src == null && source == null) {
+					Context.error('Rails HHX <audio_tag> expects src=... or source=....', pos);
+				}
+				var audioSource = src == null ? source : src;
+				var audioAttrs = attrsExcept(attrs, ["src", "source"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.AudioTag($audioSource, ${mkArray(audioAttrs.map(mkAttr), pos)});
 			case "mail_to":
 				var email = requireAttrValue(attrs, "email", pos);
 				var explicitText = attrValue(attrs, "text");

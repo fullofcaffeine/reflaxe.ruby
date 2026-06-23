@@ -6928,6 +6928,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplatePreloadLinkTag(params[0], params[1], scope);
 						}
+					case "AudioTag":
+						if (params.length != 2) {
+							Context.error("HtmlNode.AudioTag expects source and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateAudioTag(params[0], params[1], scope);
+						}
 					case "MailTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.MailTo expects email, label, and attrs arguments.", node.pos);
@@ -7555,6 +7562,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function lowerTemplatePreloadLinkTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
 		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= preload_link_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateAudioTag(source:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [printTemplateExpr(source, scope)].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= audio_tag " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateMailTo(email:TypedExpr, label:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

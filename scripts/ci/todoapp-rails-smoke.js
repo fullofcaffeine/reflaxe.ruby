@@ -24,6 +24,8 @@ const faviconLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp
 const faviconLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_favicon_link_tag_invalid_out");
 const preloadLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_src");
 const preloadLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_out");
+const audioTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_audio_tag_invalid_src");
+const audioTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_audio_tag_invalid_out");
 const phoneToInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_phone_to_invalid_src");
 const phoneToInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_phone_to_invalid_out");
 const smsToInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_sms_to_invalid_src");
@@ -230,6 +232,8 @@ rmSync(faviconLinkTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(faviconLinkTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(preloadLinkTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(preloadLinkTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(audioTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(audioTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(phoneToInvalidSourceDir, { force: true, recursive: true });
 rmSync(phoneToInvalidOutputDir, { force: true, recursive: true });
 rmSync(smsToInvalidSourceDir, { force: true, recursive: true });
@@ -1331,6 +1335,7 @@ expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
+expectAudioTagTypeFailure();
 expectPhoneToTypeFailure();
 expectSmsToTypeFailure();
 expectExcerptTypeFailure();
@@ -2776,6 +2781,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<favicon_link_tag src=\"touch-icon.png\" rel=\"apple-touch-icon\" type=\"image/png\" />,",
     "\t\t\tH.preloadLinkTag(\"application.css\", [H.attr(\"as\", \"style\"), H.attr(\"type\", \"text/css\")]),",
     "\t\t\t<preload_link_tag src=\"app.js\" as=\"script\" crossorigin=\"anonymous\" />,",
+    "\t\t\tH.audioTag(\"intro.mp3\", [H.boolAttr(\"controls\"), H.className(\"intro-audio\")]),",
+    "\t\t\t<audio_tag src=\"notify.wav\" autoplay=${true} controls=${true} />,",
     "\t\t\tH.mailTo(\"support@example.test\", null, [H.className(\"support-link\")]),",
     "\t\t\t<mail_to email=\"admin@example.test\" text=\"Email admin\" class=\"admin-link\" />,",
     "\t\t\t<mail_to email=\"ops@example.test\">Ops desk</mail_to>,",
@@ -2861,6 +2868,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= favicon_link_tag "touch-icon.png", rel: "apple-touch-icon", type: "image/png" %>',
     '<%= preload_link_tag "application.css", as: "style", type: "text/css" %>',
     '<%= preload_link_tag "app.js", as: "script", crossorigin: "anonymous" %>',
+    '<%= audio_tag "intro.mp3", controls: true, class: "intro-audio" %>',
+    '<%= audio_tag "notify.wav", autoplay: true, controls: true %>',
     '<%= mail_to "support@example.test", nil, class: "support-link" %>',
     '<%= mail_to "admin@example.test", "Email admin", class: "admin-link" %>',
     '<%= mail_to "ops@example.test", "Ops desk" %>',
@@ -3021,6 +3030,35 @@ function expectPreloadLinkTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid preload_link_tag source failed, but not with the expected String source type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectAudioTagTypeFailure() {
+  const result = compileCheckedAttrFixture(audioTagInvalidSourceDir, audioTagInvalidOutputDir, "InvalidAudioTagMain", "InvalidAudioTagView", [
+    "package views;",
+    "",
+    "import rails.action_view.H;",
+    "import rails.action_view.HtmlNode;",
+    "",
+    "@:railsTemplate(\"controllers/todos/invalid_audio_tag\")",
+    "@:railsTemplateAst(\"render\")",
+    "class InvalidAudioTagView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn H.audioTag(42, []);",
+    "\t}",
+    "}",
+    "",
+  ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid audio_tag source value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid audio_tag source failed, but not with the expected String source type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
