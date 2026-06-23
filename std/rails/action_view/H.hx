@@ -69,6 +69,10 @@ class H {
 		return macro rails.action_view.HtmlNode.FaviconLinkTag($source, $attrs);
 	}
 
+	public static macro function preloadLinkTag(source:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.PreloadLinkTag($source, $attrs);
+	}
+
 	public static macro function mailTo(email:Expr, label:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.MailTo($email, $label, $attrs);
 	}

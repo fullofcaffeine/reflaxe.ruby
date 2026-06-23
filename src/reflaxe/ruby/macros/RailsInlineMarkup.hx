@@ -779,6 +779,19 @@ private class RailsMarkupParser {
 				var faviconSource = src == null ? source : src;
 				var faviconAttrs = attrsExcept(attrs, ["src", "source"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.FaviconLinkTag($faviconSource, ${mkArray(faviconAttrs.map(mkAttr), pos)});
+			case "preload_link_tag":
+				rejectChildren(name, children, pos);
+				var src = attrValue(attrs, "src");
+				var source = attrValue(attrs, "source");
+				if (src != null && source != null) {
+					Context.error('Rails HHX <preload_link_tag> accepts src=... or source=..., not both.', pos);
+				}
+				if (src == null && source == null) {
+					Context.error('Rails HHX <preload_link_tag> expects src=... or source=....', pos);
+				}
+				var preloadSource = src == null ? source : src;
+				var preloadAttrs = attrsExcept(attrs, ["src", "source"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.PreloadLinkTag($preloadSource, ${mkArray(preloadAttrs.map(mkAttr), pos)});
 			case "mail_to":
 				var email = requireAttrValue(attrs, "email", pos);
 				var explicitText = attrValue(attrs, "text");

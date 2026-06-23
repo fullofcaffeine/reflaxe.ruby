@@ -21,6 +21,7 @@ enum HtmlNode {
 	LinkToBlock<TUrl>(url:TUrl, attrs:Array<HtmlAttr>, children:Array<HtmlNode>);
 	ImageTag<TSource>(source:TSource, attrs:Array<HtmlAttr>);
 	FaviconLinkTag(source:String, attrs:Array<HtmlAttr>);
+	PreloadLinkTag(source:String, attrs:Array<HtmlAttr>);
 	MailTo<TEmail, TLabel>(email:TEmail, label:Null<TLabel>, attrs:Array<HtmlAttr>);
 	PhoneTo<TLabel>(phone:String, label:Null<TLabel>, attrs:Array<HtmlAttr>);
 	SmsTo<TLabel>(phone:String, label:Null<TLabel>, attrs:Array<HtmlAttr>);

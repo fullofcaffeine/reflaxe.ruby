@@ -22,6 +22,8 @@ const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
 const faviconLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_favicon_link_tag_invalid_src");
 const faviconLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_favicon_link_tag_invalid_out");
+const preloadLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_src");
+const preloadLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_out");
 const phoneToInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_phone_to_invalid_src");
 const phoneToInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_phone_to_invalid_out");
 const smsToInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_sms_to_invalid_src");
@@ -226,6 +228,8 @@ rmSync(checkedAttrInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkedAttrInvalidOutputDir, { force: true, recursive: true });
 rmSync(faviconLinkTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(faviconLinkTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(preloadLinkTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(preloadLinkTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(phoneToInvalidSourceDir, { force: true, recursive: true });
 rmSync(phoneToInvalidOutputDir, { force: true, recursive: true });
 rmSync(smsToInvalidSourceDir, { force: true, recursive: true });
@@ -1326,6 +1330,7 @@ expectTypedPartialLocalsFailure();
 expectCheckedAttrHelpersOutput();
 expectCheckedAttrHelpersFailure();
 expectFaviconLinkTagTypeFailure();
+expectPreloadLinkTagTypeFailure();
 expectPhoneToTypeFailure();
 expectSmsToTypeFailure();
 expectExcerptTypeFailure();
@@ -2769,6 +2774,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
     "\t\t\tH.faviconLinkTag(\"favicon.ico\", [H.attr(\"rel\", \"shortcut icon\")]),",
     "\t\t\t<favicon_link_tag src=\"touch-icon.png\" rel=\"apple-touch-icon\" type=\"image/png\" />,",
+    "\t\t\tH.preloadLinkTag(\"application.css\", [H.attr(\"as\", \"style\"), H.attr(\"type\", \"text/css\")]),",
+    "\t\t\t<preload_link_tag src=\"app.js\" as=\"script\" crossorigin=\"anonymous\" />,",
     "\t\t\tH.mailTo(\"support@example.test\", null, [H.className(\"support-link\")]),",
     "\t\t\t<mail_to email=\"admin@example.test\" text=\"Email admin\" class=\"admin-link\" />,",
     "\t\t\t<mail_to email=\"ops@example.test\">Ops desk</mail_to>,",
@@ -2852,6 +2859,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= image_tag "badge.png", alt: "RailsHx badge", class: "badge" %>',
     '<%= favicon_link_tag "favicon.ico", rel: "shortcut icon" %>',
     '<%= favicon_link_tag "touch-icon.png", rel: "apple-touch-icon", type: "image/png" %>',
+    '<%= preload_link_tag "application.css", as: "style", type: "text/css" %>',
+    '<%= preload_link_tag "app.js", as: "script", crossorigin: "anonymous" %>',
     '<%= mail_to "support@example.test", nil, class: "support-link" %>',
     '<%= mail_to "admin@example.test", "Email admin", class: "admin-link" %>',
     '<%= mail_to "ops@example.test", "Ops desk" %>',
@@ -2982,6 +2991,36 @@ function expectFaviconLinkTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid favicon_link_tag source failed, but not with the expected String source type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectPreloadLinkTagTypeFailure() {
+  const result = compileCheckedAttrFixture(preloadLinkTagInvalidSourceDir, preloadLinkTagInvalidOutputDir, "InvalidPreloadLinkTagMain",
+    "InvalidPreloadLinkTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_preload_link_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidPreloadLinkTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.preloadLinkTag(42, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid preload_link_tag source value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid preload_link_tag source failed, but not with the expected String source type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
