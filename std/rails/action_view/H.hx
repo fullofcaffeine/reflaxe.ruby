@@ -258,6 +258,10 @@ class H {
 		return macro rails.action_view.HtmlNode.UrlFieldTag($name, $value, $attrs);
 	}
 
+	public static macro function numberFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.NumberFieldTag($name, $value, $attrs);
+	}
+
 	public static macro function passwordFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.PasswordFieldTag($name, $value, $attrs);
 	}
