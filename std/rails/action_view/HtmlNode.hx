@@ -68,6 +68,7 @@ enum HtmlNode {
 	PasswordFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	HiddenFieldTag(name:String, value:Null<String>, attrs:Array<HtmlAttr>);
 	FileFieldTag(name:String, attrs:Array<HtmlAttr>);
+	TextAreaTag(name:String, content:Null<String>, attrs:Array<HtmlAttr>);
 	// Rails `button_to` has both normal and block forms. Keeping separate AST
 	// nodes lets HHX lower simple labels to `button_to "Label", path` and
 	// nested markup to `button_to path do ... end` without runtime wrappers.

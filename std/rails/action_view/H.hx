@@ -254,6 +254,10 @@ class H {
 		return macro rails.action_view.HtmlNode.FileFieldTag($name, $attrs);
 	}
 
+	public static macro function textAreaTag(name:Expr, content:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.TextAreaTag($name, $content, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

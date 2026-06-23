@@ -1148,6 +1148,22 @@ private class RailsMarkupParser {
 				var fieldName = requireAttrValue(attrs, "name", pos);
 				var fieldAttrs = attrsExcept(attrs, ["name"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.FileFieldTag($fieldName, ${mkArray(fieldAttrs.map(mkAttr), pos)});
+			case "text_area_tag":
+				var fieldName = requireAttrValue(attrs, "name", pos);
+				var contentAttr = attrValue(attrs, "content");
+				var valueAttr = attrValue(attrs, "value");
+				if (contentAttr != null && valueAttr != null) {
+					Context.error('Rails HHX <text_area_tag> accepts content=... or value=..., not both.', pos);
+				}
+				var content = contentAttr != null ? contentAttr : (valueAttr != null ? valueAttr : textChildExpr(children, pos));
+				var fieldAttrs = attrsExcept(attrs, ["name", "content", "value"]);
+				if (content == null && children.length > 0) {
+					Context.error('Rails HHX <text_area_tag> accepts only text/expression children when content=... or value=... is omitted.', pos);
+					macro null;
+				} else {
+					macro @:pos(pos) rails.action_view.HtmlNode.TextAreaTag($fieldName, ${content == null ? (macro null) : content},
+						${mkArray(fieldAttrs.map(mkAttr), pos)});
+				}
 			case "button_to":
 				var url = requireAttrValue(attrs, "url", pos);
 				var buttonAttrs = attrsExcept(attrs, ["text", "url"]);

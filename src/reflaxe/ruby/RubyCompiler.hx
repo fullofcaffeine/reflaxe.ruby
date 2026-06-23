@@ -7244,6 +7244,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFileFieldTag(params[0], params[1], scope);
 						}
+					case "TextAreaTag":
+						if (params.length != 3) {
+							Context.error("HtmlNode.TextAreaTag expects name, content, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateTextAreaTag(params[0], params[1], params[2], scope);
+						}
 					case "ButtonTo":
 						if (params.length != 3) {
 							Context.error("HtmlNode.ButtonTo expects label, url, and attrs arguments.", node.pos);
@@ -8031,6 +8038,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			rubySymbolLiteral(expectTemplateString(name, "HtmlNode.FileFieldTag name must be a string literal."))
 		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= file_field_tag " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateTextAreaTag(name:TypedExpr, content:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [
+			rubySymbolLiteral(expectTemplateString(name, "HtmlNode.TextAreaTag name must be a string literal."))
+		];
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		if (!isTemplateNull(content) || kwargs.length > 0) {
+			args.push(isTemplateNull(content) ? "nil" : printTemplateExpr(content, scope));
+		}
+		return "<%= text_area_tag " + args.concat(kwargs).join(", ") + " %>";
 	}
 
 	static function lowerTemplateButtonToBlock(url:TypedExpr, attrs:TypedExpr, childrenExpr:TypedExpr, scope:RailsTemplateScope):String {
