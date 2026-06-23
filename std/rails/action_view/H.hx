@@ -77,6 +77,10 @@ class H {
 		return macro rails.action_view.HtmlNode.AudioTag($source, $attrs);
 	}
 
+	public static macro function videoTag(source:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.VideoTag($source, $attrs);
+	}
+
 	public static macro function mailTo(email:Expr, label:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.MailTo($email, $label, $attrs);
 	}
