@@ -250,6 +250,10 @@ class H {
 		return macro rails.action_view.HtmlNode.HiddenFieldTag($name, $value, $attrs);
 	}
 
+	public static macro function fileFieldTag(name:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FileFieldTag($name, $attrs);
+	}
+
 	public static macro function buttonTo(label:Expr, url:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.ButtonTo($label, $url, $attrs);
 	}

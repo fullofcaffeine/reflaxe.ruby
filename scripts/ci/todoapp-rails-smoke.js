@@ -96,6 +96,8 @@ const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoa
 const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
 const hiddenFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_out");
+const fileFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_file_field_tag_invalid_src");
+const fileFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_file_field_tag_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -324,6 +326,8 @@ rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(fileFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(fileFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1378,6 +1382,7 @@ expectSubmitTagTypeFailure();
 expectTextFieldTagTypeFailure();
 expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
+expectFileFieldTagTypeFailure();
 expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
@@ -2835,6 +2840,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.hiddenFieldTag(\"return_to\", \"/todos\", [H.data(\"tracked\", \"true\")]),",
     "\t\t\t<hidden_field_tag name=\"source\" value=\"typed\" data-controller=\"source\" />,",
+    "\t\t\tH.fileFieldTag(\"avatar\", [H.attr(\"accept\", \"image/png\")]),",
+    "\t\t\t<file_field_tag name=\"attachment\" multiple=${true} direct_upload=${true} />,",
     "\t\t\tH.imageTag(\"avatar.png\", [H.attr(\"alt\", \"Profile avatar\"), H.className(\"avatar\"), H.data(\"direct-upload-url\", \"/rails/active_storage/direct_uploads\")]),",
     "\t\t\t<image_tag src=\"badge.png\" alt=\"RailsHx badge\" class=\"badge\" />,",
     "\t\t\tH.pictureTag(\"hero.webp\", [H.attr(\"alt\", \"Hero image\"), H.className(\"hero-picture\")]),",
@@ -2942,6 +2949,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= hidden_field_tag :return_to, "/todos", data: {tracked: "true"} %>',
     '<%= hidden_field_tag :source, "typed", data: {controller: "source"} %>',
+    '<%= file_field_tag :avatar, accept: "image/png" %>',
+    '<%= file_field_tag :attachment, multiple: true, direct_upload: true %>',
     '<%= image_tag "avatar.png", alt: "Profile avatar", class: "avatar", data: {direct_upload_url: "/rails/active_storage/direct_uploads"} %>',
     '<%= image_tag "badge.png", alt: "RailsHx badge", class: "badge" %>',
     '<%= picture_tag "hero.webp", alt: "Hero image", class: "hero-picture" %>',
@@ -3208,6 +3217,36 @@ function expectHiddenFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid hidden_field_tag name failed, but not with the expected String name type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectFileFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(fileFieldTagInvalidSourceDir, fileFieldTagInvalidOutputDir, "InvalidFileFieldTagMain",
+    "InvalidFileFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_file_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidFileFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.fileFieldTag(42, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid file_field_tag name compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid file_field_tag name failed, but not with the expected String name type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
