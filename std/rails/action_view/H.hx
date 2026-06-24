@@ -286,6 +286,10 @@ class H {
 		return macro rails.action_view.HtmlNode.MonthFieldTag($name, $value, $attrs);
 	}
 
+	public static macro function weekFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.WeekFieldTag($name, $value, $attrs);
+	}
+
 	public static macro function passwordFieldTag(name:Expr, value:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.PasswordFieldTag($name, $value, $attrs);
 	}

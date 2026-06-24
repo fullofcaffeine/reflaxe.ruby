@@ -7300,6 +7300,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateMonthFieldTag(params[0], params[1], params[2], scope);
 						}
+					case "WeekFieldTag":
+						if (params.length != 3) {
+							Context.error("HtmlNode.WeekFieldTag expects name, value, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateWeekFieldTag(params[0], params[1], params[2], scope);
+						}
 					case "PasswordFieldTag":
 						if (params.length != 3) {
 							Context.error("HtmlNode.PasswordFieldTag expects name, value, and attrs arguments.", node.pos);
@@ -8221,6 +8228,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push(isTemplateNull(value) ? "nil" : printTemplateExpr(value, scope));
 		}
 		return "<%= month_field_tag " + args.concat(kwargs).join(", ") + " %>";
+	}
+
+	static function lowerTemplateWeekFieldTag(name:TypedExpr, value:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var args = [
+			rubySymbolLiteral(expectTemplateString(name, "HtmlNode.WeekFieldTag name must be a string literal."))
+		];
+		var kwargs = lowerTemplateHelperAttrs(attrs, scope);
+		if (!isTemplateNull(value) || kwargs.length > 0) {
+			args.push(isTemplateNull(value) ? "nil" : printTemplateExpr(value, scope));
+		}
+		return "<%= week_field_tag " + args.concat(kwargs).join(", ") + " %>";
 	}
 
 	static function lowerTemplatePasswordFieldTag(name:TypedExpr, value:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

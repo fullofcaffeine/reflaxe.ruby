@@ -114,6 +114,8 @@ const datetimeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoa
 const datetimeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_datetime_field_tag_invalid_out");
 const monthFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_month_field_tag_invalid_src");
 const monthFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_month_field_tag_invalid_out");
+const weekFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_week_field_tag_invalid_src");
+const weekFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_week_field_tag_invalid_out");
 const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
 const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
 const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
@@ -372,6 +374,8 @@ rmSync(datetimeFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(datetimeFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(monthFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(monthFieldTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(weekFieldTagInvalidSourceDir, { force: true, recursive: true });
+rmSync(weekFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(passwordFieldTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(hiddenFieldTagInvalidSourceDir, { force: true, recursive: true });
@@ -1447,6 +1451,7 @@ expectDateFieldTagTypeFailure();
 expectTimeFieldTagTypeFailure();
 expectDatetimeFieldTagTypeFailure();
 expectMonthFieldTagTypeFailure();
+expectWeekFieldTagTypeFailure();
 expectPasswordFieldTagTypeFailure();
 expectHiddenFieldTagTypeFailure();
 expectFileFieldTagTypeFailure();
@@ -2928,6 +2933,8 @@ function expectCheckedAttrHelpersOutput() {
     "\t\t\t<datetime_field_tag name=\"published_at\" value=\"2026-07-01T17:45\" min=\"2026-01-01T00:00\" data-controller=\"datetime\" />,",
     "\t\t\tH.monthFieldTag(\"billing_month\", \"2026-06\", [H.className(\"month-input\")]),",
     "\t\t\t<month_field_tag name=\"archive_month\" value=\"2026-07\" min=\"2026-01\" data-controller=\"month\" />,",
+    "\t\t\tH.weekFieldTag(\"billing_week\", \"2026-W26\", [H.className(\"week-input\")]),",
+    "\t\t\t<week_field_tag name=\"archive_week\" value=\"2026-W27\" min=\"2026-W01\" data-controller=\"week\" />,",
     "\t\t\tH.passwordFieldTag(\"admin_password\", null, [H.attr(\"autocomplete\", \"current-password\")]),",
     "\t\t\t<password_field_tag name=\"token\" value=\"secret\" autocomplete=\"one-time-code\" />,",
     "\t\t\tH.hiddenFieldTag(\"return_to\", \"/todos\", [H.data(\"tracked\", \"true\")]),",
@@ -3065,6 +3072,8 @@ function expectCheckedAttrHelpersOutput() {
     '<%= datetime_field_tag :published_at, "2026-07-01T17:45", min: "2026-01-01T00:00", data: {controller: "datetime"} %>',
     '<%= month_field_tag :billing_month, "2026-06", class: "month-input" %>',
     '<%= month_field_tag :archive_month, "2026-07", min: "2026-01", data: {controller: "month"} %>',
+    '<%= week_field_tag :billing_week, "2026-W26", class: "week-input" %>',
+    '<%= week_field_tag :archive_week, "2026-W27", min: "2026-W01", data: {controller: "week"} %>',
     '<%= password_field_tag :admin_password, nil, autocomplete: "current-password" %>',
     '<%= password_field_tag :token, "secret", autocomplete: "one-time-code" %>',
     '<%= hidden_field_tag :return_to, "/todos", data: {tracked: "true"} %>',
@@ -3613,6 +3622,36 @@ function expectMonthFieldTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid month_field_tag value failed, but not with the expected String value type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectWeekFieldTagTypeFailure() {
+  const result = compileCheckedAttrFixture(weekFieldTagInvalidSourceDir, weekFieldTagInvalidOutputDir, "InvalidWeekFieldTagMain",
+    "InvalidWeekFieldTagView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_week_field_tag\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidWeekFieldTagView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.weekFieldTag(\"billing_week\", 202626, []);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid week_field_tag value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid week_field_tag value failed, but not with the expected String value type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
