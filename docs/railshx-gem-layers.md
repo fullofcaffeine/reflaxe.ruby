@@ -200,6 +200,21 @@ and controller lifecycle hooks.
   mark uncertain APIs for review, and pass Ruby syntax, Rails runtime, and
   route/schema/helper parity gates where applicable.
 
+### DeviseHx Incubation And Release
+
+DeviseHx currently ships as an incubated companion layer inside the main
+`reflaxe.ruby` haxelib and `hxruby` generator bridge. The haxelib package must
+include `std/devisehx/**`; the Ruby gem must continue exposing
+`hxruby:adopt --gem devise` without declaring Devise as an `hxruby` runtime
+dependency. Rails apps keep Devise in their own `Gemfile`, and Bundler remains
+the runtime version owner.
+
+The reusable release checklist lives in
+[`railshx-devisehx-release-lane.md`](railshx-devisehx-release-lane.md). It
+records the current package shape, the CI lanes that cover DeviseHx across the
+supported Ruby matrix, the explicit security/escape-hatch boundaries, and the
+criteria for splitting into standalone `devisehx` / `hxruby-devise` packages.
+
 ## Testing Policy
 
 Typed gem layers should not re-test the Ruby gem they wrap. DeviseHx, for

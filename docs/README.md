@@ -29,6 +29,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Gem-Layer Testing](railshx-gem-layer-testing.md): testing pyramid for reusable RailsHx companion packages over Ruby gems.
 - [DeviseHx GPT 5.5 Pro Prompt](railshx-devisehx-gpt55-prompt.md): required pre-implementation design review packet for the reusable Devise companion layer.
 - [DeviseHx Design](railshx-devisehx-design.md): folded GPT 5.5 Pro review, API shape, extraction strategy, escape hatches, tests, and rollout plan.
+- [DeviseHx Release Lane](railshx-devisehx-release-lane.md): incubated package metadata, CI gates, security/release checklist, and standalone split criteria.
 - [Testing Strategy](railshx-testing-strategy.md): snapshots, smoke tests, Rails runtime tests, and Playwright.
 - [Typed API Production Gap Audit](railshx-typed-api-production-gap-audit.md): current typed API gaps.
 

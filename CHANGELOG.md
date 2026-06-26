@@ -1,3 +1,9 @@
+## Unreleased
+
+### Documentation
+
+* document the incubated DeviseHx release lane, package split criteria, and CI/security gates
+
 ## [0.1.0-beta.2](https://github.com/fullofcaffeine/reflaxe.ruby/compare/d5b5e15...v0.1.0-beta.2) (2026-06-16)
 
 ### Documentation

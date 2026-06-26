@@ -689,6 +689,12 @@ Required coverage:
    `examples/devisehx_todoapp` for larger Devise matrices.
 10. Harden packaging/release lanes and version matrix.
 
+The package/release contract for step 10 is tracked in
+[`railshx-devisehx-release-lane.md`](railshx-devisehx-release-lane.md). Until
+the standalone split criteria are green, DeviseHx remains incubated in the main
+`reflaxe.ruby` haxelib plus the `hxruby` generator bridge, while Rails apps own
+their Devise runtime dependency through Bundler.
+
 `examples/todoapp_rails` now carries the first integrated DeviseHx slice:
 Devise-backed sessions, a Haxe-owned guest sign-in route, protected controllers,
 typed `UserAuth.current/currentRequired/signIn`, `@:devise(...)` model metadata,

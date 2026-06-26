@@ -402,6 +402,13 @@ rake package:haxelib:test
 
 Semantic-release runs the same package builder during release preparation and attaches `dist/reflaxe.ruby-*.zip` to the GitHub release.
 
+The incubated DeviseHx Haxe API currently ships inside this haxelib package
+under `std/devisehx/**`. Its release contract is documented in
+[DeviseHx Release Lane](docs/railshx-devisehx-release-lane.md): Rails apps keep
+the Devise gem in their own Bundler environment, while `reflaxe.ruby` ships the
+typed Haxe companion API and checks package contents in
+`npm run test:haxelib-package`.
+
 ## Ruby Gem Package
 
 Build the `hxruby` runtime gem locally with:
@@ -470,6 +477,13 @@ typed HHX view path too: the index action renders `Template.of(IndexView)` with
 typed locals, and the compiler emits ordinary Rails ERB under `app/views/**`.
 
 Plain `require "hxruby"` has no gem runtime dependencies. The task entrypoint requires `rake`, which is available in the supported CI Rubies and normal Rails applications.
+
+For DeviseHx, `hxruby` is the generator bridge rather than an auth runtime: it
+exposes `bin/rails generate hxruby:adopt --gem devise`, writes deterministic
+inventory/contracts/docs under app ownership, and does not add a Devise runtime
+dependency to the `hxruby` gem. See
+[DeviseHx Release Lane](docs/railshx-devisehx-release-lane.md) for the split
+criteria before publishing a standalone `devisehx` or `hxruby-devise` package.
 
 Semantic-release builds the gem during release preparation and attaches `dist/hxruby-*.gem` to the GitHub release.
 
