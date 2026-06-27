@@ -383,6 +383,7 @@ for (const expected of [
   "scope :incomplete, -> { where(completed: false) }",
   "scope :with_status, ->(status__hx0) { where(status: status__hx0) }",
   "default_scope -> { order(title: :asc) }",
+  "validates :title, presence: true, length: {minimum: 3}",
   "validates :external_id, presence: true, uniqueness: true",
   "before_validation :normalize_title",
   "after_commit :publish_lifecycle_event",

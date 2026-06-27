@@ -40,7 +40,7 @@ class User extends rails.active_record.Base<User> implements DeviseResource<User
 
 	@:hasMany public var chatMessages:rails.ActiveRecord.HasMany<ChatMessage>;
 
-	@:validates({presence: true})
+	@:validates({presence: true, length: {minimum: 2}})
 	public var nameValidation:rails.ActiveRecord.Validation<String>;
 
 	@:validates({presence: true, uniqueness: true})
