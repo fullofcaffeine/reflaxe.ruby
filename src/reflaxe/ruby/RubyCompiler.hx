@@ -5601,6 +5601,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (typedBoolLiteral(field.expr, "MigrationIndex unique")) {
 								options.push("unique: true");
 							}
+						case "name":
+							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr, "MigrationIndex name")));
 						case _:
 							Context.error('@:railsMigration unknown MigrationIndex option ${field.name}.', field.expr.pos);
 					}
@@ -5727,6 +5729,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return "invalid";
 		}
 		return RubyNaming.toMethodName(value);
+	}
+
+	// Rails index names become generated Ruby identifiers, so keep the Haxe
+	// authoring surface literal-only and path-safe before emitting migration code.
+	static function railsMigrationSafeIdentifier(expr:TypedExpr, label:String):String {
+		var value = typedStringLiteral(expr);
+		if (value == null || value == "" || value.indexOf("/") != -1 || value.indexOf("\\") != -1 || value.indexOf(".") != -1
+			|| !~/^[a-z][a-z0-9_]*$/.match(value)) {
+			Context.error('@:railsMigration ${label} must be a safe Rails identifier such as "index_todos_on_title".', expr.pos);
+			return "invalid";
+		}
+		return value;
 	}
 
 	static function railsMigrationSymbolArrayArg(expr:TypedExpr, label:String):Array<String> {

@@ -12,10 +12,10 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
       end
     end
     add_column :todos, :priority, :integer, null: false, default: 0
-    add_index :todos, :priority
+    add_index :todos, :priority, name: "index_todos_on_priority"
     reversible do |dir|
       dir.up do
-        add_index :todos, [:user_id, :priority]
+        add_index :todos, [:user_id, :priority], name: "index_todos_on_user_id_and_priority"
       end
       dir.down do
         remove_index :todos, column: [:user_id, :priority]

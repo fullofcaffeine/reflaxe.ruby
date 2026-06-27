@@ -182,6 +182,8 @@ const migrationUnknownTableSourceDir = join(root, "test", ".generated", "todoapp
 const migrationUnknownTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_table_out");
 const migrationUnknownColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_src");
 const migrationUnknownColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_out");
+const migrationUnsafeIndexNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_index_name_src");
+const migrationUnsafeIndexNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_index_name_out");
 const migrationExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_src");
 const migrationExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_out");
 const migrationUnsafeExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_external_table_src");
@@ -448,6 +450,8 @@ rmSync(migrationUnknownTableSourceDir, { force: true, recursive: true });
 rmSync(migrationUnknownTableOutputDir, { force: true, recursive: true });
 rmSync(migrationUnknownColumnSourceDir, { force: true, recursive: true });
 rmSync(migrationUnknownColumnOutputDir, { force: true, recursive: true });
+rmSync(migrationUnsafeIndexNameSourceDir, { force: true, recursive: true });
+rmSync(migrationUnsafeIndexNameOutputDir, { force: true, recursive: true });
 rmSync(migrationExternalTableSourceDir, { force: true, recursive: true });
 rmSync(migrationExternalTableOutputDir, { force: true, recursive: true });
 rmSync(migrationUnsafeExternalTableSourceDir, { force: true, recursive: true });
@@ -931,8 +935,8 @@ for (const expected of [
   "remove_foreign_key :todos, :users",
   "change_column :todos, :title, :string",
   "add_column :todos, :priority, :integer, null: false, default: 0",
-  "add_index :todos, :priority",
-  "add_index :todos, [:user_id, :priority]",
+  'add_index :todos, :priority, name: "index_todos_on_priority"',
+  'add_index :todos, [:user_id, :priority], name: "index_todos_on_user_id_and_priority"',
   "remove_index :todos, column: [:user_id, :priority]",
   "execute \"UPDATE todos SET priority = 0 WHERE priority IS NULL\"",
   "execute \"UPDATE todos SET priority = NULL WHERE priority = 0\"",
@@ -1543,6 +1547,7 @@ expectMigrationForeignKeyOrderFailure();
 expectMigrationIrreversibleOperationFailure();
 expectMigrationUnknownTableFailure();
 expectMigrationUnknownColumnFailure();
+expectMigrationUnsafeIndexNameFailure();
 expectMigrationExternalTableAllowed();
 expectMigrationUnsafeExternalTableFailure();
 expectMigrationDropTableReversibleOutput();
@@ -2224,6 +2229,47 @@ function expectMigrationUnknownColumnFailure() {
     "InvalidUnknownColumnMigrationMain",
     "Unknown-column RailsHx migration compiled successfully.",
     "@:railsMigration AddIndex column references unknown column \"missing_title\" on table \"todos\""
+  );
+}
+
+function expectMigrationUnsafeIndexNameFailure() {
+  mkdirSync(join(migrationUnsafeIndexNameSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationUnsafeIndexNameSourceDir, "InvalidUnsafeIndexNameMigrationMain.hx"), [
+    "import migrations.BadUnsafeIndexNameMigration;",
+    "",
+    "class InvalidUnsafeIndexNameMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadUnsafeIndexNameMigration> = BadUnsafeIndexNameMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationUnsafeIndexNameSourceDir, "migrations", "BadUnsafeIndexNameMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000018\",",
+    "\tclassName: \"BadUnsafeIndexNameMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadUnsafeIndexNameMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddIndex(\"todos\", \"title\", {name: \"../bad_index\"})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationUnsafeIndexNameSourceDir,
+    migrationUnsafeIndexNameOutputDir,
+    "InvalidUnsafeIndexNameMigrationMain",
+    "Unsafe index-name RailsHx migration compiled successfully.",
+    "@:railsMigration MigrationIndex name must be a safe Rails identifier"
   );
 }
 

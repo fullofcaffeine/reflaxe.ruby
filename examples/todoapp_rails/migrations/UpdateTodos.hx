@@ -32,9 +32,9 @@ class UpdateTodos extends Migration {
 			ChangeColumn("todos", "title", StringColumn({nullable: true}))
 		]),
 		AddColumn("todos", "priority", IntegerColumn({nullable: false, defaultValue: 0})),
-		AddIndex("todos", "priority", {unique: false}),
+		AddIndex("todos", "priority", {unique: false, name: "index_todos_on_priority"}),
 		Reversible([
-			AddCompositeIndex("todos", ["user_id", "priority"], {})
+			AddCompositeIndex("todos", ["user_id", "priority"], {name: "index_todos_on_user_id_and_priority"})
 		], [
 			RemoveCompositeIndex("todos", ["user_id", "priority"])
 		]),
