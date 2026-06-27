@@ -6,7 +6,10 @@ package rails.action_controller;
 	Rails owns `Mime[:html]`/`Mime[:json]` objects at runtime. These inline
 	helpers keep app code on typed `RequestFormat` values while preserving the
 	ordinary Rails constants in generated Ruby.
+	`@:rubyAllowRaw` is scoped to this std facade so strict app examples can use
+	typed tokens without carrying raw Ruby injection in application code.
 **/
+@:rubyAllowRaw
 class Mime {
 	public static var html(get, never):RequestFormat;
 	public static var json(get, never):RequestFormat;
@@ -14,23 +17,23 @@ class Mime {
 	public static var xml(get, never):RequestFormat;
 	public static var all(get, never):RequestFormat;
 
-	static inline function get_html():RequestFormat {
+	static function get_html():RequestFormat {
 		return cast untyped __ruby__("Mime[:html]");
 	}
 
-	static inline function get_json():RequestFormat {
+	static function get_json():RequestFormat {
 		return cast untyped __ruby__("Mime[:json]");
 	}
 
-	static inline function get_turboStream():RequestFormat {
+	static function get_turboStream():RequestFormat {
 		return cast untyped __ruby__("Mime[:turbo_stream]");
 	}
 
-	static inline function get_xml():RequestFormat {
+	static function get_xml():RequestFormat {
 		return cast untyped __ruby__("Mime[:xml]");
 	}
 
-	static inline function get_all():RequestFormat {
+	static function get_all():RequestFormat {
 		return cast untyped __ruby__("Mime::ALL");
 	}
 }

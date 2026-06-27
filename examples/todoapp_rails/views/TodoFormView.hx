@@ -30,7 +30,7 @@ class TodoFormView {
 			<p class="form-owner-note">New tasks will be assigned to ${locals.currentUserName}.</p>
 			<div>
 				<field_label name=${Todo.f.title}>What should ship next?</field_label>
-				<text_field name=${Todo.f.title} placeholder="Write the HHX form DSL" required />
+				<search_field name=${Todo.f.title} placeholder="Write the HHX form DSL" required />
 				<field_errors name=${Todo.f.title} class="field-error" aria-live="polite" />
 			</div>
 			<div>

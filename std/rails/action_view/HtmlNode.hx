@@ -102,6 +102,7 @@ enum HtmlNode {
 	FormHiddenField<TValue>(name:String, value:TValue);
 	FormLabel<TText>(name:String, text:TText, attrs:Array<HtmlAttr>);
 	FormTextField(name:String, attrs:Array<HtmlAttr>);
+	FormSearchField(name:String, attrs:Array<HtmlAttr>);
 	FormEmailField(name:String, attrs:Array<HtmlAttr>);
 	FormPasswordField(name:String, attrs:Array<HtmlAttr>);
 	FormFileField(name:String, attrs:Array<HtmlAttr>);

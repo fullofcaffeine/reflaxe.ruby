@@ -716,6 +716,10 @@ private class RailsMarkupParser {
 				var textFieldName = requireAttrValue(attrs, "name", pos);
 				var textFieldAttrs = attrsExcept(attrs, ["name"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.FormTextField($textFieldName, ${mkArray(textFieldAttrs.map(mkAttr), pos)});
+			case "search_field":
+				var searchFieldName = requireAttrValue(attrs, "name", pos);
+				var searchFieldAttrs = attrsExcept(attrs, ["name"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.FormSearchField($searchFieldName, ${mkArray(searchFieldAttrs.map(mkAttr), pos)});
 			case "email_field":
 				var emailFieldName = requireAttrValue(attrs, "name", pos);
 				var emailFieldAttrs = attrsExcept(attrs, ["name"]);

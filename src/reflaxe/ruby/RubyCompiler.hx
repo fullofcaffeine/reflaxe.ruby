@@ -2188,6 +2188,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall({expr: TField(_, FEnum(enumRef, field))}, params):
 				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name),
 					[for (param in params) compileExpr(param)]);
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionControllerStaticToken(classRef.get(), fieldRef.get().name) != null):
+				RubyRawExpr(actionControllerStaticToken(classRef.get(), fieldRef.get().name));
 			case TCall({expr: TField(target, access)}, params) if (isRubyInteropCall(access)):
 				compileRubyInteropCall(target, access, params);
 			case TCall({expr: TField(target, access)}, params):
@@ -2200,7 +2202,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name), []);
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
-				var constant = mathConstantValue(classType.pack, classType.name, fieldRef.get().name);
+				var token = actionControllerStaticToken(classType, fieldRef.get().name);
+				var constant = token ?? mathConstantValue(classType.pack, classType.name, fieldRef.get().name);
 				constant == null ? RubyRawExpr((rubyNativeName(classType.meta) ?? rubyConstantPath(classType.pack, classType.name))
 					+ "."
 					+ rubyFieldName(fieldRef.get().name, fieldRef.get().meta)) : RubyRawExpr(constant);
@@ -4708,6 +4711,30 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
 				{typeName: fullTypeName(classType.pack, classType.name), fieldName: fieldRef.get().name, field: fieldRef.get()};
+			case _:
+				null;
+		}
+	}
+
+	static function actionControllerStaticToken(classType:ClassType, fieldName:String):Null<String> {
+		return switch (fullTypeName(classType.pack, classType.name)) {
+			case "rails.action_controller.Mime":
+				switch (fieldName) {
+					case "html" | "get_html": "Mime[:html]";
+					case "json" | "get_json": "Mime[:json]";
+					case "turboStream" | "get_turboStream": "Mime[:turbo_stream]";
+					case "xml" | "get_xml": "Mime[:xml]";
+					case "all" | "get_all": "Mime::ALL";
+					case _: null;
+				}
+			case "rails.action_controller.RequestVariantToken":
+				switch (fieldName) {
+					case "phone" | "get_phone": ":phone";
+					case "tablet" | "get_tablet": ":tablet";
+					case "desktop" | "get_desktop": ":desktop";
+					case "nativeApp" | "get_nativeApp": ":native_app";
+					case _: null;
+				}
 			case _:
 				null;
 		}
@@ -7454,6 +7481,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFormTextField(params[0], params[1], scope);
 						}
+					case "FormSearchField":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormSearchField expects name and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormSearchField(params[0], params[1], scope);
+						}
 					case "FormEmailField":
 						if (params.length != 2) {
 							Context.error("HtmlNode.FormEmailField expects name and attrs arguments.", node.pos);
@@ -7686,6 +7720,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			rubySymbolLiteral(expectTemplateFieldName(name, "H.textField name must be a string literal or RailsHx model field ref."))
 		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".text_field " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFormSearchField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.searchField name must be a string literal or RailsHx model field ref."))
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= " + form + ".search_field " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormEmailField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
