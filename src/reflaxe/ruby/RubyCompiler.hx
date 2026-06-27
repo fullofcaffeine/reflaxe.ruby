@@ -5341,6 +5341,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", ["
 							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)]);
+					case "EnableIndex" if (args.length == 2):
+						railsMigrationRequireReversibleContext("EnableIndex", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "EnableIndex table");
+						var name = railsMigrationSafeIdentifier(args[1], "EnableIndex name");
+						railsMigrationValidateTable(validation, table, "EnableIndex table", args[0]);
+						railsMigrationOperation(["enable_index :" + table + ", :" + name]);
+					case "DisableIndex" if (args.length == 2):
+						railsMigrationRequireReversibleContext("DisableIndex", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "DisableIndex table");
+						var name = railsMigrationSafeIdentifier(args[1], "DisableIndex name");
+						railsMigrationValidateTable(validation, table, "DisableIndex table", args[0]);
+						railsMigrationOperation(["disable_index :" + table + ", :" + name]);
 					case "RemoveIndex" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndex table");
 						var columnName = railsMigrationSymbolArg(args[1], "RemoveIndex column");

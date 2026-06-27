@@ -150,6 +150,8 @@ enum MigrationOperation {
 	ChangeColumn(table:String, name:String, column:MigrationColumn);
 	AddIndex(table:String, column:String, options:IndexOptions);
 	AddCompositeIndex(table:String, columns:Array<String>, options:IndexOptions);
+	EnableIndex(table:String, name:String);
+	DisableIndex(table:String, name:String);
 	RemoveIndex(table:String, column:String);
 	RemoveIndexIfExists(table:String, column:String);
 	RemoveIndexByName(table:String, name:String);
