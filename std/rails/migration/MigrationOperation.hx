@@ -160,6 +160,9 @@ enum MigrationOperation {
 		var columns:Array<CreateTableItem>;
 		@:optional var timestamps:Bool;
 		@:optional var ifNotExists:Bool;
+		@:optional var id:Bool;
+		@:optional var primaryKey:String;
+		@:optional var primaryKeys:Array<String>;
 	});
 	CreateJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);

@@ -5687,6 +5687,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var bodyLines:Array<String> = [];
 		var options:Array<String> = [];
 		var timestamps = false;
+		var hasPrimaryKey = false;
+		var hasPrimaryKeys = false;
 		switch (unwrapTypedExpr(optionsExpr).expr) {
 			case TObjectDecl(fields):
 				for (field in fields) {
@@ -5701,12 +5703,26 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (typedBoolLiteral(field.expr, "CreateTable ifNotExists")) {
 								options.push("if_not_exists: true");
 							}
+						case "id":
+							if (!typedBoolLiteral(field.expr, "CreateTable id")) {
+								options.push("id: false");
+							}
+						case "primaryKey":
+							hasPrimaryKey = true;
+							options.push("primary_key: :" + railsMigrationSymbolArg(field.expr, "CreateTable primaryKey"));
+						case "primaryKeys":
+							hasPrimaryKeys = true;
+							var keys = railsMigrationSymbolArrayArg(field.expr, "CreateTable primaryKeys");
+							options.push("primary_key: [" + [for (key in keys) ":" + key].join(", ") + "]");
 						case _:
 							Context.error('@:railsMigration unknown CreateTable option ${field.name}.', field.expr.pos);
 					}
 				}
 			case _:
 				Context.error("@:railsMigration CreateTable options must be an object literal.", optionsExpr.pos);
+		}
+		if (hasPrimaryKey && hasPrimaryKeys) {
+			Context.error("@:railsMigration CreateTable options cannot include both primaryKey and primaryKeys.", optionsExpr.pos);
 		}
 		if (timestamps) {
 			bodyLines.push("");
