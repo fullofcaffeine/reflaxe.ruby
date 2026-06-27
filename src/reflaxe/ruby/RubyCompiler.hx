@@ -5737,6 +5737,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							hasPrimaryKeys = true;
 							var keys = railsMigrationSymbolArrayArg(field.expr, "CreateTable primaryKeys");
 							options.push("primary_key: [" + [for (key in keys) ":" + key].join(", ") + "]");
+						case "comment":
+							options.push("comment: " + quoteRubyStringForCode(typedStringDefaultLiteral(field.expr, "CreateTable comment")));
 						case _:
 							Context.error('@:railsMigration unknown CreateTable option ${field.name}.', field.expr.pos);
 					}

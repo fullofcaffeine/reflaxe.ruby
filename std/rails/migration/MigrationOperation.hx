@@ -163,6 +163,7 @@ enum MigrationOperation {
 		@:optional var id:Bool;
 		@:optional var primaryKey:String;
 		@:optional var primaryKeys:Array<String>;
+		@:optional var comment:String;
 	});
 	CreateJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);
