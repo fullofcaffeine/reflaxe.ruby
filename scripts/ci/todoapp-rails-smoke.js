@@ -576,6 +576,7 @@ for (const expected of [
   "# haxe column email: String",
   "# haxe column role: String",
   "validates :name, presence: true, length: {minimum: 2}",
+  'validates :name, exclusion: {within: ["admin", "root", "system"]}',
   "validates :email, presence: true, uniqueness: true",
   'validates :role, inclusion: {within: ["member", "admin", "maintainer", "guest"]}',
   "def role_label()",

@@ -411,6 +411,7 @@ for (const expected of [
   "has_many :todo_owners, through: :todos, source: :user",
   "# haxe column id: Int",
   "# haxe column name: String",
+  'validates :name, exclusion: {within: ["admin", "root", "system"]}',
 ]) {
   if (!userRuby.includes(expected)) {
     console.error(`ActiveRecord user model output missing expected line: ${expected}`);

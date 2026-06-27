@@ -21,6 +21,7 @@ module Models
     has_many :todo_owners, through: :todos, source: :user
     # haxe column id: Int
     # haxe column name: String
+    validates :name, exclusion: {within: ["admin", "root", "system"]}
     def initialize(*args, **kwargs)
       args = args + [kwargs] unless kwargs.empty?
       super(*args)

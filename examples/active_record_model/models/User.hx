@@ -23,4 +23,7 @@ class User extends rails.active_record.Base<User> {
 
 	@:hasMany({through: "todos", source: "user"})
 	public var todoOwners:rails.ActiveRecord.HasMany<User>;
+
+	@:validates("name", {exclusion: {within: ["admin", "root", "system"]}})
+	public var reservedNameValidation:rails.ActiveRecord.Validation<String>;
 }

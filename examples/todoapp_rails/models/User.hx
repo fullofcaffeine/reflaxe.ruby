@@ -43,6 +43,9 @@ class User extends rails.active_record.Base<User> implements DeviseResource<User
 	@:validates({presence: true, length: {minimum: 2}})
 	public var nameValidation:rails.ActiveRecord.Validation<String>;
 
+	@:validates("name", {exclusion: {within: ["admin", "root", "system"]}})
+	public var reservedNameValidation:rails.ActiveRecord.Validation<String>;
+
 	@:validates({presence: true, uniqueness: true})
 	public var emailValidation:rails.ActiveRecord.Validation<String>;
 
