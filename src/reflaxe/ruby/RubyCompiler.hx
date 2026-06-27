@@ -6052,6 +6052,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "type":
 							options.push("type: :" + railsMigrationPrimaryKeyType(field.expr, "Reference type"));
+						case "comment":
+							options.push("comment: " + quoteRubyStringForCode(typedStringDefaultLiteral(field.expr, "Reference comment")));
 						case "foreignKey":
 							foreignKey = typedBoolLiteral(field.expr, "Reference foreignKey");
 						case "foreignKeyName":
