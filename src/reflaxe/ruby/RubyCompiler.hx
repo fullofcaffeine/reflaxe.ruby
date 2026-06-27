@@ -5249,6 +5249,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var from = railsMigrationEnumTypeName(args[0], "RenameEnum from");
 						var to = railsMigrationEnumTypeName(args[1], "RenameEnum to");
 						railsMigrationOperation(["rename_enum " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)]);
+					case "RenameEnumValue" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RenameEnumValue", allowIrreversible, expr);
+						var name = railsMigrationEnumTypeName(args[0], "RenameEnumValue name");
+						var from = railsMigrationEnumValueArg(args[1], "RenameEnumValue from");
+						var to = railsMigrationEnumValueArg(args[2], "RenameEnumValue to");
+						railsMigrationOperation([
+							"rename_enum_value " + quoteRubyStringForCode(name) + ", from: " + quoteRubyStringForCode(from) + ", to: "
+								+ quoteRubyStringForCode(to)
+						]);
 					case "EnableExtension" if (args.length == 1):
 						var name = railsMigrationExtensionName(args[0], "EnableExtension name");
 						railsMigrationOperation(["enable_extension " + quoteRubyStringForCode(name)]);
@@ -6205,11 +6214,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TArrayDecl(values):
 				var out:Array<String> = [];
 				for (valueExpr in values) {
-					var value = typedStringLiteral(valueExpr);
-					if (value == null || value == "" || !~/^[a-z][a-z0-9_]*$/.match(value)) {
-						Context.error('@:railsMigration ${label} must contain literal enum values such as "draft" or "needs_review".',
-							valueExpr.pos);
-					} else if (out.indexOf(value) != -1) {
+					var value = railsMigrationEnumValueArg(valueExpr, label);
+					if (out.indexOf(value) != -1) {
 						Context.error('@:railsMigration ${label} must not contain duplicate enum value "${value}".', valueExpr.pos);
 					} else {
 						out.push(value);
@@ -6223,6 +6229,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error('@:railsMigration ${label} must be an Array<String> literal.', expr.pos);
 				[];
 		}
+	}
+
+	static function railsMigrationEnumValueArg(expr:TypedExpr, label:String):String {
+		var value = typedStringLiteral(expr);
+		if (value == null || value == "" || !~/^[a-z][a-z0-9_]*$/.match(value)) {
+			Context.error('@:railsMigration ${label} must be a literal enum value such as "draft" or "needs_review".', expr.pos);
+			return "invalid";
+		}
+		return value;
 	}
 
 	static function railsMigrationRubyStringArray(values:Array<String>):String {

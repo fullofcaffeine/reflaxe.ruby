@@ -132,6 +132,7 @@ enum MigrationOperation {
 	CreateEnum(name:String, values:Array<String>);
 	DropEnum(name:String, values:Array<String>, options:EnumTypeOptions);
 	RenameEnum(from:String, to:String);
+	RenameEnumValue(name:String, from:String, to:String);
 	EnableExtension(name:String);
 	DisableExtension(name:String);
 
