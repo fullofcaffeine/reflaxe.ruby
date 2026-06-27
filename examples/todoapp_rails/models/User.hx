@@ -46,7 +46,7 @@ class User extends rails.active_record.Base<User> implements DeviseResource<User
 	@:validates("name", {exclusion: {within: ["admin", "root", "system"]}})
 	public var reservedNameValidation:rails.ActiveRecord.Validation<String>;
 
-	@:validates({presence: true, uniqueness: true})
+	@:validates({presence: true, uniqueness: true, format: {with: ~/^[^@]+@[^@]+$/}})
 	public var emailValidation:rails.ActiveRecord.Validation<String>;
 
 	@:validates({inclusion: {within: ["member", "admin", "maintainer", "guest"]}})

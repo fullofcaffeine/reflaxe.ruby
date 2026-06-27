@@ -650,6 +650,12 @@ class ModelMacro {
 		switch (expr.expr) {
 			case EConst(CIdent("true" | "false" | "null")):
 			case EConst(CString(_, _)) | EConst(CInt(_, _)) | EConst(CFloat(_, _)):
+			case EConst(CRegexp(_, options)):
+				// Rails validation metadata can lower Haxe regex literals to Ruby regexes,
+				// but only the shared case-insensitive flag has matching semantics here.
+				if (options != null && options != "" && options != "i") {
+					throw label + " regex literal only supports the Ruby-compatible i flag.";
+				}
 			case EArrayDecl(values):
 				for (value in values) {
 					validateMetadataLiteralValue(value, label);

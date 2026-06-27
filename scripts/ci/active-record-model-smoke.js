@@ -102,6 +102,8 @@ const invalidValidationShapeSourceDir = join(root, "test", ".generated", "active
 const invalidValidationShapeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_shape_out");
 const invalidValidationTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_type_src");
 const invalidValidationTypeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_type_out");
+const invalidValidationRegexFlagSourceDir = join(root, "test", ".generated", "active_record_model_invalid_validation_regex_flag_src");
+const invalidValidationRegexFlagOutputDir = join(root, "test", ".generated", "active_record_model_invalid_validation_regex_flag_out");
 const invalidEnumShapeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_enum_shape_src");
 const invalidEnumShapeOutputDir = join(root, "test", ".generated", "active_record_model_invalid_enum_shape_out");
 const invalidEnumValueSourceDir = join(root, "test", ".generated", "active_record_model_invalid_enum_value_src");
@@ -274,6 +276,8 @@ rmSync(invalidValidationShapeSourceDir, { force: true, recursive: true });
 rmSync(invalidValidationShapeOutputDir, { force: true, recursive: true });
 rmSync(invalidValidationTypeSourceDir, { force: true, recursive: true });
 rmSync(invalidValidationTypeOutputDir, { force: true, recursive: true });
+rmSync(invalidValidationRegexFlagSourceDir, { force: true, recursive: true });
+rmSync(invalidValidationRegexFlagOutputDir, { force: true, recursive: true });
 rmSync(invalidEnumShapeSourceDir, { force: true, recursive: true });
 rmSync(invalidEnumShapeOutputDir, { force: true, recursive: true });
 rmSync(invalidEnumValueSourceDir, { force: true, recursive: true });
@@ -384,7 +388,7 @@ for (const expected of [
   "scope :with_status, ->(status__hx0) { where(status: status__hx0) }",
   "default_scope -> { order(title: :asc) }",
   "validates :title, presence: true, length: {minimum: 3}",
-  "validates :external_id, presence: true, uniqueness: true",
+  "validates :external_id, presence: true, uniqueness: true, format: {with: /^[a-z0-9-]+$/}",
   'validates :status, inclusion: {within: ["open", "done"]}',
   "validates :user_id, numericality: {only_integer: true, greater_than: 0}",
   "before_validation :normalize_title",
@@ -736,6 +740,7 @@ expectInvalidValidationTargetFailure();
 expectInvalidValidationOptionFailure();
 expectInvalidValidationShapeFailure();
 expectInvalidValidationTypeFailure();
+expectInvalidValidationRegexFlagFailure();
 expectInvalidEnumShapeFailure();
 expectInvalidEnumValueFailure();
 expectInvalidEnumTypeFailure();
@@ -2347,6 +2352,37 @@ function expectInvalidValidationTypeFailure() {
     invalidValidationTypeOutputDir,
     "Invalid validation generic type compiled successfully.",
     "@:validates field titleValidation must use Validation<String> for target title"
+  );
+}
+
+function expectInvalidValidationRegexFlagFailure() {
+  mkdirSync(join(invalidValidationRegexFlagSourceDir, "invalid"), { recursive: true });
+  writeFileSync(join(invalidValidationRegexFlagSourceDir, "Main.hx"), [
+    "import invalid.BadTodo;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tSys.println(BadTodo == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidValidationRegexFlagSourceDir, "invalid", "BadTodo.hx"), [
+    "package invalid;",
+    "",
+    "@:railsModel(\"bad_todos\")",
+    "class BadTodo extends rails.active_record.Base<BadTodo> {",
+    "\t@:railsColumn public var title:String;",
+    "\t@:validates({format: {with: ~/^[a-z]+$/g}})",
+    "\tpublic var titleValidation:rails.ActiveRecord.Validation<String>;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidValidationRegexFlagSourceDir,
+    invalidValidationRegexFlagOutputDir,
+    "Invalid validation regex flag compiled successfully.",
+    "@:validates option format.with regex literal only supports the Ruby-compatible i flag"
   );
 }
 

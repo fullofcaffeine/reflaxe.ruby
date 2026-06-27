@@ -9587,6 +9587,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case EConst(CString(value, _)): quoteRubyStringForCode(value);
 			case EConst(CInt(value, _)): value;
 			case EConst(CFloat(value, _)): value;
+			case EConst(CRegexp(pattern, options)): rubyRegexLiteral(pattern, options);
 			case EArrayDecl(values): "[" + [for (value in values) metadataValueCode(value)].join(", ") + "]";
 			case EObjectDecl(fields): "{" + [
 					for (field in fields)
@@ -9594,6 +9595,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				].join(", ") + "}";
 			case _: "nil";
 		}
+	}
+
+	static function rubyRegexLiteral(pattern:String, options:String):String {
+		var flags = options == "i" ? "i" : "";
+		return "/" + pattern + "/" + flags;
 	}
 
 	static function railsColumnBoolOption(meta:Null<haxe.macro.Type.MetaAccess>, name:String, fallback:Bool):Bool {
