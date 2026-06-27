@@ -20,6 +20,8 @@ typedef TodoFormLocals = {
 // IntelliSense: editors should complete `Todo.f.*`, `Routes.todosPath`, and the
 // `currentUserName` local.
 // Ruby/Rails output: normal Rails form builder ERB with strong Rails param names.
+// Field errors are read from Rails' ActiveModel errors collection at runtime;
+// Haxe still checks the model-owned field ref before emitting `errors[:field]`.
 @:railsTemplate("controllers/todos/_typed_form")
 @:railsTemplateAst("render")
 class TodoFormView {
@@ -29,10 +31,12 @@ class TodoFormView {
 			<div>
 				<field_label name=${Todo.f.title}>What should ship next?</field_label>
 				<text_field name=${Todo.f.title} placeholder="Write the HHX form DSL" required />
+				<field_errors name=${Todo.f.title} class="field-error" aria-live="polite" />
 			</div>
 			<div>
 				<field_label name=${Todo.f.notes}>Why does it matter?</field_label>
 				<text_area name=${Todo.f.notes} placeholder="Add a short implementation note" rows=${3} />
+				<field_errors name=${Todo.f.notes} class="field-error" />
 			</div>
 			<submit type="submit">Add task</submit>
 		</form_with>;

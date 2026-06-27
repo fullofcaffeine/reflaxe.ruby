@@ -732,6 +732,11 @@ private class RailsMarkupParser {
 				var checkBoxName = requireAttrValue(attrs, "name", pos);
 				var checkBoxAttrs = attrsExcept(attrs, ["name"]);
 				macro @:pos(pos) rails.action_view.HtmlNode.FormCheckBox($checkBoxName, ${mkArray(checkBoxAttrs.map(mkAttr), pos)});
+			case "field_errors":
+				rejectChildren(name, children, pos);
+				var errorFieldName = requireAttrValue(attrs, "name", pos);
+				var errorAttrs = attrsExcept(attrs, ["name"]);
+				macro @:pos(pos) rails.action_view.HtmlNode.FormFieldErrors($errorFieldName, ${mkArray(errorAttrs.map(mkAttr), pos)});
 			case "submit":
 				var submitText = attrValueOrTextChildren(attrs, children, "submit", pos);
 				var submitAttrs = attrsExcept(attrs, ["text"]);

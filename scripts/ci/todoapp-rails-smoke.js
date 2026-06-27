@@ -1356,8 +1356,10 @@ for (const expected of [
   '<p class="form-owner-note">New tasks will be assigned to <%= current_user_name %>.</p>',
   '<%= form.label :title, "What should ship next?" %>',
   '<%= form.text_field :title, placeholder: "Write the HHX form DSL", required: true %>',
+  '<% form.object.errors[:title].each do |message| %><p class="field-error" aria-live="polite"><%= message %></p><% end %>',
   '<%= form.label :notes, "Why does it matter?" %>',
   '<%= form.text_area :notes, placeholder: "Add a short implementation note", rows: 3 %>',
+  '<% form.object.errors[:notes].each do |message| %><p class="field-error"><%= message %></p><% end %>',
   '<%= form.submit "Add task", type: "submit" %>',
 ]) {
   if (!typedForm.includes(expected)) {

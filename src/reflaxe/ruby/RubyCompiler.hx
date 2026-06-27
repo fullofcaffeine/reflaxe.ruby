@@ -7482,6 +7482,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFormCheckBox(params[0], params[1], scope);
 						}
+					case "FormFieldErrors":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormFieldErrors expects name and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormFieldErrors(params[0], params[1], scope);
+						}
 					case "FormSubmit":
 						if (params.length != 2) {
 							Context.error("HtmlNode.FormSubmit expects text and attrs arguments.", node.pos);
@@ -7697,6 +7704,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			rubySymbolLiteral(expectTemplateFieldName(name, "H.checkBox name must be a string literal or RailsHx model field ref."))
 		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".check_box " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFormFieldErrors(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		var fieldName = rubySymbolLiteral(expectTemplateFieldName(name, "H.fieldErrors name must be a string literal or RailsHx model field ref."));
+		var attrText = [
+			for (attr in expectTemplateArray(attrs, "HtmlNode.FormFieldErrors attrs must be an array literal."))
+				lowerTemplateAttr(attr, scope)
+		].join("");
+		return "<% "
+			+ form
+			+ ".object.errors["
+			+ fieldName
+			+ "].each do |message| %><p"
+			+ attrText
+			+ "><%= message %></p><% end %>";
 	}
 
 	static function lowerTemplateFormSubmit(text:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
