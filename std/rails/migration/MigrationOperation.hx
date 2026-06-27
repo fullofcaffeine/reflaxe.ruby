@@ -111,6 +111,13 @@ enum ForeignKeyDeferrable {
 	Deferred;
 }
 
+enum PrimaryKeyType {
+	BigIntPrimaryKey;
+	IntegerPrimaryKey;
+	UuidPrimaryKey;
+	StringPrimaryKey;
+}
+
 enum MigrationDefaultValue {
 	StringDefault(value:String);
 	IntDefault(value:Int);
@@ -162,6 +169,7 @@ enum MigrationOperation {
 		@:optional var timestamps:Bool;
 		@:optional var ifNotExists:Bool;
 		@:optional var id:Bool;
+		@:optional var idType:PrimaryKeyType;
 		@:optional var primaryKey:String;
 		@:optional var primaryKeys:Array<String>;
 		@:optional var comment:String;

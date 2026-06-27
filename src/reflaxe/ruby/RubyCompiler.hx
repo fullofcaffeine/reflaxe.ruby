@@ -5710,6 +5710,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var bodyLines:Array<String> = [];
 		var options:Array<String> = [];
 		var timestamps = false;
+		var hasIdOption = false;
+		var hasIdType = false;
 		var hasPrimaryKey = false;
 		var hasPrimaryKeys = false;
 		switch (unwrapTypedExpr(optionsExpr).expr) {
@@ -5727,9 +5729,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								options.push("if_not_exists: true");
 							}
 						case "id":
+							hasIdOption = true;
 							if (!typedBoolLiteral(field.expr, "CreateTable id")) {
 								options.push("id: false");
 							}
+						case "idType":
+							hasIdType = true;
+							options.push("id: :" + railsMigrationPrimaryKeyType(field.expr));
 						case "primaryKey":
 							hasPrimaryKey = true;
 							options.push("primary_key: :" + railsMigrationSymbolArg(field.expr, "CreateTable primaryKey"));
@@ -5753,6 +5759,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (hasPrimaryKey && hasPrimaryKeys) {
 			Context.error("@:railsMigration CreateTable options cannot include both primaryKey and primaryKeys.", optionsExpr.pos);
 		}
+		if (hasIdOption && hasIdType) {
+			Context.error("@:railsMigration CreateTable options cannot include both id and idType.", optionsExpr.pos);
+		}
 		if (timestamps) {
 			bodyLines.push("");
 			bodyLines.push("  t.timestamps");
@@ -5761,6 +5770,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		lines = lines.concat(bodyLines);
 		lines.push("end");
 		return railsMigrationOperation(lines);
+	}
+
+	static function railsMigrationPrimaryKeyType(expr:TypedExpr):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FEnum(_, field)):
+				switch (field.name) {
+					case "BigIntPrimaryKey": "bigint";
+					case "IntegerPrimaryKey": "integer";
+					case "UuidPrimaryKey": "uuid";
+					case "StringPrimaryKey": "string";
+					case _:
+						Context.error('@:railsMigration unsupported PrimaryKeyType ${field.name}.', expr.pos);
+						"bigint";
+				}
+			case _:
+				Context.error("@:railsMigration CreateTable idType expects a PrimaryKeyType enum value.", expr.pos);
+				"bigint";
+		}
 	}
 
 	static function railsMigrationCreateTableItems(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
