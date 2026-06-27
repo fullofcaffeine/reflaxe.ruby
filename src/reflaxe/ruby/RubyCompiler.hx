@@ -5216,6 +5216,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"drop_join_table :" + table1 + ", :" + table2 + railsMigrationOptionSuffix(railsMigrationJoinTableDslOptions(args[2], false))
 						]);
+					case "CreateSchema" if (args.length == 2):
+						var name = railsMigrationSchemaName(args[0], "CreateSchema name");
+						railsMigrationOperation([
+							"create_schema " + quoteRubyStringForCode(name) + railsMigrationOptionSuffix(railsMigrationSchemaDslOptions(args[1], true))
+						]);
+					case "DropSchema" if (args.length == 2):
+						railsMigrationRequireReversibleContext("DropSchema", allowIrreversible, expr);
+						var name = railsMigrationSchemaName(args[0], "DropSchema name");
+						railsMigrationOperation([
+							"drop_schema " + quoteRubyStringForCode(name) + railsMigrationOptionSuffix(railsMigrationSchemaDslOptions(args[1], false))
+						]);
 					case "EnableExtension" if (args.length == 1):
 						var name = railsMigrationExtensionName(args[0], "EnableExtension name");
 						railsMigrationOperation(["enable_extension " + quoteRubyStringForCode(name)]);
@@ -5967,6 +5978,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function railsMigrationSchemaDslOptions(expr:TypedExpr, create:Bool):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				for (field in fields) {
+					switch (field.name) {
+						case "ifNotExists" if (create):
+							if (typedBoolLiteral(field.expr, "Schema ifNotExists")) {
+								options.push("if_not_exists: true");
+							}
+						case "ifExists" if (!create):
+							if (typedBoolLiteral(field.expr, "Schema ifExists")) {
+								options.push("if_exists: true");
+							}
+						case _:
+							Context.error('@:railsMigration unknown ${create ? "CreateSchema" : "DropSchema"} option ${field.name}.', field.expr.pos);
+					}
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration Schema options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
 	static function railsMigrationForeignKeyDslOptions(expr:TypedExpr, validation:Null<RailsMigrationValidationContext>, fromTable:String):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
@@ -6080,6 +6116,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			|| !~/^[a-z][a-z0-9_-]*(\.[a-z][a-z0-9_-]*)*$/.match(value)) {
 			Context.error('@:railsMigration ${label} must be a literal database extension name such as "pgcrypto" or "pg_catalog.plpgsql".',
 				expr.pos);
+			return "invalid";
+		}
+		return value;
+	}
+
+	static function railsMigrationSchemaName(expr:TypedExpr, label:String):String {
+		var value = typedStringLiteral(expr);
+		if (value == null || value == "" || !~/^[a-z][a-z0-9_]*$/.match(value)) {
+			Context.error('@:railsMigration ${label} must be a literal schema name such as "reporting" or "tenant_alpha".', expr.pos);
 			return "invalid";
 		}
 		return value;

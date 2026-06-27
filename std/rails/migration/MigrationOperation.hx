@@ -59,6 +59,11 @@ typedef JoinTableOptions = {
 	@:optional var ifExists:Bool;
 }
 
+typedef SchemaOptions = {
+	@:optional var ifNotExists:Bool;
+	@:optional var ifExists:Bool;
+}
+
 enum ForeignKeyAction {
 	Cascade;
 	Nullify;
@@ -117,6 +122,8 @@ enum MigrationOperation {
 	});
 	CreateJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);
+	CreateSchema(name:String, options:SchemaOptions);
+	DropSchema(name:String, options:SchemaOptions);
 	EnableExtension(name:String);
 	DisableExtension(name:String);
 
