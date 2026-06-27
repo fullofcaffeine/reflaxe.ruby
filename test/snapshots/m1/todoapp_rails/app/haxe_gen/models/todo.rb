@@ -27,6 +27,7 @@ module Models
     # haxe column is_completed: Bool
     # haxe column user_id: Int
     validates :title, presence: true
+    validates :user_id, numericality: {only_integer: true, greater_than: 0}
     def initialize(*args, **kwargs)
       args = args + [kwargs] unless kwargs.empty?
       super(*args)

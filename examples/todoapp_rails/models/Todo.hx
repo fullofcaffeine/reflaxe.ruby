@@ -36,6 +36,9 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:validates({presence: true})
 	public var titleValidation:rails.ActiveRecord.Validation<String>;
 
+	@:validates({numericality: {onlyInteger: true, greaterThan: 0}})
+	public var userIdValidation:rails.ActiveRecord.Validation<Int>;
+
 	public static function incomplete() {
 		return Todo.where({isCompleted: false});
 	}

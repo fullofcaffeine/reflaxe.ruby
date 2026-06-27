@@ -70,6 +70,9 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:validates({inclusion: {within: ["open", "done"]}})
 	public var statusValidation:rails.ActiveRecord.Validation<String>;
 
+	@:validates({numericality: {onlyInteger: true, greaterThan: 0}})
+	public var userIdValidation:rails.ActiveRecord.Validation<Int>;
+
 	@:railsCallback("after_commit")
 	public function publishLifecycleEvent():Void {}
 }

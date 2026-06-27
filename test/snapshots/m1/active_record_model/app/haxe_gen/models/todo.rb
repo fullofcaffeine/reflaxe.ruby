@@ -37,6 +37,7 @@ module Models
     validates :title, presence: true, length: {minimum: 3}
     validates :external_id, presence: true, uniqueness: true
     validates :status, inclusion: {within: ["open", "done"]}
+    validates :user_id, numericality: {only_integer: true, greater_than: 0}
     before_validation :normalize_title
     after_commit :publish_lifecycle_event
     def initialize(*args, **kwargs)
