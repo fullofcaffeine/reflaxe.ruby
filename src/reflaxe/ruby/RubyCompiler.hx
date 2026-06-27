@@ -5370,6 +5370,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveCheckConstraint name");
 						railsMigrationValidateTable(validation, table, "RemoveCheckConstraint table", args[0]);
 						railsMigrationOperation(["remove_check_constraint :" + table + ", name: " + quoteRubyStringForCode(name)]);
+					case "RemoveCheckConstraintIfExists" if (args.length == 2):
+						railsMigrationRequireReversibleContext("RemoveCheckConstraintIfExists", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RemoveCheckConstraintIfExists table");
+						var name = railsMigrationSafeIdentifier(args[1], "RemoveCheckConstraintIfExists name");
+						railsMigrationValidateTable(validation, table, "RemoveCheckConstraintIfExists table", args[0]);
+						railsMigrationOperation([
+							"remove_check_constraint :" + table + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"
+						]);
 					case "DropTable" if (args.length == 1):
 						railsMigrationRequireReversibleContext("DropTable", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "DropTable table");
@@ -5701,6 +5709,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							var name = railsMigrationSafeIdentifier(field.expr, "CheckConstraint name");
 							hasName = true;
 							options.push("name: " + quoteRubyStringForCode(name));
+						case "ifNotExists":
+							if (typedBoolLiteral(field.expr, "CheckConstraint ifNotExists")) {
+								options.push("if_not_exists: true");
+							}
 						case _:
 							Context.error('@:railsMigration unknown CheckConstraint option ${field.name}.', field.expr.pos);
 					}

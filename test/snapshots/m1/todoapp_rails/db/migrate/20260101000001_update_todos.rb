@@ -15,6 +15,14 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
     add_index :todos, :priority, name: "index_todos_on_priority"
     reversible do |dir|
       dir.up do
+        add_check_constraint :todos, "priority >= 0", name: "chk_todos_priority_non_negative", if_not_exists: true
+      end
+      dir.down do
+        remove_check_constraint :todos, name: "chk_todos_priority_non_negative", if_exists: true
+      end
+    end
+    reversible do |dir|
+      dir.up do
         add_index :todos, [:user_id, :priority], name: "index_todos_on_user_id_and_priority"
       end
       dir.down do

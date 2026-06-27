@@ -29,6 +29,7 @@ typedef ReferenceOptions = {
 
 typedef CheckConstraintOptions = {
 	var name:String;
+	@:optional var ifNotExists:Bool;
 }
 
 typedef ForeignKeyOptions = {
@@ -98,6 +99,7 @@ enum MigrationOperation {
 	ChangeNull(table:String, name:String, nullable:Bool);
 	AddCheckConstraint(table:String, expression:String, options:CheckConstraintOptions);
 	RemoveCheckConstraint(table:String, name:String);
+	RemoveCheckConstraintIfExists(table:String, name:String);
 	DropTable(table:String);
 	ExecuteSql(sql:String, rollback:String);
 	DataMigration(up:String, down:String);
