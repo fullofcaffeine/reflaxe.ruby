@@ -6044,6 +6044,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var options:Array<String> = [];
 				var foreignKey = false;
 				var foreignKeyName:Null<String> = null;
+				var foreignKeyOptions:Array<String> = [];
 				var indexEnabled:Null<Bool> = null;
 				var indexName:Null<String> = null;
 				var indexUnique = false;
@@ -6061,6 +6062,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							foreignKey = typedBoolLiteral(field.expr, "Reference foreignKey");
 						case "foreignKeyName":
 							foreignKeyName = railsMigrationSafeIdentifier(field.expr, "Reference foreignKeyName");
+						case "foreignKeyToTable":
+							foreignKeyOptions.push("to_table: :" + railsMigrationSymbolArg(field.expr, "Reference foreignKeyToTable"));
+						case "foreignKeyPrimaryKey":
+							foreignKeyOptions.push("primary_key: :" + railsMigrationSymbolArg(field.expr, "Reference foreignKeyPrimaryKey"));
+						case "foreignKeyOnDelete":
+							foreignKeyOptions.push("on_delete: :" + railsMigrationForeignKeyAction(field.expr, "Reference foreignKeyOnDelete"));
+						case "foreignKeyOnUpdate":
+							foreignKeyOptions.push("on_update: :" + railsMigrationForeignKeyAction(field.expr, "Reference foreignKeyOnUpdate"));
+						case "foreignKeyDeferrable":
+							foreignKeyOptions.push("deferrable: :" + railsMigrationForeignKeyDeferrable(field.expr, "Reference foreignKeyDeferrable"));
 						case "index":
 							indexEnabled = typedBoolLiteral(field.expr, "Reference index");
 						case "indexName":
@@ -6091,7 +6102,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					options.push("index: false");
 				}
 				if (foreignKeyName != null) {
-					options.push("foreign_key: { name: " + quoteRubyStringForCode(foreignKeyName) + " }");
+					foreignKeyOptions.unshift("name: " + quoteRubyStringForCode(foreignKeyName));
+				}
+				if (foreignKeyOptions.length > 0) {
+					options.push("foreign_key: { " + foreignKeyOptions.join(", ") + " }");
 				} else if (foreignKey) {
 					options.push("foreign_key: true");
 				}

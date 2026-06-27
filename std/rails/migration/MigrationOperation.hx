@@ -47,6 +47,11 @@ typedef ReferenceOptions = {
 	@:optional var comment:String;
 	@:optional var foreignKey:Bool;
 	@:optional var foreignKeyName:String;
+	@:optional var foreignKeyToTable:String;
+	@:optional var foreignKeyPrimaryKey:String;
+	@:optional var foreignKeyOnDelete:ForeignKeyAction;
+	@:optional var foreignKeyOnUpdate:ForeignKeyAction;
+	@:optional var foreignKeyDeferrable:ForeignKeyDeferrable;
 	@:optional var index:Bool;
 	@:optional var indexName:String;
 	@:optional var indexUnique:Bool;
