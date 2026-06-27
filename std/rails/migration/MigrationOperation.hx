@@ -81,6 +81,7 @@ typedef TimestampOptions = {
 typedef JoinTableOptions = {
 	@:optional var tableName:String;
 	@:optional var nullable:Bool;
+	@:optional var type:PrimaryKeyType;
 	@:optional var index:Bool;
 	@:optional var ifNotExists:Bool;
 	@:optional var ifExists:Bool;

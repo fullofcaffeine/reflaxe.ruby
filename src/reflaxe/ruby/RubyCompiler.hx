@@ -6176,6 +6176,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							options.push("table_name: :" + railsMigrationSafeIdentifier(field.expr, "JoinTable tableName"));
 						case "nullable" if (create):
 							columnOptions.push("null: " + (typedBoolLiteral(field.expr, "JoinTable nullable") ? "true" : "false"));
+						case "type" if (create):
+							columnOptions.push("type: :" + railsMigrationPrimaryKeyType(field.expr, "JoinTable type"));
 						case "index" if (create):
 							columnOptions.push("index: " + (typedBoolLiteral(field.expr, "JoinTable index") ? "true" : "false"));
 						case "ifNotExists" if (create):
