@@ -4,6 +4,7 @@ typedef ColumnOptions<T> = {
 	@:optional var nullable:Bool;
 	@:optional var defaultValue:T;
 	@:optional var limit:Int;
+	@:optional var comment:String;
 }
 
 typedef DecimalColumnOptions = {
@@ -11,6 +12,7 @@ typedef DecimalColumnOptions = {
 	@:optional var defaultValue:Float;
 	@:optional var precision:Int;
 	@:optional var scale:Int;
+	@:optional var comment:String;
 }
 
 typedef IndexOptions = {

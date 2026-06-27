@@ -5737,6 +5737,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							options.push("precision: " + typedPositiveIntLiteral(field.expr, "MigrationColumn precision"));
 						case "scale":
 							options.push("scale: " + typedNonNegativeIntLiteral(field.expr, "MigrationColumn scale"));
+						case "comment":
+							options.push("comment: " + quoteRubyStringForCode(typedStringDefaultLiteral(field.expr, "MigrationColumn comment")));
 						case _:
 							Context.error('@:railsMigration unknown MigrationColumn option ${field.name}.', field.expr.pos);
 					}
