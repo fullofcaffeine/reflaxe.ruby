@@ -5249,6 +5249,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var from = railsMigrationEnumTypeName(args[0], "RenameEnum from");
 						var to = railsMigrationEnumTypeName(args[1], "RenameEnum to");
 						railsMigrationOperation(["rename_enum " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)]);
+					case "AddEnumValue" if (args.length == 3):
+						railsMigrationRequireReversibleContext("AddEnumValue", allowIrreversible, expr);
+						var name = railsMigrationEnumTypeName(args[0], "AddEnumValue name");
+						var value = railsMigrationEnumValueArg(args[1], "AddEnumValue value");
+						railsMigrationOperation([
+							"add_enum_value " + quoteRubyStringForCode(name) + ", " + quoteRubyStringForCode(value)
+								+ railsMigrationOptionSuffix(railsMigrationEnumValueDslOptions(args[2]))
+						]);
 					case "RenameEnumValue" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RenameEnumValue", allowIrreversible, expr);
 						var name = railsMigrationEnumTypeName(args[0], "RenameEnumValue name");
@@ -6051,6 +6059,38 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				options;
 			case _:
 				Context.error("@:railsMigration EnumType options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationEnumValueDslOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				var hasBefore = false;
+				var hasAfter = false;
+				for (field in fields) {
+					switch (field.name) {
+						case "ifNotExists":
+							if (typedBoolLiteral(field.expr, "EnumValue ifNotExists")) {
+								options.push("if_not_exists: true");
+							}
+						case "before":
+							hasBefore = true;
+							options.push("before: " + quoteRubyStringForCode(railsMigrationEnumValueArg(field.expr, "EnumValue before")));
+						case "after":
+							hasAfter = true;
+							options.push("after: " + quoteRubyStringForCode(railsMigrationEnumValueArg(field.expr, "EnumValue after")));
+						case _:
+							Context.error('@:railsMigration unknown AddEnumValue option ${field.name}.', field.expr.pos);
+					}
+				}
+				if (hasBefore && hasAfter) {
+					Context.error("@:railsMigration AddEnumValue options cannot include both before and after.", expr.pos);
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration EnumValue options must be an object literal.", expr.pos);
 				[];
 		}
 	}

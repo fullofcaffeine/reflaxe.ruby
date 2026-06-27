@@ -68,6 +68,12 @@ typedef EnumTypeOptions = {
 	@:optional var ifExists:Bool;
 }
 
+typedef EnumValueOptions = {
+	@:optional var ifNotExists:Bool;
+	@:optional var before:String;
+	@:optional var after:String;
+}
+
 enum ForeignKeyAction {
 	Cascade;
 	Nullify;
@@ -132,6 +138,7 @@ enum MigrationOperation {
 	CreateEnum(name:String, values:Array<String>);
 	DropEnum(name:String, values:Array<String>, options:EnumTypeOptions);
 	RenameEnum(from:String, to:String);
+	AddEnumValue(name:String, value:String, options:EnumValueOptions);
 	RenameEnumValue(name:String, from:String, to:String);
 	EnableExtension(name:String);
 	DisableExtension(name:String);
