@@ -18,7 +18,7 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
         add_index :todos, [:user_id, :priority], name: "index_todos_on_user_id_and_priority"
       end
       dir.down do
-        remove_index :todos, name: "index_todos_on_user_id_and_priority"
+        remove_index :todos, name: "index_todos_on_user_id_and_priority", if_exists: true
       end
     end
     reversible do |dir|

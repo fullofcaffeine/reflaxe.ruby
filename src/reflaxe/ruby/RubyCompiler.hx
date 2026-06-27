@@ -5251,11 +5251,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "RemoveIndex table", args[0]);
 						railsMigrationValidateColumn(validation, table, columnName, "RemoveIndex column", args[1]);
 						railsMigrationOperation(["remove_index :" + table + ", :" + columnName]);
+					case "RemoveIndexIfExists" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "RemoveIndexIfExists table");
+						var columnName = railsMigrationSymbolArg(args[1], "RemoveIndexIfExists column");
+						railsMigrationValidateTable(validation, table, "RemoveIndexIfExists table", args[0]);
+						railsMigrationValidateColumn(validation, table, columnName, "RemoveIndexIfExists column", args[1]);
+						railsMigrationOperation(["remove_index :" + table + ", :" + columnName + ", if_exists: true"]);
 					case "RemoveIndexByName" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByName table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByName name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByName table", args[0]);
 						railsMigrationOperation(["remove_index :" + table + ", name: " + quoteRubyStringForCode(name)]);
+					case "RemoveIndexByNameIfExists" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameIfExists table");
+						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameIfExists name");
+						railsMigrationValidateTable(validation, table, "RemoveIndexByNameIfExists table", args[0]);
+						railsMigrationOperation(["remove_index :" + table + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"]);
 					case "RemoveCompositeIndex" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndex table");
 						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndex columns");
@@ -5267,6 +5278,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", column: ["
 							+ [for (column in columns) ":" + column].join(", ") + "]"]);
+					case "RemoveCompositeIndexIfExists" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndexIfExists table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndexIfExists columns");
+						railsMigrationValidateTable(validation, table, "RemoveCompositeIndexIfExists table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "RemoveCompositeIndexIfExists column", args[1]);
+						}
+						railsMigrationOperation(["remove_index :"
+							+ table
+							+ ", column: ["
+							+ [for (column in columns) ":" + column].join(", ") + "], if_exists: true"]);
 					case "AddReference" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddReference table");
 						var name = railsMigrationSymbolArg(args[1], "AddReference name");
