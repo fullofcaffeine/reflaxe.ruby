@@ -5585,11 +5585,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "defaultValue":
 							options.push("default: " + typedMigrationLiteralCode(field.expr));
 						case "limit":
-							options.push("limit: " + typedIntLiteral(field.expr, "MigrationColumn limit"));
+							options.push("limit: " + typedPositiveIntLiteral(field.expr, "MigrationColumn limit"));
 						case "precision":
-							options.push("precision: " + typedIntLiteral(field.expr, "MigrationColumn precision"));
+							options.push("precision: " + typedPositiveIntLiteral(field.expr, "MigrationColumn precision"));
 						case "scale":
-							options.push("scale: " + typedIntLiteral(field.expr, "MigrationColumn scale"));
+							options.push("scale: " + typedNonNegativeIntLiteral(field.expr, "MigrationColumn scale"));
 						case _:
 							Context.error('@:railsMigration unknown MigrationColumn option ${field.name}.', field.expr.pos);
 					}
@@ -5807,6 +5807,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error('@:railsMigration ${label} must be an Int literal.', expr.pos);
 				0;
 		}
+	}
+
+	static function typedPositiveIntLiteral(expr:TypedExpr, label:String):Int {
+		var value = typedIntLiteral(expr, label);
+		if (value <= 0) {
+			Context.error('@:railsMigration ${label} must be a positive Int literal.', expr.pos);
+			return 1;
+		}
+		return value;
+	}
+
+	static function typedNonNegativeIntLiteral(expr:TypedExpr, label:String):Int {
+		var value = typedIntLiteral(expr, label);
+		if (value < 0) {
+			Context.error('@:railsMigration ${label} must be a non-negative Int literal.', expr.pos);
+			return 0;
+		}
+		return value;
 	}
 
 	static function unwrapTypedExpr(expr:TypedExpr):TypedExpr {

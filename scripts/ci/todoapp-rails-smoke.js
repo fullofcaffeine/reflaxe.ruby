@@ -168,6 +168,8 @@ const migrationBadTimestampSourceDir = join(root, "test", ".generated", "todoapp
 const migrationBadTimestampOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_timestamp_out");
 const migrationUnknownOptionSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_option_src");
 const migrationUnknownOptionOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_option_out");
+const migrationInvalidColumnOptionSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_invalid_column_option_src");
+const migrationInvalidColumnOptionOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_invalid_column_option_out");
 const migrationBadOperationSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_operation_src");
 const migrationBadOperationOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_operation_out");
 const migrationUnsafeSqlSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_sql_src");
@@ -440,6 +442,8 @@ rmSync(migrationBadTimestampSourceDir, { force: true, recursive: true });
 rmSync(migrationBadTimestampOutputDir, { force: true, recursive: true });
 rmSync(migrationUnknownOptionSourceDir, { force: true, recursive: true });
 rmSync(migrationUnknownOptionOutputDir, { force: true, recursive: true });
+rmSync(migrationInvalidColumnOptionSourceDir, { force: true, recursive: true });
+rmSync(migrationInvalidColumnOptionOutputDir, { force: true, recursive: true });
 rmSync(migrationBadOperationSourceDir, { force: true, recursive: true });
 rmSync(migrationBadOperationOutputDir, { force: true, recursive: true });
 rmSync(migrationUnsafeSqlSourceDir, { force: true, recursive: true });
@@ -1548,6 +1552,7 @@ expectMigrationDuplicateFileFailure();
 expectMigrationNonModelFailure();
 expectMigrationBadTimestampFailure();
 expectMigrationUnknownOptionFailure();
+expectMigrationInvalidColumnOptionFailure();
 expectMigrationBadOperationFailure();
 expectMigrationUnsafeSqlFailure();
 expectMigrationDuplicateTimestampFailure();
@@ -1894,6 +1899,47 @@ function expectMigrationUnknownOptionFailure() {
     "InvalidUnknownOptionMigrationMain",
     "Unknown-option RailsHx migration compiled successfully.",
     "@:railsMigration unknown option magic"
+  );
+}
+
+function expectMigrationInvalidColumnOptionFailure() {
+  mkdirSync(join(migrationInvalidColumnOptionSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationInvalidColumnOptionSourceDir, "InvalidColumnOptionMigrationMain.hx"), [
+    "import migrations.BadColumnOptionMigration;",
+    "",
+    "class InvalidColumnOptionMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadColumnOptionMigration> = BadColumnOptionMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationInvalidColumnOptionSourceDir, "migrations", "BadColumnOptionMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000021\",",
+    "\tclassName: \"BadColumnOptionMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadColumnOptionMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddColumn(\"todos\", \"short_code\", StringColumn({limit: 0}))",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationInvalidColumnOptionSourceDir,
+    migrationInvalidColumnOptionOutputDir,
+    "InvalidColumnOptionMigrationMain",
+    "Invalid column-option RailsHx migration compiled successfully.",
+    "@:railsMigration MigrationColumn limit must be a positive Int literal"
   );
 }
 
