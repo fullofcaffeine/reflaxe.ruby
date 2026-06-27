@@ -5199,6 +5199,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "CreateTable" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "CreateTable table");
 						railsMigrationCreateTableOperation(table, args[1], validation);
+					case "CreateJoinTable" if (args.length == 3):
+						var table1 = railsMigrationSymbolArg(args[0], "CreateJoinTable table1");
+						var table2 = railsMigrationSymbolArg(args[1], "CreateJoinTable table2");
+						railsMigrationValidateTable(validation, table1, "CreateJoinTable table1", args[0]);
+						railsMigrationValidateTable(validation, table2, "CreateJoinTable table2", args[1]);
+						railsMigrationOperation([
+							"create_join_table :" + table1 + ", :" + table2 + railsMigrationOptionSuffix(railsMigrationJoinTableDslOptions(args[2], true))
+						]);
+					case "DropJoinTable" if (args.length == 3):
+						railsMigrationRequireReversibleContext("DropJoinTable", allowIrreversible, expr);
+						var table1 = railsMigrationSymbolArg(args[0], "DropJoinTable table1");
+						var table2 = railsMigrationSymbolArg(args[1], "DropJoinTable table2");
+						railsMigrationValidateTable(validation, table1, "DropJoinTable table1", args[0]);
+						railsMigrationValidateTable(validation, table2, "DropJoinTable table2", args[1]);
+						railsMigrationOperation([
+							"drop_join_table :" + table1 + ", :" + table2 + railsMigrationOptionSuffix(railsMigrationJoinTableDslOptions(args[2], false))
+						]);
 					case "AddColumn" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddColumn table");
 						var name = railsMigrationSymbolArg(args[1], "AddColumn name");
@@ -5905,6 +5922,41 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				options;
 			case _:
 				Context.error("@:railsMigration Timestamp options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationJoinTableDslOptions(expr:TypedExpr, create:Bool):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				var columnOptions:Array<String> = [];
+				for (field in fields) {
+					switch (field.name) {
+						case "tableName":
+							options.push("table_name: :" + railsMigrationSafeIdentifier(field.expr, "JoinTable tableName"));
+						case "nullable" if (create):
+							columnOptions.push("null: " + (typedBoolLiteral(field.expr, "JoinTable nullable") ? "true" : "false"));
+						case "index" if (create):
+							columnOptions.push("index: " + (typedBoolLiteral(field.expr, "JoinTable index") ? "true" : "false"));
+						case "ifNotExists" if (create):
+							if (typedBoolLiteral(field.expr, "JoinTable ifNotExists")) {
+								options.push("if_not_exists: true");
+							}
+						case "ifExists" if (!create):
+							if (typedBoolLiteral(field.expr, "JoinTable ifExists")) {
+								options.push("if_exists: true");
+							}
+						case _:
+							Context.error('@:railsMigration unknown ${create ? "CreateJoinTable" : "DropJoinTable"} option ${field.name}.', field.expr.pos);
+					}
+				}
+				if (columnOptions.length > 0) {
+					options.push("column_options: { " + columnOptions.join(", ") + " }");
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration JoinTable options must be an object literal.", expr.pos);
 				[];
 		}
 	}

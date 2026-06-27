@@ -51,6 +51,14 @@ typedef TimestampOptions = {
 	@:optional var precision:Int;
 }
 
+typedef JoinTableOptions = {
+	@:optional var tableName:String;
+	@:optional var nullable:Bool;
+	@:optional var index:Bool;
+	@:optional var ifNotExists:Bool;
+	@:optional var ifExists:Bool;
+}
+
 enum ForeignKeyAction {
 	Cascade;
 	Nullify;
@@ -107,6 +115,8 @@ enum MigrationOperation {
 		@:optional var timestamps:Bool;
 		@:optional var ifNotExists:Bool;
 	});
+	CreateJoinTable(table1:String, table2:String, options:JoinTableOptions);
+	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);
 
 	AddColumn(table:String, name:String, column:MigrationColumn);
 	AddColumnIfNotExists(table:String, name:String, column:MigrationColumn);
