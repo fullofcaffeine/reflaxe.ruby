@@ -985,7 +985,7 @@ for (const expected of [
   'add_column :users, :email, :string, null: false, default: "owner@example.test"',
   'add_column :users, :role, :string, null: false, default: "member"',
   "add_index :users, :email, unique: true",
-  "add_index :users, :role",
+  "add_index :users, :role, if_not_exists: true",
 ]) {
   if (!updateUsersMigrationRuby.includes(expected)) {
     console.error(`todoapp_rails generated user migration missing expected line: ${expected}`);

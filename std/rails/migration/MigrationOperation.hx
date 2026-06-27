@@ -16,6 +16,7 @@ typedef DecimalColumnOptions = {
 typedef IndexOptions = {
 	@:optional var unique:Bool;
 	@:optional var name:String;
+	@:optional var ifNotExists:Bool;
 }
 
 typedef ReferenceOptions = {

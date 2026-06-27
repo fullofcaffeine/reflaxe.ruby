@@ -12,7 +12,7 @@ import rails.migration.MigrationOperation;
 // independence matters for additive migrations: the current model already knows
 // about `email`/`role`, but this historical migration is what added them.
 // IntelliSense: editors should complete `AddColumn`, `AddIndex`, and typed
-// column option fields.
+// column/index option fields.
 // Ruby/Rails output: a timestamped ActiveRecord migration adding email/role
 // profile columns and indexes.
 @:railsMigration({
@@ -26,6 +26,6 @@ class UpdateUsers extends Migration {
 		AddColumn("users", "email", StringColumn({nullable: false, defaultValue: "owner@example.test"})),
 		AddColumn("users", "role", StringColumn({nullable: false, defaultValue: "member"})),
 		AddIndex("users", "email", {unique: true}),
-		AddIndex("users", "role", {})
+		AddIndex("users", "role", {ifNotExists: true})
 	];
 }

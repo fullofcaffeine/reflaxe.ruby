@@ -5613,6 +5613,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "name":
 							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr, "MigrationIndex name")));
+						case "ifNotExists":
+							if (typedBoolLiteral(field.expr, "MigrationIndex ifNotExists")) {
+								options.push("if_not_exists: true");
+							}
 						case _:
 							Context.error('@:railsMigration unknown MigrationIndex option ${field.name}.', field.expr.pos);
 					}
