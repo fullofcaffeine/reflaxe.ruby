@@ -41,12 +41,18 @@ typedef ForeignKeyOptions = {
 	@:optional var onUpdate:ForeignKeyAction;
 	@:optional var ifNotExists:Bool;
 	@:optional var validate:Bool;
+	@:optional var deferrable:ForeignKeyDeferrable;
 }
 
 enum ForeignKeyAction {
 	Cascade;
 	Nullify;
 	Restrict;
+}
+
+enum ForeignKeyDeferrable {
+	Immediate;
+	Deferred;
 }
 
 enum MigrationColumn {

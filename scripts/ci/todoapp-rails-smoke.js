@@ -946,7 +946,7 @@ for (const expected of [
   "change_column :todos, :title, :string, null: false",
   "reversible do |dir|",
   "dir.up do",
-  'add_foreign_key :todos, :users, column: :user_id, name: "fk_todos_users", on_delete: :cascade, if_not_exists: true, validate: false',
+  'add_foreign_key :todos, :users, column: :user_id, name: "fk_todos_users", on_delete: :cascade, if_not_exists: true, validate: false, deferrable: :deferred',
   'validate_foreign_key :todos, name: "fk_todos_users"',
   "dir.down do",
   'remove_foreign_key :todos, name: "fk_todos_users", if_exists: true',

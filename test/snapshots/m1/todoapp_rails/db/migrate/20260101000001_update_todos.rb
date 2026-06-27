@@ -4,7 +4,7 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
     reversible do |dir|
       dir.up do
         change_column :todos, :title, :string, null: false
-        add_foreign_key :todos, :users, column: :user_id, name: "fk_todos_users", on_delete: :cascade, if_not_exists: true, validate: false
+        add_foreign_key :todos, :users, column: :user_id, name: "fk_todos_users", on_delete: :cascade, if_not_exists: true, validate: false, deferrable: :deferred
         validate_foreign_key :todos, name: "fk_todos_users"
       end
       dir.down do

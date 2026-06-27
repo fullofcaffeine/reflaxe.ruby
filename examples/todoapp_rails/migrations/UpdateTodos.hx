@@ -6,9 +6,10 @@ import rails.migration.MigrationOperation;
 // Typed migration operation fixture.
 //
 // Demonstrates: explicit reversible operations, column changes, foreign keys,
-// idempotent columns, named/idempotent foreign keys, deferred constraint
-// validation, named/idempotent indexes, composite indexes, idempotent check
-// constraints, and data migrations authored as Haxe enum values.
+// idempotent columns, named/idempotent deferrable foreign keys, deferred
+// constraint validation, named/idempotent indexes, composite indexes,
+// idempotent check constraints, and data migrations authored as Haxe enum
+// values.
 // Type safety: `MigrationOperation` constructors constrain operation shapes and
 // option objects; `knownModels` lets the compiler validate table/column/index
 // references without re-emitting create-table migrations; irreversible
@@ -27,7 +28,14 @@ class UpdateTodos extends Migration {
 	public static final operations:Array<MigrationOperation> = [
 		Reversible([
 			ChangeColumn("todos", "title", StringColumn({nullable: false})),
-			AddForeignKey("todos", "users", {column: "user_id", name: "fk_todos_users", onDelete: Cascade, ifNotExists: true, validate: false}),
+			AddForeignKey("todos", "users", {
+				column: "user_id",
+				name: "fk_todos_users",
+				onDelete: Cascade,
+				ifNotExists: true,
+				validate: false,
+				deferrable: Deferred
+			}),
 			ValidateForeignKeyByName("todos", "fk_todos_users")
 		], [
 			RemoveForeignKeyByNameIfExists("todos", "fk_todos_users"),

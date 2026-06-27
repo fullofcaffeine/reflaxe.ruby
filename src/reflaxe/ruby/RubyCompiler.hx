@@ -5855,6 +5855,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (!typedBoolLiteral(field.expr, "ForeignKey validate")) {
 								options.push("validate: false");
 							}
+						case "deferrable":
+							options.push("deferrable: :" + railsMigrationForeignKeyDeferrable(field.expr, "ForeignKey deferrable"));
 						case _:
 							Context.error('@:railsMigration unknown ForeignKey option ${field.name}.', field.expr.pos);
 					}
@@ -5886,6 +5888,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error('@:railsMigration unsupported ${label} action ${name}.', expr.pos);
 				"restrict";
+		}
+	}
+
+	static function railsMigrationForeignKeyDeferrable(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FEnum(_, field)):
+				railsMigrationForeignKeyDeferrableName(field.name, label, expr);
+			case TCall({expr: TField(_, FEnum(_, field))}, _):
+				railsMigrationForeignKeyDeferrableName(field.name, label, expr);
+			case _:
+				Context.error('@:railsMigration ${label} must be a ForeignKeyDeferrable enum value.', expr.pos);
+				"deferred";
+		}
+	}
+
+	static function railsMigrationForeignKeyDeferrableName(name:String, label:String, expr:TypedExpr):String {
+		return switch (name) {
+			case "Immediate": "immediate";
+			case "Deferred": "deferred";
+			case _:
+				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
+				"deferred";
 		}
 	}
 
