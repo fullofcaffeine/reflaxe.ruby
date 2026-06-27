@@ -5359,6 +5359,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"add_foreign_key :" + fromTable + ", :" + toTable + railsMigrationOptionSuffix(options)
 						], [{fromTable: fromTable, toTable: toTable}]);
+					case "ValidateForeignKey" if (args.length == 2):
+						var fromTable = railsMigrationSymbolArg(args[0], "ValidateForeignKey fromTable");
+						var toTable = railsMigrationSymbolArg(args[1], "ValidateForeignKey toTable");
+						railsMigrationValidateTable(validation, fromTable, "ValidateForeignKey fromTable", args[0]);
+						railsMigrationValidateTable(validation, toTable, "ValidateForeignKey toTable", args[1]);
+						railsMigrationValidationOperation(["validate_foreign_key :" + fromTable + ", :" + toTable], allowIrreversible);
+					case "ValidateForeignKeyByName" if (args.length == 2):
+						var fromTable = railsMigrationSymbolArg(args[0], "ValidateForeignKeyByName fromTable");
+						var name = railsMigrationSafeIdentifier(args[1], "ValidateForeignKeyByName name");
+						railsMigrationValidateTable(validation, fromTable, "ValidateForeignKeyByName fromTable", args[0]);
+						railsMigrationValidationOperation(["validate_foreign_key :" + fromTable + ", name: " + quoteRubyStringForCode(name)],
+							allowIrreversible);
 					case "RemoveForeignKey" if (args.length == 2):
 						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKey fromTable");
 						var toTable = railsMigrationSymbolArg(args[1], "RemoveForeignKey toTable");
@@ -5418,6 +5430,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ ", "
 							+ quoteRubyStringForCode(expression == null ? "" : expression)
 							+ railsMigrationOptionSuffix(options)]);
+					case "ValidateCheckConstraint" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "ValidateCheckConstraint table");
+						var name = railsMigrationSafeIdentifier(args[1], "ValidateCheckConstraint name");
+						railsMigrationValidateTable(validation, table, "ValidateCheckConstraint table", args[0]);
+						railsMigrationValidationOperation(["validate_check_constraint :" + table + ", name: " + quoteRubyStringForCode(name)],
+							allowIrreversible);
 					case "RemoveCheckConstraint" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveCheckConstraint", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveCheckConstraint table");
@@ -5624,6 +5642,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return {lines: lines, foreignKeys: foreignKeys == null ? [] : foreignKeys};
 	}
 
+	static function railsMigrationUpOnlyOperation(lines:Array<String>):RailsMigrationOperationInfo {
+		var out = ["reversible do |dir|", "  dir.up do"];
+		for (line in lines) {
+			out.push("    " + line);
+		}
+		out.push("  end");
+		out.push("end");
+		return railsMigrationOperation(out);
+	}
+
+	static function railsMigrationValidationOperation(lines:Array<String>, inExplicitReversible:Bool):RailsMigrationOperationInfo {
+		return inExplicitReversible ? railsMigrationOperation(lines) : railsMigrationUpOnlyOperation(lines);
+	}
+
 	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr,
 			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
 		var lines = ["reversible do |dir|", "  dir.up do"];
@@ -5779,6 +5811,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (typedBoolLiteral(field.expr, "CheckConstraint ifNotExists")) {
 								options.push("if_not_exists: true");
 							}
+						case "validate":
+							if (!typedBoolLiteral(field.expr, "CheckConstraint validate")) {
+								options.push("validate: false");
+							}
 						case _:
 							Context.error('@:railsMigration unknown CheckConstraint option ${field.name}.', field.expr.pos);
 					}
@@ -5814,6 +5850,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "ifNotExists":
 							if (typedBoolLiteral(field.expr, "ForeignKey ifNotExists")) {
 								options.push("if_not_exists: true");
+							}
+						case "validate":
+							if (!typedBoolLiteral(field.expr, "ForeignKey validate")) {
+								options.push("validate: false");
 							}
 						case _:
 							Context.error('@:railsMigration unknown ForeignKey option ${field.name}.', field.expr.pos);

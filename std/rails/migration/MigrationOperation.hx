@@ -30,6 +30,7 @@ typedef ReferenceOptions = {
 typedef CheckConstraintOptions = {
 	var name:String;
 	@:optional var ifNotExists:Bool;
+	@:optional var validate:Bool;
 }
 
 typedef ForeignKeyOptions = {
@@ -39,6 +40,7 @@ typedef ForeignKeyOptions = {
 	@:optional var onDelete:ForeignKeyAction;
 	@:optional var onUpdate:ForeignKeyAction;
 	@:optional var ifNotExists:Bool;
+	@:optional var validate:Bool;
 }
 
 enum ForeignKeyAction {
@@ -98,6 +100,8 @@ enum MigrationOperation {
 	RemoveReference(table:String, name:String, options:ReferenceOptions);
 	RemoveReferenceIfExists(table:String, name:String, options:ReferenceOptions);
 	AddForeignKey(fromTable:String, toTable:String, options:ForeignKeyOptions);
+	ValidateForeignKey(fromTable:String, toTable:String);
+	ValidateForeignKeyByName(fromTable:String, name:String);
 	RemoveForeignKey(fromTable:String, toTable:String);
 	RemoveForeignKeyIfExists(fromTable:String, toTable:String);
 	RemoveForeignKeyByName(fromTable:String, name:String);
@@ -106,6 +110,7 @@ enum MigrationOperation {
 	RenameTable(from:String, to:String);
 	ChangeNull(table:String, name:String, nullable:Bool);
 	AddCheckConstraint(table:String, expression:String, options:CheckConstraintOptions);
+	ValidateCheckConstraint(table:String, name:String);
 	RemoveCheckConstraint(table:String, name:String);
 	RemoveCheckConstraintIfExists(table:String, name:String);
 	DropTable(table:String);
