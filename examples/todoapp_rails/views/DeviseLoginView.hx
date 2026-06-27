@@ -21,8 +21,8 @@ import shared.TodoHooks;
 // `FlashMessages` reads Devise's normal Rails flash without authoring raw ERB;
 // `TodoHooks.sessionAttr` lets the Haxe client bind the same Turbo form
 // feedback as the board logout.
-// IntelliSense: editors should complete route helpers, HHX form tags, and shared
-// hook constants.
+// IntelliSense: editors should complete route helpers, HHX form tags such as
+// `email_field`, and shared hook constants.
 // Ruby/Rails output: `app/views/devise/sessions/new.html.erb`, consumed by
 // Devise's ordinary SessionsController.
 @:railsTemplate("devise/sessions/new")
@@ -62,7 +62,7 @@ class DeviseLoginView {
 				<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope="user" local class="login-form" data-railshx-session>
 					<div>
 						<field_label name=${DeviseFormFields.email}>Email</field_label>
-						<text_field name=${DeviseFormFields.email} type="email" autocomplete="email" placeholder="owner@example.test" autofocus required />
+						<email_field name=${DeviseFormFields.email} autocomplete="email" placeholder="owner@example.test" autofocus required />
 					</div>
 					<div>
 						<field_label name=${DeviseFormFields.password}>Password</field_label>

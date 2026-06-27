@@ -7454,6 +7454,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFormTextField(params[0], params[1], scope);
 						}
+					case "FormEmailField":
+						if (params.length != 2) {
+							Context.error("HtmlNode.FormEmailField expects name and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormEmailField(params[0], params[1], scope);
+						}
 					case "FormPasswordField":
 						if (params.length != 2) {
 							Context.error("HtmlNode.FormPasswordField expects name and attrs arguments.", node.pos);
@@ -7679,6 +7686,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			rubySymbolLiteral(expectTemplateFieldName(name, "H.textField name must be a string literal or RailsHx model field ref."))
 		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".text_field " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFormEmailField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.emailField name must be a string literal or RailsHx model field ref."))
+		].concat(lowerTemplateHelperAttrs(attrs, scope));
+		return "<%= " + form + ".email_field " + args.join(", ") + " %>";
 	}
 
 	static function lowerTemplateFormPasswordField(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

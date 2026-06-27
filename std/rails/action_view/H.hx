@@ -366,6 +366,10 @@ class H {
 		return macro rails.action_view.HtmlNode.FormTextField($name, $attrs);
 	}
 
+	public static macro function emailField(name:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormEmailField($name, $attrs);
+	}
+
 	public static macro function passwordField(name:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.FormPasswordField($name, $attrs);
 	}

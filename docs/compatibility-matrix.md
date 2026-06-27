@@ -78,7 +78,7 @@ Unsafe boundary policy is tracked in
 | Typed ActionView template AST | `@:railsTemplateAst(...)` + `H`/`HtmlNode`/`HtmlAttr` | Initial lower-level AST slice |
 | Typed ActionView partial composition | `H.partial(...)` + `Template<TLocals>` | Initial partial/component slice |
 | Typed ActionView route/helper calls | `H.linkTo(...)`, `H.buttonTo(...)` + route externs | Initial helper slice |
-| Typed ActionView form helpers | `<form_with scope=${Todo.railsParamKey}>`, `<text_field name=${Todo.f.title}>`, `<select name=${User.f.role} options=${[{label: "Member", value: "member"}]}>`, `<field_errors name=${Todo.f.title}>`, `<text_area>`, `<check_box>`, `<submit>` | Initial typed field-ref form slice |
+| Typed ActionView form helpers | `<form_with scope=${Todo.railsParamKey}>`, `<text_field name=${Todo.f.title}>`, `<email_field name=${DeviseFormFields.email}>`, `<select name=${User.f.role} options=${[{label: "Member", value: "member"}]}>`, `<field_errors name=${Todo.f.title}>`, `<text_area>`, `<check_box>`, `<submit>` | Initial typed field-ref form slice |
 | Typed HHX control/helper tags | `<if>`, `<for>`, `<link_to>`, `<button_to>`, `<partial>` | Initial template/helper slice |
 | Typed HHX helper label children | static text or `${...}` expression children | Initial helper slice |
 | Typed HHX nested helper slots | `<link_to>...</link_to>`, `<button_to>...</button_to>` block-form content | Initial slot slice |

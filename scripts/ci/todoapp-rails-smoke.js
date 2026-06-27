@@ -130,6 +130,8 @@ const radioButtonTagInvalidSourceDir = join(root, "test", ".generated", "todoapp
 const radioButtonTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_radio_button_tag_invalid_out");
 const formSelectInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_form_select_invalid_src");
 const formSelectInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_form_select_invalid_out");
+const formEmailFieldInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_form_email_field_invalid_src");
+const formEmailFieldInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_form_email_field_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -392,6 +394,8 @@ rmSync(radioButtonTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(radioButtonTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(formSelectInvalidSourceDir, { force: true, recursive: true });
 rmSync(formSelectInvalidOutputDir, { force: true, recursive: true });
+rmSync(formEmailFieldInvalidSourceDir, { force: true, recursive: true });
+rmSync(formEmailFieldInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1404,7 +1408,7 @@ for (const expected of [
   "owner@example.test",
   "password123",
   '<%= form_with url: user_session_path(), scope: :user, local: true, class: "login-form", data: {railshx_session: true} do |form| %>',
-  '<%= form.text_field :email, type: "email", autocomplete: "email", placeholder: "owner@example.test", autofocus: true, required: true %>',
+  '<%= form.email_field :email, autocomplete: "email", placeholder: "owner@example.test", autofocus: true, required: true %>',
   '<%= form.password_field :password, autocomplete: "current-password", placeholder: "password123", required: true %>',
   '<%= button_to "Continue as guest", guest_sign_in_path(), method: "post", class: "auth-guest-form", data: {railshx_session: true} %>',
 ]) {
@@ -1467,6 +1471,7 @@ expectTextAreaTagTypeFailure();
 expectCheckBoxTagTypeFailure();
 expectRadioButtonTagTypeFailure();
 expectFormSelectOptionTypeFailure();
+expectFormEmailFieldTypeFailure();
 expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
@@ -3870,6 +3875,36 @@ function expectFormSelectOptionTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid form select option failed, but not with the expected String option type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectFormEmailFieldTypeFailure() {
+  const result = compileCheckedAttrFixture(formEmailFieldInvalidSourceDir, formEmailFieldInvalidOutputDir, "InvalidFormEmailFieldMain",
+    "InvalidFormEmailFieldView", [
+      "package views;",
+      "",
+      "import rails.action_view.H;",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_form_email_field\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidFormEmailFieldView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn H.formWith(\"/users\", \"user\", [], [H.emailField(42, [])]);",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid form email_field name compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid form email_field name failed, but not with the expected String name type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);
