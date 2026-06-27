@@ -26,9 +26,9 @@ class UpdateTodos extends Migration {
 	public static final operations:Array<MigrationOperation> = [
 		Reversible([
 			ChangeColumn("todos", "title", StringColumn({nullable: false})),
-			AddForeignKey("todos", "users", {column: "user_id", onDelete: Cascade})
+			AddForeignKey("todos", "users", {column: "user_id", name: "fk_todos_users", onDelete: Cascade})
 		], [
-			RemoveForeignKey("todos", "users"),
+			RemoveForeignKeyByName("todos", "fk_todos_users"),
 			ChangeColumn("todos", "title", StringColumn({nullable: true}))
 		]),
 		AddColumn("todos", "priority", IntegerColumn({nullable: false, defaultValue: 0})),

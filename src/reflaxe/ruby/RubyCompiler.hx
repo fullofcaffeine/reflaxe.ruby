@@ -5300,6 +5300,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKey fromTable", args[0]);
 						railsMigrationValidateTable(validation, toTable, "RemoveForeignKey toTable", args[1]);
 						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", :" + toTable]);
+					case "RemoveForeignKeyByName" if (args.length == 2):
+						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyByName fromTable");
+						var name = railsMigrationSafeIdentifier(args[1], "RemoveForeignKeyByName name");
+						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyByName fromTable", args[0]);
+						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", name: " + quoteRubyStringForCode(name)]);
 					case "RenameColumn" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RenameColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RenameColumn table");
@@ -5687,6 +5692,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							var column = railsMigrationSymbolArg(field.expr, "ForeignKey column");
 							railsMigrationValidateColumn(validation, fromTable, column, "ForeignKey column", field.expr);
 							options.push("column: :" + column);
+						case "name":
+							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr, "ForeignKey name")));
 						case "primaryKey":
 							options.push("primary_key: :" + railsMigrationSymbolArg(field.expr, "ForeignKey primaryKey"));
 						case "onDelete":

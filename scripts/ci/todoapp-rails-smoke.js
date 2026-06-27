@@ -184,6 +184,8 @@ const migrationUnknownColumnSourceDir = join(root, "test", ".generated", "todoap
 const migrationUnknownColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_out");
 const migrationUnsafeIndexNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_index_name_src");
 const migrationUnsafeIndexNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_index_name_out");
+const migrationUnsafeForeignKeyNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_foreign_key_name_src");
+const migrationUnsafeForeignKeyNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_foreign_key_name_out");
 const migrationExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_src");
 const migrationExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_out");
 const migrationUnsafeExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_external_table_src");
@@ -452,6 +454,8 @@ rmSync(migrationUnknownColumnSourceDir, { force: true, recursive: true });
 rmSync(migrationUnknownColumnOutputDir, { force: true, recursive: true });
 rmSync(migrationUnsafeIndexNameSourceDir, { force: true, recursive: true });
 rmSync(migrationUnsafeIndexNameOutputDir, { force: true, recursive: true });
+rmSync(migrationUnsafeForeignKeyNameSourceDir, { force: true, recursive: true });
+rmSync(migrationUnsafeForeignKeyNameOutputDir, { force: true, recursive: true });
 rmSync(migrationExternalTableSourceDir, { force: true, recursive: true });
 rmSync(migrationExternalTableOutputDir, { force: true, recursive: true });
 rmSync(migrationUnsafeExternalTableSourceDir, { force: true, recursive: true });
@@ -930,9 +934,9 @@ for (const expected of [
   "change_column :todos, :title, :string, null: false",
   "reversible do |dir|",
   "dir.up do",
-  "add_foreign_key :todos, :users, column: :user_id, on_delete: :cascade",
+  'add_foreign_key :todos, :users, column: :user_id, name: "fk_todos_users", on_delete: :cascade',
   "dir.down do",
-  "remove_foreign_key :todos, :users",
+  'remove_foreign_key :todos, name: "fk_todos_users"',
   "change_column :todos, :title, :string",
   "add_column :todos, :priority, :integer, null: false, default: 0",
   'add_index :todos, :priority, name: "index_todos_on_priority"',
@@ -1548,6 +1552,7 @@ expectMigrationIrreversibleOperationFailure();
 expectMigrationUnknownTableFailure();
 expectMigrationUnknownColumnFailure();
 expectMigrationUnsafeIndexNameFailure();
+expectMigrationUnsafeForeignKeyNameFailure();
 expectMigrationExternalTableAllowed();
 expectMigrationUnsafeExternalTableFailure();
 expectMigrationDropTableReversibleOutput();
@@ -2270,6 +2275,47 @@ function expectMigrationUnsafeIndexNameFailure() {
     "InvalidUnsafeIndexNameMigrationMain",
     "Unsafe index-name RailsHx migration compiled successfully.",
     "@:railsMigration MigrationIndex name must be a safe Rails identifier"
+  );
+}
+
+function expectMigrationUnsafeForeignKeyNameFailure() {
+  mkdirSync(join(migrationUnsafeForeignKeyNameSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationUnsafeForeignKeyNameSourceDir, "InvalidUnsafeForeignKeyNameMigrationMain.hx"), [
+    "import migrations.BadUnsafeForeignKeyNameMigration;",
+    "",
+    "class InvalidUnsafeForeignKeyNameMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadUnsafeForeignKeyNameMigration> = BadUnsafeForeignKeyNameMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationUnsafeForeignKeyNameSourceDir, "migrations", "BadUnsafeForeignKeyNameMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000019\",",
+    "\tclassName: \"BadUnsafeForeignKeyNameMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\", \"models.User\"]",
+    "})",
+    "class BadUnsafeForeignKeyNameMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddForeignKey(\"todos\", \"users\", {column: \"user_id\", name: \"../bad_fk\"})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationUnsafeForeignKeyNameSourceDir,
+    migrationUnsafeForeignKeyNameOutputDir,
+    "InvalidUnsafeForeignKeyNameMigrationMain",
+    "Unsafe foreign-key-name RailsHx migration compiled successfully.",
+    "@:railsMigration ForeignKey name must be a safe Rails identifier"
   );
 }
 

@@ -31,6 +31,7 @@ typedef CheckConstraintOptions = {
 
 typedef ForeignKeyOptions = {
 	@:optional var column:String;
+	@:optional var name:String;
 	@:optional var primaryKey:String;
 	@:optional var onDelete:ForeignKeyAction;
 	@:optional var onUpdate:ForeignKeyAction;
@@ -86,6 +87,7 @@ enum MigrationOperation {
 	RemoveReference(table:String, name:String, options:ReferenceOptions);
 	AddForeignKey(fromTable:String, toTable:String, options:ForeignKeyOptions);
 	RemoveForeignKey(fromTable:String, toTable:String);
+	RemoveForeignKeyByName(fromTable:String, name:String);
 	RenameColumn(table:String, from:String, to:String);
 	RenameTable(from:String, to:String);
 	ChangeNull(table:String, name:String, nullable:Bool);
