@@ -163,6 +163,11 @@ enum CreateTableItem {
 	Index(columns:Array<String>, options:IndexOptions);
 }
 
+typedef ChangeTableOptions = {
+	var columns:Array<CreateTableItem>;
+	@:optional var bulk:Bool;
+}
+
 enum MigrationOperation {
 	/**
 		Typed Rails migration operations lower to normal ActiveRecord statements.
@@ -186,6 +191,7 @@ enum MigrationOperation {
 		@:optional var comment:String;
 		@:optional var temporary:Bool;
 	});
+	ChangeTable(table:String, options:ChangeTableOptions);
 	CreateJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	CreateSchema(name:String, options:SchemaOptions);

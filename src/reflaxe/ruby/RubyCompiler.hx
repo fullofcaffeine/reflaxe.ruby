@@ -5199,6 +5199,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "CreateTable" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "CreateTable table");
 						railsMigrationCreateTableOperation(table, args[1], validation);
+					case "ChangeTable" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "ChangeTable table");
+						railsMigrationValidateTable(validation, table, "ChangeTable table", args[0]);
+						railsMigrationChangeTableOperation(table, args[1], validation);
 					case "CreateJoinTable" if (args.length == 3):
 						var table1 = railsMigrationSymbolArg(args[0], "CreateJoinTable table1");
 						var table2 = railsMigrationSymbolArg(args[1], "CreateJoinTable table2");
@@ -5767,6 +5771,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			bodyLines.push("  t.timestamps");
 		}
 		var lines = ["create_table :" + table + railsMigrationOptionSuffix(options) + " do |t|"];
+		lines = lines.concat(bodyLines);
+		lines.push("end");
+		return railsMigrationOperation(lines);
+	}
+
+	static function railsMigrationChangeTableOperation(table:String, optionsExpr:TypedExpr,
+			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
+		var bodyLines:Array<String> = [];
+		var options:Array<String> = [];
+		switch (unwrapTypedExpr(optionsExpr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "columns":
+							for (item in railsMigrationCreateTableItems(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+							}
+						case "bulk":
+							if (typedBoolLiteral(field.expr, "ChangeTable bulk")) {
+								options.push("bulk: true");
+							}
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
+		}
+		var lines = ["change_table :" + table + railsMigrationOptionSuffix(options) + " do |t|"];
 		lines = lines.concat(bodyLines);
 		lines.push("end");
 		return railsMigrationOperation(lines);
