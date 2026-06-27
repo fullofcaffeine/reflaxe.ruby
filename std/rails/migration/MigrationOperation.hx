@@ -178,6 +178,8 @@ enum MigrationOperation {
 	AddColumnIfNotExists(table:String, name:String, column:MigrationColumn);
 	RemoveColumn(table:String, name:String);
 	RemoveColumnIfExists(table:String, name:String);
+	RemoveColumnWithType(table:String, name:String, column:MigrationColumn);
+	RemoveColumnIfExistsWithType(table:String, name:String, column:MigrationColumn);
 	RemoveColumns(table:String, columns:Array<String>);
 	ChangeColumn(table:String, name:String, column:MigrationColumn);
 	AddIndex(table:String, column:String, options:IndexOptions);

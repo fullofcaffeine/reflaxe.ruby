@@ -5312,6 +5312,30 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "RemoveColumnIfExists table", args[0]);
 						railsMigrationValidateColumn(validation, table, name, "RemoveColumnIfExists name", args[1]);
 						railsMigrationOperation(["remove_column :" + table + ", :" + name + ", if_exists: true"]);
+					case "RemoveColumnWithType" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveColumnWithType table");
+						var name = railsMigrationSymbolArg(args[1], "RemoveColumnWithType name");
+						railsMigrationValidateTable(validation, table, "RemoveColumnWithType table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "RemoveColumnWithType name", args[1]);
+						var column = railsMigrationColumnDsl(args[2]);
+						railsMigrationOperation([
+							"remove_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)
+						]);
+					case "RemoveColumnIfExistsWithType" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveColumnIfExistsWithType table");
+						var name = railsMigrationSymbolArg(args[1], "RemoveColumnIfExistsWithType name");
+						railsMigrationValidateTable(validation, table, "RemoveColumnIfExistsWithType table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "RemoveColumnIfExistsWithType name", args[1]);
+						var column = railsMigrationColumnDsl(args[2]);
+						railsMigrationOperation([
+							"remove_column :"
+							+ table
+							+ ", :"
+							+ name
+							+ ", :"
+							+ column.type
+							+ railsMigrationOptionSuffix(column.options.concat(["if_exists: true"]))
+						]);
 					case "RemoveColumns" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveColumns", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumns table");
