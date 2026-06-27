@@ -5244,6 +5244,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							"drop_enum " + quoteRubyStringForCode(name) + ", " + railsMigrationRubyStringArray(values)
 								+ railsMigrationOptionSuffix(railsMigrationEnumTypeDslOptions(args[2]))
 						]);
+					case "RenameEnum" if (args.length == 2):
+						railsMigrationRequireReversibleContext("RenameEnum", allowIrreversible, expr);
+						var from = railsMigrationEnumTypeName(args[0], "RenameEnum from");
+						var to = railsMigrationEnumTypeName(args[1], "RenameEnum to");
+						railsMigrationOperation(["rename_enum " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)]);
 					case "EnableExtension" if (args.length == 1):
 						var name = railsMigrationExtensionName(args[0], "EnableExtension name");
 						railsMigrationOperation(["enable_extension " + quoteRubyStringForCode(name)]);
