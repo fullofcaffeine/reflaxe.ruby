@@ -211,6 +211,7 @@ enum MigrationOperation {
 	RenameColumn(table:String, from:String, to:String);
 	RenameTable(from:String, to:String);
 	ChangeNull(table:String, name:String, nullable:Bool);
+	ChangeNullWithDefault(table:String, name:String, nullable:Bool, defaultValue:MigrationDefaultValue);
 	ChangeDefault(table:String, name:String, from:MigrationDefaultValue, to:MigrationDefaultValue);
 	ChangeColumnComment(table:String, name:String, from:MigrationCommentValue, to:MigrationCommentValue);
 	ChangeTableComment(table:String, from:MigrationCommentValue, to:MigrationCommentValue);

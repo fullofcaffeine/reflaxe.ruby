@@ -5557,6 +5557,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"change_column_null :" + table + ", :" + name + ", " + (nullable ? "true" : "false")
 						]);
+					case "ChangeNullWithDefault" if (args.length == 4):
+						var table = railsMigrationSymbolArg(args[0], "ChangeNullWithDefault table");
+						var name = railsMigrationSymbolArg(args[1], "ChangeNullWithDefault name");
+						var nullable = typedBoolLiteral(args[2], "ChangeNullWithDefault nullable");
+						var defaultValue = railsMigrationDefaultValue(args[3], "ChangeNullWithDefault defaultValue");
+						railsMigrationValidateTable(validation, table, "ChangeNullWithDefault table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "ChangeNullWithDefault name", args[1]);
+						railsMigrationOperation([
+							"change_column_null :" + table + ", :" + name + ", " + (nullable ? "true" : "false") + ", " + defaultValue
+						]);
 					case "ChangeDefault" if (args.length == 4):
 						var table = railsMigrationSymbolArg(args[0], "ChangeDefault table");
 						var name = railsMigrationSymbolArg(args[1], "ChangeDefault name");
