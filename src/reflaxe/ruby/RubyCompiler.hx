@@ -5628,6 +5628,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
+				var foreignKey = false;
+				var foreignKeyName:Null<String> = null;
 				for (field in fields) {
 					switch (field.name) {
 						case "nullable":
@@ -5635,9 +5637,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								options.push("null: false");
 							}
 						case "foreignKey":
-							if (typedBoolLiteral(field.expr, "Reference foreignKey")) {
-								options.push("foreign_key: true");
-							}
+							foreignKey = typedBoolLiteral(field.expr, "Reference foreignKey");
+						case "foreignKeyName":
+							foreignKeyName = railsMigrationSafeIdentifier(field.expr, "Reference foreignKeyName");
 						case "index":
 							if (!typedBoolLiteral(field.expr, "Reference index")) {
 								options.push("index: false");
@@ -5649,6 +5651,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case _:
 							Context.error('@:railsMigration unknown Reference option ${field.name}.', field.expr.pos);
 					}
+				}
+				if (foreignKeyName != null) {
+					options.push("foreign_key: { name: " + quoteRubyStringForCode(foreignKeyName) + " }");
+				} else if (foreignKey) {
+					options.push("foreign_key: true");
 				}
 				options;
 			case _:

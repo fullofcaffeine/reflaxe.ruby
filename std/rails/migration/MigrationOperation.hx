@@ -21,6 +21,7 @@ typedef IndexOptions = {
 typedef ReferenceOptions = {
 	@:optional var nullable:Bool;
 	@:optional var foreignKey:Bool;
+	@:optional var foreignKeyName:String;
 	@:optional var index:Bool;
 	@:optional var polymorphic:Bool;
 }

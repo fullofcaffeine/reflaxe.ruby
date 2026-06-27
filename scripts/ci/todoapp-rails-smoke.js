@@ -188,6 +188,8 @@ const migrationUnsafeIndexNameSourceDir = join(root, "test", ".generated", "todo
 const migrationUnsafeIndexNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_index_name_out");
 const migrationUnsafeForeignKeyNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_foreign_key_name_src");
 const migrationUnsafeForeignKeyNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_foreign_key_name_out");
+const migrationUnsafeReferenceForeignKeyNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_reference_foreign_key_name_src");
+const migrationUnsafeReferenceForeignKeyNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_reference_foreign_key_name_out");
 const migrationUnsafeCheckConstraintNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_check_constraint_name_src");
 const migrationUnsafeCheckConstraintNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_check_constraint_name_out");
 const migrationExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_src");
@@ -462,6 +464,8 @@ rmSync(migrationUnsafeIndexNameSourceDir, { force: true, recursive: true });
 rmSync(migrationUnsafeIndexNameOutputDir, { force: true, recursive: true });
 rmSync(migrationUnsafeForeignKeyNameSourceDir, { force: true, recursive: true });
 rmSync(migrationUnsafeForeignKeyNameOutputDir, { force: true, recursive: true });
+rmSync(migrationUnsafeReferenceForeignKeyNameSourceDir, { force: true, recursive: true });
+rmSync(migrationUnsafeReferenceForeignKeyNameOutputDir, { force: true, recursive: true });
 rmSync(migrationUnsafeCheckConstraintNameSourceDir, { force: true, recursive: true });
 rmSync(migrationUnsafeCheckConstraintNameOutputDir, { force: true, recursive: true });
 rmSync(migrationExternalTableSourceDir, { force: true, recursive: true });
@@ -965,7 +969,7 @@ for (const expected of [
   "class CreateChatMessages < ActiveRecord::Migration[7.1]",
   "create_table :chat_messages do |t|",
   "t.text :body, null: false",
-  "t.references :user, null: false, foreign_key: true",
+  't.references :user, null: false, foreign_key: { name: "fk_chat_messages_users" }',
   "t.index [:user_id, :id]",
 ]) {
   if (!chatMigrationRuby.includes(expected)) {
@@ -1562,6 +1566,7 @@ expectMigrationUnknownTableFailure();
 expectMigrationUnknownColumnFailure();
 expectMigrationUnsafeIndexNameFailure();
 expectMigrationUnsafeForeignKeyNameFailure();
+expectMigrationUnsafeReferenceForeignKeyNameFailure();
 expectMigrationUnsafeCheckConstraintNameFailure();
 expectMigrationExternalTableAllowed();
 expectMigrationUnsafeExternalTableFailure();
@@ -2367,6 +2372,48 @@ function expectMigrationUnsafeForeignKeyNameFailure() {
     "InvalidUnsafeForeignKeyNameMigrationMain",
     "Unsafe foreign-key-name RailsHx migration compiled successfully.",
     "@:railsMigration ForeignKey name must be a safe Rails identifier"
+  );
+}
+
+function expectMigrationUnsafeReferenceForeignKeyNameFailure() {
+  mkdirSync(join(migrationUnsafeReferenceForeignKeyNameSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationUnsafeReferenceForeignKeyNameSourceDir, "InvalidUnsafeReferenceForeignKeyNameMigrationMain.hx"), [
+    "import migrations.BadUnsafeReferenceForeignKeyNameMigration;",
+    "",
+    "class InvalidUnsafeReferenceForeignKeyNameMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadUnsafeReferenceForeignKeyNameMigration> = BadUnsafeReferenceForeignKeyNameMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationUnsafeReferenceForeignKeyNameSourceDir, "migrations", "BadUnsafeReferenceForeignKeyNameMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000022\",",
+    "\tclassName: \"BadUnsafeReferenceForeignKeyNameMigration\",",
+    "\tmodels: []",
+    "})",
+    "class BadUnsafeReferenceForeignKeyNameMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tCreateTable(\"chat_messages\", {",
+    "\t\t\tcolumns: [Reference(\"user\", {foreignKeyName: \"../bad_reference_fk\"})]",
+    "\t\t})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationUnsafeReferenceForeignKeyNameSourceDir,
+    migrationUnsafeReferenceForeignKeyNameOutputDir,
+    "InvalidUnsafeReferenceForeignKeyNameMigrationMain",
+    "Unsafe reference foreign-key-name RailsHx migration compiled successfully.",
+    "@:railsMigration Reference foreignKeyName must be a safe Rails identifier"
   );
 }
 

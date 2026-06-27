@@ -3,7 +3,7 @@ class CreateChatMessages < ActiveRecord::Migration[7.1]
   def change
     create_table :chat_messages do |t|
       t.text :body, null: false
-      t.references :user, null: false, foreign_key: true
+      t.references :user, null: false, foreign_key: { name: "fk_chat_messages_users" }
       t.index [:user_id, :id]
 
       t.timestamps
