@@ -29,7 +29,7 @@ module Models
     # haxe column encrypted_password: String
     # haxe column role: String
     validates :name, presence: true
-    validates :email, presence: true
+    validates :email, presence: true, uniqueness: true
     def initialize(*args, **kwargs)
       args = args + [kwargs] unless kwargs.empty?
       super(*args)

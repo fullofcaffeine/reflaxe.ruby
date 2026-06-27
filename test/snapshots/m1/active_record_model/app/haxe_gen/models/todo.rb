@@ -34,6 +34,7 @@ module Models
     # haxe column notes: Null
     # haxe column external_id: String
     # haxe column user_id: Int
+    validates :external_id, presence: true, uniqueness: true
     before_validation :normalize_title
     after_commit :publish_lifecycle_event
     def initialize(*args, **kwargs)

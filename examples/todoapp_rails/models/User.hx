@@ -43,7 +43,7 @@ class User extends rails.active_record.Base<User> implements DeviseResource<User
 	@:validates({presence: true})
 	public var nameValidation:rails.ActiveRecord.Validation<String>;
 
-	@:validates({presence: true})
+	@:validates({presence: true, uniqueness: true})
 	public var emailValidation:rails.ActiveRecord.Validation<String>;
 
 	public function roleLabel():String {

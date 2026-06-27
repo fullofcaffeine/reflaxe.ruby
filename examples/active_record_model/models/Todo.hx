@@ -61,6 +61,9 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:beforeValidation
 	public function normalizeTitle():Void {}
 
+	@:validates({presence: true, uniqueness: true})
+	public var externalIdValidation:rails.ActiveRecord.Validation<String>;
+
 	@:railsCallback("after_commit")
 	public function publishLifecycleEvent():Void {}
 }
