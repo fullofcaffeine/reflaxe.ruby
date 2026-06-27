@@ -546,6 +546,7 @@ for (const expected of [
   "# haxe column is_completed: Bool",
   "# haxe column user_id: Int",
   "validates :title, presence: true",
+  "validates :notes, length: {maximum: 500}, allow_blank: true",
   "validates :user_id, numericality: {only_integer: true, greater_than: 0}",
   "before_validation :normalize_title",
   "def normalize_title()",

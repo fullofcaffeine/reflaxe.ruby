@@ -64,6 +64,9 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:validates({presence: true, length: {minimum: 3}})
 	public var titleValidation:rails.ActiveRecord.Validation<String>;
 
+	@:validates({length: {maximum: 500}, allowNil: true})
+	public var notesValidation:rails.ActiveRecord.Validation<Null<String>>;
+
 	@:validates({presence: true, uniqueness: true, format: {with: ~/^[a-z0-9-]+$/}})
 	public var externalIdValidation:rails.ActiveRecord.Validation<String>;
 
