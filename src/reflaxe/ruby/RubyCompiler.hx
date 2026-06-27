@@ -5436,6 +5436,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"change_column_default :" + table + ", :" + name + ", from: " + from + ", to: " + to
 						]);
+					case "ChangeColumnComment" if (args.length == 4):
+						var table = railsMigrationSymbolArg(args[0], "ChangeColumnComment table");
+						var name = railsMigrationSymbolArg(args[1], "ChangeColumnComment name");
+						var from = railsMigrationCommentValue(args[2], "ChangeColumnComment from");
+						var to = railsMigrationCommentValue(args[3], "ChangeColumnComment to");
+						railsMigrationValidateTable(validation, table, "ChangeColumnComment table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "ChangeColumnComment name", args[1]);
+						railsMigrationOperation([
+							"change_column_comment :" + table + ", :" + name + ", from: " + from + ", to: " + to
+						]);
+					case "ChangeTableComment" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "ChangeTableComment table");
+						var from = railsMigrationCommentValue(args[1], "ChangeTableComment from");
+						var to = railsMigrationCommentValue(args[2], "ChangeTableComment to");
+						railsMigrationValidateTable(validation, table, "ChangeTableComment table", args[0]);
+						railsMigrationOperation([
+							"change_table_comment :" + table + ", from: " + from + ", to: " + to
+						]);
 					case "AddCheckConstraint" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddCheckConstraint table");
 						var expression = typedStringLiteral(args[1]);
@@ -6007,6 +6025,30 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case "BoolDefault" if (args.length == 1):
 				typedBoolLiteral(args[0], label) ? "true" : "false";
 			case "NullDefault" if (args.length == 0):
+				"nil";
+			case _:
+				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
+				"nil";
+		}
+	}
+
+	static function railsMigrationCommentValue(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FEnum(_, field)):
+				railsMigrationCommentValueByName(field.name, [], label, expr);
+			case TCall({expr: TField(_, FEnum(_, field))}, args):
+				railsMigrationCommentValueByName(field.name, args, label, expr);
+			case _:
+				Context.error('@:railsMigration ${label} must be a MigrationCommentValue enum value.', expr.pos);
+				"nil";
+		}
+	}
+
+	static function railsMigrationCommentValueByName(name:String, args:Array<TypedExpr>, label:String, expr:TypedExpr):String {
+		return switch (name) {
+			case "StringComment" if (args.length == 1):
+				quoteRubyStringForCode(typedStringDefaultLiteral(args[0], label));
+			case "NullComment" if (args.length == 0):
 				"nil";
 			case _:
 				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);

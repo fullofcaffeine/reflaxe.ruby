@@ -65,6 +65,11 @@ enum MigrationDefaultValue {
 	NullDefault;
 }
 
+enum MigrationCommentValue {
+	StringComment(value:String);
+	NullComment;
+}
+
 enum MigrationColumn {
 	StringColumn(options:ColumnOptions<String>);
 	TextColumn(options:ColumnOptions<String>);
@@ -127,6 +132,8 @@ enum MigrationOperation {
 	RenameTable(from:String, to:String);
 	ChangeNull(table:String, name:String, nullable:Bool);
 	ChangeDefault(table:String, name:String, from:MigrationDefaultValue, to:MigrationDefaultValue);
+	ChangeColumnComment(table:String, name:String, from:MigrationCommentValue, to:MigrationCommentValue);
+	ChangeTableComment(table:String, from:MigrationCommentValue, to:MigrationCommentValue);
 	AddCheckConstraint(table:String, expression:String, options:CheckConstraintOptions);
 	ValidateCheckConstraint(table:String, name:String);
 	RemoveCheckConstraint(table:String, name:String);
