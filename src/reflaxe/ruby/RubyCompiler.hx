@@ -5345,11 +5345,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKey fromTable", args[0]);
 						railsMigrationValidateTable(validation, toTable, "RemoveForeignKey toTable", args[1]);
 						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", :" + toTable]);
+					case "RemoveForeignKeyIfExists" if (args.length == 2):
+						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyIfExists fromTable");
+						var toTable = railsMigrationSymbolArg(args[1], "RemoveForeignKeyIfExists toTable");
+						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyIfExists fromTable", args[0]);
+						railsMigrationValidateTable(validation, toTable, "RemoveForeignKeyIfExists toTable", args[1]);
+						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", :" + toTable + ", if_exists: true"]);
 					case "RemoveForeignKeyByName" if (args.length == 2):
 						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyByName fromTable");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveForeignKeyByName name");
 						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyByName fromTable", args[0]);
 						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", name: " + quoteRubyStringForCode(name)]);
+					case "RemoveForeignKeyByNameIfExists" if (args.length == 2):
+						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyByNameIfExists fromTable");
+						var name = railsMigrationSafeIdentifier(args[1], "RemoveForeignKeyByNameIfExists name");
+						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyByNameIfExists fromTable", args[0]);
+						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"]);
 					case "RenameColumn" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RenameColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RenameColumn table");
@@ -5768,6 +5779,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							options.push("on_delete: :" + railsMigrationForeignKeyAction(field.expr, "ForeignKey onDelete"));
 						case "onUpdate":
 							options.push("on_update: :" + railsMigrationForeignKeyAction(field.expr, "ForeignKey onUpdate"));
+						case "ifNotExists":
+							if (typedBoolLiteral(field.expr, "ForeignKey ifNotExists")) {
+								options.push("if_not_exists: true");
+							}
 						case _:
 							Context.error('@:railsMigration unknown ForeignKey option ${field.name}.', field.expr.pos);
 					}
