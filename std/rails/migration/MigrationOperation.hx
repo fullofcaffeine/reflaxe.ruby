@@ -64,6 +64,10 @@ typedef SchemaOptions = {
 	@:optional var ifExists:Bool;
 }
 
+typedef EnumTypeOptions = {
+	@:optional var ifExists:Bool;
+}
+
 enum ForeignKeyAction {
 	Cascade;
 	Nullify;
@@ -125,6 +129,8 @@ enum MigrationOperation {
 	CreateSchema(name:String, options:SchemaOptions);
 	DropSchema(name:String, options:SchemaOptions);
 	RenameSchema(from:String, to:String);
+	CreateEnum(name:String, values:Array<String>);
+	DropEnum(name:String, values:Array<String>, options:EnumTypeOptions);
 	EnableExtension(name:String);
 	DisableExtension(name:String);
 

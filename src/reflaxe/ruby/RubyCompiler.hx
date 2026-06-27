@@ -5232,6 +5232,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var from = railsMigrationSchemaName(args[0], "RenameSchema from");
 						var to = railsMigrationSchemaName(args[1], "RenameSchema to");
 						railsMigrationOperation(["rename_schema " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)]);
+					case "CreateEnum" if (args.length == 2):
+						var name = railsMigrationEnumTypeName(args[0], "CreateEnum name");
+						var values = railsMigrationEnumValuesArg(args[1], "CreateEnum values");
+						railsMigrationOperation(["create_enum " + quoteRubyStringForCode(name) + ", " + railsMigrationRubyStringArray(values)]);
+					case "DropEnum" if (args.length == 3):
+						railsMigrationRequireReversibleContext("DropEnum", allowIrreversible, expr);
+						var name = railsMigrationEnumTypeName(args[0], "DropEnum name");
+						var values = railsMigrationEnumValuesArg(args[1], "DropEnum values");
+						railsMigrationOperation([
+							"drop_enum " + quoteRubyStringForCode(name) + ", " + railsMigrationRubyStringArray(values)
+								+ railsMigrationOptionSuffix(railsMigrationEnumTypeDslOptions(args[2]))
+						]);
 					case "EnableExtension" if (args.length == 1):
 						var name = railsMigrationExtensionName(args[0], "EnableExtension name");
 						railsMigrationOperation(["enable_extension " + quoteRubyStringForCode(name)]);
@@ -6008,6 +6020,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function railsMigrationEnumTypeDslOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				for (field in fields) {
+					switch (field.name) {
+						case "ifExists":
+							if (typedBoolLiteral(field.expr, "EnumType ifExists")) {
+								options.push("if_exists: true");
+							}
+						case _:
+							Context.error('@:railsMigration unknown DropEnum option ${field.name}.', field.expr.pos);
+					}
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration EnumType options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
 	static function railsMigrationForeignKeyDslOptions(expr:TypedExpr, validation:Null<RailsMigrationValidationContext>, fromTable:String):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
@@ -6135,6 +6168,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return value;
 	}
 
+	static function railsMigrationEnumTypeName(expr:TypedExpr, label:String):String {
+		var value = typedStringLiteral(expr);
+		if (value == null || value == "" || !~/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)?$/.match(value)) {
+			Context.error('@:railsMigration ${label} must be a literal enum type name such as "audit_status" or "reporting.audit_status".',
+				expr.pos);
+			return "invalid";
+		}
+		return value;
+	}
+
 	static function railsMigrationSymbolArrayArg(expr:TypedExpr, label:String):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
@@ -6150,6 +6193,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error('@:railsMigration ${label} must be an Array<String> literal.', expr.pos);
 				[];
 		}
+	}
+
+	static function railsMigrationEnumValuesArg(expr:TypedExpr, label:String):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (valueExpr in values) {
+					var value = typedStringLiteral(valueExpr);
+					if (value == null || value == "" || !~/^[a-z][a-z0-9_]*$/.match(value)) {
+						Context.error('@:railsMigration ${label} must contain literal enum values such as "draft" or "needs_review".',
+							valueExpr.pos);
+					} else if (out.indexOf(value) != -1) {
+						Context.error('@:railsMigration ${label} must not contain duplicate enum value "${value}".', valueExpr.pos);
+					} else {
+						out.push(value);
+					}
+				}
+				if (out.length == 0) {
+					Context.error('@:railsMigration ${label} must not be empty.', expr.pos);
+				}
+				out;
+			case _:
+				Context.error('@:railsMigration ${label} must be an Array<String> literal.', expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationRubyStringArray(values:Array<String>):String {
+		return "[" + [for (value in values) quoteRubyStringForCode(value)].join(", ") + "]";
 	}
 
 	static function typedMigrationLiteralCode(expr:TypedExpr):String {
