@@ -55,6 +55,14 @@ enum ForeignKeyDeferrable {
 	Deferred;
 }
 
+enum MigrationDefaultValue {
+	StringDefault(value:String);
+	IntDefault(value:Int);
+	FloatDefault(value:Float);
+	BoolDefault(value:Bool);
+	NullDefault;
+}
+
 enum MigrationColumn {
 	StringColumn(options:ColumnOptions<String>);
 	TextColumn(options:ColumnOptions<String>);
@@ -116,6 +124,7 @@ enum MigrationOperation {
 	RenameColumn(table:String, from:String, to:String);
 	RenameTable(from:String, to:String);
 	ChangeNull(table:String, name:String, nullable:Bool);
+	ChangeDefault(table:String, name:String, from:MigrationDefaultValue, to:MigrationDefaultValue);
 	AddCheckConstraint(table:String, expression:String, options:CheckConstraintOptions);
 	ValidateCheckConstraint(table:String, name:String);
 	RemoveCheckConstraint(table:String, name:String);

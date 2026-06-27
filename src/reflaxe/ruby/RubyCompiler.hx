@@ -5426,6 +5426,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"change_column_null :" + table + ", :" + name + ", " + (nullable ? "true" : "false")
 						]);
+					case "ChangeDefault" if (args.length == 4):
+						var table = railsMigrationSymbolArg(args[0], "ChangeDefault table");
+						var name = railsMigrationSymbolArg(args[1], "ChangeDefault name");
+						var from = railsMigrationDefaultValue(args[2], "ChangeDefault from");
+						var to = railsMigrationDefaultValue(args[3], "ChangeDefault to");
+						railsMigrationValidateTable(validation, table, "ChangeDefault table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "ChangeDefault name", args[1]);
+						railsMigrationOperation([
+							"change_column_default :" + table + ", :" + name + ", from: " + from + ", to: " + to
+						]);
 					case "AddCheckConstraint" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddCheckConstraint table");
 						var expression = typedStringLiteral(args[1]);
@@ -5969,6 +5979,55 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error("@:railsMigration literal option value must be a String, Int, Float, or Bool literal.", expr.pos);
 				"nil";
+		}
+	}
+
+	static function railsMigrationDefaultValue(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FEnum(_, field)):
+				railsMigrationDefaultValueByName(field.name, [], label, expr);
+			case TCall({expr: TField(_, FEnum(_, field))}, args):
+				railsMigrationDefaultValueByName(field.name, args, label, expr);
+			case _:
+				Context.error('@:railsMigration ${label} must be a MigrationDefaultValue enum value.', expr.pos);
+				"nil";
+		}
+	}
+
+	static function railsMigrationDefaultValueByName(name:String, args:Array<TypedExpr>, label:String, expr:TypedExpr):String {
+		return switch (name) {
+			case "StringDefault" if (args.length == 1):
+				quoteRubyStringForCode(typedStringDefaultLiteral(args[0], label));
+			case "IntDefault" if (args.length == 1):
+				Std.string(typedIntLiteral(args[0], label));
+			case "FloatDefault" if (args.length == 1):
+				typedFloatLiteral(args[0], label);
+			case "BoolDefault" if (args.length == 1):
+				typedBoolLiteral(args[0], label) ? "true" : "false";
+			case "NullDefault" if (args.length == 0):
+				"nil";
+			case _:
+				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
+				"nil";
+		}
+	}
+
+	static function typedStringDefaultLiteral(expr:TypedExpr, label:String):String {
+		var value = typedStringLiteral(expr);
+		if (value == null) {
+			Context.error('@:railsMigration ${label} must be a String literal.', expr.pos);
+			return "";
+		}
+		return value;
+	}
+
+	static function typedFloatLiteral(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TFloat(value)): value;
+			case TConst(TInt(value)): Std.string(value);
+			case _:
+				Context.error('@:railsMigration ${label} must be a Float literal.', expr.pos);
+				"0.0";
 		}
 	}
 
