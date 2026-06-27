@@ -5864,6 +5864,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "BooleanColumn": "boolean";
 					case "FloatColumn": "float";
 					case "DecimalColumn": "decimal";
+					case "DateColumn": "date";
+					case "DateTimeColumn": "datetime";
+					case "TimeColumn": "time";
+					case "BinaryColumn": "binary";
+					case "JsonColumn": "json";
+					case "JsonbColumn": "jsonb";
 					case _:
 						Context.error('@:railsMigration unsupported MigrationColumn ${field.name}.', expr.pos);
 						"string";

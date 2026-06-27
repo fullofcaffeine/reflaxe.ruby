@@ -15,6 +15,25 @@ typedef DecimalColumnOptions = {
 	@:optional var comment:String;
 }
 
+typedef DateColumnOptions = {
+	@:optional var nullable:Bool;
+	@:optional var defaultValue:String;
+	@:optional var comment:String;
+}
+
+typedef TemporalColumnOptions = {
+	@:optional var nullable:Bool;
+	@:optional var defaultValue:String;
+	@:optional var precision:Int;
+	@:optional var comment:String;
+}
+
+typedef JsonColumnOptions = {
+	@:optional var nullable:Bool;
+	@:optional var defaultValue:String;
+	@:optional var comment:String;
+}
+
 typedef IndexOptions = {
 	@:optional var unique:Bool;
 	@:optional var name:String;
@@ -111,6 +130,12 @@ enum MigrationColumn {
 	BooleanColumn(options:ColumnOptions<Bool>);
 	FloatColumn(options:ColumnOptions<Float>);
 	DecimalColumn(options:DecimalColumnOptions);
+	DateColumn(options:DateColumnOptions);
+	DateTimeColumn(options:TemporalColumnOptions);
+	TimeColumn(options:TemporalColumnOptions);
+	BinaryColumn(options:ColumnOptions<String>);
+	JsonColumn(options:JsonColumnOptions);
+	JsonbColumn(options:JsonColumnOptions);
 }
 
 enum CreateTableItem {
