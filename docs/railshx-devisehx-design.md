@@ -193,7 +193,7 @@ class DeviseLoginView {
 	public static function render(resource:User):HtmlNode {
 		return <main>
 			<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope="user" local>
-				<text_field name=${DeviseFormFields.email} />
+				<email_field name=${DeviseFormFields.email} />
 				<password_field name=${DeviseFormFields.password} />
 				<submit type="submit">Log in</submit>
 			</form_with>

@@ -35,7 +35,7 @@ class UnlocksNewView {
 				<form_with url=${AuthLinks.unlockPath(UserAuth.scope)} scope="user" local class="devisehx-auth-form">
 					<div>
 						<field_label name=${DeviseFormFields.email}>Email</field_label>
-						<text_field name=${DeviseFormFields.email} type="email" autocomplete="email" required />
+						<email_field name=${DeviseFormFields.email} autocomplete="email" required />
 					</div>
 					<submit type="submit">Resend unlock instructions</submit>
 				</form_with>
