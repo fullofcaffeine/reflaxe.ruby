@@ -164,6 +164,7 @@ enum MigrationOperation {
 		@:optional var primaryKey:String;
 		@:optional var primaryKeys:Array<String>;
 		@:optional var comment:String;
+		@:optional var temporary:Bool;
 	});
 	CreateJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);

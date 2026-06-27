@@ -5739,6 +5739,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							options.push("primary_key: [" + [for (key in keys) ":" + key].join(", ") + "]");
 						case "comment":
 							options.push("comment: " + quoteRubyStringForCode(typedStringDefaultLiteral(field.expr, "CreateTable comment")));
+						case "temporary":
+							if (typedBoolLiteral(field.expr, "CreateTable temporary")) {
+								options.push("temporary: true");
+							}
 						case _:
 							Context.error('@:railsMigration unknown CreateTable option ${field.name}.', field.expr.pos);
 					}
