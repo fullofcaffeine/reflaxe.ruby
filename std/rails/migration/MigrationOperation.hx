@@ -48,6 +48,8 @@ typedef ReferenceOptions = {
 	@:optional var foreignKey:Bool;
 	@:optional var foreignKeyName:String;
 	@:optional var index:Bool;
+	@:optional var indexName:String;
+	@:optional var indexUnique:Bool;
 	@:optional var polymorphic:Bool;
 }
 

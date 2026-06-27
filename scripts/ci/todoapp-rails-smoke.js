@@ -204,6 +204,8 @@ const migrationHistoricalAddColumnSourceDir = join(root, "test", ".generated", "
 const migrationHistoricalAddColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_historical_add_column_out");
 const migrationDuplicateAddColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_add_column_src");
 const migrationDuplicateAddColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_add_column_out");
+const migrationReferenceIndexConflictSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_reference_index_conflict_src");
+const migrationReferenceIndexConflictOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_reference_index_conflict_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -480,6 +482,8 @@ rmSync(migrationHistoricalAddColumnSourceDir, { force: true, recursive: true });
 rmSync(migrationHistoricalAddColumnOutputDir, { force: true, recursive: true });
 rmSync(migrationDuplicateAddColumnSourceDir, { force: true, recursive: true });
 rmSync(migrationDuplicateAddColumnOutputDir, { force: true, recursive: true });
+rmSync(migrationReferenceIndexConflictSourceDir, { force: true, recursive: true });
+rmSync(migrationReferenceIndexConflictOutputDir, { force: true, recursive: true });
 rmSync(clientOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
@@ -1579,6 +1583,7 @@ expectMigrationDropTableReversibleOutput();
 expectMigrationSnapshotOperationsOutput();
 expectMigrationHistoricalAddColumnAllowed();
 expectMigrationDuplicateAddColumnFailure();
+expectMigrationReferenceIndexConflictFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -2664,7 +2669,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t\t\tColumn(\"payload\", JsonColumn({})),",
     "\t\t\t\tColumn(\"metadata\", JsonbColumn({nullable: false, defaultValue: \"{}\"})),",
     "\t\t\t\tColumn(\"attachment\", BinaryColumn({limit: 2048})),",
-    "\t\t\t\tReference(\"user\", {nullable: false, type: UuidPrimaryKey, comment: \"Actor reference\", foreignKey: true}),",
+    "\t\t\t\tReference(\"user\", {nullable: false, type: UuidPrimaryKey, comment: \"Actor reference\", indexName: \"index_audit_events_on_actor\", foreignKey: true}),",
     "\t\t\t\tIndex([\"user_id\", \"title\"], {unique: true, comment: \"User title lookup\"})",
     "\t\t\t],",
     "\t\t\ttimestamps: true",
@@ -2703,7 +2708,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t], [",
     "\t\t\tDropJoinTable(\"audit_events\", \"users\", {tableName: \"audit_events_users\", ifExists: true})",
     "\t\t]),",
-    "\t\tAddReferenceIfNotExists(\"audit_events\", \"account\", {type: StringPrimaryKey, comment: \"Account reference\", index: false}),",
+    "\t\tAddReferenceIfNotExists(\"audit_events\", \"account\", {type: StringPrimaryKey, comment: \"Account reference\", indexUnique: true}),",
     "\t\tValidateForeignKey(\"audit_events\", \"users\"),",
     "\t\tAddColumnIfNotExists(\"audit_events\", \"archived\", BooleanColumn({nullable: false, defaultValue: false})),",
     "\t\tAddColumnIfNotExists(\"audit_events\", \"retired_flag\", BooleanColumn({nullable: false, defaultValue: false})),",
@@ -2787,7 +2792,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "t.json :payload",
     't.jsonb :metadata, null: false, default: "{}"',
     "t.binary :attachment, limit: 2048",
-    't.references :user, null: false, type: :uuid, comment: "Actor reference", foreign_key: true',
+    't.references :user, null: false, type: :uuid, comment: "Actor reference", index: { name: "index_audit_events_on_actor" }, foreign_key: true',
     't.index [:user_id, :title], unique: true, comment: "User title lookup"',
     "t.timestamps",
     "create_table :audit_rollups, id: false, primary_key: [:account_id, :reported_on], temporary: true do |t|",
@@ -2802,7 +2807,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "remove_timestamps :audit_events, null: false, precision: 6",
     "create_join_table :audit_events, :users, table_name: :audit_events_users, if_not_exists: true, column_options: { null: false, type: :uuid, index: false }",
     "drop_join_table :audit_events, :users, table_name: :audit_events_users, if_exists: true",
-    'add_reference :audit_events, :account, type: :string, comment: "Account reference", index: false, if_not_exists: true',
+    'add_reference :audit_events, :account, type: :string, comment: "Account reference", index: { unique: true }, if_not_exists: true',
     "validate_foreign_key :audit_events, :users",
     "add_column :audit_events, :archived, :boolean, null: false, default: false, if_not_exists: true",
     "add_column :audit_events, :retired_flag, :boolean, null: false, default: false, if_not_exists: true",
@@ -2936,6 +2941,49 @@ function expectMigrationDuplicateAddColumnFailure() {
     "InvalidDuplicateAddColumnMigrationMain",
     "Duplicate AddColumn RailsHx migration compiled successfully.",
     "@:railsMigration AddColumn name references column \"title\" already emitted by this migration snapshot on table \"todos\""
+  );
+}
+
+function expectMigrationReferenceIndexConflictFailure() {
+  mkdirSync(join(migrationReferenceIndexConflictSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationReferenceIndexConflictSourceDir, "InvalidReferenceIndexConflictMigrationMain.hx"), [
+    "import migrations.BadReferenceIndexConflictMigration;",
+    "",
+    "class InvalidReferenceIndexConflictMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadReferenceIndexConflictMigration> = BadReferenceIndexConflictMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationReferenceIndexConflictSourceDir, "migrations", "BadReferenceIndexConflictMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Demonstrates the typed reference-index guardrail: Rails can disable a",
+    "// reference index or configure it, but doing both is contradictory.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000018\",",
+    "\tclassName: \"BadReferenceIndexConflictMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadReferenceIndexConflictMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddReference(\"todos\", \"user\", {index: false, indexName: \"index_todos_on_user_ref\"})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationReferenceIndexConflictSourceDir,
+    migrationReferenceIndexConflictOutputDir,
+    "InvalidReferenceIndexConflictMigrationMain",
+    "Reference index conflict RailsHx migration compiled successfully.",
+    "@:railsMigration Reference indexName/indexUnique require index to be enabled."
   );
 }
 

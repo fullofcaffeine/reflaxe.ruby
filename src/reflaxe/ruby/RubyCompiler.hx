@@ -6044,6 +6044,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var options:Array<String> = [];
 				var foreignKey = false;
 				var foreignKeyName:Null<String> = null;
+				var indexEnabled:Null<Bool> = null;
+				var indexName:Null<String> = null;
+				var indexUnique = false;
 				for (field in fields) {
 					switch (field.name) {
 						case "nullable":
@@ -6059,9 +6062,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "foreignKeyName":
 							foreignKeyName = railsMigrationSafeIdentifier(field.expr, "Reference foreignKeyName");
 						case "index":
-							if (!typedBoolLiteral(field.expr, "Reference index")) {
-								options.push("index: false");
-							}
+							indexEnabled = typedBoolLiteral(field.expr, "Reference index");
+						case "indexName":
+							indexName = railsMigrationSafeIdentifier(field.expr, "Reference indexName");
+						case "indexUnique":
+							indexUnique = typedBoolLiteral(field.expr, "Reference indexUnique");
 						case "polymorphic":
 							if (typedBoolLiteral(field.expr, "Reference polymorphic")) {
 								options.push("polymorphic: true");
@@ -6069,6 +6074,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case _:
 							Context.error('@:railsMigration unknown Reference option ${field.name}.', field.expr.pos);
 					}
+				}
+				if (indexEnabled == false && (indexName != null || indexUnique)) {
+					Context.error("@:railsMigration Reference indexName/indexUnique require index to be enabled.", expr.pos);
+				}
+				if (indexName != null || indexUnique) {
+					var indexOptions = [];
+					if (indexName != null) {
+						indexOptions.push("name: " + quoteRubyStringForCode(indexName));
+					}
+					if (indexUnique) {
+						indexOptions.push("unique: true");
+					}
+					options.push("index: { " + indexOptions.join(", ") + " }");
+				} else if (indexEnabled == false) {
+					options.push("index: false");
 				}
 				if (foreignKeyName != null) {
 					options.push("foreign_key: { name: " + quoteRubyStringForCode(foreignKeyName) + " }");
