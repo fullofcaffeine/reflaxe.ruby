@@ -11,7 +11,7 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
         change_column :todos, :title, :string
       end
     end
-    add_column :todos, :priority, :integer, null: false, default: 0
+    add_column :todos, :priority, :integer, null: false, default: 0, if_not_exists: true
     add_index :todos, :priority, name: "index_todos_on_priority"
     reversible do |dir|
       dir.up do

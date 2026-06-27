@@ -5209,6 +5209,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"add_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)
 						]);
+					case "AddColumnIfNotExists" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "AddColumnIfNotExists table");
+						var name = railsMigrationSymbolArg(args[1], "AddColumnIfNotExists name");
+						railsMigrationValidateTable(validation, table, "AddColumnIfNotExists table", args[0]);
+						railsMigrationValidateNewColumn(validation, table, name, "AddColumnIfNotExists name", args[1]);
+						var column = railsMigrationColumnDsl(args[2]);
+						railsMigrationRegisterColumn(validation, table, name);
+						railsMigrationOperation([
+							"add_column :"
+							+ table
+							+ ", :"
+							+ name
+							+ ", :"
+							+ column.type
+							+ railsMigrationOptionSuffix(column.options.concat(["if_not_exists: true"]))
+						]);
 					case "RemoveColumn" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumn table");
@@ -5216,6 +5232,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "RemoveColumn table", args[0]);
 						railsMigrationValidateColumn(validation, table, name, "RemoveColumn name", args[1]);
 						railsMigrationOperation(["remove_column :" + table + ", :" + name]);
+					case "RemoveColumnIfExists" if (args.length == 2):
+						railsMigrationRequireReversibleContext("RemoveColumnIfExists", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RemoveColumnIfExists table");
+						var name = railsMigrationSymbolArg(args[1], "RemoveColumnIfExists name");
+						railsMigrationValidateTable(validation, table, "RemoveColumnIfExists table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "RemoveColumnIfExists name", args[1]);
+						railsMigrationOperation(["remove_column :" + table + ", :" + name + ", if_exists: true"]);
 					case "ChangeColumn" if (args.length == 3):
 						railsMigrationRequireReversibleContext("ChangeColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "ChangeColumn table");

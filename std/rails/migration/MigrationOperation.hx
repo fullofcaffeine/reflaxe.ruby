@@ -79,7 +79,9 @@ enum MigrationOperation {
 	});
 
 	AddColumn(table:String, name:String, column:MigrationColumn);
+	AddColumnIfNotExists(table:String, name:String, column:MigrationColumn);
 	RemoveColumn(table:String, name:String);
+	RemoveColumnIfExists(table:String, name:String);
 	ChangeColumn(table:String, name:String, column:MigrationColumn);
 	AddIndex(table:String, column:String, options:IndexOptions);
 	AddCompositeIndex(table:String, columns:Array<String>, options:IndexOptions);
