@@ -5735,7 +5735,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "idType":
 							hasIdType = true;
-							options.push("id: :" + railsMigrationPrimaryKeyType(field.expr));
+							options.push("id: :" + railsMigrationPrimaryKeyType(field.expr, "CreateTable idType"));
 						case "primaryKey":
 							hasPrimaryKey = true;
 							options.push("primary_key: :" + railsMigrationSymbolArg(field.expr, "CreateTable primaryKey"));
@@ -5772,7 +5772,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return railsMigrationOperation(lines);
 	}
 
-	static function railsMigrationPrimaryKeyType(expr:TypedExpr):String {
+	static function railsMigrationPrimaryKeyType(expr:TypedExpr, label:String):String {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TField(_, FEnum(_, field)):
 				switch (field.name) {
@@ -5781,11 +5781,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "UuidPrimaryKey": "uuid";
 					case "StringPrimaryKey": "string";
 					case _:
-						Context.error('@:railsMigration unsupported PrimaryKeyType ${field.name}.', expr.pos);
+						Context.error('@:railsMigration unsupported PrimaryKeyType ${field.name} for $label.', expr.pos);
 						"bigint";
 				}
 			case _:
-				Context.error("@:railsMigration CreateTable idType expects a PrimaryKeyType enum value.", expr.pos);
+				Context.error('@:railsMigration $label expects a PrimaryKeyType enum value.', expr.pos);
 				"bigint";
 		}
 	}
@@ -6050,6 +6050,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (!typedBoolLiteral(field.expr, "Reference nullable")) {
 								options.push("null: false");
 							}
+						case "type":
+							options.push("type: :" + railsMigrationPrimaryKeyType(field.expr, "Reference type"));
 						case "foreignKey":
 							foreignKey = typedBoolLiteral(field.expr, "Reference foreignKey");
 						case "foreignKeyName":
