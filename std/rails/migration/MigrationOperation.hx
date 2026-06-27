@@ -79,6 +79,7 @@ enum MigrationOperation {
 	AddIndex(table:String, column:String, options:IndexOptions);
 	AddCompositeIndex(table:String, columns:Array<String>, options:IndexOptions);
 	RemoveIndex(table:String, column:String);
+	RemoveCompositeIndex(table:String, columns:Array<String>);
 	AddReference(table:String, name:String, options:ReferenceOptions);
 	RemoveReference(table:String, name:String, options:ReferenceOptions);
 	AddForeignKey(fromTable:String, toTable:String, options:ForeignKeyOptions);

@@ -33,7 +33,11 @@ class UpdateTodos extends Migration {
 		]),
 		AddColumn("todos", "priority", IntegerColumn({nullable: false, defaultValue: 0})),
 		AddIndex("todos", "priority", {unique: false}),
-		AddCompositeIndex("todos", ["user_id", "priority"], {}),
+		Reversible([
+			AddCompositeIndex("todos", ["user_id", "priority"], {})
+		], [
+			RemoveCompositeIndex("todos", ["user_id", "priority"])
+		]),
 		DataMigration("UPDATE todos SET priority = 0 WHERE priority IS NULL", "UPDATE todos SET priority = NULL WHERE priority = 0")
 	];
 }

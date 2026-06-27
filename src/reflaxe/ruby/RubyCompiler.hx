@@ -5251,6 +5251,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "RemoveIndex table", args[0]);
 						railsMigrationValidateColumn(validation, table, columnName, "RemoveIndex column", args[1]);
 						railsMigrationOperation(["remove_index :" + table + ", :" + columnName]);
+					case "RemoveCompositeIndex" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndex table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndex columns");
+						railsMigrationValidateTable(validation, table, "RemoveCompositeIndex table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "RemoveCompositeIndex column", args[1]);
+						}
+						railsMigrationOperation(["remove_index :"
+							+ table
+							+ ", column: ["
+							+ [for (column in columns) ":" + column].join(", ") + "]"]);
 					case "AddReference" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddReference table");
 						var name = railsMigrationSymbolArg(args[1], "AddReference name");

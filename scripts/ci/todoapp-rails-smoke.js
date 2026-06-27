@@ -933,6 +933,7 @@ for (const expected of [
   "add_column :todos, :priority, :integer, null: false, default: 0",
   "add_index :todos, :priority",
   "add_index :todos, [:user_id, :priority]",
+  "remove_index :todos, column: [:user_id, :priority]",
   "execute \"UPDATE todos SET priority = 0 WHERE priority IS NULL\"",
   "execute \"UPDATE todos SET priority = NULL WHERE priority = 0\"",
 ]) {
