@@ -46,6 +46,11 @@ typedef ForeignKeyOptions = {
 	@:optional var deferrable:ForeignKeyDeferrable;
 }
 
+typedef TimestampOptions = {
+	@:optional var nullable:Bool;
+	@:optional var precision:Int;
+}
+
 enum ForeignKeyAction {
 	Cascade;
 	Nullify;
@@ -134,6 +139,9 @@ enum MigrationOperation {
 	ChangeDefault(table:String, name:String, from:MigrationDefaultValue, to:MigrationDefaultValue);
 	ChangeColumnComment(table:String, name:String, from:MigrationCommentValue, to:MigrationCommentValue);
 	ChangeTableComment(table:String, from:MigrationCommentValue, to:MigrationCommentValue);
+	AddTimestamps(table:String, options:TimestampOptions);
+	AddTimestampsIfNotExists(table:String, options:TimestampOptions);
+	RemoveTimestamps(table:String, options:TimestampOptions);
 	AddCheckConstraint(table:String, expression:String, options:CheckConstraintOptions);
 	ValidateCheckConstraint(table:String, name:String);
 	RemoveCheckConstraint(table:String, name:String);

@@ -5454,6 +5454,26 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"change_table_comment :" + table + ", from: " + from + ", to: " + to
 						]);
+					case "AddTimestamps" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "AddTimestamps table");
+						railsMigrationValidateTable(validation, table, "AddTimestamps table", args[0]);
+						railsMigrationOperation([
+							"add_timestamps :" + table + railsMigrationOptionSuffix(railsMigrationTimestampDslOptions(args[1]))
+						]);
+					case "AddTimestampsIfNotExists" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "AddTimestampsIfNotExists table");
+						railsMigrationValidateTable(validation, table, "AddTimestampsIfNotExists table", args[0]);
+						railsMigrationOperation([
+							"add_timestamps :"
+							+ table
+							+ railsMigrationOptionSuffix(railsMigrationTimestampDslOptions(args[1]).concat(["if_not_exists: true"]))
+						]);
+					case "RemoveTimestamps" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "RemoveTimestamps table");
+						railsMigrationValidateTable(validation, table, "RemoveTimestamps table", args[0]);
+						railsMigrationOperation([
+							"remove_timestamps :" + table + railsMigrationOptionSuffix(railsMigrationTimestampDslOptions(args[1]))
+						]);
 					case "AddCheckConstraint" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddCheckConstraint table");
 						var expression = typedStringLiteral(args[1]);
@@ -5864,6 +5884,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				options;
 			case _:
 				Context.error("@:railsMigration CheckConstraint options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationTimestampDslOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				for (field in fields) {
+					switch (field.name) {
+						case "nullable":
+							options.push("null: " + (typedBoolLiteral(field.expr, "Timestamp nullable") ? "true" : "false"));
+						case "precision":
+							options.push("precision: " + typedPositiveIntLiteral(field.expr, "Timestamp precision"));
+						case _:
+							Context.error('@:railsMigration unknown Timestamp option ${field.name}.', field.expr.pos);
+					}
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration Timestamp options must be an object literal.", expr.pos);
 				[];
 		}
 	}
