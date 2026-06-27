@@ -5320,6 +5320,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var columnName = name + "_id";
 						railsMigrationRegisterColumn(validation, table, columnName);
 						railsMigrationOperation(["add_reference :" + table + ", :" + name + railsMigrationOptionSuffix(options)]);
+					case "AddReferenceIfNotExists" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "AddReferenceIfNotExists table");
+						var name = railsMigrationSymbolArg(args[1], "AddReferenceIfNotExists name");
+						railsMigrationValidateTable(validation, table, "AddReferenceIfNotExists table", args[0]);
+						var options = railsMigrationReferenceDslOptions(args[2]);
+						var columnName = name + "_id";
+						railsMigrationRegisterColumn(validation, table, columnName);
+						railsMigrationOperation([
+							"add_reference :" + table + ", :" + name + railsMigrationOptionSuffix(options.concat(["if_not_exists: true"]))
+						]);
 					case "RemoveReference" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RemoveReference", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveReference table");
@@ -5329,6 +5339,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var options = railsMigrationReferenceDslOptions(args[2]);
 						railsMigrationOperation([
 							"remove_reference :" + table + ", :" + name + railsMigrationOptionSuffix(options)
+						]);
+					case "RemoveReferenceIfExists" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RemoveReferenceIfExists", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RemoveReferenceIfExists table");
+						var name = railsMigrationSymbolArg(args[1], "RemoveReferenceIfExists name");
+						railsMigrationValidateTable(validation, table, "RemoveReferenceIfExists table", args[0]);
+						railsMigrationValidateColumn(validation, table, name + "_id", "RemoveReferenceIfExists column", args[1]);
+						var options = railsMigrationReferenceDslOptions(args[2]);
+						railsMigrationOperation([
+							"remove_reference :" + table + ", :" + name + railsMigrationOptionSuffix(options.concat(["if_exists: true"]))
 						]);
 					case "AddForeignKey" if (args.length == 3):
 						var fromTable = railsMigrationSymbolArg(args[0], "AddForeignKey fromTable");

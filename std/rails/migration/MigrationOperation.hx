@@ -94,7 +94,9 @@ enum MigrationOperation {
 	RemoveCompositeIndex(table:String, columns:Array<String>);
 	RemoveCompositeIndexIfExists(table:String, columns:Array<String>);
 	AddReference(table:String, name:String, options:ReferenceOptions);
+	AddReferenceIfNotExists(table:String, name:String, options:ReferenceOptions);
 	RemoveReference(table:String, name:String, options:ReferenceOptions);
+	RemoveReferenceIfExists(table:String, name:String, options:ReferenceOptions);
 	AddForeignKey(fromTable:String, toTable:String, options:ForeignKeyOptions);
 	RemoveForeignKey(fromTable:String, toTable:String);
 	RemoveForeignKeyIfExists(fromTable:String, toTable:String);
