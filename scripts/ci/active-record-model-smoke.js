@@ -385,6 +385,7 @@ for (const expected of [
   "default_scope -> { order(title: :asc) }",
   "validates :title, presence: true, length: {minimum: 3}",
   "validates :external_id, presence: true, uniqueness: true",
+  'validates :status, inclusion: {within: ["open", "done"]}',
   "before_validation :normalize_title",
   "after_commit :publish_lifecycle_event",
   "def normalize_title()",

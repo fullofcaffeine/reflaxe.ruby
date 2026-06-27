@@ -30,6 +30,7 @@ module Models
     # haxe column role: String
     validates :name, presence: true, length: {minimum: 2}
     validates :email, presence: true, uniqueness: true
+    validates :role, inclusion: {within: ["member", "admin", "maintainer", "guest"]}
     def initialize(*args, **kwargs)
       args = args + [kwargs] unless kwargs.empty?
       super(*args)

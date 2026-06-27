@@ -46,6 +46,9 @@ class User extends rails.active_record.Base<User> implements DeviseResource<User
 	@:validates({presence: true, uniqueness: true})
 	public var emailValidation:rails.ActiveRecord.Validation<String>;
 
+	@:validates({inclusion: {within: ["member", "admin", "maintainer", "guest"]}})
+	public var roleValidation:rails.ActiveRecord.Validation<String>;
+
 	public function roleLabel():String {
 		return role == "admin" ? "Admin" : role == "maintainer" ? "Maintainer" : role == "guest" ? "Guest" : "Member";
 	}
