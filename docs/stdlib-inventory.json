@@ -676,7 +676,15 @@
       "status": "implemented",
       "path": "std/rails/action_controller/Request.hx",
       "surface": "rails.action_controller.Request",
-      "reason": "Typed extern facade over Rails request objects for request_method/path/fullpath/typed format/accepts/formats/content_mime_type/media_type/variant/xhr access."
+      "reason": "Typed extern facade over Rails request objects for request_method/path/fullpath/typed format/accepts/formats/negotiate_mime/content_mime_type/media_type/variant assignment and xhr access."
+    },
+    {
+      "id": "std.rails.action_controller_mime",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/Mime.hx",
+      "surface": "rails.action_controller.Mime",
+      "reason": "Typed Rails MIME tokens for ordered request.negotiateMime(...) calls, lowering to normal Rails Mime[:html]/Mime[:json] constants."
     },
     {
       "id": "std.rails.action_controller_request_format",
@@ -693,6 +701,14 @@
       "path": "std/rails/action_controller/RequestVariant.hx",
       "surface": "rails.action_controller.RequestVariant",
       "reason": "Typed facade over Rails request.variant inquirer objects so common predicates such as phone/tablet/desktop/native_app do not require Dynamic."
+    },
+    {
+      "id": "std.rails.action_controller_request_variant_token",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/RequestVariantToken.hx",
+      "surface": "rails.action_controller.RequestVariantToken",
+      "reason": "Typed Rails request variant assignment tokens for request.setVariant(...), lowering to ordinary :phone/:tablet/:desktop/:native_app symbols."
     },
     {
       "id": "std.rails.action_controller_response",

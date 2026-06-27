@@ -2,6 +2,8 @@ package controllers;
 
 import rails.action_controller.ForgeryProtectionStrategy;
 import rails.action_controller.InvalidAuthenticityToken;
+import rails.action_controller.Mime;
+import rails.action_controller.RequestVariantToken;
 import rails.action_controller.Status;
 import rails.action_controller.SendDisposition;
 import rails.active_record.RecordNotFound;
@@ -22,7 +24,9 @@ import rails.macros.ParamsMacro;
 // over the Rails runtime objects without wrapping them, including the
 // `RequestFormat` MIME facade returned by `request.format()` and the
 // accepted/negotiated MIME arrays returned by `request.accepts()`/`formats()`,
-// plus the `RequestVariant` inquirer returned by `request.variant()`.
+// plus ordered `request.negotiateMime([Mime.html, ...])` negotiation tokens,
+// plus typed variant assignment and the `RequestVariant` inquirer returned by
+// `request.variant()`.
 // `sendFile(...)` and `sendData(...)` expose Rails download helpers with typed
 // `Status` and `SendDisposition` options instead of raw status symbols.
 // `freshWhen(...)` and `stale(...)` expose Rails conditional GET helpers with
@@ -86,8 +90,11 @@ class TodosController extends rails.action_controller.Base {
 		var requestFormatName = requestFormat.toString();
 		var acceptedFormats = request.accepts();
 		var requestFormats = request.formats();
+		var preferredFormat = request.negotiateMime([Mime.html, Mime.json]);
+		var preferredFormatName = preferredFormat == null ? "" : preferredFormat.toString();
 		var contentMimeType = request.contentMimeType();
 		var requestMediaType = request.mediaType();
+		request.setVariant([RequestVariantToken.phone, RequestVariantToken.tablet]);
 		var requestVariant = request.variant();
 		var wantsPhoneVariant = requestVariant.phone();
 		var requestVariantName = requestVariant.toString();

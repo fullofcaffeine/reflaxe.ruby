@@ -21,6 +21,9 @@ extern class Request {
 
 	public function formats():Array<RequestFormat>;
 
+	@:native("negotiate_mime")
+	public function negotiateMime(order:Array<RequestFormat>):Null<RequestFormat>;
+
 	@:native("content_mime_type")
 	public function contentMimeType():Null<RequestFormat>;
 
@@ -28,6 +31,9 @@ extern class Request {
 	public function mediaType():Null<String>;
 
 	public function variant():RequestVariant;
+
+	@:native("variant=")
+	public function setVariant(variants:Array<RequestVariantToken>):RequestVariant;
 
 	@:native("xhr?")
 	public function xhr():Bool;

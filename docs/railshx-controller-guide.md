@@ -265,8 +265,10 @@ var wantsJson = request.format().json();
 var formatName = request.format().toString();
 var acceptedFormats = request.accepts();
 var negotiatedFormats = request.formats();
+var preferredFormat = request.negotiateMime([Mime.html, Mime.json]);
 var contentMimeType = request.contentMimeType();
 var mediaType = request.mediaType();
+request.setVariant([RequestVariantToken.phone]);
 var wantsPhone = request.variant().phone();
 var variantName = request.variant().toString();
 var status = response.status();
@@ -281,8 +283,10 @@ wants_json__hx0 = self.request().format().json?()
 format_name__hx0 = self.request().format().to_s()
 accepted_formats__hx0 = self.request().accepts()
 negotiated_formats__hx0 = self.request().formats()
+preferred_format__hx0 = self.request().negotiate_mime([Mime[:html], Mime[:json]])
 content_mime_type__hx0 = self.request().content_mime_type()
 media_type__hx0 = self.request().media_type()
+self.request().variant=([:phone])
 wants_phone__hx0 = self.request().variant().phone?()
 variant_name__hx0 = self.request().variant().to_s()
 status__hx0 = self.response().status()
@@ -293,12 +297,16 @@ checks such as `html()`, `json()`, `turboStream()`, `xml()`, and `any()` are
 completed and type-checked while still lowering to Rails' normal MIME object.
 `request.accepts()` and `request.formats()` return `Array<RequestFormat>`, and
 `request.contentMimeType()` returns `Null<RequestFormat>`, so custom
-negotiation can stay typed without stringly MIME checks. `request.mediaType()`
+negotiation can stay typed without stringly MIME checks. `request.negotiateMime`
+takes ordered `Mime.*` tokens and returns `Null<RequestFormat>`, matching Rails'
+`negotiate_mime` behavior without exposing raw MIME strings. `request.mediaType()`
 is intentionally `Null<String>` because Rails exposes the media type as a
 runtime string.
 `request.variant()` follows the same rule for Rails variants: `phone()`,
 `tablet()`, `desktop()`, and `nativeApp()` lower to the ordinary Rails
-`phone?`/`tablet?`/`desktop?`/`native_app?` variant inquirer methods.
+`phone?`/`tablet?`/`desktop?`/`native_app?` variant inquirer methods. Use
+`request.setVariant([RequestVariantToken.phone])` when a controller needs to
+select variants for template lookup; raw strings are rejected at compile time.
 
 Use typed status tokens where Rails expects symbols:
 

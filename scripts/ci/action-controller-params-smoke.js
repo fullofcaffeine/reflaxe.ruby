@@ -88,8 +88,11 @@ for (const expected of [
   /request_format_name__hx\d+ = request_format__hx\d+\.to_s\(\)/,
   /accepted_formats__hx\d+ = self\.request\(\)\.accepts\(\)/,
   /request_formats__hx\d+ = self\.request\(\)\.formats\(\)/,
+  /preferred_format__hx\d+ = self\.request\(\)\.negotiate_mime\(\[Mime\[:html\], Mime\[:json\]\]\)/,
+  /preferred_format_name__hx\d+ = \(if \(preferred_format__hx\d+ == nil\) then "" else preferred_format__hx\d+\.to_s\(\) end\)/,
   /content_mime_type__hx\d+ = self\.request\(\)\.content_mime_type\(\)/,
   /request_media_type__hx\d+ = self\.request\(\)\.media_type\(\)/,
+  /self\.request\(\)\.variant=\(\[:phone, :tablet\]\)/,
   /request_variant__hx\d+ = self\.request\(\)\.variant\(\)/,
   /wants_phone_variant__hx\d+ = request_variant__hx\d+\.phone\?\(\)/,
   /request_variant_name__hx\d+ = request_variant__hx\d+\.to_s\(\)/,
@@ -246,6 +249,28 @@ if (invalidRequestAccepts == null || invalidRequestAccepts.status === 0) {
   process.exit(1);
 }
 
+const invalidRequestNegotiateMime = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidRequestNegotiateMimeMain",
+  allowFailure: true,
+});
+if (invalidRequestNegotiateMime == null || invalidRequestNegotiateMime.status === 0) {
+  console.error("Expected invalid ActionController request negotiate_mime compile to fail.");
+  process.exit(1);
+}
+
+const invalidRequestSetVariant = compileWithFirstAvailableReflaxe({
+  outputDir: invalidOutputDir,
+  classPath: invalidSourceDir,
+  main: "InvalidRequestSetVariantMain",
+  allowFailure: true,
+});
+if (invalidRequestSetVariant == null || invalidRequestSetVariant.status === 0) {
+  console.error("Expected invalid ActionController request set variant compile to fail.");
+  process.exit(1);
+}
+
 const invalidLifecycleMissing = compileWithFirstAvailableReflaxe({
   outputDir: invalidOutputDir,
   classPath: invalidSourceDir,
@@ -356,6 +381,18 @@ if (!/RequestVariant|String|Cannot unify/.test(invalidRequestVariant.stderr + in
   process.stdout.write(invalidRequestVariant.stdout);
   process.stderr.write(invalidRequestVariant.stderr);
   console.error("Invalid ActionController request variant failed for an unexpected reason.");
+  process.exit(1);
+}
+if (!/RequestFormat|String|Cannot unify/.test(invalidRequestNegotiateMime.stderr + invalidRequestNegotiateMime.stdout)) {
+  process.stdout.write(invalidRequestNegotiateMime.stdout);
+  process.stderr.write(invalidRequestNegotiateMime.stderr);
+  console.error("Invalid ActionController request negotiate_mime failed for an unexpected reason.");
+  process.exit(1);
+}
+if (!/RequestVariantToken|String|Cannot unify/.test(invalidRequestSetVariant.stderr + invalidRequestSetVariant.stdout)) {
+  process.stdout.write(invalidRequestSetVariant.stdout);
+  process.stderr.write(invalidRequestSetVariant.stderr);
+  console.error("Invalid ActionController request set variant failed for an unexpected reason.");
   process.exit(1);
 }
 
@@ -494,6 +531,24 @@ function writeInvalidFixtures() {
     "\tstatic function main():Void {",
     "\t\tvar controller = new controllers.TodosController();",
     "\t\tvar accepts:String = controller.request.accepts();",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidRequestNegotiateMimeMain.hx"), [
+    "class InvalidRequestNegotiateMimeMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tcontroller.request.negotiateMime([\"html\"]);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidRequestSetVariantMain.hx"), [
+    "class InvalidRequestSetVariantMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar controller = new controllers.TodosController();",
+    "\t\tcontroller.request.setVariant([\"phone\"]);",
     "\t}",
     "}",
     "",
