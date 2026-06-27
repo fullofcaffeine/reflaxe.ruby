@@ -52,6 +52,7 @@ typedef ReferenceOptions = {
 	@:optional var foreignKeyOnDelete:ForeignKeyAction;
 	@:optional var foreignKeyOnUpdate:ForeignKeyAction;
 	@:optional var foreignKeyDeferrable:ForeignKeyDeferrable;
+	@:optional var foreignKeyValidate:Bool;
 	@:optional var index:Bool;
 	@:optional var indexName:String;
 	@:optional var indexUnique:Bool;

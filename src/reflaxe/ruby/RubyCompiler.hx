@@ -6072,6 +6072,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							foreignKeyOptions.push("on_update: :" + railsMigrationForeignKeyAction(field.expr, "Reference foreignKeyOnUpdate"));
 						case "foreignKeyDeferrable":
 							foreignKeyOptions.push("deferrable: :" + railsMigrationForeignKeyDeferrable(field.expr, "Reference foreignKeyDeferrable"));
+						case "foreignKeyValidate":
+							if (!typedBoolLiteral(field.expr, "Reference foreignKeyValidate")) {
+								foreignKeyOptions.push("validate: false");
+							}
 						case "index":
 							indexEnabled = typedBoolLiteral(field.expr, "Reference index");
 						case "indexName":
