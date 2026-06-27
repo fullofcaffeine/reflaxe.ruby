@@ -31,6 +31,13 @@ class ChatMessage extends rails.active_record.Base<ChatMessage> {
 	@:validates({presence: true})
 	public var bodyValidation:rails.ActiveRecord.Validation<String>;
 
+	@:beforeValidation
+	public function normalizeBody():Void {
+		if (body != null) {
+			body = StringTools.trim(body);
+		}
+	}
+
 	public static function latest() {
 		return ChatMessage.includes(ChatMessage.a.user).order(ChatMessage.f.id.desc()).limit(6);
 	}

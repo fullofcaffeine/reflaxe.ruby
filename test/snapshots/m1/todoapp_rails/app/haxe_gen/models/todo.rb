@@ -28,9 +28,18 @@ module Models
     # haxe column user_id: Int
     validates :title, presence: true
     validates :user_id, numericality: {only_integer: true, greater_than: 0}
+    before_validation :normalize_title
     def initialize(*args, **kwargs)
       args = args + [kwargs] unless kwargs.empty?
       super(*args)
+    end
+    def normalize_title()
+      if (self.title != nil)
+        self.title = self.title.strip()
+      end
+      if (self.notes != nil)
+        self.notes = self.notes.strip()
+      end
     end
     def self.incomplete()
       return Models::Todo.where(is_completed: false)

@@ -547,6 +547,8 @@ for (const expected of [
   "# haxe column user_id: Int",
   "validates :title, presence: true",
   "validates :user_id, numericality: {only_integer: true, greater_than: 0}",
+  "before_validation :normalize_title",
+  "def normalize_title()",
   "def self.incomplete()",
   "Models::Todo.where(is_completed: false)",
 ]) {
@@ -603,6 +605,8 @@ for (const expected of [
   "# haxe column body: String",
   "# haxe column user_id: Int",
   "validates :body, presence: true",
+  "before_validation :normalize_body",
+  "def normalize_body()",
   "def self.latest()",
   "Models::ChatMessage.includes(:user).order(id: :desc).limit(6)",
 ]) {

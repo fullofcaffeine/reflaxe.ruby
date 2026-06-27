@@ -40,6 +40,16 @@ class Todo extends rails.active_record.Base<Todo> {
 	@:validates({numericality: {onlyInteger: true, greaterThan: 0}})
 	public var userIdValidation:rails.ActiveRecord.Validation<Int>;
 
+	@:beforeValidation
+	public function normalizeTitle():Void {
+		if (title != null) {
+			title = StringTools.trim(title);
+		}
+		if (notes != null) {
+			notes = StringTools.trim(notes);
+		}
+	}
+
 	public static function incomplete() {
 		return Todo.where({isCompleted: false});
 	}
