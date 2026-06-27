@@ -5998,6 +5998,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (typedBoolLiteral(field.expr, "MigrationIndex ifNotExists")) {
 								options.push("if_not_exists: true");
 							}
+						case "comment":
+							options.push("comment: " + quoteRubyStringForCode(typedStringDefaultLiteral(field.expr, "MigrationIndex comment")));
 						case _:
 							Context.error('@:railsMigration unknown MigrationIndex option ${field.name}.', field.expr.pos);
 					}
