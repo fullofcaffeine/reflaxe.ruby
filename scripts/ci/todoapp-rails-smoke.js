@@ -128,6 +128,8 @@ const checkBoxTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_ra
 const checkBoxTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_check_box_tag_invalid_out");
 const radioButtonTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_radio_button_tag_invalid_src");
 const radioButtonTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_radio_button_tag_invalid_out");
+const formSelectInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_form_select_invalid_src");
+const formSelectInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_form_select_invalid_out");
 const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
 const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
 const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
@@ -388,6 +390,8 @@ rmSync(checkBoxTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(checkBoxTagInvalidOutputDir, { force: true, recursive: true });
 rmSync(radioButtonTagInvalidSourceDir, { force: true, recursive: true });
 rmSync(radioButtonTagInvalidOutputDir, { force: true, recursive: true });
+rmSync(formSelectInvalidSourceDir, { force: true, recursive: true });
+rmSync(formSelectInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidSourceDir, { force: true, recursive: true });
 rmSync(typedRouteInvalidOutputDir, { force: true, recursive: true });
 rmSync(typedRouteParamInvalidSourceDir, { force: true, recursive: true });
@@ -1417,8 +1421,10 @@ for (const expected of [
   '<turbo-frame id="railshx-user-frame" class="user-management-frame">',
   '<%= link_to "Back to todo board", todos_path(), class: "typed-route-link", data: {turbo_frame: "_top"} %>',
   '<%= form_with url: users_path(), scope: :user, local: true, class: "user-create-form" do |form| %>',
+  '<%= form.select :role, [["Member", "member"], ["Admin", "admin"]], {selected: "member"}, {required: true} %>',
   '<%= form.password_field :password, placeholder: "password123", required: true %>',
   '<%= form_with url: user_path(user.id), scope: :user, method: "patch", local: true, class: "user-card-form" do |form| %>',
+  '<%= form.select :role, [["Member", "member"], ["Admin", "admin"]], {selected: user.role}, {id: "user_" + user.id.to_s + "_role", required: true} %>',
   '<%= form_with url: user_path(user.id), scope: :user, method: "delete", local: true, class: "user-delete-form" do |form| %>',
   '<%= form.submit "Remove user", type: "submit" %>',
   "<% users.each do |user| %>",
@@ -1460,6 +1466,7 @@ expectFileFieldTagTypeFailure();
 expectTextAreaTagTypeFailure();
 expectCheckBoxTagTypeFailure();
 expectRadioButtonTagTypeFailure();
+expectFormSelectOptionTypeFailure();
 expectPictureTagTypeFailure();
 expectFaviconLinkTagTypeFailure();
 expectPreloadLinkTagTypeFailure();
@@ -3834,6 +3841,35 @@ function expectRadioButtonTagTypeFailure() {
   const output = `${result.stdout}\n${result.stderr}`;
   if (!output.includes("Int") || !output.includes("String")) {
     console.error("Invalid radio_button_tag value failed, but not with the expected String value type diagnostic.");
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    process.exit(1);
+  }
+}
+
+function expectFormSelectOptionTypeFailure() {
+  const result = compileCheckedAttrFixture(formSelectInvalidSourceDir, formSelectInvalidOutputDir, "InvalidFormSelectMain",
+    "InvalidFormSelectView", [
+      "package views;",
+      "",
+      "import rails.action_view.HtmlNode;",
+      "",
+      "@:railsTemplate(\"controllers/todos/invalid_form_select\")",
+      "@:railsTemplateAst(\"render\")",
+      "class InvalidFormSelectView {",
+      "\tpublic static function render():HtmlNode {",
+      "\t\treturn <form_with url=\"/users\" scope=\"user\"><select name=\"role\" options=${[{label: \"Member\", value: 42}]} /></form_with>;",
+      "\t}",
+      "}",
+      "",
+    ], { allowFailure: true });
+  if (result.status === 0) {
+    console.error("Invalid form select option value compiled successfully.");
+    process.exit(1);
+  }
+  const output = `${result.stdout}\n${result.stderr}`;
+  if (!output.includes("Int") || !output.includes("String")) {
+    console.error("Invalid form select option failed, but not with the expected String option type diagnostic.");
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(1);

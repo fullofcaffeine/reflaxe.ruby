@@ -382,6 +382,10 @@ class H {
 		return macro rails.action_view.HtmlNode.FormCheckBox($name, $attrs);
 	}
 
+	public static macro function select(name:Expr, options:Expr, attrs:Expr):Expr {
+		return macro rails.action_view.HtmlNode.FormSelect($name, $options, $attrs);
+	}
+
 	public static macro function fieldErrors(name:Expr, attrs:Expr):Expr {
 		return macro rails.action_view.HtmlNode.FormFieldErrors($name, $attrs);
 	}

@@ -13,8 +13,8 @@ import shared.TodoHooks;
 // as the matching response body for the todo board's `<turbo_frame>`.
 // Type safety: `UserIndexLocals` carries an admin `currentUser` and the
 // `users:Array<User>` loop; CRUD forms use `User.railsParamKey`, `User.f.*`,
-// DeviseFormFields for transient password params, and `Routes.userPath(user.id)`
-// instead of hand-written Rails names.
+// typed select option records, DeviseFormFields for transient password params,
+// and `Routes.userPath(user.id)` instead of hand-written Rails names.
 // IntelliSense: editors should complete user fields, `TodoHooks.userFrameId`,
 // `Routes.userPath`, and Rails HHX form tags.
 // Ruby/Rails output: `controllers/users/index.html.erb` containing a normal
@@ -57,7 +57,7 @@ class UserManagementView {
 							</div>
 							<div>
 								<field_label name=${User.f.role}>Role</field_label>
-								<text_field name=${User.f.role} placeholder="member" value="member" required />
+								<select name=${User.f.role} options=${[{label: "Member", value: "member"}, {label: "Admin", value: "admin"}]} selected="member" required />
 							</div>
 							<div>
 								<field_label name=${DeviseFormFields.password}>Password</field_label>
@@ -93,7 +93,7 @@ class UserManagementView {
 									</div>
 									<div>
 										<field_label name=${User.f.role} for=${"user_" + Std.string(user.id) + "_role"}>Role</field_label>
-										<text_field name=${User.f.role} id=${"user_" + Std.string(user.id) + "_role"} value=${user.role} required />
+										<select name=${User.f.role} options=${[{label: "Member", value: "member"}, {label: "Admin", value: "admin"}]} id=${"user_" + Std.string(user.id) + "_role"} selected=${user.role} required />
 									</div>
 									<submit type="submit">Save user</submit>
 								</form_with>

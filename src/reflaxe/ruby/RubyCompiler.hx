@@ -7482,6 +7482,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						} else {
 							lowerTemplateFormCheckBox(params[0], params[1], scope);
 						}
+					case "FormSelect":
+						if (params.length != 3) {
+							Context.error("HtmlNode.FormSelect expects name, options, and attrs arguments.", node.pos);
+							"";
+						} else {
+							lowerTemplateFormSelect(params[0], params[1], params[2], scope);
+						}
 					case "FormFieldErrors":
 						if (params.length != 2) {
 							Context.error("HtmlNode.FormFieldErrors expects name and attrs arguments.", node.pos);
@@ -7704,6 +7711,123 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			rubySymbolLiteral(expectTemplateFieldName(name, "H.checkBox name must be a string literal or RailsHx model field ref."))
 		].concat(lowerTemplateHelperAttrs(attrs, scope));
 		return "<%= " + form + ".check_box " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateFormSelect(name:TypedExpr, options:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
+		var form = requireFormBuilder(scope, name);
+		var selectAttrs = lowerTemplateSelectAttrs(attrs, scope);
+		var args = [
+			rubySymbolLiteral(expectTemplateFieldName(name, "H.select name must be a string literal or RailsHx model field ref.")),
+			lowerTemplateSelectOptions(options, scope)
+		];
+		if (selectAttrs.options.length > 0 || selectAttrs.html.length > 0) {
+			args.push("{" + selectAttrs.options.join(", ") + "}");
+		}
+		if (selectAttrs.html.length > 0) {
+			args.push("{" + selectAttrs.html.join(", ") + "}");
+		}
+		return "<%= " + form + ".select " + args.join(", ") + " %>";
+	}
+
+	static function lowerTemplateSelectOptions(options:TypedExpr, scope:RailsTemplateScope):String {
+		var pairs = [
+			for (option in expectTemplateArray(options, "HtmlNode.FormSelect options must be an array literal."))
+				lowerTemplateSelectOption(option, scope)
+		];
+		return "[" + pairs.join(", ") + "]";
+	}
+
+	static function lowerTemplateSelectOption(option:TypedExpr, scope:RailsTemplateScope):String {
+		var label:Null<TypedExpr> = null;
+		var value:Null<TypedExpr> = null;
+		switch (unwrapTemplateExpr(option).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "label":
+							label = field.expr;
+						case "value":
+							value = field.expr;
+						case other:
+							Context.error('HtmlNode.FormSelect option field "$other" is not supported; use label and value.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("HtmlNode.FormSelect options must contain object literals with label and value fields.", option.pos);
+		}
+		var labelExpr = switch (label) {
+			case null:
+				Context.error("HtmlNode.FormSelect option literals must include label and value fields.", option.pos);
+				option;
+			case expr:
+				expr;
+		}
+		var valueExpr = switch (value) {
+			case null:
+				Context.error("HtmlNode.FormSelect option literals must include label and value fields.", option.pos);
+				option;
+			case expr:
+				expr;
+		}
+		return "[" + printTemplateExpr(labelExpr, scope) + ", " + printTemplateExpr(valueExpr, scope) + "]";
+	}
+
+	static function lowerTemplateSelectAttrs(attrs:TypedExpr, scope:RailsTemplateScope):{options:Array<String>, html:Array<String>} {
+		var optionAttrs:Array<String> = [];
+		var htmlAttrs:Array<String> = [];
+		var dataAttrs:Array<String> = [];
+		var ariaAttrs:Array<String> = [];
+		for (attr in expectTemplateArray(attrs, "HtmlNode.FormSelect attrs must be an array literal.")) {
+			var unwrapped = unwrapTemplateExpr(attr);
+			switch (unwrapped.expr) {
+				case TCall(fn, params):
+					switch (templateCtorName(fn, "HtmlAttr")) {
+						case "Static":
+							if (params.length != 2) {
+								Context.error("HtmlAttr.Static expects name and value arguments.", unwrapped.pos);
+							} else {
+								addTemplateSelectAttr(optionAttrs, htmlAttrs, dataAttrs, ariaAttrs,
+									expectTemplateString(params[0], "HtmlAttr.Static name must be a string literal."),
+									quoteRubyStringForCode(expectTemplateString(params[1], "HtmlAttr.Static value must be a string literal.")));
+							}
+						case "Bool":
+							if (params.length != 1) {
+								Context.error("HtmlAttr.Bool expects one name argument.", unwrapped.pos);
+							} else {
+								addTemplateSelectAttr(optionAttrs, htmlAttrs, dataAttrs, ariaAttrs,
+									expectTemplateString(params[0], "HtmlAttr.Bool name must be a string literal."), "true");
+							}
+						case "Expr":
+							if (params.length != 2) {
+								Context.error("HtmlAttr.Expr expects name and value arguments.", unwrapped.pos);
+							} else {
+								addTemplateSelectAttr(optionAttrs, htmlAttrs, dataAttrs, ariaAttrs,
+									expectTemplateString(params[0], "HtmlAttr.Expr name must be a string literal."), printTemplateExpr(params[1], scope));
+							}
+						case other:
+							Context.error('Unsupported HtmlAttr constructor "$other" for HtmlNode.FormSelect.', unwrapped.pos);
+					}
+				case _:
+					Context.error("HtmlNode.FormSelect attrs must contain HtmlAttr constructor expressions.", unwrapped.pos);
+			}
+		}
+		if (dataAttrs.length > 0) {
+			htmlAttrs.push("data: {" + dataAttrs.join(", ") + "}");
+		}
+		if (ariaAttrs.length > 0) {
+			htmlAttrs.push("aria: {" + ariaAttrs.join(", ") + "}");
+		}
+		return {options: optionAttrs, html: htmlAttrs};
+	}
+
+	static function addTemplateSelectAttr(optionAttrs:Array<String>, htmlAttrs:Array<String>, dataAttrs:Array<String>, ariaAttrs:Array<String>,
+			name:String, value:String):Void {
+		switch (name) {
+			case "selected" | "prompt" | "include_blank" | "include-blank":
+				optionAttrs.push(helperKwargName(name) + ": " + value);
+			case _:
+				addTemplateHelperAttr(htmlAttrs, dataAttrs, ariaAttrs, name, value);
+		}
 	}
 
 	static function lowerTemplateFormFieldErrors(name:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {

@@ -106,6 +106,7 @@ enum HtmlNode {
 	FormFileField(name:String, attrs:Array<HtmlAttr>);
 	FormTextArea(name:String, attrs:Array<HtmlAttr>);
 	FormCheckBox(name:String, attrs:Array<HtmlAttr>);
+	FormSelect(name:String, options:Array<{label:String, value:String}>, attrs:Array<HtmlAttr>);
 	FormFieldErrors(name:String, attrs:Array<HtmlAttr>);
 	FormSubmit<TText>(text:TText, attrs:Array<HtmlAttr>);
 	ContentFor(name:String, children:Array<HtmlNode>);
