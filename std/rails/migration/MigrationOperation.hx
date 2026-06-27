@@ -77,6 +77,7 @@ enum MigrationOperation {
 	CreateTable(table:String, options:{
 		var columns:Array<CreateTableItem>;
 		@:optional var timestamps:Bool;
+		@:optional var ifNotExists:Bool;
 	});
 
 	AddColumn(table:String, name:String, column:MigrationColumn);
@@ -106,6 +107,7 @@ enum MigrationOperation {
 	RemoveCheckConstraint(table:String, name:String);
 	RemoveCheckConstraintIfExists(table:String, name:String);
 	DropTable(table:String);
+	DropTableIfExists(table:String);
 	ExecuteSql(sql:String, rollback:String);
 	DataMigration(up:String, down:String);
 	Reversible(up:Array<MigrationOperation>, down:Array<MigrationOperation>);

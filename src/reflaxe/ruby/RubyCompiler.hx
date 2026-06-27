@@ -5417,6 +5417,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "DropTable table");
 						railsMigrationValidateTable(validation, table, "DropTable table", args[0]);
 						railsMigrationOperation(["drop_table :" + table]);
+					case "DropTableIfExists" if (args.length == 1):
+						railsMigrationRequireReversibleContext("DropTableIfExists", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "DropTableIfExists table");
+						railsMigrationValidateTable(validation, table, "DropTableIfExists table", args[0]);
+						railsMigrationOperation(["drop_table :" + table + ", if_exists: true"]);
 					case "ExecuteSql" if (args.length == 2):
 						railsMigrationUnsafeSqlOperation("ExecuteSql", args[0], args[1], expr);
 					case "DataMigration" if (args.length == 2):
@@ -5441,7 +5446,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsMigrationCreateTableOperation(table:String, optionsExpr:TypedExpr,
 			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
-		var lines = ["create_table :" + table + " do |t|"];
+		var bodyLines:Array<String> = [];
+		var options:Array<String> = [];
 		var timestamps = false;
 		switch (unwrapTypedExpr(optionsExpr).expr) {
 			case TObjectDecl(fields):
@@ -5449,10 +5455,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					switch (field.name) {
 						case "columns":
 							for (item in railsMigrationCreateTableItems(field.expr, table, validation)) {
-								lines.push("  " + item);
+								bodyLines.push("  " + item);
 							}
 						case "timestamps":
 							timestamps = typedBoolLiteral(field.expr, "CreateTable timestamps");
+						case "ifNotExists":
+							if (typedBoolLiteral(field.expr, "CreateTable ifNotExists")) {
+								options.push("if_not_exists: true");
+							}
 						case _:
 							Context.error('@:railsMigration unknown CreateTable option ${field.name}.', field.expr.pos);
 					}
@@ -5461,9 +5471,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsMigration CreateTable options must be an object literal.", optionsExpr.pos);
 		}
 		if (timestamps) {
-			lines.push("");
-			lines.push("  t.timestamps");
+			bodyLines.push("");
+			bodyLines.push("  t.timestamps");
 		}
+		var lines = ["create_table :" + table + railsMigrationOptionSuffix(options) + " do |t|"];
+		lines = lines.concat(bodyLines);
 		lines.push("end");
 		return railsMigrationOperation(lines);
 	}

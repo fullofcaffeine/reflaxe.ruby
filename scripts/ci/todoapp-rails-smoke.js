@@ -2569,7 +2569,7 @@ function expectMigrationDropTableReversibleOutput() {
     "import rails.migration.Migration;",
     "import rails.migration.MigrationOperation;",
     "",
-    "// Demonstrates reversible destructive migration validation: DropTable is",
+    "// Demonstrates reversible destructive migration validation: DropTableIfExists is",
     "// allowed only inside Reversible, and knownModels makes the table reference",
     "// compile-time checked without emitting another create_table.",
     "@:railsMigration({",
@@ -2580,7 +2580,7 @@ function expectMigrationDropTableReversibleOutput() {
     "})",
     "class DropTableMigration extends Migration {",
     "\tpublic static final operations:Array<MigrationOperation> = [",
-    "\t\tReversible([DropTable(\"todos\")], [])",
+    "\t\tReversible([DropTableIfExists(\"todos\")], [])",
     "\t];",
     "}",
     "",
@@ -2591,8 +2591,8 @@ function expectMigrationDropTableReversibleOutput() {
     "DropTableMigrationMain"
   );
   const migrationRuby = readFileSync(join(migrationDropTableOutputDir, "db", "migrate", "20260101000013_drop_table_migration.rb"), "utf8");
-  if (!migrationRuby.includes("drop_table :todos")) {
-    console.error("Drop-table migration did not emit the expected reversible drop_table statement.");
+  if (!migrationRuby.includes("drop_table :todos, if_exists: true")) {
+    console.error("Drop-table migration did not emit the expected reversible idempotent drop_table statement.");
     process.exit(1);
   }
 }
@@ -2629,6 +2629,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "class SnapshotOperationsMigration extends Migration {",
     "\tpublic static final operations:Array<MigrationOperation> = [",
     "\t\tCreateTable(\"audit_events\", {",
+    "\t\t\tifNotExists: true,",
     "\t\t\tcolumns: [",
     "\t\t\t\tColumn(\"title\", StringColumn({nullable: false, limit: 120})),",
     "\t\t\t\tColumn(\"amount\", DecimalColumn({precision: 10, scale: 2})),",
@@ -2669,7 +2670,7 @@ function expectMigrationSnapshotOperationsOutput() {
   const migrationRuby = readFileSync(join(migrationSnapshotOpsOutputDir, "db", "migrate", "20260101000014_snapshot_operations_migration.rb"), "utf8");
   for (const expected of [
     "class SnapshotOperationsMigration < ActiveRecord::Migration[8.1]",
-    "create_table :audit_events do |t|",
+    "create_table :audit_events, if_not_exists: true do |t|",
     "t.string :title, null: false, limit: 120",
     "t.decimal :amount, precision: 10, scale: 2",
     "t.references :user, null: false, foreign_key: true",
