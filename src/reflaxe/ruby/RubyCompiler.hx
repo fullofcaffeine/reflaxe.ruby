@@ -5345,6 +5345,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							railsMigrationValidateColumn(validation, table, columnName, "RemoveColumns column", args[1]);
 						}
 						railsMigrationOperation(["remove_columns :" + table + ", " + [for (column in columns) ":" + column].join(", ")]);
+					case "RemoveColumnsWithType" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveColumnsWithType table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveColumnsWithType columns");
+						railsMigrationValidateTable(validation, table, "RemoveColumnsWithType table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "RemoveColumnsWithType column", args[1]);
+						}
+						var column = railsMigrationColumnDsl(args[2]);
+						railsMigrationOperation(["remove_columns :"
+							+ table
+							+ ", "
+							+ [for (columnName in columns) ":" + columnName].join(", ")
+							+ railsMigrationOptionSuffix(["type: :" + column.type].concat(column.options))]);
 					case "ChangeColumn" if (args.length == 3):
 						railsMigrationRequireReversibleContext("ChangeColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "ChangeColumn table");

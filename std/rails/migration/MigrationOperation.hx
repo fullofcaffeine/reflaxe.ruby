@@ -184,6 +184,7 @@ enum MigrationOperation {
 	RemoveColumnWithType(table:String, name:String, column:MigrationColumn);
 	RemoveColumnIfExistsWithType(table:String, name:String, column:MigrationColumn);
 	RemoveColumns(table:String, columns:Array<String>);
+	RemoveColumnsWithType(table:String, columns:Array<String>, column:MigrationColumn);
 	ChangeColumn(table:String, name:String, column:MigrationColumn);
 	AddIndex(table:String, column:String, options:IndexOptions);
 	AddCompositeIndex(table:String, columns:Array<String>, options:IndexOptions);
