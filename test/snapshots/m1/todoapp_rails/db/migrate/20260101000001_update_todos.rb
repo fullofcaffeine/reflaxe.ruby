@@ -26,9 +26,10 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
     reversible do |dir|
       dir.up do
         add_index :todos, [:user_id, :priority], name: "index_todos_on_user_id_and_priority"
+        rename_index :todos, "index_todos_on_user_id_and_priority", "index_todos_priority_by_user"
       end
       dir.down do
-        remove_index :todos, name: "index_todos_on_user_id_and_priority", if_exists: true
+        remove_index :todos, name: "index_todos_priority_by_user", if_exists: true
       end
     end
     reversible do |dir|

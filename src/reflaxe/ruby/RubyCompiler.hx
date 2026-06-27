@@ -5312,6 +5312,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", column: ["
 							+ [for (column in columns) ":" + column].join(", ") + "], if_exists: true"]);
+					case "RenameIndex" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RenameIndex", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RenameIndex table");
+						var from = railsMigrationSafeIdentifier(args[1], "RenameIndex from");
+						var to = railsMigrationSafeIdentifier(args[2], "RenameIndex to");
+						railsMigrationValidateTable(validation, table, "RenameIndex table", args[0]);
+						railsMigrationOperation([
+							"rename_index :" + table + ", " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)
+						]);
 					case "AddReference" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddReference table");
 						var name = railsMigrationSymbolArg(args[1], "AddReference name");

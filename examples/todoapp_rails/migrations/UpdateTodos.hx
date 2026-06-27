@@ -8,8 +8,8 @@ import rails.migration.MigrationOperation;
 // Demonstrates: explicit reversible operations, column changes, foreign keys,
 // idempotent columns, named/idempotent deferrable foreign keys, deferred
 // constraint validation, named/idempotent indexes, composite indexes,
-// idempotent check constraints, and data migrations authored as Haxe enum
-// values.
+// reversible index renames, idempotent check constraints, and data migrations
+// authored as Haxe enum values.
 // Type safety: `MigrationOperation` constructors constrain operation shapes and
 // option objects; `knownModels` lets the compiler validate table/column/index
 // references without re-emitting create-table migrations; irreversible
@@ -50,9 +50,10 @@ class UpdateTodos extends Migration {
 			RemoveCheckConstraintIfExists("todos", "chk_todos_priority_non_negative")
 		]),
 		Reversible([
-			AddCompositeIndex("todos", ["user_id", "priority"], {name: "index_todos_on_user_id_and_priority"})
+			AddCompositeIndex("todos", ["user_id", "priority"], {name: "index_todos_on_user_id_and_priority"}),
+			RenameIndex("todos", "index_todos_on_user_id_and_priority", "index_todos_priority_by_user")
 		], [
-			RemoveIndexByNameIfExists("todos", "index_todos_on_user_id_and_priority")
+			RemoveIndexByNameIfExists("todos", "index_todos_priority_by_user")
 		]),
 		DataMigration("UPDATE todos SET priority = 0 WHERE priority IS NULL", "UPDATE todos SET priority = NULL WHERE priority = 0")
 	];

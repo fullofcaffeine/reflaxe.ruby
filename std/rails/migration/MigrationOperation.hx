@@ -101,6 +101,7 @@ enum MigrationOperation {
 	RemoveIndexByNameIfExists(table:String, name:String);
 	RemoveCompositeIndex(table:String, columns:Array<String>);
 	RemoveCompositeIndexIfExists(table:String, columns:Array<String>);
+	RenameIndex(table:String, from:String, to:String);
 	AddReference(table:String, name:String, options:ReferenceOptions);
 	AddReferenceIfNotExists(table:String, name:String, options:ReferenceOptions);
 	RemoveReference(table:String, name:String, options:ReferenceOptions);

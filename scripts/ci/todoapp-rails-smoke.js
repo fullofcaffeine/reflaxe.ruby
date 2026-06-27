@@ -957,7 +957,8 @@ for (const expected of [
   'validate_check_constraint :todos, name: "chk_todos_priority_non_negative"',
   'remove_check_constraint :todos, name: "chk_todos_priority_non_negative", if_exists: true',
   'add_index :todos, [:user_id, :priority], name: "index_todos_on_user_id_and_priority"',
-  'remove_index :todos, name: "index_todos_on_user_id_and_priority", if_exists: true',
+  'rename_index :todos, "index_todos_on_user_id_and_priority", "index_todos_priority_by_user"',
+  'remove_index :todos, name: "index_todos_priority_by_user", if_exists: true',
   "execute \"UPDATE todos SET priority = 0 WHERE priority IS NULL\"",
   "execute \"UPDATE todos SET priority = NULL WHERE priority = 0\"",
 ]) {
