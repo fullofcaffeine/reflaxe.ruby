@@ -124,6 +124,7 @@ enum MigrationOperation {
 	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	CreateSchema(name:String, options:SchemaOptions);
 	DropSchema(name:String, options:SchemaOptions);
+	RenameSchema(from:String, to:String);
 	EnableExtension(name:String);
 	DisableExtension(name:String);
 

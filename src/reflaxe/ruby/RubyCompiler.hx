@@ -5227,6 +5227,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"drop_schema " + quoteRubyStringForCode(name) + railsMigrationOptionSuffix(railsMigrationSchemaDslOptions(args[1], false))
 						]);
+					case "RenameSchema" if (args.length == 2):
+						railsMigrationRequireReversibleContext("RenameSchema", allowIrreversible, expr);
+						var from = railsMigrationSchemaName(args[0], "RenameSchema from");
+						var to = railsMigrationSchemaName(args[1], "RenameSchema to");
+						railsMigrationOperation(["rename_schema " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)]);
 					case "EnableExtension" if (args.length == 1):
 						var name = railsMigrationExtensionName(args[0], "EnableExtension name");
 						railsMigrationOperation(["enable_extension " + quoteRubyStringForCode(name)]);
