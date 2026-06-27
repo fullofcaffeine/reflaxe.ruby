@@ -5592,6 +5592,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"remove_check_constraint :" + table + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"
 						]);
+					case "AddUniqueConstraint" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "AddUniqueConstraint table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "AddUniqueConstraint columns");
+						railsMigrationValidateTable(validation, table, "AddUniqueConstraint table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "AddUniqueConstraint column", args[1]);
+						}
+						var options = railsMigrationUniqueConstraintDslOptions(args[2]);
+						railsMigrationOperation(["add_unique_constraint :"
+							+ table
+							+ ", ["
+							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)]);
+					case "RemoveUniqueConstraint" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RemoveUniqueConstraint", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RemoveUniqueConstraint table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveUniqueConstraint columns");
+						railsMigrationValidateTable(validation, table, "RemoveUniqueConstraint table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "RemoveUniqueConstraint column", args[1]);
+						}
+						var options = railsMigrationUniqueConstraintDslOptions(args[2]);
+						railsMigrationOperation(["remove_unique_constraint :"
+							+ table
+							+ ", ["
+							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)]);
 					case "DropTable" if (args.length == 1):
 						railsMigrationRequireReversibleContext("DropTable", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "DropTable table");
@@ -5969,6 +5994,37 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				options;
 			case _:
 				Context.error("@:railsMigration CheckConstraint options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationUniqueConstraintDslOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				var hasName = false;
+				for (field in fields) {
+					switch (field.name) {
+						case "name":
+							var name = railsMigrationSafeIdentifier(field.expr, "UniqueConstraint name");
+							hasName = true;
+							options.push("name: " + quoteRubyStringForCode(name));
+						case "deferrable":
+							options.push("deferrable: :" + railsMigrationForeignKeyDeferrable(field.expr, "UniqueConstraint deferrable"));
+						case "nullsNotDistinct":
+							if (typedBoolLiteral(field.expr, "UniqueConstraint nullsNotDistinct")) {
+								options.push("nulls_not_distinct: true");
+							}
+						case _:
+							Context.error('@:railsMigration unknown UniqueConstraint option ${field.name}.', field.expr.pos);
+					}
+				}
+				if (!hasName) {
+					Context.error("@:railsMigration UniqueConstraint options must include a literal name.", expr.pos);
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration UniqueConstraint options must be an object literal.", expr.pos);
 				[];
 		}
 	}

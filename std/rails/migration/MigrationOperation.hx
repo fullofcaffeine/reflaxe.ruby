@@ -35,6 +35,12 @@ typedef CheckConstraintOptions = {
 	@:optional var validate:Bool;
 }
 
+typedef UniqueConstraintOptions = {
+	var name:String;
+	@:optional var deferrable:ForeignKeyDeferrable;
+	@:optional var nullsNotDistinct:Bool;
+}
+
 typedef ForeignKeyOptions = {
 	@:optional var column:String;
 	@:optional var name:String;
@@ -183,6 +189,8 @@ enum MigrationOperation {
 	ValidateCheckConstraint(table:String, name:String);
 	RemoveCheckConstraint(table:String, name:String);
 	RemoveCheckConstraintIfExists(table:String, name:String);
+	AddUniqueConstraint(table:String, columns:Array<String>, options:UniqueConstraintOptions);
+	RemoveUniqueConstraint(table:String, columns:Array<String>, options:UniqueConstraintOptions);
 	DropTable(table:String);
 	DropTableIfExists(table:String);
 	ExecuteSql(sql:String, rollback:String);
