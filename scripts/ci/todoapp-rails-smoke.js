@@ -206,6 +206,8 @@ const migrationDuplicateAddColumnSourceDir = join(root, "test", ".generated", "t
 const migrationDuplicateAddColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_add_column_out");
 const migrationReferenceIndexConflictSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_reference_index_conflict_src");
 const migrationReferenceIndexConflictOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_reference_index_conflict_out");
+const migrationPolymorphicReferenceForeignKeySourceDir = join(root, "test", ".generated", "todoapp_rails_migration_polymorphic_reference_foreign_key_src");
+const migrationPolymorphicReferenceForeignKeyOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_polymorphic_reference_foreign_key_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -484,6 +486,8 @@ rmSync(migrationDuplicateAddColumnSourceDir, { force: true, recursive: true });
 rmSync(migrationDuplicateAddColumnOutputDir, { force: true, recursive: true });
 rmSync(migrationReferenceIndexConflictSourceDir, { force: true, recursive: true });
 rmSync(migrationReferenceIndexConflictOutputDir, { force: true, recursive: true });
+rmSync(migrationPolymorphicReferenceForeignKeySourceDir, { force: true, recursive: true });
+rmSync(migrationPolymorphicReferenceForeignKeyOutputDir, { force: true, recursive: true });
 rmSync(clientOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
@@ -1584,6 +1588,7 @@ expectMigrationSnapshotOperationsOutput();
 expectMigrationHistoricalAddColumnAllowed();
 expectMigrationDuplicateAddColumnFailure();
 expectMigrationReferenceIndexConflictFailure();
+expectMigrationPolymorphicReferenceForeignKeyFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -2984,6 +2989,49 @@ function expectMigrationReferenceIndexConflictFailure() {
     "InvalidReferenceIndexConflictMigrationMain",
     "Reference index conflict RailsHx migration compiled successfully.",
     "@:railsMigration Reference indexName/indexUnique require index to be enabled."
+  );
+}
+
+function expectMigrationPolymorphicReferenceForeignKeyFailure() {
+  mkdirSync(join(migrationPolymorphicReferenceForeignKeySourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationPolymorphicReferenceForeignKeySourceDir, "InvalidPolymorphicReferenceForeignKeyMigrationMain.hx"), [
+    "import migrations.BadPolymorphicReferenceForeignKeyMigration;",
+    "",
+    "class InvalidPolymorphicReferenceForeignKeyMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadPolymorphicReferenceForeignKeyMigration> = BadPolymorphicReferenceForeignKeyMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationPolymorphicReferenceForeignKeySourceDir, "migrations", "BadPolymorphicReferenceForeignKeyMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Rails raises at runtime for polymorphic references with foreign keys;",
+    "// RailsHx turns that into a compile-time migration diagnostic.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000019\",",
+    "\tclassName: \"BadPolymorphicReferenceForeignKeyMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadPolymorphicReferenceForeignKeyMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddReference(\"todos\", \"taggable\", {polymorphic: true, foreignKey: true})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationPolymorphicReferenceForeignKeySourceDir,
+    migrationPolymorphicReferenceForeignKeyOutputDir,
+    "InvalidPolymorphicReferenceForeignKeyMigrationMain",
+    "Polymorphic reference foreign-key RailsHx migration compiled successfully.",
+    "@:railsMigration Reference cannot combine polymorphic: true with foreign-key options."
   );
 }
 

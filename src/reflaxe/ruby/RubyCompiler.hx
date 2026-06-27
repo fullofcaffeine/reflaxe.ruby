@@ -6048,6 +6048,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var indexEnabled:Null<Bool> = null;
 				var indexName:Null<String> = null;
 				var indexUnique = false;
+				var polymorphic = false;
 				for (field in fields) {
 					switch (field.name) {
 						case "nullable":
@@ -6084,6 +6085,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							indexUnique = typedBoolLiteral(field.expr, "Reference indexUnique");
 						case "polymorphic":
 							if (typedBoolLiteral(field.expr, "Reference polymorphic")) {
+								polymorphic = true;
 								options.push("polymorphic: true");
 							}
 						case _:
@@ -6092,6 +6094,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				if (indexEnabled == false && (indexName != null || indexUnique)) {
 					Context.error("@:railsMigration Reference indexName/indexUnique require index to be enabled.", expr.pos);
+				}
+				if (polymorphic && (foreignKey || foreignKeyName != null || foreignKeyOptions.length > 0)) {
+					Context.error("@:railsMigration Reference cannot combine polymorphic: true with foreign-key options.", expr.pos);
 				}
 				if (indexName != null || indexUnique) {
 					var indexOptions = [];
