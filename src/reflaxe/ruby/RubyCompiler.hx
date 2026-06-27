@@ -5345,7 +5345,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "RemoveCheckConstraint" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveCheckConstraint", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveCheckConstraint table");
-						var name = railsMigrationSymbolArg(args[1], "RemoveCheckConstraint name");
+						var name = railsMigrationSafeIdentifier(args[1], "RemoveCheckConstraint name");
 						railsMigrationValidateTable(validation, table, "RemoveCheckConstraint table", args[0]);
 						railsMigrationOperation(["remove_check_constraint :" + table + ", name: " + quoteRubyStringForCode(name)]);
 					case "DropTable" if (args.length == 1):
@@ -5665,7 +5665,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				for (field in fields) {
 					switch (field.name) {
 						case "name":
-							var name = railsMigrationSymbolArg(field.expr, "CheckConstraint name");
+							var name = railsMigrationSafeIdentifier(field.expr, "CheckConstraint name");
 							hasName = true;
 							options.push("name: " + quoteRubyStringForCode(name));
 						case _:

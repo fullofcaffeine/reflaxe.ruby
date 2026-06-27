@@ -186,6 +186,8 @@ const migrationUnsafeIndexNameSourceDir = join(root, "test", ".generated", "todo
 const migrationUnsafeIndexNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_index_name_out");
 const migrationUnsafeForeignKeyNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_foreign_key_name_src");
 const migrationUnsafeForeignKeyNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_foreign_key_name_out");
+const migrationUnsafeCheckConstraintNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_check_constraint_name_src");
+const migrationUnsafeCheckConstraintNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_check_constraint_name_out");
 const migrationExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_src");
 const migrationExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_out");
 const migrationUnsafeExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_external_table_src");
@@ -456,6 +458,8 @@ rmSync(migrationUnsafeIndexNameSourceDir, { force: true, recursive: true });
 rmSync(migrationUnsafeIndexNameOutputDir, { force: true, recursive: true });
 rmSync(migrationUnsafeForeignKeyNameSourceDir, { force: true, recursive: true });
 rmSync(migrationUnsafeForeignKeyNameOutputDir, { force: true, recursive: true });
+rmSync(migrationUnsafeCheckConstraintNameSourceDir, { force: true, recursive: true });
+rmSync(migrationUnsafeCheckConstraintNameOutputDir, { force: true, recursive: true });
 rmSync(migrationExternalTableSourceDir, { force: true, recursive: true });
 rmSync(migrationExternalTableOutputDir, { force: true, recursive: true });
 rmSync(migrationUnsafeExternalTableSourceDir, { force: true, recursive: true });
@@ -1553,6 +1557,7 @@ expectMigrationUnknownTableFailure();
 expectMigrationUnknownColumnFailure();
 expectMigrationUnsafeIndexNameFailure();
 expectMigrationUnsafeForeignKeyNameFailure();
+expectMigrationUnsafeCheckConstraintNameFailure();
 expectMigrationExternalTableAllowed();
 expectMigrationUnsafeExternalTableFailure();
 expectMigrationDropTableReversibleOutput();
@@ -2316,6 +2321,47 @@ function expectMigrationUnsafeForeignKeyNameFailure() {
     "InvalidUnsafeForeignKeyNameMigrationMain",
     "Unsafe foreign-key-name RailsHx migration compiled successfully.",
     "@:railsMigration ForeignKey name must be a safe Rails identifier"
+  );
+}
+
+function expectMigrationUnsafeCheckConstraintNameFailure() {
+  mkdirSync(join(migrationUnsafeCheckConstraintNameSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationUnsafeCheckConstraintNameSourceDir, "InvalidUnsafeCheckConstraintNameMigrationMain.hx"), [
+    "import migrations.BadUnsafeCheckConstraintNameMigration;",
+    "",
+    "class InvalidUnsafeCheckConstraintNameMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadUnsafeCheckConstraintNameMigration> = BadUnsafeCheckConstraintNameMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationUnsafeCheckConstraintNameSourceDir, "migrations", "BadUnsafeCheckConstraintNameMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000020\",",
+    "\tclassName: \"BadUnsafeCheckConstraintNameMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadUnsafeCheckConstraintNameMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddCheckConstraint(\"todos\", \"priority >= 0\", {name: \"../bad_check\"})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationUnsafeCheckConstraintNameSourceDir,
+    migrationUnsafeCheckConstraintNameOutputDir,
+    "InvalidUnsafeCheckConstraintNameMigrationMain",
+    "Unsafe check-constraint-name RailsHx migration compiled successfully.",
+    "@:railsMigration CheckConstraint name must be a safe Rails identifier"
   );
 }
 
