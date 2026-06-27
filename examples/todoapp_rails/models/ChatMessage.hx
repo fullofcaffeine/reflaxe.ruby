@@ -25,7 +25,8 @@ class ChatMessage extends rails.active_record.Base<ChatMessage> {
 	@:railsColumn({index: true})
 	public var userId:Int;
 
-	@:belongsTo public var user:rails.ActiveRecord.BelongsTo<User>;
+	@:belongsTo({optional: false, foreignKey: "userId", inverseOf: "chatMessages"})
+	public var user:rails.ActiveRecord.BelongsTo<User>;
 
 	@:validates({presence: true})
 	public var bodyValidation:rails.ActiveRecord.Validation<String>;

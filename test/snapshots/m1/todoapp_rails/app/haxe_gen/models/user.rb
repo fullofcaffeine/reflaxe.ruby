@@ -21,8 +21,8 @@ module Models
     def self.typed_column_count()
       __hx_rails_schema()[:columns].length
     end
-    has_many :todos
-    has_many :chat_messages
+    has_many :todos, dependent: :destroy, inverse_of: :user
+    has_many :chat_messages, dependent: :destroy, inverse_of: :user
     # haxe column id: Int
     # haxe column name: String
     # haxe column email: String

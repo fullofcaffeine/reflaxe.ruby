@@ -36,9 +36,11 @@ class User extends rails.active_record.Base<User> implements DeviseResource<User
 	@:railsColumn({index: true, defaultValue: "member"})
 	public var role:String;
 
-	@:hasMany public var todos:rails.ActiveRecord.HasMany<Todo>;
+	@:hasMany({dependent: "destroy", inverseOf: "user"})
+	public var todos:rails.ActiveRecord.HasMany<Todo>;
 
-	@:hasMany public var chatMessages:rails.ActiveRecord.HasMany<ChatMessage>;
+	@:hasMany({dependent: "destroy", inverseOf: "user"})
+	public var chatMessages:rails.ActiveRecord.HasMany<ChatMessage>;
 
 	@:validates({presence: true, length: {minimum: 2}})
 	public var nameValidation:rails.ActiveRecord.Validation<String>;
