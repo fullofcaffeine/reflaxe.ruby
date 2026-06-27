@@ -5216,6 +5216,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"drop_join_table :" + table1 + ", :" + table2 + railsMigrationOptionSuffix(railsMigrationJoinTableDslOptions(args[2], false))
 						]);
+					case "EnableExtension" if (args.length == 1):
+						var name = railsMigrationExtensionName(args[0], "EnableExtension name");
+						railsMigrationOperation(["enable_extension " + quoteRubyStringForCode(name)]);
+					case "DisableExtension" if (args.length == 1):
+						var name = railsMigrationExtensionName(args[0], "DisableExtension name");
+						railsMigrationOperation(["disable_extension " + quoteRubyStringForCode(name)]);
 					case "AddColumn" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddColumn table");
 						var name = railsMigrationSymbolArg(args[1], "AddColumn name");
@@ -6061,6 +6067,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (value == null || value == "" || value.indexOf("/") != -1 || value.indexOf("\\") != -1 || value.indexOf(".") != -1
 			|| !~/^[a-z][a-z0-9_]*$/.match(value)) {
 			Context.error('@:railsMigration ${label} must be a safe Rails identifier such as "index_todos_on_title".', expr.pos);
+			return "invalid";
+		}
+		return value;
+	}
+
+	static function railsMigrationExtensionName(expr:TypedExpr, label:String):String {
+		var value = typedStringLiteral(expr);
+		if (value == null
+			|| value == ""
+			|| value.indexOf("..") != -1
+			|| !~/^[a-z][a-z0-9_-]*(\.[a-z][a-z0-9_-]*)*$/.match(value)) {
+			Context.error('@:railsMigration ${label} must be a literal database extension name such as "pgcrypto" or "pg_catalog.plpgsql".',
+				expr.pos);
 			return "invalid";
 		}
 		return value;

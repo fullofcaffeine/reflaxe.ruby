@@ -2631,6 +2631,11 @@ function expectMigrationSnapshotOperationsOutput() {
     "})",
     "class SnapshotOperationsMigration extends Migration {",
     "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tReversible([",
+    "\t\t\tEnableExtension(\"pg_catalog.plpgsql\")",
+    "\t\t], [",
+    "\t\t\tDisableExtension(\"pg_catalog.plpgsql\")",
+    "\t\t]),",
     "\t\tCreateTable(\"audit_events\", {",
     "\t\t\tifNotExists: true,",
     "\t\t\tcolumns: [",
@@ -2687,6 +2692,8 @@ function expectMigrationSnapshotOperationsOutput() {
   const migrationRuby = readFileSync(join(migrationSnapshotOpsOutputDir, "db", "migrate", "20260101000014_snapshot_operations_migration.rb"), "utf8");
   for (const expected of [
     "class SnapshotOperationsMigration < ActiveRecord::Migration[8.1]",
+    'enable_extension "pg_catalog.plpgsql"',
+    'disable_extension "pg_catalog.plpgsql"',
     "create_table :audit_events, if_not_exists: true do |t|",
     "t.string :title, null: false, limit: 120",
     't.decimal :amount, precision: 10, scale: 2, comment: "Audited amount"',

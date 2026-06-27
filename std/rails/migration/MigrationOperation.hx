@@ -117,6 +117,8 @@ enum MigrationOperation {
 	});
 	CreateJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);
+	EnableExtension(name:String);
+	DisableExtension(name:String);
 
 	AddColumn(table:String, name:String, column:MigrationColumn);
 	AddColumnIfNotExists(table:String, name:String, column:MigrationColumn);
