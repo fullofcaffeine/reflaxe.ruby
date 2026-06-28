@@ -34,6 +34,7 @@ See `docs/profiles.md` before changing profile behavior.
 ## General Haxe->X Design Rule
 
 - For any Haxe-to-target compiler or framework layer, target compatibility is the floor, not the Haxe API design ceiling. Target-shaped Haxe APIs are valid when they are intentional and help migration, interop, predictability, or a familiar framework mental model. They should still be typed, toolable, and improved by Haxe where practical. Canonical APIs should default to leveraging Haxe's strengths: types, macros, generated refs, properties, completion, and compile-time diagnostics. Keep 1:1 target facades available for interop and escape hatches, while preferring semantic wrappers when they improve readability or safety without changing target behavior.
+- Prefer Haxe module-level functions/values when they fit the API and generated target shape. Do not introduce unnecessary shell classes just to host `public static` helpers when module-level declarations would be clearer, less verbose, and still type-safe/toolable. Keep nominal classes when the target artifact, metadata/macro contract, inheritance, type identity, framework convention, or generated output genuinely needs a class host.
 
 ## RailsHx Direction
 

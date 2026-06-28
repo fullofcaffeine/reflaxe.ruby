@@ -5780,6 +5780,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
 		var bodyLines:Array<String> = [];
 		var options:Array<String> = [];
+		var hasBody = false;
 		switch (unwrapTypedExpr(optionsExpr).expr) {
 			case TObjectDecl(fields):
 				for (field in fields) {
@@ -5787,17 +5788,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "columns":
 							for (item in railsMigrationCreateTableItems(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
+								hasBody = true;
 							}
 						case "bulk":
 							if (typedBoolLiteral(field.expr, "ChangeTable bulk")) {
 								options.push("bulk: true");
 							}
+						case "timestamps":
+							bodyLines.push("  t.timestamps" + railsMigrationCommandOptionSuffix(railsMigrationTimestampDslOptions(field.expr)));
+							hasBody = true;
 						case _:
 							Context.error('@:railsMigration unknown ChangeTable option ${field.name}.', field.expr.pos);
 					}
 				}
 			case _:
 				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
+		}
+		if (!hasBody) {
+			Context.error("@:railsMigration ChangeTable requires at least one typed column/reference/index item or timestamps option.", optionsExpr.pos);
 		}
 		var lines = ["change_table :" + table + railsMigrationOptionSuffix(options) + " do |t|"];
 		lines = lines.concat(bodyLines);
@@ -6695,6 +6703,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsMigrationOptionSuffix(options:Array<String>):String {
 		return options.length == 0 ? "" : ", " + options.join(", ");
+	}
+
+	static function railsMigrationCommandOptionSuffix(options:Array<String>):String {
+		return options.length == 0 ? "" : " " + options.join(", ");
 	}
 
 	static function railsMigrationIndexes(model:ClassType, belongsTo:Map<String, RailsBelongsToInfo>):Array<String> {

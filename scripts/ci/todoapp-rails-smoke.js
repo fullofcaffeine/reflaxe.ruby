@@ -208,6 +208,8 @@ const migrationReferenceIndexConflictSourceDir = join(root, "test", ".generated"
 const migrationReferenceIndexConflictOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_reference_index_conflict_out");
 const migrationPolymorphicReferenceForeignKeySourceDir = join(root, "test", ".generated", "todoapp_rails_migration_polymorphic_reference_foreign_key_src");
 const migrationPolymorphicReferenceForeignKeyOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_polymorphic_reference_foreign_key_out");
+const migrationEmptyChangeTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_src");
+const migrationEmptyChangeTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -488,6 +490,8 @@ rmSync(migrationReferenceIndexConflictSourceDir, { force: true, recursive: true 
 rmSync(migrationReferenceIndexConflictOutputDir, { force: true, recursive: true });
 rmSync(migrationPolymorphicReferenceForeignKeySourceDir, { force: true, recursive: true });
 rmSync(migrationPolymorphicReferenceForeignKeyOutputDir, { force: true, recursive: true });
+rmSync(migrationEmptyChangeTableSourceDir, { force: true, recursive: true });
+rmSync(migrationEmptyChangeTableOutputDir, { force: true, recursive: true });
 rmSync(clientOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
@@ -1589,6 +1593,7 @@ expectMigrationHistoricalAddColumnAllowed();
 expectMigrationDuplicateAddColumnFailure();
 expectMigrationReferenceIndexConflictFailure();
 expectMigrationPolymorphicReferenceForeignKeyFailure();
+expectMigrationEmptyChangeTableFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -2685,7 +2690,8 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t\t\tColumn(\"bulk_status\", StringColumn({nullable: false, defaultValue: \"pending\"})),",
     "\t\t\t\tReference(\"reviewer\", {indexName: \"index_audit_events_on_reviewer_id\"}),",
     "\t\t\t\tIndex([\"bulk_status\"], {name: \"index_audit_events_on_bulk_status\"})",
-    "\t\t\t]",
+    "\t\t\t],",
+    "\t\t\ttimestamps: {nullable: false, precision: 6}",
     "\t\t}),",
     "\t\tCreateTable(\"audit_rollups\", {",
     "\t\t\tid: false,",
@@ -2812,6 +2818,7 @@ function expectMigrationSnapshotOperationsOutput() {
     't.string :bulk_status, null: false, default: "pending"',
     't.references :reviewer, index: { name: "index_audit_events_on_reviewer_id" }',
     't.index [:bulk_status], name: "index_audit_events_on_bulk_status"',
+    "t.timestamps null: false, precision: 6",
     "create_table :audit_rollups, id: false, primary_key: [:account_id, :reported_on], temporary: true do |t|",
     "t.integer :account_id, null: false",
     "t.date :reported_on, null: false",
@@ -3044,6 +3051,49 @@ function expectMigrationPolymorphicReferenceForeignKeyFailure() {
     "InvalidPolymorphicReferenceForeignKeyMigrationMain",
     "Polymorphic reference foreign-key RailsHx migration compiled successfully.",
     "@:railsMigration Reference cannot combine polymorphic: true with foreign-key options."
+  );
+}
+
+function expectMigrationEmptyChangeTableFailure() {
+  mkdirSync(join(migrationEmptyChangeTableSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationEmptyChangeTableSourceDir, "InvalidEmptyChangeTableMigrationMain.hx"), [
+    "import migrations.BadEmptyChangeTableMigration;",
+    "",
+    "class InvalidEmptyChangeTableMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadEmptyChangeTableMigration> = BadEmptyChangeTableMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationEmptyChangeTableSourceDir, "migrations", "BadEmptyChangeTableMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Empty change_table blocks do not describe a durable schema change;",
+    "// RailsHx rejects them before generating a no-op migration block.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000020\",",
+    "\tclassName: \"BadEmptyChangeTableMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadEmptyChangeTableMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tChangeTable(\"todos\", {})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationEmptyChangeTableSourceDir,
+    migrationEmptyChangeTableOutputDir,
+    "InvalidEmptyChangeTableMigrationMain",
+    "Empty ChangeTable RailsHx migration compiled successfully.",
+    "@:railsMigration ChangeTable requires at least one typed column/reference/index item or timestamps option."
   );
 }
 

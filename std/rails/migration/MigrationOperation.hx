@@ -164,8 +164,9 @@ enum CreateTableItem {
 }
 
 typedef ChangeTableOptions = {
-	var columns:Array<CreateTableItem>;
+	@:optional var columns:Array<CreateTableItem>;
 	@:optional var bulk:Bool;
+	@:optional var timestamps:TimestampOptions;
 }
 
 enum MigrationOperation {
