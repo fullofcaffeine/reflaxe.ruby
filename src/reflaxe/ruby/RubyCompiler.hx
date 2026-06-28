@@ -5377,7 +5377,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var columnName = railsMigrationSymbolArg(args[1], "AddIndex column");
 						railsMigrationValidateTable(validation, table, "AddIndex table", args[0]);
 						railsMigrationValidateColumn(validation, table, columnName, "AddIndex column", args[1]);
-						var options = railsMigrationIndexDslOptions(args[2]);
+						var options = railsMigrationIndexDslOptions(args[2], table, validation);
 						railsMigrationOperation(["add_index :" + table + ", :" + columnName + railsMigrationOptionSuffix(options)]);
 					case "AddCompositeIndex" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddCompositeIndex table");
@@ -5386,7 +5386,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						for (columnName in columns) {
 							railsMigrationValidateColumn(validation, table, columnName, "AddCompositeIndex column", args[1]);
 						}
-						var options = railsMigrationIndexDslOptions(args[2]);
+						var options = railsMigrationIndexDslOptions(args[2], table, validation);
 						railsMigrationOperation(["add_index :"
 							+ table
 							+ ", ["
@@ -6973,7 +6973,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						];
 					case "Index" if (args.length == 2):
 						var columns = railsMigrationSymbolArrayArg(args[0], "CreateTable Index columns");
-						var options = railsMigrationIndexDslOptions(args[1]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "CreateTable Index column", args[0]);
+						}
+						var options = railsMigrationIndexDslOptions(args[1], table, validation);
 						[
 							"t.index [" + [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)
 						];
@@ -7162,7 +7165,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexDslOptions(expr:TypedExpr):Array<String> {
+	static function railsMigrationIndexDslOptions(expr:TypedExpr, ?table:String,
+			?validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
@@ -7178,6 +7182,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (typedBoolLiteral(field.expr, "MigrationIndex ifNotExists")) {
 								options.push("if_not_exists: true");
 							}
+						case "includeColumns":
+							var columns = railsMigrationSymbolArrayArg(field.expr, "MigrationIndex includeColumns");
+							if (table != null) {
+								for (columnName in columns) {
+									railsMigrationValidateColumn(validation, table, columnName, "MigrationIndex includeColumns column",
+										field.expr);
+								}
+							}
+							options.push("include: [" + [for (column in columns) ":" + column].join(", ") + "]");
 						case "comment":
 							options.push("comment: " + quoteRubyStringForCode(typedStringDefaultLiteral(field.expr, "MigrationIndex comment")));
 						case _:

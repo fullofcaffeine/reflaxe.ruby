@@ -38,6 +38,7 @@ typedef IndexOptions = {
 	@:optional var unique:Bool;
 	@:optional var name:String;
 	@:optional var ifNotExists:Bool;
+	@:optional var includeColumns:Array<String>;
 	@:optional var comment:String;
 }
 
