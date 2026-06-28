@@ -5820,6 +5820,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "checkConstraints":
+							for (item in railsMigrationChangeTableCheckConstraints(field.expr)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
+						case "removeCheckConstraints":
+							railsMigrationRequireReversibleContext("ChangeTable removeCheckConstraints", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableRemoveCheckConstraints(field.expr)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "removeColumns":
 							for (item in railsMigrationChangeTableRemoveColumns(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
@@ -5850,7 +5861,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
 		}
 		if (!hasBody) {
-			Context.error("@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, column/reference/index item, typed removal, or timestamp operation.",
+			Context.error("@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, check constraint, column/reference/index item, typed removal, or timestamp operation.",
 				optionsExpr.pos);
 		}
 		if (hasTimestamps && hasRemoveTimestamps) {
@@ -6129,6 +6140,105 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var from = railsMigrationSafeIdentifier(fromExpr, "ChangeTable renameIndexes from");
 		var to = railsMigrationSafeIdentifier(toExpr, "ChangeTable renameIndexes to");
 		return "t.rename_index " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to);
+	}
+
+	static function railsMigrationChangeTableCheckConstraints(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableCheckConstraint(value));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable checkConstraints must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable checkConstraints must be an Array<ChangeTableCheckConstraint> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableCheckConstraint(expr:TypedExpr):String {
+		var expressionExpr:Null<TypedExpr> = null;
+		var optionsExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "expression":
+							expressionExpr = field.expr;
+						case "options":
+							optionsExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable checkConstraints option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable checkConstraints entries must be object literals.", expr.pos);
+		}
+		if (expressionExpr == null) {
+			Context.error("@:railsMigration ChangeTable checkConstraints entry requires expression.", expr.pos);
+			return "t.check_constraint \"\"";
+		}
+		if (optionsExpr == null) {
+			Context.error("@:railsMigration ChangeTable checkConstraints entry requires options.", expr.pos);
+			return "t.check_constraint \"\"";
+		}
+		var expression = typedStringLiteral(expressionExpr);
+		if (expression == null || expression == "") {
+			Context.error("@:railsMigration ChangeTable checkConstraints expression must be a non-empty literal string.",
+				expressionExpr.pos);
+		}
+		return "t.check_constraint "
+			+ quoteRubyStringForCode(expression == null ? "" : expression)
+			+ railsMigrationOptionSuffix(railsMigrationCheckConstraintDslOptions(optionsExpr));
+	}
+
+	static function railsMigrationChangeTableRemoveCheckConstraints(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableRemoveCheckConstraint(value));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable removeCheckConstraints must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable removeCheckConstraints must be an Array<ChangeTableRemoveCheckConstraint> literal.",
+					expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableRemoveCheckConstraint(expr:TypedExpr):String {
+		var nameExpr:Null<TypedExpr> = null;
+		var options:Array<String> = [];
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "name":
+							nameExpr = field.expr;
+						case "ifExists":
+							if (typedBoolLiteral(field.expr, "ChangeTable removeCheckConstraints ifExists")) {
+								options.push("if_exists: true");
+							}
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable removeCheckConstraints option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable removeCheckConstraints entries must be object literals.", expr.pos);
+		}
+		if (nameExpr == null) {
+			Context.error("@:railsMigration ChangeTable removeCheckConstraints entry requires name.", expr.pos);
+			return "t.remove_check_constraint name: \"invalid\"";
+		}
+		var name = railsMigrationSafeIdentifier(nameExpr, "ChangeTable removeCheckConstraints name");
+		return "t.remove_check_constraint name: " + quoteRubyStringForCode(name) + railsMigrationOptionSuffix(options);
 	}
 
 	static function railsMigrationChangeTableRemoveColumns(expr:TypedExpr, table:String,

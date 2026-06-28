@@ -170,6 +170,8 @@ typedef ChangeTableOptions = {
 	@:optional var changeNulls:Array<ChangeTableChangeNull>;
 	@:optional var renameColumns:Array<ChangeTableRenameColumn>;
 	@:optional var renameIndexes:Array<ChangeTableRenameIndex>;
+	@:optional var checkConstraints:Array<ChangeTableCheckConstraint>;
+	@:optional var removeCheckConstraints:Array<ChangeTableRemoveCheckConstraint>;
 	@:optional var removeColumns:Array<ChangeTableRemoveColumns>;
 	@:optional var removeIndexes:Array<ChangeTableRemoveIndex>;
 	@:optional var bulk:Bool;
@@ -202,6 +204,16 @@ typedef ChangeTableRenameColumn = {
 typedef ChangeTableRenameIndex = {
 	var from:String;
 	var to:String;
+}
+
+typedef ChangeTableCheckConstraint = {
+	var expression:String;
+	var options:CheckConstraintOptions;
+}
+
+typedef ChangeTableRemoveCheckConstraint = {
+	var name:String;
+	@:optional var ifExists:Bool;
 }
 
 typedef ChangeTableRemoveColumns = {

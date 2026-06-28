@@ -2861,6 +2861,15 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\tChangeColumnComment(\"audit_events\", \"amount\", StringComment(\"Audited amount\"), StringComment(\"Reviewed amount\")),",
     "\t\tChangeTableComment(\"audit_events\", NullComment, StringComment(\"Audit event records\")),",
     "\t\tAddCheckConstraint(\"audit_events\", \"amount >= 0\", {name: \"amount_non_negative\"}),",
+    "\t\tReversible([",
+    "\t\t\tChangeTable(\"audit_events\", {",
+    "\t\t\t\tcheckConstraints: [{expression: \"amount <= 1000000\", options: {name: \"amount_reasonable\", validate: false}}]",
+    "\t\t\t})",
+    "\t\t], [",
+    "\t\t\tChangeTable(\"audit_events\", {",
+    "\t\t\t\tremoveCheckConstraints: [{name: \"amount_reasonable\", ifExists: true}]",
+    "\t\t\t})",
+    "\t\t]),",
     "\t\tExecuteSql(\"UPDATE audit_events SET title = 'untitled' WHERE title IS NULL\", \"UPDATE audit_events SET title = NULL WHERE title = 'untitled'\"),",
     "\t\tDataMigration(\"UPDATE audit_events SET amount = 0 WHERE amount IS NULL\", \"UPDATE audit_events SET amount = NULL WHERE amount = 0\"),",
     "\t\tReversible([",
@@ -2971,6 +2980,8 @@ function expectMigrationSnapshotOperationsOutput() {
     'change_column_comment :audit_events, :amount, from: "Audited amount", to: "Reviewed amount"',
     'change_table_comment :audit_events, from: nil, to: "Audit event records"',
     "add_check_constraint :audit_events, \"amount >= 0\", name: \"amount_non_negative\"",
+    "t.check_constraint \"amount <= 1000000\", name: \"amount_reasonable\", validate: false",
+    "t.remove_check_constraint name: \"amount_reasonable\", if_exists: true",
     "execute \"UPDATE audit_events SET title = 'untitled' WHERE title IS NULL\"",
     "execute \"UPDATE audit_events SET title = NULL WHERE title = 'untitled'\"",
     "execute \"UPDATE audit_events SET amount = 0 WHERE amount IS NULL\"",
@@ -3209,7 +3220,7 @@ function expectMigrationEmptyChangeTableFailure() {
     migrationEmptyChangeTableOutputDir,
     "InvalidEmptyChangeTableMigrationMain",
     "Empty ChangeTable RailsHx migration compiled successfully.",
-    "@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, column/reference/index item, typed removal, or timestamp operation."
+    "@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, check constraint, column/reference/index item, typed removal, or timestamp operation."
   );
 }
 
