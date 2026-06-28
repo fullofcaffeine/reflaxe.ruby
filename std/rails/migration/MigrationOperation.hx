@@ -354,9 +354,11 @@ enum MigrationOperation {
 	RemoveCheckConstraint(table:String, name:String);
 	RemoveCheckConstraintIfExists(table:String, name:String);
 	AddUniqueConstraint(table:String, columns:Array<String>, options:UniqueConstraintOptions);
+	AddUniqueConstraintIfNotExists(table:String, columns:Array<String>, options:UniqueConstraintOptions);
 	AddUniqueConstraintUsingIndex(table:String, indexName:String, options:UniqueConstraintOptions);
 	RemoveUniqueConstraint(table:String, columns:Array<String>, options:UniqueConstraintOptions);
 	AddExclusionConstraint(table:String, expression:String, options:ExclusionConstraintOptions);
+	AddExclusionConstraintIfNotExists(table:String, expression:String, options:ExclusionConstraintOptions);
 	RemoveExclusionConstraint(table:String, expression:String, options:ExclusionConstraintOptions);
 	DropTable(table:String);
 	DropTableIfExists(table:String);

@@ -5676,6 +5676,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", ["
 							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)]);
+					case "AddUniqueConstraintIfNotExists" if (args.length == 3):
+						railsMigrationRequireReversibleContext("AddUniqueConstraintIfNotExists", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "AddUniqueConstraintIfNotExists table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "AddUniqueConstraintIfNotExists columns");
+						railsMigrationValidateTable(validation, table, "AddUniqueConstraintIfNotExists table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "AddUniqueConstraintIfNotExists column", args[1]);
+						}
+						var info = railsMigrationUniqueConstraintDslInfo(args[2]);
+						railsMigrationOperation([
+							"unless unique_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
+							"  add_unique_constraint :"
+							+ table
+							+ ", ["
+							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(info.options),
+							"end"
+						]);
 					case "AddUniqueConstraintUsingIndex" if (args.length == 3):
 						railsMigrationRequireReversibleContext("AddUniqueConstraintUsingIndex", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "AddUniqueConstraintUsingIndex table");
@@ -5712,6 +5729,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ ", "
 							+ quoteRubyStringForCode(expression == null ? "" : expression)
 							+ railsMigrationOptionSuffix(options)]);
+					case "AddExclusionConstraintIfNotExists" if (args.length == 3):
+						railsMigrationRequireReversibleContext("AddExclusionConstraintIfNotExists", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "AddExclusionConstraintIfNotExists table");
+						var expression = typedStringLiteral(args[1]);
+						if (expression == null || expression == "") {
+							Context.error("@:railsMigration AddExclusionConstraintIfNotExists expression must be a non-empty literal string.",
+								args[1].pos);
+						}
+						var info = railsMigrationExclusionConstraintDslInfo(args[2]);
+						railsMigrationValidateTable(validation, table, "AddExclusionConstraintIfNotExists table", args[0]);
+						railsMigrationOperation([
+							"unless exclusion_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
+							"  add_exclusion_constraint :"
+							+ table
+							+ ", "
+							+ quoteRubyStringForCode(expression == null ? "" : expression)
+							+ railsMigrationOptionSuffix(info.options),
+							"end"
+						]);
 					case "RemoveExclusionConstraint" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RemoveExclusionConstraint", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveExclusionConstraint table");
@@ -7147,16 +7183,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationUniqueConstraintDslOptions(expr:TypedExpr):Array<String> {
+		return railsMigrationUniqueConstraintDslInfo(expr).options;
+	}
+
+	static function railsMigrationUniqueConstraintDslInfo(expr:TypedExpr):{name:String, options:Array<String>} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
-				var hasName = false;
+				var name:Null<String> = null;
 				for (field in fields) {
 					switch (field.name) {
 						case "name":
-							var name = railsMigrationSafeIdentifier(field.expr, "UniqueConstraint name");
-							hasName = true;
-							options.push("name: " + quoteRubyStringForCode(name));
+							var constraintName = railsMigrationSafeIdentifier(field.expr, "UniqueConstraint name");
+							name = constraintName;
+							options.push("name: " + quoteRubyStringForCode(constraintName));
 						case "deferrable":
 							options.push("deferrable: :" + railsMigrationForeignKeyDeferrable(field.expr, "UniqueConstraint deferrable"));
 						case "nullsNotDistinct":
@@ -7167,27 +7207,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							Context.error('@:railsMigration unknown UniqueConstraint option ${field.name}.', field.expr.pos);
 					}
 				}
-				if (!hasName) {
+				if (name == null) {
 					Context.error("@:railsMigration UniqueConstraint options must include a literal name.", expr.pos);
 				}
-				options;
+				{name: name == null ? "invalid" : name, options: options};
 			case _:
 				Context.error("@:railsMigration UniqueConstraint options must be an object literal.", expr.pos);
-				[];
+				{name: "invalid", options: []};
 		}
 	}
 
 	static function railsMigrationExclusionConstraintDslOptions(expr:TypedExpr):Array<String> {
+		return railsMigrationExclusionConstraintDslInfo(expr).options;
+	}
+
+	static function railsMigrationExclusionConstraintDslInfo(expr:TypedExpr):{name:String, options:Array<String>} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
-				var hasName = false;
+				var name:Null<String> = null;
 				for (field in fields) {
 					switch (field.name) {
 						case "name":
-							var name = railsMigrationSafeIdentifier(field.expr, "ExclusionConstraint name");
-							hasName = true;
-							options.push("name: " + quoteRubyStringForCode(name));
+							var constraintName = railsMigrationSafeIdentifier(field.expr, "ExclusionConstraint name");
+							name = constraintName;
+							options.push("name: " + quoteRubyStringForCode(constraintName));
 						case "usingMethod":
 							options.push("using: :" + railsMigrationSafeIdentifier(field.expr, "ExclusionConstraint usingMethod"));
 						case "where":
@@ -7203,13 +7247,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							Context.error('@:railsMigration unknown ExclusionConstraint option ${field.name}.', field.expr.pos);
 					}
 				}
-				if (!hasName) {
+				if (name == null) {
 					Context.error("@:railsMigration ExclusionConstraint options must include a literal name.", expr.pos);
 				}
-				options;
+				{name: name == null ? "invalid" : name, options: options};
 			case _:
 				Context.error("@:railsMigration ExclusionConstraint options must be an object literal.", expr.pos);
-				[];
+				{name: "invalid", options: []};
 		}
 	}
 
