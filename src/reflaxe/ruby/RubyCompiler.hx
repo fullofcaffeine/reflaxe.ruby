@@ -7170,6 +7170,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
+				var hasLengthOption = false;
 				for (field in fields) {
 					switch (field.name) {
 						case "unique":
@@ -7184,6 +7185,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "usingMethod":
 							options.push("using: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex usingMethod"));
+						case "length":
+							if (hasLengthOption) {
+								Context.error("@:railsMigration MigrationIndex cannot combine length and lengths.", field.expr.pos);
+							}
+							hasLengthOption = true;
+							options.push("length: " + typedPositiveIntLiteral(field.expr, "MigrationIndex length"));
+						case "lengths":
+							if (hasLengthOption) {
+								Context.error("@:railsMigration MigrationIndex cannot combine length and lengths.", field.expr.pos);
+							}
+							hasLengthOption = true;
+							options.push("length: {" + railsMigrationIndexLengthOptions(field.expr, table, validation).join(", ") + "}");
 						case "orders":
 							options.push("order: {" + railsMigrationIndexOrderOptions(field.expr, table, validation).join(", ") + "}");
 						case "includeColumns":
@@ -7209,6 +7222,52 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error("@:railsMigration AddIndex options must be an object literal.", expr.pos);
 				[];
+		}
+	}
+
+	static function railsMigrationIndexLengthOptions(expr:TypedExpr, ?table:String,
+			?validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				if (values.length == 0) {
+					Context.error("@:railsMigration MigrationIndex lengths must not be empty.", expr.pos);
+				}
+				[for (value in values) railsMigrationIndexLengthOption(value, table, validation)];
+			case _:
+				Context.error("@:railsMigration MigrationIndex lengths must be an Array<IndexLength> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationIndexLengthOption(expr:TypedExpr, ?table:String,
+			?validation:Null<RailsMigrationValidationContext>):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var column:Null<String> = null;
+				var length:Null<Int> = null;
+				for (field in fields) {
+					switch (field.name) {
+						case "column":
+							column = railsMigrationSymbolArg(field.expr, "MigrationIndex length column");
+							if (table != null && column != null) {
+								railsMigrationValidateColumn(validation, table, column, "MigrationIndex length column", field.expr);
+							}
+						case "length":
+							length = typedPositiveIntLiteral(field.expr, "MigrationIndex length value");
+						case _:
+							Context.error('@:railsMigration unknown MigrationIndex length option ${field.name}.', field.expr.pos);
+					}
+				}
+				if (column == null) {
+					Context.error("@:railsMigration MigrationIndex length must include a literal column.", expr.pos);
+				}
+				if (length == null) {
+					Context.error("@:railsMigration MigrationIndex length must include a positive length.", expr.pos);
+				}
+				(column == null ? "invalid" : column) + ": " + (length == null ? "1" : Std.string(length));
+			case _:
+				Context.error("@:railsMigration MigrationIndex lengths must contain object literals.", expr.pos);
+				"invalid: 1";
 		}
 	}
 

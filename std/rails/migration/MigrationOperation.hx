@@ -39,11 +39,18 @@ typedef IndexOrder = {
 	var direction:IndexOrderDirection;
 }
 
+typedef IndexLength = {
+	var column:String;
+	var length:Int;
+}
+
 typedef IndexOptions = {
 	@:optional var unique:Bool;
 	@:optional var name:String;
 	@:optional var ifNotExists:Bool;
 	@:optional var usingMethod:String;
+	@:optional var length:Int;
+	@:optional var lengths:Array<IndexLength>;
 	@:optional var orders:Array<IndexOrder>;
 	@:optional var includeColumns:Array<String>;
 	@:optional var nullsNotDistinct:Bool;
