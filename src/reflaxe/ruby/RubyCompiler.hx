@@ -5812,6 +5812,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var hasBody = false;
 		var hasTimestamps = false;
 		var hasRemoveTimestamps = false;
+		var hasValidationOperation = false;
 		var foreignKeys:Array<RailsMigrationForeignKeyRef> = [];
 		switch (unwrapTypedExpr(optionsExpr).expr) {
 			case TObjectDecl(fields):
@@ -5854,6 +5855,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							for (item in railsMigrationChangeTableCheckConstraints(field.expr)) {
 								bodyLines.push("  " + item);
 								hasBody = true;
+							}
+						case "validateCheckConstraints":
+							for (name in railsMigrationSafeIdentifierArrayArg(field.expr, "ChangeTable validateCheckConstraints")) {
+								bodyLines.push("  t.validate_check_constraint " + quoteRubyStringForCode(name));
+								hasBody = true;
+								hasValidationOperation = true;
+							}
+						case "validateConstraints":
+							for (name in railsMigrationSafeIdentifierArrayArg(field.expr, "ChangeTable validateConstraints")) {
+								bodyLines.push("  t.validate_constraint " + quoteRubyStringForCode(name));
+								hasBody = true;
+								hasValidationOperation = true;
 							}
 						case "foreignKeys":
 							for (item in railsMigrationChangeTableForeignKeys(field.expr, table, validation)) {
@@ -5942,7 +5955,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var lines = ["change_table :" + table + railsMigrationOptionSuffix(options) + " do |t|"];
 		lines = lines.concat(bodyLines);
 		lines.push("end");
-		return railsMigrationOperation(lines, foreignKeys);
+		return hasValidationOperation ? railsMigrationValidationOperation(lines, allowIrreversible, foreignKeys) : railsMigrationOperation(lines,
+			foreignKeys);
 	}
 
 	static function railsMigrationChangeTableChangeColumns(expr:TypedExpr, table:String,
@@ -6866,18 +6880,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return {lines: lines, foreignKeys: foreignKeys == null ? [] : foreignKeys};
 	}
 
-	static function railsMigrationUpOnlyOperation(lines:Array<String>):RailsMigrationOperationInfo {
+	static function railsMigrationUpOnlyOperation(lines:Array<String>, ?foreignKeys:Array<RailsMigrationForeignKeyRef>):RailsMigrationOperationInfo {
 		var out = ["reversible do |dir|", "  dir.up do"];
 		for (line in lines) {
 			out.push("    " + line);
 		}
 		out.push("  end");
 		out.push("end");
-		return railsMigrationOperation(out);
+		return railsMigrationOperation(out, foreignKeys);
 	}
 
-	static function railsMigrationValidationOperation(lines:Array<String>, inExplicitReversible:Bool):RailsMigrationOperationInfo {
-		return inExplicitReversible ? railsMigrationOperation(lines) : railsMigrationUpOnlyOperation(lines);
+	static function railsMigrationValidationOperation(lines:Array<String>, inExplicitReversible:Bool,
+			?foreignKeys:Array<RailsMigrationForeignKeyRef>):RailsMigrationOperationInfo {
+		return inExplicitReversible ? railsMigrationOperation(lines, foreignKeys) : railsMigrationUpOnlyOperation(lines, foreignKeys);
 	}
 
 	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr,
@@ -7460,6 +7475,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var out:Array<String> = [];
 				for (value in values) {
 					out.push(railsMigrationSymbolArg(value, label));
+				}
+				if (out.length == 0) {
+					Context.error('@:railsMigration ${label} must not be empty.', expr.pos);
+				}
+				out;
+			case _:
+				Context.error('@:railsMigration ${label} must be an Array<String> literal.', expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationSafeIdentifierArrayArg(expr:TypedExpr, label:String):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationSafeIdentifier(value, label));
 				}
 				if (out.length == 0) {
 					Context.error('@:railsMigration ${label} must not be empty.', expr.pos);

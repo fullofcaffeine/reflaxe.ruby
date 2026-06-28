@@ -178,6 +178,8 @@ typedef ChangeTableOptions = {
 	@:optional var renameColumns:Array<ChangeTableRenameColumn>;
 	@:optional var renameIndexes:Array<ChangeTableRenameIndex>;
 	@:optional var checkConstraints:Array<ChangeTableCheckConstraint>;
+	@:optional var validateCheckConstraints:Array<String>;
+	@:optional var validateConstraints:Array<String>;
 	@:optional var foreignKeys:Array<ChangeTableForeignKey>;
 	@:optional var uniqueConstraints:Array<ChangeTableUniqueConstraint>;
 	@:optional var exclusionConstraints:Array<ChangeTableExclusionConstraint>;
