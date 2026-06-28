@@ -5866,6 +5866,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "exclusionConstraints":
+							for (item in railsMigrationChangeTableExclusionConstraints(field.expr, "exclusionConstraints",
+									"t.exclusion_constraint")) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "removeCheckConstraints":
 							railsMigrationRequireReversibleContext("ChangeTable removeCheckConstraints", allowIrreversible, field.expr);
 							for (item in railsMigrationChangeTableRemoveCheckConstraints(field.expr)) {
@@ -5895,6 +5901,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "removeExclusionConstraints":
+							railsMigrationRequireReversibleContext("ChangeTable removeExclusionConstraints", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableExclusionConstraints(field.expr, "removeExclusionConstraints",
+									"t.remove_exclusion_constraint")) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "removeIndexes":
 							for (item in railsMigrationChangeTableRemoveIndexes(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
@@ -5920,7 +5933,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
 		}
 		if (!hasBody) {
-			Context.error("@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, check constraint, column/reference/index item, typed removal, or timestamp operation.",
+			Context.error("@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, constraint, column/reference/index item, typed removal, or timestamp operation.",
 				optionsExpr.pos);
 		}
 		if (hasTimestamps && hasRemoveTimestamps) {
@@ -6363,6 +6376,62 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			+ [for (column in columns) ":" + column].join(", ")
 			+ "]"
 			+ railsMigrationOptionSuffix(railsMigrationUniqueConstraintDslOptions(optionsExpr));
+	}
+
+	static function railsMigrationChangeTableExclusionConstraints(expr:TypedExpr, fieldName:String,
+			command:String):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableExclusionConstraint(value, fieldName, command));
+				}
+				if (out.length == 0) {
+					Context.error('@:railsMigration ChangeTable $fieldName must not be empty.', expr.pos);
+				}
+				out;
+			case _:
+				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableExclusionConstraint> literal.',
+					expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableExclusionConstraint(expr:TypedExpr, fieldName:String, command:String):String {
+		var expressionExpr:Null<TypedExpr> = null;
+		var optionsExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "expression":
+							expressionExpr = field.expr;
+						case "options":
+							optionsExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable $fieldName option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error('@:railsMigration ChangeTable $fieldName entries must be object literals.', expr.pos);
+		}
+		if (expressionExpr == null) {
+			Context.error('@:railsMigration ChangeTable $fieldName entry requires expression.', expr.pos);
+			return command + " \"\"";
+		}
+		if (optionsExpr == null) {
+			Context.error('@:railsMigration ChangeTable $fieldName entry requires options.', expr.pos);
+			return command + " \"\"";
+		}
+		var expression = typedStringLiteral(expressionExpr);
+		if (expression == null || expression == "") {
+			Context.error('@:railsMigration ChangeTable $fieldName expression must be a non-empty literal string.',
+				expressionExpr.pos);
+		}
+		return command
+			+ " "
+			+ quoteRubyStringForCode(expression == null ? "" : expression)
+			+ railsMigrationOptionSuffix(railsMigrationExclusionConstraintDslOptions(optionsExpr));
 	}
 
 	static function railsMigrationChangeTableRemoveCheckConstraints(expr:TypedExpr):Array<String> {

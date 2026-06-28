@@ -2859,6 +2859,15 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t], [",
     "\t\t\tRemoveExclusionConstraint(\"audit_events\", \"daterange(reported_on, reviewed_at::date) WITH &&\", {name: \"audit_events_reported_review_overlap\", usingMethod: \"gist\", where: \"reported_on IS NOT NULL\"})",
     "\t\t]),",
+    "\t\tReversible([",
+    "\t\t\tChangeTable(\"audit_events\", {",
+    "\t\t\t\texclusionConstraints: [{expression: \"account_id WITH =, daterange(reported_on, reviewed_at::date) WITH &&\", options: {name: \"audit_events_account_reported_review_overlap\", usingMethod: \"gist\", deferrable: Immediate}}]",
+    "\t\t\t})",
+    "\t\t], [",
+    "\t\t\tChangeTable(\"audit_events\", {",
+    "\t\t\t\tremoveExclusionConstraints: [{expression: \"account_id WITH =, daterange(reported_on, reviewed_at::date) WITH &&\", options: {name: \"audit_events_account_reported_review_overlap\", usingMethod: \"gist\", deferrable: Immediate}}]",
+    "\t\t\t})",
+    "\t\t]),",
     "\t\tChangeNull(\"audit_events\", \"title\", false),",
     "\t\tChangeNullWithDefault(\"audit_events\", \"reported_on\", false, StringDefault(\"2026-01-01\")),",
     "\t\tChangeDefault(\"audit_events\", \"archived\", BoolDefault(false), BoolDefault(true)),",
@@ -2999,6 +3008,8 @@ function expectMigrationSnapshotOperationsOutput() {
     't.remove_unique_constraint [:bulk_status], name: "unique_audit_events_bulk_status"',
     'add_exclusion_constraint :audit_events, "daterange(reported_on, reviewed_at::date) WITH &&", name: "audit_events_reported_review_overlap", using: :gist, where: "reported_on IS NOT NULL"',
     'remove_exclusion_constraint :audit_events, "daterange(reported_on, reviewed_at::date) WITH &&", name: "audit_events_reported_review_overlap", using: :gist, where: "reported_on IS NOT NULL"',
+    't.exclusion_constraint "account_id WITH =, daterange(reported_on, reviewed_at::date) WITH &&", name: "audit_events_account_reported_review_overlap", using: :gist, deferrable: :immediate',
+    't.remove_exclusion_constraint "account_id WITH =, daterange(reported_on, reviewed_at::date) WITH &&", name: "audit_events_account_reported_review_overlap", using: :gist, deferrable: :immediate',
     "change_column_null :audit_events, :title, false",
     'change_column_null :audit_events, :reported_on, false, "2026-01-01"',
     "change_column_default :audit_events, :archived, from: false, to: true",
@@ -3255,7 +3266,7 @@ function expectMigrationEmptyChangeTableFailure() {
     migrationEmptyChangeTableOutputDir,
     "InvalidEmptyChangeTableMigrationMain",
     "Empty ChangeTable RailsHx migration compiled successfully.",
-    "@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, check constraint, column/reference/index item, typed removal, or timestamp operation."
+    "@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, constraint, column/reference/index item, typed removal, or timestamp operation."
   );
 }
 
