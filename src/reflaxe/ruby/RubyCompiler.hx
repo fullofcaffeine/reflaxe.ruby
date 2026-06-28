@@ -5832,6 +5832,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								foreignKeys.push({fromTable: table, toTable: item.toTable});
 								hasBody = true;
 							}
+						case "uniqueConstraints":
+							for (item in railsMigrationChangeTableUniqueConstraints(field.expr, table, validation, "uniqueConstraints")) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "removeCheckConstraints":
 							railsMigrationRequireReversibleContext("ChangeTable removeCheckConstraints", allowIrreversible, field.expr);
 							for (item in railsMigrationChangeTableRemoveCheckConstraints(field.expr)) {
@@ -5852,6 +5857,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "removeReferences":
 							railsMigrationRequireReversibleContext("ChangeTable removeReferences", allowIrreversible, field.expr);
 							for (item in railsMigrationChangeTableRemoveReferences(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
+						case "removeUniqueConstraints":
+							railsMigrationRequireReversibleContext("ChangeTable removeUniqueConstraints", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableRemoveUniqueConstraints(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
@@ -6268,6 +6279,63 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		};
 	}
 
+	static function railsMigrationChangeTableUniqueConstraints(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>, fieldName:String):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableUniqueConstraint(value, table, validation, fieldName, "t.unique_constraint"));
+				}
+				if (out.length == 0) {
+					Context.error('@:railsMigration ChangeTable $fieldName must not be empty.', expr.pos);
+				}
+				out;
+			case _:
+				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableUniqueConstraint> literal.',
+					expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableUniqueConstraint(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>, fieldName:String, command:String):String {
+		var columnsExpr:Null<TypedExpr> = null;
+		var optionsExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "columns":
+							columnsExpr = field.expr;
+						case "options":
+							optionsExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable $fieldName option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error('@:railsMigration ChangeTable $fieldName entries must be object literals.', expr.pos);
+		}
+		if (columnsExpr == null) {
+			Context.error('@:railsMigration ChangeTable $fieldName entry requires columns.', expr.pos);
+			return command + " [:invalid]";
+		}
+		if (optionsExpr == null) {
+			Context.error('@:railsMigration ChangeTable $fieldName entry requires options.', expr.pos);
+			return command + " [:invalid]";
+		}
+		var columns = railsMigrationSymbolArrayArg(columnsExpr, "ChangeTable " + fieldName + " columns");
+		for (columnName in columns) {
+			railsMigrationValidateColumn(validation, table, columnName, "ChangeTable " + fieldName + " column", columnsExpr);
+		}
+		return command
+			+ " ["
+			+ [for (column in columns) ":" + column].join(", ")
+			+ "]"
+			+ railsMigrationOptionSuffix(railsMigrationUniqueConstraintDslOptions(optionsExpr));
+	}
+
 	static function railsMigrationChangeTableRemoveCheckConstraints(expr:TypedExpr):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
@@ -6428,6 +6496,26 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			line += " :" + toTable;
 		}
 		return line + railsMigrationOptionSuffix(options);
+	}
+
+	static function railsMigrationChangeTableRemoveUniqueConstraints(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableUniqueConstraint(value, table, validation, "removeUniqueConstraints",
+						"t.remove_unique_constraint"));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable removeUniqueConstraints must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable removeUniqueConstraints must be an Array<ChangeTableUniqueConstraint> literal.",
+					expr.pos);
+				[];
+		}
 	}
 
 	static function railsMigrationChangeTableRemoveReferences(expr:TypedExpr, table:String,

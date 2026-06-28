@@ -172,10 +172,12 @@ typedef ChangeTableOptions = {
 	@:optional var renameIndexes:Array<ChangeTableRenameIndex>;
 	@:optional var checkConstraints:Array<ChangeTableCheckConstraint>;
 	@:optional var foreignKeys:Array<ChangeTableForeignKey>;
+	@:optional var uniqueConstraints:Array<ChangeTableUniqueConstraint>;
 	@:optional var removeCheckConstraints:Array<ChangeTableRemoveCheckConstraint>;
 	@:optional var removeColumns:Array<ChangeTableRemoveColumns>;
 	@:optional var removeForeignKeys:Array<ChangeTableRemoveForeignKey>;
 	@:optional var removeReferences:Array<ChangeTableRemoveReference>;
+	@:optional var removeUniqueConstraints:Array<ChangeTableUniqueConstraint>;
 	@:optional var removeIndexes:Array<ChangeTableRemoveIndex>;
 	@:optional var bulk:Bool;
 	@:optional var timestamps:TimestampOptions;
@@ -217,6 +219,11 @@ typedef ChangeTableCheckConstraint = {
 typedef ChangeTableForeignKey = {
 	var toTable:String;
 	var options:ForeignKeyOptions;
+}
+
+typedef ChangeTableUniqueConstraint = {
+	var columns:Array<String>;
+	var options:UniqueConstraintOptions;
 }
 
 typedef ChangeTableRemoveCheckConstraint = {
