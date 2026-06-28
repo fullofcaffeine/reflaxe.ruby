@@ -7191,6 +7191,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								}
 							}
 							options.push("include: [" + [for (column in columns) ":" + column].join(", ") + "]");
+						case "nullsNotDistinct":
+							if (typedBoolLiteral(field.expr, "MigrationIndex nullsNotDistinct")) {
+								options.push("nulls_not_distinct: true");
+							}
 						case "comment":
 							options.push("comment: " + quoteRubyStringForCode(typedStringDefaultLiteral(field.expr, "MigrationIndex comment")));
 						case _:
