@@ -162,6 +162,7 @@ enum IndexOrderDirection {
 
 enum IndexAlgorithm {
 	Inplace;
+	Concurrently;
 }
 
 enum IndexLock {

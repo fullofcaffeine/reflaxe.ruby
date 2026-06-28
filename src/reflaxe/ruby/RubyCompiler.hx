@@ -62,6 +62,7 @@ typedef RailsMigrationConfig = {
 	timestamp:String,
 	className:String,
 	version:String,
+	disableDdlTransaction:Bool,
 	models:Array<ClassType>,
 	knownModels:Array<ClassType>,
 	externalTables:Array<String>,
@@ -4951,6 +4952,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var timestamp:Null<String> = null;
 		var className:Null<String> = null;
 		var version = "7.1";
+		var disableDdlTransaction = false;
 		var modelPaths:Array<String> = [];
 		var knownModelPaths:Array<String> = [];
 		var externalTables:Array<String> = [];
@@ -4964,6 +4966,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							className = metadataStringLiteral(field.expr);
 						case "version" | "migrationVersion":
 							version = metadataStringLiteral(field.expr);
+						case "disableDdlTransaction":
+							disableDdlTransaction = metadataBoolLiteral(field.expr, "disableDdlTransaction");
 						case "models":
 							modelPaths = metadataStringArray(field.expr, "models");
 						case "knownModels":
@@ -4996,7 +5000,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var models = railsMigrationResolveModels(modelPaths, tableNames, classType, false);
 		var knownModels = railsMigrationResolveModels(knownModelPaths, tableNames, classType, true);
 		var validationContext = railsMigrationValidationContext(models, knownModels, externalTables);
-		var operations = railsMigrationOperations(varFields, classType, validationContext);
+		var operations = railsMigrationOperations(varFields, classType, validationContext, disableDdlTransaction);
 		if (modelPaths.length == 0 && operations.length == 0) {
 			Context.error("@:railsMigration models must include at least one model path unless typed operations are provided.", classType.pos);
 			return null;
@@ -5005,6 +5009,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			timestamp: timestamp,
 			className: className,
 			version: version,
+			disableDdlTransaction: disableDdlTransaction,
 			models: models,
 			knownModels: knownModels,
 			externalTables: externalTables,
@@ -5098,8 +5103,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			+ " < ActiveRecord::Migration["
 			+ config.version
 			+ "]",
-			"  def change"
 		];
+		if (config.disableDdlTransaction) {
+			lines.push("  disable_ddl_transaction!");
+			lines.push("");
+		}
+		lines.push("  def change");
 		for (index in 0...config.models.length) {
 			if (index > 0) {
 				lines.push("");
@@ -5157,7 +5166,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationOperations(varFields:Array<ClassVarData>, classType:ClassType,
-			validation:Null<RailsMigrationValidationContext>):Array<RailsMigrationOperationInfo> {
+			validation:Null<RailsMigrationValidationContext>, allowConcurrentIndexes:Bool):Array<RailsMigrationOperationInfo> {
 		var operationField:Null<ClassVarData> = null;
 		for (field in varFields) {
 			if (field.isStatic && field.field.name == "operations") {
@@ -5173,16 +5182,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsMigration operations must be a static final Array<MigrationOperation> literal.", operationField.field.pos);
 			return [];
 		}
-		return railsMigrationOperationArray(expr, "@:railsMigration operations", false, validation);
+		return railsMigrationOperationArray(expr, "@:railsMigration operations", false, validation, allowConcurrentIndexes);
 	}
 
 	static function railsMigrationOperationArray(expr:TypedExpr, label:String, allowIrreversible:Bool,
-			validation:Null<RailsMigrationValidationContext>):Array<RailsMigrationOperationInfo> {
+			validation:Null<RailsMigrationValidationContext>, allowConcurrentIndexes:Bool):Array<RailsMigrationOperationInfo> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var operations:Array<RailsMigrationOperationInfo> = [];
 				for (value in values) {
-					operations.push(railsMigrationOperationInfo(value, allowIrreversible, validation));
+					operations.push(railsMigrationOperationInfo(value, allowIrreversible, validation, allowConcurrentIndexes));
 				}
 				operations;
 			case _:
@@ -5192,7 +5201,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationOperationInfo(expr:TypedExpr, allowIrreversible:Bool,
-			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
+			validation:Null<RailsMigrationValidationContext>, allowConcurrentIndexes:Bool):RailsMigrationOperationInfo {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args):
 				switch (field.name) {
@@ -5377,7 +5386,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var columnName = railsMigrationSymbolArg(args[1], "AddIndex column");
 						railsMigrationValidateTable(validation, table, "AddIndex table", args[0]);
 						railsMigrationValidateColumn(validation, table, columnName, "AddIndex column", args[1]);
-						var options = railsMigrationIndexDslOptions(args[2], table, validation);
+						var options = railsMigrationIndexDslOptions(args[2], table, validation, allowConcurrentIndexes);
 						railsMigrationOperation(["add_index :" + table + ", :" + columnName + railsMigrationOptionSuffix(options)]);
 					case "AddCompositeIndex" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddCompositeIndex table");
@@ -5386,7 +5395,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						for (columnName in columns) {
 							railsMigrationValidateColumn(validation, table, columnName, "AddCompositeIndex column", args[1]);
 						}
-						var options = railsMigrationIndexDslOptions(args[2], table, validation);
+						var options = railsMigrationIndexDslOptions(args[2], table, validation, allowConcurrentIndexes);
 						railsMigrationOperation(["add_index :"
 							+ table
 							+ ", ["
@@ -5814,7 +5823,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "DataMigration" if (args.length == 2):
 						railsMigrationUnsafeSqlOperation("DataMigration", args[0], args[1], expr);
 					case "Reversible" if (args.length == 2):
-						railsMigrationReversibleOperation(args[0], args[1], validation);
+						railsMigrationReversibleOperation(args[0], args[1], validation, allowConcurrentIndexes);
 					case _:
 						Context.error('@:railsMigration unsupported MigrationOperation ${field.name}.', expr.pos);
 						railsMigrationOperation(["# unsupported RailsHx migration operation"]);
@@ -6976,7 +6985,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						for (columnName in columns) {
 							railsMigrationValidateColumn(validation, table, columnName, "CreateTable Index column", args[0]);
 						}
-						var options = railsMigrationIndexDslOptions(args[1], table, validation);
+						var options = railsMigrationIndexDslOptions(args[1], table, validation, false);
 						[
 							"t.index [" + [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)
 						];
@@ -7085,10 +7094,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr,
-			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
+			validation:Null<RailsMigrationValidationContext>, allowConcurrentIndexes:Bool):RailsMigrationOperationInfo {
 		var lines = ["reversible do |dir|", "  dir.up do"];
 		var foreignKeys:Array<RailsMigrationForeignKeyRef> = [];
-		for (operation in railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up", true, validation)) {
+		for (operation in railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up", true, validation, allowConcurrentIndexes)) {
 			foreignKeys = foreignKeys.concat(operation.foreignKeys);
 			for (line in operation.lines) {
 				lines.push("    " + line);
@@ -7096,7 +7105,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		lines.push("  end");
 		lines.push("  dir.down do");
-		for (operation in railsMigrationOperationArray(downExpr, "@:railsMigration Reversible down", true, validation)) {
+		for (operation in railsMigrationOperationArray(downExpr, "@:railsMigration Reversible down", true, validation, allowConcurrentIndexes)) {
 			for (line in operation.lines) {
 				lines.push("    " + line);
 			}
@@ -7166,7 +7175,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationIndexDslOptions(expr:TypedExpr, ?table:String,
-			?validation:Null<RailsMigrationValidationContext>):Array<String> {
+			?validation:Null<RailsMigrationValidationContext>, ?allowConcurrentIndexes:Bool = false):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
@@ -7189,7 +7198,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "indexType":
 							options.push("type: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex indexType"));
 						case "indexAlgorithm":
-							options.push("algorithm: :" + railsMigrationIndexAlgorithm(field.expr, "MigrationIndex indexAlgorithm"));
+							options.push("algorithm: :"
+								+ railsMigrationIndexAlgorithm(field.expr, "MigrationIndex indexAlgorithm", allowConcurrentIndexes));
 						case "indexLock":
 							options.push("lock: :" + railsMigrationIndexLock(field.expr, "MigrationIndex indexLock"));
 						case "length":
@@ -7244,21 +7254,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexAlgorithm(expr:TypedExpr, label:String):String {
+	static function railsMigrationIndexAlgorithm(expr:TypedExpr, label:String, allowConcurrentIndexes:Bool):String {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TField(_, FEnum(_, field)):
-				railsMigrationIndexAlgorithmName(field.name, label, expr);
+				railsMigrationIndexAlgorithmName(field.name, label, expr, allowConcurrentIndexes);
 			case TCall({expr: TField(_, FEnum(_, field))}, _):
-				railsMigrationIndexAlgorithmName(field.name, label, expr);
+				railsMigrationIndexAlgorithmName(field.name, label, expr, allowConcurrentIndexes);
 			case _:
 				Context.error('@:railsMigration ${label} must be an IndexAlgorithm enum value.', expr.pos);
 				"inplace";
 		}
 	}
 
-	static function railsMigrationIndexAlgorithmName(name:String, label:String, expr:TypedExpr):String {
+	static function railsMigrationIndexAlgorithmName(name:String, label:String, expr:TypedExpr, allowConcurrentIndexes:Bool):String {
 		return switch (name) {
 			case "Inplace": "inplace";
+			case "Concurrently":
+				if (!allowConcurrentIndexes) {
+					Context.error("@:railsMigration IndexAlgorithm.Concurrently requires @:railsMigration disableDdlTransaction: true and a standalone index operation.",
+						expr.pos);
+				}
+				"concurrently";
 			case _:
 				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
 				"inplace";
@@ -8189,6 +8205,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (expr.expr) {
 			case EConst(CString(value, _)) if (value.length > 0): value;
 			case _: null;
+		}
+	}
+
+	static function metadataBoolLiteral(expr:haxe.macro.Expr, label:String):Bool {
+		return switch (expr.expr) {
+			case EConst(CIdent("true")): true;
+			case EConst(CIdent("false")): false;
+			case _:
+				Context.error('@:railsMigration $label must be a Bool literal.', expr.pos);
+				false;
 		}
 	}
 

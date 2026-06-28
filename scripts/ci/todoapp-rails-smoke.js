@@ -202,6 +202,8 @@ const migrationDropTableSourceDir = join(root, "test", ".generated", "todoapp_ra
 const migrationDropTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_out");
 const migrationSnapshotOpsSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_snapshot_ops_src");
 const migrationSnapshotOpsOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_snapshot_ops_out");
+const migrationConcurrentIndexWithoutDisabledDdlSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_concurrent_index_without_disabled_ddl_src");
+const migrationConcurrentIndexWithoutDisabledDdlOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_concurrent_index_without_disabled_ddl_out");
 const migrationHistoricalAddColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_historical_add_column_src");
 const migrationHistoricalAddColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_historical_add_column_out");
 const migrationDuplicateAddColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_add_column_src");
@@ -492,6 +494,8 @@ rmSync(migrationDropTableSourceDir, { force: true, recursive: true });
 rmSync(migrationDropTableOutputDir, { force: true, recursive: true });
 rmSync(migrationSnapshotOpsSourceDir, { force: true, recursive: true });
 rmSync(migrationSnapshotOpsOutputDir, { force: true, recursive: true });
+rmSync(migrationConcurrentIndexWithoutDisabledDdlSourceDir, { force: true, recursive: true });
+rmSync(migrationConcurrentIndexWithoutDisabledDdlOutputDir, { force: true, recursive: true });
 rmSync(migrationHistoricalAddColumnSourceDir, { force: true, recursive: true });
 rmSync(migrationHistoricalAddColumnOutputDir, { force: true, recursive: true });
 rmSync(migrationDuplicateAddColumnSourceDir, { force: true, recursive: true });
@@ -1606,6 +1610,7 @@ expectMigrationExternalTableAllowed();
 expectMigrationUnsafeExternalTableFailure();
 expectMigrationDropTableReversibleOutput();
 expectMigrationSnapshotOperationsOutput();
+expectMigrationConcurrentIndexWithoutDisabledDdlFailure();
 expectMigrationHistoricalAddColumnAllowed();
 expectMigrationDuplicateAddColumnFailure();
 expectMigrationReferenceIndexConflictFailure();
@@ -2705,6 +2710,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "\ttimestamp: \"20260101000014\",",
     "\tclassName: \"SnapshotOperationsMigration\",",
     "\tversion: \"8.1\",",
+    "\tdisableDdlTransaction: true,",
     "\tmodels: []",
     "})",
     "class SnapshotOperationsMigration extends Migration {",
@@ -2836,6 +2842,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t]),",
     "\t\tAddCompositeIndex(\"audit_events\", [\"account_id\", \"title\"], {lengths: [{column: \"title\", length: 80}], opclasses: [{column: \"title\", opclass: \"text_pattern_ops\"}], orders: [{column: \"title\", direction: Desc}, {column: \"account_id\", direction: Asc}], includeColumns: [\"amount\"], comment: \"Account title lookup\"}),",
     "\t\tAddIndex(\"audit_events\", \"title\", {name: \"index_audit_events_on_title_fulltext\", indexType: \"fulltext\", indexAlgorithm: Inplace, indexLock: None}),",
+    "\t\tAddIndex(\"audit_events\", \"reported_on\", {name: \"index_audit_events_on_reported_on_concurrently\", indexAlgorithm: Concurrently}),",
     "\t\tReversible([",
     "\t\t\tDisableIndex(\"audit_events\", \"index_audit_events_on_account_id_and_title\")",
     "\t\t], [",
@@ -2979,6 +2986,7 @@ function expectMigrationSnapshotOperationsOutput() {
   const migrationRuby = readFileSync(join(migrationSnapshotOpsOutputDir, "db", "migrate", "20260101000014_snapshot_operations_migration.rb"), "utf8");
   for (const expected of [
     "class SnapshotOperationsMigration < ActiveRecord::Migration[8.1]",
+    "disable_ddl_transaction!",
     'enable_extension "pg_catalog.plpgsql"',
     'disable_extension "pg_catalog.plpgsql"',
     'create_schema "reporting", if_not_exists: true',
@@ -3046,6 +3054,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "remove_columns :audit_events, :legacy_code, :legacy_notes",
     'add_index :audit_events, [:account_id, :title], length: {title: 80}, opclass: {title: :text_pattern_ops}, order: {title: :desc, account_id: :asc}, include: [:amount], comment: "Account title lookup"',
     'add_index :audit_events, :title, name: "index_audit_events_on_title_fulltext", type: :fulltext, algorithm: :inplace, lock: :none',
+    'add_index :audit_events, :reported_on, name: "index_audit_events_on_reported_on_concurrently", algorithm: :concurrently',
     "disable_index :audit_events, :index_audit_events_on_account_id_and_title",
     "enable_index :audit_events, :index_audit_events_on_account_id_and_title",
     'unless unique_constraint_exists?(:audit_events, name: "unique_audit_events_account_title_guarded")',
@@ -3114,6 +3123,49 @@ function expectMigrationSnapshotOperationsOutput() {
       process.exit(1);
     }
   }
+}
+
+function expectMigrationConcurrentIndexWithoutDisabledDdlFailure() {
+  mkdirSync(join(migrationConcurrentIndexWithoutDisabledDdlSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationConcurrentIndexWithoutDisabledDdlSourceDir, "InvalidConcurrentIndexWithoutDisabledDdlMain.hx"), [
+    "import migrations.BadConcurrentIndexWithoutDisabledDdlMigration;",
+    "",
+    "class InvalidConcurrentIndexWithoutDisabledDdlMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadConcurrentIndexWithoutDisabledDdlMigration> = BadConcurrentIndexWithoutDisabledDdlMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationConcurrentIndexWithoutDisabledDdlSourceDir, "migrations", "BadConcurrentIndexWithoutDisabledDdlMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Concurrent indexes require Rails to run this migration outside its",
+    "// default DDL transaction; the compiler rejects the operation otherwise.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000024\",",
+    "\tclassName: \"BadConcurrentIndexWithoutDisabledDdlMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadConcurrentIndexWithoutDisabledDdlMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tAddIndex(\"todos\", \"title\", {name: \"index_todos_on_title_concurrently\", indexAlgorithm: Concurrently})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationConcurrentIndexWithoutDisabledDdlSourceDir,
+    migrationConcurrentIndexWithoutDisabledDdlOutputDir,
+    "InvalidConcurrentIndexWithoutDisabledDdlMain",
+    "Concurrent index RailsHx migration compiled without disabling DDL transactions.",
+    "@:railsMigration IndexAlgorithm.Concurrently requires @:railsMigration disableDdlTransaction: true and a standalone index operation."
+  );
 }
 
 function expectMigrationHistoricalAddColumnAllowed() {
