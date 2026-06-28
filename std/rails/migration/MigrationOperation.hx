@@ -67,6 +67,11 @@ typedef IndexOptions = {
 	@:optional var comment:String;
 }
 
+typedef MysqlDdlOptions = {
+	@:optional var algorithm:MysqlDdlAlgorithm;
+	@:optional var lock:IndexLock;
+}
+
 typedef ReferenceOptions = {
 	@:optional var nullable:Bool;
 	@:optional var type:PrimaryKeyType;
@@ -170,6 +175,13 @@ enum IndexLock {
 	None;
 	Shared;
 	Exclusive;
+}
+
+enum MysqlDdlAlgorithm {
+	DdlDefault;
+	DdlCopy;
+	DdlInplace;
+	DdlInstant;
 }
 
 enum PrimaryKeyType {
@@ -354,7 +366,9 @@ enum MigrationOperation {
 	DisableExtension(name:String);
 
 	AddColumn(table:String, name:String, column:MigrationColumn);
+	AddColumnWithDdl(table:String, name:String, column:MigrationColumn, options:MysqlDdlOptions);
 	AddColumnIfNotExists(table:String, name:String, column:MigrationColumn);
+	AddColumnIfNotExistsWithDdl(table:String, name:String, column:MigrationColumn, options:MysqlDdlOptions);
 	RemoveColumn(table:String, name:String);
 	RemoveColumnIfExists(table:String, name:String);
 	RemoveColumnWithType(table:String, name:String, column:MigrationColumn);
@@ -362,6 +376,7 @@ enum MigrationOperation {
 	RemoveColumns(table:String, columns:Array<String>);
 	RemoveColumnsWithType(table:String, columns:Array<String>, column:MigrationColumn);
 	ChangeColumn(table:String, name:String, column:MigrationColumn);
+	ChangeColumnWithDdl(table:String, name:String, column:MigrationColumn, options:MysqlDdlOptions);
 	AddIndex(table:String, column:String, options:IndexOptions);
 	AddCompositeIndex(table:String, columns:Array<String>, options:IndexOptions);
 	EnableIndex(table:String, name:String);

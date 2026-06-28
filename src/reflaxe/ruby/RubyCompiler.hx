@@ -5295,6 +5295,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"add_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)
 						]);
+					case "AddColumnWithDdl" if (args.length == 4):
+						var table = railsMigrationSymbolArg(args[0], "AddColumnWithDdl table");
+						var name = railsMigrationSymbolArg(args[1], "AddColumnWithDdl name");
+						railsMigrationValidateTable(validation, table, "AddColumnWithDdl table", args[0]);
+						railsMigrationValidateNewColumn(validation, table, name, "AddColumnWithDdl name", args[1]);
+						var column = railsMigrationColumnDsl(args[2]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "AddColumnWithDdl options");
+						railsMigrationRegisterColumn(validation, table, name);
+						railsMigrationOperation([
+							"add_column :"
+							+ table
+							+ ", :"
+							+ name
+							+ ", :"
+							+ column.type
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))
+						]);
 					case "AddColumnIfNotExists" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddColumnIfNotExists table");
 						var name = railsMigrationSymbolArg(args[1], "AddColumnIfNotExists name");
@@ -5310,6 +5327,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ ", :"
 							+ column.type
 							+ railsMigrationOptionSuffix(column.options.concat(["if_not_exists: true"]))
+						]);
+					case "AddColumnIfNotExistsWithDdl" if (args.length == 4):
+						var table = railsMigrationSymbolArg(args[0], "AddColumnIfNotExistsWithDdl table");
+						var name = railsMigrationSymbolArg(args[1], "AddColumnIfNotExistsWithDdl name");
+						railsMigrationValidateTable(validation, table, "AddColumnIfNotExistsWithDdl table", args[0]);
+						railsMigrationValidateNewColumn(validation, table, name, "AddColumnIfNotExistsWithDdl name", args[1]);
+						var column = railsMigrationColumnDsl(args[2]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "AddColumnIfNotExistsWithDdl options");
+						railsMigrationRegisterColumn(validation, table, name);
+						railsMigrationOperation([
+							"add_column :"
+							+ table
+							+ ", :"
+							+ name
+							+ ", :"
+							+ column.type
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions).concat(["if_not_exists: true"]))
 						]);
 					case "RemoveColumn" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveColumn", allowIrreversible, expr);
@@ -5380,6 +5414,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var column = railsMigrationColumnDsl(args[2]);
 						railsMigrationOperation([
 							"change_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)
+						]);
+					case "ChangeColumnWithDdl" if (args.length == 4):
+						railsMigrationRequireReversibleContext("ChangeColumnWithDdl", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "ChangeColumnWithDdl table");
+						var name = railsMigrationSymbolArg(args[1], "ChangeColumnWithDdl name");
+						railsMigrationValidateTable(validation, table, "ChangeColumnWithDdl table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "ChangeColumnWithDdl name", args[1]);
+						var column = railsMigrationColumnDsl(args[2]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "ChangeColumnWithDdl options");
+						railsMigrationOperation([
+							"change_column :"
+							+ table
+							+ ", :"
+							+ name
+							+ ", :"
+							+ column.type
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))
 						]);
 					case "AddIndex" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddIndex table");
@@ -7171,6 +7222,51 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error("@:railsMigration MigrationColumn options must be an object literal.", expr.pos);
 				[];
+		}
+	}
+
+	static function railsMigrationMysqlDdlOptions(expr:TypedExpr, label:String):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				for (field in fields) {
+					switch (field.name) {
+						case "algorithm":
+							options.push("algorithm: :" + railsMigrationMysqlDdlAlgorithm(field.expr, label + " algorithm"));
+						case "lock":
+							options.push("lock: :" + railsMigrationIndexLock(field.expr, label + " lock"));
+						case _:
+							Context.error('@:railsMigration unknown $label option ${field.name}.', field.expr.pos);
+					}
+				}
+				options;
+			case _:
+				Context.error('@:railsMigration $label must be an object literal.', expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationMysqlDdlAlgorithm(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FEnum(_, field)):
+				railsMigrationMysqlDdlAlgorithmName(field.name, label, expr);
+			case TCall({expr: TField(_, FEnum(_, field))}, _):
+				railsMigrationMysqlDdlAlgorithmName(field.name, label, expr);
+			case _:
+				Context.error('@:railsMigration ${label} must be a MysqlDdlAlgorithm enum value.', expr.pos);
+				"default";
+		}
+	}
+
+	static function railsMigrationMysqlDdlAlgorithmName(name:String, label:String, expr:TypedExpr):String {
+		return switch (name) {
+			case "DdlDefault": "default";
+			case "DdlCopy": "copy";
+			case "DdlInplace": "inplace";
+			case "DdlInstant": "instant";
+			case _:
+				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
+				"default";
 		}
 	}
 
