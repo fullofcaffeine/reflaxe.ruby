@@ -5368,6 +5368,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"remove_column :" + table + ", :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options)
 						]);
+					case "RemoveColumnWithDdl" if (args.length == 4):
+						var table = railsMigrationSymbolArg(args[0], "RemoveColumnWithDdl table");
+						var name = railsMigrationSymbolArg(args[1], "RemoveColumnWithDdl name");
+						railsMigrationValidateTable(validation, table, "RemoveColumnWithDdl table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "RemoveColumnWithDdl name", args[1]);
+						var column = railsMigrationColumnDsl(args[2]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "RemoveColumnWithDdl options");
+						railsMigrationOperation([
+							"remove_column :"
+							+ table
+							+ ", :"
+							+ name
+							+ ", :"
+							+ column.type
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))
+						]);
 					case "RemoveColumnIfExistsWithType" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumnIfExistsWithType table");
 						var name = railsMigrationSymbolArg(args[1], "RemoveColumnIfExistsWithType name");
@@ -5382,6 +5398,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ ", :"
 							+ column.type
 							+ railsMigrationOptionSuffix(column.options.concat(["if_exists: true"]))
+						]);
+					case "RemoveColumnIfExistsWithDdl" if (args.length == 4):
+						var table = railsMigrationSymbolArg(args[0], "RemoveColumnIfExistsWithDdl table");
+						var name = railsMigrationSymbolArg(args[1], "RemoveColumnIfExistsWithDdl name");
+						railsMigrationValidateTable(validation, table, "RemoveColumnIfExistsWithDdl table", args[0]);
+						railsMigrationValidateColumn(validation, table, name, "RemoveColumnIfExistsWithDdl name", args[1]);
+						var column = railsMigrationColumnDsl(args[2]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "RemoveColumnIfExistsWithDdl options");
+						railsMigrationOperation([
+							"remove_column :"
+							+ table
+							+ ", :"
+							+ name
+							+ ", :"
+							+ column.type
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions).concat(["if_exists: true"]))
 						]);
 					case "RemoveColumns" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveColumns", allowIrreversible, expr);
@@ -5606,6 +5638,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateColumn(validation, table, from, "RenameColumn from", args[1]);
 						railsMigrationRegisterColumn(validation, table, to);
 						railsMigrationOperation(["rename_column :" + table + ", :" + from + ", :" + to]);
+					case "RenameColumnWithDdl" if (args.length == 4):
+						railsMigrationRequireReversibleContext("RenameColumnWithDdl", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RenameColumnWithDdl table");
+						var from = railsMigrationSymbolArg(args[1], "RenameColumnWithDdl from");
+						var to = railsMigrationSymbolArg(args[2], "RenameColumnWithDdl to");
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "RenameColumnWithDdl options");
+						railsMigrationValidateTable(validation, table, "RenameColumnWithDdl table", args[0]);
+						railsMigrationValidateColumn(validation, table, from, "RenameColumnWithDdl from", args[1]);
+						railsMigrationRegisterColumn(validation, table, to);
+						railsMigrationOperation([
+							"rename_column :" + table + ", :" + from + ", :" + to + railsMigrationOptionSuffix(ddlOptions)
+						]);
 					case "RenameTable" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RenameTable", allowIrreversible, expr);
 						var from = railsMigrationSymbolArg(args[0], "RenameTable from");

@@ -372,7 +372,9 @@ enum MigrationOperation {
 	RemoveColumn(table:String, name:String);
 	RemoveColumnIfExists(table:String, name:String);
 	RemoveColumnWithType(table:String, name:String, column:MigrationColumn);
+	RemoveColumnWithDdl(table:String, name:String, column:MigrationColumn, options:MysqlDdlOptions);
 	RemoveColumnIfExistsWithType(table:String, name:String, column:MigrationColumn);
+	RemoveColumnIfExistsWithDdl(table:String, name:String, column:MigrationColumn, options:MysqlDdlOptions);
 	RemoveColumns(table:String, columns:Array<String>);
 	RemoveColumnsWithType(table:String, columns:Array<String>, column:MigrationColumn);
 	ChangeColumn(table:String, name:String, column:MigrationColumn);
@@ -400,6 +402,7 @@ enum MigrationOperation {
 	RemoveForeignKeyByName(fromTable:String, name:String);
 	RemoveForeignKeyByNameIfExists(fromTable:String, name:String);
 	RenameColumn(table:String, from:String, to:String);
+	RenameColumnWithDdl(table:String, from:String, to:String, options:MysqlDdlOptions);
 	RenameTable(from:String, to:String);
 	ChangeNull(table:String, name:String, nullable:Bool);
 	ChangeNullWithDefault(table:String, name:String, nullable:Bool, defaultValue:MigrationDefaultValue);
