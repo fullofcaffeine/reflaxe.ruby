@@ -214,6 +214,8 @@ const migrationChangeTableTimestampConflictSourceDir = join(root, "test", ".gene
 const migrationChangeTableTimestampConflictOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_change_table_timestamp_conflict_out");
 const migrationEmptyChangeTableRemoveColumnsSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_columns_src");
 const migrationEmptyChangeTableRemoveColumnsOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_columns_out");
+const migrationEmptyChangeTableRemoveIndexesSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_indexes_src");
+const migrationEmptyChangeTableRemoveIndexesOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_indexes_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -500,6 +502,8 @@ rmSync(migrationChangeTableTimestampConflictSourceDir, { force: true, recursive:
 rmSync(migrationChangeTableTimestampConflictOutputDir, { force: true, recursive: true });
 rmSync(migrationEmptyChangeTableRemoveColumnsSourceDir, { force: true, recursive: true });
 rmSync(migrationEmptyChangeTableRemoveColumnsOutputDir, { force: true, recursive: true });
+rmSync(migrationEmptyChangeTableRemoveIndexesSourceDir, { force: true, recursive: true });
+rmSync(migrationEmptyChangeTableRemoveIndexesOutputDir, { force: true, recursive: true });
 rmSync(clientOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
@@ -1604,6 +1608,7 @@ expectMigrationPolymorphicReferenceForeignKeyFailure();
 expectMigrationEmptyChangeTableFailure();
 expectMigrationChangeTableTimestampConflictFailure();
 expectMigrationEmptyChangeTableRemoveColumnsFailure();
+expectMigrationEmptyChangeTableRemoveIndexesFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -2700,6 +2705,9 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t\t\tColumn(\"bulk_status\", StringColumn({nullable: false, defaultValue: \"pending\"})),",
     "\t\t\t\tReference(\"reviewer\", {indexName: \"index_audit_events_on_reviewer_id\"}),",
     "\t\t\t\tIndex([\"bulk_status\"], {name: \"index_audit_events_on_bulk_status\"})",
+    "\t\t\t],",
+    "\t\t\tremoveIndexes: [",
+    "\t\t\t\t{columns: [\"bulk_status\"], name: \"index_audit_events_on_bulk_status\", ifExists: true}",
     "\t\t\t]",
     "\t\t}),",
     "\t\tCreateTable(\"audit_rollups\", {",
@@ -2837,6 +2845,7 @@ function expectMigrationSnapshotOperationsOutput() {
     't.string :bulk_status, null: false, default: "pending"',
     't.references :reviewer, index: { name: "index_audit_events_on_reviewer_id" }',
     't.index [:bulk_status], name: "index_audit_events_on_bulk_status"',
+    't.remove_index :bulk_status, name: "index_audit_events_on_bulk_status", if_exists: true',
     "create_table :audit_rollups, id: false, primary_key: [:account_id, :reported_on], temporary: true do |t|",
     "t.integer :account_id, null: false",
     "t.date :reported_on, null: false",
@@ -3118,7 +3127,7 @@ function expectMigrationEmptyChangeTableFailure() {
     migrationEmptyChangeTableOutputDir,
     "InvalidEmptyChangeTableMigrationMain",
     "Empty ChangeTable RailsHx migration compiled successfully.",
-    "@:railsMigration ChangeTable requires at least one typed column/reference/index item, typed column removal, or timestamp operation."
+    "@:railsMigration ChangeTable requires at least one typed column/reference/index item, typed removal, or timestamp operation."
   );
 }
 
@@ -3205,6 +3214,49 @@ function expectMigrationEmptyChangeTableRemoveColumnsFailure() {
     "InvalidEmptyChangeTableRemoveColumnsMigrationMain",
     "Empty ChangeTable removeColumns RailsHx migration compiled successfully.",
     "@:railsMigration ChangeTable removeColumns columns must not be empty."
+  );
+}
+
+function expectMigrationEmptyChangeTableRemoveIndexesFailure() {
+  mkdirSync(join(migrationEmptyChangeTableRemoveIndexesSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationEmptyChangeTableRemoveIndexesSourceDir, "InvalidEmptyChangeTableRemoveIndexesMigrationMain.hx"), [
+    "import migrations.BadEmptyChangeTableRemoveIndexesMigration;",
+    "",
+    "class InvalidEmptyChangeTableRemoveIndexesMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadEmptyChangeTableRemoveIndexesMigration> = BadEmptyChangeTableRemoveIndexesMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationEmptyChangeTableRemoveIndexesSourceDir, "migrations", "BadEmptyChangeTableRemoveIndexesMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Reversible change_table index removal keeps the indexed columns as",
+    "// typed metadata; empty groups cannot describe a real Rails index.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000023\",",
+    "\tclassName: \"BadEmptyChangeTableRemoveIndexesMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadEmptyChangeTableRemoveIndexesMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tChangeTable(\"todos\", {removeIndexes: []})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationEmptyChangeTableRemoveIndexesSourceDir,
+    migrationEmptyChangeTableRemoveIndexesOutputDir,
+    "InvalidEmptyChangeTableRemoveIndexesMigrationMain",
+    "Empty ChangeTable removeIndexes RailsHx migration compiled successfully.",
+    "@:railsMigration ChangeTable removeIndexes must not be empty."
   );
 }
 

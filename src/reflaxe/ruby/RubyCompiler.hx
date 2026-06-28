@@ -5797,6 +5797,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "removeIndexes":
+							for (item in railsMigrationChangeTableRemoveIndexes(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "bulk":
 							if (typedBoolLiteral(field.expr, "ChangeTable bulk")) {
 								options.push("bulk: true");
@@ -5817,7 +5822,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
 		}
 		if (!hasBody) {
-			Context.error("@:railsMigration ChangeTable requires at least one typed column/reference/index item, typed column removal, or timestamp operation.",
+			Context.error("@:railsMigration ChangeTable requires at least one typed column/reference/index item, typed removal, or timestamp operation.",
 				optionsExpr.pos);
 		}
 		if (hasTimestamps && hasRemoveTimestamps) {
@@ -5883,6 +5888,62 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			"t.remove " + [for (columnName in columns) ":" + columnName].join(", ")
 				+ railsMigrationOptionSuffix(["type: :" + column.type].concat(column.options))
 		];
+	}
+
+	static function railsMigrationChangeTableRemoveIndexes(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableRemoveIndex(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable removeIndexes must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable removeIndexes must be an Array<ChangeTableRemoveIndex> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableRemoveIndex(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):String {
+		var columnsExpr:Null<TypedExpr> = null;
+		var options:Array<String> = [];
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "columns":
+							columnsExpr = field.expr;
+						case "name":
+							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr, "ChangeTable removeIndexes name")));
+						case "ifExists":
+							if (typedBoolLiteral(field.expr, "ChangeTable removeIndexes ifExists")) {
+								options.push("if_exists: true");
+							}
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable removeIndexes option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable removeIndexes entries must be object literals.", expr.pos);
+		}
+		if (columnsExpr == null) {
+			Context.error("@:railsMigration ChangeTable removeIndexes entry requires columns.", expr.pos);
+			return "t.remove_index :invalid";
+		}
+		var columns = railsMigrationSymbolArrayArg(columnsExpr, "ChangeTable removeIndexes columns");
+		for (columnName in columns) {
+			railsMigrationValidateColumn(validation, table, columnName, "ChangeTable removeIndexes column", columnsExpr);
+		}
+		if (columns.length == 1) {
+			return "t.remove_index :" + columns[0] + railsMigrationOptionSuffix(options);
+		}
+		return "t.remove_index column: [" + [for (column in columns) ":" + column].join(", ") + "]"
+			+ railsMigrationOptionSuffix(options);
 	}
 
 	static function railsMigrationPrimaryKeyType(expr:TypedExpr, label:String):String {
