@@ -165,11 +165,17 @@ enum CreateTableItem {
 
 typedef ChangeTableOptions = {
 	@:optional var columns:Array<CreateTableItem>;
+	@:optional var changeColumns:Array<ChangeTableChangeColumn>;
 	@:optional var removeColumns:Array<ChangeTableRemoveColumns>;
 	@:optional var removeIndexes:Array<ChangeTableRemoveIndex>;
 	@:optional var bulk:Bool;
 	@:optional var timestamps:TimestampOptions;
 	@:optional var removeTimestamps:TimestampOptions;
+}
+
+typedef ChangeTableChangeColumn = {
+	var name:String;
+	var column:MigrationColumn;
 }
 
 typedef ChangeTableRemoveColumns = {

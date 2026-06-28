@@ -5202,7 +5202,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "ChangeTable" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "ChangeTable table");
 						railsMigrationValidateTable(validation, table, "ChangeTable table", args[0]);
-						railsMigrationChangeTableOperation(table, args[1], validation);
+						railsMigrationChangeTableOperation(table, args[1], allowIrreversible, validation);
 					case "CreateJoinTable" if (args.length == 3):
 						var table1 = railsMigrationSymbolArg(args[0], "CreateJoinTable table1");
 						var table2 = railsMigrationSymbolArg(args[1], "CreateJoinTable table2");
@@ -5776,7 +5776,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return railsMigrationOperation(lines);
 	}
 
-	static function railsMigrationChangeTableOperation(table:String, optionsExpr:TypedExpr,
+	static function railsMigrationChangeTableOperation(table:String, optionsExpr:TypedExpr, allowIrreversible:Bool,
 			validation:Null<RailsMigrationValidationContext>):RailsMigrationOperationInfo {
 		var bodyLines:Array<String> = [];
 		var options:Array<String> = [];
@@ -5789,6 +5789,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					switch (field.name) {
 						case "columns":
 							for (item in railsMigrationCreateTableItems(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
+						case "changeColumns":
+							railsMigrationRequireReversibleContext("ChangeTable changeColumns", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableChangeColumns(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
@@ -5832,6 +5838,57 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		lines = lines.concat(bodyLines);
 		lines.push("end");
 		return railsMigrationOperation(lines);
+	}
+
+	static function railsMigrationChangeTableChangeColumns(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableChangeColumn(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable changeColumns must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable changeColumns must be an Array<ChangeTableChangeColumn> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableChangeColumn(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):String {
+		var nameExpr:Null<TypedExpr> = null;
+		var columnExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "name":
+							nameExpr = field.expr;
+						case "column":
+							columnExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable changeColumns option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable changeColumns entries must be object literals.", expr.pos);
+		}
+		if (nameExpr == null) {
+			Context.error("@:railsMigration ChangeTable changeColumns entry requires name.", expr.pos);
+			return "t.change :invalid, :string";
+		}
+		if (columnExpr == null) {
+			Context.error("@:railsMigration ChangeTable changeColumns entry requires column.", expr.pos);
+			return "t.change :invalid, :string";
+		}
+		var name = railsMigrationSymbolArg(nameExpr, "ChangeTable changeColumns name");
+		railsMigrationValidateColumn(validation, table, name, "ChangeTable changeColumns name", nameExpr);
+		var column = railsMigrationColumnDsl(columnExpr, "ChangeTable changeColumns column");
+		return "t.change :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options);
 	}
 
 	static function railsMigrationChangeTableRemoveColumns(expr:TypedExpr, table:String,

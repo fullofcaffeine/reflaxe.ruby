@@ -180,6 +180,8 @@ const migrationForeignKeyOrderSourceDir = join(root, "test", ".generated", "todo
 const migrationForeignKeyOrderOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_foreign_key_order_out");
 const migrationIrreversibleOperationSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_operation_src");
 const migrationIrreversibleOperationOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_operation_out");
+const migrationIrreversibleChangeTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_change_table_src");
+const migrationIrreversibleChangeTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_change_table_out");
 const migrationUnknownTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_table_src");
 const migrationUnknownTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_table_out");
 const migrationUnknownColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_src");
@@ -468,6 +470,8 @@ rmSync(migrationForeignKeyOrderSourceDir, { force: true, recursive: true });
 rmSync(migrationForeignKeyOrderOutputDir, { force: true, recursive: true });
 rmSync(migrationIrreversibleOperationSourceDir, { force: true, recursive: true });
 rmSync(migrationIrreversibleOperationOutputDir, { force: true, recursive: true });
+rmSync(migrationIrreversibleChangeTableSourceDir, { force: true, recursive: true });
+rmSync(migrationIrreversibleChangeTableOutputDir, { force: true, recursive: true });
 rmSync(migrationUnknownTableSourceDir, { force: true, recursive: true });
 rmSync(migrationUnknownTableOutputDir, { force: true, recursive: true });
 rmSync(migrationUnknownColumnSourceDir, { force: true, recursive: true });
@@ -1591,6 +1595,7 @@ expectMigrationUnsafeSqlFailure();
 expectMigrationDuplicateTimestampFailure();
 expectMigrationForeignKeyOrderFailure();
 expectMigrationIrreversibleOperationFailure();
+expectMigrationIrreversibleChangeTableFailure();
 expectMigrationUnknownTableFailure();
 expectMigrationUnknownColumnFailure();
 expectMigrationUnsafeIndexNameFailure();
@@ -2240,6 +2245,49 @@ function expectMigrationIrreversibleOperationFailure() {
   );
 }
 
+function expectMigrationIrreversibleChangeTableFailure() {
+  mkdirSync(join(migrationIrreversibleChangeTableSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationIrreversibleChangeTableSourceDir, "InvalidIrreversibleChangeTableMigrationMain.hx"), [
+    "import migrations.BadIrreversibleChangeTableMigration;",
+    "",
+    "class InvalidIrreversibleChangeTableMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadIrreversibleChangeTableMigration> = BadIrreversibleChangeTableMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationIrreversibleChangeTableSourceDir, "migrations", "BadIrreversibleChangeTableMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Rails cannot infer a rollback for t.change; RailsHx requires an",
+    "// explicit Reversible(up, down) pair around typed change_table changes.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000024\",",
+    "\tclassName: \"BadIrreversibleChangeTableMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadIrreversibleChangeTableMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tChangeTable(\"todos\", {changeColumns: [{name: \"title\", column: StringColumn({nullable: false})}]})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationIrreversibleChangeTableSourceDir,
+    migrationIrreversibleChangeTableOutputDir,
+    "InvalidIrreversibleChangeTableMigrationMain",
+    "Irreversible ChangeTable RailsHx migration compiled successfully.",
+    "@:railsMigration ChangeTable changeColumns must be wrapped in Reversible(up, down)"
+  );
+}
+
 function expectMigrationUnknownTableFailure() {
   mkdirSync(join(migrationUnknownTableSourceDir, "migrations"), { recursive: true });
   writeFileSync(join(migrationUnknownTableSourceDir, "InvalidUnknownTableMigrationMain.hx"), [
@@ -2786,6 +2834,11 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\tChangeNull(\"audit_events\", \"title\", false),",
     "\t\tChangeNullWithDefault(\"audit_events\", \"reported_on\", false, StringDefault(\"2026-01-01\")),",
     "\t\tChangeDefault(\"audit_events\", \"archived\", BoolDefault(false), BoolDefault(true)),",
+    "\t\tReversible([",
+    "\t\t\tChangeTable(\"audit_events\", {changeColumns: [{name: \"metadata\", column: JsonbColumn({nullable: false, defaultValue: \"{}\"})}]})",
+    "\t\t], [",
+    "\t\t\tChangeTable(\"audit_events\", {changeColumns: [{name: \"metadata\", column: JsonColumn({})}]})",
+    "\t\t]),",
     "\t\tChangeColumnComment(\"audit_events\", \"amount\", StringComment(\"Audited amount\"), StringComment(\"Reviewed amount\")),",
     "\t\tChangeTableComment(\"audit_events\", NullComment, StringComment(\"Audit event records\")),",
     "\t\tAddCheckConstraint(\"audit_events\", \"amount >= 0\", {name: \"amount_non_negative\"}),",
@@ -2886,6 +2939,8 @@ function expectMigrationSnapshotOperationsOutput() {
     "change_column_null :audit_events, :title, false",
     'change_column_null :audit_events, :reported_on, false, "2026-01-01"',
     "change_column_default :audit_events, :archived, from: false, to: true",
+    "t.change :metadata, :jsonb, null: false, default: \"{}\"",
+    "t.change :metadata, :json",
     'change_column_comment :audit_events, :amount, from: "Audited amount", to: "Reviewed amount"',
     'change_table_comment :audit_events, from: nil, to: "Audit event records"',
     "add_check_constraint :audit_events, \"amount >= 0\", name: \"amount_non_negative\"",
