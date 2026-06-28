@@ -5792,6 +5792,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "removeColumns":
+							for (item in railsMigrationChangeTableRemoveColumns(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "bulk":
 							if (typedBoolLiteral(field.expr, "ChangeTable bulk")) {
 								options.push("bulk: true");
@@ -5812,7 +5817,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
 		}
 		if (!hasBody) {
-			Context.error("@:railsMigration ChangeTable requires at least one typed column/reference/index item or timestamp operation.", optionsExpr.pos);
+			Context.error("@:railsMigration ChangeTable requires at least one typed column/reference/index item, typed column removal, or timestamp operation.",
+				optionsExpr.pos);
 		}
 		if (hasTimestamps && hasRemoveTimestamps) {
 			Context.error("@:railsMigration ChangeTable cannot include both timestamps and removeTimestamps.", optionsExpr.pos);
@@ -5821,6 +5827,62 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		lines = lines.concat(bodyLines);
 		lines.push("end");
 		return railsMigrationOperation(lines);
+	}
+
+	static function railsMigrationChangeTableRemoveColumns(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out = out.concat(railsMigrationChangeTableRemoveColumnsItem(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable removeColumns must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable removeColumns must be an Array<ChangeTableRemoveColumns> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableRemoveColumnsItem(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		var columnsExpr:Null<TypedExpr> = null;
+		var columnExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "columns":
+							columnsExpr = field.expr;
+						case "column":
+							columnExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable removeColumns option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable removeColumns entries must be object literals.", expr.pos);
+		}
+		if (columnsExpr == null) {
+			Context.error("@:railsMigration ChangeTable removeColumns entry requires columns.", expr.pos);
+			return [];
+		}
+		if (columnExpr == null) {
+			Context.error("@:railsMigration ChangeTable removeColumns entry requires column.", expr.pos);
+			return [];
+		}
+		var columns = railsMigrationSymbolArrayArg(columnsExpr, "ChangeTable removeColumns columns");
+		for (columnName in columns) {
+			railsMigrationValidateColumn(validation, table, columnName, "ChangeTable removeColumns column", columnsExpr);
+		}
+		var column = railsMigrationColumnDsl(columnExpr, "ChangeTable removeColumns column");
+		return [
+			"t.remove " + [for (columnName in columns) ":" + columnName].join(", ")
+				+ railsMigrationOptionSuffix(["type: :" + column.type].concat(column.options))
+		];
 	}
 
 	static function railsMigrationPrimaryKeyType(expr:TypedExpr, label:String):String {
@@ -6001,7 +6063,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return railsMigrationOperation(lines, foreignKeys);
 	}
 
-	static function railsMigrationColumnDsl(expr:TypedExpr):{type:String, options:Array<String>} {
+	static function railsMigrationColumnDsl(expr:TypedExpr, ?label:String = "AddColumn"):{type:String, options:Array<String>} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args) if (args.length == 1):
 				var type = switch (field.name) {
@@ -6023,7 +6085,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				{type: type, options: railsMigrationColumnDslOptions(args[0])};
 			case _:
-				Context.error("@:railsMigration AddColumn expects a MigrationColumn enum value.", expr.pos);
+				Context.error('@:railsMigration ${label} expects a MigrationColumn enum value.', expr.pos);
 				{type: "string", options: []};
 		}
 	}

@@ -212,6 +212,8 @@ const migrationEmptyChangeTableSourceDir = join(root, "test", ".generated", "tod
 const migrationEmptyChangeTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_out");
 const migrationChangeTableTimestampConflictSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_change_table_timestamp_conflict_src");
 const migrationChangeTableTimestampConflictOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_change_table_timestamp_conflict_out");
+const migrationEmptyChangeTableRemoveColumnsSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_columns_src");
+const migrationEmptyChangeTableRemoveColumnsOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_columns_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -496,6 +498,8 @@ rmSync(migrationEmptyChangeTableSourceDir, { force: true, recursive: true });
 rmSync(migrationEmptyChangeTableOutputDir, { force: true, recursive: true });
 rmSync(migrationChangeTableTimestampConflictSourceDir, { force: true, recursive: true });
 rmSync(migrationChangeTableTimestampConflictOutputDir, { force: true, recursive: true });
+rmSync(migrationEmptyChangeTableRemoveColumnsSourceDir, { force: true, recursive: true });
+rmSync(migrationEmptyChangeTableRemoveColumnsOutputDir, { force: true, recursive: true });
 rmSync(clientOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
@@ -1599,6 +1603,7 @@ expectMigrationReferenceIndexConflictFailure();
 expectMigrationPolymorphicReferenceForeignKeyFailure();
 expectMigrationEmptyChangeTableFailure();
 expectMigrationChangeTableTimestampConflictFailure();
+expectMigrationEmptyChangeTableRemoveColumnsFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -2706,6 +2711,14 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t\t\tColumn(\"reported_on\", DateColumn({nullable: false}))",
     "\t\t\t]",
     "\t\t}),",
+    "\t\tChangeTable(\"audit_rollups\", {",
+    "\t\t\tcolumns: [",
+    "\t\t\t\tColumn(\"stale_count\", IntegerColumn({nullable: false, defaultValue: 0}))",
+    "\t\t\t],",
+    "\t\t\tremoveColumns: [",
+    "\t\t\t\t{columns: [\"stale_count\"], column: IntegerColumn({nullable: false, defaultValue: 0})}",
+    "\t\t\t]",
+    "\t\t}),",
     "\t\tChangeTable(\"audit_rollups\", {timestamps: {nullable: false, precision: 6}}),",
     "\t\tChangeTable(\"audit_rollups\", {removeTimestamps: {nullable: false, precision: 6}}),",
     "\t\tCreateTable(\"legacy_batches\", {",
@@ -2827,6 +2840,9 @@ function expectMigrationSnapshotOperationsOutput() {
     "create_table :audit_rollups, id: false, primary_key: [:account_id, :reported_on], temporary: true do |t|",
     "t.integer :account_id, null: false",
     "t.date :reported_on, null: false",
+    "change_table :audit_rollups do |t|",
+    "t.integer :stale_count, null: false, default: 0",
+    "t.remove :stale_count, type: :integer, null: false, default: 0",
     "change_table :audit_rollups do |t|",
     "t.timestamps null: false, precision: 6",
     "change_table :audit_rollups do |t|",
@@ -3102,7 +3118,7 @@ function expectMigrationEmptyChangeTableFailure() {
     migrationEmptyChangeTableOutputDir,
     "InvalidEmptyChangeTableMigrationMain",
     "Empty ChangeTable RailsHx migration compiled successfully.",
-    "@:railsMigration ChangeTable requires at least one typed column/reference/index item or timestamp operation."
+    "@:railsMigration ChangeTable requires at least one typed column/reference/index item, typed column removal, or timestamp operation."
   );
 }
 
@@ -3146,6 +3162,49 @@ function expectMigrationChangeTableTimestampConflictFailure() {
     "InvalidChangeTableTimestampConflictMigrationMain",
     "Conflicting ChangeTable timestamp RailsHx migration compiled successfully.",
     "@:railsMigration ChangeTable cannot include both timestamps and removeTimestamps."
+  );
+}
+
+function expectMigrationEmptyChangeTableRemoveColumnsFailure() {
+  mkdirSync(join(migrationEmptyChangeTableRemoveColumnsSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationEmptyChangeTableRemoveColumnsSourceDir, "InvalidEmptyChangeTableRemoveColumnsMigrationMain.hx"), [
+    "import migrations.BadEmptyChangeTableRemoveColumnsMigration;",
+    "",
+    "class InvalidEmptyChangeTableRemoveColumnsMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadEmptyChangeTableRemoveColumnsMigration> = BadEmptyChangeTableRemoveColumnsMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationEmptyChangeTableRemoveColumnsSourceDir, "migrations", "BadEmptyChangeTableRemoveColumnsMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// Reversible change_table column removal must name the historical",
+    "// columns being removed; an empty group is rejected before Ruby is emitted.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000022\",",
+    "\tclassName: \"BadEmptyChangeTableRemoveColumnsMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadEmptyChangeTableRemoveColumnsMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tChangeTable(\"todos\", {removeColumns: [{columns: [], column: StringColumn({})}]})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationEmptyChangeTableRemoveColumnsSourceDir,
+    migrationEmptyChangeTableRemoveColumnsOutputDir,
+    "InvalidEmptyChangeTableRemoveColumnsMigrationMain",
+    "Empty ChangeTable removeColumns RailsHx migration compiled successfully.",
+    "@:railsMigration ChangeTable removeColumns columns must not be empty."
   );
 }
 
