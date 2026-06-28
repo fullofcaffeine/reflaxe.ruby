@@ -168,6 +168,8 @@ typedef ChangeTableOptions = {
 	@:optional var changeColumns:Array<ChangeTableChangeColumn>;
 	@:optional var changeDefaults:Array<ChangeTableChangeDefault>;
 	@:optional var changeNulls:Array<ChangeTableChangeNull>;
+	@:optional var renameColumns:Array<ChangeTableRenameColumn>;
+	@:optional var renameIndexes:Array<ChangeTableRenameIndex>;
 	@:optional var removeColumns:Array<ChangeTableRemoveColumns>;
 	@:optional var removeIndexes:Array<ChangeTableRemoveIndex>;
 	@:optional var bulk:Bool;
@@ -190,6 +192,16 @@ typedef ChangeTableChangeNull = {
 	var name:String;
 	var nullable:Bool;
 	@:optional var defaultValue:MigrationDefaultValue;
+}
+
+typedef ChangeTableRenameColumn = {
+	var from:String;
+	var to:String;
+}
+
+typedef ChangeTableRenameIndex = {
+	var from:String;
+	var to:String;
 }
 
 typedef ChangeTableRemoveColumns = {

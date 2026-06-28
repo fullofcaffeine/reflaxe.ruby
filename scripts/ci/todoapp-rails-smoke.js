@@ -2847,6 +2847,17 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t\t\tchangeNulls: [{name: \"title\", nullable: true}]",
     "\t\t\t})",
     "\t\t]),",
+    "\t\tReversible([",
+    "\t\t\tChangeTable(\"audit_events\", {",
+    "\t\t\t\trenameColumns: [{from: \"title\", to: \"amount\"}],",
+    "\t\t\t\trenameIndexes: [{from: \"index_audit_events_on_account_id_and_title\", to: \"index_audit_events_title_by_account\"}]",
+    "\t\t\t})",
+    "\t\t], [",
+    "\t\t\tChangeTable(\"audit_events\", {",
+    "\t\t\t\trenameColumns: [{from: \"amount\", to: \"title\"}],",
+    "\t\t\t\trenameIndexes: [{from: \"index_audit_events_title_by_account\", to: \"index_audit_events_on_account_id_and_title\"}]",
+    "\t\t\t})",
+    "\t\t]),",
     "\t\tChangeColumnComment(\"audit_events\", \"amount\", StringComment(\"Audited amount\"), StringComment(\"Reviewed amount\")),",
     "\t\tChangeTableComment(\"audit_events\", NullComment, StringComment(\"Audit event records\")),",
     "\t\tAddCheckConstraint(\"audit_events\", \"amount >= 0\", {name: \"amount_non_negative\"}),",
@@ -2953,6 +2964,10 @@ function expectMigrationSnapshotOperationsOutput() {
     "t.change :metadata, :json",
     't.change_default :title, from: "pending", to: "untitled"',
     "t.change_null :title, true",
+    "t.rename :title, :amount",
+    't.rename_index "index_audit_events_on_account_id_and_title", "index_audit_events_title_by_account"',
+    "t.rename :amount, :title",
+    't.rename_index "index_audit_events_title_by_account", "index_audit_events_on_account_id_and_title"',
     'change_column_comment :audit_events, :amount, from: "Audited amount", to: "Reviewed amount"',
     'change_table_comment :audit_events, from: nil, to: "Audit event records"',
     "add_check_constraint :audit_events, \"amount >= 0\", name: \"amount_non_negative\"",
@@ -3194,7 +3209,7 @@ function expectMigrationEmptyChangeTableFailure() {
     migrationEmptyChangeTableOutputDir,
     "InvalidEmptyChangeTableMigrationMain",
     "Empty ChangeTable RailsHx migration compiled successfully.",
-    "@:railsMigration ChangeTable requires at least one typed column/default/null change, column/reference/index item, typed removal, or timestamp operation."
+    "@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, column/reference/index item, typed removal, or timestamp operation."
   );
 }
 

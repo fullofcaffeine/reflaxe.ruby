@@ -5808,6 +5808,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "renameColumns":
+							railsMigrationRequireReversibleContext("ChangeTable renameColumns", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableRenameColumns(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
+						case "renameIndexes":
+							railsMigrationRequireReversibleContext("ChangeTable renameIndexes", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableRenameIndexes(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "removeColumns":
 							for (item in railsMigrationChangeTableRemoveColumns(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
@@ -5838,7 +5850,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
 		}
 		if (!hasBody) {
-			Context.error("@:railsMigration ChangeTable requires at least one typed column/default/null change, column/reference/index item, typed removal, or timestamp operation.",
+			Context.error("@:railsMigration ChangeTable requires at least one typed column/default/null change, column/index rename, column/reference/index item, typed removal, or timestamp operation.",
 				optionsExpr.pos);
 		}
 		if (hasTimestamps && hasRemoveTimestamps) {
@@ -6016,6 +6028,107 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			line += ", " + railsMigrationDefaultValue(defaultValueExpr, "ChangeTable changeNulls defaultValue");
 		}
 		return line;
+	}
+
+	static function railsMigrationChangeTableRenameColumns(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableRenameColumn(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable renameColumns must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable renameColumns must be an Array<ChangeTableRenameColumn> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableRenameColumn(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):String {
+		var fromExpr:Null<TypedExpr> = null;
+		var toExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "from":
+							fromExpr = field.expr;
+						case "to":
+							toExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable renameColumns option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable renameColumns entries must be object literals.", expr.pos);
+		}
+		if (fromExpr == null) {
+			Context.error("@:railsMigration ChangeTable renameColumns entry requires from.", expr.pos);
+			return "t.rename :invalid, :invalid";
+		}
+		if (toExpr == null) {
+			Context.error("@:railsMigration ChangeTable renameColumns entry requires to.", expr.pos);
+			return "t.rename :invalid, :invalid";
+		}
+		var from = railsMigrationSymbolArg(fromExpr, "ChangeTable renameColumns from");
+		var to = railsMigrationSymbolArg(toExpr, "ChangeTable renameColumns to");
+		railsMigrationValidateColumn(validation, table, from, "ChangeTable renameColumns from", fromExpr);
+		return "t.rename :" + from + ", :" + to;
+	}
+
+	static function railsMigrationChangeTableRenameIndexes(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableRenameIndex(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable renameIndexes must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable renameIndexes must be an Array<ChangeTableRenameIndex> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableRenameIndex(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):String {
+		var fromExpr:Null<TypedExpr> = null;
+		var toExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "from":
+							fromExpr = field.expr;
+						case "to":
+							toExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable renameIndexes option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable renameIndexes entries must be object literals.", expr.pos);
+		}
+		if (fromExpr == null) {
+			Context.error("@:railsMigration ChangeTable renameIndexes entry requires from.", expr.pos);
+			return "t.rename_index \"invalid\", \"invalid\"";
+		}
+		if (toExpr == null) {
+			Context.error("@:railsMigration ChangeTable renameIndexes entry requires to.", expr.pos);
+			return "t.rename_index \"invalid\", \"invalid\"";
+		}
+		var from = railsMigrationSafeIdentifier(fromExpr, "ChangeTable renameIndexes from");
+		var to = railsMigrationSafeIdentifier(toExpr, "ChangeTable renameIndexes to");
+		return "t.rename_index " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to);
 	}
 
 	static function railsMigrationChangeTableRemoveColumns(expr:TypedExpr, table:String,
