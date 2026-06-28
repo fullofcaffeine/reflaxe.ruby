@@ -5664,6 +5664,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", ["
 							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)]);
+					case "AddUniqueConstraintUsingIndex" if (args.length == 3):
+						railsMigrationRequireReversibleContext("AddUniqueConstraintUsingIndex", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "AddUniqueConstraintUsingIndex table");
+						var indexName = railsMigrationSafeIdentifier(args[1], "AddUniqueConstraintUsingIndex indexName");
+						railsMigrationValidateTable(validation, table, "AddUniqueConstraintUsingIndex table", args[0]);
+						var options = railsMigrationUniqueConstraintDslOptions(args[2]).concat([
+							"using_index: " + quoteRubyStringForCode(indexName)
+						]);
+						railsMigrationOperation(["add_unique_constraint :" + table + railsMigrationOptionSuffix(options)]);
 					case "RemoveUniqueConstraint" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RemoveUniqueConstraint", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveUniqueConstraint table");
