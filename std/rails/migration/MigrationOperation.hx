@@ -166,7 +166,10 @@ enum IndexAlgorithm {
 }
 
 enum IndexLock {
+	Default;
 	None;
+	Shared;
+	Exclusive;
 }
 
 enum PrimaryKeyType {

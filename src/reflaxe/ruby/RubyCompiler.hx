@@ -7295,7 +7295,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsMigrationIndexLockName(name:String, label:String, expr:TypedExpr):String {
 		return switch (name) {
+			case "Default": "default";
 			case "None": "none";
+			case "Shared": "shared";
+			case "Exclusive": "exclusive";
 			case _:
 				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
 				"none";
