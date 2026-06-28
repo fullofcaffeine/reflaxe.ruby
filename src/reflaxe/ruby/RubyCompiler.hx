@@ -5677,6 +5677,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", ["
 							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)]);
+					case "AddExclusionConstraint" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "AddExclusionConstraint table");
+						var expression = typedStringLiteral(args[1]);
+						if (expression == null || expression == "") {
+							Context.error("@:railsMigration AddExclusionConstraint expression must be a non-empty literal string.",
+								args[1].pos);
+						}
+						var options = railsMigrationExclusionConstraintDslOptions(args[2]);
+						railsMigrationValidateTable(validation, table, "AddExclusionConstraint table", args[0]);
+						railsMigrationOperation(["add_exclusion_constraint :"
+							+ table
+							+ ", "
+							+ quoteRubyStringForCode(expression == null ? "" : expression)
+							+ railsMigrationOptionSuffix(options)]);
+					case "RemoveExclusionConstraint" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RemoveExclusionConstraint", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RemoveExclusionConstraint table");
+						var expression = typedStringLiteral(args[1]);
+						if (expression == null || expression == "") {
+							Context.error("@:railsMigration RemoveExclusionConstraint expression must be a non-empty literal string.",
+								args[1].pos);
+						}
+						var options = railsMigrationExclusionConstraintDslOptions(args[2]);
+						railsMigrationValidateTable(validation, table, "RemoveExclusionConstraint table", args[0]);
+						railsMigrationOperation(["remove_exclusion_constraint :"
+							+ table
+							+ ", "
+							+ quoteRubyStringForCode(expression == null ? "" : expression)
+							+ railsMigrationOptionSuffix(options)]);
 					case "DropTable" if (args.length == 1):
 						railsMigrationRequireReversibleContext("DropTable", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "DropTable table");
@@ -7039,6 +7068,42 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				options;
 			case _:
 				Context.error("@:railsMigration UniqueConstraint options must be an object literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationExclusionConstraintDslOptions(expr:TypedExpr):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var options:Array<String> = [];
+				var hasName = false;
+				for (field in fields) {
+					switch (field.name) {
+						case "name":
+							var name = railsMigrationSafeIdentifier(field.expr, "ExclusionConstraint name");
+							hasName = true;
+							options.push("name: " + quoteRubyStringForCode(name));
+						case "usingMethod":
+							options.push("using: :" + railsMigrationSafeIdentifier(field.expr, "ExclusionConstraint usingMethod"));
+						case "where":
+							var where = typedStringLiteral(field.expr);
+							if (where == null || where == "") {
+								Context.error("@:railsMigration ExclusionConstraint where must be a non-empty literal string.",
+									field.expr.pos);
+							}
+							options.push("where: " + quoteRubyStringForCode(where == null ? "" : where));
+						case "deferrable":
+							options.push("deferrable: :" + railsMigrationForeignKeyDeferrable(field.expr, "ExclusionConstraint deferrable"));
+						case _:
+							Context.error('@:railsMigration unknown ExclusionConstraint option ${field.name}.', field.expr.pos);
+					}
+				}
+				if (!hasName) {
+					Context.error("@:railsMigration ExclusionConstraint options must include a literal name.", expr.pos);
+				}
+				options;
+			case _:
+				Context.error("@:railsMigration ExclusionConstraint options must be an object literal.", expr.pos);
 				[];
 		}
 	}
