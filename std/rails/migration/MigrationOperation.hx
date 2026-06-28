@@ -182,13 +182,17 @@ typedef ChangeTableOptions = {
 	@:optional var validateConstraints:Array<String>;
 	@:optional var foreignKeys:Array<ChangeTableForeignKey>;
 	@:optional var uniqueConstraints:Array<ChangeTableUniqueConstraint>;
+	@:optional var uniqueConstraintsIfNotExists:Array<ChangeTableUniqueConstraint>;
 	@:optional var exclusionConstraints:Array<ChangeTableExclusionConstraint>;
+	@:optional var exclusionConstraintsIfNotExists:Array<ChangeTableExclusionConstraint>;
 	@:optional var removeCheckConstraints:Array<ChangeTableRemoveCheckConstraint>;
 	@:optional var removeColumns:Array<ChangeTableRemoveColumns>;
 	@:optional var removeForeignKeys:Array<ChangeTableRemoveForeignKey>;
 	@:optional var removeReferences:Array<ChangeTableRemoveReference>;
 	@:optional var removeUniqueConstraints:Array<ChangeTableUniqueConstraint>;
+	@:optional var removeUniqueConstraintsIfExists:Array<ChangeTableUniqueConstraint>;
 	@:optional var removeExclusionConstraints:Array<ChangeTableExclusionConstraint>;
+	@:optional var removeExclusionConstraintsIfExists:Array<ChangeTableExclusionConstraint>;
 	@:optional var removeIndexes:Array<ChangeTableRemoveIndex>;
 	@:optional var bulk:Bool;
 	@:optional var timestamps:TimestampOptions;
