@@ -55,6 +55,7 @@ typedef IndexOptions = {
 	@:optional var ifNotExists:Bool;
 	@:optional var usingMethod:String;
 	@:optional var indexType:String;
+	@:optional var indexAlgorithm:IndexAlgorithm;
 	@:optional var length:Int;
 	@:optional var lengths:Array<IndexLength>;
 	@:optional var opclass:String;
@@ -156,6 +157,10 @@ enum ForeignKeyDeferrable {
 enum IndexOrderDirection {
 	Asc;
 	Desc;
+}
+
+enum IndexAlgorithm {
+	Inplace;
 }
 
 enum PrimaryKeyType {
