@@ -174,6 +174,7 @@ typedef ChangeTableOptions = {
 	@:optional var foreignKeys:Array<ChangeTableForeignKey>;
 	@:optional var removeCheckConstraints:Array<ChangeTableRemoveCheckConstraint>;
 	@:optional var removeColumns:Array<ChangeTableRemoveColumns>;
+	@:optional var removeForeignKeys:Array<ChangeTableRemoveForeignKey>;
 	@:optional var removeReferences:Array<ChangeTableRemoveReference>;
 	@:optional var removeIndexes:Array<ChangeTableRemoveIndex>;
 	@:optional var bulk:Bool;
@@ -228,10 +229,15 @@ typedef ChangeTableRemoveColumns = {
 	var column:MigrationColumn;
 }
 
+typedef ChangeTableRemoveForeignKey = {
+	@:optional var toTable:String;
+	@:optional var column:String;
+	@:optional var name:String;
+}
+
 typedef ChangeTableRemoveReference = {
 	var name:String;
 	var options:ReferenceOptions;
-	@:optional var ifExists:Bool;
 }
 
 typedef ChangeTableRemoveIndex = {

@@ -5843,6 +5843,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "removeForeignKeys":
+							railsMigrationRequireReversibleContext("ChangeTable removeForeignKeys", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableRemoveForeignKeys(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "removeReferences":
 							railsMigrationRequireReversibleContext("ChangeTable removeReferences", allowIrreversible, field.expr);
 							for (item in railsMigrationChangeTableRemoveReferences(field.expr, table, validation)) {
@@ -6364,6 +6370,66 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		];
 	}
 
+	static function railsMigrationChangeTableRemoveForeignKeys(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableRemoveForeignKey(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable removeForeignKeys must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable removeForeignKeys must be an Array<ChangeTableRemoveForeignKey> literal.",
+					expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableRemoveForeignKey(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):String {
+		var toTableExpr:Null<TypedExpr> = null;
+		var options:Array<String> = [];
+		var hasSelector = false;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "toTable":
+							toTableExpr = field.expr;
+							hasSelector = true;
+						case "column":
+							var column = railsMigrationSymbolArg(field.expr, "ChangeTable removeForeignKeys column");
+							railsMigrationValidateColumn(validation, table, column, "ChangeTable removeForeignKeys column", field.expr);
+							options.push("column: :" + column);
+							hasSelector = true;
+						case "name":
+							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr,
+								"ChangeTable removeForeignKeys name")));
+							hasSelector = true;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable removeForeignKeys option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable removeForeignKeys entries must be object literals.", expr.pos);
+		}
+		if (!hasSelector) {
+			Context.error("@:railsMigration ChangeTable removeForeignKeys entry requires toTable, column, or name.", expr.pos);
+			return "t.remove_foreign_key :invalid";
+		}
+		var line = "t.remove_foreign_key";
+		if (toTableExpr != null) {
+			var toTable = railsMigrationSymbolArg(toTableExpr, "ChangeTable removeForeignKeys toTable");
+			railsMigrationValidateTable(validation, toTable, "ChangeTable removeForeignKeys toTable", toTableExpr);
+			line += " :" + toTable;
+		}
+		return line + railsMigrationOptionSuffix(options);
+	}
+
 	static function railsMigrationChangeTableRemoveReferences(expr:TypedExpr, table:String,
 			validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
@@ -6387,7 +6453,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			validation:Null<RailsMigrationValidationContext>):String {
 		var nameExpr:Null<TypedExpr> = null;
 		var optionsExpr:Null<TypedExpr> = null;
-		var ifExistsExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				for (field in fields) {
@@ -6396,8 +6461,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							nameExpr = field.expr;
 						case "options":
 							optionsExpr = field.expr;
-						case "ifExists":
-							ifExistsExpr = field.expr;
 						case _:
 							Context.error('@:railsMigration unknown ChangeTable removeReferences option ${field.name}.', field.expr.pos);
 					}
@@ -6416,9 +6479,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var name = railsMigrationSymbolArg(nameExpr, "ChangeTable removeReferences name");
 		railsMigrationValidateColumn(validation, table, name + "_id", "ChangeTable removeReferences column", nameExpr);
 		var options = railsMigrationReferenceDslOptions(optionsExpr);
-		if (ifExistsExpr != null && typedBoolLiteral(ifExistsExpr, "ChangeTable removeReferences ifExists")) {
-			options.push("if_exists: true");
-		}
 		return "t.remove_references :" + name + railsMigrationOptionSuffix(options);
 	}
 
