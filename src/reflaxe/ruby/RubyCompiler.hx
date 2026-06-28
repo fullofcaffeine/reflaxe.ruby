@@ -7184,6 +7184,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "usingMethod":
 							options.push("using: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex usingMethod"));
+						case "orders":
+							options.push("order: {" + railsMigrationIndexOrderOptions(field.expr, table, validation).join(", ") + "}");
 						case "includeColumns":
 							var columns = railsMigrationSymbolArrayArg(field.expr, "MigrationIndex includeColumns");
 							if (table != null) {
@@ -7207,6 +7209,74 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error("@:railsMigration AddIndex options must be an object literal.", expr.pos);
 				[];
+		}
+	}
+
+	static function railsMigrationIndexOrderOptions(expr:TypedExpr, ?table:String,
+			?validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				if (values.length == 0) {
+					Context.error("@:railsMigration MigrationIndex orders must not be empty.", expr.pos);
+				}
+				[for (value in values) railsMigrationIndexOrderOption(value, table, validation)];
+			case _:
+				Context.error("@:railsMigration MigrationIndex orders must be an Array<IndexOrder> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationIndexOrderOption(expr:TypedExpr, ?table:String,
+			?validation:Null<RailsMigrationValidationContext>):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var column:Null<String> = null;
+				var direction:Null<String> = null;
+				for (field in fields) {
+					switch (field.name) {
+						case "column":
+							column = railsMigrationSymbolArg(field.expr, "MigrationIndex order column");
+							if (table != null && column != null) {
+								railsMigrationValidateColumn(validation, table, column, "MigrationIndex order column", field.expr);
+							}
+						case "direction":
+							direction = railsMigrationIndexOrderDirection(field.expr, "MigrationIndex order direction");
+						case _:
+							Context.error('@:railsMigration unknown MigrationIndex order option ${field.name}.', field.expr.pos);
+					}
+				}
+				if (column == null) {
+					Context.error("@:railsMigration MigrationIndex order must include a literal column.", expr.pos);
+				}
+				if (direction == null) {
+					Context.error("@:railsMigration MigrationIndex order must include a direction.", expr.pos);
+				}
+				(column == null ? "invalid" : column) + ": :" + (direction == null ? "asc" : direction);
+			case _:
+				Context.error("@:railsMigration MigrationIndex orders must contain object literals.", expr.pos);
+				"invalid: :asc";
+		}
+	}
+
+	static function railsMigrationIndexOrderDirection(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FEnum(_, field)):
+				railsMigrationIndexOrderDirectionName(field.name, label, expr);
+			case TCall({expr: TField(_, FEnum(_, field))}, _):
+				railsMigrationIndexOrderDirectionName(field.name, label, expr);
+			case _:
+				Context.error('@:railsMigration ${label} must be an IndexOrderDirection enum value.', expr.pos);
+				"asc";
+		}
+	}
+
+	static function railsMigrationIndexOrderDirectionName(name:String, label:String, expr:TypedExpr):String {
+		return switch (name) {
+			case "Asc": "asc";
+			case "Desc": "desc";
+			case _:
+				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
+				"asc";
 		}
 	}
 
