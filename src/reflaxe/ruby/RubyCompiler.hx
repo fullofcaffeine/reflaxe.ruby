@@ -5715,6 +5715,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", ["
 							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options)]);
+					case "RemoveUniqueConstraintIfExists" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RemoveUniqueConstraintIfExists", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RemoveUniqueConstraintIfExists table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveUniqueConstraintIfExists columns");
+						railsMigrationValidateTable(validation, table, "RemoveUniqueConstraintIfExists table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "RemoveUniqueConstraintIfExists column", args[1]);
+						}
+						var info = railsMigrationUniqueConstraintDslInfo(args[2]);
+						railsMigrationOperation([
+							"if unique_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
+							"  remove_unique_constraint :"
+							+ table
+							+ ", ["
+							+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(info.options),
+							"end"
+						]);
 					case "AddExclusionConstraint" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddExclusionConstraint table");
 						var expression = typedStringLiteral(args[1]);
@@ -5763,6 +5780,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ ", "
 							+ quoteRubyStringForCode(expression == null ? "" : expression)
 							+ railsMigrationOptionSuffix(options)]);
+					case "RemoveExclusionConstraintIfExists" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RemoveExclusionConstraintIfExists", allowIrreversible, expr);
+						var table = railsMigrationSymbolArg(args[0], "RemoveExclusionConstraintIfExists table");
+						var expression = typedStringLiteral(args[1]);
+						if (expression == null || expression == "") {
+							Context.error("@:railsMigration RemoveExclusionConstraintIfExists expression must be a non-empty literal string.",
+								args[1].pos);
+						}
+						var info = railsMigrationExclusionConstraintDslInfo(args[2]);
+						railsMigrationValidateTable(validation, table, "RemoveExclusionConstraintIfExists table", args[0]);
+						railsMigrationOperation([
+							"if exclusion_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
+							"  remove_exclusion_constraint :"
+							+ table
+							+ ", "
+							+ quoteRubyStringForCode(expression == null ? "" : expression)
+							+ railsMigrationOptionSuffix(info.options),
+							"end"
+						]);
 					case "DropTable" if (args.length == 1):
 						railsMigrationRequireReversibleContext("DropTable", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "DropTable table");
