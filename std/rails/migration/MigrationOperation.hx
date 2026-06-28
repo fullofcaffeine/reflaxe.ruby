@@ -54,6 +54,7 @@ typedef IndexOptions = {
 	@:optional var name:String;
 	@:optional var ifNotExists:Bool;
 	@:optional var usingMethod:String;
+	@:optional var indexType:String;
 	@:optional var length:Int;
 	@:optional var lengths:Array<IndexLength>;
 	@:optional var opclass:String;

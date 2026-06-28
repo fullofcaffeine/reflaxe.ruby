@@ -7186,6 +7186,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "usingMethod":
 							options.push("using: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex usingMethod"));
+						case "indexType":
+							options.push("type: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex indexType"));
 						case "length":
 							if (hasLengthOption) {
 								Context.error("@:railsMigration MigrationIndex cannot combine length and lengths.", field.expr.pos);
