@@ -7190,6 +7190,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							options.push("type: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex indexType"));
 						case "indexAlgorithm":
 							options.push("algorithm: :" + railsMigrationIndexAlgorithm(field.expr, "MigrationIndex indexAlgorithm"));
+						case "indexLock":
+							options.push("lock: :" + railsMigrationIndexLock(field.expr, "MigrationIndex indexLock"));
 						case "length":
 							if (hasLengthOption) {
 								Context.error("@:railsMigration MigrationIndex cannot combine length and lengths.", field.expr.pos);
@@ -7260,6 +7262,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
 				"inplace";
+		}
+	}
+
+	static function railsMigrationIndexLock(expr:TypedExpr, label:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TField(_, FEnum(_, field)):
+				railsMigrationIndexLockName(field.name, label, expr);
+			case TCall({expr: TField(_, FEnum(_, field))}, _):
+				railsMigrationIndexLockName(field.name, label, expr);
+			case _:
+				Context.error('@:railsMigration ${label} must be an IndexLock enum value.', expr.pos);
+				"none";
+		}
+	}
+
+	static function railsMigrationIndexLockName(name:String, label:String, expr:TypedExpr):String {
+		return switch (name) {
+			case "None": "none";
+			case _:
+				Context.error('@:railsMigration unsupported ${label} value ${name}.', expr.pos);
+				"none";
 		}
 	}
 

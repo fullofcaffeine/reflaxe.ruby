@@ -56,6 +56,7 @@ typedef IndexOptions = {
 	@:optional var usingMethod:String;
 	@:optional var indexType:String;
 	@:optional var indexAlgorithm:IndexAlgorithm;
+	@:optional var indexLock:IndexLock;
 	@:optional var length:Int;
 	@:optional var lengths:Array<IndexLength>;
 	@:optional var opclass:String;
@@ -161,6 +162,10 @@ enum IndexOrderDirection {
 
 enum IndexAlgorithm {
 	Inplace;
+}
+
+enum IndexLock {
+	None;
 }
 
 enum PrimaryKeyType {
