@@ -7182,6 +7182,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							if (typedBoolLiteral(field.expr, "MigrationIndex ifNotExists")) {
 								options.push("if_not_exists: true");
 							}
+						case "usingMethod":
+							options.push("using: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex usingMethod"));
 						case "includeColumns":
 							var columns = railsMigrationSymbolArrayArg(field.expr, "MigrationIndex includeColumns");
 							if (table != null) {
