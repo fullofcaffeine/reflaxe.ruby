@@ -167,6 +167,7 @@ typedef ChangeTableOptions = {
 	@:optional var columns:Array<CreateTableItem>;
 	@:optional var bulk:Bool;
 	@:optional var timestamps:TimestampOptions;
+	@:optional var removeTimestamps:TimestampOptions;
 }
 
 enum MigrationOperation {

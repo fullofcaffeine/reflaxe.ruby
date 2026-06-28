@@ -210,6 +210,8 @@ const migrationPolymorphicReferenceForeignKeySourceDir = join(root, "test", ".ge
 const migrationPolymorphicReferenceForeignKeyOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_polymorphic_reference_foreign_key_out");
 const migrationEmptyChangeTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_src");
 const migrationEmptyChangeTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_out");
+const migrationChangeTableTimestampConflictSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_change_table_timestamp_conflict_src");
+const migrationChangeTableTimestampConflictOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_change_table_timestamp_conflict_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -492,6 +494,8 @@ rmSync(migrationPolymorphicReferenceForeignKeySourceDir, { force: true, recursiv
 rmSync(migrationPolymorphicReferenceForeignKeyOutputDir, { force: true, recursive: true });
 rmSync(migrationEmptyChangeTableSourceDir, { force: true, recursive: true });
 rmSync(migrationEmptyChangeTableOutputDir, { force: true, recursive: true });
+rmSync(migrationChangeTableTimestampConflictSourceDir, { force: true, recursive: true });
+rmSync(migrationChangeTableTimestampConflictOutputDir, { force: true, recursive: true });
 rmSync(clientOutputDir, { force: true, recursive: true });
 
 exportTodoHooksForPlaywright();
@@ -1594,6 +1598,7 @@ expectMigrationDuplicateAddColumnFailure();
 expectMigrationReferenceIndexConflictFailure();
 expectMigrationPolymorphicReferenceForeignKeyFailure();
 expectMigrationEmptyChangeTableFailure();
+expectMigrationChangeTableTimestampConflictFailure();
 
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
@@ -2690,8 +2695,7 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t\t\tColumn(\"bulk_status\", StringColumn({nullable: false, defaultValue: \"pending\"})),",
     "\t\t\t\tReference(\"reviewer\", {indexName: \"index_audit_events_on_reviewer_id\"}),",
     "\t\t\t\tIndex([\"bulk_status\"], {name: \"index_audit_events_on_bulk_status\"})",
-    "\t\t\t],",
-    "\t\t\ttimestamps: {nullable: false, precision: 6}",
+    "\t\t\t]",
     "\t\t}),",
     "\t\tCreateTable(\"audit_rollups\", {",
     "\t\t\tid: false,",
@@ -2702,6 +2706,8 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\t\t\tColumn(\"reported_on\", DateColumn({nullable: false}))",
     "\t\t\t]",
     "\t\t}),",
+    "\t\tChangeTable(\"audit_rollups\", {timestamps: {nullable: false, precision: 6}}),",
+    "\t\tChangeTable(\"audit_rollups\", {removeTimestamps: {nullable: false, precision: 6}}),",
     "\t\tCreateTable(\"legacy_batches\", {",
     "\t\t\tprimaryKey: \"batch_code\",",
     "\t\t\tcomment: \"Legacy batch imports\",",
@@ -2818,10 +2824,13 @@ function expectMigrationSnapshotOperationsOutput() {
     't.string :bulk_status, null: false, default: "pending"',
     't.references :reviewer, index: { name: "index_audit_events_on_reviewer_id" }',
     't.index [:bulk_status], name: "index_audit_events_on_bulk_status"',
-    "t.timestamps null: false, precision: 6",
     "create_table :audit_rollups, id: false, primary_key: [:account_id, :reported_on], temporary: true do |t|",
     "t.integer :account_id, null: false",
     "t.date :reported_on, null: false",
+    "change_table :audit_rollups do |t|",
+    "t.timestamps null: false, precision: 6",
+    "change_table :audit_rollups do |t|",
+    "t.remove_timestamps null: false, precision: 6",
     'create_table :legacy_batches, primary_key: :batch_code, comment: "Legacy batch imports" do |t|',
     "t.string :batch_code, null: false, limit: 36",
     "t.json :payload",
@@ -3093,7 +3102,50 @@ function expectMigrationEmptyChangeTableFailure() {
     migrationEmptyChangeTableOutputDir,
     "InvalidEmptyChangeTableMigrationMain",
     "Empty ChangeTable RailsHx migration compiled successfully.",
-    "@:railsMigration ChangeTable requires at least one typed column/reference/index item or timestamps option."
+    "@:railsMigration ChangeTable requires at least one typed column/reference/index item or timestamp operation."
+  );
+}
+
+function expectMigrationChangeTableTimestampConflictFailure() {
+  mkdirSync(join(migrationChangeTableTimestampConflictSourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(migrationChangeTableTimestampConflictSourceDir, "InvalidChangeTableTimestampConflictMigrationMain.hx"), [
+    "import migrations.BadChangeTableTimestampConflictMigration;",
+    "",
+    "class InvalidChangeTableTimestampConflictMigrationMain {",
+    "\tstatic function main() {",
+    "\t\tvar migration:Class<BadChangeTableTimestampConflictMigration> = BadChangeTableTimestampConflictMigration;",
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(migrationChangeTableTimestampConflictSourceDir, "migrations", "BadChangeTableTimestampConflictMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "// A single change_table block should not add and remove timestamps at once;",
+    "// the typed operation reports that contradictory intent at compile time.",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000021\",",
+    "\tclassName: \"BadChangeTableTimestampConflictMigration\",",
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\"]",
+    "})",
+    "class BadChangeTableTimestampConflictMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tChangeTable(\"todos\", {timestamps: {}, removeTimestamps: {}})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    migrationChangeTableTimestampConflictSourceDir,
+    migrationChangeTableTimestampConflictOutputDir,
+    "InvalidChangeTableTimestampConflictMigrationMain",
+    "Conflicting ChangeTable timestamp RailsHx migration compiled successfully.",
+    "@:railsMigration ChangeTable cannot include both timestamps and removeTimestamps."
   );
 }
 

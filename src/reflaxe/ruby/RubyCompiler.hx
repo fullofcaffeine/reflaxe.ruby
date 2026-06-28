@@ -5781,6 +5781,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var bodyLines:Array<String> = [];
 		var options:Array<String> = [];
 		var hasBody = false;
+		var hasTimestamps = false;
+		var hasRemoveTimestamps = false;
 		switch (unwrapTypedExpr(optionsExpr).expr) {
 			case TObjectDecl(fields):
 				for (field in fields) {
@@ -5795,7 +5797,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								options.push("bulk: true");
 							}
 						case "timestamps":
+							hasTimestamps = true;
 							bodyLines.push("  t.timestamps" + railsMigrationCommandOptionSuffix(railsMigrationTimestampDslOptions(field.expr)));
+							hasBody = true;
+						case "removeTimestamps":
+							hasRemoveTimestamps = true;
+							bodyLines.push("  t.remove_timestamps" + railsMigrationCommandOptionSuffix(railsMigrationTimestampDslOptions(field.expr)));
 							hasBody = true;
 						case _:
 							Context.error('@:railsMigration unknown ChangeTable option ${field.name}.', field.expr.pos);
@@ -5805,7 +5812,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
 		}
 		if (!hasBody) {
-			Context.error("@:railsMigration ChangeTable requires at least one typed column/reference/index item or timestamps option.", optionsExpr.pos);
+			Context.error("@:railsMigration ChangeTable requires at least one typed column/reference/index item or timestamp operation.", optionsExpr.pos);
+		}
+		if (hasTimestamps && hasRemoveTimestamps) {
+			Context.error("@:railsMigration ChangeTable cannot include both timestamps and removeTimestamps.", optionsExpr.pos);
 		}
 		var lines = ["change_table :" + table + railsMigrationOptionSuffix(options) + " do |t|"];
 		lines = lines.concat(bodyLines);
