@@ -5638,6 +5638,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "ValidateCheckConstraint table", args[0]);
 						railsMigrationValidationOperation(["validate_check_constraint :" + table + ", name: " + quoteRubyStringForCode(name)],
 							allowIrreversible);
+					case "ValidateConstraint" if (args.length == 2):
+						var table = railsMigrationSymbolArg(args[0], "ValidateConstraint table");
+						var name = railsMigrationSafeIdentifier(args[1], "ValidateConstraint name");
+						railsMigrationValidateTable(validation, table, "ValidateConstraint table", args[0]);
+						railsMigrationValidationOperation(["validate_constraint :" + table + ", " + quoteRubyStringForCode(name)],
+							allowIrreversible);
 					case "RemoveConstraint" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveConstraint", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveConstraint table");
