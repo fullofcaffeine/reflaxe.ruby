@@ -349,6 +349,7 @@ enum MigrationOperation {
 	RemoveTimestamps(table:String, options:TimestampOptions);
 	AddCheckConstraint(table:String, expression:String, options:CheckConstraintOptions);
 	ValidateCheckConstraint(table:String, name:String);
+	RemoveConstraint(table:String, name:String);
 	RemoveCheckConstraint(table:String, name:String);
 	RemoveCheckConstraintIfExists(table:String, name:String);
 	AddUniqueConstraint(table:String, columns:Array<String>, options:UniqueConstraintOptions);
