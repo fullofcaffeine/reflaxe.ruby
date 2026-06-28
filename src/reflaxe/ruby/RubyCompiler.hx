@@ -5836,6 +5836,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "removeReferences":
+							railsMigrationRequireReversibleContext("ChangeTable removeReferences", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableRemoveReferences(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "removeIndexes":
 							for (item in railsMigrationChangeTableRemoveIndexes(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
@@ -6295,6 +6301,64 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			"t.remove " + [for (columnName in columns) ":" + columnName].join(", ")
 				+ railsMigrationOptionSuffix(["type: :" + column.type].concat(column.options))
 		];
+	}
+
+	static function railsMigrationChangeTableRemoveReferences(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableRemoveReference(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable removeReferences must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable removeReferences must be an Array<ChangeTableRemoveReference> literal.",
+					expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableRemoveReference(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):String {
+		var nameExpr:Null<TypedExpr> = null;
+		var optionsExpr:Null<TypedExpr> = null;
+		var ifExistsExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "name":
+							nameExpr = field.expr;
+						case "options":
+							optionsExpr = field.expr;
+						case "ifExists":
+							ifExistsExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable removeReferences option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable removeReferences entries must be object literals.", expr.pos);
+		}
+		if (nameExpr == null) {
+			Context.error("@:railsMigration ChangeTable removeReferences entry requires name.", expr.pos);
+			return "t.remove_references :invalid";
+		}
+		if (optionsExpr == null) {
+			Context.error("@:railsMigration ChangeTable removeReferences entry requires options.", expr.pos);
+			return "t.remove_references :invalid";
+		}
+		var name = railsMigrationSymbolArg(nameExpr, "ChangeTable removeReferences name");
+		railsMigrationValidateColumn(validation, table, name + "_id", "ChangeTable removeReferences column", nameExpr);
+		var options = railsMigrationReferenceDslOptions(optionsExpr);
+		if (ifExistsExpr != null && typedBoolLiteral(ifExistsExpr, "ChangeTable removeReferences ifExists")) {
+			options.push("if_exists: true");
+		}
+		return "t.remove_references :" + name + railsMigrationOptionSuffix(options);
 	}
 
 	static function railsMigrationChangeTableRemoveIndexes(expr:TypedExpr, table:String,

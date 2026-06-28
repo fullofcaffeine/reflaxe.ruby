@@ -173,6 +173,7 @@ typedef ChangeTableOptions = {
 	@:optional var checkConstraints:Array<ChangeTableCheckConstraint>;
 	@:optional var removeCheckConstraints:Array<ChangeTableRemoveCheckConstraint>;
 	@:optional var removeColumns:Array<ChangeTableRemoveColumns>;
+	@:optional var removeReferences:Array<ChangeTableRemoveReference>;
 	@:optional var removeIndexes:Array<ChangeTableRemoveIndex>;
 	@:optional var bulk:Bool;
 	@:optional var timestamps:TimestampOptions;
@@ -219,6 +220,12 @@ typedef ChangeTableRemoveCheckConstraint = {
 typedef ChangeTableRemoveColumns = {
 	var columns:Array<String>;
 	var column:MigrationColumn;
+}
+
+typedef ChangeTableRemoveReference = {
+	var name:String;
+	var options:ReferenceOptions;
+	@:optional var ifExists:Bool;
 }
 
 typedef ChangeTableRemoveIndex = {
