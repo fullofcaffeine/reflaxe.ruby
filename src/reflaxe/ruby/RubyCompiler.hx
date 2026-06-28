@@ -7171,6 +7171,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
 				var hasLengthOption = false;
+				var hasOpclassOption = false;
 				for (field in fields) {
 					switch (field.name) {
 						case "unique":
@@ -7197,6 +7198,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 							hasLengthOption = true;
 							options.push("length: {" + railsMigrationIndexLengthOptions(field.expr, table, validation).join(", ") + "}");
+						case "opclass":
+							if (hasOpclassOption) {
+								Context.error("@:railsMigration MigrationIndex cannot combine opclass and opclasses.", field.expr.pos);
+							}
+							hasOpclassOption = true;
+							options.push("opclass: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex opclass"));
+						case "opclasses":
+							if (hasOpclassOption) {
+								Context.error("@:railsMigration MigrationIndex cannot combine opclass and opclasses.", field.expr.pos);
+							}
+							hasOpclassOption = true;
+							options.push("opclass: {" + railsMigrationIndexOpclassOptions(field.expr, table, validation).join(", ") + "}");
 						case "orders":
 							options.push("order: {" + railsMigrationIndexOrderOptions(field.expr, table, validation).join(", ") + "}");
 						case "includeColumns":
@@ -7222,6 +7235,52 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				Context.error("@:railsMigration AddIndex options must be an object literal.", expr.pos);
 				[];
+		}
+	}
+
+	static function railsMigrationIndexOpclassOptions(expr:TypedExpr, ?table:String,
+			?validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				if (values.length == 0) {
+					Context.error("@:railsMigration MigrationIndex opclasses must not be empty.", expr.pos);
+				}
+				[for (value in values) railsMigrationIndexOpclassOption(value, table, validation)];
+			case _:
+				Context.error("@:railsMigration MigrationIndex opclasses must be an Array<IndexOpclass> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationIndexOpclassOption(expr:TypedExpr, ?table:String,
+			?validation:Null<RailsMigrationValidationContext>):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				var column:Null<String> = null;
+				var opclass:Null<String> = null;
+				for (field in fields) {
+					switch (field.name) {
+						case "column":
+							column = railsMigrationSymbolArg(field.expr, "MigrationIndex opclass column");
+							if (table != null && column != null) {
+								railsMigrationValidateColumn(validation, table, column, "MigrationIndex opclass column", field.expr);
+							}
+						case "opclass":
+							opclass = railsMigrationSafeIdentifier(field.expr, "MigrationIndex opclass value");
+						case _:
+							Context.error('@:railsMigration unknown MigrationIndex opclass option ${field.name}.', field.expr.pos);
+					}
+				}
+				if (column == null) {
+					Context.error("@:railsMigration MigrationIndex opclass must include a literal column.", expr.pos);
+				}
+				if (opclass == null) {
+					Context.error("@:railsMigration MigrationIndex opclass must include a literal opclass.", expr.pos);
+				}
+				(column == null ? "invalid" : column) + ": :" + (opclass == null ? "invalid" : opclass);
+			case _:
+				Context.error("@:railsMigration MigrationIndex opclasses must contain object literals.", expr.pos);
+				"invalid: :invalid";
 		}
 	}
 

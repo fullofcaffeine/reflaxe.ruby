@@ -44,6 +44,11 @@ typedef IndexLength = {
 	var length:Int;
 }
 
+typedef IndexOpclass = {
+	var column:String;
+	var opclass:String;
+}
+
 typedef IndexOptions = {
 	@:optional var unique:Bool;
 	@:optional var name:String;
@@ -51,6 +56,8 @@ typedef IndexOptions = {
 	@:optional var usingMethod:String;
 	@:optional var length:Int;
 	@:optional var lengths:Array<IndexLength>;
+	@:optional var opclass:String;
+	@:optional var opclasses:Array<IndexOpclass>;
 	@:optional var orders:Array<IndexOrder>;
 	@:optional var includeColumns:Array<String>;
 	@:optional var nullsNotDistinct:Bool;
