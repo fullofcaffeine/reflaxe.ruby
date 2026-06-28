@@ -2835,9 +2835,17 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\tChangeNullWithDefault(\"audit_events\", \"reported_on\", false, StringDefault(\"2026-01-01\")),",
     "\t\tChangeDefault(\"audit_events\", \"archived\", BoolDefault(false), BoolDefault(true)),",
     "\t\tReversible([",
-    "\t\t\tChangeTable(\"audit_events\", {changeColumns: [{name: \"metadata\", column: JsonbColumn({nullable: false, defaultValue: \"{}\"})}]})",
+    "\t\t\tChangeTable(\"audit_events\", {",
+    "\t\t\t\tchangeColumns: [{name: \"metadata\", column: JsonbColumn({nullable: false, defaultValue: \"{}\"})}],",
+    "\t\t\t\tchangeDefaults: [{name: \"title\", from: StringDefault(\"untitled\"), to: StringDefault(\"pending\")}],",
+    "\t\t\t\tchangeNulls: [{name: \"title\", nullable: false, defaultValue: StringDefault(\"pending\")}]",
+    "\t\t\t})",
     "\t\t], [",
-    "\t\t\tChangeTable(\"audit_events\", {changeColumns: [{name: \"metadata\", column: JsonColumn({})}]})",
+    "\t\t\tChangeTable(\"audit_events\", {",
+    "\t\t\t\tchangeColumns: [{name: \"metadata\", column: JsonColumn({})}],",
+    "\t\t\t\tchangeDefaults: [{name: \"title\", from: StringDefault(\"pending\"), to: StringDefault(\"untitled\")}],",
+    "\t\t\t\tchangeNulls: [{name: \"title\", nullable: true}]",
+    "\t\t\t})",
     "\t\t]),",
     "\t\tChangeColumnComment(\"audit_events\", \"amount\", StringComment(\"Audited amount\"), StringComment(\"Reviewed amount\")),",
     "\t\tChangeTableComment(\"audit_events\", NullComment, StringComment(\"Audit event records\")),",
@@ -2940,7 +2948,11 @@ function expectMigrationSnapshotOperationsOutput() {
     'change_column_null :audit_events, :reported_on, false, "2026-01-01"',
     "change_column_default :audit_events, :archived, from: false, to: true",
     "t.change :metadata, :jsonb, null: false, default: \"{}\"",
+    't.change_default :title, from: "untitled", to: "pending"',
+    't.change_null :title, false, "pending"',
     "t.change :metadata, :json",
+    't.change_default :title, from: "pending", to: "untitled"',
+    "t.change_null :title, true",
     'change_column_comment :audit_events, :amount, from: "Audited amount", to: "Reviewed amount"',
     'change_table_comment :audit_events, from: nil, to: "Audit event records"',
     "add_check_constraint :audit_events, \"amount >= 0\", name: \"amount_non_negative\"",
@@ -3182,7 +3194,7 @@ function expectMigrationEmptyChangeTableFailure() {
     migrationEmptyChangeTableOutputDir,
     "InvalidEmptyChangeTableMigrationMain",
     "Empty ChangeTable RailsHx migration compiled successfully.",
-    "@:railsMigration ChangeTable requires at least one typed column/reference/index item, typed removal, or timestamp operation."
+    "@:railsMigration ChangeTable requires at least one typed column/default/null change, column/reference/index item, typed removal, or timestamp operation."
   );
 }
 

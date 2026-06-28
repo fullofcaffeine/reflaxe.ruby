@@ -5798,6 +5798,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
+						case "changeDefaults":
+							for (item in railsMigrationChangeTableChangeDefaults(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
+						case "changeNulls":
+							for (item in railsMigrationChangeTableChangeNulls(field.expr, table, validation)) {
+								bodyLines.push("  " + item);
+								hasBody = true;
+							}
 						case "removeColumns":
 							for (item in railsMigrationChangeTableRemoveColumns(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
@@ -5828,7 +5838,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:railsMigration ChangeTable options must be an object literal.", optionsExpr.pos);
 		}
 		if (!hasBody) {
-			Context.error("@:railsMigration ChangeTable requires at least one typed column/reference/index item, typed removal, or timestamp operation.",
+			Context.error("@:railsMigration ChangeTable requires at least one typed column/default/null change, column/reference/index item, typed removal, or timestamp operation.",
 				optionsExpr.pos);
 		}
 		if (hasTimestamps && hasRemoveTimestamps) {
@@ -5889,6 +5899,123 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		railsMigrationValidateColumn(validation, table, name, "ChangeTable changeColumns name", nameExpr);
 		var column = railsMigrationColumnDsl(columnExpr, "ChangeTable changeColumns column");
 		return "t.change :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options);
+	}
+
+	static function railsMigrationChangeTableChangeDefaults(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableChangeDefault(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable changeDefaults must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable changeDefaults must be an Array<ChangeTableChangeDefault> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableChangeDefault(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):String {
+		var nameExpr:Null<TypedExpr> = null;
+		var fromExpr:Null<TypedExpr> = null;
+		var toExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "name":
+							nameExpr = field.expr;
+						case "from":
+							fromExpr = field.expr;
+						case "to":
+							toExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable changeDefaults option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable changeDefaults entries must be object literals.", expr.pos);
+		}
+		if (nameExpr == null) {
+			Context.error("@:railsMigration ChangeTable changeDefaults entry requires name.", expr.pos);
+			return "t.change_default :invalid, from: nil, to: nil";
+		}
+		if (fromExpr == null) {
+			Context.error("@:railsMigration ChangeTable changeDefaults entry requires from.", expr.pos);
+			return "t.change_default :invalid, from: nil, to: nil";
+		}
+		if (toExpr == null) {
+			Context.error("@:railsMigration ChangeTable changeDefaults entry requires to.", expr.pos);
+			return "t.change_default :invalid, from: nil, to: nil";
+		}
+		var name = railsMigrationSymbolArg(nameExpr, "ChangeTable changeDefaults name");
+		railsMigrationValidateColumn(validation, table, name, "ChangeTable changeDefaults name", nameExpr);
+		var from = railsMigrationDefaultValue(fromExpr, "ChangeTable changeDefaults from");
+		var to = railsMigrationDefaultValue(toExpr, "ChangeTable changeDefaults to");
+		return "t.change_default :" + name + ", from: " + from + ", to: " + to;
+	}
+
+	static function railsMigrationChangeTableChangeNulls(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out.push(railsMigrationChangeTableChangeNull(value, table, validation));
+				}
+				if (out.length == 0) {
+					Context.error("@:railsMigration ChangeTable changeNulls must not be empty.", expr.pos);
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable changeNulls must be an Array<ChangeTableChangeNull> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableChangeNull(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):String {
+		var nameExpr:Null<TypedExpr> = null;
+		var nullableExpr:Null<TypedExpr> = null;
+		var defaultValueExpr:Null<TypedExpr> = null;
+		switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				for (field in fields) {
+					switch (field.name) {
+						case "name":
+							nameExpr = field.expr;
+						case "nullable":
+							nullableExpr = field.expr;
+						case "defaultValue":
+							defaultValueExpr = field.expr;
+						case _:
+							Context.error('@:railsMigration unknown ChangeTable changeNulls option ${field.name}.', field.expr.pos);
+					}
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable changeNulls entries must be object literals.", expr.pos);
+		}
+		if (nameExpr == null) {
+			Context.error("@:railsMigration ChangeTable changeNulls entry requires name.", expr.pos);
+			return "t.change_null :invalid, true";
+		}
+		if (nullableExpr == null) {
+			Context.error("@:railsMigration ChangeTable changeNulls entry requires nullable.", expr.pos);
+			return "t.change_null :invalid, true";
+		}
+		var name = railsMigrationSymbolArg(nameExpr, "ChangeTable changeNulls name");
+		railsMigrationValidateColumn(validation, table, name, "ChangeTable changeNulls name", nameExpr);
+		var nullable = typedBoolLiteral(nullableExpr, "ChangeTable changeNulls nullable");
+		var line = "t.change_null :" + name + ", " + (nullable ? "true" : "false");
+		if (defaultValueExpr != null) {
+			line += ", " + railsMigrationDefaultValue(defaultValueExpr, "ChangeTable changeNulls defaultValue");
+		}
+		return line;
 	}
 
 	static function railsMigrationChangeTableRemoveColumns(expr:TypedExpr, table:String,
