@@ -38,6 +38,8 @@ class TodosHaxeRequestTest extends RequestTestCase {
 				get(Routes.todosPath());
 				assertResponse(Status.ok);
 			});
+			includes(responseBody(), "Typed Rails, polished Ruby.");
+			includes(responseBody(), "Haxe Request User");
 			IntegrationHelpers.signOut(UserAuth.scope);
 		});
 
@@ -62,6 +64,33 @@ class TodosHaxeRequestTest extends RequestTestCase {
 
 			assertRedirectedTo(Routes.todosPath());
 			equal(["from haxe request"], Todo.where({userId: user.id}).pluck(Todo.f.title));
+			IntegrationHelpers.signOut(UserAuth.scope);
+		});
+
+		test("route param actions expose typed response helpers", () -> {
+			var user = User.create({
+				name: "Haxe Route User",
+				email: "request-routes@example.test",
+				role: "member",
+				password: "password123",
+				passwordConfirmation: "password123"
+			});
+			Todo.create({
+				title: "haxe completed route",
+				notes: "typed response helper",
+				isCompleted: true,
+				userId: user.id
+			});
+
+			IntegrationHelpers.signIn(UserAuth.scope, user);
+			get(Routes.completedTodosPath());
+			assertResponse(Status.ok);
+			equal("Completed todos: haxe completed route", responseBody());
+
+			get(Routes.filePath("docs/readme"));
+			assertResponse(Status.ok);
+			equal("text/plain", responseMediaType());
+			equal("RailsHx file route: docs/readme\n", responseBody());
 			IntegrationHelpers.signOut(UserAuth.scope);
 		});
 	}

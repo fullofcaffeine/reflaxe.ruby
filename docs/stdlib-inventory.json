@@ -572,7 +572,7 @@
       "status": "implemented",
       "path": "std/rails/test/Request.hx",
       "surface": "rails.test.Request",
-      "reason": "Typed request helper facade for Haxe-authored Rails integration tests lowered to ordinary get/post/patch/delete ActionDispatch calls."
+      "reason": "Typed request helper facade for Haxe-authored Rails integration tests lowered to ordinary get/post/patch/delete ActionDispatch calls, plus typed accessors for the Rails response body and media type."
     },
     {
       "id": "std.rails.test_request_params",

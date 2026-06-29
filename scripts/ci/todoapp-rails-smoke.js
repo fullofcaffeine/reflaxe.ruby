@@ -694,13 +694,20 @@ for (const expected of [
   "include Devise::Test::IntegrationHelpers",
   'test "signed-in users can view their board" do',
   'test "create accepts typed route and request params" do',
+  'test "route param actions expose typed response helpers" do',
   "get(self.todos_path())",
   "assert_response(:ok)",
+  'assert_includes(response.body, "Typed Rails, polished Ruby.")',
+  'assert_includes(response.body, "Haxe Request User")',
   "assert_no_difference(-> { Models::Todo.count() }) do",
   "assert_difference(-> { Models::Todo.count() }, 1) { post(self.todos_path(), params:",
   'post(self.todos_path(), params: {"todo" => {title: "from haxe request", notes: "typed request params"}})',
   "assert_redirected_to(self.todos_path())",
   'assert_equal(["from haxe request"], Models::Todo.where(user_id:',
+  'assert_equal("Completed todos: haxe completed route", response.body)',
+  'get(self.file_path(begin',
+  'assert_equal("text/plain", response.media_type)',
+  'assert_equal("RailsHx file route: docs/readme\\n", response.body)',
 ]) {
   if (!haxeRequestTestRuby.includes(expected)) {
     console.error(`todoapp_rails Haxe-authored request test output missing expected line: ${expected}`);

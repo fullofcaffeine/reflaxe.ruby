@@ -2765,6 +2765,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					args = args.concat(renderKeywordArgs(params[1]));
 				}
 				RubyRawExpr(info.name + "(" + args.join(", ") + ")");
+			case "responseBody" if (params.length == 0):
+				RubyRawExpr("response.body");
+			case "responseMediaType" if (params.length == 0):
+				RubyRawExpr("response.media_type");
 			case _:
 				null;
 		}

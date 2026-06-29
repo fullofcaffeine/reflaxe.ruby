@@ -141,6 +141,7 @@ Playwright still runs generated JavaScript from `e2e/generated/**`.
 | `assertResponse(Status.ok)` | `assert_response :ok` |
 | `assertRedirectedTo(Routes.todosPath())` | `assert_redirected_to "/todos"` |
 | `get(Routes.todosPath())` | `get "/todos"` |
+| `responseBody()` / `responseMediaType()` | `response.body` / `response.media_type` |
 | `post(path, {params: RequestParams.model(...)})` | ActionDispatch request with Rails params hash |
 | `Todo.f.title`, `Todo.railsParamKey` | Rails symbols/param roots such as `:title`, `todo` |
 | `PW.testPage("...", page -> ...)` | Playwright `test("...", async ({ page }) => ...)` |
