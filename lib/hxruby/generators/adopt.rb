@@ -692,8 +692,8 @@ module HXRuby
       def write_devise_contracts(gem_name)
         inventory = devise_inventory(gem_name)
         base_dir = File.join(@output_dir, ".railshx", "gems", "devise")
-        write_owned(File.join(base_dir, "inventory.json"), JSON.pretty_generate(inventory) + "\n", kind: "devise_inventory")
-        write_owned(File.join(base_dir, "diagnostics.json"), JSON.pretty_generate(devise_diagnostics(inventory)) + "\n", kind: "devise_diagnostics")
+        write_owned(File.join(base_dir, "inventory.json"), stable_json(inventory), kind: "devise_inventory")
+        write_owned(File.join(base_dir, "diagnostics.json"), stable_json(devise_diagnostics(inventory)), kind: "devise_diagnostics")
         inventory.fetch(:scopes).each do |scope|
           class_name = "#{scope.fetch(:model)}Auth"
           write_owned(
@@ -1005,6 +1005,12 @@ module HXRuby
           status: diagnostics.empty? ? "ok" : "review",
           diagnostics: diagnostics,
         }
+      end
+
+      def stable_json(value)
+        # Ruby's bundled JSON gem may change empty-array pretty formatting across
+        # versions; generator-owned artifacts should remain byte-stable in CI.
+        JSON.pretty_generate(value).gsub(/\[\n\s*\n\s*\]/, "[]") + "\n"
       end
 
       def render_devise_auth_contract(scope)

@@ -3,7 +3,5 @@
   "kind": "devise_diagnostics",
   "gem": "devise",
   "status": "ok",
-  "diagnostics": [
-
-  ]
+  "diagnostics": []
 }
