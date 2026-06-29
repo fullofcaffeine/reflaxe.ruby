@@ -4,6 +4,7 @@ import app.auth.UserAuth;
 import models.ChatMessage;
 import models.Todo;
 import models.User;
+import rails.action_controller.SendDisposition;
 import rails.action_view.Template;
 import rails.action_controller.Status;
 import rails.macros.ControllerDsl.beforeAction;
@@ -88,11 +89,48 @@ class TodosController extends rails.action_controller.Base {
 		});
 	}
 
-	public function completed() {}
+	public function completed() {
+		var currentUser = UserAuth.currentRequired(this);
+		var titles = Todo.where({isCompleted: true, userId: currentUser.id})
+			.order(Todo.f.title.asc())
+			.pluck(Todo.f.title);
+		render({plain: "Completed todos: " + titles.join(", "), status: Status.ok});
+	}
 
-	public function complete() {}
+	public function complete() {
+		var currentUser = UserAuth.currentRequired(this);
+		var todo = Todo.where({id: paramId(), userId: currentUser.id}).first();
+		if (todo == null) {
+			render({plain: "Todo not found", status: Status.notFound});
+			return;
+		}
+		todo.update({isCompleted: true});
+		this.flash.notice("Todo completed");
+		redirectToLocation(Routes.todosPath(), {status: Status.seeOther});
+	}
 
-	public function optionalReport() {}
+	public function optionalReport() {
+		var currentUser = UserAuth.currentRequired(this);
+		var year = this.params().get("year");
+		var label = year == null ? "all years" : year;
+		var count = Todo.where({userId: currentUser.id}).count();
+		render({plain: "Todo report for " + label + ": " + Std.string(count) + " todos", status: Status.ok});
+	}
 
-	public function file() {}
+	public function file() {
+		var path = this.params().get("path");
+		var label = path == null ? "root" : path;
+		sendData("RailsHx file route: " + label + "\n", {
+			filename: "todoapp-route.txt",
+			type: "text/plain",
+			disposition: SendDisposition.inlineContent,
+			status: Status.ok
+		});
+	}
+
+	function paramId():Int {
+		var raw = this.params().get("id");
+		var parsed = raw == null ? null : Std.parseInt(raw);
+		return parsed == null ? 0 : parsed;
+	}
 }

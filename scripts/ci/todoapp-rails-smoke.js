@@ -822,6 +822,14 @@ for (const expected of [
   /self\.respond_to\(\) do \|format__hx\d+\|/,
   /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-todo-list", partial: "controllers\/todos\/list", locals: \{todos: Models::Todo\.where\(is_completed: false, user_id: current_user__hx\d+\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)\}\)\) \}/,
   /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
+  /titles__hx\d+ = Models::Todo\.where\(is_completed: true, user_id: current_user__hx\d+\.id\)\.order\(title: :asc\)\.pluck\(:title\)/,
+  /self\.render\(plain: \("Completed todos: " \+ HXRuby\.array_join\(titles__hx\d+, ", "\)\), status: :ok\)/,
+  /todo__hx\d+ = Models::Todo\.where\(id: self\.param_id\(\), user_id: current_user__hx\d+\.id\)\.first\(\)/,
+  /todo__hx\d+\.update\(is_completed: true\)/,
+  /self\.flash\(\)\[:notice\] = "Todo completed"/,
+  /"Todo report for " \+ label__hx\d+.*HXRuby\.stringify\(count__hx\d+\).*" todos"/,
+  /self\.render\(plain: .*status: :ok\)/,
+  /self\.send_data\(.*"RailsHx file route: " \+ label__hx\d+.*"\\n".*filename: "todoapp-route\.txt", type: "text\/plain", disposition: "inline", status: :ok\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`todoapp_rails controller output missing expected line: ${expected}`);

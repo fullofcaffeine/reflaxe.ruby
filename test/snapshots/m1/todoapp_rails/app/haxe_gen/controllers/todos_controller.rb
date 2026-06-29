@@ -27,16 +27,37 @@ module Controllers
       end
     end
     def completed()
-      nil
+      current_user__hx0 = current_user()
+      titles__hx0 = Models::Todo.where(is_completed: true, user_id: current_user__hx0.id).order(title: :asc).pluck(:title)
+      self.render(plain: ("Completed todos: " + HXRuby.array_join(titles__hx0, ", ")), status: :ok)
     end
     def complete()
-      nil
+      current_user__hx0 = current_user()
+      todo__hx0 = Models::Todo.where(id: self.param_id(), user_id: current_user__hx0.id).first()
+      if (todo__hx0 == nil)
+        self.render(plain: "Todo not found", status: :not_found)
+        return
+      end
+      todo__hx0.update(is_completed: true)
+      self.flash()[:notice] = "Todo completed"
+      self.redirect_to(self.todos_path(), status: :see_other)
     end
     def optional_report()
-      nil
+      current_user__hx0 = current_user()
+      year__hx0 = self.params()[:year]
+      label__hx0 = (if (year__hx0 == nil) then "all years" else year__hx0 end)
+      count__hx0 = Models::Todo.where(user_id: current_user__hx0.id).count()
+      self.render(plain: (((("Todo report for " + label__hx0) + ": ") + HXRuby.stringify(count__hx0)) + " todos"), status: :ok)
     end
     def file()
-      nil
+      path__hx0 = self.params()[:path]
+      label__hx0 = (if (path__hx0 == nil) then "root" else path__hx0 end)
+      self.send_data((("RailsHx file route: " + label__hx0) + "\n"), filename: "todoapp-route.txt", type: "text/plain", disposition: "inline", status: :ok)
+    end
+    def param_id()
+      raw__hx0 = self.params()[:id]
+      parsed__hx0 = (if (raw__hx0 == nil) then nil else HXRuby.parse_int(raw__hx0) end)
+      return (if (parsed__hx0 == nil) then 0 else parsed__hx0 end)
     end
   end
 end

@@ -87,6 +87,62 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/todos"
   end
 
+  test "completed route renders signed-in user's completed todo titles" do
+    user = create_user!(name: "owner", email: "owner-completed@example.test", role: "member")
+    other_user = create_user!(name: "other", email: "other-completed@example.test", role: "member")
+    Models::Todo.create!(title: "beta done", is_completed: true, user: user)
+    Models::Todo.create!(title: "alpha done", is_completed: true, user: user)
+    Models::Todo.create!(title: "still open", is_completed: false, user: user)
+    Models::Todo.create!(title: "other done", is_completed: true, user: other_user)
+    sign_in user
+
+    get "/todos/completed"
+
+    assert_response :success
+    assert_equal "Completed todos: alpha done, beta done", @response.body
+  end
+
+  test "complete route marks only the signed-in user's todo complete" do
+    user = create_user!(name: "owner", email: "owner-complete@example.test", role: "member")
+    other_user = create_user!(name: "other", email: "other-complete@example.test", role: "member")
+    todo = Models::Todo.create!(title: "mark me", is_completed: false, user: user)
+    other_todo = Models::Todo.create!(title: "not yours", is_completed: false, user: other_user)
+    sign_in user
+
+    patch "/todos/#{todo.id}/complete"
+
+    assert_redirected_to "/todos"
+    assert Models::Todo.find(todo.id).is_completed
+
+    patch "/todos/#{other_todo.id}/complete"
+
+    assert_response :not_found
+    assert_equal "Todo not found", @response.body
+    assert_not Models::Todo.find(other_todo.id).is_completed
+  end
+
+  test "optional and glob route actions expose typed route params" do
+    user = create_user!(name: "owner", email: "owner-route-params@example.test", role: "member")
+    Models::Todo.create!(title: "route counted", is_completed: false, user: user)
+    sign_in user
+
+    get "/reports/2026"
+
+    assert_response :success
+    assert_equal "Todo report for 2026: 1 todos", @response.body
+
+    get "/reports"
+
+    assert_response :success
+    assert_equal "Todo report for all years: 1 todos", @response.body
+
+    get "/files/docs/readme"
+
+    assert_response :success
+    assert_equal "text/plain", @response.media_type
+    assert_equal "RailsHx file route: docs/readme\n", @response.body
+  end
+
   test "guest sign in uses Devise and reaches protected RailsHx pages" do
     create_user!(name: "Guest Workspace", email: "guest@example.test", role: "guest")
 
