@@ -326,6 +326,8 @@ typedef ChangeTableRemoveIndex = {
 	var columns:Array<String>;
 	@:optional var name:String;
 	@:optional var ifExists:Bool;
+	@:optional var algorithm:MysqlDdlAlgorithm;
+	@:optional var lock:IndexLock;
 }
 
 enum MigrationOperation {

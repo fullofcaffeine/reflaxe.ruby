@@ -6211,7 +6211,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "removeIndexes":
 							for (item in railsMigrationChangeTableRemoveIndexes(field.expr, table, validation)) {
-								bodyLines.push("  " + item);
+								for (line in item) {
+									bodyLines.push("  " + line);
+								}
 								hasBody = true;
 							}
 						case "bulk":
@@ -7033,10 +7035,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationChangeTableRemoveIndexes(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+			validation:Null<RailsMigrationValidationContext>):Array<Array<String>> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
-				var out:Array<String> = [];
+				var out:Array<Array<String>> = [];
 				for (value in values) {
 					out.push(railsMigrationChangeTableRemoveIndex(value, table, validation));
 				}
@@ -7051,9 +7053,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationChangeTableRemoveIndex(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):String {
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
 		var columnsExpr:Null<TypedExpr> = null;
 		var options:Array<String> = [];
+		var ifExists = false;
 		switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				for (field in fields) {
@@ -7064,8 +7067,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr, "ChangeTable removeIndexes name")));
 						case "ifExists":
 							if (typedBoolLiteral(field.expr, "ChangeTable removeIndexes ifExists")) {
-								options.push("if_exists: true");
+								ifExists = true;
 							}
+						case "algorithm":
+							options.push("algorithm: :" + railsMigrationMysqlDdlAlgorithm(field.expr, "ChangeTable removeIndexes algorithm"));
+						case "lock":
+							options.push("lock: :" + railsMigrationIndexLock(field.expr, "ChangeTable removeIndexes lock"));
 						case _:
 							Context.error('@:railsMigration unknown ChangeTable removeIndexes option ${field.name}.', field.expr.pos);
 					}
@@ -7075,17 +7082,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		if (columnsExpr == null) {
 			Context.error("@:railsMigration ChangeTable removeIndexes entry requires columns.", expr.pos);
-			return "t.remove_index :invalid";
+			return ["t.remove_index :invalid"];
 		}
 		var columns = railsMigrationSymbolArrayArg(columnsExpr, "ChangeTable removeIndexes columns");
 		for (columnName in columns) {
 			railsMigrationValidateColumn(validation, table, columnName, "ChangeTable removeIndexes column", columnsExpr);
 		}
-		if (columns.length == 1) {
-			return "t.remove_index :" + columns[0] + railsMigrationOptionSuffix(options);
+		var guardOptions = [for (option in options) if (!StringTools.startsWith(option, "algorithm: ") && !StringTools.startsWith(option, "lock: ")) option];
+		var guard = columns.length == 1
+			? "t.index_exists?(:" + columns[0] + railsMigrationOptionSuffix(guardOptions) + ")"
+			: "t.index_exists?(["
+				+ [for (column in columns) ":" + column].join(", ")
+				+ "]"
+				+ railsMigrationOptionSuffix(guardOptions)
+				+ ")";
+		var command = columns.length == 1
+			? "t.remove_index :" + columns[0] + railsMigrationOptionSuffix(options)
+			: "t.remove_index column: [" + [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options);
+		if (ifExists) {
+			return ["if " + guard, "  " + command, "end"];
 		}
-		return "t.remove_index column: [" + [for (column in columns) ":" + column].join(", ") + "]"
-			+ railsMigrationOptionSuffix(options);
+		return [command];
 	}
 
 	static function railsMigrationPrimaryKeyType(expr:TypedExpr, label:String):String {
