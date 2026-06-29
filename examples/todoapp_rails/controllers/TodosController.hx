@@ -91,9 +91,7 @@ class TodosController extends rails.action_controller.Base {
 
 	public function completed() {
 		var currentUser = UserAuth.currentRequired(this);
-		var titles = Todo.where({isCompleted: true, userId: currentUser.id})
-			.order(Todo.f.title.asc())
-			.pluck(Todo.f.title);
+		var titles = Todo.where({isCompleted: true, userId: currentUser.id}).order(Todo.f.title.asc()).pluck(Todo.f.title);
 		render({plain: "Completed todos: " + titles.join(", "), status: Status.ok});
 	}
 

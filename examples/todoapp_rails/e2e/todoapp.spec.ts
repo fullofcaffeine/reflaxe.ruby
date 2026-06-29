@@ -214,18 +214,18 @@ test('lets admins create, update, and remove users through typed RailsHx CRUD', 
 
   await createForm.getByLabel('Name').fill(`Typed Teammate ${unique}`)
   await createForm.getByLabel('Email').fill(email)
-  await createForm.getByLabel('Role').fill('member')
+  await createForm.getByLabel('Role').selectOption('member')
   await createForm.getByLabel('Password', { exact: true }).fill('password123')
   await createForm.getByLabel('Confirm password').fill('password123')
   await createForm.getByRole('button', { name: 'Create user' }).click()
 
   const card = frame.locator('.user-management-card').filter({ hasText: email })
   await expect(card).toBeVisible({ timeout: 20_000 })
-  await card.locator('input[name="user[role]"]').fill('maintainer')
+  await card.locator('select[name="user[role]"]').selectOption('admin')
   await card.getByRole('button', { name: 'Save user' }).click()
 
   const updatedCard = frame.locator('.user-management-card').filter({ hasText: email })
-  await expect(updatedCard).toContainText('Maintainer', { timeout: 20_000 })
+  await expect(updatedCard).toContainText('Admin', { timeout: 20_000 })
   await updatedCard.getByRole('button', { name: 'Remove user' }).click()
   await expect(frame).not.toContainText(email, { timeout: 20_000 })
 })

@@ -14,6 +14,7 @@ typedef ConfirmationsNewLocals = {
 // Generated DeviseHx HHX confirmation request view skeleton.
 // Confirmable remains Devise-owned at runtime; RailsHx owns the checked
 // HHX source, typed Devise route helper, typed field refs, and typed resource error block.
+
 @:railsTemplate("devise/confirmations/new")
 @:railsTemplateAst("render")
 class ConfirmationsNewView {

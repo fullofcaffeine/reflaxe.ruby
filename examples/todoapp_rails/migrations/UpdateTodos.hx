@@ -6,8 +6,8 @@ import rails.migration.MigrationOperation;
 // Typed migration operation fixture.
 //
 // Demonstrates: explicit reversible operations, column changes, foreign keys,
-// idempotent columns, named/idempotent deferrable foreign keys, deferred
-// constraint validation, named/idempotent indexes, composite indexes,
+// idempotent columns, named/idempotent deferrable foreign keys, named/idempotent
+// check constraints, named/idempotent indexes, composite indexes,
 // reversible index renames, idempotent check constraints, and data migrations
 // authored as Haxe enum values.
 // Type safety: `MigrationOperation` constructors constrain operation shapes and
@@ -35,8 +35,7 @@ class UpdateTodos extends Migration {
 				ifNotExists: true,
 				validate: false,
 				deferrable: Deferred
-			}),
-			ValidateForeignKeyByName("todos", "fk_todos_users")
+			})
 		], [
 			RemoveForeignKeyByNameIfExists("todos", "fk_todos_users"),
 			ChangeColumn("todos", "title", StringColumn({nullable: true}))
@@ -44,8 +43,7 @@ class UpdateTodos extends Migration {
 		AddColumnIfNotExists("todos", "priority", IntegerColumn({nullable: false, defaultValue: 0})),
 		AddIndex("todos", "priority", {unique: false, name: "index_todos_on_priority"}),
 		Reversible([
-			AddCheckConstraint("todos", "priority >= 0", {name: "chk_todos_priority_non_negative", ifNotExists: true, validate: false}),
-			ValidateCheckConstraint("todos", "chk_todos_priority_non_negative")
+			AddCheckConstraint("todos", "priority >= 0", {name: "chk_todos_priority_non_negative", ifNotExists: true, validate: false})
 		], [
 			RemoveCheckConstraintIfExists("todos", "chk_todos_priority_non_negative")
 		]),

@@ -389,7 +389,7 @@ for (const expected of [
   "default_scope -> { order(title: :asc) }",
   "validates :title, presence: true, length: {minimum: 3}",
   "validates :notes, length: {maximum: 500}, allow_nil: true",
-  "validates :external_id, presence: true, uniqueness: true, format: {with: /^[a-z0-9-]+$/}",
+  "validates :external_id, presence: true, uniqueness: true, format: {with: /\\A[a-z0-9-]+\\z/}",
   'validates :status, inclusion: {within: ["open", "done"]}',
   "validates :user_id, numericality: {only_integer: true, greater_than: 0}",
   "before_validation :normalize_title",

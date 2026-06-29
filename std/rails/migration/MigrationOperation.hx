@@ -353,6 +353,7 @@ enum MigrationOperation {
 		@:optional var comment:String;
 		@:optional var temporary:Bool;
 	});
+
 	ChangeTable(table:String, options:ChangeTableOptions);
 	CreateJoinTable(table1:String, table2:String, options:JoinTableOptions);
 	DropJoinTable(table1:String, table2:String, options:JoinTableOptions);

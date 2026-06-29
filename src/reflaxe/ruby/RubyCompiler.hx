@@ -5169,8 +5169,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		lines.push("    end");
 	}
 
-	static function railsMigrationOperations(varFields:Array<ClassVarData>, classType:ClassType,
-			validation:Null<RailsMigrationValidationContext>, allowConcurrentIndexes:Bool):Array<RailsMigrationOperationInfo> {
+	static function railsMigrationOperations(varFields:Array<ClassVarData>, classType:ClassType, validation:Null<RailsMigrationValidationContext>,
+			allowConcurrentIndexes:Bool):Array<RailsMigrationOperationInfo> {
 		var operationField:Null<ClassVarData> = null;
 		for (field in varFields) {
 			if (field.isStatic && field.field.name == "operations") {
@@ -5189,8 +5189,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return railsMigrationOperationArray(expr, "@:railsMigration operations", false, validation, allowConcurrentIndexes);
 	}
 
-	static function railsMigrationOperationArray(expr:TypedExpr, label:String, allowIrreversible:Bool,
-			validation:Null<RailsMigrationValidationContext>, allowConcurrentIndexes:Bool):Array<RailsMigrationOperationInfo> {
+	static function railsMigrationOperationArray(expr:TypedExpr, label:String, allowIrreversible:Bool, validation:Null<RailsMigrationValidationContext>,
+			allowConcurrentIndexes:Bool):Array<RailsMigrationOperationInfo> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var operations:Array<RailsMigrationOperationInfo> = [];
@@ -5204,8 +5204,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationOperationInfo(expr:TypedExpr, allowIrreversible:Bool,
-			validation:Null<RailsMigrationValidationContext>, allowConcurrentIndexes:Bool):RailsMigrationOperationInfo {
+	static function railsMigrationOperationInfo(expr:TypedExpr, allowIrreversible:Bool, validation:Null<RailsMigrationValidationContext>,
+			allowConcurrentIndexes:Bool):RailsMigrationOperationInfo {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args):
 				switch (field.name) {
@@ -5221,18 +5221,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table2 = railsMigrationSymbolArg(args[1], "CreateJoinTable table2");
 						railsMigrationValidateTable(validation, table1, "CreateJoinTable table1", args[0]);
 						railsMigrationValidateTable(validation, table2, "CreateJoinTable table2", args[1]);
-						railsMigrationOperation([
-							"create_join_table :" + table1 + ", :" + table2 + railsMigrationOptionSuffix(railsMigrationJoinTableDslOptions(args[2], true))
-						]);
+						railsMigrationOperation(["create_join_table :"
+							+ table1
+							+ ", :"
+							+ table2
+							+ railsMigrationOptionSuffix(railsMigrationJoinTableDslOptions(args[2], true))]);
 					case "DropJoinTable" if (args.length == 3):
 						railsMigrationRequireReversibleContext("DropJoinTable", allowIrreversible, expr);
 						var table1 = railsMigrationSymbolArg(args[0], "DropJoinTable table1");
 						var table2 = railsMigrationSymbolArg(args[1], "DropJoinTable table2");
 						railsMigrationValidateTable(validation, table1, "DropJoinTable table1", args[0]);
 						railsMigrationValidateTable(validation, table2, "DropJoinTable table2", args[1]);
-						railsMigrationOperation([
-							"drop_join_table :" + table1 + ", :" + table2 + railsMigrationOptionSuffix(railsMigrationJoinTableDslOptions(args[2], false))
-						]);
+						railsMigrationOperation(["drop_join_table :"
+							+ table1
+							+ ", :"
+							+ table2
+							+ railsMigrationOptionSuffix(railsMigrationJoinTableDslOptions(args[2], false))]);
 					case "CreateSchema" if (args.length == 2):
 						var name = railsMigrationSchemaName(args[0], "CreateSchema name");
 						railsMigrationOperation([
@@ -5248,41 +5252,51 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationRequireReversibleContext("RenameSchema", allowIrreversible, expr);
 						var from = railsMigrationSchemaName(args[0], "RenameSchema from");
 						var to = railsMigrationSchemaName(args[1], "RenameSchema to");
-						railsMigrationOperation(["rename_schema " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)]);
+						railsMigrationOperation([
+							"rename_schema " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)
+						]);
 					case "CreateEnum" if (args.length == 2):
 						var name = railsMigrationEnumTypeName(args[0], "CreateEnum name");
 						var values = railsMigrationEnumValuesArg(args[1], "CreateEnum values");
-						railsMigrationOperation(["create_enum " + quoteRubyStringForCode(name) + ", " + railsMigrationRubyStringArray(values)]);
+						railsMigrationOperation([
+							"create_enum " + quoteRubyStringForCode(name) + ", " + railsMigrationRubyStringArray(values)
+						]);
 					case "DropEnum" if (args.length == 3):
 						railsMigrationRequireReversibleContext("DropEnum", allowIrreversible, expr);
 						var name = railsMigrationEnumTypeName(args[0], "DropEnum name");
 						var values = railsMigrationEnumValuesArg(args[1], "DropEnum values");
-						railsMigrationOperation([
-							"drop_enum " + quoteRubyStringForCode(name) + ", " + railsMigrationRubyStringArray(values)
-								+ railsMigrationOptionSuffix(railsMigrationEnumTypeDslOptions(args[2]))
-						]);
+						railsMigrationOperation(["drop_enum "
+							+ quoteRubyStringForCode(name)
+							+ ", "
+							+ railsMigrationRubyStringArray(values)
+							+ railsMigrationOptionSuffix(railsMigrationEnumTypeDslOptions(args[2]))]);
 					case "RenameEnum" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RenameEnum", allowIrreversible, expr);
 						var from = railsMigrationEnumTypeName(args[0], "RenameEnum from");
 						var to = railsMigrationEnumTypeName(args[1], "RenameEnum to");
-						railsMigrationOperation(["rename_enum " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)]);
+						railsMigrationOperation([
+							"rename_enum " + quoteRubyStringForCode(from) + ", " + quoteRubyStringForCode(to)
+						]);
 					case "AddEnumValue" if (args.length == 3):
 						railsMigrationRequireReversibleContext("AddEnumValue", allowIrreversible, expr);
 						var name = railsMigrationEnumTypeName(args[0], "AddEnumValue name");
 						var value = railsMigrationEnumValueArg(args[1], "AddEnumValue value");
-						railsMigrationOperation([
-							"add_enum_value " + quoteRubyStringForCode(name) + ", " + quoteRubyStringForCode(value)
-								+ railsMigrationOptionSuffix(railsMigrationEnumValueDslOptions(args[2]))
-						]);
+						railsMigrationOperation(["add_enum_value "
+							+ quoteRubyStringForCode(name)
+							+ ", "
+							+ quoteRubyStringForCode(value)
+							+ railsMigrationOptionSuffix(railsMigrationEnumValueDslOptions(args[2]))]);
 					case "RenameEnumValue" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RenameEnumValue", allowIrreversible, expr);
 						var name = railsMigrationEnumTypeName(args[0], "RenameEnumValue name");
 						var from = railsMigrationEnumValueArg(args[1], "RenameEnumValue from");
 						var to = railsMigrationEnumValueArg(args[2], "RenameEnumValue to");
-						railsMigrationOperation([
-							"rename_enum_value " + quoteRubyStringForCode(name) + ", from: " + quoteRubyStringForCode(from) + ", to: "
-								+ quoteRubyStringForCode(to)
-						]);
+						railsMigrationOperation(["rename_enum_value "
+							+ quoteRubyStringForCode(name)
+							+ ", from: "
+							+ quoteRubyStringForCode(from)
+							+ ", to: "
+							+ quoteRubyStringForCode(to)]);
 					case "EnableExtension" if (args.length == 1):
 						var name = railsMigrationExtensionName(args[0], "EnableExtension name");
 						railsMigrationOperation(["enable_extension " + quoteRubyStringForCode(name)]);
@@ -5307,15 +5321,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var column = railsMigrationColumnDsl(args[2]);
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "AddColumnWithDdl options");
 						railsMigrationRegisterColumn(validation, table, name);
-						railsMigrationOperation([
-							"add_column :"
+						railsMigrationOperation(["add_column :"
 							+ table
 							+ ", :"
 							+ name
 							+ ", :"
 							+ column.type
-							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))
-						]);
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))]);
 					case "AddColumnIfNotExists" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddColumnIfNotExists table");
 						var name = railsMigrationSymbolArg(args[1], "AddColumnIfNotExists name");
@@ -5323,15 +5335,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateNewColumn(validation, table, name, "AddColumnIfNotExists name", args[1]);
 						var column = railsMigrationColumnDsl(args[2]);
 						railsMigrationRegisterColumn(validation, table, name);
-						railsMigrationOperation([
-							"add_column :"
+						railsMigrationOperation(["add_column :"
 							+ table
 							+ ", :"
 							+ name
 							+ ", :"
 							+ column.type
-							+ railsMigrationOptionSuffix(column.options.concat(["if_not_exists: true"]))
-						]);
+							+ railsMigrationOptionSuffix(column.options.concat(["if_not_exists: true"]))]);
 					case "AddColumnIfNotExistsWithDdl" if (args.length == 4):
 						var table = railsMigrationSymbolArg(args[0], "AddColumnIfNotExistsWithDdl table");
 						var name = railsMigrationSymbolArg(args[1], "AddColumnIfNotExistsWithDdl name");
@@ -5340,15 +5350,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var column = railsMigrationColumnDsl(args[2]);
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "AddColumnIfNotExistsWithDdl options");
 						railsMigrationRegisterColumn(validation, table, name);
-						railsMigrationOperation([
-							"add_column :"
+						railsMigrationOperation(["add_column :"
 							+ table
 							+ ", :"
 							+ name
 							+ ", :"
 							+ column.type
-							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions).concat(["if_not_exists: true"]))
-						]);
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions).concat(["if_not_exists: true"]))]);
 					case "RemoveColumn" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumn table");
@@ -5379,30 +5387,26 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateColumn(validation, table, name, "RemoveColumnWithDdl name", args[1]);
 						var column = railsMigrationColumnDsl(args[2]);
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "RemoveColumnWithDdl options");
-						railsMigrationOperation([
-							"remove_column :"
+						railsMigrationOperation(["remove_column :"
 							+ table
 							+ ", :"
 							+ name
 							+ ", :"
 							+ column.type
-							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))
-						]);
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))]);
 					case "RemoveColumnIfExistsWithType" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumnIfExistsWithType table");
 						var name = railsMigrationSymbolArg(args[1], "RemoveColumnIfExistsWithType name");
 						railsMigrationValidateTable(validation, table, "RemoveColumnIfExistsWithType table", args[0]);
 						railsMigrationValidateColumn(validation, table, name, "RemoveColumnIfExistsWithType name", args[1]);
 						var column = railsMigrationColumnDsl(args[2]);
-						railsMigrationOperation([
-							"remove_column :"
+						railsMigrationOperation(["remove_column :"
 							+ table
 							+ ", :"
 							+ name
 							+ ", :"
 							+ column.type
-							+ railsMigrationOptionSuffix(column.options.concat(["if_exists: true"]))
-						]);
+							+ railsMigrationOptionSuffix(column.options.concat(["if_exists: true"]))]);
 					case "RemoveColumnIfExistsWithDdl" if (args.length == 4):
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumnIfExistsWithDdl table");
 						var name = railsMigrationSymbolArg(args[1], "RemoveColumnIfExistsWithDdl name");
@@ -5410,15 +5414,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateColumn(validation, table, name, "RemoveColumnIfExistsWithDdl name", args[1]);
 						var column = railsMigrationColumnDsl(args[2]);
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "RemoveColumnIfExistsWithDdl options");
-						railsMigrationOperation([
-							"remove_column :"
+						railsMigrationOperation(["remove_column :"
 							+ table
 							+ ", :"
 							+ name
 							+ ", :"
 							+ column.type
-							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions).concat(["if_exists: true"]))
-						]);
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions).concat(["if_exists: true"]))]);
 					case "RemoveColumns" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveColumns", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumns table");
@@ -5427,7 +5429,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						for (columnName in columns) {
 							railsMigrationValidateColumn(validation, table, columnName, "RemoveColumns column", args[1]);
 						}
-						railsMigrationOperation(["remove_columns :" + table + ", " + [for (column in columns) ":" + column].join(", ")]);
+						railsMigrationOperation([
+							"remove_columns :" + table + ", " + [for (column in columns) ":" + column].join(", ")
+						]);
 					case "RemoveColumnsWithType" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "RemoveColumnsWithType table");
 						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveColumnsWithType columns");
@@ -5439,8 +5443,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation(["remove_columns :"
 							+ table
 							+ ", "
-							+ [for (columnName in columns) ":" + columnName].join(", ")
-							+ railsMigrationOptionSuffix(["type: :" + column.type].concat(column.options))]);
+							+ [for (columnName in columns) ":" + columnName].join(", ") +
+								railsMigrationOptionSuffix(["type: :" + column.type].concat(column.options))]);
 					case "ChangeColumn" if (args.length == 3):
 						railsMigrationRequireReversibleContext("ChangeColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "ChangeColumn table");
@@ -5459,15 +5463,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateColumn(validation, table, name, "ChangeColumnWithDdl name", args[1]);
 						var column = railsMigrationColumnDsl(args[2]);
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[3], "ChangeColumnWithDdl options");
-						railsMigrationOperation([
-							"change_column :"
+						railsMigrationOperation(["change_column :"
 							+ table
 							+ ", :"
 							+ name
 							+ ", :"
 							+ column.type
-							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))
-						]);
+							+ railsMigrationOptionSuffix(column.options.concat(ddlOptions))]);
 					case "AddIndex" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "AddIndex table");
 						var columnName = railsMigrationSymbolArg(args[1], "AddIndex column");
@@ -5511,7 +5513,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "RemoveIndexWithDdl table", args[0]);
 						railsMigrationValidateColumn(validation, table, columnName, "RemoveIndexWithDdl column", args[1]);
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveIndexWithDdl options");
-						railsMigrationOperation(["remove_index :" + table + ", :" + columnName + railsMigrationOptionSuffix(ddlOptions)]);
+						railsMigrationOperation([
+							"remove_index :" + table + ", :" + columnName + railsMigrationOptionSuffix(ddlOptions)
+						]);
 					case "RemoveIndexIfExists" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexIfExists table");
 						var columnName = railsMigrationSymbolArg(args[1], "RemoveIndexIfExists column");
@@ -5544,16 +5548,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameIfExists table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameIfExists name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByNameIfExists table", args[0]);
-						railsMigrationOperation(["remove_index :" + table + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"]);
+						railsMigrationOperation([
+							"remove_index :" + table + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"
+						]);
 					case "RemoveIndexByNameIfExistsWithDdl" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameIfExistsWithDdl table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameIfExistsWithDdl name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByNameIfExistsWithDdl table", args[0]);
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveIndexByNameIfExistsWithDdl options");
 						railsMigrationOperation([
-							"remove_index :"
-							+ table
-							+ railsMigrationOptionSuffix(["name: " + quoteRubyStringForCode(name)].concat(ddlOptions).concat(["if_exists: true"]))
+							"remove_index :" + table + railsMigrationOptionSuffix(["name: " + quoteRubyStringForCode(name)].concat(ddlOptions)
+								.concat(["if_exists: true"]))
 						]);
 					case "RemoveCompositeIndex" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndex table");
@@ -5562,10 +5567,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						for (columnName in columns) {
 							railsMigrationValidateColumn(validation, table, columnName, "RemoveCompositeIndex column", args[1]);
 						}
-						railsMigrationOperation(["remove_index :"
-							+ table
-							+ ", column: ["
-							+ [for (column in columns) ":" + column].join(", ") + "]"]);
+						railsMigrationOperation([
+							"remove_index :" + table + ", column: [" + [for (column in columns) ":" + column].join(", ") + "]"
+						]);
 					case "RemoveCompositeIndexWithDdl" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndexWithDdl table");
 						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndexWithDdl columns");
@@ -5574,11 +5578,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							railsMigrationValidateColumn(validation, table, columnName, "RemoveCompositeIndexWithDdl column", args[1]);
 						}
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveCompositeIndexWithDdl options");
-						railsMigrationOperation(["remove_index :"
-							+ table
-							+ railsMigrationOptionSuffix((["column: ["
-								+ [for (column in columns) ":" + column].join(", ")
-								+ "]"]).concat(ddlOptions))]);
+						railsMigrationOperation([
+							"remove_index :" + table + railsMigrationOptionSuffix((["column: [" + [for (column in columns) ":" + column].join(", ")
+								+ "]"]).concat(ddlOptions))
+						]);
 					case "RemoveCompositeIndexIfExists" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndexIfExists table");
 						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndexIfExists columns");
@@ -5586,10 +5589,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						for (columnName in columns) {
 							railsMigrationValidateColumn(validation, table, columnName, "RemoveCompositeIndexIfExists column", args[1]);
 						}
-						railsMigrationOperation(["remove_index :"
-							+ table
-							+ ", column: ["
-							+ [for (column in columns) ":" + column].join(", ") + "], if_exists: true"]);
+						railsMigrationOperation([
+							"remove_index :" + table + ", column: [" + [for (column in columns) ":" + column].join(", ") + "], if_exists: true"
+						]);
 					case "RemoveCompositeIndexIfExistsWithDdl" if (args.length == 3):
 						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndexIfExistsWithDdl table");
 						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndexIfExistsWithDdl columns");
@@ -5598,11 +5600,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							railsMigrationValidateColumn(validation, table, columnName, "RemoveCompositeIndexIfExistsWithDdl column", args[1]);
 						}
 						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveCompositeIndexIfExistsWithDdl options");
-						railsMigrationOperation(["remove_index :"
-							+ table
-							+ railsMigrationOptionSuffix((["column: ["
-								+ [for (column in columns) ":" + column].join(", ")
-								+ "]"]).concat(ddlOptions).concat(["if_exists: true"]))]);
+						railsMigrationOperation([
+							"remove_index :" + table + railsMigrationOptionSuffix((["column: [" + [for (column in columns) ":" + column].join(", ")
+								+ "]"]).concat(ddlOptions).concat(["if_exists: true"]))
+						]);
 					case "RenameIndex" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RenameIndex", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RenameIndex table");
@@ -5692,7 +5693,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyByNameIfExists fromTable");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveForeignKeyByNameIfExists name");
 						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyByNameIfExists fromTable", args[0]);
-						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"]);
+						railsMigrationOperation([
+							"remove_foreign_key :" + fromTable + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"
+						]);
 					case "RenameColumn" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RenameColumn", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RenameColumn table");
@@ -5764,9 +5767,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var from = railsMigrationCommentValue(args[1], "ChangeTableComment from");
 						var to = railsMigrationCommentValue(args[2], "ChangeTableComment to");
 						railsMigrationValidateTable(validation, table, "ChangeTableComment table", args[0]);
-						railsMigrationOperation([
-							"change_table_comment :" + table + ", from: " + from + ", to: " + to
-						]);
+						railsMigrationOperation(["change_table_comment :" + table + ", from: " + from + ", to: " + to]);
 					case "AddTimestamps" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "AddTimestamps table");
 						railsMigrationValidateTable(validation, table, "AddTimestamps table", args[0]);
@@ -5777,9 +5778,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "AddTimestampsIfNotExists table");
 						railsMigrationValidateTable(validation, table, "AddTimestampsIfNotExists table", args[0]);
 						railsMigrationOperation([
-							"add_timestamps :"
-							+ table
-							+ railsMigrationOptionSuffix(railsMigrationTimestampDslOptions(args[1]).concat(["if_not_exists: true"]))
+							"add_timestamps :" + table + railsMigrationOptionSuffix(railsMigrationTimestampDslOptions(args[1]).concat(["if_not_exists: true"]))
 						]);
 					case "RemoveTimestamps" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveTimestamps table");
@@ -5804,14 +5803,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "ValidateCheckConstraint table");
 						var name = railsMigrationSafeIdentifier(args[1], "ValidateCheckConstraint name");
 						railsMigrationValidateTable(validation, table, "ValidateCheckConstraint table", args[0]);
-						railsMigrationValidationOperation(["validate_check_constraint :" + table + ", name: " + quoteRubyStringForCode(name)],
-							allowIrreversible);
+						railsMigrationValidationOperation([
+							"validate_check_constraint :" + table + ", name: " + quoteRubyStringForCode(name)
+						], allowIrreversible);
 					case "ValidateConstraint" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "ValidateConstraint table");
 						var name = railsMigrationSafeIdentifier(args[1], "ValidateConstraint name");
 						railsMigrationValidateTable(validation, table, "ValidateConstraint table", args[0]);
-						railsMigrationValidationOperation(["validate_constraint :" + table + ", " + quoteRubyStringForCode(name)],
-							allowIrreversible);
+						railsMigrationValidationOperation(["validate_constraint :" + table + ", " + quoteRubyStringForCode(name)], allowIrreversible);
 					case "RemoveConstraint" if (args.length == 2):
 						railsMigrationRequireReversibleContext("RemoveConstraint", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveConstraint table");
@@ -5853,8 +5852,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							railsMigrationValidateColumn(validation, table, columnName, "AddUniqueConstraintIfNotExists column", args[1]);
 						}
 						var info = railsMigrationUniqueConstraintDslInfo(args[2]);
-						railsMigrationOperation([
-							"unless unique_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
+						railsMigrationOperation(["unless unique_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
 							"  add_unique_constraint :"
 							+ table
 							+ ", ["
@@ -5866,9 +5864,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "AddUniqueConstraintUsingIndex table");
 						var indexName = railsMigrationSafeIdentifier(args[1], "AddUniqueConstraintUsingIndex indexName");
 						railsMigrationValidateTable(validation, table, "AddUniqueConstraintUsingIndex table", args[0]);
-						var options = railsMigrationUniqueConstraintDslOptions(args[2]).concat([
-							"using_index: " + quoteRubyStringForCode(indexName)
-						]);
+						var options = railsMigrationUniqueConstraintDslOptions(args[2]).concat(["using_index: " + quoteRubyStringForCode(indexName)]);
 						railsMigrationOperation(["add_unique_constraint :" + table + railsMigrationOptionSuffix(options)]);
 					case "RemoveUniqueConstraint" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RemoveUniqueConstraint", allowIrreversible, expr);
@@ -5892,8 +5888,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							railsMigrationValidateColumn(validation, table, columnName, "RemoveUniqueConstraintIfExists column", args[1]);
 						}
 						var info = railsMigrationUniqueConstraintDslInfo(args[2]);
-						railsMigrationOperation([
-							"if unique_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
+						railsMigrationOperation(["if unique_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
 							"  remove_unique_constraint :"
 							+ table
 							+ ", ["
@@ -5904,8 +5899,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "AddExclusionConstraint table");
 						var expression = typedStringLiteral(args[1]);
 						if (expression == null || expression == "") {
-							Context.error("@:railsMigration AddExclusionConstraint expression must be a non-empty literal string.",
-								args[1].pos);
+							Context.error("@:railsMigration AddExclusionConstraint expression must be a non-empty literal string.", args[1].pos);
 						}
 						var options = railsMigrationExclusionConstraintDslOptions(args[2]);
 						railsMigrationValidateTable(validation, table, "AddExclusionConstraint table", args[0]);
@@ -5919,13 +5913,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "AddExclusionConstraintIfNotExists table");
 						var expression = typedStringLiteral(args[1]);
 						if (expression == null || expression == "") {
-							Context.error("@:railsMigration AddExclusionConstraintIfNotExists expression must be a non-empty literal string.",
-								args[1].pos);
+							Context.error("@:railsMigration AddExclusionConstraintIfNotExists expression must be a non-empty literal string.", args[1].pos);
 						}
 						var info = railsMigrationExclusionConstraintDslInfo(args[2]);
 						railsMigrationValidateTable(validation, table, "AddExclusionConstraintIfNotExists table", args[0]);
-						railsMigrationOperation([
-							"unless exclusion_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
+						railsMigrationOperation(["unless exclusion_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
 							"  add_exclusion_constraint :"
 							+ table
 							+ ", "
@@ -5938,8 +5930,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "RemoveExclusionConstraint table");
 						var expression = typedStringLiteral(args[1]);
 						if (expression == null || expression == "") {
-							Context.error("@:railsMigration RemoveExclusionConstraint expression must be a non-empty literal string.",
-								args[1].pos);
+							Context.error("@:railsMigration RemoveExclusionConstraint expression must be a non-empty literal string.", args[1].pos);
 						}
 						var options = railsMigrationExclusionConstraintDslOptions(args[2]);
 						railsMigrationValidateTable(validation, table, "RemoveExclusionConstraint table", args[0]);
@@ -5953,13 +5944,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var table = railsMigrationSymbolArg(args[0], "RemoveExclusionConstraintIfExists table");
 						var expression = typedStringLiteral(args[1]);
 						if (expression == null || expression == "") {
-							Context.error("@:railsMigration RemoveExclusionConstraintIfExists expression must be a non-empty literal string.",
-								args[1].pos);
+							Context.error("@:railsMigration RemoveExclusionConstraintIfExists expression must be a non-empty literal string.", args[1].pos);
 						}
 						var info = railsMigrationExclusionConstraintDslInfo(args[2]);
 						railsMigrationValidateTable(validation, table, "RemoveExclusionConstraintIfExists table", args[0]);
-						railsMigrationOperation([
-							"if exclusion_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
+						railsMigrationOperation(["if exclusion_constraint_exists?(:" + table + ", name: " + quoteRubyStringForCode(info.name) + ")",
 							"  remove_exclusion_constraint :"
 							+ table
 							+ ", "
@@ -6144,22 +6133,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "uniqueConstraintsIfNotExists":
 							railsMigrationRequireReversibleContext("ChangeTable uniqueConstraintsIfNotExists", allowIrreversible, field.expr);
-							for (item in railsMigrationChangeTableGuardedUniqueConstraints(field.expr, table, validation,
-									"uniqueConstraintsIfNotExists", "unless", "t.unique_constraint")) {
+							for (item in railsMigrationChangeTableGuardedUniqueConstraints(field.expr, table, validation, "uniqueConstraintsIfNotExists",
+								"unless", "t.unique_constraint")) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
 						case "exclusionConstraints":
-							for (item in railsMigrationChangeTableExclusionConstraints(field.expr, "exclusionConstraints",
-									"t.exclusion_constraint")) {
+							for (item in railsMigrationChangeTableExclusionConstraints(field.expr, "exclusionConstraints", "t.exclusion_constraint")) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
 						case "exclusionConstraintsIfNotExists":
-							railsMigrationRequireReversibleContext("ChangeTable exclusionConstraintsIfNotExists", allowIrreversible,
-								field.expr);
-							for (item in railsMigrationChangeTableGuardedExclusionConstraints(field.expr, "exclusionConstraintsIfNotExists",
-									"unless", "t.exclusion_constraint")) {
+							railsMigrationRequireReversibleContext("ChangeTable exclusionConstraintsIfNotExists", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableGuardedExclusionConstraints(field.expr, "exclusionConstraintsIfNotExists", "unless",
+								"t.exclusion_constraint")) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
@@ -6193,25 +6180,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								hasBody = true;
 							}
 						case "removeUniqueConstraintsIfExists":
-							railsMigrationRequireReversibleContext("ChangeTable removeUniqueConstraintsIfExists", allowIrreversible,
-								field.expr);
-							for (item in railsMigrationChangeTableGuardedUniqueConstraints(field.expr, table, validation,
-									"removeUniqueConstraintsIfExists", "if", "t.remove_unique_constraint")) {
+							railsMigrationRequireReversibleContext("ChangeTable removeUniqueConstraintsIfExists", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableGuardedUniqueConstraints(field.expr, table, validation, "removeUniqueConstraintsIfExists",
+								"if", "t.remove_unique_constraint")) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
 						case "removeExclusionConstraints":
 							railsMigrationRequireReversibleContext("ChangeTable removeExclusionConstraints", allowIrreversible, field.expr);
 							for (item in railsMigrationChangeTableExclusionConstraints(field.expr, "removeExclusionConstraints",
-									"t.remove_exclusion_constraint")) {
+								"t.remove_exclusion_constraint")) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
 						case "removeExclusionConstraintsIfExists":
-							railsMigrationRequireReversibleContext("ChangeTable removeExclusionConstraintsIfExists", allowIrreversible,
-								field.expr);
-							for (item in railsMigrationChangeTableGuardedExclusionConstraints(field.expr,
-									"removeExclusionConstraintsIfExists", "if", "t.remove_exclusion_constraint")) {
+							railsMigrationRequireReversibleContext("ChangeTable removeExclusionConstraintsIfExists", allowIrreversible, field.expr);
+							for (item in railsMigrationChangeTableGuardedExclusionConstraints(field.expr, "removeExclusionConstraintsIfExists", "if",
+								"t.remove_exclusion_constraint")) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
@@ -6251,12 +6236,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var lines = ["change_table :" + table + railsMigrationOptionSuffix(options) + " do |t|"];
 		lines = lines.concat(bodyLines);
 		lines.push("end");
-		return hasValidationOperation ? railsMigrationValidationOperation(lines, allowIrreversible, foreignKeys) : railsMigrationOperation(lines,
-			foreignKeys);
+		return hasValidationOperation ? railsMigrationValidationOperation(lines, allowIrreversible, foreignKeys) : railsMigrationOperation(lines, foreignKeys);
 	}
 
-	static function railsMigrationChangeTableChangeColumns(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableChangeColumns(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6273,8 +6256,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableChangeColumn(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationChangeTableChangeColumn(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):String {
 		var nameExpr:Null<TypedExpr> = null;
 		var columnExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
@@ -6306,8 +6288,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "t.change :" + name + ", :" + column.type + railsMigrationOptionSuffix(column.options);
 	}
 
-	static function railsMigrationChangeTableChangeDefaults(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableChangeDefaults(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6324,8 +6305,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableChangeDefault(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationChangeTableChangeDefault(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):String {
 		var nameExpr:Null<TypedExpr> = null;
 		var fromExpr:Null<TypedExpr> = null;
 		var toExpr:Null<TypedExpr> = null;
@@ -6365,8 +6345,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "t.change_default :" + name + ", from: " + from + ", to: " + to;
 	}
 
-	static function railsMigrationChangeTableChangeNulls(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableChangeNulls(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6383,8 +6362,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableChangeNull(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationChangeTableChangeNull(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):String {
 		var nameExpr:Null<TypedExpr> = null;
 		var nullableExpr:Null<TypedExpr> = null;
 		var defaultValueExpr:Null<TypedExpr> = null;
@@ -6423,8 +6401,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return line;
 	}
 
-	static function railsMigrationChangeTableRenameColumns(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableRenameColumns(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6441,8 +6418,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableRenameColumn(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationChangeTableRenameColumn(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):String {
 		var fromExpr:Null<TypedExpr> = null;
 		var toExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
@@ -6474,8 +6450,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "t.rename :" + from + ", :" + to;
 	}
 
-	static function railsMigrationChangeTableRenameIndexes(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableRenameIndexes(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6492,8 +6467,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableRenameIndex(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationChangeTableRenameIndex(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):String {
 		var fromExpr:Null<TypedExpr> = null;
 		var toExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
@@ -6569,8 +6543,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var expression = typedStringLiteral(expressionExpr);
 		if (expression == null || expression == "") {
-			Context.error("@:railsMigration ChangeTable checkConstraints expression must be a non-empty literal string.",
-				expressionExpr.pos);
+			Context.error("@:railsMigration ChangeTable checkConstraints expression must be a non-empty literal string.", expressionExpr.pos);
 		}
 		return "t.check_constraint "
 			+ quoteRubyStringForCode(expression == null ? "" : expression)
@@ -6629,7 +6602,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var command = "t.foreign_key :" + toTable + railsMigrationOptionSuffix(commandOptions);
 		if (info.ifNotExists) {
 			return {
-				lines: ["unless t.foreign_key_exists?(:" + toTable + railsMigrationOptionSuffix(commandOptions) + ")", "  " + command, "end"],
+				lines: [
+					"unless t.foreign_key_exists?(:" + toTable + railsMigrationOptionSuffix(commandOptions) + ")",
+					"  " + command,
+					"end"
+				],
 				toTable: toTable
 			};
 		}
@@ -6639,8 +6616,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		};
 	}
 
-	static function railsMigrationChangeTableUniqueConstraints(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>, fieldName:String):Array<String> {
+	static function railsMigrationChangeTableUniqueConstraints(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>,
+			fieldName:String):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6652,19 +6629,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				out;
 			case _:
-				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableUniqueConstraint> literal.',
-					expr.pos);
+				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableUniqueConstraint> literal.', expr.pos);
 				[];
 		}
 	}
 
-	static function railsMigrationChangeTableUniqueConstraint(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>, fieldName:String, command:String):String {
+	static function railsMigrationChangeTableUniqueConstraint(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>,
+			fieldName:String, command:String):String {
 		return railsMigrationChangeTableUniqueConstraintInfo(expr, table, validation, fieldName, command).line;
 	}
 
-	static function railsMigrationChangeTableUniqueConstraintInfo(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>, fieldName:String, command:String):{name:String, line:String} {
+	static function railsMigrationChangeTableUniqueConstraintInfo(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>,
+			fieldName:String, command:String):{
+		name:String,
+		line:String
+	} {
 		var columnsExpr:Null<TypedExpr> = null;
 		var optionsExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
@@ -6697,16 +6676,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var info = railsMigrationUniqueConstraintDslInfo(optionsExpr);
 		return {
 			name: info.name,
-			line: command
-				+ " ["
-				+ [for (column in columns) ":" + column].join(", ")
-				+ "]"
-				+ railsMigrationOptionSuffix(info.options)
+			line: command + " [" + [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(info.options)
 		};
 	}
 
-	static function railsMigrationChangeTableGuardedUniqueConstraints(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>, fieldName:String, guard:String, command:String):Array<String> {
+	static function railsMigrationChangeTableGuardedUniqueConstraints(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>,
+			fieldName:String, guard:String, command:String):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6721,14 +6696,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				out;
 			case _:
-				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableUniqueConstraint> literal.',
-					expr.pos);
+				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableUniqueConstraint> literal.', expr.pos);
 				[];
 		}
 	}
 
-	static function railsMigrationChangeTableExclusionConstraints(expr:TypedExpr, fieldName:String,
-			command:String):Array<String> {
+	static function railsMigrationChangeTableExclusionConstraints(expr:TypedExpr, fieldName:String, command:String):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6740,8 +6713,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				out;
 			case _:
-				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableExclusionConstraint> literal.',
-					expr.pos);
+				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableExclusionConstraint> literal.', expr.pos);
 				[];
 		}
 	}
@@ -6750,8 +6722,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return railsMigrationChangeTableExclusionConstraintInfo(expr, fieldName, command).line;
 	}
 
-	static function railsMigrationChangeTableExclusionConstraintInfo(expr:TypedExpr, fieldName:String,
-			command:String):{name:String, line:String} {
+	static function railsMigrationChangeTableExclusionConstraintInfo(expr:TypedExpr, fieldName:String, command:String):{name:String, line:String} {
 		var expressionExpr:Null<TypedExpr> = null;
 		var optionsExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
@@ -6779,21 +6750,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var expression = typedStringLiteral(expressionExpr);
 		if (expression == null || expression == "") {
-			Context.error('@:railsMigration ChangeTable $fieldName expression must be a non-empty literal string.',
-				expressionExpr.pos);
+			Context.error('@:railsMigration ChangeTable $fieldName expression must be a non-empty literal string.', expressionExpr.pos);
 		}
 		var info = railsMigrationExclusionConstraintDslInfo(optionsExpr);
-		return {
-			name: info.name,
+		return {name: info.name,
 			line: command
-				+ " "
-				+ quoteRubyStringForCode(expression == null ? "" : expression)
-				+ railsMigrationOptionSuffix(info.options)
-		};
+			+ " "
+			+ quoteRubyStringForCode(expression == null ? "" : expression)
+			+ railsMigrationOptionSuffix(info.options)};
 	}
 
-	static function railsMigrationChangeTableGuardedExclusionConstraints(expr:TypedExpr, fieldName:String, guard:String,
-			command:String):Array<String> {
+	static function railsMigrationChangeTableGuardedExclusionConstraints(expr:TypedExpr, fieldName:String, guard:String, command:String):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6808,8 +6775,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				out;
 			case _:
-				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableExclusionConstraint> literal.',
-					expr.pos);
+				Context.error('@:railsMigration ChangeTable $fieldName must be an Array<ChangeTableExclusionConstraint> literal.', expr.pos);
 				[];
 		}
 	}
@@ -6826,8 +6792,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				out;
 			case _:
-				Context.error("@:railsMigration ChangeTable removeCheckConstraints must be an Array<ChangeTableRemoveCheckConstraint> literal.",
-					expr.pos);
+				Context.error("@:railsMigration ChangeTable removeCheckConstraints must be an Array<ChangeTableRemoveCheckConstraint> literal.", expr.pos);
 				[];
 		}
 	}
@@ -6860,8 +6825,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "t.remove_check_constraint name: " + quoteRubyStringForCode(name) + railsMigrationOptionSuffix(options);
 	}
 
-	static function railsMigrationChangeTableRemoveColumns(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableRemoveColumns(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6878,8 +6842,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableRemoveColumnsItem(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableRemoveColumnsItem(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		var columnsExpr:Null<TypedExpr> = null;
 		var columnExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
@@ -6911,13 +6874,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var column = railsMigrationColumnDsl(columnExpr, "ChangeTable removeColumns column");
 		return [
-			"t.remove " + [for (columnName in columns) ":" + columnName].join(", ")
-				+ railsMigrationOptionSuffix(["type: :" + column.type].concat(column.options))
+			"t.remove " + [for (columnName in columns) ":" + columnName].join(", ") +
+				railsMigrationOptionSuffix(["type: :" + column.type].concat(column.options))
 		];
 	}
 
-	static function railsMigrationChangeTableRemoveForeignKeys(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableRemoveForeignKeys(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -6929,14 +6891,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				out;
 			case _:
-				Context.error("@:railsMigration ChangeTable removeForeignKeys must be an Array<ChangeTableRemoveForeignKey> literal.",
-					expr.pos);
+				Context.error("@:railsMigration ChangeTable removeForeignKeys must be an Array<ChangeTableRemoveForeignKey> literal.", expr.pos);
 				[];
 		}
 	}
 
-	static function railsMigrationChangeTableRemoveForeignKey(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationChangeTableRemoveForeignKey(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):String {
 		var toTableExpr:Null<TypedExpr> = null;
 		var options:Array<String> = [];
 		var hasSelector = false;
@@ -6953,8 +6913,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							options.push("column: :" + column);
 							hasSelector = true;
 						case "name":
-							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr,
-								"ChangeTable removeForeignKeys name")));
+							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr, "ChangeTable removeForeignKeys name")));
 							hasSelector = true;
 						case _:
 							Context.error('@:railsMigration unknown ChangeTable removeForeignKeys option ${field.name}.', field.expr.pos);
@@ -6982,22 +6941,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TArrayDecl(values):
 				var out:Array<String> = [];
 				for (value in values) {
-					out.push(railsMigrationChangeTableUniqueConstraint(value, table, validation, "removeUniqueConstraints",
-						"t.remove_unique_constraint"));
+					out.push(railsMigrationChangeTableUniqueConstraint(value, table, validation, "removeUniqueConstraints", "t.remove_unique_constraint"));
 				}
 				if (out.length == 0) {
 					Context.error("@:railsMigration ChangeTable removeUniqueConstraints must not be empty.", expr.pos);
 				}
 				out;
 			case _:
-				Context.error("@:railsMigration ChangeTable removeUniqueConstraints must be an Array<ChangeTableUniqueConstraint> literal.",
-					expr.pos);
+				Context.error("@:railsMigration ChangeTable removeUniqueConstraints must be an Array<ChangeTableUniqueConstraint> literal.", expr.pos);
 				[];
 		}
 	}
 
-	static function railsMigrationChangeTableRemoveReferences(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableRemoveReferences(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -7009,14 +6965,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				out;
 			case _:
-				Context.error("@:railsMigration ChangeTable removeReferences must be an Array<ChangeTableRemoveReference> literal.",
-					expr.pos);
+				Context.error("@:railsMigration ChangeTable removeReferences must be an Array<ChangeTableRemoveReference> literal.", expr.pos);
 				[];
 		}
 	}
 
-	static function railsMigrationChangeTableRemoveReference(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationChangeTableRemoveReference(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):String {
 		var nameExpr:Null<TypedExpr> = null;
 		var optionsExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
@@ -7066,8 +7020,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableRemoveIndex(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableRemoveIndex(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		var columnsExpr:Null<TypedExpr> = null;
 		var options:Array<String> = [];
 		var ifExists = false;
@@ -7102,17 +7055,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		for (columnName in columns) {
 			railsMigrationValidateColumn(validation, table, columnName, "ChangeTable removeIndexes column", columnsExpr);
 		}
-		var guardOptions = [for (option in options) if (!StringTools.startsWith(option, "algorithm: ") && !StringTools.startsWith(option, "lock: ")) option];
-		var guard = columns.length == 1
-			? "t.index_exists?(:" + columns[0] + railsMigrationOptionSuffix(guardOptions) + ")"
-			: "t.index_exists?(["
-				+ [for (column in columns) ":" + column].join(", ")
+		var guardOptions = [
+			for (option in options)
+				if (!StringTools.startsWith(option, "algorithm: ") && !StringTools.startsWith(option, "lock: ")) option
+		];
+		var guard = columns.length == 1 ? "t.index_exists?(:" + columns[0] + railsMigrationOptionSuffix(guardOptions) + ")" : "t.index_exists?(["
+			+ [for (column in columns) ":" + column].join(", ")
 				+ "]"
 				+ railsMigrationOptionSuffix(guardOptions)
 				+ ")";
-		var command = columns.length == 1
-			? "t.remove_index :" + columns[0] + railsMigrationOptionSuffix(options)
-			: "t.remove_index column: [" + [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options);
+		var command = columns.length == 1 ? "t.remove_index :" + columns[0] + railsMigrationOptionSuffix(options) : "t.remove_index column: ["
+			+ [for (column in columns) ":" + column].join(", ") + "]" + railsMigrationOptionSuffix(options);
 		if (ifExists) {
 			return ["if " + guard, "  " + command, "end"];
 		}
@@ -7185,8 +7138,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableItems(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableItems(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var out:Array<String> = [];
@@ -7200,8 +7152,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationChangeTableItem(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationChangeTableItem(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args):
 				switch (field.name) {
@@ -7226,10 +7177,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						var columnArg = "[" + [for (column in columns) ":" + column].join(", ") + "]";
 						var command = "t.index " + columnArg + railsMigrationOptionSuffix(commandOptions);
 						if (info.ifNotExists) {
-							var guard = info.name != null
-								? "t.index_exists?(name: " + quoteRubyStringForCode(info.name) + ")"
-								: "t.index_exists?(" + columnArg + ")";
-							["unless " + guard, "  " + command, "end"];
+							var guard = info.name != null ? "t.index_exists?(name: " + quoteRubyStringForCode(info.name) + ")" : "t.index_exists?("
+								+ columnArg
+								+ ")";
+								["unless " + guard, "  " + command, "end"];
 						} else {
 							[command];
 						}
@@ -7337,8 +7288,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return inExplicitReversible ? railsMigrationOperation(lines, foreignKeys) : railsMigrationUpOnlyOperation(lines, foreignKeys);
 	}
 
-	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr,
-			validation:Null<RailsMigrationValidationContext>, allowConcurrentIndexes:Bool):RailsMigrationOperationInfo {
+	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr, validation:Null<RailsMigrationValidationContext>,
+			allowConcurrentIndexes:Bool):RailsMigrationOperationInfo {
 		var lines = ["reversible do |dir|", "  dir.up do"];
 		var foreignKeys:Array<RailsMigrationForeignKeyRef> = [];
 		for (operation in railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up", true, validation, allowConcurrentIndexes)) {
@@ -7463,13 +7414,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexDslOptions(expr:TypedExpr, ?table:String,
-			?validation:Null<RailsMigrationValidationContext>, ?allowConcurrentIndexes:Bool = false):Array<String> {
+	static function railsMigrationIndexDslOptions(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>,
+			?allowConcurrentIndexes:Bool = false):Array<String> {
 		return railsMigrationIndexDslInfo(expr, table, validation, allowConcurrentIndexes).options;
 	}
 
 	static function railsMigrationIndexDslInfo(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>,
-			?allowConcurrentIndexes:Bool = false):{options:Array<String>, name:Null<String>, ifNotExists:Bool} {
+			?allowConcurrentIndexes:Bool = false):{
+		options:Array<String>,
+		name:Null<String>,
+		ifNotExists:Bool
+	} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
@@ -7496,8 +7451,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "indexType":
 							options.push("type: :" + railsMigrationSafeIdentifier(field.expr, "MigrationIndex indexType"));
 						case "indexAlgorithm":
-							options.push("algorithm: :"
-								+ railsMigrationIndexAlgorithm(field.expr, "MigrationIndex indexAlgorithm", allowConcurrentIndexes));
+							options.push("algorithm: :" + railsMigrationIndexAlgorithm(field.expr, "MigrationIndex indexAlgorithm", allowConcurrentIndexes));
 						case "indexLock":
 							options.push("lock: :" + railsMigrationIndexLock(field.expr, "MigrationIndex indexLock"));
 						case "length":
@@ -7530,8 +7484,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							var columns = railsMigrationSymbolArrayArg(field.expr, "MigrationIndex includeColumns");
 							if (table != null) {
 								for (columnName in columns) {
-									railsMigrationValidateColumn(validation, table, columnName, "MigrationIndex includeColumns column",
-										field.expr);
+									railsMigrationValidateColumn(validation, table, columnName, "MigrationIndex includeColumns column", field.expr);
 								}
 							}
 							options.push("include: [" + [for (column in columns) ":" + column].join(", ") + "]");
@@ -7603,8 +7556,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexOpclassOptions(expr:TypedExpr, ?table:String,
-			?validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationIndexOpclassOptions(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				if (values.length == 0) {
@@ -7617,8 +7569,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexOpclassOption(expr:TypedExpr, ?table:String,
-			?validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationIndexOpclassOption(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>):String {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var column:Null<String> = null;
@@ -7649,8 +7600,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexLengthOptions(expr:TypedExpr, ?table:String,
-			?validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationIndexLengthOptions(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				if (values.length == 0) {
@@ -7663,8 +7613,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexLengthOption(expr:TypedExpr, ?table:String,
-			?validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationIndexLengthOption(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>):String {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var column:Null<String> = null;
@@ -7695,8 +7644,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexOrderOptions(expr:TypedExpr, ?table:String,
-			?validation:Null<RailsMigrationValidationContext>):Array<String> {
+	static function railsMigrationIndexOrderOptions(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>):Array<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				if (values.length == 0) {
@@ -7709,8 +7657,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsMigrationIndexOrderOption(expr:TypedExpr, ?table:String,
-			?validation:Null<RailsMigrationValidationContext>):String {
+	static function railsMigrationIndexOrderOption(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>):String {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var column:Null<String> = null;
@@ -7938,8 +7885,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						case "where":
 							var where = typedStringLiteral(field.expr);
 							if (where == null || where == "") {
-								Context.error("@:railsMigration ExclusionConstraint where must be a non-empty literal string.",
-									field.expr.pos);
+								Context.error("@:railsMigration ExclusionConstraint where must be a non-empty literal string.", field.expr.pos);
 							}
 							options.push("where: " + quoteRubyStringForCode(where == null ? "" : where));
 						case "deferrable":
@@ -8100,7 +8046,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationForeignKeyDslInfo(expr:TypedExpr, validation:Null<RailsMigrationValidationContext>, fromTable:String,
-			?allowIfNotExists:Bool = true):{options:Array<String>, ifNotExists:Bool} {
+			?allowIfNotExists:Bool = true):{
+		options:Array<String>,
+		ifNotExists:Bool
+	} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
@@ -8212,12 +8161,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsMigrationExtensionName(expr:TypedExpr, label:String):String {
 		var value = typedStringLiteral(expr);
-		if (value == null
-			|| value == ""
-			|| value.indexOf("..") != -1
-			|| !~/^[a-z][a-z0-9_-]*(\.[a-z][a-z0-9_-]*)*$/.match(value)) {
-			Context.error('@:railsMigration ${label} must be a literal database extension name such as "pgcrypto" or "pg_catalog.plpgsql".',
-				expr.pos);
+		if (value == null || value == "" || value.indexOf("..") != -1 || !~/^[a-z][a-z0-9_-]*(\.[a-z][a-z0-9_-]*)*$/.match(value)) {
+			Context.error('@:railsMigration ${label} must be a literal database extension name such as "pgcrypto" or "pg_catalog.plpgsql".', expr.pos);
 			return "invalid";
 		}
 		return value;
@@ -8235,8 +8180,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function railsMigrationEnumTypeName(expr:TypedExpr, label:String):String {
 		var value = typedStringLiteral(expr);
 		if (value == null || value == "" || !~/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)?$/.match(value)) {
-			Context.error('@:railsMigration ${label} must be a literal enum type name such as "audit_status" or "reporting.audit_status".',
-				expr.pos);
+			Context.error('@:railsMigration ${label} must be a literal enum type name such as "audit_status" or "reporting.audit_status".', expr.pos);
 			return "invalid";
 		}
 		return value;
@@ -10558,8 +10502,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return {options: optionAttrs, html: htmlAttrs};
 	}
 
-	static function addTemplateSelectAttr(optionAttrs:Array<String>, htmlAttrs:Array<String>, dataAttrs:Array<String>, ariaAttrs:Array<String>,
-			name:String, value:String):Void {
+	static function addTemplateSelectAttr(optionAttrs:Array<String>, htmlAttrs:Array<String>, dataAttrs:Array<String>, ariaAttrs:Array<String>, name:String,
+			value:String):Void {
 		switch (name) {
 			case "selected" | "prompt" | "include_blank" | "include-blank":
 				optionAttrs.push(helperKwargName(name) + ": " + value);
@@ -10575,13 +10519,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			for (attr in expectTemplateArray(attrs, "HtmlNode.FormFieldErrors attrs must be an array literal."))
 				lowerTemplateAttr(attr, scope)
 		].join("");
-		return "<% "
-			+ form
-			+ ".object.errors["
-			+ fieldName
-			+ "].each do |message| %><p"
-			+ attrText
-			+ "><%= message %></p><% end %>";
+		var errors = "(" + form + ".object.respond_to?(:errors) ? " + form + ".object.errors[" + fieldName + "] : [])";
+		return "<% " + errors + ".each do |message| %><p" + attrText + "><%= message %></p><% end %>";
 	}
 
 	static function lowerTemplateFormSubmit(text:TypedExpr, attrs:TypedExpr, scope:RailsTemplateScope):String {
@@ -10761,7 +10700,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("line_width: " + printTemplateExpr(lineWidth, scope));
 		}
 		if (!isTemplateNull(breakSequence)) {
-			args.push("break_sequence: " + quoteRubyStringForCode(expectTemplateString(breakSequence, "HtmlNode.WordWrap breakSequence must be a string literal.")));
+			args.push("break_sequence: "
+				+ quoteRubyStringForCode(expectTemplateString(breakSequence, "HtmlNode.WordWrap breakSequence must be a string literal.")));
 		}
 		return "<%= word_wrap " + args.join(", ") + " %>";
 	}
@@ -10951,12 +10891,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push("area_code: " + printTemplateExpr(areaCode, scope));
 		}
 		if (!isTemplateNull(delimiter)) {
-			args.push("delimiter: "
-				+ quoteRubyStringForCode(expectTemplateString(delimiter, "HtmlNode.NumberToPhone delimiter must be a string literal.")));
+			args.push("delimiter: " + quoteRubyStringForCode(expectTemplateString(delimiter, "HtmlNode.NumberToPhone delimiter must be a string literal.")));
 		}
 		if (!isTemplateNull(extension)) {
-			args.push("extension: "
-				+ quoteRubyStringForCode(expectTemplateString(extension, "HtmlNode.NumberToPhone extension must be a string literal.")));
+			args.push("extension: " + quoteRubyStringForCode(expectTemplateString(extension, "HtmlNode.NumberToPhone extension must be a string literal.")));
 		}
 		if (!isTemplateNull(countryCode)) {
 			args.push("country_code: " + printTemplateExpr(countryCode, scope));
@@ -12144,7 +12082,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _ if (params.length > 1): params[1];
 			case _: null;
 		}
-		return options == null ? [] : metadataObjectOptions(options);
+		return options == null ? [] : metadataObjectOptions(options, true);
 	}
 
 	static function railsEnumOptions(meta:Null<haxe.macro.Type.MetaAccess>):String {
@@ -12248,19 +12186,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return names;
 	}
 
-	static function metadataObjectOptions(expr:haxe.macro.Expr):Array<String> {
+	static function metadataObjectOptions(expr:haxe.macro.Expr, railsValidationRegex:Bool = false):Array<String> {
 		return switch (expr.expr) {
 			case EObjectDecl(fields):
 				[
 					for (field in fields)
-						RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr)
+						RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr, railsValidationRegex)
 				];
 			case _:
 				[];
 		}
 	}
 
-	static function metadataValueCode(expr:haxe.macro.Expr):String {
+	static function metadataValueCode(expr:haxe.macro.Expr, railsValidationRegex:Bool = false):String {
 		return switch (expr.expr) {
 			case EConst(CIdent("true")): "true";
 			case EConst(CIdent("false")): "false";
@@ -12268,19 +12206,45 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case EConst(CString(value, _)): quoteRubyStringForCode(value);
 			case EConst(CInt(value, _)): value;
 			case EConst(CFloat(value, _)): value;
-			case EConst(CRegexp(pattern, options)): rubyRegexLiteral(pattern, options);
-			case EArrayDecl(values): "[" + [for (value in values) metadataValueCode(value)].join(", ") + "]";
+			case EConst(CRegexp(pattern, options)): rubyRegexLiteral(pattern, options, railsValidationRegex);
+			case EArrayDecl(values): "[" + [for (value in values) metadataValueCode(value, railsValidationRegex)].join(", ") + "]";
 			case EObjectDecl(fields): "{" + [
 					for (field in fields)
-						RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr)
+						RubyNaming.toMethodName(field.field) + ": " + metadataValueCode(field.expr, railsValidationRegex)
 				].join(", ") + "}";
 			case _: "nil";
 		}
 	}
 
-	static function rubyRegexLiteral(pattern:String, options:String):String {
+	static function rubyRegexLiteral(pattern:String, options:String, railsValidationRegex:Bool = false):String {
 		var flags = options == "i" ? "i" : "";
+		if (railsValidationRegex) {
+			pattern = railsValidationRegexPattern(pattern);
+		}
 		return "/" + pattern + "/" + flags;
+	}
+
+	static function railsValidationRegexPattern(pattern:String):String {
+		if (StringTools.startsWith(pattern, "^")) {
+			pattern = "\\A" + pattern.substr(1);
+		}
+		if (StringTools.endsWith(pattern, "$") && !hasEscapedFinalDollar(pattern)) {
+			pattern = pattern.substr(0, pattern.length - 1) + "\\z";
+		}
+		return pattern;
+	}
+
+	static function hasEscapedFinalDollar(pattern:String):Bool {
+		if (pattern.length < 2 || pattern.charAt(pattern.length - 1) != "$") {
+			return false;
+		}
+		var slashCount = 0;
+		var index = pattern.length - 2;
+		while (index >= 0 && pattern.charAt(index) == "\\") {
+			slashCount++;
+			index--;
+		}
+		return slashCount % 2 == 1;
 	}
 
 	static function railsColumnBoolOption(meta:Null<haxe.macro.Type.MetaAccess>, name:String, fallback:Bool):Bool {

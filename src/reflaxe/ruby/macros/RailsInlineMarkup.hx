@@ -891,8 +891,7 @@ private class RailsMarkupParser {
 					Context.error('Rails HHX <phone_to> accepts only text/expression children when text=... is omitted.', pos);
 				}
 				var phoneAttrs = attrsExcept(attrs, ["phone", "text"]);
-				macro @:pos(pos) rails.action_view.HtmlNode.PhoneTo($phone, ${label == null ? (macro null) : label},
-					${mkArray(phoneAttrs.map(mkAttr), pos)});
+				macro @:pos(pos) rails.action_view.HtmlNode.PhoneTo($phone, ${label == null ? (macro null) : label}, ${mkArray(phoneAttrs.map(mkAttr), pos)});
 			case "sms_to":
 				var phone = requireAttrValue(attrs, "phone", pos);
 				var explicitText = attrValue(attrs, "text");
@@ -979,8 +978,7 @@ private class RailsMarkupParser {
 				var lastWordConnector = attrValue(attrs, "last_word_connector");
 				rejectUnknownAttrs(name, attrs, ["items", "words_connector", "two_words_connector", "last_word_connector"], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.ToSentence($items, ${wordsConnector == null ? (macro null) : wordsConnector},
-					${twoWordsConnector == null ? (macro null) : twoWordsConnector},
-					${lastWordConnector == null ? (macro null) : lastWordConnector});
+					${twoWordsConnector == null ? (macro null) : twoWordsConnector}, ${lastWordConnector == null ? (macro null) : lastWordConnector});
 			case "escape_once":
 				rejectChildren(name, children, pos);
 				var html = requireAttrValue(attrs, "html", pos);
@@ -1035,15 +1033,13 @@ private class RailsMarkupParser {
 				var to = requireAttrValue(attrs, "to", pos);
 				var includeSeconds = attrValue(attrs, "include_seconds");
 				rejectUnknownAttrs(name, attrs, ["from", "to", "include_seconds"], pos);
-				macro @:pos(pos) rails.action_view.HtmlNode.DistanceOfTimeInWords($from, $to,
-					${includeSeconds == null ? (macro null) : includeSeconds});
+				macro @:pos(pos) rails.action_view.HtmlNode.DistanceOfTimeInWords($from, $to, ${includeSeconds == null ? (macro null) : includeSeconds});
 			case "time_tag":
 				rejectChildren(name, children, pos);
 				var time = requireAttrValue(attrs, "time", pos);
 				var label = attrValue(attrs, "text");
 				var timeTagAttrs = attrsExcept(attrs, ["time", "text"]);
-				macro @:pos(pos) rails.action_view.HtmlNode.TimeTag($time, ${label == null ? (macro null) : label},
-					${mkArray(timeTagAttrs.map(mkAttr), pos)});
+				macro @:pos(pos) rails.action_view.HtmlNode.TimeTag($time, ${label == null ? (macro null) : label}, ${mkArray(timeTagAttrs.map(mkAttr), pos)});
 			case "number_to_currency":
 				rejectChildren(name, children, pos);
 				var number = requireAttrValue(attrs, "number", pos);
@@ -1078,7 +1074,14 @@ private class RailsMarkupParser {
 				var delimiter = attrValue(attrs, "delimiter");
 				var separator = attrValue(attrs, "separator");
 				var stripInsignificantZeros = attrValue(attrs, "strip_insignificant_zeros");
-				rejectUnknownAttrs(name, attrs, ["number", "precision", "significant", "delimiter", "separator", "strip_insignificant_zeros"], pos);
+				rejectUnknownAttrs(name, attrs, [
+					"number",
+					"precision",
+					"significant",
+					"delimiter",
+					"separator",
+					"strip_insignificant_zeros"
+				], pos);
 				macro @:pos(pos) rails.action_view.HtmlNode.NumberWithPrecision($number, ${precision == null ? (macro null) : precision},
 					${significant == null ? (macro null) : significant}, ${delimiter == null ? (macro null) : delimiter},
 					${separator == null ? (macro null) : separator}, ${stripInsignificantZeros == null ? (macro null) : stripInsignificantZeros});

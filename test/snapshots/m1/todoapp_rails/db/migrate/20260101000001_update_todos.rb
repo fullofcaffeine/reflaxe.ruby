@@ -5,7 +5,6 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
       dir.up do
         change_column :todos, :title, :string, null: false
         add_foreign_key :todos, :users, column: :user_id, name: "fk_todos_users", on_delete: :cascade, if_not_exists: true, validate: false, deferrable: :deferred
-        validate_foreign_key :todos, name: "fk_todos_users"
       end
       dir.down do
         remove_foreign_key :todos, name: "fk_todos_users", if_exists: true
@@ -17,7 +16,6 @@ class UpdateTodos < ActiveRecord::Migration[7.1]
     reversible do |dir|
       dir.up do
         add_check_constraint :todos, "priority >= 0", name: "chk_todos_priority_non_negative", if_not_exists: true, validate: false
-        validate_check_constraint :todos, name: "chk_todos_priority_non_negative"
       end
       dir.down do
         remove_check_constraint :todos, name: "chk_todos_priority_non_negative", if_exists: true
