@@ -3769,6 +3769,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						RubyRawExpr(printActionControllerStoreTarget(target) + "[:notice] = " + printInlineExpr(params[0]));
 					case "alert" if (params.length == 1):
 						RubyRawExpr(printActionControllerStoreTarget(target) + "[:alert] = " + printInlineExpr(params[0]));
+					case "noticeNow" if (params.length == 1):
+						RubyRawExpr(printActionControllerStoreTarget(target) + ".now[:notice] = " + printInlineExpr(params[0]));
+					case "alertNow" if (params.length == 1):
+						RubyRawExpr(printActionControllerStoreTarget(target) + ".now[:alert] = " + printInlineExpr(params[0]));
 					case _:
 						null;
 				}

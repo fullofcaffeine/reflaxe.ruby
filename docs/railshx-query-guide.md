@@ -894,7 +894,7 @@ or `__ruby__` in app code.
 ## Example And Tests
 
 See `examples/active_record_model` for the focused query fixture and
-`examples/todoapp_rails/controllers/TodosController.hx` for controller-boundary
+`examples/todoapp_rails/src/controllers/TodosController.hx` for controller-boundary
 usage with `toArray()`.
 
 Run:

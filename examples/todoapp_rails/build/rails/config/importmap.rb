@@ -1,0 +1,5 @@
+pin "application"
+pin "@hotwired/turbo-rails", to: "turbo.min.js"
+pin "@rails/actioncable", to: "actioncable.esm.js"
+pin "railshx/todo_client", to: "railshx/todo_client.js"
+pin_all_from "app/javascript/railshx", under: "railshx"

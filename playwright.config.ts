@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: './examples/todoapp_rails/e2e',
+  testDir: './examples/todoapp_rails',
+  testMatch: ['src/e2e/**/*.spec.ts', 'tmp/e2e/generated/**/*.spec.js'],
   timeout: 30_000,
   expect: {
     timeout: 10_000,

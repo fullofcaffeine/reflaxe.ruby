@@ -1,6 +1,6 @@
 # Haxe->JavaScript client behavior for the RailsHx todoapp.
 # The Rails materializer compiles this into app/javascript/railshx/todo_client.js.
--cp examples/todoapp_rails
+-cp examples/todoapp_rails/src
 -cp std
 
 # Genes emits readable ES module JavaScript for Rails importmap assets. This is
@@ -13,7 +13,7 @@
 --macro addMetadata('@:genes.disableNativeAccessors', 'haxe.Exception')
 
 -main client.TodoClient
--js test/.generated/todoapp_rails_client/_todo_client_tmp.js
+-js examples/todoapp_rails/tmp/client/_todo_client_tmp.js
 -D source-map
 -D js-unflatten
 --dce=full

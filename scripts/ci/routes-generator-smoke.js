@@ -33,7 +33,7 @@ if (!routeEntry || routeEntry.kind !== "route_extern" || routeEntry.source !== "
 }
 
 const generated = readFileSync(outputFile, "utf8");
-const committed = readFileSync(join(root, "examples", "todoapp_rails", "src_haxe", "routes", "Routes.hx"), "utf8");
+const committed = readFileSync(join(root, "examples", "todoapp_rails", "src", "routes", "Routes.hx"), "utf8");
 if (generated !== committed) {
   console.error("Generated Routes.hx does not match the committed todoapp route helper extern.");
   process.exit(1);

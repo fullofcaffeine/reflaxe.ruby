@@ -12,6 +12,7 @@ out/
 dump/
 **/dump/
 test/.generated/
+examples/todoapp_rails/tmp/
 
 # Ruby / Rails local state
 .bundle/
@@ -19,14 +20,21 @@ vendor/bundle/
 coverage/
 tmp/
 log/
+examples/todoapp_rails/build/rails/.bundle/
+examples/todoapp_rails/build/rails/vendor/bundle/
+examples/todoapp_rails/build/rails/db/*.sqlite3*
+examples/todoapp_rails/build/rails/log/
+examples/todoapp_rails/build/rails/tmp/
+examples/todoapp_rails/build/rails/storage/
+examples/todoapp_rails/build/rails/public/assets/
 
 # Browser test artifacts
 test-results/
 playwright-report/
-examples/todoapp_rails/e2e/generated/
 
 # Release artifacts
 dist/
+examples/todoapp_rails/build/release/
 
 # Local analysis artifacts
 repomix-output*.xml

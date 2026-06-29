@@ -41,7 +41,7 @@ if [ "${#STAGED_HX_FILES[@]}" -gt 0 ]; then
         echo "[pre-commit] Skipping Rails migration source: $hx_file"
         continue
       fi
-      if [[ "$hx_file" == examples/*/src_haxe/routes/Routes.hx ]]; then
+      if [[ "$hx_file" == examples/*/src_haxe/routes/Routes.hx || "$hx_file" == examples/*/src/routes/Routes.hx ]]; then
         echo "[pre-commit] Skipping generated Rails route extern: $hx_file"
         continue
       fi

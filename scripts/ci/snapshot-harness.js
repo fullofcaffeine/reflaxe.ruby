@@ -191,7 +191,7 @@ const cases = [
   {
     name: "todoapp_rails",
     defines: ["reflaxe_ruby_rails"],
-    extraClassPaths: ["examples/todoapp_rails/src_haxe"],
+    extraClassPaths: ["examples/todoapp_rails/src"],
     files: [
       "app/haxe_gen/models/todo.rb",
       "app/haxe_gen/models/user.rb",

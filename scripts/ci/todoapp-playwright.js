@@ -6,11 +6,11 @@ const { join, resolve } = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
-const appDir = join(root, "test", ".generated", "rails_integration");
+const appDir = join(root, "examples", "todoapp_rails", "build", "rails");
 const requestedPort = process.env.RAILSHX_PLAYWRIGHT_PORT ?? process.env.PORT;
 const defaultPort = "3100";
 const bind = process.env.BIND ?? "127.0.0.1";
-const spec = process.env.RAILSHX_PLAYWRIGHT_SPEC ?? "examples/todoapp_rails/e2e";
+const spec = process.env.RAILSHX_PLAYWRIGHT_SPEC ?? "examples/todoapp_rails/src/e2e examples/todoapp_rails/tmp/e2e/generated";
 
 let server = null;
 let serverLog = "";
@@ -40,7 +40,7 @@ async function main() {
   }));
   stage("browser haxe specs compile", () => {
     run("haxe", ["examples/todoapp_rails/build-e2e.hxml"]);
-    const generatedDir = join(root, "examples", "todoapp_rails", "e2e", "generated");
+    const generatedDir = join(root, "examples", "todoapp_rails", "tmp", "e2e", "generated");
     writeFileSync(join(generatedDir, "package.json"), `${JSON.stringify({ type: "module" }, null, 2)}\n`);
     writeFileSync(join(generatedDir, "haxe_todoapp.spec.js"), 'import "./haxe_todoapp/spec.js";\n');
   });

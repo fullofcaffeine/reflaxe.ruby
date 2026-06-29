@@ -12,4 +12,6 @@ package rails.action_controller;
 extern class FlashStore extends KeyValueStore<String> {
 	public function notice(value:String):String;
 	public function alert(value:String):String;
+	public function noticeNow(value:String):String;
+	public function alertNow(value:String):String;
 }

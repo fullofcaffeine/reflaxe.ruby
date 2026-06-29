@@ -532,7 +532,7 @@ Generated Ruby:
 Models::Todo.incomplete().includes(:user).order(title: :asc).offset(20).limit(10).to_a()
 ```
 
-See `examples/todoapp_rails/controllers/TodosController.hx` for this pattern in
+See `examples/todoapp_rails/src/controllers/TodosController.hx` for this pattern in
 a Rails controller render flow.
 
 ## What Should Fail

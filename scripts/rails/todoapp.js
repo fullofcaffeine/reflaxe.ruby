@@ -15,11 +15,14 @@ const { dirname, join, relative, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
-const compiledDir = join(root, "test", ".generated", "todoapp_rails");
-const compiledClientDir = join(root, "test", ".generated", "todoapp_rails_client");
-const appDir = join(root, "test", ".generated", "rails_integration");
-const releaseArchive = join(root, "test", ".generated", "rails_integration_release.tgz");
 const exampleDir = join(root, "examples", "todoapp_rails");
+const sourceDir = join(exampleDir, "src");
+const buildDir = join(exampleDir, "build");
+const tmpDir = join(exampleDir, "tmp");
+const compiledDir = join(tmpDir, "compiler");
+const compiledClientDir = join(tmpDir, "client");
+const appDir = join(buildDir, "rails");
+const releaseArchive = join(buildDir, "release", "todoapp_rails_release.tgz");
 const port = process.env.PORT ?? "3000";
 const bind = process.env.BIND ?? "127.0.0.1";
 const reflaxeCandidates = [
@@ -94,9 +97,7 @@ function compileHaxe() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
-      "-cp",
-      join(exampleDir, "src_haxe"),
+      sourceDir,
       "-cp",
       reflaxeSrc,
       "--macro",
@@ -169,6 +170,16 @@ Rails.application.load_server
   writeFile("Rakefile", `require_relative "config/application"
 
 Rails.application.load_tasks
+`);
+
+  writeFile("AGENTS.md", `# Generated Rails App Instructions
+
+This Rails app is generated from the RailsHx todoapp source in \`examples/todoapp_rails/src/**\`.
+
+- Treat Haxe/HHX in \`../../src/**\` as the source of truth for controllers, models, routes, views, migrations, Haxe-authored tests, and Haxe-authored client/browser code.
+- Treat this directory as deployable Rails output: inspect it freely, but make durable behavior changes in \`../../src/**\` or the RailsHx compiler/materializer.
+- Runtime files such as SQLite databases, logs, tmp files, storage, local bundles, and precompiled assets are local state and should not be committed.
+- If generated Rails output looks wrong, update the Haxe source, compiler, or materializer, then run \`npm run todoapp:compile\` from the repository root.
 `);
 
   writeFile("config/boot.rb", `ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../Gemfile", __dir__)
@@ -274,7 +285,7 @@ pin_all_from "app/javascript/railshx", under: "railshx"
 `);
 
   copyFileSync(
-    join(exampleDir, "assets", "stylesheets", "application.css"),
+    join(sourceDir, "assets", "stylesheets", "application.css"),
     writeTargetPath("app/assets/stylesheets/application.css")
   );
   writeFile("app/javascript/application.js", `import "@hotwired/turbo-rails"
@@ -364,7 +375,7 @@ class ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 end
 `);
-  copyTree(join(exampleDir, "rails", "test"), join(appDir, "test"));
+  copyTree(join(sourceDir, "rails", "test"), join(appDir, "test"));
 }
 
 function ensureApp() {
@@ -448,7 +459,10 @@ function snapshot() {
   const roots = [
     join(root, "src"),
     join(root, "std"),
-    exampleDir,
+    sourceDir,
+    join(exampleDir, "build-client.hxml"),
+    join(exampleDir, "build-e2e.hxml"),
+    join(exampleDir, "README.md"),
   ];
   const entries = [];
   for (const sourceRoot of roots) {
@@ -494,6 +508,7 @@ function ensureSupportedRuby() {
 
 function buildReleaseArchive() {
   rmSync(releaseArchive, { force: true });
+  mkdirSync(dirname(releaseArchive), { recursive: true });
   runStreaming("tar", ["-czf", releaseArchive, "-C", appDir, "."]);
 }
 
@@ -590,7 +605,7 @@ function collectJsFiles(path) {
 
 function spliceRailsOwnedRouteSnippet() {
   const routesPath = writeTargetPath("config/routes.rb");
-  const snippetPath = join(exampleDir, "rails", "config", "routes_rails_owned.rb");
+  const snippetPath = join(sourceDir, "rails", "config", "routes_rails_owned.rb");
   const routes = readFileSync(routesPath, "utf8");
   const snippet = readFileSync(snippetPath, "utf8").trimEnd();
   const insertionPoint = "\nend\n";

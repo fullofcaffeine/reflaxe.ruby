@@ -31,7 +31,7 @@ const railsExamples = new Set([
 ]);
 
 const extraClassPaths = new Map([
-  ["todoapp_rails", ["src_haxe"]],
+  ["todoapp_rails", ["src"]],
 ]);
 
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
@@ -78,7 +78,7 @@ if (!reflaxeSrc) {
 const examples = readdirSync(join(root, "examples"), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name)
-  .filter((name) => existsSync(join(root, "examples", name, "Main.hx")))
+  .filter((name) => hasExampleMain(name))
   .sort();
 
 for (const example of examples) {
@@ -92,6 +92,11 @@ console.log(`[examples-compile] OK (${examples.length} Haxe examples compiled)`)
 
 function firstAvailableReflaxe() {
   return reflaxeCandidates.find((candidate) => existsSync(join(candidate, "reflaxe", "ReflectCompiler.hx")));
+}
+
+function hasExampleMain(example) {
+  const exampleDir = join(root, "examples", example);
+  return existsSync(join(exampleDir, "Main.hx")) || existsSync(join(exampleDir, "src", "Main.hx"));
 }
 
 function assertExampleCoverage(example) {

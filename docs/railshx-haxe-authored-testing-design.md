@@ -437,17 +437,17 @@ vanilla tests should live outside generated roots and must never be overwritten.
 
 The todoapp should keep its current vanilla Rails fixtures:
 
-- `examples/todoapp_rails/rails/test/models/todo_test.rb`
-- `examples/todoapp_rails/rails/test/models/user_test.rb`
-- `examples/todoapp_rails/rails/test/controllers/todos_controller_test.rb`
-- `examples/todoapp_rails/e2e/todoapp.spec.ts`
+- `examples/todoapp_rails/src/rails/test/models/todo_test.rb`
+- `examples/todoapp_rails/src/rails/test/models/user_test.rb`
+- `examples/todoapp_rails/src/rails/test/controllers/todos_controller_test.rb`
+- `examples/todoapp_rails/src/e2e/todoapp.spec.ts`
 
 The first Haxe-authored test example should live alongside them, not replace
 them:
 
-- `examples/todoapp_rails/test_haxe/models/TodoTest.hx`
-- `examples/todoapp_rails/test_haxe/controllers/TodosControllerTest.hx`
-- `examples/todoapp_rails/e2e_haxe/TodoappBrowserSpec.hx`
+- `examples/todoapp_rails/src/test_haxe/models/TodoTest.hx`
+- `examples/todoapp_rails/src/test_haxe/controllers/TodosControllerTest.hx`
+- `examples/todoapp_rails/src/e2e_haxe/TodoappBrowserSpec.hx`
 
 The materializer should copy vanilla tests and generated tests into the
 disposable Rails app. This lets reviewers compare the vanilla and Haxe-authored

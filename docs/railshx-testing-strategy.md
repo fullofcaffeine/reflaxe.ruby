@@ -141,9 +141,9 @@ TypeScript/JavaScript tests remain supported per test:
   contracts, route constants, and typed client payloads before lowering to
   Playwright/Vitest-compatible JavaScript or TypeScript.
 - The current todoapp browser slice uses
-  `examples/todoapp_rails/e2e_haxe/TodoappBrowserSpec.hx` plus
+  `examples/todoapp_rails/src/e2e_haxe/TodoappBrowserSpec.hx` plus
   `examples/todoapp_rails/build-e2e.hxml` to emit Genes ES modules under
-  `examples/todoapp_rails/e2e/generated/**`. The full Playwright sentinel
+  `examples/todoapp_rails/tmp/e2e/generated/**`. The full Playwright sentinel
   compiles those Haxe specs before booting Rails, while
   `npm run test:haxe-playwright` keeps the generated JavaScript shape pinned
   without launching a browser.

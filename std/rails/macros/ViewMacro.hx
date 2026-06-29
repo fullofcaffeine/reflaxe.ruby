@@ -37,6 +37,25 @@ class ViewMacro {
 		#end
 	}
 
+	public static macro function renderTemplateWithLayoutStatus<TLocals>(controller:Expr, template:ExprOf<rails.action_view.Template<TLocals>>,
+			locals:ExprOf<TLocals>, layout:ExprOf<rails.action_view.Layout>, status:ExprOf<rails.action_controller.Status>):Expr {
+		#if macro
+		var templatePath = extractTemplatePath(template);
+		var layoutPath = extractLayoutPath(layout);
+		validateLocalsObject(locals);
+		validateLocalsType(template, locals);
+		var railsLocals = railsLocalsObject(locals);
+		return macro $controller.render({
+			template: $v{templatePath},
+			locals: $railsLocals,
+			layout: $v{layoutPath},
+			status: $status
+		});
+		#else
+		return macro null;
+		#end
+	}
+
 	#if macro
 	static function extractTemplatePath(template:Expr):String {
 		return switch (unwrapTypedMarker(template).expr) {

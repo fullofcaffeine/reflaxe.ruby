@@ -511,8 +511,8 @@ default.
 - `scripts/ci/routes-generator-smoke.js` covers Rails-owned route helper extern
   generation and Haxe-owned parity checks.
 - `examples/todoapp_rails` is the end-to-end dogfood app. Its
-  `src_haxe/routes/AppRoutes.hx` owns the greenfield routes, while
-  `rails/config/routes_rails_owned.rb` demonstrates a Rails-owned adoption
+  `src/routes/AppRoutes.hx` owns the greenfield routes, while
+  `src/rails/config/routes_rails_owned.rb` demonstrates a Rails-owned adoption
   route that still appears in typed `Routes.hx`.
 - `test/snapshots/m1/todoapp_rails/config/routes.rb` and
   `test/snapshots/m1/todoapp_rails/.railshx/routes.haxe.json` prove the

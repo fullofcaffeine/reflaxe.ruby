@@ -127,7 +127,7 @@ The dedicated CI production dogfood job runs the underlying `npm run test:todoap
 on the pinned Ruby lane. That command compiles server Haxe/HHX and Haxe-authored
 client JS, materializes the Rails app, runs migrations/tests, runs
 `zeitwerk:check`, precompiles production assets, creates
-`test/.generated/rails_integration_release.tgz`, and verifies the archive
+`examples/todoapp_rails/build/release/todoapp_rails_release.tgz`, and verifies the archive
 contains generated RailsHx Ruby, ERB, JS, migrations, and initializer files.
 
 For a generated or adopted Rails app, also run:

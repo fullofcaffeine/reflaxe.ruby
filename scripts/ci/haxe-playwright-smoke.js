@@ -5,7 +5,7 @@ const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
-const generatedDir = join(root, "examples", "todoapp_rails", "e2e", "generated");
+const generatedDir = join(root, "examples", "todoapp_rails", "tmp", "e2e", "generated");
 const wrapper = join(generatedDir, "haxe_todoapp.spec.js");
 const entry = join(generatedDir, "haxe_todoapp", "spec.js");
 const implementation = join(generatedDir, "haxe_todoapp", "e2e_haxe", "TodoappBrowserSpec.js");

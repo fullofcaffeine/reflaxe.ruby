@@ -5,221 +5,225 @@ const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
-const outputDir = join(root, "test", ".generated", "todoapp_rails");
-const clientOutputDir = join(root, "test", ".generated", "todoapp_rails_client");
 const exampleDir = join(root, "examples", "todoapp_rails");
-const invalidSourceDir = join(root, "test", ".generated", "todoapp_rails_invalid_src");
-const invalidOutputDir = join(root, "test", ".generated", "todoapp_rails_invalid_out");
-const rawErbInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_raw_erb_invalid_src");
-const rawErbInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_raw_erb_invalid_out");
-const typedTemplateInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_template_invalid_src");
-const typedTemplateInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_template_invalid_out");
-const typedPartialInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_src");
-const typedPartialInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_partial_invalid_out");
-const checkedAttrSourceDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_src");
-const checkedAttrOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_out");
-const checkedAttrInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_src");
-const checkedAttrInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_checked_attr_invalid_out");
-const pictureTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_picture_tag_invalid_src");
-const pictureTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_picture_tag_invalid_out");
-const faviconLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_favicon_link_tag_invalid_src");
-const faviconLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_favicon_link_tag_invalid_out");
-const preloadLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_src");
-const preloadLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_preload_link_tag_invalid_out");
-const javascriptIncludeTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_javascript_include_tag_invalid_src");
-const javascriptIncludeTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_javascript_include_tag_invalid_out");
-const javascriptTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_javascript_tag_invalid_src");
-const javascriptTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_javascript_tag_invalid_out");
-const autoDiscoveryLinkTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_auto_discovery_link_tag_invalid_src");
-const autoDiscoveryLinkTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_auto_discovery_link_tag_invalid_out");
-const audioTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_audio_tag_invalid_src");
-const audioTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_audio_tag_invalid_out");
-const videoTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_video_tag_invalid_src");
-const videoTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_video_tag_invalid_out");
-const phoneToInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_phone_to_invalid_src");
-const phoneToInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_phone_to_invalid_out");
-const smsToInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_sms_to_invalid_src");
-const smsToInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_sms_to_invalid_out");
-const excerptInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_src");
-const excerptInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_excerpt_invalid_out");
-const highlightInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_highlight_invalid_src");
-const highlightInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_highlight_invalid_out");
-const wordWrapInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_word_wrap_invalid_src");
-const wordWrapInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_word_wrap_invalid_out");
-const sanitizeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_sanitize_invalid_src");
-const sanitizeInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_sanitize_invalid_out");
-const sanitizeCssInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_sanitize_css_invalid_src");
-const sanitizeCssInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_sanitize_css_invalid_out");
-const stripTagsInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_src");
-const stripTagsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_strip_tags_invalid_out");
-const stripLinksInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_strip_links_invalid_src");
-const stripLinksInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_strip_links_invalid_out");
-const toSentenceInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_to_sentence_invalid_src");
-const toSentenceInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_to_sentence_invalid_out");
-const escapeOnceInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_escape_once_invalid_src");
-const escapeOnceInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_escape_once_invalid_out");
-const cdataSectionInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_cdata_section_invalid_src");
-const cdataSectionInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_cdata_section_invalid_out");
-const safeJoinInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_safe_join_invalid_src");
-const safeJoinInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_safe_join_invalid_out");
-const tokenListInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_token_list_invalid_src");
-const tokenListInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_token_list_invalid_out");
-const classNamesInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_class_names_invalid_src");
-const classNamesInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_class_names_invalid_out");
-const cycleInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_cycle_invalid_src");
-const cycleInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_cycle_invalid_out");
-const currentCycleInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_current_cycle_invalid_src");
-const currentCycleInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_current_cycle_invalid_out");
-const resetCycleInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_reset_cycle_invalid_src");
-const resetCycleInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_reset_cycle_invalid_out");
-const timeAgoInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_src");
-const timeAgoInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_ago_invalid_out");
-const distanceOfTimeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_src");
-const distanceOfTimeInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_distance_of_time_invalid_out");
-const timeTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_tag_invalid_src");
-const timeTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_tag_invalid_out");
-const numberToPhoneInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_to_phone_invalid_src");
-const numberToPhoneInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_to_phone_invalid_out");
-const numberToHumanSizeInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_to_human_size_invalid_src");
-const numberToHumanSizeInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_to_human_size_invalid_out");
-const numberWithPrecisionInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_with_precision_invalid_src");
-const numberWithPrecisionInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_with_precision_invalid_out");
-const numberWithDelimiterInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_with_delimiter_invalid_src");
-const numberWithDelimiterInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_with_delimiter_invalid_out");
-const buttonTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_button_tag_invalid_src");
-const buttonTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_button_tag_invalid_out");
-const submitTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_submit_tag_invalid_src");
-const submitTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_submit_tag_invalid_out");
-const textFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_text_field_tag_invalid_src");
-const textFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_text_field_tag_invalid_out");
-const searchFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_search_field_tag_invalid_src");
-const searchFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_search_field_tag_invalid_out");
-const emailFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_email_field_tag_invalid_src");
-const emailFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_email_field_tag_invalid_out");
-const telephoneFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_telephone_field_tag_invalid_src");
-const telephoneFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_telephone_field_tag_invalid_out");
-const urlFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_url_field_tag_invalid_src");
-const urlFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_url_field_tag_invalid_out");
-const numberFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_number_field_tag_invalid_src");
-const numberFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_number_field_tag_invalid_out");
-const rangeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_range_field_tag_invalid_src");
-const rangeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_range_field_tag_invalid_out");
-const colorFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_color_field_tag_invalid_src");
-const colorFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_color_field_tag_invalid_out");
-const dateFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_date_field_tag_invalid_src");
-const dateFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_date_field_tag_invalid_out");
-const timeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_time_field_tag_invalid_src");
-const timeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_time_field_tag_invalid_out");
-const datetimeFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_datetime_field_tag_invalid_src");
-const datetimeFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_datetime_field_tag_invalid_out");
-const monthFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_month_field_tag_invalid_src");
-const monthFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_month_field_tag_invalid_out");
-const weekFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_week_field_tag_invalid_src");
-const weekFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_week_field_tag_invalid_out");
-const passwordFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_src");
-const passwordFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_password_field_tag_invalid_out");
-const hiddenFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_src");
-const hiddenFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_hidden_field_tag_invalid_out");
-const fileFieldTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_file_field_tag_invalid_src");
-const fileFieldTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_file_field_tag_invalid_out");
-const textAreaTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_text_area_tag_invalid_src");
-const textAreaTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_text_area_tag_invalid_out");
-const checkBoxTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_check_box_tag_invalid_src");
-const checkBoxTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_check_box_tag_invalid_out");
-const radioButtonTagInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_radio_button_tag_invalid_src");
-const radioButtonTagInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_radio_button_tag_invalid_out");
-const formSelectInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_form_select_invalid_src");
-const formSelectInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_form_select_invalid_out");
-const formSearchFieldInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_form_search_field_invalid_src");
-const formSearchFieldInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_form_search_field_invalid_out");
-const formEmailFieldInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_form_email_field_invalid_src");
-const formEmailFieldInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_form_email_field_invalid_out");
-const typedRouteInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_src");
-const typedRouteInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_invalid_out");
-const typedRouteParamInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_src");
-const typedRouteParamInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_route_param_invalid_out");
-const typedFormInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_src");
-const typedFormInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_form_invalid_out");
-const typedSlotInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_slot_invalid_src");
-const typedSlotInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_slot_invalid_out");
-const templateRefInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_ref_invalid_src");
-const templateRefInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_ref_invalid_out");
-const templatePathInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_src");
-const templatePathInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_path_invalid_out");
-const templateBackslashPathInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_template_backslash_path_invalid_src");
-const templateBackslashPathInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_template_backslash_path_invalid_out");
-const rawLayoutInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_raw_layout_invalid_src");
-const rawLayoutInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_raw_layout_invalid_out");
-const typedFieldInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_field_invalid_src");
-const typedFieldInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_field_invalid_out");
-const typedParamsInvalidSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_params_invalid_src");
-const typedParamsInvalidOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_params_invalid_out");
-const typedParamsUnknownSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_params_unknown_src");
-const typedParamsUnknownOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_params_unknown_out");
-const typedRequestParamsUnknownSourceDir = join(root, "test", ".generated", "todoapp_rails_typed_request_params_unknown_src");
-const typedRequestParamsUnknownOutputDir = join(root, "test", ".generated", "todoapp_rails_typed_request_params_unknown_out");
-const migrationDuplicateTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_table_src");
-const migrationDuplicateTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_table_out");
-const migrationDuplicateFileSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_file_src");
-const migrationDuplicateFileOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_file_out");
-const migrationNonModelSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_non_model_src");
-const migrationNonModelOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_non_model_out");
-const migrationBadTimestampSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_timestamp_src");
-const migrationBadTimestampOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_timestamp_out");
-const migrationUnknownOptionSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_option_src");
-const migrationUnknownOptionOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_option_out");
-const migrationInvalidColumnOptionSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_invalid_column_option_src");
-const migrationInvalidColumnOptionOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_invalid_column_option_out");
-const migrationBadOperationSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_operation_src");
-const migrationBadOperationOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_bad_operation_out");
-const migrationUnsafeSqlSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_sql_src");
-const migrationUnsafeSqlOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_sql_out");
-const migrationDuplicateTimestampSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_timestamp_src");
-const migrationDuplicateTimestampOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_timestamp_out");
-const migrationForeignKeyOrderSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_foreign_key_order_src");
-const migrationForeignKeyOrderOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_foreign_key_order_out");
-const migrationIrreversibleOperationSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_operation_src");
-const migrationIrreversibleOperationOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_operation_out");
-const migrationIrreversibleChangeTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_change_table_src");
-const migrationIrreversibleChangeTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_irreversible_change_table_out");
-const migrationUnknownTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_table_src");
-const migrationUnknownTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_table_out");
-const migrationUnknownColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_src");
-const migrationUnknownColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unknown_column_out");
-const migrationUnsafeIndexNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_index_name_src");
-const migrationUnsafeIndexNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_index_name_out");
-const migrationUnsafeForeignKeyNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_foreign_key_name_src");
-const migrationUnsafeForeignKeyNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_foreign_key_name_out");
-const migrationUnsafeReferenceForeignKeyNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_reference_foreign_key_name_src");
-const migrationUnsafeReferenceForeignKeyNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_reference_foreign_key_name_out");
-const migrationUnsafeCheckConstraintNameSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_check_constraint_name_src");
-const migrationUnsafeCheckConstraintNameOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_check_constraint_name_out");
-const migrationExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_src");
-const migrationExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_external_table_out");
-const migrationUnsafeExternalTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_external_table_src");
-const migrationUnsafeExternalTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_unsafe_external_table_out");
-const migrationDropTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_src");
-const migrationDropTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_drop_table_out");
-const migrationSnapshotOpsSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_snapshot_ops_src");
-const migrationSnapshotOpsOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_snapshot_ops_out");
-const migrationConcurrentIndexWithoutDisabledDdlSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_concurrent_index_without_disabled_ddl_src");
-const migrationConcurrentIndexWithoutDisabledDdlOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_concurrent_index_without_disabled_ddl_out");
-const migrationHistoricalAddColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_historical_add_column_src");
-const migrationHistoricalAddColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_historical_add_column_out");
-const migrationDuplicateAddColumnSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_add_column_src");
-const migrationDuplicateAddColumnOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_duplicate_add_column_out");
-const migrationReferenceIndexConflictSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_reference_index_conflict_src");
-const migrationReferenceIndexConflictOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_reference_index_conflict_out");
-const migrationPolymorphicReferenceForeignKeySourceDir = join(root, "test", ".generated", "todoapp_rails_migration_polymorphic_reference_foreign_key_src");
-const migrationPolymorphicReferenceForeignKeyOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_polymorphic_reference_foreign_key_out");
-const migrationEmptyChangeTableSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_src");
-const migrationEmptyChangeTableOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_out");
-const migrationChangeTableTimestampConflictSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_change_table_timestamp_conflict_src");
-const migrationChangeTableTimestampConflictOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_change_table_timestamp_conflict_out");
-const migrationEmptyChangeTableRemoveColumnsSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_columns_src");
-const migrationEmptyChangeTableRemoveColumnsOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_columns_out");
-const migrationEmptyChangeTableRemoveIndexesSourceDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_indexes_src");
-const migrationEmptyChangeTableRemoveIndexesOutputDir = join(root, "test", ".generated", "todoapp_rails_migration_empty_change_table_remove_indexes_out");
+const sourceDir = join(exampleDir, "src");
+const appSourceDir = sourceDir;
+const tmpDir = join(exampleDir, "tmp");
+const smokeTmpDir = join(tmpDir, "smoke");
+const outputDir = join(tmpDir, "compiler");
+const clientOutputDir = join(tmpDir, "client");
+const invalidSourceDir = join(smokeTmpDir, "invalid_src");
+const invalidOutputDir = join(smokeTmpDir, "invalid_out");
+const rawErbInvalidSourceDir = join(smokeTmpDir, "raw_erb_invalid_src");
+const rawErbInvalidOutputDir = join(smokeTmpDir, "raw_erb_invalid_out");
+const typedTemplateInvalidSourceDir = join(smokeTmpDir, "typed_template_invalid_src");
+const typedTemplateInvalidOutputDir = join(smokeTmpDir, "typed_template_invalid_out");
+const typedPartialInvalidSourceDir = join(smokeTmpDir, "typed_partial_invalid_src");
+const typedPartialInvalidOutputDir = join(smokeTmpDir, "typed_partial_invalid_out");
+const checkedAttrSourceDir = join(smokeTmpDir, "checked_attr_src");
+const checkedAttrOutputDir = join(smokeTmpDir, "checked_attr_out");
+const checkedAttrInvalidSourceDir = join(smokeTmpDir, "checked_attr_invalid_src");
+const checkedAttrInvalidOutputDir = join(smokeTmpDir, "checked_attr_invalid_out");
+const pictureTagInvalidSourceDir = join(smokeTmpDir, "picture_tag_invalid_src");
+const pictureTagInvalidOutputDir = join(smokeTmpDir, "picture_tag_invalid_out");
+const faviconLinkTagInvalidSourceDir = join(smokeTmpDir, "favicon_link_tag_invalid_src");
+const faviconLinkTagInvalidOutputDir = join(smokeTmpDir, "favicon_link_tag_invalid_out");
+const preloadLinkTagInvalidSourceDir = join(smokeTmpDir, "preload_link_tag_invalid_src");
+const preloadLinkTagInvalidOutputDir = join(smokeTmpDir, "preload_link_tag_invalid_out");
+const javascriptIncludeTagInvalidSourceDir = join(smokeTmpDir, "javascript_include_tag_invalid_src");
+const javascriptIncludeTagInvalidOutputDir = join(smokeTmpDir, "javascript_include_tag_invalid_out");
+const javascriptTagInvalidSourceDir = join(smokeTmpDir, "javascript_tag_invalid_src");
+const javascriptTagInvalidOutputDir = join(smokeTmpDir, "javascript_tag_invalid_out");
+const autoDiscoveryLinkTagInvalidSourceDir = join(smokeTmpDir, "auto_discovery_link_tag_invalid_src");
+const autoDiscoveryLinkTagInvalidOutputDir = join(smokeTmpDir, "auto_discovery_link_tag_invalid_out");
+const audioTagInvalidSourceDir = join(smokeTmpDir, "audio_tag_invalid_src");
+const audioTagInvalidOutputDir = join(smokeTmpDir, "audio_tag_invalid_out");
+const videoTagInvalidSourceDir = join(smokeTmpDir, "video_tag_invalid_src");
+const videoTagInvalidOutputDir = join(smokeTmpDir, "video_tag_invalid_out");
+const phoneToInvalidSourceDir = join(smokeTmpDir, "phone_to_invalid_src");
+const phoneToInvalidOutputDir = join(smokeTmpDir, "phone_to_invalid_out");
+const smsToInvalidSourceDir = join(smokeTmpDir, "sms_to_invalid_src");
+const smsToInvalidOutputDir = join(smokeTmpDir, "sms_to_invalid_out");
+const excerptInvalidSourceDir = join(smokeTmpDir, "excerpt_invalid_src");
+const excerptInvalidOutputDir = join(smokeTmpDir, "excerpt_invalid_out");
+const highlightInvalidSourceDir = join(smokeTmpDir, "highlight_invalid_src");
+const highlightInvalidOutputDir = join(smokeTmpDir, "highlight_invalid_out");
+const wordWrapInvalidSourceDir = join(smokeTmpDir, "word_wrap_invalid_src");
+const wordWrapInvalidOutputDir = join(smokeTmpDir, "word_wrap_invalid_out");
+const sanitizeInvalidSourceDir = join(smokeTmpDir, "sanitize_invalid_src");
+const sanitizeInvalidOutputDir = join(smokeTmpDir, "sanitize_invalid_out");
+const sanitizeCssInvalidSourceDir = join(smokeTmpDir, "sanitize_css_invalid_src");
+const sanitizeCssInvalidOutputDir = join(smokeTmpDir, "sanitize_css_invalid_out");
+const stripTagsInvalidSourceDir = join(smokeTmpDir, "strip_tags_invalid_src");
+const stripTagsInvalidOutputDir = join(smokeTmpDir, "strip_tags_invalid_out");
+const stripLinksInvalidSourceDir = join(smokeTmpDir, "strip_links_invalid_src");
+const stripLinksInvalidOutputDir = join(smokeTmpDir, "strip_links_invalid_out");
+const toSentenceInvalidSourceDir = join(smokeTmpDir, "to_sentence_invalid_src");
+const toSentenceInvalidOutputDir = join(smokeTmpDir, "to_sentence_invalid_out");
+const escapeOnceInvalidSourceDir = join(smokeTmpDir, "escape_once_invalid_src");
+const escapeOnceInvalidOutputDir = join(smokeTmpDir, "escape_once_invalid_out");
+const cdataSectionInvalidSourceDir = join(smokeTmpDir, "cdata_section_invalid_src");
+const cdataSectionInvalidOutputDir = join(smokeTmpDir, "cdata_section_invalid_out");
+const safeJoinInvalidSourceDir = join(smokeTmpDir, "safe_join_invalid_src");
+const safeJoinInvalidOutputDir = join(smokeTmpDir, "safe_join_invalid_out");
+const tokenListInvalidSourceDir = join(smokeTmpDir, "token_list_invalid_src");
+const tokenListInvalidOutputDir = join(smokeTmpDir, "token_list_invalid_out");
+const classNamesInvalidSourceDir = join(smokeTmpDir, "class_names_invalid_src");
+const classNamesInvalidOutputDir = join(smokeTmpDir, "class_names_invalid_out");
+const cycleInvalidSourceDir = join(smokeTmpDir, "cycle_invalid_src");
+const cycleInvalidOutputDir = join(smokeTmpDir, "cycle_invalid_out");
+const currentCycleInvalidSourceDir = join(smokeTmpDir, "current_cycle_invalid_src");
+const currentCycleInvalidOutputDir = join(smokeTmpDir, "current_cycle_invalid_out");
+const resetCycleInvalidSourceDir = join(smokeTmpDir, "reset_cycle_invalid_src");
+const resetCycleInvalidOutputDir = join(smokeTmpDir, "reset_cycle_invalid_out");
+const timeAgoInvalidSourceDir = join(smokeTmpDir, "time_ago_invalid_src");
+const timeAgoInvalidOutputDir = join(smokeTmpDir, "time_ago_invalid_out");
+const distanceOfTimeInvalidSourceDir = join(smokeTmpDir, "distance_of_time_invalid_src");
+const distanceOfTimeInvalidOutputDir = join(smokeTmpDir, "distance_of_time_invalid_out");
+const timeTagInvalidSourceDir = join(smokeTmpDir, "time_tag_invalid_src");
+const timeTagInvalidOutputDir = join(smokeTmpDir, "time_tag_invalid_out");
+const numberToPhoneInvalidSourceDir = join(smokeTmpDir, "number_to_phone_invalid_src");
+const numberToPhoneInvalidOutputDir = join(smokeTmpDir, "number_to_phone_invalid_out");
+const numberToHumanSizeInvalidSourceDir = join(smokeTmpDir, "number_to_human_size_invalid_src");
+const numberToHumanSizeInvalidOutputDir = join(smokeTmpDir, "number_to_human_size_invalid_out");
+const numberWithPrecisionInvalidSourceDir = join(smokeTmpDir, "number_with_precision_invalid_src");
+const numberWithPrecisionInvalidOutputDir = join(smokeTmpDir, "number_with_precision_invalid_out");
+const numberWithDelimiterInvalidSourceDir = join(smokeTmpDir, "number_with_delimiter_invalid_src");
+const numberWithDelimiterInvalidOutputDir = join(smokeTmpDir, "number_with_delimiter_invalid_out");
+const buttonTagInvalidSourceDir = join(smokeTmpDir, "button_tag_invalid_src");
+const buttonTagInvalidOutputDir = join(smokeTmpDir, "button_tag_invalid_out");
+const submitTagInvalidSourceDir = join(smokeTmpDir, "submit_tag_invalid_src");
+const submitTagInvalidOutputDir = join(smokeTmpDir, "submit_tag_invalid_out");
+const textFieldTagInvalidSourceDir = join(smokeTmpDir, "text_field_tag_invalid_src");
+const textFieldTagInvalidOutputDir = join(smokeTmpDir, "text_field_tag_invalid_out");
+const searchFieldTagInvalidSourceDir = join(smokeTmpDir, "search_field_tag_invalid_src");
+const searchFieldTagInvalidOutputDir = join(smokeTmpDir, "search_field_tag_invalid_out");
+const emailFieldTagInvalidSourceDir = join(smokeTmpDir, "email_field_tag_invalid_src");
+const emailFieldTagInvalidOutputDir = join(smokeTmpDir, "email_field_tag_invalid_out");
+const telephoneFieldTagInvalidSourceDir = join(smokeTmpDir, "telephone_field_tag_invalid_src");
+const telephoneFieldTagInvalidOutputDir = join(smokeTmpDir, "telephone_field_tag_invalid_out");
+const urlFieldTagInvalidSourceDir = join(smokeTmpDir, "url_field_tag_invalid_src");
+const urlFieldTagInvalidOutputDir = join(smokeTmpDir, "url_field_tag_invalid_out");
+const numberFieldTagInvalidSourceDir = join(smokeTmpDir, "number_field_tag_invalid_src");
+const numberFieldTagInvalidOutputDir = join(smokeTmpDir, "number_field_tag_invalid_out");
+const rangeFieldTagInvalidSourceDir = join(smokeTmpDir, "range_field_tag_invalid_src");
+const rangeFieldTagInvalidOutputDir = join(smokeTmpDir, "range_field_tag_invalid_out");
+const colorFieldTagInvalidSourceDir = join(smokeTmpDir, "color_field_tag_invalid_src");
+const colorFieldTagInvalidOutputDir = join(smokeTmpDir, "color_field_tag_invalid_out");
+const dateFieldTagInvalidSourceDir = join(smokeTmpDir, "date_field_tag_invalid_src");
+const dateFieldTagInvalidOutputDir = join(smokeTmpDir, "date_field_tag_invalid_out");
+const timeFieldTagInvalidSourceDir = join(smokeTmpDir, "time_field_tag_invalid_src");
+const timeFieldTagInvalidOutputDir = join(smokeTmpDir, "time_field_tag_invalid_out");
+const datetimeFieldTagInvalidSourceDir = join(smokeTmpDir, "datetime_field_tag_invalid_src");
+const datetimeFieldTagInvalidOutputDir = join(smokeTmpDir, "datetime_field_tag_invalid_out");
+const monthFieldTagInvalidSourceDir = join(smokeTmpDir, "month_field_tag_invalid_src");
+const monthFieldTagInvalidOutputDir = join(smokeTmpDir, "month_field_tag_invalid_out");
+const weekFieldTagInvalidSourceDir = join(smokeTmpDir, "week_field_tag_invalid_src");
+const weekFieldTagInvalidOutputDir = join(smokeTmpDir, "week_field_tag_invalid_out");
+const passwordFieldTagInvalidSourceDir = join(smokeTmpDir, "password_field_tag_invalid_src");
+const passwordFieldTagInvalidOutputDir = join(smokeTmpDir, "password_field_tag_invalid_out");
+const hiddenFieldTagInvalidSourceDir = join(smokeTmpDir, "hidden_field_tag_invalid_src");
+const hiddenFieldTagInvalidOutputDir = join(smokeTmpDir, "hidden_field_tag_invalid_out");
+const fileFieldTagInvalidSourceDir = join(smokeTmpDir, "file_field_tag_invalid_src");
+const fileFieldTagInvalidOutputDir = join(smokeTmpDir, "file_field_tag_invalid_out");
+const textAreaTagInvalidSourceDir = join(smokeTmpDir, "text_area_tag_invalid_src");
+const textAreaTagInvalidOutputDir = join(smokeTmpDir, "text_area_tag_invalid_out");
+const checkBoxTagInvalidSourceDir = join(smokeTmpDir, "check_box_tag_invalid_src");
+const checkBoxTagInvalidOutputDir = join(smokeTmpDir, "check_box_tag_invalid_out");
+const radioButtonTagInvalidSourceDir = join(smokeTmpDir, "radio_button_tag_invalid_src");
+const radioButtonTagInvalidOutputDir = join(smokeTmpDir, "radio_button_tag_invalid_out");
+const formSelectInvalidSourceDir = join(smokeTmpDir, "form_select_invalid_src");
+const formSelectInvalidOutputDir = join(smokeTmpDir, "form_select_invalid_out");
+const formSearchFieldInvalidSourceDir = join(smokeTmpDir, "form_search_field_invalid_src");
+const formSearchFieldInvalidOutputDir = join(smokeTmpDir, "form_search_field_invalid_out");
+const formEmailFieldInvalidSourceDir = join(smokeTmpDir, "form_email_field_invalid_src");
+const formEmailFieldInvalidOutputDir = join(smokeTmpDir, "form_email_field_invalid_out");
+const typedRouteInvalidSourceDir = join(smokeTmpDir, "typed_route_invalid_src");
+const typedRouteInvalidOutputDir = join(smokeTmpDir, "typed_route_invalid_out");
+const typedRouteParamInvalidSourceDir = join(smokeTmpDir, "typed_route_param_invalid_src");
+const typedRouteParamInvalidOutputDir = join(smokeTmpDir, "typed_route_param_invalid_out");
+const typedFormInvalidSourceDir = join(smokeTmpDir, "typed_form_invalid_src");
+const typedFormInvalidOutputDir = join(smokeTmpDir, "typed_form_invalid_out");
+const typedSlotInvalidSourceDir = join(smokeTmpDir, "typed_slot_invalid_src");
+const typedSlotInvalidOutputDir = join(smokeTmpDir, "typed_slot_invalid_out");
+const templateRefInvalidSourceDir = join(smokeTmpDir, "template_ref_invalid_src");
+const templateRefInvalidOutputDir = join(smokeTmpDir, "template_ref_invalid_out");
+const templatePathInvalidSourceDir = join(smokeTmpDir, "template_path_invalid_src");
+const templatePathInvalidOutputDir = join(smokeTmpDir, "template_path_invalid_out");
+const templateBackslashPathInvalidSourceDir = join(smokeTmpDir, "template_backslash_path_invalid_src");
+const templateBackslashPathInvalidOutputDir = join(smokeTmpDir, "template_backslash_path_invalid_out");
+const rawLayoutInvalidSourceDir = join(smokeTmpDir, "raw_layout_invalid_src");
+const rawLayoutInvalidOutputDir = join(smokeTmpDir, "raw_layout_invalid_out");
+const typedFieldInvalidSourceDir = join(smokeTmpDir, "typed_field_invalid_src");
+const typedFieldInvalidOutputDir = join(smokeTmpDir, "typed_field_invalid_out");
+const typedParamsInvalidSourceDir = join(smokeTmpDir, "typed_params_invalid_src");
+const typedParamsInvalidOutputDir = join(smokeTmpDir, "typed_params_invalid_out");
+const typedParamsUnknownSourceDir = join(smokeTmpDir, "typed_params_unknown_src");
+const typedParamsUnknownOutputDir = join(smokeTmpDir, "typed_params_unknown_out");
+const typedRequestParamsUnknownSourceDir = join(smokeTmpDir, "typed_request_params_unknown_src");
+const typedRequestParamsUnknownOutputDir = join(smokeTmpDir, "typed_request_params_unknown_out");
+const migrationDuplicateTableSourceDir = join(smokeTmpDir, "migration_duplicate_table_src");
+const migrationDuplicateTableOutputDir = join(smokeTmpDir, "migration_duplicate_table_out");
+const migrationDuplicateFileSourceDir = join(smokeTmpDir, "migration_duplicate_file_src");
+const migrationDuplicateFileOutputDir = join(smokeTmpDir, "migration_duplicate_file_out");
+const migrationNonModelSourceDir = join(smokeTmpDir, "migration_non_model_src");
+const migrationNonModelOutputDir = join(smokeTmpDir, "migration_non_model_out");
+const migrationBadTimestampSourceDir = join(smokeTmpDir, "migration_bad_timestamp_src");
+const migrationBadTimestampOutputDir = join(smokeTmpDir, "migration_bad_timestamp_out");
+const migrationUnknownOptionSourceDir = join(smokeTmpDir, "migration_unknown_option_src");
+const migrationUnknownOptionOutputDir = join(smokeTmpDir, "migration_unknown_option_out");
+const migrationInvalidColumnOptionSourceDir = join(smokeTmpDir, "migration_invalid_column_option_src");
+const migrationInvalidColumnOptionOutputDir = join(smokeTmpDir, "migration_invalid_column_option_out");
+const migrationBadOperationSourceDir = join(smokeTmpDir, "migration_bad_operation_src");
+const migrationBadOperationOutputDir = join(smokeTmpDir, "migration_bad_operation_out");
+const migrationUnsafeSqlSourceDir = join(smokeTmpDir, "migration_unsafe_sql_src");
+const migrationUnsafeSqlOutputDir = join(smokeTmpDir, "migration_unsafe_sql_out");
+const migrationDuplicateTimestampSourceDir = join(smokeTmpDir, "migration_duplicate_timestamp_src");
+const migrationDuplicateTimestampOutputDir = join(smokeTmpDir, "migration_duplicate_timestamp_out");
+const migrationForeignKeyOrderSourceDir = join(smokeTmpDir, "migration_foreign_key_order_src");
+const migrationForeignKeyOrderOutputDir = join(smokeTmpDir, "migration_foreign_key_order_out");
+const migrationIrreversibleOperationSourceDir = join(smokeTmpDir, "migration_irreversible_operation_src");
+const migrationIrreversibleOperationOutputDir = join(smokeTmpDir, "migration_irreversible_operation_out");
+const migrationIrreversibleChangeTableSourceDir = join(smokeTmpDir, "migration_irreversible_change_table_src");
+const migrationIrreversibleChangeTableOutputDir = join(smokeTmpDir, "migration_irreversible_change_table_out");
+const migrationUnknownTableSourceDir = join(smokeTmpDir, "migration_unknown_table_src");
+const migrationUnknownTableOutputDir = join(smokeTmpDir, "migration_unknown_table_out");
+const migrationUnknownColumnSourceDir = join(smokeTmpDir, "migration_unknown_column_src");
+const migrationUnknownColumnOutputDir = join(smokeTmpDir, "migration_unknown_column_out");
+const migrationUnsafeIndexNameSourceDir = join(smokeTmpDir, "migration_unsafe_index_name_src");
+const migrationUnsafeIndexNameOutputDir = join(smokeTmpDir, "migration_unsafe_index_name_out");
+const migrationUnsafeForeignKeyNameSourceDir = join(smokeTmpDir, "migration_unsafe_foreign_key_name_src");
+const migrationUnsafeForeignKeyNameOutputDir = join(smokeTmpDir, "migration_unsafe_foreign_key_name_out");
+const migrationUnsafeReferenceForeignKeyNameSourceDir = join(smokeTmpDir, "migration_unsafe_reference_foreign_key_name_src");
+const migrationUnsafeReferenceForeignKeyNameOutputDir = join(smokeTmpDir, "migration_unsafe_reference_foreign_key_name_out");
+const migrationUnsafeCheckConstraintNameSourceDir = join(smokeTmpDir, "migration_unsafe_check_constraint_name_src");
+const migrationUnsafeCheckConstraintNameOutputDir = join(smokeTmpDir, "migration_unsafe_check_constraint_name_out");
+const migrationExternalTableSourceDir = join(smokeTmpDir, "migration_external_table_src");
+const migrationExternalTableOutputDir = join(smokeTmpDir, "migration_external_table_out");
+const migrationUnsafeExternalTableSourceDir = join(smokeTmpDir, "migration_unsafe_external_table_src");
+const migrationUnsafeExternalTableOutputDir = join(smokeTmpDir, "migration_unsafe_external_table_out");
+const migrationDropTableSourceDir = join(smokeTmpDir, "migration_drop_table_src");
+const migrationDropTableOutputDir = join(smokeTmpDir, "migration_drop_table_out");
+const migrationSnapshotOpsSourceDir = join(smokeTmpDir, "migration_snapshot_ops_src");
+const migrationSnapshotOpsOutputDir = join(smokeTmpDir, "migration_snapshot_ops_out");
+const migrationConcurrentIndexWithoutDisabledDdlSourceDir = join(smokeTmpDir, "migration_concurrent_index_without_disabled_ddl_src");
+const migrationConcurrentIndexWithoutDisabledDdlOutputDir = join(smokeTmpDir, "migration_concurrent_index_without_disabled_ddl_out");
+const migrationHistoricalAddColumnSourceDir = join(smokeTmpDir, "migration_historical_add_column_src");
+const migrationHistoricalAddColumnOutputDir = join(smokeTmpDir, "migration_historical_add_column_out");
+const migrationDuplicateAddColumnSourceDir = join(smokeTmpDir, "migration_duplicate_add_column_src");
+const migrationDuplicateAddColumnOutputDir = join(smokeTmpDir, "migration_duplicate_add_column_out");
+const migrationReferenceIndexConflictSourceDir = join(smokeTmpDir, "migration_reference_index_conflict_src");
+const migrationReferenceIndexConflictOutputDir = join(smokeTmpDir, "migration_reference_index_conflict_out");
+const migrationPolymorphicReferenceForeignKeySourceDir = join(smokeTmpDir, "migration_polymorphic_reference_foreign_key_src");
+const migrationPolymorphicReferenceForeignKeyOutputDir = join(smokeTmpDir, "migration_polymorphic_reference_foreign_key_out");
+const migrationEmptyChangeTableSourceDir = join(smokeTmpDir, "migration_empty_change_table_src");
+const migrationEmptyChangeTableOutputDir = join(smokeTmpDir, "migration_empty_change_table_out");
+const migrationChangeTableTimestampConflictSourceDir = join(smokeTmpDir, "migration_change_table_timestamp_conflict_src");
+const migrationChangeTableTimestampConflictOutputDir = join(smokeTmpDir, "migration_change_table_timestamp_conflict_out");
+const migrationEmptyChangeTableRemoveColumnsSourceDir = join(smokeTmpDir, "migration_empty_change_table_remove_columns_src");
+const migrationEmptyChangeTableRemoveColumnsOutputDir = join(smokeTmpDir, "migration_empty_change_table_remove_columns_out");
+const migrationEmptyChangeTableRemoveIndexesSourceDir = join(smokeTmpDir, "migration_empty_change_table_remove_indexes_src");
+const migrationEmptyChangeTableRemoveIndexesOutputDir = join(smokeTmpDir, "migration_empty_change_table_remove_indexes_out");
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -748,7 +752,7 @@ for (const expected of [
   }
 }
 
-const railsOwnedRouteFixture = readFileSync(join(exampleDir, "rails", "config", "routes_rails_owned.rb"), "utf8");
+const railsOwnedRouteFixture = readFileSync(join(sourceDir, "rails", "config", "routes_rails_owned.rb"), "utf8");
 for (const expected of [
   "Rails-owned route fixture.",
   'get "/rails-owned-health"',
@@ -761,7 +765,7 @@ for (const expected of [
   }
 }
 
-const committedRoutesExtern = readFileSync(join(exampleDir, "src_haxe", "routes", "Routes.hx"), "utf8");
+const committedRoutesExtern = readFileSync(join(sourceDir, "routes", "Routes.hx"), "utf8");
 for (const expected of [
   '@:native("users_path")',
   '@:native("chat_messages_path")',
@@ -792,7 +796,7 @@ for (const expected of [
   }
 }
 
-const routeTestSource = readFileSync(join(exampleDir, "rails", "test", "controllers", "routes_test.rb"), "utf8");
+const routeTestSource = readFileSync(join(sourceDir, "rails", "test", "controllers", "routes_test.rb"), "utf8");
 for (const expected of [
   "class RoutesTest < ActionDispatch::IntegrationTest",
   "assert_routing({ path: \"/\", method: :get }, { controller: \"controllers/todos\", action: \"index\" })",
@@ -867,6 +871,8 @@ for (const expected of [
   /class SessionsController < ActionController::Base/,
   /def create_guest\(\)/,
   /guest__hx\d+ = Models::User\.find_by\(email: "guest@example\.test"\)/,
+  /guest__hx\d+ = Models::User\.create\(name: "Guest Workspace", email: "guest@example\.test", role: "guest", password: "password123", password_confirmation: "password123"\)/,
+  /self\.flash\(\)\[:alert\] = "The guest workspace could not be prepared\. Please sign in with the seeded demo account\."/,
   /sign_in\(:user, guest__hx\d+\)/,
   /self\.flash\(\)\[:notice\] = "Signed in as the guest workspace"/,
   /self\.redirect_to\(self\.todos_path\(\), status: :see_other\)/,
@@ -883,14 +889,17 @@ for (const expected of [
   /before_action :authenticate_user!/,
   /current_user__hx\d+ = self\.require_admin\(\)/,
   /users__hx\d+ = Models::User\.order\(name: :asc\)\.to_a\(\)/,
-  /self\.render\(template: "controllers\/users\/index", locals: \{users: users__hx\d+, current_user: current_user__hx\d+\}, layout: "application"\)/,
+  /self\.render\(template: "controllers\/users\/index", locals: \{users: users__hx\d+, current_user: current_user__hx\d+, form_user: form_user__hx\d+\}, layout: "application"\)/,
+  /self\.render\(template: "controllers\/users\/index", locals: \{users: users__hx\d+, current_user: current_user__hx\d+, form_user: form_user__hx\d+\}, layout: "application", status: :unprocessable_entity\)/,
   /def create\(\)/,
   /self\.params\(\)\.require\("user"\)\.permit\(\[:name, :email, :role, :password, :password_confirmation\]\)/,
-  /Models::User\.create\(attrs__hx\d+\)/,
-  /self\.flash\(\)\[:notice\] = "User created"/,
+  /user__hx\d+ = Models::User\.create\(attrs__hx\d+\)/,
+  /self\.flash\(\)\.now\[:alert\] = "Could not save user\. Review the highlighted details and try again\."/,
+  /self\.flash\(\)\[:notice\] = "User saved"/,
   /def update\(\)/,
   /Models::User\.find\(self\.param_id\(\)\)/,
   /user__hx\d+\.update\(attrs__hx\d+\)/,
+  /self\.flash\(\)\.now\[:alert\] = "Could not update user\. Review the details and try again\."/,
   /def destroy\(\)/,
   /user__hx\d+\.destroy\(\)/,
   /self\.flash\(\)\[:alert\] = "Admin access is required for user management"/,
@@ -1074,7 +1083,7 @@ for (const expected of [
   }
 }
 
-const layoutSource = readFileSync(join(exampleDir, "views", "ApplicationLayoutView.hx"), "utf8");
+const layoutSource = readFileSync(join(sourceDir, "views", "ApplicationLayoutView.hx"), "utf8");
 for (const expected of [
   '@:railsTemplate("layouts/application")',
   '@:railsTemplateAst("render")',
@@ -1097,7 +1106,7 @@ for (const forbidden of ["public static var body", "public static var erb", "pub
   }
 }
 
-const indexSource = readFileSync(join(exampleDir, "views", "TodoIndexView.hx"), "utf8");
+const indexSource = readFileSync(join(sourceDir, "views", "TodoIndexView.hx"), "utf8");
 for (const expected of [
   '@:railsTemplateAst("render")',
   "return <>",
@@ -1128,7 +1137,7 @@ for (const forbidden of [
   }
 }
 
-const routesSource = readFileSync(join(exampleDir, "src_haxe", "routes", "AppRoutes.hx"), "utf8");
+const routesSource = readFileSync(join(sourceDir, "routes", "AppRoutes.hx"), "utf8");
 for (const expected of [
   "@:railsRoutes",
   "static final routes = {",
@@ -1157,7 +1166,7 @@ for (const forbidden of ['"controllers/todos#index"', 'writeFile("config/routes.
   }
 }
 
-const hooksSource = readFileSync(join(exampleDir, "shared", "TodoHooks.hx"), "utf8");
+const hooksSource = readFileSync(join(sourceDir, "shared", "TodoHooks.hx"), "utf8");
 for (const expected of [
   "class TodoHooks",
   "abstract CssClass(String)",
@@ -1181,10 +1190,10 @@ for (const expected of [
   }
 }
 
-const hookExportSource = readFileSync(join(exampleDir, "tools", "ExportTodoHooks.hx"), "utf8");
+const hookExportSource = readFileSync(join(sourceDir, "tools", "ExportTodoHooks.hx"), "utf8");
 for (const expected of [
   "import shared.TodoHooks;",
-  "examples/todoapp_rails/e2e/todo_hooks.ts",
+  "examples/todoapp_rails/src/e2e/todo_hooks.ts",
   "TodoHooks.classSelector(TodoHooks.formClass)",
   "TodoHooks.classSelector(TodoHooks.chatFormClass)",
 ]) {
@@ -1194,7 +1203,7 @@ for (const expected of [
   }
 }
 
-const hookSpecSource = readFileSync(join(exampleDir, "e2e", "todoapp.spec.ts"), "utf8");
+const hookSpecSource = readFileSync(join(sourceDir, "e2e", "todoapp.spec.ts"), "utf8");
 for (const expected of [
   "import { hooks } from './todo_hooks'",
   "hooks.selectors.form",
@@ -1214,9 +1223,9 @@ for (const expected of [
   }
 }
 
-const hookManifest = readFileSync(join(exampleDir, "e2e", "todo_hooks.ts"), "utf8");
+const hookManifest = readFileSync(join(sourceDir, "e2e", "todo_hooks.ts"), "utf8");
 for (const expected of [
-  "// Generated by examples/todoapp_rails/tools/ExportTodoHooks.hx.",
+  "// Generated by examples/todoapp_rails/src/tools/ExportTodoHooks.hx.",
   'form: "todo-form"',
   'sessionForm: "session-form"',
   'sessionFooter: "session-footer"',
@@ -1235,7 +1244,7 @@ for (const expected of [
   }
 }
 
-const appCss = readFileSync(join(exampleDir, "assets", "stylesheets", "application.css"), "utf8");
+const appCss = readFileSync(join(sourceDir, "assets", "stylesheets", "application.css"), "utf8");
 for (const expected of [
   ".chat-panel turbo-cable-stream-source",
   ".chat-panel turbo-cable-stream-source::after",
@@ -1469,7 +1478,7 @@ for (const expected of [
   "RailsHx Todo",
   "Devise session active",
   '<% if current_user.can_manage_users() %>',
-  '<%= link_to users_path(), class: "typed-route-link topbar-link", data: {turbo_frame: "railshx-user-frame"} do %>',
+  '<%= link_to users_path(), class: "typed-route-link topbar-link" do %>',
   '<%= link_to "#open-work", class: "typed-route-link topbar-link", data: {railshx_scroll: true} do %>',
   '<span class="avatar"><%= current_user.initials() %></span>',
   '<strong><%= current_user.name %></strong>',
@@ -1507,12 +1516,17 @@ for (const expected of [
   "Typed users, ordinary Rails CRUD.",
   '<turbo-frame id="railshx-user-frame" class="user-management-frame">',
   '<%= link_to "Back to todo board", todos_path(), class: "typed-route-link", data: {turbo_frame: "_top"} %>',
-  '<%= form_with url: users_path(), scope: :user, local: true, class: "user-create-form" do |form| %>',
-  '<%= form.select :role, [["Member", "member"], ["Admin", "admin"]], {selected: "member"}, {required: true} %>',
-  '<%= form.password_field :password, placeholder: "password123", required: true %>',
-  '<%= form_with url: user_path(user.id), scope: :user, method: "patch", local: true, class: "user-card-form" do |form| %>',
-  '<%= form.select :role, [["Member", "member"], ["Admin", "admin"]], {selected: user.role}, {id: "user_" + user.id.to_s + "_role", required: true} %>',
-  '<%= form_with url: user_path(user.id), scope: :user, method: "delete", local: true, class: "user-delete-form" do |form| %>',
+  '<%= form_with url: users_path(), scope: :user, local: true, class: "user-create-form", data: {turbo_frame: "_top"} do |form| %>',
+  '<% if form_user.errors.any? %>',
+  '<div class="error-summary" role="alert" aria-live="assertive">',
+  '<% form_user.errors.full_messages.each do |message| %>',
+  '<%= form.email_field :email, value: form_user.email, placeholder: "ada@example.test", autocomplete: "email", required: true %>',
+  '<%= form.select :role, [["Member", "member"], ["Maintainer", "maintainer"], ["Admin", "admin"], ["Guest", "guest"]], {selected: form_user.role}, {required: true} %>',
+  '<%= form.password_field :password, placeholder: "password123", minlength: "6", autocomplete: "new-password", required: true %>',
+  '<%= form_with url: user_path(user.id), scope: :user, method: "patch", local: true, class: "user-card-form", data: {turbo_frame: "_top"} do |form| %>',
+  '<%= form.email_field :email, id: "user_" + user.id.to_s + "_email", value: user.email, autocomplete: "email", required: true %>',
+  '<%= form.select :role, [["Member", "member"], ["Maintainer", "maintainer"], ["Admin", "admin"], ["Guest", "guest"]], {selected: user.role}, {id: "user_" + user.id.to_s + "_role", required: true} %>',
+  '<%= form_with url: user_path(user.id), scope: :user, method: "delete", local: true, class: "user-delete-form", data: {turbo_frame: "_top"} do |form| %>',
   '<%= form.submit "Remove user", type: "submit" %>',
   "<% users.each do |user| %>",
   '<span class="avatar"><%= user.initials() %></span>',
@@ -1648,9 +1662,9 @@ function compileWithFirstAvailableReflaxe() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
-      join(exampleDir, "src_haxe"),
+      sourceDir,
       "-cp",
       reflaxeSrc,
       "--macro",
@@ -1670,7 +1684,7 @@ function compileWithFirstAvailableReflaxe() {
 function exportTodoHooksForPlaywright() {
   run("haxe", [
     "-cp",
-    exampleDir,
+    sourceDir,
     "-main",
     "tools.ExportTodoHooks",
     "--interp",
@@ -1694,7 +1708,7 @@ function expectInvalidMigrationCompile(sourceDir, invalidOutputDir, mainClass, s
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
       sourceDir,
       "-cp",
@@ -1742,7 +1756,7 @@ function compileValidMigration(sourceDir, validOutputDir, mainClass) {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
       sourceDir,
       "-cp",
@@ -3625,9 +3639,9 @@ function expectInvalidTemplateLocalsFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
-      join(exampleDir, "src_haxe"),
+      sourceDir,
       "-cp",
       invalidSourceDir,
       "-cp",
@@ -3776,7 +3790,7 @@ function expectTypedTemplateAstFieldFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      sourceDir,
       "-cp",
       typedTemplateInvalidSourceDir,
       "-cp",
@@ -3856,7 +3870,7 @@ function expectTypedPartialLocalsFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      sourceDir,
       "-cp",
       typedPartialInvalidSourceDir,
       "-cp",
@@ -3918,7 +3932,7 @@ function compileCheckedAttrFixture(sourceDir, outputDir, mainClass, viewClass, v
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
       sourceDir,
       "-cp",
@@ -6017,9 +6031,9 @@ function expectTypedRouteHelperFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
-      join(exampleDir, "src_haxe"),
+      sourceDir,
       "-cp",
       typedRouteInvalidSourceDir,
       "-cp",
@@ -6096,9 +6110,9 @@ function expectTypedRouteParamFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
-      join(exampleDir, "src_haxe"),
+      sourceDir,
       "-cp",
       typedRouteParamInvalidSourceDir,
       "-cp",
@@ -6247,7 +6261,7 @@ function expectTypedSlotContentRequiresComponentFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      sourceDir,
       "-cp",
       typedSlotInvalidSourceDir,
       "-cp",
@@ -6564,7 +6578,7 @@ function expectRawLayoutStringFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      sourceDir,
       "-cp",
       rawLayoutInvalidSourceDir,
       "-cp",
@@ -6641,7 +6655,7 @@ function expectUnknownTypedFormFieldFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      sourceDir,
       "-cp",
       typedFieldInvalidSourceDir,
       "-cp",
@@ -6719,9 +6733,9 @@ function expectMixedModelStrongParamsFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
-      join(exampleDir, "src_haxe"),
+      sourceDir,
       "-cp",
       typedParamsInvalidSourceDir,
       "-cp",
@@ -6798,9 +6812,9 @@ function expectUnknownStrongParamsFieldFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
-      join(exampleDir, "src_haxe"),
+      sourceDir,
       "-cp",
       typedParamsUnknownSourceDir,
       "-cp",
@@ -6874,9 +6888,9 @@ function expectUnknownRequestParamsFieldFailure() {
       "-cp",
       join(root, "src"),
       "-cp",
-      exampleDir,
+      appSourceDir,
       "-cp",
-      join(exampleDir, "src_haxe"),
+      sourceDir,
       "-cp",
       typedRequestParamsUnknownSourceDir,
       "-cp",
