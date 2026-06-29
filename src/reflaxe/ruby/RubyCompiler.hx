@@ -6127,7 +6127,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							}
 						case "foreignKeys":
 							for (item in railsMigrationChangeTableForeignKeys(field.expr, table, validation)) {
-								bodyLines.push("  " + item.line);
+								for (line in item.lines) {
+									bodyLines.push("  " + line);
+								}
 								foreignKeys.push({fromTable: table, toTable: item.toTable});
 								hasBody = true;
 							}
@@ -6572,10 +6574,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationChangeTableForeignKeys(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):Array<{line:String, toTable:String}> {
+			validation:Null<RailsMigrationValidationContext>):Array<{lines:Array<String>, toTable:String}> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
-				var out:Array<{line:String, toTable:String}> = [];
+				var out:Array<{lines:Array<String>, toTable:String}> = [];
 				for (value in values) {
 					out.push(railsMigrationChangeTableForeignKey(value, table, validation));
 				}
@@ -6590,7 +6592,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationChangeTableForeignKey(expr:TypedExpr, table:String,
-			validation:Null<RailsMigrationValidationContext>):{line:String, toTable:String} {
+			validation:Null<RailsMigrationValidationContext>):{lines:Array<String>, toTable:String} {
 		var toTableExpr:Null<TypedExpr> = null;
 		var optionsExpr:Null<TypedExpr> = null;
 		switch (unwrapTypedExpr(expr).expr) {
@@ -6610,17 +6612,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		if (toTableExpr == null) {
 			Context.error("@:railsMigration ChangeTable foreignKeys entry requires toTable.", expr.pos);
-			return {line: "t.foreign_key :invalid", toTable: "invalid"};
+			return {lines: ["t.foreign_key :invalid"], toTable: "invalid"};
 		}
 		if (optionsExpr == null) {
 			Context.error("@:railsMigration ChangeTable foreignKeys entry requires options.", expr.pos);
-			return {line: "t.foreign_key :invalid", toTable: "invalid"};
+			return {lines: ["t.foreign_key :invalid"], toTable: "invalid"};
 		}
 		var toTable = railsMigrationSymbolArg(toTableExpr, "ChangeTable foreignKeys toTable");
 		railsMigrationValidateTable(validation, toTable, "ChangeTable foreignKeys toTable", toTableExpr);
+		var info = railsMigrationForeignKeyDslInfo(optionsExpr, validation, table);
+		var commandOptions = [for (option in info.options) if (option != "if_not_exists: true") option];
+		var command = "t.foreign_key :" + toTable + railsMigrationOptionSuffix(commandOptions);
+		if (info.ifNotExists) {
+			return {
+				lines: ["unless t.foreign_key_exists?(:" + toTable + railsMigrationOptionSuffix(commandOptions) + ")", "  " + command, "end"],
+				toTable: toTable
+			};
+		}
 		return {
-			line: "t.foreign_key :" + toTable + railsMigrationOptionSuffix(railsMigrationForeignKeyDslOptions(optionsExpr,
-				validation, table, false)),
+			lines: [command],
 			toTable: toTable
 		};
 	}
@@ -8082,9 +8092,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsMigrationForeignKeyDslOptions(expr:TypedExpr, validation:Null<RailsMigrationValidationContext>, fromTable:String,
 			?allowIfNotExists:Bool = true):Array<String> {
+		return railsMigrationForeignKeyDslInfo(expr, validation, fromTable, allowIfNotExists).options;
+	}
+
+	static function railsMigrationForeignKeyDslInfo(expr:TypedExpr, validation:Null<RailsMigrationValidationContext>, fromTable:String,
+			?allowIfNotExists:Bool = true):{options:Array<String>, ifNotExists:Bool} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
+				var ifNotExists = false;
 				for (field in fields) {
 					switch (field.name) {
 						case "column":
@@ -8101,6 +8117,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							options.push("on_update: :" + railsMigrationForeignKeyAction(field.expr, "ForeignKey onUpdate"));
 						case "ifNotExists" if (allowIfNotExists):
 							if (typedBoolLiteral(field.expr, "ForeignKey ifNotExists")) {
+								ifNotExists = true;
 								options.push("if_not_exists: true");
 							}
 						case "ifNotExists":
@@ -8116,10 +8133,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							Context.error('@:railsMigration unknown ForeignKey option ${field.name}.', field.expr.pos);
 					}
 				}
-				options;
+				{options: options, ifNotExists: ifNotExists};
 			case _:
 				Context.error("@:railsMigration AddForeignKey options must be an object literal.", expr.pos);
-				[];
+				{options: [], ifNotExists: false};
 		}
 	}
 
