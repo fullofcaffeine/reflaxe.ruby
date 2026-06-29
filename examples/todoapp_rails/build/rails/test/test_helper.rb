@@ -7,6 +7,12 @@ ActiveRecord::Migration.maintain_test_schema!
 class ActiveSupport::TestCase
   USER_PASSWORD = "password123"
 
+  setup do
+    Models::ChatMessage.delete_all
+    Models::Todo.delete_all
+    Models::User.delete_all
+  end
+
   def create_user!(name:, email:, role: "member")
     Models::User.create!(
       name: name,
