@@ -5501,22 +5501,56 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, table, "RemoveIndex table", args[0]);
 						railsMigrationValidateColumn(validation, table, columnName, "RemoveIndex column", args[1]);
 						railsMigrationOperation(["remove_index :" + table + ", :" + columnName]);
+					case "RemoveIndexWithDdl" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveIndexWithDdl table");
+						var columnName = railsMigrationSymbolArg(args[1], "RemoveIndexWithDdl column");
+						railsMigrationValidateTable(validation, table, "RemoveIndexWithDdl table", args[0]);
+						railsMigrationValidateColumn(validation, table, columnName, "RemoveIndexWithDdl column", args[1]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveIndexWithDdl options");
+						railsMigrationOperation(["remove_index :" + table + ", :" + columnName + railsMigrationOptionSuffix(ddlOptions)]);
 					case "RemoveIndexIfExists" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexIfExists table");
 						var columnName = railsMigrationSymbolArg(args[1], "RemoveIndexIfExists column");
 						railsMigrationValidateTable(validation, table, "RemoveIndexIfExists table", args[0]);
 						railsMigrationValidateColumn(validation, table, columnName, "RemoveIndexIfExists column", args[1]);
 						railsMigrationOperation(["remove_index :" + table + ", :" + columnName + ", if_exists: true"]);
+					case "RemoveIndexIfExistsWithDdl" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveIndexIfExistsWithDdl table");
+						var columnName = railsMigrationSymbolArg(args[1], "RemoveIndexIfExistsWithDdl column");
+						railsMigrationValidateTable(validation, table, "RemoveIndexIfExistsWithDdl table", args[0]);
+						railsMigrationValidateColumn(validation, table, columnName, "RemoveIndexIfExistsWithDdl column", args[1]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveIndexIfExistsWithDdl options");
+						railsMigrationOperation([
+							"remove_index :" + table + ", :" + columnName + railsMigrationOptionSuffix(ddlOptions.concat(["if_exists: true"]))
+						]);
 					case "RemoveIndexByName" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByName table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByName name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByName table", args[0]);
 						railsMigrationOperation(["remove_index :" + table + ", name: " + quoteRubyStringForCode(name)]);
+					case "RemoveIndexByNameWithDdl" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameWithDdl table");
+						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameWithDdl name");
+						railsMigrationValidateTable(validation, table, "RemoveIndexByNameWithDdl table", args[0]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveIndexByNameWithDdl options");
+						railsMigrationOperation([
+							"remove_index :" + table + railsMigrationOptionSuffix(["name: " + quoteRubyStringForCode(name)].concat(ddlOptions))
+						]);
 					case "RemoveIndexByNameIfExists" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameIfExists table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameIfExists name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByNameIfExists table", args[0]);
 						railsMigrationOperation(["remove_index :" + table + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"]);
+					case "RemoveIndexByNameIfExistsWithDdl" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameIfExistsWithDdl table");
+						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameIfExistsWithDdl name");
+						railsMigrationValidateTable(validation, table, "RemoveIndexByNameIfExistsWithDdl table", args[0]);
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveIndexByNameIfExistsWithDdl options");
+						railsMigrationOperation([
+							"remove_index :"
+							+ table
+							+ railsMigrationOptionSuffix(["name: " + quoteRubyStringForCode(name)].concat(ddlOptions).concat(["if_exists: true"]))
+						]);
 					case "RemoveCompositeIndex" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndex table");
 						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndex columns");
@@ -5528,6 +5562,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", column: ["
 							+ [for (column in columns) ":" + column].join(", ") + "]"]);
+					case "RemoveCompositeIndexWithDdl" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndexWithDdl table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndexWithDdl columns");
+						railsMigrationValidateTable(validation, table, "RemoveCompositeIndexWithDdl table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "RemoveCompositeIndexWithDdl column", args[1]);
+						}
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveCompositeIndexWithDdl options");
+						railsMigrationOperation(["remove_index :"
+							+ table
+							+ railsMigrationOptionSuffix((["column: ["
+								+ [for (column in columns) ":" + column].join(", ")
+								+ "]"]).concat(ddlOptions))]);
 					case "RemoveCompositeIndexIfExists" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndexIfExists table");
 						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndexIfExists columns");
@@ -5539,6 +5586,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							+ table
 							+ ", column: ["
 							+ [for (column in columns) ":" + column].join(", ") + "], if_exists: true"]);
+					case "RemoveCompositeIndexIfExistsWithDdl" if (args.length == 3):
+						var table = railsMigrationSymbolArg(args[0], "RemoveCompositeIndexIfExistsWithDdl table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveCompositeIndexIfExistsWithDdl columns");
+						railsMigrationValidateTable(validation, table, "RemoveCompositeIndexIfExistsWithDdl table", args[0]);
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "RemoveCompositeIndexIfExistsWithDdl column", args[1]);
+						}
+						var ddlOptions = railsMigrationMysqlDdlOptions(args[2], "RemoveCompositeIndexIfExistsWithDdl options");
+						railsMigrationOperation(["remove_index :"
+							+ table
+							+ railsMigrationOptionSuffix((["column: ["
+								+ [for (column in columns) ":" + column].join(", ")
+								+ "]"]).concat(ddlOptions).concat(["if_exists: true"]))]);
 					case "RenameIndex" if (args.length == 3):
 						railsMigrationRequireReversibleContext("RenameIndex", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RenameIndex table");

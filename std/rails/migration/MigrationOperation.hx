@@ -384,11 +384,17 @@ enum MigrationOperation {
 	EnableIndex(table:String, name:String);
 	DisableIndex(table:String, name:String);
 	RemoveIndex(table:String, column:String);
+	RemoveIndexWithDdl(table:String, column:String, options:MysqlDdlOptions);
 	RemoveIndexIfExists(table:String, column:String);
+	RemoveIndexIfExistsWithDdl(table:String, column:String, options:MysqlDdlOptions);
 	RemoveIndexByName(table:String, name:String);
+	RemoveIndexByNameWithDdl(table:String, name:String, options:MysqlDdlOptions);
 	RemoveIndexByNameIfExists(table:String, name:String);
+	RemoveIndexByNameIfExistsWithDdl(table:String, name:String, options:MysqlDdlOptions);
 	RemoveCompositeIndex(table:String, columns:Array<String>);
+	RemoveCompositeIndexWithDdl(table:String, columns:Array<String>, options:MysqlDdlOptions);
 	RemoveCompositeIndexIfExists(table:String, columns:Array<String>);
+	RemoveCompositeIndexIfExistsWithDdl(table:String, columns:Array<String>, options:MysqlDdlOptions);
 	RenameIndex(table:String, from:String, to:String);
 	AddReference(table:String, name:String, options:ReferenceOptions);
 	AddReferenceIfNotExists(table:String, name:String, options:ReferenceOptions);
