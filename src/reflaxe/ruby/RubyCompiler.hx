@@ -6076,7 +6076,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				for (field in fields) {
 					switch (field.name) {
 						case "columns":
-							for (item in railsMigrationCreateTableItems(field.expr, table, validation)) {
+							for (item in railsMigrationChangeTableItems(field.expr, table, validation)) {
 								bodyLines.push("  " + item);
 								hasBody = true;
 							}
@@ -7171,6 +7171,64 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function railsMigrationChangeTableItems(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TArrayDecl(values):
+				var out:Array<String> = [];
+				for (value in values) {
+					out = out.concat(railsMigrationChangeTableItem(value, table, validation));
+				}
+				out;
+			case _:
+				Context.error("@:railsMigration ChangeTable columns must be an Array<CreateTableItem> literal.", expr.pos);
+				[];
+		}
+	}
+
+	static function railsMigrationChangeTableItem(expr:TypedExpr, table:String,
+			validation:Null<RailsMigrationValidationContext>):Array<String> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall({expr: TField(_, FEnum(_, field))}, args):
+				switch (field.name) {
+					case "Column" if (args.length == 2):
+						var name = railsMigrationSymbolArg(args[0], "ChangeTable Column name");
+						var column = railsMigrationColumnDsl(args[1]);
+						railsMigrationRegisterColumn(validation, table, name);
+						["t." + column.type + " :" + name + railsMigrationOptionSuffix(column.options)];
+					case "Reference" if (args.length == 2):
+						var name = railsMigrationSymbolArg(args[0], "ChangeTable Reference name");
+						railsMigrationRegisterColumn(validation, table, name + "_id");
+						[
+							"t.references :" + name + railsMigrationOptionSuffix(railsMigrationReferenceDslOptions(args[1]))
+						];
+					case "Index" if (args.length == 2):
+						var columns = railsMigrationSymbolArrayArg(args[0], "ChangeTable Index columns");
+						for (columnName in columns) {
+							railsMigrationValidateColumn(validation, table, columnName, "ChangeTable Index column", args[0]);
+						}
+						var info = railsMigrationIndexDslInfo(args[1], table, validation, false);
+						var commandOptions = [for (option in info.options) if (option != "if_not_exists: true") option];
+						var columnArg = "[" + [for (column in columns) ":" + column].join(", ") + "]";
+						var command = "t.index " + columnArg + railsMigrationOptionSuffix(commandOptions);
+						if (info.ifNotExists) {
+							var guard = info.name != null
+								? "t.index_exists?(name: " + quoteRubyStringForCode(info.name) + ")"
+								: "t.index_exists?(" + columnArg + ")";
+							["unless " + guard, "  " + command, "end"];
+						} else {
+							[command];
+						}
+					case _:
+						Context.error('@:railsMigration unsupported ChangeTable columns item ${field.name}.', expr.pos);
+						["# unsupported RailsHx change table item"];
+				}
+			case _:
+				Context.error("@:railsMigration ChangeTable columns must contain CreateTableItem enum values.", expr.pos);
+				["# invalid RailsHx change table item"];
+		}
+	}
+
 	static function railsMigrationUnsafeSqlOperation(label:String, upExpr:TypedExpr, downExpr:TypedExpr, callExpr:TypedExpr):RailsMigrationOperationInfo {
 		var up = typedStringLiteral(upExpr);
 		var down = typedStringLiteral(downExpr);
@@ -7393,9 +7451,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsMigrationIndexDslOptions(expr:TypedExpr, ?table:String,
 			?validation:Null<RailsMigrationValidationContext>, ?allowConcurrentIndexes:Bool = false):Array<String> {
+		return railsMigrationIndexDslInfo(expr, table, validation, allowConcurrentIndexes).options;
+	}
+
+	static function railsMigrationIndexDslInfo(expr:TypedExpr, ?table:String, ?validation:Null<RailsMigrationValidationContext>,
+			?allowConcurrentIndexes:Bool = false):{options:Array<String>, name:Null<String>, ifNotExists:Bool} {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TObjectDecl(fields):
 				var options:Array<String> = [];
+				var name:Null<String> = null;
+				var ifNotExists = false;
 				var hasLengthOption = false;
 				var hasOpclassOption = false;
 				for (field in fields) {
@@ -7405,9 +7470,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								options.push("unique: true");
 							}
 						case "name":
-							options.push("name: " + quoteRubyStringForCode(railsMigrationSafeIdentifier(field.expr, "MigrationIndex name")));
+							name = railsMigrationSafeIdentifier(field.expr, "MigrationIndex name");
+							options.push("name: " + quoteRubyStringForCode(name));
 						case "ifNotExists":
 							if (typedBoolLiteral(field.expr, "MigrationIndex ifNotExists")) {
+								ifNotExists = true;
 								options.push("if_not_exists: true");
 							}
 						case "usingMethod":
@@ -7464,10 +7531,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							Context.error('@:railsMigration unknown MigrationIndex option ${field.name}.', field.expr.pos);
 					}
 				}
-				options;
+				{options: options, name: name, ifNotExists: ifNotExists};
 			case _:
 				Context.error("@:railsMigration AddIndex options must be an object literal.", expr.pos);
-				[];
+				{options: [], name: null, ifNotExists: false};
 		}
 	}
 
