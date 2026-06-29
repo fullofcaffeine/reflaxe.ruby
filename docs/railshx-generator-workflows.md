@@ -295,10 +295,12 @@ Rails still runs the generated Ruby test:
 bundle exec rake hxruby:test
 ```
 
-Use Haxe-authored tests when the test benefits from typed model fields, route
-helpers, request params, DeviseHx scopes, template refs, or RailsHx contracts.
-Keep vanilla Rails/Minitest tests first-class for Rails-owned behavior,
-third-party gem runtime behavior, or cases where a plain Ruby test is clearer.
+Generated RailsHx app and scaffold tests should use this Haxe-authored path by
+default. Use it when the test benefits from typed model fields, route helpers,
+request params, DeviseHx scopes, template refs, shared hooks, or other RailsHx
+contracts. Keep vanilla Rails/Minitest tests first-class for Rails-owned
+behavior, third-party gem runtime behavior, or cases where a plain Ruby test is
+clearer; the choice is per test, not per app.
 
 ## Scaffold
 

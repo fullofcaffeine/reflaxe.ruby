@@ -124,8 +124,10 @@ ordinary idiomatic Ruby, so teams can use Minitest, RSpec, Rails request tests,
 system tests, and normal JavaScript/browser tooling without RailsHx-specific
 runtime requirements.
 
-RailsHx should also grow optional typed Haxe-authored test layers where that
-improves developer experience:
+RailsHx should also provide typed Haxe-authored test layers as a first-class
+authoring path where they improve developer experience. Generated RailsHx apps
+and scaffolds should default to Haxe-authored tests, while raw Ruby/Rails and
+TypeScript/JavaScript tests remain supported per test:
 
 - Haxe-authored Ruby/Rails tests can reuse typed model fields, route helpers,
   params contracts, template refs, and generated constants before lowering to
@@ -145,9 +147,9 @@ improves developer experience:
   compiles those Haxe specs before booting Rails, while
   `npm run test:haxe-playwright` keeps the generated JavaScript shape pinned
   without launching a browser.
-- The typed test layers should be additive, not mandatory. If a user prefers
-  vanilla Rails tests, those tests should keep working against generated RailsHx
-  code as if it had been hand-written.
+- The typed test layers should be additive, not exclusive. If a user prefers a
+  vanilla Rails or TypeScript test for a specific case, that test should keep
+  working against generated RailsHx code as if it had been hand-written.
 
 Use `../haxe.elixir.codex` as inspiration for the ergonomics, but adapt the
 output to Rails and modern Ruby/JS testing conventions rather than copying

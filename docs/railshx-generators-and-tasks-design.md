@@ -434,7 +434,11 @@ Keep RailsHx tasks as composition and validation helpers:
   or partial. It creates Haxe only; ERB remains compiler output.
 - `hxruby:gen:test`: generate a Haxe-authored Rails/Minitest source using
   `@:railsTests static function define():Void`. Rails still runs the generated
-  Ruby test through `hxruby:test` / `bin/rails test`.
+  Ruby test through `hxruby:test` / `bin/rails test`. Generated RailsHx app,
+  scaffold, mailer, and focused test templates should default to Haxe-authored
+  tests unless an explicit option such as `--skip-tests` or a future
+  target-language flag says otherwise; raw Ruby/Rails tests remain supported
+  beside them.
 
 Avoid task names that imply RailsHx owns Rails runtime behavior, especially
 database migration execution. The pattern is always: compile generated artifacts
@@ -554,11 +558,12 @@ The scaffold default is `haxe` for greenfield code and emits a typed
 existing Rails-owned `config/routes.rb`; use `snippet` when you want a
 reviewable patch instead of generated route ownership.
 
-Scaffolded projects generate a Haxe-authored model test by default under
+Scaffolded projects generate Haxe-authored tests by default under
 `test_haxe/**`. This mirrors the RailsHx testing strategy: app authors keep
 typed test source in Haxe, while the compiler emits ordinary Rails/Minitest
 files under `test/generated/**` for Rails to run. `--skip-tests` is an explicit
-adoption option for apps that already have a different test source of truth.
+adoption option for apps that already have a different test source of truth,
+and target-native Ruby/Rails tests can still live beside the Haxe source.
 
 With `--controller`, scaffold composes the controller generator's typed HHX
 view path: the index action renders `Template.of(IndexView)` with typed locals,

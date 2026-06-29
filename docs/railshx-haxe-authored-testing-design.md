@@ -1,17 +1,23 @@
 # RailsHx Haxe-Authored Testing Design
 
-RailsHx should support two testing paths:
+RailsHx supports two first-class testing paths, and apps can choose per test:
 
-1. Vanilla Ruby/Rails/JS tests remain first-class.
-2. Optional Haxe-authored tests improve type safety and reuse RailsHx contracts.
+1. Write target-native tests directly in Ruby/Rails, TypeScript, or JavaScript.
+2. Write tests in Haxe and compile them to ordinary target test files.
 
-Generated RailsHx code should look and behave like hand-written Ruby. A team
-must be able to use ordinary Minitest, RSpec, Rails request tests, Rails system
-tests, Playwright, Vitest, or any other Ruby/JS test tool without adopting a
-RailsHx-specific runtime.
+The beginner mental model is simple: Haxe is the authoring language, Rails and
+Playwright are still the runners. A Haxe-authored Rails test should feel like a
+typed version of a normal Minitest/request test, then compile into a normal
+`*_test.rb` file. A Haxe-authored browser test should feel like a typed version
+of a normal Playwright spec, then compile through Genes into modern JavaScript
+that Playwright can run.
 
-The Haxe-authored test layer is an authoring convenience and type-safety layer.
-It should compile away into ordinary target test files.
+Generated RailsHx code should look and behave like hand-written target code. A
+team must be able to use ordinary Minitest, RSpec, Rails request tests, Rails
+system tests, Playwright, Vitest, or any other Ruby/JS test tool without a
+RailsHx-specific runtime. Haxe-authored tests are not mandatory, but they are a
+canonical RailsHx path and generated RailsHx apps/scaffolds should default to
+them unless the user opts out.
 
 ## Inspiration
 
@@ -28,7 +34,10 @@ JavaScript/browser test files.
 
 ## Design Goals
 
-- Keep vanilla Rails tests as the default and always supported.
+- Keep vanilla target-language tests always supported and mixable with
+  Haxe-authored tests in the same app.
+- Make Haxe-authored tests ergonomic enough that a RailsHx beginner can reach
+  for them by default without losing the familiar Rails/Playwright workflow.
 - Let Haxe tests reuse typed RailsHx contracts: model fields, route helpers,
   params roots, template refs, component slots, Turbo targets, DOM hooks, and
   typed client payloads.
@@ -45,7 +54,10 @@ JavaScript/browser test files.
 - Do not replace Rails/Minitest/RSpec.
 - Do not build a custom RailsHx test runner.
 - Do not hide broad Ruby tests inside JS materializer strings.
-- Do not make Haxe-authored tests mandatory for RailsHx apps.
+- Do not remove or discourage raw Ruby/Rails/TypeScript/JavaScript tests.
+- Do not design a lowest-common-denominator portable test API that feels worse
+  than Rails or Playwright. Prefer typed target facades, with shared Haxe
+  contracts where they add real value.
 
 ## Layer Comparison
 
@@ -55,6 +67,108 @@ JavaScript/browser test files.
 | Haxe-authored Rails tests | `test_haxe/**/*.hx` | `test/**/*_test.rb` or `spec/**/*_spec.rb` | Reusing typed model fields, routes, params, template refs, and RailsHx contracts. |
 | Vanilla JS/browser tests | `e2e/**/*.spec.ts`, `test/**/*.test.ts` | Same files | Existing Playwright/Vitest suites. |
 | Haxe-authored JS/browser tests | `test_haxe_js/**/*.hx` or `e2e_haxe/**/*.hx` | Playwright/Vitest-compatible `.spec.ts`/`.test.ts` or compiled JS | Reusing typed DOM hooks, Turbo event contracts, route constants, and client payloads. |
+
+## Beginner Quick Start
+
+If you are new to RailsHx testing, start with this rule of thumb:
+
+- Use Haxe when the test touches Haxe-owned app contracts: model fields,
+  generated route helpers, strong params, HHX template refs, DeviseHx scopes,
+  Turbo targets, shared DOM hooks, or typed payloads.
+- Use raw Ruby/Rails or TypeScript/JavaScript when the test is clearer in the
+  target language, especially for Rails-owned fixtures, gem-owned behavior,
+  migration-path checks, or a tiny browser assertion with no shared Haxe
+  contracts.
+
+For a Rails model or request test, write Haxe under `test_haxe/**`:
+
+```haxe
+import models.Todo;
+import models.User;
+import rails.test.Assert.*;
+import rails.test.Dsl.*;
+import rails.test.ModelTestCase;
+
+@:railsTest("models/todo_haxe_test")
+class TodoHaxeTest extends ModelTestCase {
+	@:railsTests
+	static function define():Void {
+		test("incomplete returns only open todos", () -> {
+			var user = User.create({name: "owner"});
+			Todo.create({title: "ship", isCompleted: false, userId: user.id});
+			Todo.create({title: "done", isCompleted: true, userId: user.id});
+
+			assertEqual(["ship"], Todo.incomplete().pluck(Todo.f.title));
+		});
+	}
+}
+```
+
+Then run the normal RailsHx test task:
+
+```bash
+bundle exec rake hxruby:test
+```
+
+Rails still runs generated Ruby/Minitest output under `test/generated/**`.
+
+For a browser test, write Haxe under `e2e_haxe/**` and compile through Genes:
+
+```haxe
+import js.lib.Promise;
+import rails.test.playwright.Playwright.PW;
+import rails.test.playwright.Types.Page;
+import reflaxe.js.Async;
+import reflaxe.js.Async.await;
+import shared.TodoHooks;
+
+PW.testPage("guest reaches the board", Async.async(function(page:Page):Promise<Void> {
+	await(page.goto("/todos"));
+	await(page.getByRole("button", {name: "Continue as guest"}).click());
+	await(PW.see(page.locator(TodoHooks.classSelector(TodoHooks.shellClass))).toBeVisible());
+	return Promise.resolve(null);
+}));
+```
+
+Playwright still runs generated JavaScript from `e2e/generated/**`.
+
+## API Map
+
+| Haxe authoring API | Target output idea |
+| --- | --- |
+| `test("...", () -> {...})` | Rails `test "..." do ... end` |
+| `setup(() -> {...})` / `teardown(() -> {...})` | Minitest setup/teardown blocks |
+| `assertResponse(Status.ok)` | `assert_response :ok` |
+| `assertRedirectedTo(Routes.todosPath())` | `assert_redirected_to "/todos"` |
+| `get(Routes.todosPath())` | `get "/todos"` |
+| `post(path, {params: RequestParams.model(...)})` | ActionDispatch request with Rails params hash |
+| `Todo.f.title`, `Todo.railsParamKey` | Rails symbols/param roots such as `:title`, `todo` |
+| `PW.testPage("...", page -> ...)` | Playwright `test("...", async ({ page }) => ...)` |
+| `TodoHooks.*` in browser tests | Shared selectors/ids/data attrs exported from Haxe |
+
+## Current API Audit
+
+The current Rails test surface is enough for model tests, request tests, basic
+setup/teardown, typed request params, DeviseHx integration helpers, and common
+assertions. That is the minimum viable RailsHx path for generated app/scaffold
+tests to default to Haxe-authored source.
+
+The current browser test surface is intentionally small: Haxe specs compile
+through Genes, `PW.testPage(...)` hides Playwright's fixture-destructuring
+interop, and typed `Page`/`Locator`/`Expectation` externs cover the todoapp
+sentinel. This proves the path without replacing Playwright.
+
+Follow-up ergonomic gaps should be tracked as focused beads before widening
+APIs:
+
+- Rails fixtures/factories: typed fixture lookup or typed FactoryBot wrappers.
+- Request params: richer nested/non-model builders beyond `RequestParams.model`.
+- Assertions: more Rails/Minitest helpers where examples currently need raw
+  Ruby-shaped checks.
+- Browser tests: typed helpers for common Playwright waits, route assertions,
+  Turbo lifecycle waits, and shared hook exports.
+- Output modes: decide later whether Haxe-authored browser tests need direct
+  TypeScript output, or whether Genes ES modules remain the preferred lane.
 
 ## Rails Test API Shape
 
@@ -251,9 +365,9 @@ end
 
 The first browser slice targets Playwright-compatible JavaScript emitted by the
 existing Haxe-to-JS + Genes ES-module lane. Vanilla TypeScript Playwright specs
-remain first-class; Haxe-authored browser tests are an additive option for specs
-that benefit from typed RailsHx hooks, route constants, Turbo contracts, or
-shared client payloads.
+remain first-class; Haxe-authored browser tests are the canonical RailsHx typed
+authoring path for specs that benefit from typed RailsHx hooks, route constants,
+Turbo contracts, or shared client payloads.
 
 Example source:
 
@@ -350,8 +464,8 @@ forms while Rails still executes ordinary test files.
 4. Add request-test helpers: `get`, `post`, `assertResponse`,
    `assertRedirectedTo`, `assertDifference`, and `assertNoDifference`.
 5. Add todoapp Haxe-authored tests in parallel with the existing Ruby fixtures.
-6. Add optional Playwright Haxe authoring through Genes ES-module output; keep
-   vanilla TypeScript specs in parallel.
+6. Add Playwright Haxe authoring through Genes ES-module output; keep vanilla
+   TypeScript specs fully supported in parallel.
 
 ## Open Questions
 

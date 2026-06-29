@@ -153,7 +153,7 @@ Runs the deployability dogfood lane for this sample: compile Haxe/HHX, compile H
 rake todoapp:playwright
 ```
 
-Runs the RailsHx browser sentinel: compile/materialize the generated app, compile the optional Haxe-authored Playwright spec from `e2e_haxe/**` into disposable ES modules under `e2e/generated/**`, prepare and seed the SQLite DB, boot Rails on a dedicated port, run Playwright specs from `examples/todoapp_rails/e2e`, and shut Rails down. Vanilla TypeScript specs remain first-class; Haxe-authored specs are useful when a browser test wants typed RailsHx hooks such as `shared.TodoHooks`.
+Runs the RailsHx browser sentinel: compile/materialize the generated app, compile the Haxe-authored Playwright spec from `e2e_haxe/**` into disposable ES modules under `e2e/generated/**`, prepare and seed the SQLite DB, boot Rails on a dedicated port, run Playwright specs from `examples/todoapp_rails/e2e`, and shut Rails down. Vanilla TypeScript specs remain first-class; Haxe-authored specs are useful when a browser test wants typed RailsHx hooks such as `shared.TodoHooks`.
 
 Use the lightweight compile/output-shape lane when you only need to verify the Haxe-authored browser test artifact:
 
@@ -272,6 +272,32 @@ rake todoapp:playwright
 `test:rails:integration` always syntax-checks generated Ruby. It runs `rails db:migrate` and `rails test` when the generated Rails app bundle is available. `test:rails:runtime` is the mandatory runtime lane: it sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and runs both the todoapp Rails integration tests and the mixed Rails/RailsHx interop runtime tests.
 
 `test:todoapp-playwright` is the real-browser layer, modeled after the PhoenixHx sentinel approach but Rails-native: Playwright validates browser-rendered ActionView, importmap/Turbo/Haxe-client boot, same-page link enhancement, and Turbo-backed form flows against a running generated Rails app.
+
+## Testing Layers For Beginners
+
+RailsHx tests have one important rule: choose the authoring language per test,
+but keep the runtime boring. Raw Ruby/Rails tests and TypeScript Playwright
+specs are supported directly. Haxe-authored tests are also first-class: they
+compile into ordinary Rails/Minitest files through haxe.ruby, or ordinary
+Playwright-compatible JavaScript through Genes.
+
+In this app:
+
+- `rails/test/**` contains vanilla Rails tests. Use this style when a tiny Ruby
+  test is clearer or when the behavior is mostly Rails/gem-owned.
+- `test_haxe/**` contains Haxe-authored Rails tests. Use this style when the
+  test benefits from typed model fields, generated route helpers, typed params,
+  DeviseHx scopes, or RailsHx contracts.
+- `e2e/**/*.spec.ts` contains vanilla Playwright specs. Use this style when a
+  target-native browser test is the clearest shape.
+- `e2e_haxe/**` contains Haxe-authored browser specs. Use this style when the
+  test benefits from shared Haxe hooks, route constants, Turbo wrappers, typed
+  payloads, or exercising the Genes client lane.
+
+Generated RailsHx app/scaffold tests should default to Haxe-authored source.
+That gives beginners one language for models, controllers, HHX, client code,
+and tests, while still letting teams add raw Ruby/TS tests whenever those are
+the better tool.
 
 The todoapp is the canonical RailsHx dogfood app. When a RailsHx feature is
 demonstrated here, add coverage at the Rails layer that would catch a real app
