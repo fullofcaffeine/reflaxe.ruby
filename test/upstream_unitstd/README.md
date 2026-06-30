@@ -26,7 +26,8 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `IntIterator`, `String`, `StringBuf`, `haxe.io.BytesBuffer`.
+- Enabled: `IntIterator`, `String`, `StringBuf`, `StringTools`,
+  `haxe.io.BytesBuffer`.
 
 The first lane is intentionally narrow. It proves the harness, provenance, sync
 workflow, and runtime execution shape without pretending broad Ruby stdlib parity

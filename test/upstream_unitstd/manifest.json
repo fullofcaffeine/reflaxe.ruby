@@ -19,7 +19,7 @@
     {"module": "Std", "status": "skipped-target-specific", "source": "Std.unit.hx", "reason": "Upstream spec exists; enable after parseInt, parseFloat, isOfType/downcast, random, enum stringification, and in-expression parsing are triaged."},
     {"module": "String", "status": "enabled", "source": "String.unit.hx", "fixture": "test/upstream_unitstd/upstream/String.unit.hx"},
     {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
-    {"module": "StringTools", "status": "skipped-target-specific", "source": "StringTools.unit.hx", "reason": "Upstream spec exists; enable after Ruby UTF-8 iterator, fastCodeAt, padding, replace, and EOF semantics are triaged."},
+    {"module": "StringTools", "status": "enabled", "source": "StringTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringTools.unit.hx"},
     {"module": "haxe.io.Bytes", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; Bytes behavior is covered by local runtime tests and future adjacent upstream haxe.io fixtures."},
     {"module": "haxe.io.BytesBuffer", "status": "enabled", "source": "haxe/io/BytesBuffer.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/BytesBuffer.unit.hx"}
   ]

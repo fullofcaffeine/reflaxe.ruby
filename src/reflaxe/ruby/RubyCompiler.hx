@@ -2719,8 +2719,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(compileParam(params, 0), "lstrip", []);
 			case ["StringTools", "rtrim"]:
 				RubyCall(compileParam(params, 0), "rstrip", []);
+			case ["StringTools", "htmlEscape"]:
+				hxrubyCall("html_escape", [
+					compileParam(params, 0),
+					params.length > 1 ? compileExpr(params[1]) : RubyBool(false)
+				]);
+			case ["StringTools", "htmlUnescape"]:
+				hxrubyCall("html_unescape", [compileParam(params, 0)]);
+			case ["StringTools", "isSpace"]:
+				hxrubyCall("string_tools_is_space", [compileParam(params, 0), compileParam(params, 1)]);
+			case ["StringTools", "lpad"]:
+				hxrubyCall("string_tools_lpad", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+			case ["StringTools", "rpad"]:
+				hxrubyCall("string_tools_rpad", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
 			case ["StringTools", "replace"]:
-				RubyCall(compileParam(params, 0), "gsub", [compileParam(params, 1), compileParam(params, 2)]);
+				var search = typedStringLiteral(params[1]);
+				var replacement = typedStringLiteral(params[2]);
+				if (search != null && search != "" && replacement != null && replacement.indexOf("\\") == -1) {
+					RubyCall(compileParam(params, 0), "gsub", [compileParam(params, 1), compileParam(params, 2)]);
+				} else {
+					hxrubyCall("string_tools_replace", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+				}
 			case ["StringTools", "startsWith"]:
 				RubyCall(compileParam(params, 0), "start_with?", [compileParam(params, 1)]);
 			case ["StringTools", "endsWith"]:
@@ -2733,6 +2752,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				hxrubyCall("url_encode", [compileParam(params, 0)]);
 			case ["StringTools", "urlDecode"]:
 				hxrubyCall("url_decode", [compileParam(params, 0)]);
+			case ["StringTools", "fastCodeAt"]:
+				hxrubyCall("string_tools_fast_code_at", [compileParam(params, 0), compileParam(params, 1)]);
+			case ["StringTools", "isEof"]:
+				hxrubyCall("string_tools_is_eof", [compileParam(params, 0)]);
+			case ["StringTools", "iterator"]:
+				hxrubyCall("native_iterator", [hxrubyCall("string_utf16_units", [compileParam(params, 0)])]);
+			case ["StringTools", "keyValueIterator"]:
+				hxrubyCall("native_iterator", [hxrubyCall("string_utf16_key_value_units", [compileParam(params, 0)])]);
 			case _:
 				null;
 		}

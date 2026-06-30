@@ -19,6 +19,7 @@ class Main {
 		Sys.println(StringTools.endsWith("reflaxe.ruby", "ruby"));
 		Sys.println(StringTools.contains("haxe to ruby", "ruby"));
 		Sys.println(StringTools.replace("typed rails", "rails", "ruby"));
+		Sys.println(StringTools.replace("a", "a", "\\1"));
 		Sys.println(StringTools.hex(255, 4));
 		Sys.println(StringTools.urlDecode("typed+ruby"));
 		Sys.println(Math.PI > 3);

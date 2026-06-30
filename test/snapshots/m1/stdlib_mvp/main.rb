@@ -13,6 +13,7 @@ class Main
     puts("reflaxe.ruby".end_with?("ruby").to_s())
     puts("haxe to ruby".include?("ruby").to_s())
     puts("typed rails".gsub("rails", "ruby").to_s())
+    puts(HXRuby.string_tools_replace("a", "a", "\\1").to_s())
     puts(HXRuby.hex(255, 4).to_s())
     puts(HXRuby.url_decode("typed+ruby").to_s())
     puts((::Math::PI > 3).to_s())

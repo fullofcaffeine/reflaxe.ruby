@@ -76,6 +76,9 @@ class UpstreamUnitStdMacro {
 			case ECall({expr: EConst(CIdent("feq"))}, [actual, expected]):
 				assertFloatNear(actual, expected, expression, relativePath);
 
+			case ECall({expr: EConst(CIdent("aeq"))}, [expected, actual]):
+				assertTrue({expr: EBinop(OpEq, actual, expected), pos: expression.pos}, expression, relativePath);
+
 			case EBlock(expressions):
 				{expr: EBlock([for (statement in expressions) transformStatement(statement, relativePath)]), pos: expression.pos};
 

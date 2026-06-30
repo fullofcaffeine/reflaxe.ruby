@@ -57,6 +57,38 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal 1, HXRuby.string_compare("\uFF61", "\u{10002}")
   end
 
+  def test_string_tools_helpers
+    assert_equal "&lt;a href=&quot;x&quot;&gt;&#039;y&#039;&amp;&lt;/a&gt;", HXRuby.html_escape("<a href=\"x\">'y'&</a>", true)
+    assert_equal "<a href=\"x\">'y'&</a>", HXRuby.html_unescape("&lt;a href=&quot;x&quot;&gt;&#039;y&#039;&amp;&lt;/a&gt;")
+    assert HXRuby.string_tools_is_space(" a", 0)
+    refute HXRuby.string_tools_is_space(" a", 1)
+    assert_equal "--hi", HXRuby.string_tools_lpad("hi", "-", 4)
+    assert_equal "hi--", HXRuby.string_tools_rpad("hi", "-", 4)
+    assert_equal "hi", HXRuby.string_tools_lpad("hi", "", 4)
+    assert_equal "axbxc", HXRuby.string_tools_replace("abc", "", "x")
+    assert_equal "axa", HXRuby.string_tools_replace("abba", "bb", "x")
+    assert_equal "\\1", HXRuby.string_tools_replace("a", "a", "\\1")
+    assert_equal 0xD83D, HXRuby.string_tools_fast_code_at("😀", 0)
+    assert_equal 0, HXRuby.string_tools_fast_code_at("A", 99)
+    assert HXRuby.string_tools_is_eof(nil)
+    assert HXRuby.string_tools_is_eof(0)
+    refute HXRuby.string_tools_is_eof(65)
+  end
+
+  def test_native_iterator_and_key_value_entries
+    iterator = HXRuby.native_iterator([10, 20])
+
+    assert iterator.has_next
+    assert_equal 10, iterator.next_
+    assert iterator.has_next
+    assert_equal 20, iterator.next_
+    refute iterator.has_next
+
+    entries = HXRuby.string_utf16_key_value_units("zя𠜎")
+    assert_equal [0, 1, 2, 3], entries.map(&:key)
+    assert_equal [122, 1103, 55_361, 57_102], entries.map(&:value)
+  end
+
   def test_data_define_compatibility_and_enum_metadata
     option = Data.define(:value, :__hx_tag, :__hx_index)
     some = option.new(41, "Some", 1)

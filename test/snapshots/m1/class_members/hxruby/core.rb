@@ -4,6 +4,32 @@ require "cgi"
 require "uri"
 
 module HXRuby
+  class NativeIterator
+    def initialize(values)
+      @values = values
+      @index = 0
+    end
+
+    def has_next
+      @index < @values.length
+    end
+
+    def next_
+      value = @values[@index]
+      @index += 1
+      value
+    end
+  end
+
+  class KeyValueEntry
+    attr_reader :key, :value
+
+    def initialize(key, value)
+      @key = key
+      @value = value
+    end
+  end
+
   RUBY_MATH_UNARY = {
     sin: ::Math.method(:sin),
     cos: ::Math.method(:cos),
@@ -70,6 +96,25 @@ module HXRuby
 
   def url_decode(value)
     CGI.unescape(value.to_s)
+  end
+
+  def html_escape(value, quotes = false)
+    out = value.to_s
+      .gsub("&", "&amp;")
+      .gsub("<", "&lt;")
+      .gsub(">", "&gt;")
+    return out unless quotes
+
+    out.gsub("\"", "&quot;").gsub("'", "&#039;")
+  end
+
+  def html_unescape(value)
+    value.to_s
+      .gsub("&lt;", "<")
+      .gsub("&gt;", ">")
+      .gsub("&quot;", "\"")
+      .gsub("&#039;", "'")
+      .gsub("&amp;", "&")
   end
 
   def string_substr(value, position, count = nil)
@@ -210,6 +255,55 @@ module HXRuby
       end
     end
     units
+  end
+
+  def string_utf16_key_value_units(value)
+    string_utf16_units(value).each_with_index.map { |code, index| KeyValueEntry.new(index, code) }
+  end
+
+  def native_iterator(values)
+    NativeIterator.new(values)
+  end
+
+  def string_tools_is_space(value, position)
+    code = string_char_code_at(value, position)
+    (code && code > 8 && code < 14) || code == 32
+  end
+
+  def string_tools_lpad(value, pad, length)
+    out = value.to_s
+    fill = pad.to_s
+    return out if fill.empty?
+
+    out = fill + out while string_utf16_units(out).length < length.to_i
+    out
+  end
+
+  def string_tools_rpad(value, pad, length)
+    out = value.to_s
+    fill = pad.to_s
+    return out if fill.empty?
+
+    out += fill while string_utf16_units(out).length < length.to_i
+    out
+  end
+
+  def string_tools_replace(value, search, replacement)
+    string = value.to_s
+    needle = search.to_s
+    by = replacement.to_s
+    return string if needle.empty? && by.empty?
+    return string.each_char.to_a.join(by) if needle.empty?
+
+    string.gsub(needle) { by }
+  end
+
+  def string_tools_fast_code_at(value, position)
+    string_char_code_at(value, position) || 0
+  end
+
+  def string_tools_is_eof(value)
+    value.nil? || value == 0
   end
 
   def array_concat(array, other)

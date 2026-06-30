@@ -12,6 +12,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("StringBuf.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("IntIterator.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("String.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("StringTools.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		Sys.println("unitstd-ruby ok");
 	}
