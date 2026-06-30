@@ -57,8 +57,19 @@ module HXRuby
     when Array, Hash
       stable_inspect(value)
     else
+      return enum_string(value) if value.respond_to?(:__hx_tag)
+      return value.to_string if value.respond_to?(:to_string)
+
       value.to_s
     end
+  end
+
+  def enum_string(value)
+    tag = enum_tag(value)
+    params = enum_parameters(value)
+    return tag.to_s if params.empty?
+
+    "#{tag}(#{params.map { |param| stringify(param) }.join(",")})"
   end
 
   def stable_inspect(value)
@@ -544,6 +555,7 @@ module HXRuby
     return value.is_a?(String) if type.equal?(String)
     return value.is_a?(Array) if type.equal?(Array)
     return value.is_a?(type) if type.is_a?(Class)
+    return value.is_a?(type) if type.is_a?(Module) && !type.respond_to?(:__hx_constructs)
     return enum_value_of?(value, type) if type.is_a?(Module)
 
     false

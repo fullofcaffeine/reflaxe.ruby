@@ -545,13 +545,12 @@ for (const file of [
   "app/views/todos/_list.html.erb",
   "app/views/todos/_summary.html.erb",
   "app/views/todos/_typed_form.html.erb",
-  "app/views/devise/sessions/new.html.erb",
-  "app/views/layouts/application.html.erb",
-  "config/routes.rb",
-  "config/initializers/hxruby_autoload.rb",
-  "db/migrate/20260101000000_create_todos.rb",
-  "db/migrate/20260101000001_update_todos.rb",
-  "db/migrate/20260101000002_update_users.rb",
+	"app/views/devise/sessions/new.html.erb",
+	"app/views/layouts/application.html.erb",
+	"config/routes.rb",
+	"db/migrate/20260101000000_create_todos.rb",
+	"db/migrate/20260101000001_update_todos.rb",
+	"db/migrate/20260101000002_update_users.rb",
   "db/migrate/20260101000003_create_chat_messages.rb",
   "db/migrate/20260101000004_add_devise_to_users.rb",
   "test/generated/models/todo_haxe_test.rb",
@@ -565,9 +564,10 @@ for (const file of [
 }
 
 for (const forbidden of [
-  "app/haxe_gen",
-  "app/lib/railshx/generated",
-  "run.rb",
+	"app/haxe_gen",
+	"app/lib/railshx/generated",
+	"config/initializers/hxruby_autoload.rb",
+	"run.rb",
 ]) {
   const fullPath = join(outputDir, forbidden);
   if (existsSync(fullPath)) {
@@ -818,7 +818,7 @@ for (const expected of [
   /todo(?:__hx\d+)? = Todo\.where\(id: self\.param_id\(\), user_id: current_user(?:__hx\d+)?\.id\)\.first\(\)/,
   /todo(?:__hx\d+)?\.update\(is_completed: true\)/,
   /self\.flash\(\)\[:notice\] = "Todo completed"/,
-  /"Todo report for " \+ label(?:__hx\d+)?.*count(?:__hx\d+)?\.to_s\(\).*" todos"/,
+  /"Todo report for " \+ label(?:__hx\d+)?.*(?:HXRuby\.stringify\(count(?:__hx\d+)?\)|count(?:__hx\d+)?\.to_s\(\)).*" todos"/,
   /self\.render\(plain: .*status: :ok\)/,
   /self\.send_data\(.*"RailsHx file route: " \+ label(?:__hx\d+)?.*"\\n".*filename: "todoapp-route\.txt", type: "text\/plain", disposition: "inline", status: :ok\)/,
 ]) {

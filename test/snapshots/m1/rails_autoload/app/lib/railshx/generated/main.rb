@@ -6,7 +6,7 @@ class Main
   end
   def self.main()
     todo = nil
-    puts((todo == nil).to_s())
+    puts(HXRuby.stringify((todo == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

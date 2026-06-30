@@ -161,7 +161,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static inline final RAILS_VENDOR_RUNTIME_ROOT = "app/lib/railshx/runtime";
 	static var activeBuildContext:RubyBuildContext = RubyBuildContext.legacyDefaults();
 	static var needsCoreRuntime:Bool = false;
-	static var needsRailsNativeRuntimeInitializer:Bool = false;
 	static var needsDataDefine:Bool = false;
 	static var needsHxException:Bool = false;
 	static var hxrubyCallCount:Int = 0;
@@ -194,7 +193,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		requireRegistry = new RequireRegistry();
 		didEmitMain = false;
 		needsCoreRuntime = false;
-		needsRailsNativeRuntimeInitializer = false;
 		needsDataDefine = false;
 		needsHxException = false;
 		hxrubyCallCount = 0;
@@ -202,7 +200,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	override public function onCompileEnd():Void {
-		if (buildContext.railsMode && (!buildContext.usesRailsNativeLayout() || needsRailsNativeRuntimeInitializer)) {
+		if (buildContext.railsMode && !buildContext.usesRailsNativeLayout()) {
 			setRailsAutoloadInitializer();
 		}
 		if (didEmitMain || needsCoreRuntime) {
@@ -324,11 +322,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			requireRegistry.addRequire("active_support/concern");
 			moduleRequires.addRequire("active_support/concern");
 		}
+		addHaxeHierarchyRequires(moduleRequires, classType);
 		var classBody:Array<RubyStatement> = [];
 		classBody.push(typeNameMetadata(fullTypeName(classType.pack, classType.name)));
 		if (isRubyConcern) {
 			classBody.push(RubyRawStatement("extend ActiveSupport::Concern"));
 		}
+		classBody = classBody.concat(haxeInterfaceIncludeStatements(classType));
 		classBody = classBody.concat(rubyExtensionStatements(classType.meta, classType));
 		for (field in varFields) {
 			var mathConstant = mathConstantValue(classType.pack, classType.name, field.field.name);
@@ -448,11 +448,82 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function rubyClassDeclaration(classType:ClassType, body:Array<RubyStatement>):RubyStatement {
 		var constant = RubyNaming.toConstantName(classType.name);
+		if (classType.isInterface) {
+			return RubyModuleDecl(constant, body);
+		}
 		if (isRubyModuleType(classType) || fullTypeName(classType.pack, classType.name) == "Math") {
 			return RubyModuleDecl(isRubyModuleType(classType) ? rubyModuleDeclarationName(classType) : constant, body);
 		}
-		var superclass = nativeExternSuperclassName(classType);
+		var superclass = rubySuperclassName(classType);
 		return superclass == null ? RubyClassDecl(constant, body) : RubyClassDeclWithSuper(constant, superclass, body);
+	}
+
+	static function haxeInterfaceIncludeStatements(classType:ClassType):Array<RubyStatement> {
+		if (classType.interfaces == null || classType.interfaces.length == 0) {
+			return [];
+		}
+		return [
+			for (implemented in classType.interfaces) {
+				var interfaceType = implemented.t.get();
+				RubyRawStatement("include " + rubyClassConstantPath(interfaceType));
+			}
+		];
+	}
+
+	static function addHaxeHierarchyRequires(moduleRequires:RequireRegistry, classType:ClassType):Void {
+		if (classType.superClass != null) {
+			var superclass = classType.superClass.t.get();
+			if (!superclass.isExtern) {
+				moduleRequires.addRequireRelative(rubyRequireRelativePathFrom(classType.pack, superclass.pack, superclass.name));
+			}
+		}
+		if (classType.interfaces == null) {
+			return;
+		}
+		for (implemented in classType.interfaces) {
+			var interfaceType = implemented.t.get();
+			if (!interfaceType.isExtern) {
+				moduleRequires.addRequireRelative(rubyRequireRelativePathFrom(classType.pack, interfaceType.pack, interfaceType.name));
+			}
+		}
+	}
+
+	static function rubyRequireRelativePathFrom(fromPack:Array<String>, targetPack:Array<String>, targetName:String):String {
+		var fromParts = rubyFileDirParts(fromPack);
+		var targetParts = rubyFileDirParts(targetPack);
+		targetParts.push(RubyNaming.fileName(targetName));
+		var common = 0;
+		while (common < fromParts.length && common < targetParts.length && fromParts[common] == targetParts[common]) {
+			common++;
+		}
+		var out:Array<String> = [];
+		for (_ in common...fromParts.length) {
+			out.push("..");
+		}
+		for (i in common...targetParts.length) {
+			out.push(targetParts[i]);
+		}
+		return out.length == 0 ? "." : out.join("/");
+	}
+
+	static function rubyFileDirParts(pack:Array<String>):Array<String> {
+		var dir = RubyNaming.fileDir(pack);
+		return dir == null || dir == "" ? [] : dir.split("/");
+	}
+
+	static function rubySuperclassName(classType:ClassType):Null<String> {
+		var native = nativeExternSuperclassName(classType);
+		if (native != null) {
+			return native;
+		}
+		if (classType.superClass == null) {
+			return null;
+		}
+		var superclass = classType.superClass.t.get();
+		if (superclass.isExtern) {
+			return null;
+		}
+		return rubyClassConstantPath(superclass);
 	}
 
 	static function nativeExternSuperclassName(classType:ClassType):Null<String> {
@@ -1003,7 +1074,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return;
 		}
 		moduleRequires.addRequireRelative(relativeRequirePath(sourcePath, outputRelativePath("hxruby/core.rb", true)));
-		needsRailsNativeRuntimeInitializer = true;
 	}
 
 	static function relativeRequirePath(fromFile:String, toFile:String):String {
@@ -3127,7 +3197,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyStringify(value:RubyExpr):RubyExpr {
-		return activeBuildContext.isPortable() ? hxrubyCall("stringify", [value]) : RubyCall(value, "to_s", []);
+		return hxrubyCall("stringify", [value]);
 	}
 
 	static function hxrubyCall(method:String, args:Array<RubyExpr>):RubyExpr {
@@ -3137,29 +3207,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyStringifyParam(value:TypedExpr):RubyExpr {
-		if (activeBuildContext.isPortable()) {
-			return hxrubyCall("stringify", [compileExpr(value)]);
-		}
 		return switch (value.expr) {
 			case TConst(TNull):
 				RubyString("null");
-			case _ if (canStringifyWithPlainToS(value)):
-				RubyCall(compileExpr(value), "to_s", []);
 			case _:
-				var source = printInlineExpr(value);
-				RubyRawExpr("((__hx_value = " + source + ').nil? ? "null" : __hx_value.to_s)');
-		}
-	}
-
-	static function canStringifyWithPlainToS(value:TypedExpr):Bool {
-		if (isNullableType(value.t)) {
-			return false;
-		}
-		return switch (TypeTools.follow(value.t)) {
-			case TDynamic(_) | TMono(_):
-				false;
-			case _:
-				true;
+				hxrubyCall("stringify", [compileExpr(value)]);
 		}
 	}
 

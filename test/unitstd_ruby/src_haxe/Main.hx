@@ -14,6 +14,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("String.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("StringTools.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Math.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		unitstd_ruby.StdNumericParsing.run();
 		Sys.println("unitstd-ruby ok");

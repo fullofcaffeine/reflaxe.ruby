@@ -79,6 +79,12 @@ class UpstreamUnitStdMacro {
 			case ECall({expr: EConst(CIdent("aeq"))}, [expected, actual]):
 				assertTrue({expr: EBinop(OpEq, actual, expected), pos: expression.pos}, expression, relativePath);
 
+			case ECall({expr: EConst(CIdent("unspec"))}, [_]):
+				macro {};
+
+			case EBinop(OpIn, left, right):
+				assertTrue(macro $right.indexOf($left) != -1, expression, relativePath);
+
 			case EBlock(expressions):
 				{expr: EBlock([for (statement in expressions) transformStatement(statement, relativePath)]), pos: expression.pos};
 

@@ -114,11 +114,11 @@ for (const expected of [
 
 const retryJobRuby = readFileSync(join(outputDir, "app", "jobs", "retry_probe_job.rb"), "utf8");
 for (const expected of [
-  /class RetryProbeJob < ActiveJob::Base/,
-  /queue_as :critical/,
-  /retry_on StandardError, wait: 5\.seconds, attempts: 2, queue: :retries/,
-  /def perform\(attempt(?:__hx\d+)?\)/,
-  /raise HxException\.new\(\("retry:" \+ attempt(?:__hx\d+)?\.to_s\(\)\)\)/,
+	/class RetryProbeJob < ActiveJob::Base/,
+	/queue_as :critical/,
+	/retry_on StandardError, wait: 5\.seconds, attempts: 2, queue: :retries/,
+	/def perform\(attempt(?:__hx\d+)?\)/,
+	/raise HxException\.new\(\("retry:" \+ HXRuby\.stringify\(attempt(?:__hx\d+)?\)\)\)/,
 ]) {
   if (!expected.test(retryJobRuby)) {
     console.error(`ActiveJob retry output missing expected line: ${expected}`);
@@ -128,11 +128,11 @@ for (const expected of [
 
 const discardJobRuby = readFileSync(join(outputDir, "app", "jobs", "discard_probe_job.rb"), "utf8");
 for (const expected of [
-  /class DiscardProbeJob < ActiveJob::Base/,
-  /queue_as :critical/,
-  /discard_on ActiveJob::DeserializationError/,
-  /def perform\(record_id(?:__hx\d+)?\)/,
-  /raise ActiveJob::DeserializationError\.new\(\("discard:" \+ record_id(?:__hx\d+)?\.to_s\(\)\)\)/,
+	/class DiscardProbeJob < ActiveJob::Base/,
+	/queue_as :critical/,
+	/discard_on ActiveJob::DeserializationError/,
+	/def perform\(record_id(?:__hx\d+)?\)/,
+	/raise ActiveJob::DeserializationError\.new\(\("discard:" \+ HXRuby\.stringify\(record_id(?:__hx\d+)?\)\)\)/,
 ]) {
   if (!expected.test(discardJobRuby)) {
     console.error(`ActiveJob discard output missing expected line: ${expected}`);

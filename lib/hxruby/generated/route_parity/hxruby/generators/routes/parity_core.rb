@@ -39,7 +39,7 @@ module Hxruby
         def self.validate_manifest(manifest)
           errors = []
           version = Hxruby::Generators::Routes::ParityCore.hash_value(manifest, "version")
-          version_text = ((version == nil) ? "" : ((__hx_value = version).nil? ? "null" : __hx_value.to_s))
+          version_text = ((version == nil) ? "" : HXRuby.stringify(version))
           if ((version_text != "1") && (version_text != "2"))
             HXRuby.array_push(errors, ("unsupported Haxe-owned route manifest version " + ((version_text == "") ? "(missing)" : version_text)))
           end

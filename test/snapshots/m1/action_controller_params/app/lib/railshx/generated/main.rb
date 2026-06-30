@@ -6,7 +6,7 @@ class Main
   end
   def self.main()
     controller = nil
-    puts((controller == nil).to_s())
+    puts(HXRuby.stringify((controller == nil)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

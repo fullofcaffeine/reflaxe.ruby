@@ -12,7 +12,7 @@ class Main
   def self.main()
     NativeJson.parse("{}")
     NativeDate.today()
-    puts("require metadata".to_s())
+    puts(HXRuby.stringify("require metadata"))
   end
 end
 if __FILE__ == $PROGRAM_NAME

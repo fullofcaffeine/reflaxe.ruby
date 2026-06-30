@@ -83,7 +83,7 @@ for (const expected of [
   /File\.basename/,
   /RubyInterop\.describe\(name: "interop", count: 3\)/,
   /RubyInterop\.describe_details\(name: "interop", tags: \[:safe, :typed\], count: count(?:__hx\d+)?\)/,
-  /RubyInterop\.each\(\[4, 5\]\) \{ \|value(?:__hx\d+)?\| puts\(value(?:__hx\d+)?\.to_s\(\)\) \}/,
+  /RubyInterop\.each\(\[4, 5\]\) \{ \|value(?:__hx\d+)?\| puts\(HXRuby\.stringify\(value(?:__hx\d+)?\)\) \}/,
   /RubyInterop\.with_options\(\[6, 7\], prefix: "interop", tags: \[:block\], count: count(?:__hx\d+)?\) do \|value(?:__hx\d+)?\|/,
   /Kernel\.print\("interop="\)/,
   /RubyInterop\.accept_symbol\(:ready\)/,

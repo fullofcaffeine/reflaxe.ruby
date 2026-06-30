@@ -10,10 +10,26 @@ module Float_; end unless defined?(Float_)
 module Bool; end unless defined?(Bool)
 module Dynamic; end unless defined?(Dynamic)
 module TestEnumForTypeCheck
+  def self.__hx_constructs
+    [{ name: "Happy", index: 0, method: :happy, arity: 0 }]
+  end
+
   Happy = Data.define(:__hx_tag, :__hx_index)
 end
 
 class TestClassForTypeCheck; end
+
+module TestInterfaceForTypeCheck; end
+
+class TestInterfaceImplementor
+  include TestInterfaceForTypeCheck
+end
+
+class TestClassWithToString
+  def to_string
+    "TestClassWithToString.toString()"
+  end
+end
 
 class HXRubyRuntimeTest < Minitest::Test
   def test_stringify_matches_haxe_basics
@@ -21,6 +37,8 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal "true", HXRuby.stringify(true)
     assert_equal "false", HXRuby.stringify(false)
     assert_equal "[1, 2]", HXRuby.stringify([1, 2])
+    assert_equal "TestClassWithToString.toString()", HXRuby.stringify(TestClassWithToString.new)
+    assert_equal "Happy", HXRuby.stringify(TestEnumForTypeCheck::Happy.new("Happy", 0))
   end
 
   def test_number_and_string_helpers
@@ -122,6 +140,7 @@ class HXRubyRuntimeTest < Minitest::Test
     assert HXRuby.is_of_type(true, Bool)
     assert HXRuby.is_of_type([1, 2], Array)
     assert HXRuby.is_of_type(TestClassForTypeCheck.new, TestClassForTypeCheck)
+    assert HXRuby.is_of_type(TestInterfaceImplementor.new, TestInterfaceForTypeCheck)
     assert HXRuby.is_of_type(TestEnumForTypeCheck::Happy.new("Happy", 0), TestEnumForTypeCheck)
     refute HXRuby.is_of_type(nil, Dynamic)
   end
