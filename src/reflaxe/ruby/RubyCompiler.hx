@@ -35,6 +35,7 @@ import reflaxe.ruby.rails.RailsRouteTarget;
 import reflaxe.ruby.rails.RailsRouteManifest;
 import reflaxe.ruby.rails.RailsRoutesExtractor;
 import reflaxe.ruby.rails.RailsRoutesEmitter;
+import reflaxe.ruby.rails.RailsArtifactPaths;
 import reflaxe.ruby.RequireRegistry;
 import sys.FileSystem;
 import sys.io.File;
@@ -12117,116 +12118,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsTemplateOutputPath(path:String):String {
-		var normalized = normalizeRailsTemplatePath(path);
-		while (StringTools.startsWith(normalized, "/")) {
-			normalized = normalized.substr(1);
-		}
-		if (!StringTools.endsWith(normalized, ".erb")) {
-			normalized += ".html.erb";
-		}
-		return "app/views/" + normalized;
+		return RailsArtifactPaths.templateOutputPath(path);
 	}
 
 	static function railsTestOutputPath(path:String):String {
-		var normalized = normalizeRailsTestPath(path);
-		while (StringTools.startsWith(normalized, "/")) {
-			normalized = normalized.substr(1);
-		}
-		if (!StringTools.endsWith(normalized, ".rb")) {
-			normalized += ".rb";
-		}
-		return "test/generated/" + normalized;
+		return RailsArtifactPaths.testOutputPath(path);
 	}
 
 	static function railsMailerPreviewOutputPath(path:String):String {
-		var normalized = normalizeRailsMailerPreviewPath(path);
-		while (StringTools.startsWith(normalized, "/")) {
-			normalized = normalized.substr(1);
-		}
-		if (!StringTools.endsWith(normalized, ".rb")) {
-			normalized += ".rb";
-		}
-		return "test/mailers/previews/" + normalized;
+		return RailsArtifactPaths.mailerPreviewOutputPath(path);
 	}
 
 	static function normalizeRailsRenderPath(path:String):String {
-		var normalized = normalizeRailsTemplatePath(path);
-		if (StringTools.endsWith(normalized, ".html.erb")) {
-			normalized = normalized.substr(0, normalized.length - ".html.erb".length);
-		} else if (StringTools.endsWith(normalized, ".erb")) {
-			normalized = normalized.substr(0, normalized.length - ".erb".length);
-		}
-		var segments = normalized.split("/");
-		var last = segments.pop();
-		if (last != null && StringTools.startsWith(last, "_")) {
-			last = last.substr(1);
-		}
-		if (last != null) {
-			segments.push(last);
-		}
-		return segments.join("/");
+		return RailsArtifactPaths.normalizeRenderPath(path);
 	}
 
 	static function validateRailsTemplatePath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
-		var normalized = normalizeRailsTemplatePath(path);
-		if (normalized == ""
-			|| StringTools.startsWith(normalized, "/")
-			|| normalized.indexOf("..") != -1
-			|| normalized.indexOf("//") != -1
-			|| path.indexOf("\\") != -1) {
-			Context.error(context + " path must be a safe Rails template path relative to app/views.", pos);
-			return;
-		}
-		for (segment in normalized.split("/")) {
-			if (segment == "" || segment == "." || segment == "..") {
-				Context.error(context + " path must not contain empty, '.', or '..' segments.", pos);
-				return;
-			}
-		}
+		RailsArtifactPaths.validateTemplatePath(path, pos, context);
 	}
 
 	static function validateRailsTestPath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
-		var normalized = normalizeRailsTestPath(path);
-		if (normalized == ""
-			|| StringTools.startsWith(normalized, "/")
-			|| normalized.indexOf("..") != -1
-			|| normalized.indexOf("//") != -1
-			|| path.indexOf("\\") != -1) {
-			Context.error(context + " path must be a safe Rails test path relative to test/generated.", pos);
-			return;
-		}
-		if (!StringTools.endsWith(normalized, "_test") && !StringTools.endsWith(normalized, "_test.rb")) {
-			Context.error(context + " path must end with _test or _test.rb so Rails/Minitest discovers it.", pos);
-			return;
-		}
-		for (segment in normalized.split("/")) {
-			if (segment == "" || segment == "." || segment == "..") {
-				Context.error(context + " path must not contain empty, '.', or '..' segments.", pos);
-				return;
-			}
-		}
+		RailsArtifactPaths.validateTestPath(path, pos, context);
 	}
 
 	static function validateRailsMailerPreviewPath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
-		var normalized = normalizeRailsMailerPreviewPath(path);
-		if (normalized == ""
-			|| StringTools.startsWith(normalized, "/")
-			|| normalized.indexOf("..") != -1
-			|| normalized.indexOf("//") != -1
-			|| path.indexOf("\\") != -1) {
-			Context.error(context + " path must be a safe Rails preview path relative to test/mailers/previews.", pos);
-			return;
-		}
-		if (!StringTools.endsWith(normalized, "_preview") && !StringTools.endsWith(normalized, "_preview.rb")) {
-			Context.error(context + " path must end with _preview or _preview.rb so Rails discovers it as a mailer preview.", pos);
-			return;
-		}
-		for (segment in normalized.split("/")) {
-			if (segment == "" || segment == "." || segment == "..") {
-				Context.error(context + " path must not contain empty, '.', or '..' segments.", pos);
-				return;
-			}
-		}
+		RailsArtifactPaths.validateMailerPreviewPath(path, pos, context);
 	}
 
 	static function validateTemplateComponentSlotName(slotName:String, pos:haxe.macro.Expr.Position, context:String):Void {
@@ -12236,19 +12152,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function normalizeRailsTemplatePath(path:String):String {
-		return StringTools.replace(path == null ? "" : StringTools.trim(path), "\\", "/");
+		return RailsArtifactPaths.normalizeTemplatePath(path);
 	}
 
 	static function normalizeRailsTestPath(path:String):String {
-		return StringTools.replace(path == null ? "" : StringTools.trim(path), "\\", "/");
+		return RailsArtifactPaths.normalizeTestPath(path);
 	}
 
 	static function normalizeRailsMailerPreviewPath(path:String):String {
-		var normalized = StringTools.replace(path == null ? "" : StringTools.trim(path), "\\", "/");
-		while (StringTools.startsWith(normalized, "test/mailers/previews/")) {
-			normalized = normalized.substr("test/mailers/previews/".length);
-		}
-		return normalized;
+		return RailsArtifactPaths.normalizeMailerPreviewPath(path);
 	}
 
 	static function normalizeGeneratedText(value:String):String {
