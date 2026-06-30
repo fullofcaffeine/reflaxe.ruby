@@ -310,10 +310,10 @@ end end)
         def self.trim_slashes(value)
           out = value
           while out.start_with?("/")
-            out = out[1..]
+            out = HXRuby.string_substr(out, 1)
           end
           while out.end_with?("/")
-            out = out[0, (out.length - 1)]
+            out = HXRuby.string_substr(out, 0, (out.length - 1))
           end
           return out
         end

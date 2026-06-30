@@ -16,6 +16,7 @@
 		"db/migrate/20260101000001_update_todos.rb",
 		"db/migrate/20260101000000_create_todos.rb",
 		"config/routes.rb",
+		"config/initializers/hxruby_autoload.rb",
 		"app/views/users/index.html.erb",
 		"app/views/todos/index.html.erb",
 		"app/views/todos/_typed_form.html.erb",
@@ -29,6 +30,7 @@
 		"app/views/todos/_app_top_bar.html.erb",
 		"app/views/layouts/application.html.erb",
 		"app/views/devise/sessions/new.html.erb",
+		"app/lib/railshx/runtime/hxruby/core.rb",
 		".railshx/routes.haxe.json",
 		".railshx/manifest.json"
 	],

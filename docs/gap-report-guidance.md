@@ -28,6 +28,12 @@ Validate that committed std/runtime files are represented:
 npm run test:stdlib-inventory
 ```
 
+Run upstream Haxe std runtime fixtures selected for Ruby:
+
+```bash
+npm run test:unitstd-ruby
+```
+
 ## Inventory Rules
 
 Each entry in `docs/stdlib-inventory.json` must include:
@@ -40,6 +46,13 @@ Each entry in `docs/stdlib-inventory.json` must include:
 - `reason`: why the surface exists or remains missing.
 
 Use `std/` for additive Ruby/Rails APIs and `std/_std/` for upstream Haxe std overrides that need classpath precedence. Use `runtime/hxruby/` for Ruby files copied or required by generated output.
+
+When changing a std/runtime surface that has a matching upstream Haxe
+`unitstd` fixture, update `test/upstream_unitstd/manifest.json` in the same
+change. Prefer enabling the fixture once it passes. If the Ruby target needs a
+runtime helper to preserve Haxe semantics, keep it in `runtime/hxruby` and add
+or update inventory/gap-report entries as appropriate; do not silently patch
+Ruby core classes or leave the fixture untracked.
 
 ## Current Gap Summary
 

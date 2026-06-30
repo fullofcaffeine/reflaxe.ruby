@@ -72,6 +72,28 @@ module HXRuby
     CGI.unescape(value.to_s)
   end
 
+  def string_substr(value, position, count = nil)
+    string = value.to_s
+    total_units = string.each_char.sum { |char| char.ord > 0xffff ? 2 : 1 }
+    start = position.to_i
+    start = total_units + start if start.negative?
+    start = 0 if start.negative?
+    return "" if start >= total_units
+
+    finish = count.nil? ? nil : start + count.to_i
+    return "" if !finish.nil? && finish <= start
+
+    out = +""
+    offset = 0
+    string.each_char do |char|
+      units = char.ord > 0xffff ? 2 : 1
+      next_offset = offset + units
+      out << char if next_offset > start && (finish.nil? || offset < finish)
+      offset = next_offset
+    end
+    out
+  end
+
   def array_concat(array, other)
     array + other
   end

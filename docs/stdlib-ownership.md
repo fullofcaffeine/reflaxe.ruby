@@ -42,6 +42,36 @@ Use `runtime/hxruby/` for Ruby files copied or required by generated output:
 - Future array/string/hash dynamic helpers that should not be duplicated per generated file.
 
 Compiler-generated one-off shims are allowed during bring-up, but stable runtime behavior should move into `runtime/hxruby/` and be tracked in the inventory.
+Keep these helpers namespaced under `HXRuby` unless there is a documented reason
+to patch a Ruby core class. For example, Haxe `String.substr` needs UTF-16-style
+code-unit overlap semantics for some upstream stdlib cases, so the compiler
+routes it through `HXRuby.string_substr(...)` instead of adding methods to
+Ruby's `String`.
+
+## Upstream `unitstd` Runtime Parity
+
+The Ruby target carries a curated copy of upstream Haxe
+`tests/unit/src/unitstd/**/*.unit.hx` fixtures under
+`test/upstream_unitstd/upstream`. These fixtures are provenance-tracked in
+`test/upstream_unitstd/manifest.json` and synchronized from the local reference
+checkout with:
+
+```bash
+scripts/sync-upstream-unitstd-specs.sh
+```
+
+Run the Ruby parity lane with:
+
+```bash
+npm run test:unitstd-ruby
+```
+
+This lane complements snapshots and inventory checks. Snapshots prove generated
+Ruby shape, `docs/stdlib-inventory.json` proves ownership, and upstream unitstd
+fixtures prove selected Haxe std semantics actually execute on Ruby. When an
+upstream fixture exposes a real target gap, prefer fixing the compiler/std/runtime
+layer over editing the fixture. If a fixture must be adapted or skipped for a
+Ruby-specific reason, record that decision in the manifest with a short reason.
 
 ## Current Baseline
 
@@ -56,6 +86,8 @@ Run:
 
 ```bash
 npm run test:stdlib-inventory
+npm run test:unitstd-ruby
 ```
 
-to validate the inventory schema and that committed std/runtime files are represented.
+to validate the inventory schema, that committed std/runtime files are
+represented, and that the curated upstream runtime fixture lane still passes.
