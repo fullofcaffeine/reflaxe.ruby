@@ -25,8 +25,16 @@ class HXRubyRuntimeTest < Minitest::Test
 
   def test_number_and_string_helpers
     assert_equal 42, HXRuby.parse_int("42")
+    assert_equal 100, HXRuby.parse_int("100x123")
+    assert_equal 23, HXRuby.parse_int("23e2")
+    assert_equal 16, HXRuby.parse_int("0x10z")
+    assert_equal(-160, HXRuby.parse_int("-0xa0"))
+    assert_equal 0, HXRuby.parse_int("0b10")
     assert_nil HXRuby.parse_int("nope")
     assert_in_delta 3.5, HXRuby.parse_float("3.5"), 0.0001
+    assert_in_delta 100.0, HXRuby.parse_float("100x123"), 0.0001
+    assert_in_delta 5.3, HXRuby.parse_float("5.3 1"), 0.0001
+    assert_in_delta 6.0, HXRuby.parse_float("6e"), 0.0001
     assert HXRuby.parse_float("nope").nan?
     assert_equal "00FF", HXRuby.hex(255, 4)
     assert_equal "typed+ruby", HXRuby.url_encode("typed ruby")

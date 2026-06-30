@@ -6,8 +6,8 @@ class Main
   end
   def self.main()
     puts("null".to_s())
-    puts(((Integer("41".to_s, 10) rescue nil) + 1).to_s())
-    puts(((Float("3.5".to_s) rescue nil) + 0.5).to_s())
+    puts((HXRuby.parse_int("41") + 1).to_s())
+    puts((HXRuby.parse_float("3.5") + 0.5).to_s())
     puts("  typed rails  ".strip().to_s())
     puts("reflaxe.ruby".start_with?("reflaxe").to_s())
     puts("reflaxe.ruby".end_with?("ruby").to_s())

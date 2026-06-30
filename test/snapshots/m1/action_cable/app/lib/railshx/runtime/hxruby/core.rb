@@ -73,15 +73,24 @@ module HXRuby
   end
 
   def parse_int(value)
-    Integer(value.to_s, 10)
-  rescue ArgumentError, TypeError
-    nil
+    return nil if value.nil?
+
+    match = /\A[ \t\n\v\f\r]*([+-]?)(?:(?:0[xX]([0-9a-fA-F]+))|([0-9]+))/.match(value.to_s)
+    return nil if match.nil?
+
+    sign = match[1] == "-" ? -1 : 1
+    digits = match[2] || match[3]
+    base = match[2].nil? ? 10 : 16
+    sign * digits.to_i(base)
   end
 
   def parse_float(value)
-    Float(value.to_s)
-  rescue ArgumentError, TypeError
-    Float::NAN
+    return Float::NAN if value.nil?
+
+    match = /\A[ \t\n\v\f\r]*[+-]?(?:(?:[0-9]+\.[0-9]*)|(?:\.[0-9]+)|(?:[0-9]+))(?:[eE][+-]?[0-9]+)?/.match(value.to_s)
+    return Float::NAN if match.nil?
+
+    match[0].to_f
   end
 
   def hex(value, digits = nil)

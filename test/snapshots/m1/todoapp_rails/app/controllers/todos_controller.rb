@@ -2,6 +2,7 @@
 # Rails controller output; Zeitwerk path should match the Ruby constant.
 require "action_controller/railtie"
 require "turbo-rails"
+require_relative "../lib/railshx/runtime/hxruby/core"
 class TodosController < ApplicationController
   before_action :authenticate_user!
   def index()
@@ -51,7 +52,7 @@ class TodosController < ApplicationController
   end
   def param_id()
     raw = self.params()[:id]
-    parsed = ((raw == nil) ? nil : (Integer(raw.to_s, 10) rescue nil))
+    parsed = ((raw == nil) ? nil : HXRuby.parse_int(raw))
     return ((parsed == nil) ? 0 : parsed)
   end
 end

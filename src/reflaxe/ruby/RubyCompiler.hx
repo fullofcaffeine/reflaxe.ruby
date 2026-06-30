@@ -3164,19 +3164,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyParseInt(value:TypedExpr):RubyExpr {
-		if (activeBuildContext.isPortable()) {
-			return hxrubyCall("parse_int", [compileExpr(value)]);
-		}
-		var source = printInlineExpr(value);
-		return RubyRawExpr("(Integer(" + source + ".to_s, 10) rescue nil)");
+		return hxrubyCall("parse_int", [compileExpr(value)]);
 	}
 
 	static function compileRubyParseFloat(value:TypedExpr):RubyExpr {
-		if (activeBuildContext.isPortable()) {
-			return hxrubyCall("parse_float", [compileExpr(value)]);
-		}
-		var source = printInlineExpr(value);
-		return RubyRawExpr("(Float(" + source + ".to_s) rescue nil)");
+		return hxrubyCall("parse_float", [compileExpr(value)]);
 	}
 
 	static function compileArrayCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
