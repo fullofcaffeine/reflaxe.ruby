@@ -137,7 +137,7 @@ end)
           routes = []
           previous_prefix = nil
           g = 0
-          g1 = input.split("\n")
+          g1 = HXRuby.string_split(input, "\n")
           while (g < g1.length)
             raw_line = g1[g]
             g = (g + 1)
@@ -176,7 +176,7 @@ end)
           end
           routes = []
           g = 0
-          g1 = tokens[verb_index].split("|")
+          g1 = HXRuby.string_split(tokens[verb_index], "|")
           while (g < g1.length)
             verb = g1[g]
             g = (g + 1)
@@ -193,7 +193,7 @@ end)
         def self.non_empty_tokens(line)
           out = []
           g = 0
-          g1 = line.split(" ")
+          g1 = HXRuby.string_split(line, " ")
           while (g < g1.length)
             token = g1[g]
             g = (g + 1)
@@ -214,7 +214,7 @@ end)
           return -1
         end
         def self.route_verb(token)
-          parts = token.split("|")
+          parts = HXRuby.string_split(token, "|")
           g = 0
           while (g < parts.length)
             part = parts[g]
