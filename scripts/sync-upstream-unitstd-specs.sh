@@ -43,3 +43,5 @@ for entry in manifest["modules"]:
 
 print(f"synced {copied} upstream unitstd fixture(s)")
 PY
+
+haxelib run formatter -s "$ROOT/test/upstream_unitstd/upstream"

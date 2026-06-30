@@ -12,7 +12,7 @@
     {"module": "Array", "status": "skipped-target-specific", "source": "Array.unit.hx", "reason": "Upstream spec exists; enable after Ruby Array mutability, structural equality, helper-class dependencies, and in-expression parsing are triaged."},
     {"module": "Date", "status": "skipped-target-specific", "source": "Date.unit.hx", "reason": "Upstream spec exists; enable after Ruby Date/timezone semantics are triaged against Haxe Date expectations."},
     {"module": "EReg", "status": "skipped-target-specific", "source": "EReg.unit.hx", "reason": "Upstream spec exists; enable after Ruby Regexp replacement, group, and global-match semantics are triaged."},
-    {"module": "IntIterator", "status": "skipped-target-specific", "source": "IntIterator.unit.hx", "reason": "Upstream spec exposes a Ruby parity gap: direct IntIterator.next() must advance receiver state, not only read the current min value."},
+    {"module": "IntIterator", "status": "enabled", "source": "IntIterator.unit.hx", "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx"},
     {"module": "Lambda", "status": "skipped-target-specific", "source": "Lambda.unit.hx", "reason": "Upstream spec exists; enable after collection/list semantics and Type.getClassName parity are triaged."},
     {"module": "Map", "status": "skipped-target-specific", "source": "Map.unit.hx", "reason": "Upstream spec exists; enable after StringMap, IntMap, ObjectMap, and key identity/order semantics are triaged."},
     {"module": "Math", "status": "skipped-target-specific", "source": "Math.unit.hx", "reason": "Upstream spec exists; enable after Ruby float edge cases such as NaN, Infinity, and division-by-zero lowering are triaged."},

@@ -2441,6 +2441,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TArrayDecl(values): RubyArray([for (value in values) compileExpr(value)]);
 			case TObjectDecl(fields): RubyHash([for (field in fields) {key: field.name, value: compileExpr(field.expr)}]);
 			case TBinop(op, lhs, rhs): RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
+			case TUnop(OpIncrement, postFix, inner):
+				compileIncrementExpr(inner, 1, postFix);
+			case TUnop(OpDecrement, postFix, inner):
+				compileIncrementExpr(inner, -1, postFix);
 			case TUnop(op, _, inner): RubyUnary(unopToRuby(op), compileExpr(inner));
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): compileExpr(inner);
 			case TFunction(fn):
@@ -2501,6 +2505,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access): RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case _: RubyRawExpr(printInlineExpr(expr));
 		}
+	}
+
+	static function compileIncrementExpr(inner:TypedExpr, delta:Int, postFix:Bool):RubyExpr {
+		var target = reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileAssignable(inner));
+		var op = delta > 0 ? "+" : "-";
+		var amount = Std.string(delta > 0 ? delta : -delta);
+		var assignment = target + " = " + target + " " + op + " " + amount;
+		return postFix ? RubyRawExpr("(" + target + ").tap { " + assignment + " }") : RubyRawExpr("(" + assignment + ")");
 	}
 
 	static function compileUntypedConst(expr:Null<haxe.macro.Expr>):RubyExpr {

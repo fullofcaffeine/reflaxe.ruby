@@ -26,14 +26,15 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `StringBuf`.
+- Enabled: `IntIterator`, `StringBuf`.
 
 The first lane is intentionally narrow. It proves the harness, provenance, sync
 workflow, and runtime execution shape without pretending broad Ruby stdlib parity
-is already complete. `IntIterator.unit.hx` is tracked in the manifest but kept
-disabled until Ruby receiver-state threading for direct `next()` calls is fixed.
-Expand the lane fixture-by-fixture as Ruby std support hardens.
+is already complete. Expand the lane fixture-by-fixture as Ruby std support
+hardens.
 
-Use `scripts/sync-upstream-unitstd-specs.sh` to refresh enabled, unmodified
-specs from a local Haxe reference checkout. Adapted specs must be reviewed
-manually so their local target changes are not overwritten.
+Use `scripts/sync-upstream-unitstd-specs.sh` to refresh enabled, unadapted specs
+from a local Haxe reference checkout. The sync normalizes fixture whitespace
+with the repo Haxe formatter so normal formatting gates stay green. Adapted
+specs must be reviewed manually so their local target changes are not
+overwritten.

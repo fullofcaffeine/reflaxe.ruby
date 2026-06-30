@@ -51,7 +51,12 @@ if (actual !== "unitstd-ruby ok\n") {
 }
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
-for (const expectedShape of ["StringBuf.new()", ".chr(Encoding::UTF_8)", "HXRuby.string_substr("]) {
+for (const expectedShape of [
+  "StringBuf.new()",
+  ".chr(Encoding::UTF_8)",
+  "HXRuby.string_substr(",
+  ".tap { ii_min = ii_min + 1 }",
+]) {
   if (!mainRuby.includes(expectedShape)) {
     console.error(`Expected generated unitstd Ruby shape missing: ${expectedShape}`);
     process.exit(1);
