@@ -1,4 +1,5 @@
 import app.auth.UserAuth;
+import controllers.ApplicationController;
 import controllers.ChatMessagesController;
 import controllers.SessionsController;
 import controllers.TodosController;
@@ -36,8 +37,10 @@ import views.UserManagementView;
 // The Haxe-authored Rails test import proves generated test artifacts are also
 // in the compile graph without being emitted into app autoload paths.
 // IntelliSense: editors should complete the full app surface from Haxe packages.
-// Ruby/Rails output: generated Rails app artifacts under the configured output
-// root plus ActionView templates and migrations.
+// Ruby/Rails output: Rails-native app artifacts under `app/controllers`,
+// `app/models`, `app/views`, and `db/migrate`; this sentinel itself is not
+// emitted as a Rails runtime file.
+@:rubyNoEmit
 class Main {
 	static function main() {
 		var todo:Todo = null;
@@ -46,6 +49,7 @@ class Main {
 		var routes:Class<AppRoutes> = null;
 		var haxeAuthoredTest:Class<TodoHaxeTest> = TodoHaxeTest;
 		var haxeRequestTest:Class<TodosHaxeRequestTest> = TodosHaxeRequestTest;
+		var applicationController:ApplicationController = null;
 		var deviseMigration:Class<AddDeviseToUsers> = AddDeviseToUsers;
 		var chatMigration:Class<CreateChatMessages> = CreateChatMessages;
 		var migration:Class<CreateTodos> = CreateTodos;
@@ -74,6 +78,7 @@ class Main {
 		Sys.println(routes == null);
 		Sys.println(haxeAuthoredTest != null);
 		Sys.println(haxeRequestTest != null);
+		Sys.println(applicationController == null);
 		Sys.println(deviseMigration != null);
 		Sys.println(chatMigration != null);
 		Sys.println(migration != null);

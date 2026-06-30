@@ -27,7 +27,7 @@ typedef ChatMessageLocals = {
 // ActionView AST, then emit ERB from it instead of treating the method as normal
 // Ruby code. Together they make the Haxe class the source of truth for a normal
 // Rails partial.
-@:railsTemplate("controllers/todos/_chat_message")
+@:railsTemplate("todos/_chat_message")
 @:railsTemplateAst("render")
 class ChatMessageView {
 	public static inline function roomStream():StreamName<ChatMessageLocals> {

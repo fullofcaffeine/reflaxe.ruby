@@ -47,7 +47,7 @@ Unsafe boundary policy is tracked in
 | Rails output root | `-D reflaxe_ruby_rails` | Implemented |
 | Custom Rails output root | `-D reflaxe_ruby_rails_output_root=<path>` | Implemented with safe relative path validation |
 | ActiveRecord model surface | `rails.active_record.Base<T>` | Implemented |
-| ActiveRecord schema registry | `Todo.__hx_rails_schema` | Implemented |
+| ActiveRecord compile-time model metadata | `@:railsColumn`, `Todo.f.title`, `Todo.typedColumnCount()` | Implemented without emitting runtime schema methods into Rails models |
 | Typed ActiveRecord field refs | `Todo.fields.title` / `Todo.f.title : Field<Todo, String>`, `Todo.f.notes : NullableField<Todo, String>`, `Todo.railsParamKey : ModelKey<Todo>` | Initial form/params slice; string-to-field coercion is intentionally rejected |
 | Typed ActiveRecord association refs | `Todo.associations.user` / `Todo.a.user : Association<Todo, User>` | Initial association query slice |
 | Typed ActiveRecord relation chain | `Todo.none().reverseOrder().readOnly().select(Todo.f.title).distinct().where({completed: false}).whereNot({status: "done"}).whereIn(Todo.f.status, ["open"]).whereBetween(Todo.f.id, 1, 10).whereGt(Todo.f.id, 1).where(Todo.f.title.lower().eq("ship")).whereNotLte(Todo.f.id, 10).whereNull(Todo.f.notes).rewhere({status: "done"}).or(Todo.where({completed: true})).merge(Todo.where({status: "open"})).order(Todo.f.title.asc()).order(Todo.f.title.lower().asc()).reorder(Order.many([Todo.f.id.desc(), Todo.f.title.asc()])).offset(20).limit(10) : Relation<Todo, criteria>`, `Todo.pluck(Todo.f.title) : Array<String>`, `Todo.maximum(Todo.f.id) : Null<Int>`, `Todo.sum(Todo.f.userId) : Int`, `Todo.average(Todo.f.userId) : Null<Float>` inferred | Initial query slice |
@@ -82,6 +82,7 @@ Unsafe boundary policy is tracked in
 | Typed HHX control/helper tags | `<if>`, `<for>`, `<link_to>`, `<button_to>`, `<partial>` | Initial template/helper slice |
 | Typed HHX helper label children | static text or `${...}` expression children | Initial helper slice |
 | Typed HHX nested helper slots | `<link_to>...</link_to>`, `<button_to>...</button_to>` block-form content | Initial slot slice |
+| HHX view-local helper methods | Static same-class helpers called from `@:railsTemplateAst` views | R&D design drafted; scalar helpers recommended as first implementation slice |
 | Typed RailsHx components | `Component<TLocals>`, `<component component=${...}>`, `Slot.content()` | Initial ActionView capture/render partial slice |
 | Typed Turbo client helpers | `rails.turbo.Turbo`, `TurboVisitAction`, `TurboStreamAction` | Initial Haxe JS/importmap-friendly slice |
 | Typed server-side Turbo streams | `TurboStreams.append/prepend/before/after/replace/update/remove`, `broadcast*To`, `StreamTarget`, `StreamName<TPayload>`, `Template<TLocals>` | Rails-native `turbo_stream.*`/`Turbo::StreamsChannel` slice |

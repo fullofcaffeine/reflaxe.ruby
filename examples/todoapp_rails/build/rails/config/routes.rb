@@ -3,21 +3,21 @@
 # Do not edit directly unless you intend to take RailsHx ownership.
 
 Rails.application.routes.draw do
-  devise_for :users, class_name: "Models::User", only: [:sessions]
-  root "controllers/todos#index"
-  resources :todos, controller: "controllers/todos", only: [:index, :create] do
+  devise_for :users, only: [:sessions]
+  root "todos#index"
+  resources :todos, controller: "todos", only: [:index, :create] do
     collection do
-      get "completed", to: "controllers/todos#completed"
+      get "completed", to: "todos#completed"
     end
     member do
-      patch "complete", to: "controllers/todos#complete"
+      patch "complete", to: "todos#complete"
     end
   end
-  resources :chat_messages, controller: "controllers/chat_messages", only: [:index, :create]
-  resources :users, controller: "controllers/users", only: [:index, :create, :update, :destroy]
-  post "guest", to: "controllers/sessions#create_guest", as: :guest_sign_in
-  get "reports(/:year)", to: "controllers/todos#optional_report", as: :optional_report
-  get "files/*path", to: "controllers/todos#file", as: :file
+  resources :chat_messages, controller: "chat_messages", only: [:index, :create]
+  resources :users, controller: "users", only: [:index, :create, :update, :destroy]
+  post "guest", to: "sessions#create_guest", as: :guest_sign_in
+  get "reports(/:year)", to: "todos#optional_report", as: :optional_report
+  get "files/*path", to: "todos#file", as: :file
   # Rails-owned route fixture.
   #
   # This block deliberately stays outside `src/routes/AppRoutes.hx` to

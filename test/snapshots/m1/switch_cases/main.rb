@@ -5,23 +5,23 @@ class Main
     "Main"
   end
   def self.main()
-    number__hx0 = 2
-    case number__hx0
+    number = 2
+    case number
     when 1
-      puts(HXRuby.stringify("one"))
+      puts("one".to_s())
     when 2
-      puts(HXRuby.stringify("two"))
+      puts("two".to_s())
     else
-      puts(HXRuby.stringify("other"))
+      puts("other".to_s())
     end
-    color__hx0 = Color.green()
-    case color__hx0.__hx_index
+    color = Color.green()
+    case color.__hx_index
     when 0
-      puts(HXRuby.stringify("red"))
+      puts("red".to_s())
     when 1
-      puts(HXRuby.stringify("green"))
+      puts("green".to_s())
     when 2
-      puts(HXRuby.stringify("blue"))
+      puts("blue".to_s())
     end
   end
 end

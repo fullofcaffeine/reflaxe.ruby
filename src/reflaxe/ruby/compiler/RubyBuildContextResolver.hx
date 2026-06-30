@@ -14,15 +14,18 @@ class RubyBuildContextResolver {
 	public static inline final GAP_REPORT_DEFINE = "reflaxe_ruby_gap_report";
 	public static inline final RAILS_DEFINE = "reflaxe_ruby_rails";
 	public static inline final RAILS_OUTPUT_ROOT_DEFINE = "reflaxe_ruby_rails_output_root";
+	public static inline final RAILS_LAYOUT_DEFINE = "reflaxe_ruby_rails_layout";
 
 	#if macro
 	public static function resolve():RubyBuildContext {
 		var profile = ProfileResolver.resolve();
 		var strictPolicy = parseStrictUserBoundaryPolicy(Context.definedValue(STRICT_POLICY_DEFINE));
 		var strictUserBoundaries = resolveStrictUserBoundaries(strictPolicy, Context.defined(STRICT_DEFINE));
-		var railsOutputRoot = parseRailsOutputRoot(Context.definedValue(RAILS_OUTPUT_ROOT_DEFINE));
+		var rawRailsOutputRoot = Context.definedValue(RAILS_OUTPUT_ROOT_DEFINE);
+		var railsOutputRoot = parseRailsOutputRoot(rawRailsOutputRoot);
+		var railsLayout = parseRailsLayout(Context.definedValue(RAILS_LAYOUT_DEFINE), rawRailsOutputRoot != null);
 		return new RubyBuildContext(profile, "ruby_output", "__ruby__", Context.defined(STRICT_EXAMPLES_DEFINE), strictPolicy, strictUserBoundaries,
-			Context.defined(RUNTIME_PLAN_REPORT_DEFINE), Context.defined(GAP_REPORT_DEFINE), Context.defined(RAILS_DEFINE), railsOutputRoot);
+			Context.defined(RUNTIME_PLAN_REPORT_DEFINE), Context.defined(GAP_REPORT_DEFINE), Context.defined(RAILS_DEFINE), railsOutputRoot, railsLayout);
 	}
 
 	static function parseStrictUserBoundaryPolicy(raw:Null<String>):String {
@@ -79,6 +82,24 @@ class RubyBuildContextResolver {
 			}
 		}
 		return normalized;
+	}
+
+	static function parseRailsLayout(raw:Null<String>, hasLegacyOutputRootDefine:Bool):String {
+		if (raw == null) {
+			return hasLegacyOutputRootDefine ? "legacy_haxe_gen" : "rails_native";
+		}
+		var normalized = StringTools.trim(raw).toLowerCase();
+		if (normalized == "") {
+			return "rails_native";
+		}
+		return switch (normalized) {
+			case "rails_native", "legacy_haxe_gen":
+				normalized;
+			case _:
+				Context.fatalError('Unknown `' + RAILS_LAYOUT_DEFINE + '` value "' + raw + '" (expected: rails_native or legacy_haxe_gen)',
+					Context.currentPos());
+				"rails_native";
+		}
 	}
 	#else
 	public static function resolve():RubyBuildContext {

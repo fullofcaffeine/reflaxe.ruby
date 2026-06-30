@@ -19,7 +19,7 @@ typedef TodoListLocals = {
 // Turbo safety: the outer `railshx-todo-list` target is always present, even
 // when the list is empty, so Rails `turbo_stream.replace(...)` has a stable
 // target after the first task is created.
-@:railsTemplate("controllers/todos/_list")
+@:railsTemplate("todos/_list")
 @:railsTemplateAst("render")
 class TodoListView {
 	public static function render(locals:TodoListLocals):HtmlNode {

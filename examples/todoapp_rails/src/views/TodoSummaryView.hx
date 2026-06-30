@@ -16,7 +16,7 @@ typedef TodoSummaryLocals = {
 // IntelliSense: editors should complete array members (`length`) and `Todo`
 // fields (`title`, `notes`) inside the HHX body.
 // Ruby/Rails output: a normal `_summary.html.erb` partial generated from HHX.
-@:railsTemplate("controllers/todos/_summary")
+@:railsTemplate("todos/_summary")
 @:railsTemplateAst("render")
 class TodoSummaryView {
 	public static function render(todos:Array<Todo>):HtmlNode {

@@ -6,7 +6,11 @@ package devisehx.model;
 	Apps can import `devisehx.model.DeviseModule.*` and write
 	`[databaseAuthenticatable, recoverable, validatable]`, while the compiler and
 	generators still receive typed module specs instead of raw symbols.
+
+	`@:rubyNoEmit` keeps these ergonomic constants as Haxe authoring sugar; the
+	compiler emits Rails' normal `devise :database_authenticatable, ...` call.
 **/
+@:rubyNoEmit
 class DeviseModule {
 	public static final databaseAuthenticatable:DeviseModuleSpec = DatabaseAuthenticatable();
 	public static final registerable:DeviseModuleSpec = Registerable();

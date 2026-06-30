@@ -8,7 +8,11 @@ import rails.action_controller.Base;
 	These methods are compiler/generator contracts: Rails/Devise owns the runtime
 	helpers (`current_user`, `user_signed_in?`, `sign_in`, `sign_out`). RailsHx
 	uses the scope token to make those calls type-safe from Haxe.
+
+	`@:rubyNoEmit` marks this as a compile-time facade: the compiler lowers calls
+	to ordinary Devise helpers and does not emit a DeviseHx Ruby runtime class.
 **/
+@:rubyNoEmit
 class Auth {
 	public static function require<TModel>(scope:DeviseScope<TModel>):AuthFilter<TModel> {
 		return AuthFilter.forScope(scope);

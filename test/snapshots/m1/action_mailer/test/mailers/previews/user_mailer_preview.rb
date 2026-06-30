@@ -4,6 +4,6 @@ require "action_mailer/railtie"
 
 class UserMailerPreview < ActionMailer::Preview
   def welcome()
-    return Mailers::UserMailer.with(email: "preview@example.test", name: "Preview Ada", message: "Previewed through typed RailsHx params.").welcome_from_params()
+    return UserMailer.with(email: "preview@example.test", name: "Preview Ada", message: "Previewed through typed RailsHx params.").welcome_from_params()
   end
 end

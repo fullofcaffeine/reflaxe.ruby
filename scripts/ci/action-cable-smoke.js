@@ -53,10 +53,10 @@ if (!reflaxeSrc) {
 compileActionCable(outputDir);
 
 for (const file of [
-  "app/haxe_gen/channels/application_cable_connection.rb",
-  "app/haxe_gen/channels/todos_channel.rb",
-  "app/haxe_gen/main.rb",
-  "config/initializers/hxruby_autoload.rb",
+  "app/channels/application_cable/connection.rb",
+  "app/channels/todos_channel.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -65,11 +65,11 @@ for (const file of [
   }
 }
 
-const connectionRuby = readFileSync(join(outputDir, "app", "haxe_gen", "channels", "application_cable_connection.rb"), "utf8");
+const connectionRuby = readFileSync(join(outputDir, "app", "channels", "application_cable", "connection.rb"), "utf8");
 for (const expected of [
   /require "action_cable\/engine"/,
-  /module Channels/,
-  /class ApplicationCableConnection < ActionCable::Connection::Base/,
+  /module ApplicationCable/,
+  /class Connection < ActionCable::Connection::Base/,
   /identified_by :current_user/,
   /def connect\(\)/,
   /request\.params\["token"\]/,
@@ -81,14 +81,13 @@ for (const expected of [
   }
 }
 
-const channelRuby = readFileSync(join(outputDir, "app", "haxe_gen", "channels", "todos_channel.rb"), "utf8");
+const channelRuby = readFileSync(join(outputDir, "app", "channels", "todos_channel.rb"), "utf8");
 for (const expected of [
   /require "action_cable\/engine"/,
-  /module Channels/,
   /class TodosChannel < ActionCable::Channel::Base/,
   /def subscribed\(\)/,
   /params\["list_id"\]/,
-  /if \(list_id__hx\d+ == "reject"\)/,
+  /if \(list_id(?:__hx\d+)? == "reject"\)/,
   /self\.reject\(\)/,
   /self\.stream_from/,
   /current_user/,
@@ -96,21 +95,21 @@ for (const expected of [
   /self\.stop_all_streams\(\)/,
   /def ping\(\)/,
   /self\.transmit\(\{"title" => "pong", "completed" => false\}\)/,
-  /def self\.announce\(list_id__hx\d+, title__hx\d+\)/,
+  /def self\.announce\(list_id(?:__hx\d+)?, title(?:__hx\d+)?\)/,
   /ActionCable\.server\.broadcast/,
-  /\{"title" => title__hx\d+, "completed" => false\}/,
+  /\{"title" => title(?:__hx\d+)?, "completed" => false\}/,
 ]) {
   if (!expected.test(channelRuby)) {
     fail(`ActionCable channel output missing expected line: ${expected}`);
   }
 }
 
-const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
-if (!/Channels::TodosChannel\.announce\("open", "Typed cable payload"\)/.test(mainRuby)) {
+const mainRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "generated", "main.rb"), "utf8");
+if (!/TodosChannel\.announce\("open", "Typed cable payload"\)/.test(mainRuby)) {
   fail("ActionCable main output missing typed broadcast call.");
 }
 
-for (const file of ["app/haxe_gen/channels/application_cable_connection.rb", "app/haxe_gen/channels/todos_channel.rb", "app/haxe_gen/main.rb", "run.rb"]) {
+for (const file of ["app/channels/application_cable/connection.rb", "app/channels/todos_channel.rb", "app/lib/railshx/generated/main.rb", "run.rb"]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
@@ -253,8 +252,8 @@ if (!/has no field title|title|Cannot unify/.test(invalidPerformPayload.stderr +
 
 stage("runtime materialization", materializeRuntimeRailsApp);
 stage("runtime ruby syntax", () => syntaxCheck([
-  "app/haxe_gen/channels/todos_channel.rb",
-  "app/haxe_gen/channels/application_cable_connection.rb",
+  "app/channels/todos_channel.rb",
+  "app/channels/application_cable/connection.rb",
   "config/application.rb",
   "config/environment.rb",
   "test/channels/todos_channel_test.rb",
@@ -349,7 +348,7 @@ function compileClient(options = {}) {
     "Object.assign({ channel: channel }, params)",
     "consumer.subscriptions.create(identifier, callbacks)",
     "subscription.perform(\"ping\", { title : \"client ping\"})",
-    "Channels::TodosChannel",
+    "TodosChannel",
     "received",
   ]) {
     if (!js.includes(expected)) {
@@ -454,7 +453,7 @@ function writeInvalidPerformFixtures() {
     "import rails.action_cable.Consumer;",
     "class InvalidRawPerformMain {",
     "\tstatic function main():Void {",
-    "\t\tvar subscription = Consumer.subscribe(Consumer.create(), \"Channels::TodosChannel\", {listId: \"open\"}, {});",
+    "\t\tvar subscription = Consumer.subscribe(Consumer.create(), \"TodosChannel\", {listId: \"open\"}, {});",
     "\t\tsubscription.perform(\"ping\", {title: \"raw action string\"});",
     "\t}",
     "}",
@@ -465,7 +464,7 @@ function writeInvalidPerformFixtures() {
     "import rails.action_cable.Consumer;",
     "class InvalidPerformPayloadMain {",
     "\tstatic function main():Void {",
-    "\t\tvar subscription = Consumer.subscribe(Consumer.create(), \"Channels::TodosChannel\", {listId: \"open\"}, {});",
+    "\t\tvar subscription = Consumer.subscribe(Consumer.create(), \"TodosChannel\", {listId: \"open\"}, {});",
     "\t\tsubscription.perform(TodoCable.pingAction(), {missingTitle: \"bad payload\"});",
     "\t}",
     "}",
@@ -476,8 +475,6 @@ function writeInvalidPerformFixtures() {
 function materializeRuntimeRailsApp() {
   mkdirSync(runtimeAppDir, { recursive: true });
   copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
-  copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
-  copyGeneratedSupportIntoHaxeGen();
 
   writeFile("Gemfile", `source "https://rubygems.org"
 
@@ -509,10 +506,10 @@ require "action_cable/connection/test_case"
 `);
 
   writeFile("test/channels/application_cable_connection_test.rb", `require "test_helper"
-require Rails.root.join("app/haxe_gen/channels/application_cable_connection")
+require Rails.root.join("app/channels/application_cable/connection")
 
 class ApplicationCableConnectionTest < ActionCable::Connection::TestCase
-  tests Channels::ApplicationCableConnection
+  tests ApplicationCable::Connection
 
   test "accepts a typed connection and assigns the typed identifier" do
     connect params: { token: "ok" }
@@ -530,11 +527,11 @@ end
 `);
 
   writeFile("test/channels/todos_channel_test.rb", `require "test_helper"
-require Rails.root.join("app/haxe_gen/channels/application_cable_connection")
-require Rails.root.join("app/haxe_gen/channels/todos_channel")
+require Rails.root.join("app/channels/application_cable/connection")
+require Rails.root.join("app/channels/todos_channel")
 
 class TodosChannelTest < ActionCable::Channel::TestCase
-  tests Channels::TodosChannel
+  tests TodosChannel
 
   test "subscribes to the typed stream" do
     subscribe list_id: "open"
@@ -579,28 +576,11 @@ class TodosChannelTest < ActionCable::Channel::TestCase
 
   test "broadcasts typed payload to stream" do
     assert_broadcast_on("todos:open", {"title" => "Typed cable payload", "completed" => false}) do
-      Channels::TodosChannel.announce("open", "Typed cable payload")
+      TodosChannel.announce("open", "Typed cable payload")
     end
   end
 end
 `);
-}
-
-function copyGeneratedSupportIntoHaxeGen() {
-  const haxeGenDir = join(runtimeAppDir, "app", "haxe_gen");
-  for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
-    if (["app", "config", "run.rb", "_GeneratedFiles.json"].includes(entry.name)) {
-      continue;
-    }
-    const sourcePath = join(outputDir, entry.name);
-    const targetPath = join(haxeGenDir, entry.name);
-    if (entry.isDirectory()) {
-      copyTree(sourcePath, targetPath);
-    } else if (entry.isFile()) {
-      mkdirSync(dirname(targetPath), { recursive: true });
-      copyFileSync(sourcePath, targetPath);
-    }
-  }
 }
 
 function syntaxCheck(relativeFiles) {

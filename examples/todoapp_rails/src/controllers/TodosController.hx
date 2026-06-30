@@ -41,7 +41,7 @@ typedef TodoIndexLocals = {
 // params, route helpers, and `render`/`redirect_to`.
 
 @:railsController
-class TodosController extends rails.action_controller.Base {
+class TodosController extends ApplicationController {
 	static final lifecycle = {
 		// The board is a real authenticated Rails surface. Devise owns the
 		// redirect/filter; RailsHx only gives the filter a typed Haxe ref.

@@ -31,7 +31,11 @@ typedef OmniauthableOptions = {
 	Known constructors are safe defaults. `UnsafeCustom` is deliberately loud so
 	custom Devise modules remain reviewable and do not gain fake schema/type
 	guarantees.
+
+	`@:rubyNoEmit` makes this enum a compile-time token set only; Devise module
+	symbols are emitted into the Rails model instead of a Ruby enum runtime.
 **/
+@:rubyNoEmit
 enum DeviseModuleSpec {
 	DatabaseAuthenticatable(?options:DatabaseAuthenticatableOptions);
 	Registerable(?options:RegisterableOptions);

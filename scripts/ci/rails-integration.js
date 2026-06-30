@@ -16,31 +16,37 @@ stage("compiler", () => run(process.execPath, [join(root, "scripts", "ci", "todo
 stage("materialization", () => run(process.execPath, [join(root, "scripts", "rails", "todoapp.js"), "compile"]));
 stage("ruby syntax", () => syntaxCheck([
   "app/models/application_record.rb",
-  "app/haxe_gen/controllers/todo_index_locals.rb",
-  "app/haxe_gen/views/todo_index_view.rb",
-  "app/haxe_gen/models/todo.rb",
-  "app/haxe_gen/models/user.rb",
-  "app/haxe_gen/controllers/todos_controller.rb",
+  "app/models/todo.rb",
+  "app/models/user.rb",
+  "app/models/chat_message.rb",
+  "app/controllers/application_controller.rb",
+  "app/controllers/todos_controller.rb",
+  "app/controllers/users_controller.rb",
+  "app/controllers/sessions_controller.rb",
+  "app/controllers/chat_messages_controller.rb",
   "config/application.rb",
   "config/environment.rb",
   "config/routes.rb",
-  "config/initializers/hxruby_autoload.rb",
   "db/migrate/20260101000000_create_todos.rb",
   "db/migrate/20260101000001_update_todos.rb",
+  "db/migrate/20260101000002_update_users.rb",
+  "db/migrate/20260101000003_create_chat_messages.rb",
+  "db/migrate/20260101000004_add_devise_to_users.rb",
   "test/models/todo_test.rb",
   "test/models/user_test.rb",
+  "test/models/chat_message_test.rb",
   "test/controllers/todos_controller_test.rb",
 ]));
-stage("template materialization", () => viewContentCheck("app/views/controllers/todos/index.html.erb", [
+stage("template materialization", () => viewContentCheck("app/views/todos/index.html.erb", [
   "RailsHx sample",
   "Typed Rails, polished Ruby.",
-  'render partial: "controllers/todos/composer"',
-  'render partial: "controllers/todos/dashboard"',
+  'render partial: "todos/composer"',
+  'render partial: "todos/dashboard"',
   "typed_column_count",
 ]));
-stage("template materialization", () => viewContentCheck("app/views/controllers/todos/_composer.html.erb", [
+stage("template materialization", () => viewContentCheck("app/views/todos/_composer.html.erb", [
   "current_user.name",
-  'render partial: "controllers/todos/typed_form"',
+  'render partial: "todos/typed_form"',
   "current_user_name",
 ]));
 

@@ -72,9 +72,9 @@ writeFileSync(join(supportDir, "native_interop.rb"), [
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 for (const expected of [
   /NativeInterop\.describe\(name: "ruby", count: 2\)/,
-  /NativeInterop\.describe_details\(name: "ruby", tags: \[:fast, :typed\], count: count__hx\d+\)/,
-  /NativeInterop\.each\(\[1, 2\]\) \{ \|value__hx\d+\| puts\(HXRuby\.stringify\(value__hx\d+\)\) \}/,
-  /NativeInterop\.with_options\(\[3, 4\], prefix: "item", tags: \[:safe\], count: count__hx\d+\) do \|value__hx\d+\|/,
+  /NativeInterop\.describe_details\(name: "ruby", tags: \[:fast, :typed\], count: count(?:__hx\d+)?\)/,
+  /NativeInterop\.each\(\[1, 2\]\) \{ \|value(?:__hx\d+)?\| puts\(value(?:__hx\d+)?\.to_s\(\)\) \}/,
+  /NativeInterop\.with_options\(\[3, 4\], prefix: "item", tags: \[:safe\], count: count(?:__hx\d+)?\) do \|value(?:__hx\d+)?\|/,
   /Kernel\.print\("item="\)/,
   /NativeInterop\.accept_symbol\(:ready\)/,
   /Kernel\.puts\("kernel"\)/,

@@ -22,7 +22,7 @@ import views.TodoSummaryView.TodoSummaryLocals;
 // `locals.todos` as `Array<Todo>`.
 // Ruby/Rails output: Rails-native `link_to` and `render partial:` calls, not a
 // custom component runtime.
-@:railsTemplate("controllers/todos/_dashboard")
+@:railsTemplate("todos/_dashboard")
 @:railsTemplateAst("render")
 class TodoDashboardView {
 	public static function render(locals:TodoIndexLocals):HtmlNode {

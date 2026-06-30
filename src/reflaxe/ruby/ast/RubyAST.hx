@@ -6,6 +6,7 @@ typedef RubyFile = {
 }
 
 enum RubyStatement {
+	RubyNoop;
 	RubyComment(text:String);
 	RubyRawStatement(code:String);
 	RubyModuleDecl(name:String, body:Array<RubyStatement>);

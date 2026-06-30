@@ -21,10 +21,10 @@ import shared.TodoHooks;
 // and `Routes.userPath(user.id)` instead of hand-written Rails names.
 // IntelliSense: editors should complete user fields, `TodoHooks.userFrameId`,
 // `Routes.userPath`, and Rails HHX form tags.
-// Ruby/Rails output: `controllers/users/index.html.erb` containing a normal
+// Ruby/Rails output: `users/index.html.erb` containing a normal
 // `<turbo-frame id="railshx-user-frame">` and resourceful `form_with` output
 // that Turbo can extract into the todo board.
-@:railsTemplate("controllers/users/index")
+@:railsTemplate("users/index")
 @:railsTemplateAst("render")
 class UserManagementView {
 	public static function render(locals:UserIndexLocals):HtmlNode {

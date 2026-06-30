@@ -26,7 +26,7 @@ final class UserAuth {
 		routeAuthorable: true,
 		resource: "users",
 		mappingScope: "user",
-		rubyClass: "Models::User",
+		rubyClass: "User",
 		haxeModel: "models.User"
 	})
 	public static final scope:DeviseScope<User> = DeviseScope.of(ScopeName.named("user"), RouteResource.named("users"), User);

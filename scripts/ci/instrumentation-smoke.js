@@ -34,8 +34,8 @@ compileInstrumentation(outputDir);
 // syntax, negative payload/subscription typing, and optional ActiveSupport
 // runtime consumption when the gem is available.
 for (const file of [
-  "app/haxe_gen/main.rb",
-  "config/initializers/hxruby_autoload.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -44,7 +44,7 @@ for (const file of [
   }
 }
 
-for (const file of ["app/haxe_gen/main.rb", "run.rb"]) {
+for (const file of ["app/lib/railshx/generated/main.rb", "run.rb"]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);

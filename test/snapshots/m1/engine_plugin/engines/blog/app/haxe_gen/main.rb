@@ -5,7 +5,7 @@ class Main
     "Main"
   end
   def self.main()
-    puts(HXRuby.stringify(BlogEngine::Services::EngineGreeting.message("host app")))
+    puts(BlogEngine::Services::EngineGreeting.message("host app").to_s())
   end
 end
 if __FILE__ == $PROGRAM_NAME

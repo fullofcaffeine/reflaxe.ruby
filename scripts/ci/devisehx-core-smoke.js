@@ -494,12 +494,11 @@ function haxeArgs(src, out) {
 
 function assertGeneratedShape(out) {
   for (const file of [
-    "app/haxe_gen/hxruby/core.rb",
-    "app/haxe_gen/main.rb",
-    "app/haxe_gen/app/auth/user_auth.rb",
-    "app/haxe_gen/app/auth/admin_auth.rb",
-    "app/haxe_gen/models/user.rb",
-    "app/haxe_gen/mailers/user_devise_mailer.rb",
+    "app/lib/railshx/runtime/hxruby/core.rb",
+    "app/lib/railshx/generated/main.rb",
+    "app/models/user.rb",
+    "app/models/admin.rb",
+    "app/mailers/user_devise_mailer.rb",
     "app/views/auth_links/show.html.erb",
     "test/generated/controllers/devise_auth_haxe_test.rb",
   ]) {
@@ -510,7 +509,7 @@ function assertGeneratedShape(out) {
   }
   const authLinks = readFileSync(join(out, "app/views/auth_links/show.html.erb"), "utf8");
   const authRequestTest = readFileSync(join(out, "test/generated/controllers/devise_auth_haxe_test.rb"), "utf8");
-  const main = readFileSync(join(out, "app/haxe_gen/main.rb"), "utf8");
+  const main = readFileSync(join(out, "app/lib/railshx/generated/main.rb"), "utf8");
   for (const expected of [
     "new_user_session_path()",
     "new_user_registration_path()",
@@ -533,7 +532,7 @@ function assertGeneratedShape(out) {
       process.exit(1);
     }
   }
-  if (!/sign_in\(:user,\s*user__hx\d+\)/.test(main)) {
+  if (!/sign_in\(:user,\s*user(?:__hx\d+)?\)/.test(main)) {
     console.error("DeviseHx test helper output missing expected Rails helper shape: sign_in(:user, user)");
     process.exit(1);
   }
@@ -552,7 +551,7 @@ function assertGeneratedShape(out) {
       process.exit(1);
     }
   }
-  if (!/sign_in\(:user,\s*user__hx\d+\)/.test(authRequestTest)) {
+  if (!/sign_in\(:user,\s*user(?:__hx\d+)?\)/.test(authRequestTest)) {
     console.error("DeviseHx generated Rails request test missing expected shape: sign_in(:user, user)");
     process.exit(1);
   }
@@ -565,7 +564,7 @@ function assertGeneratedShape(out) {
       process.exit(1);
     }
   }
-  const mailer = readFileSync(join(out, "app/haxe_gen/mailers/user_devise_mailer.rb"), "utf8");
+  const mailer = readFileSync(join(out, "app/mailers/user_devise_mailer.rb"), "utf8");
   if (!mailer.includes("class UserDeviseMailer < Devise::Mailer")) {
     console.error("DeviseHx mailer output missing native Devise superclass shape.");
     process.exit(1);
@@ -573,7 +572,7 @@ function assertGeneratedShape(out) {
 }
 
 function assertDeviseModelGeneratedShape(out) {
-  const userModel = readFileSync(join(out, "app/haxe_gen/models/user.rb"), "utf8");
+  const userModel = readFileSync(join(out, "app/models/user.rb"), "utf8");
   for (const expected of [
     "devise :database_authenticatable, :validatable, :magic_auth",
     "# haxe column email: String",

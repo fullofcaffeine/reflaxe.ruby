@@ -286,7 +286,7 @@ function generatedMailerCompileSmoke() {
       "--macro", 'include("test_haxe")',
       "-main", "SmokeMain",
     ]);
-    run("ruby", ["-c", join(output, "app", "haxe_gen", "mailers", "user_mailer.rb")]);
+    run("ruby", ["-c", join(output, "app", "mailers", "user_mailer.rb")]);
     run("ruby", ["-c", join(output, "test", "mailers", "previews", "user_mailer_preview.rb")]);
   } finally {
     rmSync(temp, { force: true, recursive: true });

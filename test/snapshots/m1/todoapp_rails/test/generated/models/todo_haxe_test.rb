@@ -3,9 +3,9 @@ require "test_helper"
 
 class TodoHaxeTest < ActiveSupport::TestCase
   test "typed incomplete scope returns typed titles" do
-    user__hx0 = Models::User.create(name: "haxe test owner", email: "haxe-test-owner@example.test", role: "admin", password: "password123", password_confirmation: "password123")
-    Models::Todo.create(title: "ship haxe tests", notes: "generated Minitest", is_completed: false, user_id: user__hx0.id)
-    Models::Todo.create(title: "hide completed work", notes: "done", is_completed: true, user_id: user__hx0.id)
-    assert_equal(["ship haxe tests"], Models::Todo.incomplete().pluck(:title))
+    user = User.create(name: "haxe test owner", email: "haxe-test-owner@example.test", role: "admin", password: "password123", password_confirmation: "password123")
+    Todo.create(title: "ship haxe tests", notes: "generated Minitest", is_completed: false, user_id: user.id)
+    Todo.create(title: "hide completed work", notes: "done", is_completed: true, user_id: user.id)
+    assert_equal(["ship haxe tests"], Todo.incomplete().pluck(:title))
   end
 end

@@ -1,0 +1,47 @@
+<main class="login-shell">
+			<section class="login-hero card">
+				<div class="login-copy">
+					<span class="eyebrow">DeviseHx session</span>
+					<h1>Sign in to the typed Rails board.</h1>
+					<p>
+						Devise owns Warden, password verification, sessions, and redirects.
+						RailsHx owns the typed route helpers, HHX template, and guest flow
+						that make the happy path pleasant to author.
+					</p>
+				</div>
+				<div class="credential-card">
+					<span>Seeded demo</span>
+					<strong>owner@example.test</strong>
+					<em>password123</em>
+				</div>
+			</section>
+
+			<section class="login-panel card" aria-label="Login">
+				<div>
+					<span class="eyebrow">Rails-native login</span>
+					<h2>Welcome back.</h2>
+					<p>Use seeded credentials or enter through the guest workspace.</p>
+				</div>
+				<% if flash[:alert].present? || flash[:notice].present? %>
+					<div class="<%= "login-flash is-" + (flash[:alert].present? ? "alert" : "notice") %>" role="alert" aria-live="assertive">
+						<span>Session message</span>
+						<p><%= flash[:alert] || flash[:notice] %></p>
+					</div>
+				<% end %>
+				<%= form_with url: user_session_path(), scope: :user, local: true, class: "login-form", data: {railshx_session: true} do |form| %>
+					<div>
+						<%= form.label :email, "Email" %>
+						<%= form.email_field :email, autocomplete: "email", placeholder: "owner@example.test", autofocus: true, required: true %>
+					</div>
+					<div>
+						<%= form.label :password, "Password" %>
+						<%= form.password_field :password, autocomplete: "current-password", placeholder: "password123", required: true %>
+					</div>
+					<%= form.submit "Log in", type: "submit" %>
+				<% end %>
+				<div class="guest-entry">
+					<span>Just touring?</span>
+					<%= button_to "Continue as guest", guest_sign_in_path(), method: "post", class: "auth-guest-form", data: {railshx_session: true} %>
+				</div>
+			</section>
+		</main>

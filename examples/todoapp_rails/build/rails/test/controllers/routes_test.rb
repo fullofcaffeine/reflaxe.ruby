@@ -5,21 +5,21 @@ class RoutesTest < ActionDispatch::IntegrationTest
     # These routes are authored in src/routes/AppRoutes.hx with typed
     # controller/action refs such as to(TodosController, index). The compiler
     # emits config/routes.rb, then Rails remains the runtime oracle here.
-    assert_routing({ path: "/", method: :get }, { controller: "controllers/todos", action: "index" })
-    assert_recognizes({ controller: "controllers/todos", action: "index" }, { path: "/todos", method: :get })
-    assert_recognizes({ controller: "controllers/todos", action: "create" }, { path: "/todos", method: :post })
-    assert_recognizes({ controller: "controllers/chat_messages", action: "index" }, { path: "/chat_messages", method: :get })
-    assert_recognizes({ controller: "controllers/chat_messages", action: "create" }, { path: "/chat_messages", method: :post })
-    assert_recognizes({ controller: "controllers/todos", action: "completed" }, { path: "/todos/completed", method: :get })
-    assert_recognizes({ controller: "controllers/todos", action: "complete", id: "42" }, { path: "/todos/42/complete", method: :patch })
-    assert_routing({ path: "/users", method: :get }, { controller: "controllers/users", action: "index" })
-    assert_recognizes({ controller: "controllers/users", action: "create" }, { path: "/users", method: :post })
-    assert_recognizes({ controller: "controllers/users", action: "update", id: "42" }, { path: "/users/42", method: :patch })
-    assert_recognizes({ controller: "controllers/users", action: "destroy", id: "42" }, { path: "/users/42", method: :delete })
-    assert_routing({ path: "/guest", method: :post }, { controller: "controllers/sessions", action: "create_guest" })
-    assert_recognizes({ controller: "controllers/todos", action: "optional_report", year: "2026" }, { path: "/reports/2026", method: :get })
-    assert_recognizes({ controller: "controllers/todos", action: "optional_report" }, { path: "/reports", method: :get })
-    assert_recognizes({ controller: "controllers/todos", action: "file", path: "docs/readme" }, { path: "/files/docs/readme", method: :get })
+    assert_routing({ path: "/", method: :get }, { controller: "todos", action: "index" })
+    assert_recognizes({ controller: "todos", action: "index" }, { path: "/todos", method: :get })
+    assert_recognizes({ controller: "todos", action: "create" }, { path: "/todos", method: :post })
+    assert_recognizes({ controller: "chat_messages", action: "index" }, { path: "/chat_messages", method: :get })
+    assert_recognizes({ controller: "chat_messages", action: "create" }, { path: "/chat_messages", method: :post })
+    assert_recognizes({ controller: "todos", action: "completed" }, { path: "/todos/completed", method: :get })
+    assert_recognizes({ controller: "todos", action: "complete", id: "42" }, { path: "/todos/42/complete", method: :patch })
+    assert_routing({ path: "/users", method: :get }, { controller: "users", action: "index" })
+    assert_recognizes({ controller: "users", action: "create" }, { path: "/users", method: :post })
+    assert_recognizes({ controller: "users", action: "update", id: "42" }, { path: "/users/42", method: :patch })
+    assert_recognizes({ controller: "users", action: "destroy", id: "42" }, { path: "/users/42", method: :delete })
+    assert_routing({ path: "/guest", method: :post }, { controller: "sessions", action: "create_guest" })
+    assert_recognizes({ controller: "todos", action: "optional_report", year: "2026" }, { path: "/reports/2026", method: :get })
+    assert_recognizes({ controller: "todos", action: "optional_report" }, { path: "/reports", method: :get })
+    assert_recognizes({ controller: "todos", action: "file", path: "docs/readme" }, { path: "/files/docs/readme", method: :get })
   end
 
   test "generated route helpers match haxe route externs" do

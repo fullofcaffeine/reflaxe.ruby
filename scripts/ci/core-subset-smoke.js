@@ -42,8 +42,15 @@ if (!existsSync(mainRuby)) {
 
 const actual = run("ruby", [mainRuby]).stdout;
 const expected = readFileSync(join(root, "test", "fixtures", "core_subset", "expected.stdout"), "utf8");
+const accepted = new Set([
+  expected,
+  // Ruby 4.0 formats Hash#inspect with spaces around hash rockets. The compiler
+  // contract here is that Haxe anonymous structures lower to a Ruby Hash, not the
+  // exact VM-owned inspect whitespace.
+  expected.replace('{"name"=>"ruby", "count"=>3}', '{"name" => "ruby", "count" => 3}'),
+]);
 
-if (actual !== expected) {
+if (!accepted.has(actual)) {
   console.error("core_subset stdout mismatch");
   console.error(`expected: ${JSON.stringify(expected)}`);
   console.error(`actual:   ${JSON.stringify(actual)}`);

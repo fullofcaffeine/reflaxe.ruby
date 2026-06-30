@@ -11,8 +11,8 @@ import models.User;
 // `Base<Todo>` makes query chains return typed `Relation<Todo>`.
 // IntelliSense: editors should complete fields, `Todo.f.*`, `Todo.a.user`,
 // `Todo.where`, `Todo.incomplete`, and relation methods.
-// Ruby/Rails output: a normal `ApplicationRecord` model with Rails macros and
-// compiler-emitted schema metadata.
+// Ruby/Rails output: a normal `ApplicationRecord` model with Rails macros;
+// typed schema facts stay in Haxe metadata unless a Rails artifact needs them.
 @:railsModel("todos")
 @:railsTimestamps
 class Todo extends rails.active_record.Base<Todo> {

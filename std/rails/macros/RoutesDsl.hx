@@ -844,6 +844,9 @@ class RoutesDsl {
 			return external;
 		}
 		var segments = classType.pack.copy();
+		if (segments.length > 0 && segments[0] == "controllers") {
+			segments.shift();
+		}
 		var name = classType.name;
 		var suffix = "Controller";
 		if (StringTools.endsWith(name, suffix)) {

@@ -81,7 +81,7 @@ class ModelMacro {
 		addIntFieldProjectionStub(fields, "sum", selfType, macro :Int, pos);
 		addIntFieldProjectionStub(fields, "average", selfType, macro :Null<Float>, pos);
 		addTransactionStub(fields, pos);
-		addNoArgStub(fields, "typedColumnCount", macro :Int, pos);
+		addTypedColumnCount(fields, pos);
 		return fields;
 	}
 
@@ -1295,6 +1295,26 @@ class ModelMacro {
 				args: [],
 				ret: ret,
 				expr: macro return cast null
+			}),
+			meta: [{name: ":rubyExternStub", params: [], pos: pos}],
+			pos: pos
+		});
+	}
+
+	static function addTypedColumnCount(fields:Array<Field>, pos:Position):Void {
+		for (field in fields) {
+			if (field.name == "typedColumnCount") {
+				return;
+			}
+		}
+		var count = [for (field in fields) if (isRailsColumn(field)) field].length;
+		fields.push({
+			name: "typedColumnCount",
+			access: [APublic, AStatic, AInline],
+			kind: FFun({
+				args: [],
+				ret: macro :Int,
+				expr: macro return $v{count}
 			}),
 			meta: [{name: ":rubyExternStub", params: [], pos: pos}],
 			pos: pos

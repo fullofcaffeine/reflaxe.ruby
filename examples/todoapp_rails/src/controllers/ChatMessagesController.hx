@@ -31,7 +31,7 @@ import views.ChatMessageView.ChatMessageLocals;
 // `Turbo::StreamsChannel.broadcast_prepend_to`, `head :no_content`, and
 // `redirect_to`.
 @:railsController
-class ChatMessagesController extends rails.action_controller.Base {
+class ChatMessagesController extends ApplicationController {
 	static final lifecycle = {
 		beforeAction(UserAuth.authenticate, {});
 	};

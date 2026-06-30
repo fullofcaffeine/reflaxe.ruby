@@ -223,13 +223,13 @@ for (const expected of [
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 for (const expected of [
   /LegacyPost\.new/,
-  /legacy__hx\d+\.slug\(\)/,
+  /legacy(?:__hx\d+)?\.slug\(\)/,
   /LegacyPost\.find_by_slug/,
-  /owned__hx\d+\.decorated\(\)/,
+  /owned(?:__hx\d+)?\.decorated\(\)/,
   /HaxeOwnedPost\.build_label/,
-  /module_post__hx\d+\.haxe_badge\("typed"\)/,
+  /module_post(?:__hx\d+)?\.haxe_badge\("typed"\)/,
   /HaxeModulePost\.haxe_class_badge\("typed"\)/,
-  /raw_backed__hx\d+\.raw_decorated\(\)/,
+  /raw_backed(?:__hx\d+)?\.raw_decorated\(\)/,
   /"typed patch"\.headline\(\)/,
   /"typed patch"\.surround\("\[", "\]"\)/,
   /"direct patch"\.headline\(\)/,
@@ -391,7 +391,7 @@ function expectPatchOnlyRequireOutput() {
     process.exit(1);
   }
   const mainRuby = readFileSync(join(patchOnlyOutputDir, "main.rb"), "utf8");
-  if (!mainRuby.includes('puts(HXRuby.stringify("".blank?()))')) {
+  if (!mainRuby.includes('puts("".blank?().to_s())')) {
     console.error("Expected patch-only call to lower to direct receiver dispatch.");
     console.error(mainRuby);
     process.exit(1);

@@ -7,17 +7,17 @@ class Main
     "Main"
   end
   def self.main()
-    count__hx0 = 3
-    puts(HXRuby.stringify(JSON.generate({"name" => "ruby", "count" => 2})))
-    puts(HXRuby.stringify(File.basename("/tmp/reflaxe.rb")))
-    puts(HXRuby.stringify(RubyInterop.describe(name: "interop", count: 3)))
-    puts(HXRuby.stringify(RubyInterop.describe_details(name: "interop", tags: [:safe, :typed], count: count__hx0)))
-    RubyInterop.each([4, 5]) { |value__hx0| puts(HXRuby.stringify(value__hx0)) }
-    RubyInterop.with_options([6, 7], prefix: "interop", tags: [:block], count: count__hx0) do |value__hx1|
+    count = 3
+    puts(JSON.generate({"name" => "ruby", "count" => 2}).to_s())
+    puts(File.basename("/tmp/reflaxe.rb").to_s())
+    puts(RubyInterop.describe(name: "interop", count: 3).to_s())
+    puts(RubyInterop.describe_details(name: "interop", tags: [:safe, :typed], count: count).to_s())
+    RubyInterop.each([4, 5]) { |value| puts(value.to_s()) }
+    RubyInterop.with_options([6, 7], prefix: "interop", tags: [:block], count: count) do |value__hx1|
       Kernel.print("interop=")
-      puts(HXRuby.stringify(value__hx1))
+      puts(value__hx1.to_s())
     end
-    puts(HXRuby.stringify(RubyInterop.accept_symbol(:ready)))
+    puts(RubyInterop.accept_symbol(:ready).to_s())
     Kernel.puts("kernel")
   end
 end

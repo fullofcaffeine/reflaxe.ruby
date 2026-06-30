@@ -26,7 +26,7 @@ typedef AppTopBarLocals = {
 // `currentUser.roleLabel`, `UserAuth.scope`, HHX tags, and
 // typed route helpers.
 // Ruby/Rails output: normal `link_to`, `button_to`, and HTML header markup.
-@:railsTemplate("controllers/todos/_app_top_bar")
+@:railsTemplate("todos/_app_top_bar")
 @:railsTemplateAst("render")
 class AppTopBarView {
 	public static function render(locals:AppTopBarLocals):HtmlNode {

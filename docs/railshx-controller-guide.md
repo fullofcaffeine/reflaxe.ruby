@@ -84,7 +84,7 @@ Generated Ruby is Rails-shaped:
 class TodosController < ActionController::Base
   def index()
     todos__hx0 = Models::Todo.incomplete().includes(:user).order(title: :asc).limit(10).to_a()
-    locals__hx0 = {todos: todos__hx0, todo_count: todos__hx0.length, typed_column_count: Models::Todo.typed_column_count(), sample_user: nil}
+    locals__hx0 = {todos: todos__hx0, todo_count: todos__hx0.length, typed_column_count: 5, sample_user: nil}
     self.render(template: "controllers/todos/index", locals: locals__hx0)
   end
 
@@ -423,7 +423,7 @@ Action View rendering:
 self.render(template: "controllers/todos/index", locals: {
   todos: todos__hx0,
   todo_count: todos__hx0.length,
-  typed_column_count: Models::Todo.typed_column_count(),
+  typed_column_count: 5,
   sample_user: Models::User.first()
 })
 ```

@@ -18,7 +18,7 @@ typedef TodoComposerLocals = {
 // `TodoFormLocals` checks the locals object.
 // IntelliSense: editors should complete `Template.of` and form-local fields.
 // Ruby/Rails output: a Rails partial render plus a normal Rails form.
-@:railsTemplate("controllers/todos/_composer")
+@:railsTemplate("todos/_composer")
 @:railsTemplateAst("render")
 class TodoComposerView {
 	public static function render(locals:TodoComposerLocals):HtmlNode {

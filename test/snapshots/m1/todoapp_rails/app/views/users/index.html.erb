@@ -1,0 +1,100 @@
+<main class="users-shell">
+			<% if flash[:alert].present? || flash[:notice].present? %>
+				<div class="<%= "app-flash is-" + (flash[:alert].present? ? "alert" : "notice") %>" role="status" aria-live="polite" data-railshx-server-flash>
+					<span>Session message</span>
+					<p><%= flash[:alert] || flash[:notice] %></p>
+				</div>
+			<% end %>
+			<turbo-frame id="railshx-user-frame" class="user-management-frame">
+				<div class="users-admin-board">
+					<section class="users-page-hero">
+						<div>
+							<span class="eyebrow">Admin-only RailsHx user management</span>
+							<h1>Typed users, ordinary Rails CRUD.</h1>
+							<p>
+								Only admins can reach this panel. The forms are HHX-authored, params
+								are derived from typed model fields, and Rails receives normal
+								resourceful controller actions.
+							</p>
+						</div>
+						<%= link_to "Back to todo board", todos_path(), class: "typed-route-link", data: {turbo_frame: "_top"} %>
+					</section>
+
+					<section class="user-create-card" aria-label="Create a user">
+						<div>
+							<span class="eyebrow">Create user</span>
+							<h2>Invite a typed teammate.</h2>
+							<p>Use a real Devise password here; the generated Rails controller permits those extra auth keys explicitly.</p>
+						</div>
+						<%= form_with url: users_path(), scope: :user, local: true, class: "user-create-form", data: {turbo_frame: "_top"} do |form| %>
+							<% if form_user.errors.any? %>
+								<div class="error-summary" role="alert" aria-live="assertive">
+									<span>Review user details</span>
+									<ul>
+										<% form_user.errors.full_messages.each do |message| %>
+											<li><%= message %></li>
+										<% end %>
+									</ul>
+								</div>
+							<% end %>
+							<div>
+								<%= form.label :name, "Name" %>
+								<%= form.text_field :name, value: form_user.name, placeholder: "Ada Lovelace", minlength: "2", required: true %>
+							</div>
+							<div>
+								<%= form.label :email, "Email" %>
+								<%= form.email_field :email, value: form_user.email, placeholder: "ada@example.test", autocomplete: "email", required: true %>
+							</div>
+							<div>
+								<%= form.label :role, "Role" %>
+								<%= form.select :role, [["Member", "member"], ["Maintainer", "maintainer"], ["Admin", "admin"], ["Guest", "guest"]], {selected: form_user.role}, {required: true} %>
+							</div>
+							<div>
+								<%= form.label :password, "Password" %>
+								<%= form.password_field :password, placeholder: "password123", minlength: "6", autocomplete: "new-password", required: true %>
+							</div>
+							<div>
+								<%= form.label :password_confirmation, "Confirm password" %>
+								<%= form.password_field :password_confirmation, placeholder: "password123", minlength: "6", autocomplete: "new-password", required: true %>
+							</div>
+							<%= form.submit "Create user", type: "submit" %>
+						<% end %>
+					</section>
+
+					<section class="user-grid" aria-label="Manage users">
+						<% users.each do |user| %>
+							<article class="<%= (if current_user.id == user.id then "user-management-card is-current" else "user-management-card" end) %>">
+								<header class="user-card-heading">
+									<span class="avatar"><%= user.initials() %></span>
+									<div>
+										<h2><%= user.name %></h2>
+										<p><%= user.email %></p>
+									</div>
+									<span class="role-pill"><%= user.role_label() %></span>
+								</header>
+								<%= form_with url: user_path(user.id), scope: :user, method: "patch", local: true, class: "user-card-form", data: {turbo_frame: "_top"} do |form| %>
+									<div>
+										<%= form.label :name, "Name", for: "user_" + user.id.to_s + "_name" %>
+										<%= form.text_field :name, id: "user_" + user.id.to_s + "_name", value: user.name, required: true %>
+									</div>
+									<div>
+										<%= form.label :email, "Email", for: "user_" + user.id.to_s + "_email" %>
+										<%= form.email_field :email, id: "user_" + user.id.to_s + "_email", value: user.email, autocomplete: "email", required: true %>
+									</div>
+									<div>
+										<%= form.label :role, "Role", for: "user_" + user.id.to_s + "_role" %>
+										<%= form.select :role, [["Member", "member"], ["Maintainer", "maintainer"], ["Admin", "admin"], ["Guest", "guest"]], {selected: user.role}, {id: "user_" + user.id.to_s + "_role", required: true} %>
+									</div>
+									<%= form.submit "Save user", type: "submit" %>
+								<% end %>
+								<% if current_user.id != user.id %>
+									<%= form_with url: user_path(user.id), scope: :user, method: "delete", local: true, class: "user-delete-form", data: {turbo_frame: "_top"} do |form| %>
+										<%= form.submit "Remove user", type: "submit" %>
+									<% end %>
+								<% end %>
+							</article>
+						<% end %>
+					</section>
+				</div>
+			</turbo-frame>
+		</main>
