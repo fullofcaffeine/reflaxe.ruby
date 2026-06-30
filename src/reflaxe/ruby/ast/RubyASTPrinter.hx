@@ -71,7 +71,7 @@ class RubyASTPrinter {
 			case RubyNil: "nil";
 			case RubyBool(value): value ? "true" : "false";
 			case RubyInt(value): value;
-			case RubyFloat(value): value;
+			case RubyFloat(value): normalizeFloatLiteral(value);
 			case RubyString(value): quoteRubyString(value);
 			case RubyLocal(name): name;
 			case RubyArray(values): "[" + [for (value in values) printExpr(value)].join(", ") + "]";
@@ -120,6 +120,13 @@ class RubyASTPrinter {
 		escaped = StringTools.replace(escaped, "\r", "\\r");
 		escaped = StringTools.replace(escaped, "\t", "\\t");
 		return "\"" + escaped + "\"";
+	}
+
+	static function normalizeFloatLiteral(value:String):String {
+		if (value == null || value.length == 0) {
+			return "0.0";
+		}
+		return StringTools.endsWith(value, ".") ? value + "0" : value;
 	}
 
 	static function splitCodeLines(code:String):Array<String> {

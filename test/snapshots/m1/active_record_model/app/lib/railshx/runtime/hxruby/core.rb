@@ -94,6 +94,29 @@ module HXRuby
     out
   end
 
+  def string_char_code_at(value, position)
+    target = position.to_i
+    return nil if target.negative?
+
+    offset = 0
+    value.to_s.each_char do |char|
+      code = char.ord
+      if code > 0xffff
+        high = 0xd800 + ((code - 0x10000) >> 10)
+        low = 0xdc00 + ((code - 0x10000) & 0x3ff)
+        return high if offset == target
+        return low if offset + 1 == target
+
+        offset += 2
+      else
+        return code if offset == target
+
+        offset += 1
+      end
+    end
+    nil
+  end
+
   def array_concat(array, other)
     array + other
   end

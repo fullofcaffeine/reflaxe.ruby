@@ -1,4 +1,4 @@
-<li id="<%= dom_id %>" class="<%= (if completed then "todo-row is-complete" else "todo-row" end) %>">
+<li id="<%= dom_id %>" class="<%= (completed ? "todo-row is-complete" : "todo-row") %>">
 			<span class="todo-row__dot" aria-hidden="true"></span>
 			<span class="todo-row__title"><%= title %></span>
 		</li>

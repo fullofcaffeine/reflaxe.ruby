@@ -11,6 +11,7 @@ class Main {
 	static function main():Void {
 		UpstreamUnitStdMacro.assertSpec("StringBuf.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("IntIterator.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		Sys.println("unitstd-ruby ok");
 	}
 }

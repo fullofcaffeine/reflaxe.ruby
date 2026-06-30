@@ -100,7 +100,7 @@ for (const expected of [
   /accepted_formats(?:__hx\d+)? = self\.request\(\)\.accepts\(\)/,
   /request_formats(?:__hx\d+)? = self\.request\(\)\.formats\(\)/,
   /preferred_format(?:__hx\d+)? = self\.request\(\)\.negotiate_mime\(\[Mime\[:html\], Mime\[:json\]\]\)/,
-  /preferred_format_name(?:__hx\d+)? = \(if \(preferred_format(?:__hx\d+)? == nil\) then "" else preferred_format(?:__hx\d+)?\.to_s\(\) end\)/,
+  /preferred_format_name(?:__hx\d+)? = \(\(preferred_format(?:__hx\d+)? == nil\) \? "" : preferred_format(?:__hx\d+)?\.to_s\(\)\)/,
   /content_mime_type(?:__hx\d+)? = self\.request\(\)\.content_mime_type\(\)/,
   /request_media_type(?:__hx\d+)? = self\.request\(\)\.media_type\(\)/,
   /self\.request\(\)\.variant=\(\[:phone, :tablet\]\)/,

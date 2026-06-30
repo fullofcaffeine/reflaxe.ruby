@@ -1599,6 +1599,14 @@
       "reason": "Byte storage and encoding behavior backed by Ruby strings or byte arrays."
     },
     {
+      "id": "std.io.fp_helper",
+      "owner": "std/_std",
+      "status": "implemented",
+      "path": "std/_std/haxe/io/FPHelper.hx",
+      "surface": "haxe.io.FPHelper",
+      "reason": "Ruby Array#pack/String#unpack1 IEEE-754 bit reinterpretation for BytesBuffer."
+    },
+    {
       "id": "std.sys.filesystem",
       "owner": "std/_std",
       "status": "missing",

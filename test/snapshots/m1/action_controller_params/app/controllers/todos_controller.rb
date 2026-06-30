@@ -34,7 +34,7 @@ class TodosController < ApplicationController
     accepted_formats = self.request().accepts()
     request_formats = self.request().formats()
     preferred_format = self.request().negotiate_mime([Mime[:html], Mime[:json]])
-    preferred_format_name = (if (preferred_format == nil) then "" else preferred_format.to_s() end)
+    preferred_format_name = ((preferred_format == nil) ? "" : preferred_format.to_s())
     content_mime_type = self.request().content_mime_type()
     request_media_type = self.request().media_type()
     self.request().variant=([:phone, :tablet])

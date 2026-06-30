@@ -21,13 +21,13 @@ class User < ApplicationRecord
     super(*args)
   end
   def role_label()
-    return (if (self.role == "admin") then "Admin" else (if (self.role == "maintainer") then "Maintainer" else (if (self.role == "guest") then "Guest" else "Member" end) end) end)
+    return ((self.role == "admin") ? "Admin" : ((self.role == "maintainer") ? "Maintainer" : ((self.role == "guest") ? "Guest" : "Member")))
   end
   def can_manage_users()
     return (self.role == "admin")
   end
   def initials()
     trimmed = self.name.strip()
-    return (if (trimmed == "") then "?" else HXRuby.string_substr(trimmed, 0, 1).upcase() end)
+    return ((trimmed == "") ? "?" : HXRuby.string_substr(trimmed, 0, 1).upcase())
   end
 end

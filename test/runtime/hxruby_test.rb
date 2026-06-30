@@ -31,6 +31,10 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal "00FF", HXRuby.hex(255, 4)
     assert_equal "typed+ruby", HXRuby.url_encode("typed ruby")
     assert_equal "typed ruby", HXRuby.url_decode("typed+ruby")
+    assert_equal 66, HXRuby.string_char_code_at("ABC", 1)
+    assert_equal 0xD83D, HXRuby.string_char_code_at("😀", 0)
+    assert_equal 0xDE00, HXRuby.string_char_code_at("😀", 1)
+    assert_nil HXRuby.string_char_code_at("ABC", 99)
   end
 
   def test_data_define_compatibility_and_enum_metadata

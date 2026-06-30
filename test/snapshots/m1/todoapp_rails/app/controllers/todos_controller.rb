@@ -40,18 +40,18 @@ class TodosController < ApplicationController
   def optional_report()
     current_user = current_user()
     year = self.params()[:year]
-    label = (if (year == nil) then "all years" else year end)
+    label = ((year == nil) ? "all years" : year)
     count = Todo.where(user_id: current_user.id).count()
     self.render(plain: (((("Todo report for " + label) + ": ") + count.to_s()) + " todos"), status: :ok)
   end
   def file()
     path = self.params()[:path]
-    label = (if (path == nil) then "root" else path end)
+    label = ((path == nil) ? "root" : path)
     self.send_data((("RailsHx file route: " + label) + "\n"), filename: "todoapp-route.txt", type: "text/plain", disposition: "inline", status: :ok)
   end
   def param_id()
     raw = self.params()[:id]
-    parsed = (if (raw == nil) then nil else (Integer(raw.to_s, 10) rescue nil) end)
-    return (if (parsed == nil) then 0 else parsed end)
+    parsed = ((raw == nil) ? nil : (Integer(raw.to_s, 10) rescue nil))
+    return ((parsed == nil) ? 0 : parsed)
   end
 end

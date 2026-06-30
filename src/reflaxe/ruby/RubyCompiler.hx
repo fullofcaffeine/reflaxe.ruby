@@ -408,19 +408,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	override public function compileTypedefImpl(typedefType:DefType):Null<RubyFile> {
-		if (isMacroOnlyRuntimeType(typedefType.pack)) {
-			return null;
-		}
-		if (hasRubyNoEmit(typedefType.meta)) {
-			return null;
-		}
-		if (buildContext.railsMode) {
-			return null;
-		}
-		setRubyOutputPath(typedefType.pack, typedefType.name);
-		return typeShell(typedefType.pack, typedefType.name, RubyModuleDecl(RubyNaming.toConstantName(typedefType.name), [
-			RubyComment("Haxe typedef " + fullTypeName(typedefType.pack, typedefType.name) + " has no Ruby runtime body.")
-		]), collectModuleRequires(typedefType.meta));
+		// Haxe typedefs are compile-time aliases. Emitting an empty Ruby constant
+		// makes generated output look less like handwritten Ruby and can collide
+		// with real runtime carriers, for example haxe._Int64.___Int64.
+		return null;
 	}
 
 	override public function compileAbstractImpl(abstractType:AbstractType):Null<RubyFile> {
@@ -651,8 +642,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				name = "self." + name;
 			}
 			var args = [
-				for (arg in field.args)
-					arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)
+				for (arg in field.args) {
+					var argName = arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar);
+					arg.opt ? argName + " = nil" : argName;
+				}
 			];
 			return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
 		});
@@ -2451,12 +2444,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyLambda([for (arg in fn.args) localName(arg.v)], lambdaBody(fn.expr));
 			case TNew(classRef, _, params):
 				var classType = classRef.get();
-				RubyCall(RubyLocal(rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType)), "new", [for (param in params) compileExpr(param)]);
+				RubyCall(RubyLocal(coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType)),
+					"new", [for (param in params) compileExpr(param)]);
 			case TBlock(exprs):
 				RubyRawExpr("begin\n" + [for (stmt in compileStatementList(exprs)) "  " + statementToInlineRuby(stmt)].join("\n") + "\nend");
 			case TIf(cond, eThen, eElse):
-				RubyRawExpr("(if " + printInlineExpr(cond) + " then " + printInlineExpr(eThen) + " else " + (eElse == null ? "nil" : printInlineExpr(eElse))
-					+ " end)");
+				RubyRawExpr(rubyConditionalExpr(printInlineExpr(cond), printInlineExpr(eThen), eElse == null ? "nil" : printInlineExpr(eElse)));
 			case TSwitch(switchExpr, cases, edef):
 				RubyRawExpr(renderSwitch(switchExpr, cases, edef));
 			case TTry(tryExpr, catches):
@@ -3210,6 +3203,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						hxrubyCall("string_substr", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
 					case "charAt" if (params.length == 1):
 						RubyRawExpr("(" + receiver + "[" + printParam(params, 0) + "] || \"\")");
+					case "charCodeAt" if (params.length == 1):
+						hxrubyCall("string_char_code_at", [compileExpr(target), compileParam(params, 0)]);
 					case "toUpperCase" if (params.length == 0):
 						RubyCall(compileExpr(target), "upcase", []);
 					case "toLowerCase" if (params.length == 0):
@@ -11966,13 +11961,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall(callee, params):
 				printTemplateExpr(callee, scope) + ".call(" + [for (param in params) printTemplateExpr(param, scope)].join(", ") + ")";
 			case TIf(cond, eThen, eElse):
-				"(if "
-				+ printTemplateExpr(cond, scope)
-				+ " then "
-				+ printTemplateExpr(eThen, scope)
-				+ " else "
-				+ (eElse == null ? "nil" : printTemplateExpr(eElse, scope))
-				+ " end)";
+				rubyConditionalExpr(printTemplateExpr(cond, scope), printTemplateExpr(eThen, scope), eElse == null ? "nil" : printTemplateExpr(eElse, scope));
 			case _:
 				simplifyTemplateRubyIdentityBegin(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped)));
 		}
@@ -12958,6 +12947,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function printInlineExpr(expr:TypedExpr):String {
 		return reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(expr));
+	}
+
+	static function rubyConditionalExpr(cond:String, thenExpr:String, elseExpr:String):String {
+		return "(" + cond + " ? " + thenExpr + " : " + elseExpr + ")";
 	}
 
 	static function lambdaBody(expr:TypedExpr):String {

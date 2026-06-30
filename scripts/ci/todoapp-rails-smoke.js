@@ -1335,7 +1335,7 @@ for (const expected of [
   '<%= link_to "#open-work", class: "typed-route-link", data: {railshx_scroll: true} do %>',
   '<%= link_to legacy_health_path(), class: "typed-route-link rails-owned-route-link" do %>',
   "Rails-owned route, typed in Haxe",
-  '<span><%= (if todos.length > 0 then "Jump to open work" else "Jump to the empty state" end) %></span>',
+  '<span><%= (todos.length > 0 ? "Jump to open work" : "Jump to the empty state") %></span>',
   '<span class="typed-route-count"><%= todos.length %></span>',
   '<% end %>',
   '<%= render partial: "todos/summary", locals: {todos: todos} %>',

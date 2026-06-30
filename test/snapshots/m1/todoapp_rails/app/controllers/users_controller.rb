@@ -73,7 +73,7 @@ class UsersController < ApplicationController
   end
   def param_id()
     raw = self.params()[:id]
-    parsed = (if (raw == nil) then nil else (Integer(raw.to_s, 10) rescue nil) end)
-    return (if (parsed == nil) then 0 else parsed end)
+    parsed = ((raw == nil) ? nil : (Integer(raw.to_s, 10) rescue nil))
+    return ((parsed == nil) ? 0 : parsed)
   end
 end

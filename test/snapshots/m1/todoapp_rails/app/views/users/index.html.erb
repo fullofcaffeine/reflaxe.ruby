@@ -63,7 +63,7 @@
 
 					<section class="user-grid" aria-label="Manage users">
 						<% users.each do |user| %>
-							<article class="<%= (if current_user.id == user.id then "user-management-card is-current" else "user-management-card" end) %>">
+							<article class="<%= (current_user.id == user.id ? "user-management-card is-current" : "user-management-card") %>">
 								<header class="user-card-heading">
 									<span class="avatar"><%= user.initials() %></span>
 									<div>
