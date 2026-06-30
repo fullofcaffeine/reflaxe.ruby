@@ -47,7 +47,7 @@ class Math {
 	}
 
 	public static function exp(v:Float):Float {
-		return untyped __ruby__("HXRuby.math_unary(:exp, {0})", v);
+		return untyped __ruby__("::Math.exp({0})", v);
 	}
 
 	public static function log(v:Float):Float {
@@ -95,6 +95,6 @@ class Math {
 	}
 
 	public static function isNaN(f:Float):Bool {
-		return untyped __ruby__("HXRuby.math_nan?({0})", f);
+		return untyped __ruby__("{0}.respond_to?(:nan?) && {0}.nan?", f);
 	}
 }

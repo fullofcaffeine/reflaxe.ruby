@@ -2,15 +2,15 @@ package;
 
 class Std {
 	public static function string<T>(value:T):String {
-		return "" + value;
+		return untyped __ruby__("HXRuby.stringify({0})", value);
 	}
 
 	public static function parseInt(value:String):Null<Int> {
-		return value == null ? null : 0;
+		return untyped __ruby__("HXRuby.parse_int({0})", value);
 	}
 
 	public static function parseFloat(value:String):Float {
-		return value == null ? Math.NaN : 0.0;
+		return untyped __ruby__("HXRuby.parse_float({0})", value);
 	}
 
 	public static function is(value:Dynamic, type:Dynamic):Bool {
@@ -22,7 +22,7 @@ class Std {
 	}
 
 	public static function int(value:Float):Int {
-		return cast value;
+		return untyped __ruby__("{0}.to_i", value);
 	}
 
 	public static function downcast<T:S, S>(value:S, c:Class<T>):Null<T> {
@@ -30,6 +30,6 @@ class Std {
 	}
 
 	public static function random(max:Int):Int {
-		return max <= 0 ? 0 : cast Math.floor(Math.random() * max);
+		return untyped __ruby__("({0} <= 0 ? 0 : rand({0}))", max);
 	}
 }

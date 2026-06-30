@@ -37,7 +37,6 @@ module HXRuby
     asin: ::Math.method(:asin),
     acos: ::Math.method(:acos),
     atan: ::Math.method(:atan),
-    exp: ::Math.method(:exp),
     log: ::Math.method(:log),
     sqrt: ::Math.method(:sqrt)
   }.freeze

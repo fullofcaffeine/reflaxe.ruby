@@ -339,6 +339,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (field.expr == null) {
 				continue;
 			}
+			if (isNativeRubyMathMethod(classType, field.field.name)) {
+				continue;
+			}
 			if (hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
@@ -765,6 +768,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case "POSITIVE_INFINITY": "Float::INFINITY";
 			case "NaN": "Float::NAN";
 			case _: null;
+		}
+	}
+
+	static function isNativeRubyMathMethod(classType:ClassType, fieldName:String):Bool {
+		if (fullTypeName(classType.pack, classType.name) != "Math") {
+			return false;
+		}
+		// Haxe Math emits as Ruby's Math module. If a method is already
+		// behavior-compatible with Ruby, do not emit a wrapper that overrides
+		// the native method and forces an avoidable HXRuby call.
+		return switch (fieldName) {
+			case "exp":
+				true;
+			case _:
+				false;
 		}
 	}
 
