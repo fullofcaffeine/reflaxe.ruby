@@ -80,7 +80,11 @@ module HXRuby
     start = 0 if start.negative?
     return "" if start >= total_units
 
-    finish = count.nil? ? nil : start + count.to_i
+    finish = nil
+    unless count.nil?
+      count_units = count.to_i
+      finish = count_units.negative? ? total_units + count_units : start + count_units
+    end
     return "" if !finish.nil? && finish <= start
 
     out = +""
@@ -92,6 +96,16 @@ module HXRuby
       offset = next_offset
     end
     out
+  end
+
+  def string_char_at(value, position)
+    index = position.to_i
+    return "" if index.negative?
+
+    value.to_s.each_char.with_index do |char, offset|
+      return char if offset == index
+    end
+    ""
   end
 
   def string_char_code_at(value, position)
@@ -115,6 +129,87 @@ module HXRuby
       end
     end
     nil
+  end
+
+  def string_index_of(value, search, start = 0)
+    string = value.to_s
+    needle = search.to_s
+    index = start.to_i
+    index = 0 if index.negative?
+    return [index, string.length].min if needle.empty?
+
+    found = string.index(needle, index)
+    found.nil? ? -1 : found
+  end
+
+  def string_last_index_of(value, search, start = nil)
+    string = value.to_s
+    needle = search.to_s
+    index = start.nil? ? string.length : [start.to_i, string.length].min
+    index = 0 if index.negative?
+    return index if needle.empty?
+
+    found = string.rindex(needle, index)
+    found.nil? ? -1 : found
+  end
+
+  def string_split(value, delimiter)
+    string = value.to_s
+    separator = delimiter.to_s
+    return string.each_char.to_a if separator.empty?
+
+    string.split(separator, -1)
+  end
+
+  def string_substring(value, start_pos, end_pos = nil)
+    string = value.to_s
+    length = string.length
+    start_index = start_pos.to_i
+    finish_index = end_pos.nil? ? length : end_pos.to_i
+    start_index = 0 if start_index.negative?
+    finish_index = 0 if finish_index.negative?
+
+    if start_index > finish_index
+      start_index, finish_index = finish_index, start_index
+    end
+
+    start_index = length if start_index > length
+    finish_index = length if finish_index > length
+    string[start_index...finish_index] || ""
+  end
+
+  def string_compare(value, other)
+    left_units = string_utf16_units(value.to_s)
+    right_units = string_utf16_units(other.to_s)
+    limit = [left_units.length, right_units.length].min
+    index = 0
+
+    while index < limit
+      left = left_units[index]
+      right = right_units[index]
+      return -1 if left < right
+      return 1 if left > right
+
+      index += 1
+    end
+
+    return -1 if left_units.length < right_units.length
+    return 1 if left_units.length > right_units.length
+    0
+  end
+
+  def string_utf16_units(value)
+    units = []
+    value.each_char do |char|
+      code = char.ord
+      if code > 0xffff
+        units << (0xd800 + ((code - 0x10000) >> 10))
+        units << (0xdc00 + ((code - 0x10000) & 0x3ff))
+      else
+        units << code
+      end
+    end
+    units
   end
 
   def array_concat(array, other)

@@ -2433,6 +2433,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TArray(target, index): RubyRawExpr(printInlineExpr(target) + "[" + printInlineExpr(index) + "]");
 			case TArrayDecl(values): RubyArray([for (value in values) compileExpr(value)]);
 			case TObjectDecl(fields): RubyHash([for (field in fields) {key: field.name, value: compileExpr(field.expr)}]);
+			case TBinop(op, lhs, rhs) if (isStringComparison(op, lhs, rhs)):
+				RubyBinary(binopToRuby(op), hxrubyCall("string_compare", [compileExpr(lhs), compileExpr(rhs)]), RubyInt("0"));
 			case TBinop(op, lhs, rhs): RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
 			case TUnop(OpIncrement, postFix, inner):
 				compileIncrementExpr(inner, 1, postFix);
@@ -3202,9 +3204,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "substr" if (params.length == 2):
 						hxrubyCall("string_substr", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
 					case "charAt" if (params.length == 1):
-						RubyRawExpr("(" + receiver + "[" + printParam(params, 0) + "] || \"\")");
+						hxrubyCall("string_char_at", [compileExpr(target), compileParam(params, 0)]);
 					case "charCodeAt" if (params.length == 1):
 						hxrubyCall("string_char_code_at", [compileExpr(target), compileParam(params, 0)]);
+					case "indexOf" if (params.length == 1):
+						hxrubyCall("string_index_of", [compileExpr(target), compileParam(params, 0)]);
+					case "indexOf" if (params.length == 2):
+						hxrubyCall("string_index_of", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
+					case "lastIndexOf" if (params.length == 1):
+						hxrubyCall("string_last_index_of", [compileExpr(target), compileParam(params, 0)]);
+					case "lastIndexOf" if (params.length == 2):
+						hxrubyCall("string_last_index_of", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
+					case "split" if (params.length == 1):
+						hxrubyCall("string_split", [compileExpr(target), compileParam(params, 0)]);
+					case "substring" if (params.length == 1):
+						hxrubyCall("string_substring", [compileExpr(target), compileParam(params, 0)]);
+					case "substring" if (params.length == 2):
+						hxrubyCall("string_substring", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
 					case "toUpperCase" if (params.length == 0):
 						RubyCall(compileExpr(target), "upcase", []);
 					case "toLowerCase" if (params.length == 0):
@@ -3231,6 +3247,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isStringExpr(expr:TypedExpr):Bool {
 		return TypeTools.toString(expr.t) == "String";
+	}
+
+	static function isStringComparison(op:haxe.macro.Expr.Binop, lhs:TypedExpr, rhs:TypedExpr):Bool {
+		return switch op {
+			case OpGt | OpGte | OpLt | OpLte: isStringExpr(lhs) && isStringExpr(rhs);
+			case _:
+				false;
+		}
 	}
 
 	static function compileActiveRecordRelationCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {

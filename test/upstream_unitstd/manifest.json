@@ -17,7 +17,7 @@
     {"module": "Map", "status": "skipped-target-specific", "source": "Map.unit.hx", "reason": "Upstream spec exists; enable after StringMap, IntMap, ObjectMap, and key identity/order semantics are triaged."},
     {"module": "Math", "status": "skipped-target-specific", "source": "Math.unit.hx", "reason": "Upstream spec exists; enable after Ruby float edge cases such as NaN, Infinity, and division-by-zero lowering are triaged."},
     {"module": "Std", "status": "skipped-target-specific", "source": "Std.unit.hx", "reason": "Upstream spec exists; enable after parseInt, parseFloat, isOfType/downcast, random, enum stringification, and in-expression parsing are triaged."},
-    {"module": "String", "status": "skipped-target-specific", "source": "String.unit.hx", "reason": "Upstream spec exists; enable after Ruby byte/codepoint indexing and substring semantics are triaged."},
+    {"module": "String", "status": "enabled", "source": "String.unit.hx", "fixture": "test/upstream_unitstd/upstream/String.unit.hx"},
     {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
     {"module": "StringTools", "status": "skipped-target-specific", "source": "StringTools.unit.hx", "reason": "Upstream spec exists; enable after Ruby UTF-8 iterator, fastCodeAt, padding, replace, and EOF semantics are triaged."},
     {"module": "haxe.io.Bytes", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; Bytes behavior is covered by local runtime tests and future adjacent upstream haxe.io fixtures."},
