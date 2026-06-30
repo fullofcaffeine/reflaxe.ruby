@@ -15,7 +15,7 @@
     {"module": "IntIterator", "status": "enabled", "source": "IntIterator.unit.hx", "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx"},
     {"module": "Lambda", "status": "skipped-target-specific", "source": "Lambda.unit.hx", "reason": "Upstream spec exists; enable after collection/list semantics and Type.getClassName parity are triaged."},
     {"module": "Map", "status": "skipped-target-specific", "source": "Map.unit.hx", "reason": "Upstream spec exists; enable after StringMap, IntMap, ObjectMap, and key identity/order semantics are triaged."},
-    {"module": "Math", "status": "skipped-target-specific", "source": "Math.unit.hx", "reason": "Upstream spec exists; enable after Ruby float edge cases such as NaN, Infinity, and division-by-zero lowering are triaged."},
+    {"module": "Math", "status": "enabled", "source": "Math.unit.hx", "fixture": "test/upstream_unitstd/upstream/Math.unit.hx"},
     {"module": "Std", "status": "skipped-target-specific", "source": "Std.unit.hx", "reason": "Upstream spec exists; enable after parseInt, parseFloat, isOfType/downcast, random, enum stringification, and in-expression parsing are triaged."},
     {"module": "String", "status": "enabled", "source": "String.unit.hx", "fixture": "test/upstream_unitstd/upstream/String.unit.hx"},
     {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},

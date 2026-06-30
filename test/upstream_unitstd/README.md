@@ -26,7 +26,7 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `IntIterator`, `String`, `StringBuf`, `StringTools`,
+- Enabled: `IntIterator`, `Math`, `String`, `StringBuf`, `StringTools`,
   `haxe.io.BytesBuffer`.
 
 The first lane is intentionally narrow. It proves the harness, provenance, sync

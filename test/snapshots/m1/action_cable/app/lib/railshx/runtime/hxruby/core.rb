@@ -467,13 +467,15 @@ module HXRuby
   end
 
   def math_unary(method, value)
-    RUBY_MATH_UNARY.fetch(method).call(value)
+    result = RUBY_MATH_UNARY.fetch(method).call(value)
+    %i[sin cos tan asin acos atan].include?(method) ? math_canonicalize(result) : result
   rescue Math::DomainError
     Float::NAN
   end
 
   def math_binary(method, left, right)
-    RUBY_MATH_BINARY.fetch(method).call(left, right)
+    result = RUBY_MATH_BINARY.fetch(method).call(left, right)
+    method == :atan2 ? math_canonicalize(result) : result
   rescue Math::DomainError
     Float::NAN
   end
@@ -485,12 +487,45 @@ module HXRuby
     Float::NAN
   end
 
+  def math_divide(left, right)
+    left.to_f / right.to_f
+  end
+
   def math_round(value)
     (value + 0.5).floor
   end
 
+  def math_fround(value)
+    return value if math_nan?(value) || value.infinite?
+
+    math_round(value).to_f
+  end
+
+  def math_ffloor(value)
+    return value if math_nan?(value) || value.infinite?
+
+    value.floor.to_f
+  end
+
+  def math_fceil(value)
+    return value if math_nan?(value) || value.infinite?
+
+    value.ceil.to_f
+  end
+
   def math_nan?(value)
     value.respond_to?(:nan?) && value.nan?
+  end
+
+  def math_canonicalize(value)
+    return value unless value.is_a?(Numeric)
+
+    epsilon = 1.0e-12
+    return 0.0 if value.abs < epsilon
+    return 1.0 if (value - 1.0).abs < epsilon
+    return -1.0 if (value + 1.0).abs < epsilon
+
+    value
   end
 
   def is_of_type(value, type)

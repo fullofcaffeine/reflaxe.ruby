@@ -78,16 +78,16 @@ class Math {
 		return untyped __ruby__("rand");
 	}
 
-	public static inline function ffloor(v:Float):Float {
-		return floor(v);
+	public static function ffloor(v:Float):Float {
+		return untyped __ruby__("HXRuby.math_ffloor({0})", v);
 	}
 
-	public static inline function fceil(v:Float):Float {
-		return ceil(v);
+	public static function fceil(v:Float):Float {
+		return untyped __ruby__("HXRuby.math_fceil({0})", v);
 	}
 
-	public static inline function fround(v:Float):Float {
-		return round(v);
+	public static function fround(v:Float):Float {
+		return untyped __ruby__("HXRuby.math_fround({0})", v);
 	}
 
 	public static function isFinite(f:Float):Bool {

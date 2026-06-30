@@ -2387,7 +2387,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TBinop(OpAssign, lhs, rhs):
 				return RubyAssign(compileAssignable(lhs), compileExpr(rhs));
 			case TBinop(OpAssignOp(op), lhs, rhs):
-				return RubyAssign(compileAssignable(lhs), RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs)));
+				return RubyAssign(compileAssignable(lhs), compileBinaryOp(op, lhs, rhs));
 			case TUnop(OpIncrement, _, inner):
 				return RubyAssign(compileAssignable(inner), RubyBinary("+", compileExpr(inner), RubyInt("1")));
 			case TUnop(OpDecrement, _, inner):
@@ -2435,7 +2435,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TObjectDecl(fields): RubyHash([for (field in fields) {key: field.name, value: compileExpr(field.expr)}]);
 			case TBinop(op, lhs, rhs) if (isStringComparison(op, lhs, rhs)):
 				RubyBinary(binopToRuby(op), hxrubyCall("string_compare", [compileExpr(lhs), compileExpr(rhs)]), RubyInt("0"));
-			case TBinop(op, lhs, rhs): RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
+			case TBinop(op, lhs, rhs): compileBinaryOp(op, lhs, rhs);
 			case TUnop(OpIncrement, postFix, inner):
 				compileIncrementExpr(inner, 1, postFix);
 			case TUnop(OpDecrement, postFix, inner):
@@ -12954,6 +12954,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isCapturedSelfAliasName(name:String):Bool {
 		return name == "gthis" || name == "_gthis";
+	}
+
+	static function compileBinaryOp(op:haxe.macro.Expr.Binop, lhs:TypedExpr, rhs:TypedExpr):RubyExpr {
+		return switch (op) {
+			case OpDiv:
+				hxrubyCall("math_divide", [compileExpr(lhs), compileExpr(rhs)]);
+			case _:
+				RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
+		}
 	}
 
 	static function loopIteratorName(v:TVar, iterable:TypedExpr):String {

@@ -122,8 +122,19 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal 0, HXRuby.math_round(-0.5)
     assert_equal 1, HXRuby.math_round(0.5)
     assert_equal 3.0, HXRuby.math_unary(:sqrt, 9)
+    assert_equal 0.0, HXRuby.math_unary(:sin, Math::PI)
+    assert_equal 0.0, HXRuby.math_unary(:cos, Math::PI / 2)
+    assert_equal(-1.0, HXRuby.math_unary(:sin, Math::PI * 3 / 2))
     assert HXRuby.math_nan?(HXRuby.math_unary(:sqrt, -1))
     assert HXRuby.math_nan?(Float::NAN)
     refute HXRuby.math_nan?(1)
+    assert_in_delta 0.5, HXRuby.math_divide(1, 2), 0.0001
+    assert_equal Float::INFINITY, HXRuby.math_divide(1, 0)
+    assert_equal(-Float::INFINITY, HXRuby.math_divide(-1, 0))
+    assert HXRuby.math_nan?(HXRuby.math_divide(0, 0))
+    assert_equal Float::INFINITY, HXRuby.math_fround(Float::INFINITY)
+    assert_equal(-Float::INFINITY, HXRuby.math_ffloor(-Float::INFINITY))
+    assert HXRuby.math_nan?(HXRuby.math_fceil(Float::NAN))
+    assert_equal 2.0, HXRuby.math_fround(1.5)
   end
 end
