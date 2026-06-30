@@ -17,7 +17,11 @@ import haxe.macro.Type.TypedExpr;
 	generation. For Haxe-owned routes, this macro accepts only generated
 	`UserAuth.scope`-style static fields carrying DeviseHx route metadata, then
 	lowers to a compiler marker that emits ordinary Rails `devise_for :users`.
+
+	`@:rubyNoEmit` keeps this macro facade out of Ruby output because the emitted
+	artifact is a Rails route declaration, not a DeviseHx runtime object.
 **/
+@:rubyNoEmit
 class DeviseRoutes {
 	public static macro function deviseFor(scope:Expr, ?options:Expr):Expr {
 		#if macro

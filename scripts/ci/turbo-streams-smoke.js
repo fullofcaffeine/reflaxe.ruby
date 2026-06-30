@@ -33,10 +33,9 @@ compileTurboStreams(outputDir);
 // snapshots. This smoke keeps the non-snapshot checks: required files, Ruby
 // syntax, and negative typing diagnostics for locals and stream targets.
 for (const file of [
-  "app/haxe_gen/main.rb",
-  "app/haxe_gen/views/todo_row_view.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "app/views/todos/_todo.html.erb",
-  "config/initializers/hxruby_autoload.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -45,7 +44,7 @@ for (const file of [
   }
 }
 
-for (const file of ["app/haxe_gen/main.rb", "app/haxe_gen/views/todo_row_view.rb", "run.rb"]) {
+for (const file of ["app/lib/railshx/generated/main.rb", "run.rb"]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);

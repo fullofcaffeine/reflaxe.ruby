@@ -13,9 +13,10 @@ class RubyBuildContext {
 	public final gapReportEnabled:Bool;
 	public final railsMode:Bool;
 	public final railsOutputRoot:String;
+	public final railsLayout:String;
 
 	public function new(profile:RubyProfile, outputDirDefineName:String, targetCodeInjectionName:String, strictExamples:Bool, strictUserBoundaryPolicy:String,
-			strictUserBoundaries:Bool, runtimePlanReportEnabled:Bool, gapReportEnabled:Bool, railsMode:Bool, railsOutputRoot:String) {
+			strictUserBoundaries:Bool, runtimePlanReportEnabled:Bool, gapReportEnabled:Bool, railsMode:Bool, railsOutputRoot:String, railsLayout:String) {
 		this.profile = profile == null ? RubyProfile.Idiomatic : profile;
 		this.outputDirDefineName = normalizeDefineName(outputDirDefineName, "ruby_output");
 		this.targetCodeInjectionName = normalizeDefineName(targetCodeInjectionName, "__ruby__");
@@ -26,15 +27,20 @@ class RubyBuildContext {
 		this.gapReportEnabled = gapReportEnabled == true;
 		this.railsMode = railsMode == true;
 		this.railsOutputRoot = normalizePath(railsOutputRoot, "app/haxe_gen");
+		this.railsLayout = normalizeRailsLayout(railsLayout);
 	}
 
 	public inline function isPortable():Bool {
 		return profile == RubyProfile.Portable;
 	}
 
+	public inline function usesRailsNativeLayout():Bool {
+		return railsMode && railsLayout == "rails_native";
+	}
+
 	public static function legacyDefaults(?profile:RubyProfile):RubyBuildContext {
 		return new RubyBuildContext(profile == null ? RubyProfile.Idiomatic : profile, "ruby_output", "__ruby__", false, "auto", false, false, false, false,
-			"app/haxe_gen");
+			"app/haxe_gen", "legacy_haxe_gen");
 	}
 
 	static function normalizeDefineName(raw:Null<String>, fallback:String):String {
@@ -65,5 +71,13 @@ class RubyBuildContext {
 			trimmed = trimmed.substr(0, trimmed.length - 1);
 		}
 		return trimmed == "" ? fallback : trimmed;
+	}
+
+	static function normalizeRailsLayout(raw:Null<String>):String {
+		if (raw == null) {
+			return "rails_native";
+		}
+		var trimmed = StringTools.trim(raw).toLowerCase();
+		return trimmed == "" ? "rails_native" : trimmed;
 	}
 }

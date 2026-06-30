@@ -22,7 +22,7 @@ typedef TodoFormLocals = {
 // Ruby/Rails output: normal Rails form builder ERB with strong Rails param names.
 // Field errors are read from Rails' ActiveModel errors collection at runtime;
 // Haxe still checks the model-owned field ref before emitting `errors[:field]`.
-@:railsTemplate("controllers/todos/_typed_form")
+@:railsTemplate("todos/_typed_form")
 @:railsTemplateAst("render")
 class TodoFormView {
 	public static function render(locals:TodoFormLocals):HtmlNode {

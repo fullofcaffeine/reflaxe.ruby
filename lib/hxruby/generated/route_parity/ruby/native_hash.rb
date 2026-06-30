@@ -8,35 +8,35 @@ module Ruby
     def self.create()
       return {}
     end
-    def self.set(hash__hx0, key__hx0, value__hx0)
-      hash__hx0[key__hx0] = value__hx0
+    def self.set(hash, key, value)
+      hash[key] = value
     end
-    def self.get(hash__hx0, key__hx0)
-      return hash__hx0[key__hx0]
+    def self.get(hash, key)
+      return hash[key]
     end
-    def self.exists(hash__hx0, key__hx0)
-      return hash__hx0.key?(key__hx0)
+    def self.exists(hash, key)
+      return hash.key?(key)
     end
-    def self.remove(hash__hx0, key__hx0)
-      return (if hash__hx0.key?(key__hx0) then hash__hx0.delete(key__hx0); true else false end)
+    def self.remove(hash, key)
+      return (if hash.key?(key) then hash.delete(key); true else false end)
     end
-    def self.keys(hash__hx0)
-      return hash__hx0.keys
+    def self.keys(hash)
+      return hash.keys
     end
-    def self.values(hash__hx0)
-      return hash__hx0.values
+    def self.values(hash)
+      return hash.values
     end
-    def self.entries(hash__hx0)
-      return hash__hx0.map { |key, value| Struct.new(:key, :value).new(key, value) }
+    def self.entries(hash)
+      return hash.map { |key, value| Struct.new(:key, :value).new(key, value) }
     end
-    def self.copy_into(target__hx0, source__hx0)
-      target__hx0.replace(source__hx0)
+    def self.copy_into(target, source)
+      target.replace(source)
     end
-    def self.clear(hash__hx0)
-      hash__hx0.clear
+    def self.clear(hash)
+      hash.clear
     end
-    def self.to_string(hash__hx0)
-      return hash__hx0.to_s
+    def self.to_string(hash)
+      return hash.to_s
     end
   end
 end

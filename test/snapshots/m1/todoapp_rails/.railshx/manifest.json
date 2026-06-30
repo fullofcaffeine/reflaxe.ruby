@@ -1,0 +1,17 @@
+{
+  "outputs": [
+    {
+      "output": ".railshx/routes.haxe.json",
+      "source": "@:railsRoutes routes.AppRoutes",
+      "sha256": "1e352c5ca986962f9709af60eaae37815b6b59edbe849ef8773773510de23270",
+      "kind": "route_manifest"
+    },
+    {
+      "output": "config/routes.rb",
+      "source": "@:railsRoutes routes.AppRoutes",
+      "sha256": "268a5c5654115f1d4809c420cd1531a974253037ad73ed377121c347eda124b6",
+      "kind": "rails_config"
+    }
+  ],
+  "version": 1
+}

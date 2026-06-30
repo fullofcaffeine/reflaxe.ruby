@@ -3,36 +3,36 @@
 # Do not edit directly unless you intend to take RailsHx ownership.
 
 Rails.application.routes.draw do
-  root "controllers/posts#index"
-  get "posts/archive", to: "controllers/posts#archive", as: :archived_posts
-  post "posts", to: "controllers/posts#create"
-  match "posts/search", to: "controllers/posts#search", via: [:get, :post], as: :post_search
-  get "photos(/:id)", to: "controllers/posts#show_optional", as: :photo_display
-  get "files/*path", to: "controllers/posts#file", as: :file
+  root "posts#index"
+  get "posts/archive", to: "posts#archive", as: :archived_posts
+  post "posts", to: "posts#create"
+  match "posts/search", to: "posts#search", via: [:get, :post], as: :post_search
+  get "photos(/:id)", to: "posts#show_optional", as: :photo_display
+  get "files/*path", to: "posts#file", as: :file
   get "legacy/posts/:id", to: "legacy/posts#show", as: :legacy_post
   mount Sidekiq::Web => "/sidekiq", as: :sidekiq
   defaults format: "json" do
     constraints id: /[0-9]+/ do
-      get "numeric_posts/:id", to: "controllers/posts#show", as: :numeric_post
+      get "numeric_posts/:id", to: "posts#show", as: :numeric_post
     end
   end
-  resources :posts, controller: "controllers/posts", except: [:destroy], param: :slug do
+  resources :posts, controller: "posts", except: [:destroy], param: :slug do
     collection do
-      get "archived", to: "controllers/posts#archive", as: :archived_collection
+      get "archived", to: "posts#archive", as: :archived_collection
     end
     member do
-      patch "publish", to: "controllers/posts#publish", as: :publish_post
+      patch "publish", to: "posts#publish", as: :publish_post
     end
   end
-  resources :draft_posts, controller: "controllers/posts", only: [:new]
-  resource :profile, controller: "controllers/profiles", only: [:show, :update]
+  resources :draft_posts, controller: "posts", only: [:new]
+  resource :profile, controller: "profiles", only: [:show, :update]
   namespace :admin do
-    get "posts/audit", to: "controllers/admin/posts#audit", as: :admin_post_audit
+    get "posts/audit", to: "admin/posts#audit", as: :admin_post_audit
   end
   scope "/api", module: "api", as: :api do
-    get "status", to: "controllers/health#show", as: :status
+    get "status", to: "health#show", as: :status
   end
-  controller "controllers/health" do
-    get "up", to: "controllers/health#show", as: :health
+  controller "health" do
+    get "up", to: "health#show", as: :health
   end
 end

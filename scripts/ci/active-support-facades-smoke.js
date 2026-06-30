@@ -76,10 +76,10 @@ for (const expected of [
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 for (const expected of [
-  /title__hx\d+\.squish\(\)/,
-  /normalized__hx\d+\.presence\(\)/,
+  /title(?:__hx\d+)?\.squish\(\)/,
+  /normalized(?:__hx\d+)?\.presence\(\)/,
   /""\.blank\?\(\)/,
-  /normalized__hx\d+\.present\?\(\)/,
+  /normalized(?:__hx\d+)?\.present\?\(\)/,
 ]) {
   if (!expected.test(mainRuby)) {
     console.error(`Expected ActiveSupport receiver call shape missing from main.rb: ${expected}`);

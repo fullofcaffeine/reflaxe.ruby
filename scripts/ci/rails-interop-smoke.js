@@ -38,11 +38,10 @@ stage("typed external template validation", expectInvalidExternalTemplateLocalsF
 stage("missing existing template validation", expectMissingExistingTemplateFailure);
 stage("materialization", materializeRailsApp);
 stage("ruby syntax", () => syntaxCheck([
+  "app/controllers/application_controller.rb",
   "app/controllers/legacy_controller.rb",
-  "app/haxe_gen/controllers/mixed_controller.rb",
-  "app/haxe_gen/services/typed_stats.rb",
-  "app/haxe_gen/views/haxe_shell_view.rb",
-  "app/haxe_gen/views/typed_widget_view.rb",
+  "app/controllers/mixed_controller.rb",
+  "app/lib/railshx/generated/services/typed_stats.rb",
   "app/services/legacy_price_formatter.rb",
   "config/application.rb",
   "config/environment.rb",
@@ -79,11 +78,9 @@ function assertCompiledArtifacts() {
   // This smoke keeps the interop-specific checks: required generated files and
   // proof that Template.external does not emit or overwrite Rails-owned ERB.
   for (const file of [
-    "app/haxe_gen/controllers/mixed_controller.rb",
-    "app/haxe_gen/services/typed_stats.rb",
-    "app/haxe_gen/views/application_layout_view.rb",
-    "app/haxe_gen/views/haxe_shell_view.rb",
-    "app/haxe_gen/views/typed_widget_view.rb",
+    "app/controllers/mixed_controller.rb",
+    "app/lib/railshx/generated/services/typed_stats.rb",
+    "app/lib/railshx/runtime/hxruby/core.rb",
     "app/views/layouts/application.html.erb",
     "app/views/mixed/haxe_shell.html.erb",
     "app/views/typed_widgets/_summary.html.erb",
@@ -250,7 +247,6 @@ function expectMissingExistingTemplateFailure() {
 
 function materializeRailsApp() {
   copyTree(join(compiledDir, "app"), join(appDir, "app"));
-  copyTree(join(compiledDir, "config"), join(appDir, "config"));
   copyTree(join(exampleDir, "rails", "app"), join(appDir, "app"));
 
   writeFile("Gemfile", `source "https://rubygems.org"
@@ -286,7 +282,8 @@ module HXRubyInterop
     config.load_defaults 7.0
     config.eager_load = false
     config.root = File.expand_path("..", __dir__)
-    config.paths.add "app/haxe_gen", eager_load: true
+    config.autoload_paths << Rails.root.join("app/lib/railshx/generated")
+    config.eager_load_paths << Rails.root.join("app/lib/railshx/generated")
     config.assets.paths << Rails.root.join("app/assets/stylesheets")
     config.action_controller.allow_forgery_protection = false
   end
@@ -299,9 +296,13 @@ Rails.application.initialize!
 `);
 
   writeFile("config/routes.rb", `Rails.application.routes.draw do
-  root "controllers/mixed#haxe_shell"
-  get "/haxe-shell", to: "controllers/mixed#haxe_shell"
+  root "mixed#haxe_shell"
+  get "/haxe-shell", to: "mixed#haxe_shell"
   get "/legacy-shell", to: "legacy#home"
+end
+`);
+
+  writeFile("app/controllers/application_controller.rb", `class ApplicationController < ActionController::Base
 end
 `);
 

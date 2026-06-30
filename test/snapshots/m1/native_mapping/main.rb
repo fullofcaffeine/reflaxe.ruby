@@ -6,8 +6,8 @@ class Main
     "Main"
   end
   def self.main()
-    puts(HXRuby.stringify(JSON.generate({"name" => "ruby", "count" => 2})))
-    puts(HXRuby.stringify(File.basename("/tmp/reflaxe.rb")))
+    puts(JSON.generate({"name" => "ruby", "count" => 2}).to_s())
+    puts(File.basename("/tmp/reflaxe.rb").to_s())
   end
 end
 if __FILE__ == $PROGRAM_NAME

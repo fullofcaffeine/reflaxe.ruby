@@ -6,5 +6,9 @@ package devisehx.model;
 	The marker is intentionally empty: Devise behavior comes from the Ruby
 	`devise :...` class macro or an adopted Rails-owned model, not from a
 	RailsHx runtime replacement.
+
+	`@:rubyNoEmit` avoids an empty Ruby marker module while preserving the Haxe
+	type bound used by generated DeviseHx contracts.
 **/
+@:rubyNoEmit
 interface DeviseResource<TSelf> {}

@@ -540,7 +540,7 @@ class OutputManager {
 			outputMetadata.filesGenerated = outputFiles;
 		}
 
-		sys.io.File.saveContent(generatedFilesPath(), haxe.Json.stringify(outputMetadata, "\t"));
+		sys.io.File.saveContent(generatedFilesPath(), haxe.Json.stringify(outputMetadata, "\t") + "\n");
 	}
 }
 

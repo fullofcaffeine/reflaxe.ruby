@@ -11,6 +11,7 @@ import rails.action_mailer.MailOptions;
 	token usage while emitted Ruby stays Devise/Rails-native.
 **/
 @:native("Devise::Mailer")
+@:railsMailerSuperclass("Devise::Mailer")
 extern class DeviseMailer<TModel> extends rails.action_mailer.Base {
 	public function confirmationInstructions(record:TModel, token:ConfirmationToken, opts:MailOptions):Void;
 	public function resetPasswordInstructions(record:TModel, token:ResetPasswordToken, opts:MailOptions):Void;

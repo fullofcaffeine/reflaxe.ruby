@@ -7,7 +7,11 @@ package devisehx;
 	helpers such as `current`, `signIn`, and route/view helpers cannot drift
 	across multi-scope apps. Devise still owns runtime mappings; this is a typed
 	authoring contract generated from deterministic inventory.
+
+	`@:rubyNoEmit` means generated/app-local scope fields may use this type for
+	Haxe checking without creating a DeviseHx runtime constant in Ruby.
 **/
+@:rubyNoEmit
 final class DeviseScope<TModel> {
 	public final name:ScopeName;
 	public final routeResource:RouteResource;

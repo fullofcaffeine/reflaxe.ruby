@@ -6,7 +6,11 @@ package devisehx;
 	Later compiler/generator slices lower this to Rails' normal
 	`before_action :authenticate_user!` shape. Keeping it as a first-class type
 	now prevents auth filters from being modeled as loose strings.
+
+	`@:rubyNoEmit` keeps the typed Haxe token out of Rails autoload paths because
+	the runtime artifact is the Rails `before_action`, not this helper class.
 **/
+@:rubyNoEmit
 final class AuthFilter<TModel> {
 	public final scope:DeviseScope<TModel>;
 

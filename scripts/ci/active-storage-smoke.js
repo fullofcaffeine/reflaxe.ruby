@@ -59,10 +59,10 @@ if (!reflaxeSrc) {
 compileActiveStorage(outputDir);
 
 for (const file of [
-  "app/haxe_gen/models/profile.rb",
-  "app/haxe_gen/main.rb",
+  "app/models/profile.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "app/views/profiles/_upload_form.html.erb",
-  "config/initializers/hxruby_autoload.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -72,11 +72,23 @@ for (const file of [
   }
 }
 
-const profileRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "profile.rb"), "utf8");
+for (const legacyFile of [
+  "app/haxe_gen/models/profile.rb",
+  "app/haxe_gen/main.rb",
+  "config/initializers/hxruby_autoload.rb",
+]) {
+  const fullPath = join(outputDir, legacyFile);
+  if (existsSync(fullPath)) {
+    console.error(`ActiveStorage smoke should not emit legacy haxe_gen/autoload file: ${fullPath}`);
+    process.exit(1);
+  }
+}
+
+const profileRuby = readFileSync(join(outputDir, "app", "models", "profile.rb"), "utf8");
 for (const expected of [
   'require "active_record"',
   'require "active_storage/engine"',
-  "class Profile < ::ApplicationRecord",
+  "class Profile < ApplicationRecord",
   'self.table_name = "profiles"',
   "has_one_attached :avatar",
   "has_many_attached :gallery",
@@ -89,23 +101,23 @@ for (const expected of [
   }
 }
 
-const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
+const mainRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "generated", "main.rb"), "utf8");
 for (const expected of [
-  /has_avatar__hx\d+ = profile__hx\d+\.avatar\(\)\.attached\?\(\)/,
-  /profile__hx\d+\.avatar\(\)\.attach\("avatar.png"\)/,
-  /profile__hx\d+\.avatar\(\)\.attach\(\{"io" => File\.open\("avatar.png"\), "filename" => "avatar.png", "content_type" => "image\/png"\}\)/,
-  /uploaded_signed_id__hx\d+ = uploaded_blob__hx\d+\.signed_id\(\)/,
-  /uploaded_filename__hx\d+ = uploaded_blob__hx\d+\.filename\(\)\.to_s\(\)/,
-  /uploaded_content_type__hx\d+ = uploaded_blob__hx\d+\.content_type\(\)/,
-  /direct_upload_url__hx\d+ = uploaded_blob__hx\d+\.service_url_for_direct_upload\(\)/,
-  /direct_upload_headers__hx\d+ = uploaded_blob__hx\d+\.service_headers_for_direct_upload\(\)/,
-  /profile__hx\d+\.avatar\(\)\.attach\(uploaded_signed_id__hx\d+\)/,
-  /profile__hx\d+\.avatar\(\)\.attach\(uploaded_blob__hx\d+\)/,
-  /profile__hx\d+\.avatar\(\)\.purge\(\)/,
-  /has_gallery__hx\d+ = profile__hx\d+\.gallery\(\)\.attached\?\(\)/,
-  /profile__hx\d+\.gallery\(\)\.attach\(\["one.png", "two.png"\]\)/,
-  /profile__hx\d+\.gallery\(\)\.attach\(\[\{"io" => File\.open\("one.png"\), "filename" => "one.png", "content_type" => "image\/png"\}, \{"io" => File\.open\("two.png"\), "filename" => "two.png", "content_type" => "image\/png"\}\]\)/,
-  /profile__hx\d+\.gallery\(\)\.purge\(\)/,
+  /has_avatar(?:__hx\d+)? = profile(?:__hx\d+)?\.avatar\(\)\.attached\?\(\)/,
+  /profile(?:__hx\d+)?\.avatar\(\)\.attach\("avatar.png"\)/,
+  /profile(?:__hx\d+)?\.avatar\(\)\.attach\(\{"io" => File\.open\("avatar.png"\), "filename" => "avatar.png", "content_type" => "image\/png"\}\)/,
+  /uploaded_signed_id(?:__hx\d+)? = uploaded_blob(?:__hx\d+)?\.signed_id\(\)/,
+  /uploaded_filename(?:__hx\d+)? = uploaded_blob(?:__hx\d+)?\.filename\(\)\.to_s\(\)/,
+  /uploaded_content_type(?:__hx\d+)? = uploaded_blob(?:__hx\d+)?\.content_type\(\)/,
+  /direct_upload_url(?:__hx\d+)? = uploaded_blob(?:__hx\d+)?\.service_url_for_direct_upload\(\)/,
+  /direct_upload_headers(?:__hx\d+)? = uploaded_blob(?:__hx\d+)?\.service_headers_for_direct_upload\(\)/,
+  /profile(?:__hx\d+)?\.avatar\(\)\.attach\(uploaded_signed_id(?:__hx\d+)?\)/,
+  /profile(?:__hx\d+)?\.avatar\(\)\.attach\(uploaded_blob(?:__hx\d+)?\)/,
+  /profile(?:__hx\d+)?\.avatar\(\)\.purge\(\)/,
+  /has_gallery(?:__hx\d+)? = profile(?:__hx\d+)?\.gallery\(\)\.attached\?\(\)/,
+  /profile(?:__hx\d+)?\.gallery\(\)\.attach\(\["one.png", "two.png"\]\)/,
+  /profile(?:__hx\d+)?\.gallery\(\)\.attach\(\[\{"io" => File\.open\("one.png"\), "filename" => "one.png", "content_type" => "image\/png"\}, \{"io" => File\.open\("two.png"\), "filename" => "two.png", "content_type" => "image\/png"\}\]\)/,
+  /profile(?:__hx\d+)?\.gallery\(\)\.purge\(\)/,
 ]) {
   if (!expected.test(mainRuby)) {
     console.error(`ActiveStorage helper output missing expected call: ${expected}`);
@@ -125,7 +137,7 @@ for (const expected of [
   }
 }
 
-for (const file of ["app/haxe_gen/models/profile.rb", "app/haxe_gen/main.rb", "run.rb"]) {
+for (const file of ["app/models/profile.rb", "app/lib/railshx/generated/main.rb", "run.rb"]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
@@ -187,7 +199,7 @@ if (!/String|Array<String>|Cannot unify/.test(invalidAttach.stderr + invalidAtta
 
 stage("runtime materialization", materializeRuntimeRailsApp);
 stage("runtime ruby syntax", () => syntaxCheck([
-  "app/haxe_gen/models/profile.rb",
+  "app/models/profile.rb",
   "app/models/application_record.rb",
   "config/application.rb",
   "config/environment.rb",
@@ -321,8 +333,6 @@ function writeInvalidAttachFixture() {
 function materializeRuntimeRailsApp() {
   mkdirSync(runtimeAppDir, { recursive: true });
   copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
-  copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
-  copyGeneratedSupportIntoHaxeGen();
 
   writeFile("Gemfile", `source "https://rubygems.org"
 
@@ -387,7 +397,7 @@ ActiveRecord::Migration.maintain_test_schema!
   writeFile("test/models/profile_attachment_test.rb", `require "test_helper"
 require "digest/md5"
 require "stringio"
-require Rails.root.join("app/haxe_gen/models/profile")
+require Rails.root.join("app/models/profile")
 
 class ProfileAttachmentTest < ActiveSupport::TestCase
   setup do
@@ -395,7 +405,7 @@ class ProfileAttachmentTest < ActiveSupport::TestCase
   end
 
   test "attaches reads and purges a typed one attachment by signed id" do
-    profile = Models::Profile.create!(name: "Ada")
+    profile = Profile.create!(name: "Ada")
     avatar = blob("avatar.txt", "avatar-body")
 
     profile.avatar.attach(avatar.signed_id)
@@ -410,7 +420,7 @@ class ProfileAttachmentTest < ActiveSupport::TestCase
   end
 
   test "attaches reads and purges typed many attachments by signed ids" do
-    profile = Models::Profile.create!(name: "Grace")
+    profile = Profile.create!(name: "Grace")
     first = blob("one.txt", "one-body")
     second = blob("two.txt", "two-body")
 
@@ -426,7 +436,7 @@ class ProfileAttachmentTest < ActiveSupport::TestCase
   end
 
   test "attaches a typed io filename content type hash" do
-    profile = Models::Profile.create!(name: "Katherine")
+    profile = Profile.create!(name: "Katherine")
 
     profile.avatar.attach(
       io: StringIO.new("hash-avatar-body"),
@@ -441,7 +451,7 @@ class ProfileAttachmentTest < ActiveSupport::TestCase
   end
 
   test "direct upload blob helpers attach through signed ids" do
-    profile = Models::Profile.create!(name: "Dorothy")
+    profile = Profile.create!(name: "Dorothy")
     body = "direct-upload-body"
     blob = ActiveStorage::Blob.create_before_direct_upload!(
       filename: "direct.txt",
@@ -463,7 +473,7 @@ class ProfileAttachmentTest < ActiveSupport::TestCase
   end
 
   test "direct upload file field renders through Rails helpers" do
-    profile = Models::Profile.create!(name: "Mary")
+    profile = Profile.create!(name: "Mary")
     html = ApplicationController.render(partial: "profiles/upload_form", locals: { profile: profile })
 
     assert_includes html, "type=\\"file\\""
@@ -483,23 +493,6 @@ class ProfileAttachmentTest < ActiveSupport::TestCase
   end
 end
 `);
-}
-
-function copyGeneratedSupportIntoHaxeGen() {
-  const haxeGenDir = join(runtimeAppDir, "app", "haxe_gen");
-  for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
-    if (["app", "config", "run.rb", "_GeneratedFiles.json"].includes(entry.name)) {
-      continue;
-    }
-    const sourcePath = join(outputDir, entry.name);
-    const targetPath = join(haxeGenDir, entry.name);
-    if (entry.isDirectory()) {
-      copyTree(sourcePath, targetPath);
-    } else if (entry.isFile()) {
-      mkdirSync(dirname(targetPath), { recursive: true });
-      copyFileSync(sourcePath, targetPath);
-    }
-  }
 }
 
 function syntaxCheck(relativeFiles) {

@@ -109,13 +109,15 @@ if (!compileWithFirstAvailableReflaxe(join(outputDir, "ruby"))) {
   process.exit(1);
 }
 
-assertIncludes("ruby/app/haxe_gen/models/todo.rb", [
-  "module Models",
-  "class Todo < ::ApplicationRecord",
+assertIncludes("ruby/app/models/todo.rb", [
+  "class Todo < ApplicationRecord",
   "belongs_to :user, foreign_key: \"user_id\", optional: false",
   "validates :title, presence: true",
+]);
+assertExcludes("ruby/app/models/todo.rb", [
+  "__hx_rails_schema",
+  "typed_column_count",
   "rails_type: :decimal",
-  "self.__hx_rails_schema",
 ]);
 assertIncludes("ruby/db/migrate/20260101020101_create_todos.rb", [
   "class CreateTodos < ActiveRecord::Migration[8.1]",
@@ -166,6 +168,16 @@ function assertIncludes(relativeFile, expectedLines) {
   for (const expected of expectedLines) {
     if (!content.includes(expected)) {
       console.error(`${relativeFile} missing expected line: ${expected}`);
+      process.exit(1);
+    }
+  }
+}
+
+function assertExcludes(relativeFile, unexpectedLines) {
+  const content = readFileSync(join(outputDir, relativeFile), "utf8");
+  for (const unexpected of unexpectedLines) {
+    if (content.includes(unexpected)) {
+      console.error(`${relativeFile} should not include: ${unexpected}`);
       process.exit(1);
     }
   }

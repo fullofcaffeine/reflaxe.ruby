@@ -54,8 +54,8 @@ if (actual !== expected) {
 
 const mathRuby = readFileSync(join(outputDir, "math.rb"), "utf8");
 for (const expectedMathShape of [
-  /def self\.abs\(v__hx\d+\)\n\s+return v__hx\d+\.abs/,
-  /def self\.is_finite\(f__hx\d+\)\n\s+return f__hx\d+\.finite\?/,
+  /def self\.abs\(v\)\n\s+return v\.abs/,
+  /def self\.is_finite\(f\)\n\s+return f\.finite\?/,
 ]) {
   if (!expectedMathShape.test(mathRuby)) {
     console.error(`Expected idiomatic direct Ruby Math lowering missing: ${expectedMathShape}`);

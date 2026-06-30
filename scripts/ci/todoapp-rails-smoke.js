@@ -527,38 +527,23 @@ if (!compileWithFirstAvailableReflaxe()) {
 compileTodoClient();
 
 for (const file of [
-  "app/haxe_gen/models/todo.rb",
-  "app/haxe_gen/models/user.rb",
-  "app/haxe_gen/models/chat_message.rb",
-  "app/haxe_gen/controllers/chat_messages_controller.rb",
-  "app/haxe_gen/controllers/todo_index_locals.rb",
-  "app/haxe_gen/controllers/todos_controller.rb",
-  "app/haxe_gen/migrations/create_chat_messages.rb",
-  "app/haxe_gen/migrations/create_todos.rb",
-  "app/haxe_gen/migrations/add_devise_to_users.rb",
-  "app/haxe_gen/migrations/update_todos.rb",
-  "app/haxe_gen/migrations/update_users.rb",
-  "app/haxe_gen/views/application_layout_view.rb",
-  "app/haxe_gen/views/chat_message_view.rb",
-  "app/haxe_gen/views/chat_panel_view.rb",
-  "app/haxe_gen/views/app_top_bar_view.rb",
-  "app/haxe_gen/views/devise_login_view.rb",
-  "app/haxe_gen/views/todo_card_view.rb",
-  "app/haxe_gen/views/todo_composer_view.rb",
-  "app/haxe_gen/views/todo_dashboard_view.rb",
-  "app/haxe_gen/views/todo_form_view.rb",
-  "app/haxe_gen/views/todo_index_view.rb",
-  "app/haxe_gen/views/todo_list_view.rb",
-  "app/haxe_gen/views/todo_summary_view.rb",
-  "app/views/controllers/todos/index.html.erb",
-  "app/views/controllers/todos/_card.html.erb",
-  "app/views/controllers/todos/_app_top_bar.html.erb",
-  "app/views/controllers/todos/_chat_panel.html.erb",
-  "app/views/controllers/todos/_composer.html.erb",
-  "app/views/controllers/todos/_dashboard.html.erb",
-  "app/views/controllers/todos/_list.html.erb",
-  "app/views/controllers/todos/_summary.html.erb",
-  "app/views/controllers/todos/_typed_form.html.erb",
+  "app/controllers/application_controller.rb",
+  "app/controllers/chat_messages_controller.rb",
+  "app/controllers/sessions_controller.rb",
+  "app/controllers/todos_controller.rb",
+  "app/controllers/users_controller.rb",
+  "app/models/todo.rb",
+  "app/models/user.rb",
+  "app/models/chat_message.rb",
+  "app/views/todos/index.html.erb",
+  "app/views/todos/_card.html.erb",
+  "app/views/todos/_app_top_bar.html.erb",
+  "app/views/todos/_chat_panel.html.erb",
+  "app/views/todos/_composer.html.erb",
+  "app/views/todos/_dashboard.html.erb",
+  "app/views/todos/_list.html.erb",
+  "app/views/todos/_summary.html.erb",
+  "app/views/todos/_typed_form.html.erb",
   "app/views/devise/sessions/new.html.erb",
   "app/views/layouts/application.html.erb",
   "config/routes.rb",
@@ -568,9 +553,7 @@ for (const file of [
   "db/migrate/20260101000003_create_chat_messages.rb",
   "db/migrate/20260101000004_add_devise_to_users.rb",
   "test/generated/models/todo_haxe_test.rb",
-  "app/haxe_gen/main.rb",
-  "config/initializers/hxruby_autoload.rb",
-  "run.rb",
+  "test/generated/controllers/todos_haxe_request_test.rb",
 ]) {
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
@@ -579,22 +562,25 @@ for (const file of [
   }
 }
 
-const todoRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "todo.rb"), "utf8");
+for (const forbidden of [
+  "app/haxe_gen",
+  "app/lib/railshx/generated",
+  "app/lib/railshx/runtime",
+  "config/initializers/hxruby_autoload.rb",
+  "run.rb",
+]) {
+  const fullPath = join(outputDir, forbidden);
+  if (existsSync(fullPath)) {
+    console.error(`todoapp_rails should not emit legacy/runtime support output for native Rails artifacts: ${fullPath}`);
+    process.exit(1);
+  }
+}
+
+const todoRuby = readFileSync(join(outputDir, "app", "models", "todo.rb"), "utf8");
 for (const expected of [
   'require "active_record"',
-  "module Models",
-  "class Todo < ::ApplicationRecord",
+  "class Todo < ApplicationRecord",
   'self.table_name = "todos"',
-  "def self.__hx_rails_schema()",
-  'table_name: "todos"',
-  "timestamps: true",
-  "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
-  "{name: :title, haxe_name: \"title\", ruby_name: \"title\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
-  "{name: :notes, haxe_name: \"notes\", ruby_name: \"notes\", haxe_type: \"String\", rails_type: :text, nullable: false, default: \"\", primary_key: false, index: false, unique: false, db_type: :text}",
-  "{name: :is_completed, haxe_name: \"isCompleted\", ruby_name: \"is_completed\", haxe_type: \"Bool\", rails_type: :boolean, nullable: false, default: false, primary_key: false, index: false, unique: false, db_type: nil}",
-  "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
-  "def self.typed_column_count()",
-  "__hx_rails_schema()[:columns].length",
   'belongs_to :user, optional: false, foreign_key: "user_id", inverse_of: :todos',
   "# haxe column id: Int",
   "# haxe column title: String",
@@ -607,7 +593,7 @@ for (const expected of [
   "before_validation :normalize_title",
   "def normalize_title()",
   "def self.incomplete()",
-  "Models::Todo.where(is_completed: false)",
+  "Todo.where(is_completed: false)",
 ]) {
   if (!todoRuby.includes(expected)) {
     console.error(`todoapp_rails model output missing expected line: ${expected}`);
@@ -615,19 +601,11 @@ for (const expected of [
   }
 }
 
-const userRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "user.rb"), "utf8");
+const userRuby = readFileSync(join(outputDir, "app", "models", "user.rb"), "utf8");
 for (const expected of [
   'require "active_record"',
-  "module Models",
-  "class User < ::ApplicationRecord",
+  "class User < ApplicationRecord",
   'self.table_name = "users"',
-  "def self.__hx_rails_schema()",
-  'table_name: "users"',
-  "timestamps: true",
-  "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
-  "{name: :name, haxe_name: \"name\", ruby_name: \"name\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
-  "{name: :email, haxe_name: \"email\", ruby_name: \"email\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
-  "{name: :role, haxe_name: \"role\", ruby_name: \"role\", haxe_type: \"String\", rails_type: :string, nullable: false, default: \"member\", primary_key: false, index: true, unique: false, db_type: nil}",
   "has_many :todos, dependent: :destroy, inverse_of: :user",
   "has_many :chat_messages, dependent: :destroy, inverse_of: :user",
   "# haxe column id: Int",
@@ -640,7 +618,7 @@ for (const expected of [
   'validates :role, inclusion: {within: ["member", "admin", "maintainer", "guest"]}',
   "def role_label()",
   "def initials()",
-  "trimmed__hx0[0, 1].upcase()",
+  "trimmed[0, 1].upcase()",
 ]) {
   if (!userRuby.includes(expected)) {
     console.error(`todoapp_rails user model output missing expected line: ${expected}`);
@@ -648,16 +626,11 @@ for (const expected of [
   }
 }
 
-const chatMessageRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "chat_message.rb"), "utf8");
+const chatMessageRuby = readFileSync(join(outputDir, "app", "models", "chat_message.rb"), "utf8");
 for (const expected of [
   'require "active_record"',
-  "module Models",
-  "class ChatMessage < ::ApplicationRecord",
+  "class ChatMessage < ApplicationRecord",
   'self.table_name = "chat_messages"',
-  "def self.__hx_rails_schema()",
-  'table_name: "chat_messages"',
-  "{name: :body, haxe_name: \"body\", ruby_name: \"body\", haxe_type: \"String\", rails_type: :text, nullable: false, default: nil, primary_key: false, index: false, unique: false, db_type: :text}",
-  "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   'belongs_to :user, optional: false, foreign_key: "user_id", inverse_of: :chat_messages',
   "# haxe column body: String",
   "# haxe column user_id: Int",
@@ -665,10 +638,17 @@ for (const expected of [
   "before_validation :normalize_body",
   "def normalize_body()",
   "def self.latest()",
-  "Models::ChatMessage.includes(:user).order(id: :desc).limit(6)",
+  "ChatMessage.includes(:user).order(id: :desc).limit(6)",
 ]) {
   if (!chatMessageRuby.includes(expected)) {
     console.error(`todoapp_rails chat message model output missing expected line: ${expected}`);
+    process.exit(1);
+  }
+}
+
+for (const [label, ruby] of [["todo", todoRuby], ["user", userRuby], ["chat_message", chatMessageRuby]]) {
+  if (ruby.includes("__hx_rails_schema") || ruby.includes("typed_column_count")) {
+    console.error(`todoapp_rails ${label} model should not expose compiler schema metadata or compile-time helper methods.`);
     process.exit(1);
   }
 }
@@ -679,10 +659,10 @@ for (const expected of [
   'require "test_helper"',
   "class TodoHaxeTest < ActiveSupport::TestCase",
   'test "typed incomplete scope returns typed titles" do',
-  'user__hx0 = Models::User.create(name: "haxe test owner", email: "haxe-test-owner@example.test", role: "admin", password: "password123", password_confirmation: "password123")',
-  'Models::Todo.create(title: "ship haxe tests", notes: "generated Minitest", is_completed: false, user_id: user__hx0.id)',
-  'Models::Todo.create(title: "hide completed work", notes: "done", is_completed: true, user_id: user__hx0.id)',
-  'assert_equal(["ship haxe tests"], Models::Todo.incomplete().pluck(:title))',
+  'user = User.create(name: "haxe test owner", email: "haxe-test-owner@example.test", role: "admin", password: "password123", password_confirmation: "password123")',
+  'Todo.create(title: "ship haxe tests", notes: "generated Minitest", is_completed: false, user_id: user.id)',
+  'Todo.create(title: "hide completed work", notes: "done", is_completed: true, user_id: user.id)',
+  'assert_equal(["ship haxe tests"], Todo.incomplete().pluck(:title))',
 ]) {
   if (!haxeAuthoredTestRuby.includes(expected)) {
     console.error(`todoapp_rails Haxe-authored test output missing expected line: ${expected}`);
@@ -703,11 +683,11 @@ for (const expected of [
   "assert_response(:ok)",
   'assert_includes(response.body, "Typed Rails, polished Ruby.")',
   'assert_includes(response.body, "Haxe Request User")',
-  "assert_no_difference(-> { Models::Todo.count() }) do",
-  "assert_difference(-> { Models::Todo.count() }, 1) { post(self.todos_path(), params:",
+  "assert_no_difference(-> { Todo.count() }) do",
+  "assert_difference(-> { Todo.count() }, 1) { post(self.todos_path(), params:",
   'post(self.todos_path(), params: {"todo" => {title: "from haxe request", notes: "typed request params"}})',
   "assert_redirected_to(self.todos_path())",
-  'assert_equal(["from haxe request"], Models::Todo.where(user_id:',
+  'assert_equal(["from haxe request"], Todo.where(user_id:',
   'assert_equal("Completed todos: haxe completed route", response.body)',
   'get(self.file_path(begin',
   'assert_equal("text/plain", response.media_type)',
@@ -719,10 +699,10 @@ for (const expected of [
   }
 }
 for (const expected of [
-  /sign_in\(:user,\s*user__hx\d+\)/,
+  /sign_in\(:user,\s*user(?:__hx\d+)?\)/,
   /sign_out\(:user\)/,
-  /Models::User.create\(name: "Haxe Request User", email: "request-viewer@example.test", role: "member", password: "password123", password_confirmation: "password123"\)/,
-  /Models::User.create\(name: "Haxe Request User", email: "request-creator@example.test", role: "member", password: "password123", password_confirmation: "password123"\)/,
+  /User.create\(name: "Haxe Request User", email: "request-viewer@example.test", role: "member", password: "password123", password_confirmation: "password123"\)/,
+  /User.create\(name: "Haxe Request User", email: "request-creator@example.test", role: "member", password: "password123", password_confirmation: "password123"\)/,
 ]) {
   if (!expected.test(haxeRequestTestRuby)) {
     console.error(`todoapp_rails Haxe-authored request test output missing expected pattern: ${expected}`);
@@ -735,16 +715,16 @@ for (const expected of [
   "# Generated by RailsHx from @:railsRoutes.",
   "# Source: routes.AppRoutes",
   "Rails.application.routes.draw do",
-  'devise_for :users, class_name: "Models::User", only: [:sessions]',
-  'root "controllers/todos#index"',
-  'resources :todos, controller: "controllers/todos", only: [:index, :create]',
-  'resources :chat_messages, controller: "controllers/chat_messages", only: [:index, :create]',
-  'get "completed", to: "controllers/todos#completed"',
-  'patch "complete", to: "controllers/todos#complete"',
-  'resources :users, controller: "controllers/users", only: [:index, :create, :update, :destroy]',
-  'post "guest", to: "controllers/sessions#create_guest", as: :guest_sign_in',
-  'get "reports(/:year)", to: "controllers/todos#optional_report", as: :optional_report',
-  'get "files/*path", to: "controllers/todos#file", as: :file',
+  "devise_for :users, only: [:sessions]",
+  'root "todos#index"',
+  'resources :todos, controller: "todos", only: [:index, :create]',
+  'resources :chat_messages, controller: "chat_messages", only: [:index, :create]',
+  'get "completed", to: "todos#completed"',
+  'patch "complete", to: "todos#complete"',
+  'resources :users, controller: "users", only: [:index, :create, :update, :destroy]',
+  'post "guest", to: "sessions#create_guest", as: :guest_sign_in',
+  'get "reports(/:year)", to: "todos#optional_report", as: :optional_report',
+  'get "files/*path", to: "todos#file", as: :file',
 ]) {
   if (!generatedRoutes.includes(expected)) {
     console.error(`todoapp_rails generated routes missing expected line: ${expected}`);
@@ -799,13 +779,13 @@ for (const expected of [
 const routeTestSource = readFileSync(join(sourceDir, "rails", "test", "controllers", "routes_test.rb"), "utf8");
 for (const expected of [
   "class RoutesTest < ActionDispatch::IntegrationTest",
-  "assert_routing({ path: \"/\", method: :get }, { controller: \"controllers/todos\", action: \"index\" })",
-  "assert_recognizes({ controller: \"controllers/todos\", action: \"create\" }, { path: \"/todos\", method: :post })",
-  "assert_recognizes({ controller: \"controllers/chat_messages\", action: \"create\" }, { path: \"/chat_messages\", method: :post })",
-  "assert_recognizes({ controller: \"controllers/todos\", action: \"completed\" }, { path: \"/todos/completed\", method: :get })",
-  "assert_recognizes({ controller: \"controllers/todos\", action: \"complete\", id: \"42\" }, { path: \"/todos/42/complete\", method: :patch })",
-  "assert_recognizes({ controller: \"controllers/todos\", action: \"optional_report\", year: \"2026\" }, { path: \"/reports/2026\", method: :get })",
-  "assert_recognizes({ controller: \"controllers/todos\", action: \"file\", path: \"docs/readme\" }, { path: \"/files/docs/readme\", method: :get })",
+  "assert_routing({ path: \"/\", method: :get }, { controller: \"todos\", action: \"index\" })",
+  "assert_recognizes({ controller: \"todos\", action: \"create\" }, { path: \"/todos\", method: :post })",
+  "assert_recognizes({ controller: \"chat_messages\", action: \"create\" }, { path: \"/chat_messages\", method: :post })",
+  "assert_recognizes({ controller: \"todos\", action: \"completed\" }, { path: \"/todos/completed\", method: :get })",
+  "assert_recognizes({ controller: \"todos\", action: \"complete\", id: \"42\" }, { path: \"/todos/42/complete\", method: :patch })",
+  "assert_recognizes({ controller: \"todos\", action: \"optional_report\", year: \"2026\" }, { path: \"/reports/2026\", method: :get })",
+  "assert_recognizes({ controller: \"todos\", action: \"file\", path: \"docs/readme\" }, { path: \"/files/docs/readme\", method: :get })",
   "assert_equal \"/rails-owned-health\", legacy_health_path",
   "get legacy_health_path",
   "Routes.legacyHealthPath()",
@@ -816,31 +796,30 @@ for (const expected of [
   }
 }
 
-const controllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "todos_controller.rb"), "utf8");
+const controllerRuby = readFileSync(join(outputDir, "app", "controllers", "todos_controller.rb"), "utf8");
 for (const expected of [
   /require "action_controller\/railtie"/,
-  /module Controllers/,
-  /class TodosController < ActionController::Base/,
-  /todos__hx\d+ = Models::Todo\.where\(is_completed: false, user_id: current_user__hx\d+\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)/,
-  /users__hx\d+ = Models::User\.order\(name: :asc\)\.to_a\(\)/,
-  /chat_messages__hx\d+ = Models::ChatMessage\.latest\(\)\.to_a\(\)/,
+  /class TodosController < ApplicationController/,
+  /todos(?:__hx\d+)? = Todo\.where\(is_completed: false, user_id: current_user(?:__hx\d+)?\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)/,
+  /users(?:__hx\d+)? = User\.order\(name: :asc\)\.to_a\(\)/,
+  /chat_messages(?:__hx\d+)? = ChatMessage\.latest\(\)\.to_a\(\)/,
   /before_action :authenticate_user!/,
-  /current_user__hx\d+ = current_user\(\)/,
-  /self\.render\(template: "controllers\/todos\/index", locals: \{todos: todos__hx\d+, users: users__hx\d+, chat_messages: chat_messages__hx\d+, todo_count: todos__hx\d+\.length, typed_column_count: Models::Todo\.typed_column_count\(\), current_user: current_user__hx\d+\}, layout: "application"\)/,
-  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes\]\)/,
-  /attrs__hx\d+ = attrs__hx\d+\.merge\(user_id: current_user__hx\d+\.id\)/,
-  /todo__hx\d+ = Models::Todo\.create\(attrs__hx\d+\)/,
-  /self\.respond_to\(\) do \|format__hx\d+\|/,
-  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.render\(turbo_stream: turbo_stream\.replace\("railshx-todo-list", partial: "controllers\/todos\/list", locals: \{todos: Models::Todo\.where\(is_completed: false, user_id: current_user__hx\d+\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)\}\)\) \}/,
-  /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
-  /titles__hx\d+ = Models::Todo\.where\(is_completed: true, user_id: current_user__hx\d+\.id\)\.order\(title: :asc\)\.pluck\(:title\)/,
-  /self\.render\(plain: \("Completed todos: " \+ HXRuby\.array_join\(titles__hx\d+, ", "\)\), status: :ok\)/,
-  /todo__hx\d+ = Models::Todo\.where\(id: self\.param_id\(\), user_id: current_user__hx\d+\.id\)\.first\(\)/,
-  /todo__hx\d+\.update\(is_completed: true\)/,
+  /current_user(?:__hx\d+)? = current_user\(\)/,
+  /self\.render\(template: "todos\/index", locals: \{todos: todos(?:__hx\d+)?, users: users(?:__hx\d+)?, chat_messages: chat_messages(?:__hx\d+)?, todo_count: todos(?:__hx\d+)?\.length, typed_column_count: 5, current_user: current_user(?:__hx\d+)?\}, layout: "application"\)/,
+  /attrs(?:__hx\d+)? = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes\]\)/,
+  /attrs(?:__hx\d+)? = attrs(?:__hx\d+)?\.merge\(user_id: current_user(?:__hx\d+)?\.id\)/,
+  /todo(?:__hx\d+)? = Todo\.create\(attrs(?:__hx\d+)?\)/,
+  /self\.respond_to\(\) do \|format(?:__hx\d+)?\|/,
+  /format(?:__hx\d+)?\.turbo_stream\(\) \{ self\.render\(turbo_stream: turbo_stream\.replace\("railshx-todo-list", partial: "todos\/list", locals: \{todos: Todo\.where\(is_completed: false, user_id: current_user(?:__hx\d+)?\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)\}\)\) \}/,
+  /format(?:__hx\d+)?\.html\(\) \{ self\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
+  /titles(?:__hx\d+)? = Todo\.where\(is_completed: true, user_id: current_user(?:__hx\d+)?\.id\)\.order\(title: :asc\)\.pluck\(:title\)/,
+  /self\.render\(plain: \("Completed todos: " \+ titles(?:__hx\d+)?\.join\(", "\)\), status: :ok\)/,
+  /todo(?:__hx\d+)? = Todo\.where\(id: self\.param_id\(\), user_id: current_user(?:__hx\d+)?\.id\)\.first\(\)/,
+  /todo(?:__hx\d+)?\.update\(is_completed: true\)/,
   /self\.flash\(\)\[:notice\] = "Todo completed"/,
-  /"Todo report for " \+ label__hx\d+.*HXRuby\.stringify\(count__hx\d+\).*" todos"/,
+  /"Todo report for " \+ label(?:__hx\d+)?.*count(?:__hx\d+)?\.to_s\(\).*" todos"/,
   /self\.render\(plain: .*status: :ok\)/,
-  /self\.send_data\(.*"RailsHx file route: " \+ label__hx\d+.*"\\n".*filename: "todoapp-route\.txt", type: "text\/plain", disposition: "inline", status: :ok\)/,
+  /self\.send_data\(.*"RailsHx file route: " \+ label(?:__hx\d+)?.*"\\n".*filename: "todoapp-route\.txt", type: "text\/plain", disposition: "inline", status: :ok\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`todoapp_rails controller output missing expected line: ${expected}`);
@@ -848,17 +827,22 @@ for (const expected of [
   }
 }
 
-const chatMessagesControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "chat_messages_controller.rb"), "utf8");
+if (/gthis(?:__hx\d+)?/.test(controllerRuby)) {
+  console.error("todoapp_rails controller output should use Ruby self directly instead of a generated gthis alias");
+  process.exit(1);
+}
+
+const chatMessagesControllerRuby = readFileSync(join(outputDir, "app", "controllers", "chat_messages_controller.rb"), "utf8");
 for (const expected of [
-  /class ChatMessagesController < ActionController::Base/,
+  /class ChatMessagesController < ApplicationController/,
   /before_action :authenticate_user!/,
   /def index\(\)/,
-  /attrs__hx\d+ = self\.params\(\)\.require\("chat_message"\)\.permit\(\[:body\]\)/,
-  /attrs__hx\d+ = attrs__hx\d+\.merge\(user_id: current_user__hx\d+\.id\)/,
-  /message__hx\d+ = Models::ChatMessage\.create\(attrs__hx\d+\)/,
-  /Turbo::StreamsChannel\.broadcast_prepend_to\("todoapp:chat", target: "railshx-chat-list", partial: "controllers\/todos\/chat_message", locals: \{message: message__hx\d+\}\)/,
-  /format__hx\d+\.turbo_stream\(\) \{ gthis__hx\d+\.head\(:no_content\) \}/,
-  /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
+  /attrs(?:__hx\d+)? = self\.params\(\)\.require\("chat_message"\)\.permit\(\[:body\]\)/,
+  /attrs(?:__hx\d+)? = attrs(?:__hx\d+)?\.merge\(user_id: current_user(?:__hx\d+)?\.id\)/,
+  /message(?:__hx\d+)? = ChatMessage\.create\(attrs(?:__hx\d+)?\)/,
+  /Turbo::StreamsChannel\.broadcast_prepend_to\("todoapp:chat", target: "railshx-chat-list", partial: "todos\/chat_message", locals: \{message: message(?:__hx\d+)?\}\)/,
+  /format(?:__hx\d+)?\.turbo_stream\(\) \{ self\.head\(:no_content\) \}/,
+  /format(?:__hx\d+)?\.html\(\) \{ self\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
 ]) {
   if (!expected.test(chatMessagesControllerRuby)) {
     console.error(`todoapp_rails chat messages controller output missing expected line: ${expected}`);
@@ -866,14 +850,19 @@ for (const expected of [
   }
 }
 
-const sessionsControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "sessions_controller.rb"), "utf8");
+if (/gthis(?:__hx\d+)?/.test(chatMessagesControllerRuby)) {
+  console.error("todoapp_rails chat messages controller output should use Ruby self directly instead of a generated gthis alias");
+  process.exit(1);
+}
+
+const sessionsControllerRuby = readFileSync(join(outputDir, "app", "controllers", "sessions_controller.rb"), "utf8");
 for (const expected of [
-  /class SessionsController < ActionController::Base/,
+  /class SessionsController < ApplicationController/,
   /def create_guest\(\)/,
-  /guest__hx\d+ = Models::User\.find_by\(email: "guest@example\.test"\)/,
-  /guest__hx\d+ = Models::User\.create\(name: "Guest Workspace", email: "guest@example\.test", role: "guest", password: "password123", password_confirmation: "password123"\)/,
+  /guest(?:__hx\d+)? = User\.find_by\(email: "guest@example\.test"\)/,
+  /guest(?:__hx\d+)? = User\.create\(name: "Guest Workspace", email: "guest@example\.test", role: "guest", password: "password123", password_confirmation: "password123"\)/,
   /self\.flash\(\)\[:alert\] = "The guest workspace could not be prepared\. Please sign in with the seeded demo account\."/,
-  /sign_in\(:user, guest__hx\d+\)/,
+  /sign_in\(:user, guest(?:__hx\d+)?\)/,
   /self\.flash\(\)\[:notice\] = "Signed in as the guest workspace"/,
   /self\.redirect_to\(self\.todos_path\(\), status: :see_other\)/,
 ]) {
@@ -883,94 +872,29 @@ for (const expected of [
   }
 }
 
-const usersControllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "users_controller.rb"), "utf8");
+const usersControllerRuby = readFileSync(join(outputDir, "app", "controllers", "users_controller.rb"), "utf8");
 for (const expected of [
-  /class UsersController < ActionController::Base/,
+  /class UsersController < ApplicationController/,
   /before_action :authenticate_user!/,
-  /current_user__hx\d+ = self\.require_admin\(\)/,
-  /users__hx\d+ = Models::User\.order\(name: :asc\)\.to_a\(\)/,
-  /self\.render\(template: "controllers\/users\/index", locals: \{users: users__hx\d+, current_user: current_user__hx\d+, form_user: form_user__hx\d+\}, layout: "application"\)/,
-  /self\.render\(template: "controllers\/users\/index", locals: \{users: users__hx\d+, current_user: current_user__hx\d+, form_user: form_user__hx\d+\}, layout: "application", status: :unprocessable_entity\)/,
+  /current_user(?:__hx\d+)? = self\.require_admin\(\)/,
+  /users(?:__hx\d+)? = User\.order\(name: :asc\)\.to_a\(\)/,
+  /self\.render\(template: "users\/index", locals: \{users: users(?:__hx\d+)?, current_user: current_user(?:__hx\d+)?, form_user: form_user(?:__hx\d+)?\}, layout: "application"\)/,
+  /self\.render\(template: "users\/index", locals: \{users: users(?:__hx\d+)?, current_user: current_user(?:__hx\d+)?, form_user: form_user(?:__hx\d+)?\}, layout: "application", status: :unprocessable_entity\)/,
   /def create\(\)/,
   /self\.params\(\)\.require\("user"\)\.permit\(\[:name, :email, :role, :password, :password_confirmation\]\)/,
-  /user__hx\d+ = Models::User\.create\(attrs__hx\d+\)/,
+  /user(?:__hx\d+)? = User\.create\(attrs(?:__hx\d+)?\)/,
   /self\.flash\(\)\.now\[:alert\] = "Could not save user\. Review the highlighted details and try again\."/,
   /self\.flash\(\)\[:notice\] = "User saved"/,
   /def update\(\)/,
-  /Models::User\.find\(self\.param_id\(\)\)/,
-  /user__hx\d+\.update\(attrs__hx\d+\)/,
+  /User\.find\(self\.param_id\(\)\)/,
+  /user(?:__hx\d+)?\.update\(attrs(?:__hx\d+)?\)/,
   /self\.flash\(\)\.now\[:alert\] = "Could not update user\. Review the details and try again\."/,
   /def destroy\(\)/,
-  /user__hx\d+\.destroy\(\)/,
+  /user(?:__hx\d+)?\.destroy\(\)/,
   /self\.flash\(\)\[:alert\] = "Admin access is required for user management"/,
 ]) {
   if (!expected.test(usersControllerRuby)) {
     console.error(`todoapp_rails users controller output missing expected line: ${expected}`);
-    process.exit(1);
-  }
-}
-
-const migrationClassRuby = readFileSync(join(outputDir, "app", "haxe_gen", "migrations", "create_todos.rb"), "utf8");
-for (const expected of [
-  "module Migrations",
-  "class CreateTodos",
-  'def self.__hx_name()',
-  '"migrations.CreateTodos"',
-]) {
-  if (!migrationClassRuby.includes(expected)) {
-    console.error(`todoapp_rails migration marker output missing expected line: ${expected}`);
-    process.exit(1);
-  }
-}
-
-const updateMigrationClassRuby = readFileSync(join(outputDir, "app", "haxe_gen", "migrations", "update_todos.rb"), "utf8");
-for (const expected of [
-  "module Migrations",
-  "class UpdateTodos",
-  'def self.__hx_name()',
-  '"migrations.UpdateTodos"',
-]) {
-  if (!updateMigrationClassRuby.includes(expected)) {
-    console.error(`todoapp_rails update migration marker output missing expected line: ${expected}`);
-    process.exit(1);
-  }
-}
-
-const chatMigrationClassRuby = readFileSync(join(outputDir, "app", "haxe_gen", "migrations", "create_chat_messages.rb"), "utf8");
-for (const expected of [
-  "module Migrations",
-  "class CreateChatMessages",
-  'def self.__hx_name()',
-  '"migrations.CreateChatMessages"',
-]) {
-  if (!chatMigrationClassRuby.includes(expected)) {
-    console.error(`todoapp_rails chat migration marker output missing expected line: ${expected}`);
-    process.exit(1);
-  }
-}
-
-const updateUsersMigrationClassRuby = readFileSync(join(outputDir, "app", "haxe_gen", "migrations", "update_users.rb"), "utf8");
-for (const expected of [
-  "module Migrations",
-  "class UpdateUsers",
-  'def self.__hx_name()',
-  '"migrations.UpdateUsers"',
-]) {
-  if (!updateUsersMigrationClassRuby.includes(expected)) {
-    console.error(`todoapp_rails user migration marker output missing expected line: ${expected}`);
-    process.exit(1);
-  }
-}
-
-const deviseMigrationClassRuby = readFileSync(join(outputDir, "app", "haxe_gen", "migrations", "add_devise_to_users.rb"), "utf8");
-for (const expected of [
-  "module Migrations",
-  "class AddDeviseToUsers",
-  'def self.__hx_name()',
-  '"migrations.AddDeviseToUsers"',
-]) {
-  if (!deviseMigrationClassRuby.includes(expected)) {
-    console.error(`todoapp_rails Devise migration marker output missing expected line: ${expected}`);
     process.exit(1);
   }
 }
@@ -1067,7 +991,7 @@ for (const expected of [
 const readme = readFileSync(join(exampleDir, "README.md"), "utf8");
 for (const expected of [
   "RailsHx Todo App",
-  "self.__hx_rails_schema",
+  "Compile-time model metadata",
   "ParamsMacro.requirePermit",
   "ViewMacro.renderTemplate",
   "Haxe-authored Rails migration",
@@ -1159,7 +1083,7 @@ for (const expected of [
     process.exit(1);
   }
 }
-for (const forbidden of ['"controllers/todos#index"', 'writeFile("config/routes.rb"']) {
+for (const forbidden of ['"todos#index"', 'writeFile("config/routes.rb"']) {
   if (routesSource.includes(forbidden)) {
     console.error(`todoapp_rails Haxe route source should use typed route declarations, not raw route output: ${forbidden}`);
     process.exit(1);
@@ -1257,7 +1181,7 @@ for (const expected of [
   }
 }
 
-const view = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "index.html.erb"), "utf8");
+const view = readFileSync(join(outputDir, "app", "views", "todos", "index.html.erb"), "utf8");
 for (const expected of [
   "RailsHx sample",
   "Typed Rails, polished Ruby.",
@@ -1265,13 +1189,13 @@ for (const expected of [
   '<meta name="railshx-template" content="todo-index">',
   "<%= todo_count %>",
   "<%= typed_column_count %>",
-  '<%= render partial: "controllers/todos/app_top_bar", locals: {current_user: current_user} %>',
+  '<%= render partial: "todos/app_top_bar", locals: {current_user: current_user} %>',
   '<turbo-frame id="railshx-user-frame" class="user-management-frame"></turbo-frame>',
-  '<%= render partial: "controllers/todos/composer", locals: {current_user: current_user} %>',
-  '<%= render partial: "controllers/todos/list", locals: {todos: todos} %>',
-  '<%= render partial: "controllers/todos/chat_panel", locals: {messages: chat_messages, current_user: current_user, users: users} %>',
+  '<%= render partial: "todos/composer", locals: {current_user: current_user} %>',
+  '<%= render partial: "todos/list", locals: {todos: todos} %>',
+  '<%= render partial: "todos/chat_panel", locals: {messages: chat_messages, current_user: current_user, users: users} %>',
   "todo-shell",
-  '<%= render partial: "controllers/todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, current_user: current_user} %>',
+  '<%= render partial: "todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, current_user: current_user} %>',
 ]) {
   if (!view.includes(expected)) {
     console.error(`todoapp_rails view missing expected content: ${expected}`);
@@ -1279,7 +1203,7 @@ for (const expected of [
   }
 }
 
-const typedChatPanel = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_chat_panel.html.erb"), "utf8");
+const typedChatPanel = readFileSync(join(outputDir, "app", "views", "todos", "_chat_panel.html.erb"), "utf8");
 for (const expected of [
   'id="railshx-chat-panel"',
   '<%= turbo_stream_from "todoapp:chat" %>',
@@ -1287,7 +1211,7 @@ for (const expected of [
   "This is a Rails-native chat slice",
   '<ul id="railshx-chat-list" class="chat-list">',
   "<% messages.each do |message| %>",
-  '<%= render partial: "controllers/todos/chat_message", locals: {message: message} %>',
+  '<%= render partial: "todos/chat_message", locals: {message: message} %>',
   "<% if messages.length == 0 %>",
   '<%= form_with url: chat_messages_path(), scope: :chat_message, local: true, class: "chat-form", data: {railshx_chat_form: true} do |form| %>',
   '<%= form.label :body, "Add a typed room note" %>',
@@ -1304,7 +1228,7 @@ if (typedChatPanel.includes("hidden_field :user_id")) {
   process.exit(1);
 }
 
-const typedChatMessage = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_chat_message.html.erb"), "utf8");
+const typedChatMessage = readFileSync(join(outputDir, "app", "views", "todos", "_chat_message.html.erb"), "utf8");
 for (const expected of [
   '<li class="chat-message" data-railshx-chat-message-key="<%= message.id %>">',
   "<strong>User <%= message.user_id %></strong>",
@@ -1365,14 +1289,14 @@ for (const expected of [
     process.exit(1);
   }
 }
-for (const forbidden of ["<% todos ||= [] %>", "<% sample_user = Models::User.order(:id).first %>", "controllers/todos/hero", "controllers/todos/user_switcher"]) {
+for (const forbidden of ["<% todos ||= [] %>", "<% sample_user = User.order(:id).first %>", "todos/hero", "todos/user_switcher"]) {
   if (view.includes(forbidden)) {
     console.error(`todoapp_rails HHX index should not contain raw shell content: ${forbidden}`);
     process.exit(1);
   }
 }
 
-const typedPartial = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_summary.html.erb"), "utf8");
+const typedPartial = readFileSync(join(outputDir, "app", "views", "todos", "_summary.html.erb"), "utf8");
 for (const expected of [
   "Typed template partial",
   "typed Rails HHX",
@@ -1391,12 +1315,12 @@ for (const expected of [
   }
 }
 
-const typedCard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_card.html.erb"), "utf8");
+const typedCard = readFileSync(join(outputDir, "app", "views", "todos", "_card.html.erb"), "utf8");
 for (const expected of [
+  '<section class="<%= ("card " + "typed-dashboard") %>">',
   '<span class="eyebrow"><%= eyebrow %></span>',
   "<h2><%= title %></h2>",
   "<%= body %>",
-  "typed-dashboard",
 ]) {
   if (!typedCard.includes(expected)) {
     console.error(`todoapp_rails typed card component missing expected content: ${expected}`);
@@ -1404,7 +1328,7 @@ for (const expected of [
   }
 }
 
-const typedDashboard = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_dashboard.html.erb"), "utf8");
+const typedDashboard = readFileSync(join(outputDir, "app", "views", "todos", "_dashboard.html.erb"), "utf8");
 for (const expected of [
   "<% railshx_component_body = capture do %>",
   '<%= link_to "#open-work", class: "typed-route-link", data: {railshx_scroll: true} do %>',
@@ -1413,8 +1337,8 @@ for (const expected of [
   '<span><%= (if todos.length > 0 then "Jump to open work" else "Jump to the empty state" end) %></span>',
   '<span class="typed-route-count"><%= todos.length %></span>',
   '<% end %>',
-  '<%= render partial: "controllers/todos/summary", locals: {todos: todos} %>',
-  '<%= render partial: "controllers/todos/card", locals: {eyebrow: "Composed typed component", title: "One typed component, reused by Rails.", body: railshx_component_body} %>',
+  '<%= render partial: "todos/summary", locals: {todos: todos} %>',
+  '<%= render partial: "todos/card", locals: {eyebrow: "Composed typed component", title: "One typed component, reused by Rails.", body: railshx_component_body} %>',
 ]) {
   if (!typedDashboard.includes(expected)) {
     console.error(`todoapp_rails typed dashboard partial missing expected content: ${expected}`);
@@ -1422,9 +1346,9 @@ for (const expected of [
   }
 }
 
-const typedComposer = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_composer.html.erb"), "utf8");
+const typedComposer = readFileSync(join(outputDir, "app", "views", "todos", "_composer.html.erb"), "utf8");
 for (const expected of [
-  '<%= render partial: "controllers/todos/typed_form", locals: {current_user_name: current_user.name} %>',
+  '<%= render partial: "todos/typed_form", locals: {current_user_name: current_user.name} %>',
 ]) {
   if (!typedComposer.includes(expected)) {
     console.error(`todoapp_rails typed composer partial missing expected content: ${expected}`);
@@ -1432,7 +1356,7 @@ for (const expected of [
   }
 }
 
-const typedList = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_list.html.erb"), "utf8");
+const typedList = readFileSync(join(outputDir, "app", "views", "todos", "_list.html.erb"), "utf8");
 for (const expected of [
   '<div id="railshx-todo-list" class="todo-list-frame">',
   "<% if todos.length > 0 %>",
@@ -1450,7 +1374,7 @@ for (const expected of [
   }
 }
 
-const typedForm = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_typed_form.html.erb"), "utf8");
+const typedForm = readFileSync(join(outputDir, "app", "views", "todos", "_typed_form.html.erb"), "utf8");
 for (const expected of [
   '<%= form_with url: todos_path(), scope: :todo, local: true, class: "todo-form" do |form| %>',
   '<p class="form-owner-note">New tasks will be assigned to <%= current_user_name %>.</p>',
@@ -1472,7 +1396,7 @@ if (typedForm.includes("hidden_field :user_id")) {
   process.exit(1);
 }
 
-const typedAppTopBar = readFileSync(join(outputDir, "app", "views", "controllers", "todos", "_app_top_bar.html.erb"), "utf8");
+const typedAppTopBar = readFileSync(join(outputDir, "app", "views", "todos", "_app_top_bar.html.erb"), "utf8");
 for (const expected of [
   '<header class="app-topbar" aria-label="Todoapp session">',
   "RailsHx Todo",
@@ -1510,7 +1434,7 @@ for (const expected of [
   }
 }
 
-const typedUsersPage = readFileSync(join(outputDir, "app", "views", "controllers", "users", "index.html.erb"), "utf8");
+const typedUsersPage = readFileSync(join(outputDir, "app", "views", "users", "index.html.erb"), "utf8");
 for (const expected of [
   "Admin-only RailsHx user management",
   "Typed users, ordinary Rails CRUD.",
@@ -3690,7 +3614,7 @@ function expectRawErbRequiresOptInFailure() {
   writeFileSync(join(rawErbInvalidSourceDir, "views", "BadRawErbView.hx"), [
     "package views;",
     "",
-    "@:railsTemplate(\"controllers/todos/bad\")",
+    "@:railsTemplate(\"todos/bad\")",
     "class BadRawErbView {",
     "\tpublic static var body:String = \"<%= dangerous %>\";",
     "}",
@@ -3762,7 +3686,7 @@ function expectTypedTemplateAstFieldFailure() {
     "import rails.action_view.HtmlAttr;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/bad_typed\")",
+    "@:railsTemplate(\"todos/bad_typed\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTypedTemplateView {",
     "\tpublic static function render(todos:Array<Todo>):HtmlNode {",
@@ -3844,7 +3768,7 @@ function expectTypedPartialLocalsFailure() {
     "import views.TodoSummaryView;",
     "import views.TodoSummaryView.TodoSummaryLocals;",
     "",
-    "@:railsTemplate(\"controllers/todos/bad_partial\")",
+    "@:railsTemplate(\"todos/bad_partial\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTypedPartialView {",
     "\tpublic static function render(todos:Array<Todo>):HtmlNode {",
@@ -3959,7 +3883,7 @@ function expectCheckedAttrHelpersOutput() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/checked_attrs\")",
+    "@:railsTemplate(\"todos/checked_attrs\")",
     "@:railsTemplateAst(\"render\")",
     "class CheckedAttrView {",
     "\tpublic static function render():HtmlNode {",
@@ -4101,7 +4025,7 @@ function expectCheckedAttrHelpersOutput() {
     "",
   ]);
 
-  const generated = readFileSync(join(checkedAttrOutputDir, "app", "views", "controllers", "todos", "checked_attrs.html.erb"), "utf8");
+  const generated = readFileSync(join(checkedAttrOutputDir, "app", "views", "todos", "checked_attrs.html.erb"), "utf8");
   for (const expected of [
     '<section role="status" aria-live="polite" data-railshx-scroll>Ready</section>',
     '<%= link_to "Users", "/users", data: {turbo_frame: "railshx-user-frame"}, aria: {label: "Manage users"} %>',
@@ -4249,7 +4173,7 @@ function expectCheckedAttrHelpersFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_checked_attrs\")",
+    "@:railsTemplate(\"todos/invalid_checked_attrs\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidCheckedAttrView {",
     "\tpublic static function render():HtmlNode {",
@@ -4278,7 +4202,7 @@ function expectButtonTagTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_button_tag\")",
+    "@:railsTemplate(\"todos/invalid_button_tag\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidButtonTagView {",
     "\tpublic static function render():HtmlNode {",
@@ -4307,7 +4231,7 @@ function expectSubmitTagTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_submit_tag\")",
+    "@:railsTemplate(\"todos/invalid_submit_tag\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidSubmitTagView {",
     "\tpublic static function render():HtmlNode {",
@@ -4337,7 +4261,7 @@ function expectTextFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_text_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_text_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidTextFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4367,7 +4291,7 @@ function expectSearchFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_search_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_search_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidSearchFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4397,7 +4321,7 @@ function expectEmailFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_email_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_email_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidEmailFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4427,7 +4351,7 @@ function expectTelephoneFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_telephone_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_telephone_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidTelephoneFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4457,7 +4381,7 @@ function expectUrlFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_url_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_url_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidUrlFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4487,7 +4411,7 @@ function expectNumberFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_number_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_number_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidNumberFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4517,7 +4441,7 @@ function expectRangeFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_range_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_range_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidRangeFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4547,7 +4471,7 @@ function expectColorFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_color_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_color_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidColorFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4577,7 +4501,7 @@ function expectDateFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_date_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_date_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidDateFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4607,7 +4531,7 @@ function expectTimeFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_time_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_time_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidTimeFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4637,7 +4561,7 @@ function expectDatetimeFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_datetime_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_datetime_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidDatetimeFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4667,7 +4591,7 @@ function expectMonthFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_month_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_month_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidMonthFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4697,7 +4621,7 @@ function expectWeekFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_week_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_week_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidWeekFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4727,7 +4651,7 @@ function expectPasswordFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_password_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_password_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidPasswordFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4757,7 +4681,7 @@ function expectHiddenFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_hidden_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_hidden_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidHiddenFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4787,7 +4711,7 @@ function expectFileFieldTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_file_field_tag\")",
+      "@:railsTemplate(\"todos/invalid_file_field_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidFileFieldTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4817,7 +4741,7 @@ function expectTextAreaTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_text_area_tag\")",
+      "@:railsTemplate(\"todos/invalid_text_area_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidTextAreaTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4847,7 +4771,7 @@ function expectCheckBoxTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_check_box_tag\")",
+      "@:railsTemplate(\"todos/invalid_check_box_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidCheckBoxTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4877,7 +4801,7 @@ function expectRadioButtonTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_radio_button_tag\")",
+      "@:railsTemplate(\"todos/invalid_radio_button_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidRadioButtonTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -4906,7 +4830,7 @@ function expectFormSelectOptionTypeFailure() {
       "",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_form_select\")",
+      "@:railsTemplate(\"todos/invalid_form_select\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidFormSelectView {",
       "\tpublic static function render():HtmlNode {",
@@ -4936,7 +4860,7 @@ function expectFormEmailFieldTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_form_email_field\")",
+      "@:railsTemplate(\"todos/invalid_form_email_field\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidFormEmailFieldView {",
       "\tpublic static function render():HtmlNode {",
@@ -4966,7 +4890,7 @@ function expectFormSearchFieldTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_form_search_field\")",
+      "@:railsTemplate(\"todos/invalid_form_search_field\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidFormSearchFieldView {",
       "\tpublic static function render():HtmlNode {",
@@ -4995,7 +4919,7 @@ function expectPictureTagTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_picture_tag\")",
+    "@:railsTemplate(\"todos/invalid_picture_tag\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidPictureTagView {",
     "\tpublic static function render():HtmlNode {",
@@ -5025,7 +4949,7 @@ function expectFaviconLinkTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_favicon_link_tag\")",
+      "@:railsTemplate(\"todos/invalid_favicon_link_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidFaviconLinkTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -5055,7 +4979,7 @@ function expectPreloadLinkTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_preload_link_tag\")",
+      "@:railsTemplate(\"todos/invalid_preload_link_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidPreloadLinkTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -5085,7 +5009,7 @@ function expectJavascriptIncludeTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_javascript_include_tag\")",
+      "@:railsTemplate(\"todos/invalid_javascript_include_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidJavascriptIncludeTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -5115,7 +5039,7 @@ function expectJavascriptTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_javascript_tag\")",
+      "@:railsTemplate(\"todos/invalid_javascript_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidJavascriptTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -5145,7 +5069,7 @@ function expectAutoDiscoveryLinkTagTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_auto_discovery_link_tag\")",
+      "@:railsTemplate(\"todos/invalid_auto_discovery_link_tag\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidAutoDiscoveryLinkTagView {",
       "\tpublic static function render():HtmlNode {",
@@ -5174,7 +5098,7 @@ function expectAudioTagTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_audio_tag\")",
+    "@:railsTemplate(\"todos/invalid_audio_tag\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidAudioTagView {",
     "\tpublic static function render():HtmlNode {",
@@ -5203,7 +5127,7 @@ function expectVideoTagTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_video_tag\")",
+    "@:railsTemplate(\"todos/invalid_video_tag\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidVideoTagView {",
     "\tpublic static function render():HtmlNode {",
@@ -5232,7 +5156,7 @@ function expectPhoneToTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_phone_to\")",
+    "@:railsTemplate(\"todos/invalid_phone_to\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidPhoneToView {",
     "\tpublic static function render():HtmlNode {",
@@ -5261,7 +5185,7 @@ function expectSmsToTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_sms_to\")",
+    "@:railsTemplate(\"todos/invalid_sms_to\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidSmsToView {",
     "\tpublic static function render():HtmlNode {",
@@ -5290,7 +5214,7 @@ function expectExcerptTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_excerpt\")",
+    "@:railsTemplate(\"todos/invalid_excerpt\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidExcerptView {",
     "\tpublic static function render():HtmlNode {",
@@ -5319,7 +5243,7 @@ function expectHighlightTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_highlight\")",
+    "@:railsTemplate(\"todos/invalid_highlight\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidHighlightView {",
     "\tpublic static function render():HtmlNode {",
@@ -5348,7 +5272,7 @@ function expectWordWrapTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_word_wrap\")",
+    "@:railsTemplate(\"todos/invalid_word_wrap\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidWordWrapView {",
     "\tpublic static function render():HtmlNode {",
@@ -5377,7 +5301,7 @@ function expectSanitizeTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_sanitize\")",
+    "@:railsTemplate(\"todos/invalid_sanitize\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidSanitizeView {",
     "\tpublic static function render():HtmlNode {",
@@ -5406,7 +5330,7 @@ function expectSanitizeCssTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_sanitize_css\")",
+    "@:railsTemplate(\"todos/invalid_sanitize_css\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidSanitizeCssView {",
     "\tpublic static function render():HtmlNode {",
@@ -5435,7 +5359,7 @@ function expectStripTagsTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_strip_tags\")",
+    "@:railsTemplate(\"todos/invalid_strip_tags\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidStripTagsView {",
     "\tpublic static function render():HtmlNode {",
@@ -5464,7 +5388,7 @@ function expectStripLinksTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_strip_links\")",
+    "@:railsTemplate(\"todos/invalid_strip_links\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidStripLinksView {",
     "\tpublic static function render():HtmlNode {",
@@ -5493,7 +5417,7 @@ function expectToSentenceTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_to_sentence\")",
+    "@:railsTemplate(\"todos/invalid_to_sentence\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidToSentenceView {",
     "\tpublic static function render():HtmlNode {",
@@ -5522,7 +5446,7 @@ function expectEscapeOnceTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_escape_once\")",
+    "@:railsTemplate(\"todos/invalid_escape_once\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidEscapeOnceView {",
     "\tpublic static function render():HtmlNode {",
@@ -5551,7 +5475,7 @@ function expectCdataSectionTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_cdata_section\")",
+    "@:railsTemplate(\"todos/invalid_cdata_section\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidCdataSectionView {",
     "\tpublic static function render():HtmlNode {",
@@ -5580,7 +5504,7 @@ function expectSafeJoinTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_safe_join\")",
+    "@:railsTemplate(\"todos/invalid_safe_join\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidSafeJoinView {",
     "\tpublic static function render():HtmlNode {",
@@ -5609,7 +5533,7 @@ function expectTokenListTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_token_list\")",
+    "@:railsTemplate(\"todos/invalid_token_list\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidTokenListView {",
     "\tpublic static function render():HtmlNode {",
@@ -5638,7 +5562,7 @@ function expectClassNamesTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_class_names\")",
+    "@:railsTemplate(\"todos/invalid_class_names\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidClassNamesView {",
     "\tpublic static function render():HtmlNode {",
@@ -5667,7 +5591,7 @@ function expectCycleTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_cycle\")",
+    "@:railsTemplate(\"todos/invalid_cycle\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidCycleView {",
     "\tpublic static function render():HtmlNode {",
@@ -5701,7 +5625,7 @@ function expectCurrentCycleTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_current_cycle\")",
+      "@:railsTemplate(\"todos/invalid_current_cycle\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidCurrentCycleView {",
       "\tpublic static function render():HtmlNode {",
@@ -5737,7 +5661,7 @@ function expectResetCycleTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_reset_cycle\")",
+      "@:railsTemplate(\"todos/invalid_reset_cycle\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidResetCycleView {",
       "\tpublic static function render():HtmlNode {",
@@ -5768,7 +5692,7 @@ function expectTimeAgoInWordsTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_time_ago\")",
+    "@:railsTemplate(\"todos/invalid_time_ago\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidTimeAgoView {",
     "\tpublic static function render():HtmlNode {",
@@ -5797,7 +5721,7 @@ function expectDistanceOfTimeInWordsTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_distance_of_time\")",
+    "@:railsTemplate(\"todos/invalid_distance_of_time\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidDistanceOfTimeView {",
     "\tpublic static function render():HtmlNode {",
@@ -5826,7 +5750,7 @@ function expectTimeTagTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_time_tag\")",
+    "@:railsTemplate(\"todos/invalid_time_tag\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidTimeTagView {",
     "\tpublic static function render():HtmlNode {",
@@ -5855,7 +5779,7 @@ function expectNumberToPhoneTypeFailure() {
     "import rails.action_view.H;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/invalid_number_to_phone\")",
+    "@:railsTemplate(\"todos/invalid_number_to_phone\")",
     "@:railsTemplateAst(\"render\")",
     "class InvalidNumberToPhoneView {",
     "\tpublic static function render():HtmlNode {",
@@ -5889,7 +5813,7 @@ function expectNumberToHumanSizeTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_number_to_human_size\")",
+      "@:railsTemplate(\"todos/invalid_number_to_human_size\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidNumberToHumanSizeView {",
       "\tpublic static function render():HtmlNode {",
@@ -5925,7 +5849,7 @@ function expectNumberWithPrecisionTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_number_with_precision\")",
+      "@:railsTemplate(\"todos/invalid_number_with_precision\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidNumberWithPrecisionView {",
       "\tpublic static function render():HtmlNode {",
@@ -5961,7 +5885,7 @@ function expectNumberWithDelimiterTypeFailure() {
       "import rails.action_view.H;",
       "import rails.action_view.HtmlNode;",
       "",
-      "@:railsTemplate(\"controllers/todos/invalid_number_with_delimiter\")",
+      "@:railsTemplate(\"todos/invalid_number_with_delimiter\")",
       "@:railsTemplateAst(\"render\")",
       "class InvalidNumberWithDelimiterView {",
       "\tpublic static function render():HtmlNode {",
@@ -6005,7 +5929,7 @@ function expectTypedRouteHelperFailure() {
     "import rails.action_view.HtmlNode;",
     "import routes.Routes;",
     "",
-    "@:railsTemplate(\"controllers/todos/bad_route\")",
+    "@:railsTemplate(\"todos/bad_route\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTypedRouteView {",
     "\tpublic static function render():HtmlNode {",
@@ -6084,7 +6008,7 @@ function expectTypedRouteParamFailure() {
     "import rails.action_view.HtmlNode;",
     "import routes.Routes;",
     "",
-    "@:railsTemplate(\"controllers/todos/bad_route_param\")",
+    "@:railsTemplate(\"todos/bad_route_param\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTypedRouteParamView {",
     "\tpublic static function render():HtmlNode {",
@@ -6161,7 +6085,7 @@ function expectTypedFormFieldRequiresFormFailure() {
     "",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/bad_form\")",
+    "@:railsTemplate(\"todos/bad_form\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTypedFormView {",
     "\tpublic static function render():HtmlNode {",
@@ -6235,7 +6159,7 @@ function expectTypedSlotContentRequiresComponentFailure() {
     "import rails.action_view.HtmlNode;",
     "import rails.action_view.Slot;",
     "",
-    "@:railsTemplate(\"controllers/todos/bad_slot\")",
+    "@:railsTemplate(\"todos/bad_slot\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTypedSlotView {",
     "\tpublic static function render():HtmlNode {",
@@ -6322,7 +6246,7 @@ function expectTemplateOfRequiresRailsTemplateFailure() {
     "\tvar title:String;",
     "}",
     "",
-    "@:railsTemplate(\"controllers/todos/bad_template_ref\")",
+    "@:railsTemplate(\"todos/bad_template_ref\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTemplateRefView {",
     "\tpublic static function render():HtmlNode {",
@@ -6629,7 +6553,7 @@ function expectUnknownTypedFormFieldFailure() {
     "import models.Todo;",
     "import rails.action_view.HtmlNode;",
     "",
-    "@:railsTemplate(\"controllers/todos/bad_typed_field\")",
+    "@:railsTemplate(\"todos/bad_typed_field\")",
     "@:railsTemplateAst(\"render\")",
     "class BadTypedFieldView {",
     "\tpublic static function render():HtmlNode {",

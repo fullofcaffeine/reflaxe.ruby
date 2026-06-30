@@ -345,11 +345,11 @@ if (!compileWithFirstAvailableReflaxe()) {
 }
 
 for (const file of [
-  "app/haxe_gen/models/todo.rb",
-  "app/haxe_gen/models/user.rb",
-  "app/haxe_gen/models/audit_log.rb",
-  "app/haxe_gen/main.rb",
-  "config/initializers/hxruby_autoload.rb",
+  "app/models/todo.rb",
+  "app/models/user.rb",
+  "app/models/audit_log.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -359,22 +359,25 @@ for (const file of [
   }
 }
 
-const todoRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "todo.rb"), "utf8");
+for (const legacyFile of [
+  "app/haxe_gen/models/todo.rb",
+  "app/haxe_gen/models/user.rb",
+  "app/haxe_gen/models/audit_log.rb",
+  "app/haxe_gen/main.rb",
+  "config/initializers/hxruby_autoload.rb",
+]) {
+  const fullPath = join(outputDir, legacyFile);
+  if (existsSync(fullPath)) {
+    console.error(`ActiveRecord model smoke should not emit legacy haxe_gen/autoload file: ${fullPath}`);
+    process.exit(1);
+  }
+}
+
+const todoRuby = readFileSync(join(outputDir, "app", "models", "todo.rb"), "utf8");
 for (const expected of [
   'require "active_record"',
-  "module Models",
-  "class Todo < ::ApplicationRecord",
+  "class Todo < ApplicationRecord",
   'self.table_name = "todos"',
-  "def self.__hx_rails_schema()",
-  'table_name: "todos"',
-  "timestamps: true",
-  "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
-  "{name: :title, haxe_name: \"title\", ruby_name: \"title\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
-  "{name: :completed, haxe_name: \"completed\", ruby_name: \"completed\", haxe_type: \"Bool\", rails_type: :boolean, nullable: false, default: false, primary_key: false, index: false, unique: false, db_type: nil}",
-  "{name: :status, haxe_name: \"status\", ruby_name: \"status\", haxe_type: \"String\", rails_type: :string, nullable: false, default: \"open\", primary_key: false, index: false, unique: false, db_type: nil}",
-  "{name: :notes, haxe_name: \"notes\", ruby_name: \"notes\", haxe_type: \"String\", rails_type: :text, nullable: true, default: nil, primary_key: false, index: false, unique: false, db_type: :text}",
-  "{name: :external_id, haxe_name: \"externalId\", ruby_name: \"external_id\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: false, unique: true, db_type: nil}",
-  "{name: :user_id, haxe_name: \"userId\", ruby_name: \"user_id\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   'belongs_to :user, optional: false, foreign_key: "user_id", inverse_of: :todos',
   'enum :status, {open: "open", done: "done"}',
   "# haxe column id: Int",
@@ -385,7 +388,7 @@ for (const expected of [
   "# haxe column external_id: String",
   "# haxe column user_id: Int",
   "scope :incomplete, -> { where(completed: false) }",
-  "scope :with_status, ->(status__hx0) { where(status: status__hx0) }",
+  "scope :with_status, ->(status) { where(status: status) }",
   "default_scope -> { order(title: :asc) }",
   "validates :title, presence: true, length: {minimum: 3}",
   "validates :notes, length: {maximum: 500}, allow_nil: true",
@@ -403,15 +406,10 @@ for (const expected of [
   }
 }
 
-const userRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "user.rb"), "utf8");
+const userRuby = readFileSync(join(outputDir, "app", "models", "user.rb"), "utf8");
 for (const expected of [
-  "class User < ::ApplicationRecord",
+  "class User < ApplicationRecord",
   'self.table_name = "users"',
-  "def self.__hx_rails_schema()",
-  'table_name: "users"',
-  "timestamps: true",
-  "{name: :id, haxe_name: \"id\", ruby_name: \"id\", haxe_type: \"Int\", rails_type: :bigint, nullable: false, default: nil, primary_key: true, index: false, unique: false, db_type: :bigint}",
-  "{name: :name, haxe_name: \"name\", ruby_name: \"name\", haxe_type: \"String\", rails_type: :string, nullable: false, default: nil, primary_key: false, index: true, unique: false, db_type: nil}",
   "has_many :todos, dependent: :destroy, inverse_of: :user",
   "has_many :todo_owners, through: :todos, source: :user",
   "# haxe column id: Int",
@@ -438,14 +436,10 @@ for (const unexpected of ["def self.incomplete()", "def self.with_status("]) {
   }
 }
 
-const auditLogRuby = readFileSync(join(outputDir, "app", "haxe_gen", "models", "audit_log.rb"), "utf8");
+const auditLogRuby = readFileSync(join(outputDir, "app", "models", "audit_log.rb"), "utf8");
 for (const expected of [
-  "class AuditLog < ::ApplicationRecord",
+  "class AuditLog < ApplicationRecord",
   'self.table_name = "audit_logs"',
-  "def self.__hx_rails_schema()",
-  'table_name: "audit_logs"',
-  "timestamps: false",
-  "{name: :event_count, haxe_name: \"eventCount\", ruby_name: \"event_count\", haxe_type: \"Int\", rails_type: :integer, nullable: false, default: 0, primary_key: false, index: false, unique: false, db_type: nil}",
 ]) {
   if (!auditLogRuby.includes(expected)) {
     console.error(`ActiveRecord inferred model output missing expected line: ${expected}`);
@@ -453,7 +447,14 @@ for (const expected of [
   }
 }
 
-const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
+for (const [label, ruby] of [["todo", todoRuby], ["user", userRuby], ["audit_log", auditLogRuby]]) {
+  if (ruby.includes("__hx_rails_schema") || ruby.includes("typed_column_count") || ruby.includes("RailsHx::Generated::Schemas")) {
+    console.error(`ActiveRecord ${label} model should not expose compiler schema metadata or compile-time helper methods.`);
+    process.exit(1);
+  }
+}
+
+const mainRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "generated", "main.rb"), "utf8");
 for (const expected of [
   'Models::Todo.includes(:user).where(title: "ship", status: "open").where(completed: false).joins(:user).order(title: :asc).limit(10)',
   'Models::Todo.includes({user: :todos}).where(status: "open")',
@@ -483,62 +484,62 @@ for (const expected of [
   ".where.not(Models::Todo.arel_table[:id].lteq(10)).limit(2)",
   "Models::Todo.order(Models::Todo.arel_table[:title].lower.asc).limit(3)",
   'Models::Todo.where(Models::Todo.arel_table[:title].lower.eq("ship")).limit(2)',
-  'assigned__hx',
+  'assigned',
   '.where.not(Models::Todo.arel_table[:title].lower.eq("ship")).limit(2)',
   "Models::Todo.where(Models::Todo.arel_table[:id].gt(1)).limit(2)",
   "Models::Todo.where(\"status <> 'archived'\").limit(2)",
-  'assigned__hx',
+  'assigned',
   ".where.not(\"status = 'done'\").limit(2)",
   'Models::Todo.order("LOWER(title) ASC").limit(2)',
   "Models::Todo.where(notes: nil).limit(3)",
   ".where.not(notes: nil).limit(2)",
   '.distinct().limit(2)',
   'Models::Todo.none().where(status: "open")',
-  'assigned__hx',
+  'assigned',
   '.none().limit(1)',
   'Models::Todo.reverse_order().where(status: "open").limit(2)',
-  'assigned__hx',
+  'assigned',
   '.reverse_order().limit(2)',
   'Models::Todo.readonly().where(status: "open").limit(2)',
-  'assigned__hx',
+  'assigned',
   '.readonly().limit(2)',
   'Models::Todo.lock().where(status: "open").limit(1)',
-  'assigned__hx',
+  'assigned',
   '.lock("FOR UPDATE").first()',
   'Models::Todo.where(status: "open").lock("FOR UPDATE NOWAIT").first()',
   'Models::Todo.where(status: "open").or(Models::Todo.where(status: "done")).order(title: :asc)',
   'Models::Todo.where(status: "open").merge(Models::Todo.where(completed: false)).limit(7)',
   'Models::Todo.select(:title).where(status: "open")',
-  'assigned__hx',
+  'assigned',
   '.select(:id).limit(2)',
-  'assigned__hx',
+  'assigned',
   '.reorder(id: :desc)',
   'Models::Todo.reorder(title: :desc).limit(4)',
   'Models::Todo.order(title: :asc, id: :desc).limit(6)',
-  'assigned__hx',
+  'assigned',
   '.reorder(id: :desc, title: :asc)',
-  'assigned__hx',
+  'assigned',
   'rewhere(status: "done")',
   'Models::Todo.rewhere(completed: true).limit(1)',
   'Models::Todo.where(status: "open").offset(20).limit(10)',
   'Models::Todo.offset(5).where(completed: false)',
   'Models::Todo.exists?(external_id: "assigned-1")',
-  'assigned__hx',
+  'assigned',
   'exists?(status: "open")',
   'Models::Todo.where(status: "open").count()',
   'Models::Todo.count()',
-  'assigned__hx',
+  'assigned',
   '.find(1)',
-  'assigned__hx',
+  'assigned',
   'find_by(external_id: "assigned-1")',
-  "first__hx",
+  "first",
   ".first()",
-  "last__hx",
+  "last",
   "Models::Todo.last()",
-  "relation_last__hx",
+  "relation_last",
   ".last()",
   "Models::Todo.pluck(:title)",
-  "assigned__hx",
+  "assigned",
   ".pluck(:id)",
   'HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])',
   'HXRuby.active_record_projection(Models::Todo.pluck(:id, :external_id), ["id", "externalId"])',
@@ -549,19 +550,20 @@ for (const expected of [
   "HXRuby.active_record_group_count(Models::AuditLog.where(event_count: 1).group(:event_count).count(), :int)",
   "Models::Todo.minimum(:id)",
   "Models::Todo.maximum(:title)",
-  "assigned__hx",
+  "assigned",
   ".maximum(:id)",
   "Models::Todo.sum(:user_id)",
   "Models::Todo.average(:user_id)",
-  "assigned__hx",
+  "assigned",
   ".sum(:user_id)",
-  "assigned__hx",
+  "assigned",
   ".average(:user_id)",
   'Models::Todo.transaction() { Models::Todo.create(title: "inside transaction", user_id: 1) }',
   'Models::Todo.transaction(requires_new: true, isolation: :serializable) { Models::Todo.where(status: "open").lock("FOR SHARE").count() }',
 ]) {
-  if (!mainRuby.includes(expected)) {
-    console.error(`ActiveRecord call shape missing from main.rb: ${expected}`);
+  const nativeExpected = expected.replaceAll("Models::", "");
+  if (!mainRuby.includes(nativeExpected)) {
+    console.error(`ActiveRecord call shape missing from main.rb: ${nativeExpected}`);
     process.exit(1);
   }
 }

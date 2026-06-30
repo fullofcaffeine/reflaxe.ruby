@@ -8,13 +8,13 @@ class ActiveSupport::TestCase
   USER_PASSWORD = "password123"
 
   setup do
-    Models::ChatMessage.delete_all
-    Models::Todo.delete_all
-    Models::User.delete_all
+    ChatMessage.delete_all
+    Todo.delete_all
+    User.delete_all
   end
 
   def create_user!(name:, email:, role: "member")
-    Models::User.create!(
+    User.create!(
       name: name,
       email: email,
       role: role,

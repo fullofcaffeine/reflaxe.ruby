@@ -16,14 +16,14 @@
       "expectedMapping": {
         "name": "user",
         "path": "users",
-        "className": "Models::User"
+        "className": "User"
       },
       "kind": "deviseFor",
       "resource": "users"
     },
     {
       "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1189-1215",
-      "target": "controllers/todos#index",
+      "target": "todos#index",
       "kind": "root"
     },
     {
@@ -33,7 +33,7 @@
         "create"
       ],
       "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1230-1234",
-      "controller": "controllers/todos",
+      "controller": "todos",
       "kind": "resources",
       "children": [
         {
@@ -42,7 +42,7 @@
           "children": [
             {
               "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1304-1315",
-              "target": "controllers/todos#completed",
+              "target": "todos#completed",
               "path": "completed",
               "kind": "verb",
               "verb": "get"
@@ -55,7 +55,7 @@
           "children": [
             {
               "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1379-1389",
-              "target": "controllers/todos#complete",
+              "target": "todos#complete",
               "path": "complete",
               "kind": "verb",
               "verb": "patch"
@@ -71,7 +71,7 @@
         "create"
       ],
       "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1448-1459",
-      "controller": "controllers/chat_messages",
+      "controller": "chat_messages",
       "kind": "resources"
     },
     {
@@ -83,13 +83,13 @@
         "destroy"
       ],
       "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1523-1527",
-      "controller": "controllers/users",
+      "controller": "users",
       "kind": "resources"
     },
     {
       "name": "guest_sign_in",
       "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1596-1603",
-      "target": "controllers/sessions#create_guest",
+      "target": "sessions#create_guest",
       "path": "guest",
       "kind": "verb",
       "verb": "post"
@@ -97,7 +97,7 @@
     {
       "name": "optional_report",
       "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1687-1704",
-      "target": "controllers/todos#optional_report",
+      "target": "todos#optional_report",
       "path": "reports(/:year)",
       "kind": "verb",
       "verb": "get"
@@ -105,7 +105,7 @@
     {
       "name": "file",
       "position": "examples/todoapp_rails/src/routes/AppRoutes.hx:1790-1803",
-      "target": "controllers/todos#file",
+      "target": "todos#file",
       "path": "files/*path",
       "kind": "verb",
       "verb": "get"

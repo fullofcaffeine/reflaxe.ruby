@@ -19,6 +19,8 @@ class RubyASTPrinter {
 	static function writeStatement(lines:Array<String>, statement:RubyStatement, indentLevel:Int):Void {
 		var indent = indentation(indentLevel);
 		switch (statement) {
+			case RubyNoop:
+				return;
 			case RubyComment(text):
 				lines.push(indent + "# " + text);
 			case RubyRawStatement(code):

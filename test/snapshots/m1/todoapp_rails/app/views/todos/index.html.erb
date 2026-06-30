@@ -1,0 +1,53 @@
+
+			<% content_for :head do %>
+				<meta name="railshx-template" content="todo-index">
+			<% end %>
+			<main class="todo-shell">
+				<%= render partial: "todos/app_top_bar", locals: {current_user: current_user} %>
+				<% if flash[:alert].present? || flash[:notice].present? %>
+					<div class="<%= "app-flash is-" + (flash[:alert].present? ? "alert" : "notice") %>" role="status" aria-live="polite" data-railshx-server-flash>
+						<span>Session message</span>
+						<p><%= flash[:alert] || flash[:notice] %></p>
+					</div>
+				<% end %>
+				<div class="railshx-flash" data-railshx-flash role="status" aria-live="polite" hidden></div>
+				<section class="hero">
+					<div class="card">
+						<span class="eyebrow">RailsHx sample</span>
+						<h1>Typed Rails, polished Ruby.</h1>
+						<p class="hero-copy">
+							This todo app is authored in Haxe with typed ActiveRecord metadata,
+							strong params, route helpers, and a Haxe-owned Rails template artifact.
+						</p>
+					</div>
+
+					<aside class="card" aria-label="Todo stats">
+						<div class="stat">
+							<strong><%= todo_count %></strong>
+							<span>open tasks</span>
+						</div>
+						<div class="stat">
+							<strong><%= typed_column_count %></strong>
+							<span>typed columns</span>
+						</div>
+					</aside>
+				</section>
+
+				<turbo-frame id="railshx-user-frame" class="user-management-frame"></turbo-frame>
+
+				<section class="workspace">
+					<div class="card">
+						<h2>Add a task</h2>
+						<%= render partial: "todos/composer", locals: {current_user: current_user} %>
+					</div>
+
+					<div id="open-work" class="card open-work-card" tabindex="-1">
+						<h2>Open work</h2>
+						<%= render partial: "todos/list", locals: {todos: todos} %>
+					</div>
+				</section>
+
+				<%= render partial: "todos/chat_panel", locals: {messages: chat_messages, current_user: current_user, users: users} %>
+
+				<%= render partial: "todos/dashboard", locals: {todos: todos, users: users, chat_messages: chat_messages, todo_count: todo_count, typed_column_count: typed_column_count, current_user: current_user} %>
+			</main>

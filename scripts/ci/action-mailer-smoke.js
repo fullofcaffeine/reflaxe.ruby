@@ -56,14 +56,12 @@ if (!reflaxeSrc) {
 compileActionMailer(outputDir);
 
 for (const file of [
-  "app/haxe_gen/mailers/user_mailer.rb",
-  "app/haxe_gen/views/welcome_email_html_view.rb",
-  "app/haxe_gen/views/welcome_email_text_view.rb",
+  "app/mailers/user_mailer.rb",
   "app/views/mailers/user_mailer/welcome.html.erb",
   "app/views/mailers/user_mailer/welcome.text.erb",
   "test/mailers/previews/user_mailer_preview.rb",
-  "app/haxe_gen/main.rb",
-  "config/initializers/hxruby_autoload.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -73,24 +71,37 @@ for (const file of [
   }
 }
 
-const mailerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "mailers", "user_mailer.rb"), "utf8");
+for (const legacyFile of [
+  "app/haxe_gen/mailers/user_mailer.rb",
+  "app/haxe_gen/views/welcome_email_html_view.rb",
+  "app/haxe_gen/views/welcome_email_text_view.rb",
+  "app/haxe_gen/main.rb",
+  "config/initializers/hxruby_autoload.rb",
+]) {
+  const fullPath = join(outputDir, legacyFile);
+  if (existsSync(fullPath)) {
+    console.error(`ActionMailer smoke should not emit legacy haxe_gen/autoload file: ${fullPath}`);
+    process.exit(1);
+  }
+}
+
+const mailerRuby = readFileSync(join(outputDir, "app", "mailers", "user_mailer.rb"), "utf8");
 for (const expected of [
   /require "action_mailer\/railtie"/,
-  /module Mailers/,
   /class UserMailer < ActionMailer::Base/,
-  /def welcome\(email__hx\d+, name__hx\d+, message__hx\d+\)/,
+  /def welcome\(email(?:__hx\d+)?, name(?:__hx\d+)?, message(?:__hx\d+)?\)/,
   /self\.attachments\(\)/,
-  /self\.attachments\(\)\["welcome\.txt"\] = message__hx\d+/,
-  /self\.attachments\(\)\.inline\(\)\["welcome\.csv"\] = \{content: .*name,message\\n.*name__hx\d+.*message__hx\d+.*mime_type: "text\/csv"\}/,
-  /self\.mail\(to: email__hx\d+, from: "team@example.test", cc: \["ops@example.test"\], reply_to: "reply@example.test", subject: "Welcome to typed RailsHx mail", layout: false\) do \|format__hx\d+\|/,
-  /format__hx\d+\.html\(\) \{/,
-  /render\(template: "mailers\/user_mailer\/welcome", locals: \{message: locals_message__hx\d+, name: locals_name__hx\d+, product_name: locals_product_name__hx\d+\}\)/,
-  /format__hx\d+\.text\(\) \{/,
-  /render\(template: "mailers\/user_mailer\/welcome.text", locals: \{message: locals_message__hx\d+, name: locals_name__hx\d+, product_name: locals_product_name__hx\d+\}\)/,
+  /self\.attachments\(\)\["welcome\.txt"\] = message(?:__hx\d+)?/,
+  /self\.attachments\(\)\.inline\(\)\["welcome\.csv"\] = \{content: .*name,message\\n.*name(?:__hx\d+)?.*message(?:__hx\d+)?.*mime_type: "text\/csv"\}/,
+  /self\.mail\(to: email(?:__hx\d+)?, from: "team@example.test", cc: \["ops@example.test"\], reply_to: "reply@example.test", subject: "Welcome to typed RailsHx mail", layout: false\) do \|format(?:__hx\d+)?\|/,
+  /format(?:__hx\d+)?\.html\(\) \{/,
+  /self\.render\(template: "mailers\/user_mailer\/welcome", locals: \{message: locals_message(?:__hx\d+)?, name: locals_name(?:__hx\d+)?, product_name: locals_product_name(?:__hx\d+)?\}\)/,
+  /format(?:__hx\d+)?\.text\(\) \{/,
+  /self\.render\(template: "mailers\/user_mailer\/welcome.text", locals: \{message: locals_message(?:__hx\d+)?, name: locals_name(?:__hx\d+)?, product_name: locals_product_name(?:__hx\d+)?\}\)/,
   /def welcome_from_params\(\)/,
-  /email__hx\d+ = params\[:email\]/,
-  /name__hx\d+ = params\[:name\]/,
-  /message__hx\d+ = params\[:message\]/,
+  /email(?:__hx\d+)? = params\[:email\]/,
+  /name(?:__hx\d+)? = params\[:name\]/,
+  /message(?:__hx\d+)? = params\[:message\]/,
   /subject: "Welcome to typed RailsHx parameterized mail"/,
 ]) {
   if (!expected.test(mailerRuby)) {
@@ -99,8 +110,13 @@ for (const expected of [
   }
 }
 
-const mainRuby = readFileSync(join(outputDir, "app", "haxe_gen", "main.rb"), "utf8");
-if (!/Mailers::UserMailer\.with\(email: "reader@example.test", name: "Ada", message: "Typed parameterized RailsHx mailers are ready\."\)\.welcome_from_params\(\)\.deliver_later\(\)/.test(mainRuby)) {
+if (/gthis(?:__hx\d+)?/.test(mailerRuby)) {
+  console.error("ActionMailer output should use Ruby self directly instead of a generated gthis alias");
+  process.exit(1);
+}
+
+const mainRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "generated", "main.rb"), "utf8");
+if (!/UserMailer\.with\(email: "reader@example.test", name: "Ada", message: "Typed parameterized RailsHx mailers are ready\."\)\.welcome_from_params\(\)\.deliver_later\(\)/.test(mainRuby)) {
   console.error("ActionMailer main output missing typed parameterized .with(...).deliver_later call.");
   process.exit(1);
 }
@@ -109,7 +125,7 @@ const previewRuby = readFileSync(join(outputDir, "test", "mailers", "previews", 
 for (const expected of [
   /class UserMailerPreview < ActionMailer::Preview/,
   /def welcome\(\)/,
-  /Mailers::UserMailer\.with\(email: "preview@example.test", name: "Preview Ada", message: "Previewed through typed RailsHx params\."\)\.welcome_from_params\(\)/,
+  /UserMailer\.with\(email: "preview@example.test", name: "Preview Ada", message: "Previewed through typed RailsHx params\."\)\.welcome_from_params\(\)/,
 ]) {
   if (!expected.test(previewRuby)) {
     console.error(`ActionMailer preview output missing expected line: ${expected}`);
@@ -139,11 +155,9 @@ for (const expected of ["Hello <%= name %>", "<%= product_name %> mailers are ty
 }
 
 for (const file of [
-  "app/haxe_gen/mailers/user_mailer.rb",
-  "app/haxe_gen/views/welcome_email_html_view.rb",
-  "app/haxe_gen/views/welcome_email_text_view.rb",
+  "app/mailers/user_mailer.rb",
   "test/mailers/previews/user_mailer_preview.rb",
-  "app/haxe_gen/main.rb",
+  "app/lib/railshx/generated/main.rb",
   "run.rb",
 ]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
@@ -221,9 +235,7 @@ if (!/WelcomeMailerParams|has no field message|requires field message|String|Can
 
 stage("runtime materialization", materializeRuntimeRailsApp);
 stage("runtime ruby syntax", () => syntaxCheck([
-  "app/haxe_gen/mailers/user_mailer.rb",
-  "app/haxe_gen/views/welcome_email_html_view.rb",
-  "app/haxe_gen/views/welcome_email_text_view.rb",
+  "app/mailers/user_mailer.rb",
   "config/application.rb",
   "config/environment.rb",
   "test/mailers/user_mailer_test.rb",
@@ -350,9 +362,7 @@ function writeInvalidFixture() {
 function materializeRuntimeRailsApp() {
   mkdirSync(runtimeAppDir, { recursive: true });
   copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
-  copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
   copyTree(join(outputDir, "test", "mailers", "previews"), join(runtimeAppDir, "test", "mailers", "previews"));
-  copyGeneratedSupportIntoHaxeGen();
 
   writeFile("Gemfile", `source "https://rubygems.org"
 
@@ -384,7 +394,7 @@ require "rails/test_help"
 `);
 
   writeFile("test/mailers/user_mailer_test.rb", `require "test_helper"
-require Rails.root.join("app/haxe_gen/mailers/user_mailer")
+require Rails.root.join("app/mailers/user_mailer")
 require Rails.root.join("test/mailers/previews/user_mailer_preview")
 
 class UserMailerTest < ActiveSupport::TestCase
@@ -393,7 +403,7 @@ class UserMailerTest < ActiveSupport::TestCase
   end
 
   test "builds typed multipart mail with headers and attachment" do
-    mail = Mailers::UserMailer.welcome("reader@example.test", "Ada", "Typed RailsHx mailers are ready.")
+    mail = UserMailer.welcome("reader@example.test", "Ada", "Typed RailsHx mailers are ready.")
 
     assert_equal "Welcome to typed RailsHx mail", mail.subject
     assert_equal ["reader@example.test"], mail.to
@@ -421,7 +431,7 @@ class UserMailerTest < ActiveSupport::TestCase
 
   test "deliver_now uses the Rails test delivery collection" do
     assert_difference -> { ActionMailer::Base.deliveries.size }, 1 do
-      Mailers::UserMailer.welcome("reader@example.test", "Ada", "Typed RailsHx mailers are ready.").deliver_now
+      UserMailer.welcome("reader@example.test", "Ada", "Typed RailsHx mailers are ready.").deliver_now
     end
 
     delivered = ActionMailer::Base.deliveries.last
@@ -430,7 +440,7 @@ class UserMailerTest < ActiveSupport::TestCase
   end
 
   test "builds typed parameterized mail through ActionMailer with params" do
-    mail = Mailers::UserMailer.with(
+    mail = UserMailer.with(
       email: "reader@example.test",
       name: "Ada",
       message: "Typed RailsHx parameterized mailers are ready."
@@ -454,23 +464,6 @@ class UserMailerTest < ActiveSupport::TestCase
   end
 end
 `);
-}
-
-function copyGeneratedSupportIntoHaxeGen() {
-  const haxeGenDir = join(runtimeAppDir, "app", "haxe_gen");
-  for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
-    if (["app", "config", "run.rb", "_GeneratedFiles.json"].includes(entry.name)) {
-      continue;
-    }
-    const sourcePath = join(outputDir, entry.name);
-    const targetPath = join(haxeGenDir, entry.name);
-    if (entry.isDirectory()) {
-      copyTree(sourcePath, targetPath);
-    } else if (entry.isFile()) {
-      mkdirSync(dirname(targetPath), { recursive: true });
-      copyFileSync(sourcePath, targetPath);
-    }
-  }
 }
 
 function syntaxCheck(relativeFiles) {

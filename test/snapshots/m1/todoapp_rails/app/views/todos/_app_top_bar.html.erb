@@ -1,0 +1,27 @@
+<header class="app-topbar" aria-label="Todoapp session">
+			<div class="brand-mark">
+				<span class="brand-glyph">Hx</span>
+				<span>
+					<strong>RailsHx Todo</strong>
+					<em>Devise session active</em>
+				</span>
+			</div>
+			<nav class="topbar-actions" aria-label="Primary">
+				<% if current_user.can_manage_users() %>
+					<%= link_to users_path(), class: "typed-route-link topbar-link" do %>
+						<span>Users</span>
+					<% end %>
+				<% end %>
+				<%= link_to "#open-work", class: "typed-route-link topbar-link", data: {railshx_scroll: true} do %>
+					<span>Open work</span>
+				<% end %>
+			</nav>
+			<div class="session-chip">
+				<span class="avatar"><%= current_user.initials() %></span>
+				<span class="session-copy">
+					<strong><%= current_user.name %></strong>
+					<em><%= current_user.role_label() %> · <%= current_user.email %></em>
+				</span>
+				<%= button_to "Log out", destroy_user_session_path(), method: "delete", class: "session-clear-form topbar-logout", data: {railshx_session: true} %>
+			</div>
+		</header>

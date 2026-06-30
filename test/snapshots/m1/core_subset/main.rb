@@ -5,20 +5,20 @@ class Main
     "Main"
   end
   def self.main()
-    total__hx0 = 7
-    if (total__hx0 > 5)
-      puts(HXRuby.stringify("big"))
+    total = 7
+    if (total > 5)
+      puts("big".to_s())
     else
-      puts(HXRuby.stringify("small"))
+      puts("small".to_s())
     end
-    i__hx0 = 0
-    while (i__hx0 < 2)
-      puts(HXRuby.stringify("loop"))
-      i__hx0 = (i__hx0 + 1)
+    i = 0
+    while (i < 2)
+      puts("loop".to_s())
+      i = (i + 1)
     end
-    puts(HXRuby.stringify([1, 2, 3]))
-    puts(HXRuby.stringify({"name" => "ruby", "count" => 3}))
-    puts(HXRuby.stringify("done"))
+    puts([1, 2, 3].to_s())
+    puts({"name" => "ruby", "count" => 3}.to_s())
+    puts("done".to_s())
   end
 end
 if __FILE__ == $PROGRAM_NAME

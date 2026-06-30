@@ -336,19 +336,24 @@ function writeStrictDirectSources(dir) {
 }
 
 function assertControllerOutput() {
-  const controllerPath = join(outputDir, "app", "haxe_gen", "controllers", "dashboard_controller.rb");
+  const controllerPath = join(outputDir, "app", "controllers", "dashboard_controller.rb");
+  const legacyControllerPath = join(outputDir, "app", "haxe_gen", "controllers", "dashboard_controller.rb");
   if (!existsSync(controllerPath)) {
     console.error(`Expected generated DeviseHx controller missing: ${controllerPath}`);
+    process.exit(1);
+  }
+  if (existsSync(legacyControllerPath)) {
+    console.error(`Generated DeviseHx controller should use the Rails-native path, not legacy haxe_gen: ${legacyControllerPath}`);
     process.exit(1);
   }
   const ruby = readFileSync(controllerPath, "utf8");
   for (const expected of [
     /before_action :authenticate_user!, only: \[:index\]/,
-    /user__hx\d+ = current_user\(\)/,
-    /maybe_user__hx\d+ = current_user\(\)/,
-    /signed_in__hx\d+ = user_signed_in\?\(\)/,
-    /sign_in\(:user, user__hx\d+\)/,
-    /bypass_sign_in\(user__hx\d+, scope: :user\)/,
+    /user(?:__hx\d+)? = current_user\(\)/,
+    /maybe_user(?:__hx\d+)? = current_user\(\)/,
+    /signed_in(?:__hx\d+)? = user_signed_in\?\(\)/,
+    /sign_in\(:user, user(?:__hx\d+)?\)/,
+    /bypass_sign_in\(user(?:__hx\d+)?, scope: :user\)/,
     /sign_out\(:user\)/,
     /sign_out_all_scopes\(\)/,
   ]) {

@@ -31,11 +31,11 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   test "index renders the authenticated RailsHx todo page scoped to current user" do
     user = create_user!(name: "owner", email: "owner@example.test", role: "admin")
     other_user = create_user!(name: "member", email: "member@example.test", role: "member")
-    Models::Todo.create!(title: "zed open task", is_completed: false, user: user)
-    Models::Todo.create!(title: "alpha open task", is_completed: false, user: user)
-    Models::Todo.create!(title: "completed hidden task", is_completed: true, user: user)
-    Models::Todo.create!(title: "other user private task", is_completed: false, user: other_user)
-    Models::ChatMessage.create!(body: "typed chat note", user: user)
+    Todo.create!(title: "zed open task", is_completed: false, user: user)
+    Todo.create!(title: "alpha open task", is_completed: false, user: user)
+    Todo.create!(title: "completed hidden task", is_completed: true, user: user)
+    Todo.create!(title: "other user private task", is_completed: false, user: other_user)
+    ChatMessage.create!(body: "typed chat note", user: user)
 
     sign_in user
     get "/todos"
@@ -64,12 +64,12 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     other_user = create_user!(name: "attacker", email: "attacker-create@example.test", role: "member")
     sign_in user
 
-    assert_difference "Models::Todo.count", 1 do
+    assert_difference "Todo.count", 1 do
       post "/todos", params: { todo: { title: "from params", notes: "typed notes", is_completed: true, user_id: other_user.id, ignored: "nope" } }
     end
 
     assert_redirected_to "/todos"
-    todo = Models::Todo.order(:id).last
+    todo = Todo.order(:id).last
     assert_equal "from params", todo.title
     assert_equal "typed notes", todo.notes
     assert_not todo.is_completed
@@ -80,7 +80,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     user = create_user!(name: "owner", email: "owner-invalid@example.test", role: "admin")
     sign_in user
 
-    assert_no_difference "Models::Todo.count" do
+    assert_no_difference "Todo.count" do
       post "/todos", params: { todo: { title: "", notes: "missing title", user_id: user.id } }
     end
 
@@ -90,10 +90,10 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   test "completed route renders signed-in user's completed todo titles" do
     user = create_user!(name: "owner", email: "owner-completed@example.test", role: "member")
     other_user = create_user!(name: "other", email: "other-completed@example.test", role: "member")
-    Models::Todo.create!(title: "beta done", is_completed: true, user: user)
-    Models::Todo.create!(title: "alpha done", is_completed: true, user: user)
-    Models::Todo.create!(title: "still open", is_completed: false, user: user)
-    Models::Todo.create!(title: "other done", is_completed: true, user: other_user)
+    Todo.create!(title: "beta done", is_completed: true, user: user)
+    Todo.create!(title: "alpha done", is_completed: true, user: user)
+    Todo.create!(title: "still open", is_completed: false, user: user)
+    Todo.create!(title: "other done", is_completed: true, user: other_user)
     sign_in user
 
     get "/todos/completed"
@@ -105,25 +105,25 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   test "complete route marks only the signed-in user's todo complete" do
     user = create_user!(name: "owner", email: "owner-complete@example.test", role: "member")
     other_user = create_user!(name: "other", email: "other-complete@example.test", role: "member")
-    todo = Models::Todo.create!(title: "mark me", is_completed: false, user: user)
-    other_todo = Models::Todo.create!(title: "not yours", is_completed: false, user: other_user)
+    todo = Todo.create!(title: "mark me", is_completed: false, user: user)
+    other_todo = Todo.create!(title: "not yours", is_completed: false, user: other_user)
     sign_in user
 
     patch "/todos/#{todo.id}/complete"
 
     assert_redirected_to "/todos"
-    assert Models::Todo.find(todo.id).is_completed
+    assert Todo.find(todo.id).is_completed
 
     patch "/todos/#{other_todo.id}/complete"
 
     assert_response :not_found
     assert_equal "Todo not found", @response.body
-    assert_not Models::Todo.find(other_todo.id).is_completed
+    assert_not Todo.find(other_todo.id).is_completed
   end
 
   test "optional and glob route actions expose typed route params" do
     user = create_user!(name: "owner", email: "owner-route-params@example.test", role: "member")
-    Models::Todo.create!(title: "route counted", is_completed: false, user: user)
+    Todo.create!(title: "route counted", is_completed: false, user: user)
     sign_in user
 
     get "/reports/2026"
@@ -144,7 +144,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "guest sign in prepares the guest user and reaches protected RailsHx pages" do
-    assert_difference "Models::User.where(email: 'guest@example.test').count", 1 do
+    assert_difference "User.where(email: 'guest@example.test').count", 1 do
       post "/guest"
     end
 
@@ -187,7 +187,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, "Remove user"
     assert_includes @response.body, "Back to todo board"
 
-    assert_difference "Models::User.count", 1 do
+    assert_difference "User.count", 1 do
       post "/users", params: { user: { name: "New Admin", email: "new-admin@example.test", role: "admin", password: USER_PASSWORD, password_confirmation: USER_PASSWORD } }
     end
     assert_redirected_to "/users"
@@ -195,7 +195,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes @response.body, "app-flash"
     assert_includes @response.body, "User saved"
-    assert_equal "admin", Models::User.find_by(email: "new-admin@example.test").role
+    assert_equal "admin", User.find_by(email: "new-admin@example.test").role
 
     patch "/users/#{managed.id}", params: { user: { name: "Updated Member", email: "updated-member@example.test", role: "maintainer" } }
     assert_redirected_to "/users"
@@ -205,7 +205,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Updated Member", managed.name
     assert_equal "maintainer", managed.role
 
-    assert_difference "Models::User.count", -1 do
+    assert_difference "User.count", -1 do
       delete "/users/#{managed.id}"
     end
     assert_redirected_to "/users"
@@ -218,7 +218,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     create_user!(name: "member", email: "member-user-errors@example.test", role: "member")
     sign_in user
 
-    assert_no_difference "Models::User.count" do
+    assert_no_difference "User.count" do
       post "/users", params: {
         user: {
           name: "Dupe",
@@ -252,12 +252,12 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     other_user = create_user!(name: "room spoof", email: "room-spoof@example.test", role: "member")
     sign_in user
 
-    assert_difference "Models::ChatMessage.count", 1 do
+    assert_difference "ChatMessage.count", 1 do
       post "/chat_messages", params: { chat_message: { body: "from typed room", user_id: other_user.id, ignored: "nope" } }
     end
 
     assert_redirected_to "/todos"
-    message = Models::ChatMessage.order(:id).last
+    message = ChatMessage.order(:id).last
     assert_equal "from typed room", message.body
     assert_equal user, message.user
   end
@@ -266,7 +266,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     user = create_user!(name: "room stream owner", email: "room-stream@example.test", role: "maintainer")
     sign_in user
 
-    assert_difference "Models::ChatMessage.count", 1 do
+    assert_difference "ChatMessage.count", 1 do
       post "/chat_messages",
         params: { chat_message: { body: "streamed row", user_id: user.id } },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }

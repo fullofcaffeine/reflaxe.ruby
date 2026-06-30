@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -31,7 +31,8 @@ compileComponents(outputDir);
 for (const file of [
   "app/views/components/_card.html.erb",
   "app/views/components/show.html.erb",
-  "app/haxe_gen/main.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -40,12 +41,27 @@ for (const file of [
   }
 }
 
-for (const file of ["app/haxe_gen/main.rb", "run.rb"]) {
+for (const file of ["app/lib/railshx/generated/main.rb", "run.rb"]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
+  }
+}
+
+const cardErb = readFileSync(join(outputDir, "app", "views", "components", "_card.html.erb"), "utf8");
+for (const expected of [
+  '<article class="<%= ("component-card component-card--" + (tone)) %>">',
+  '<h2><%= ("Typed: " + (title)) %></h2>',
+]) {
+  if (!cardErb.includes(expected)) {
+    fail(`Expected view-local helper expression missing from generated component ERB: ${expected}`);
+  }
+}
+for (const unexpected of ["ComponentCardView", "card_class", "heading(", "__hx"]) {
+  if (cardErb.includes(unexpected)) {
+    fail(`Generated component ERB should inline scalar view-local helpers without runtime scaffolding: ${unexpected}`);
   }
 }
 
@@ -119,6 +135,34 @@ if (!/Component\.of slot name must be a safe Haxe\/Ruby local identifier/.test(i
   process.stdout.write(invalidSlotName.stdout);
   process.stderr.write(invalidSlotName.stderr);
   fail("Unsafe Component.of slot name failed for an unexpected reason.");
+}
+
+const invalidDynamicHelper = compileComponents(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidDynamicHelperMain",
+  allowFailure: true,
+});
+if (invalidDynamicHelper.status === 0) {
+  fail("Expected Dynamic view-local helper compile to fail.");
+}
+if (!/view-local helper .* must return a known scalar display type/i.test(invalidDynamicHelper.stderr + invalidDynamicHelper.stdout)) {
+  process.stdout.write(invalidDynamicHelper.stdout);
+  process.stderr.write(invalidDynamicHelper.stderr);
+  fail("Dynamic view-local helper failed for an unexpected reason.");
+}
+
+const invalidMutationHelper = compileComponents(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidMutationHelperMain",
+  allowFailure: true,
+});
+if (invalidMutationHelper.status === 0) {
+  fail("Expected mutation-looking view-local helper compile to fail.");
+}
+if (!/View-local helper .* calls "update"/.test(invalidMutationHelper.stderr + invalidMutationHelper.stdout)) {
+  process.stdout.write(invalidMutationHelper.stdout);
+  process.stderr.write(invalidMutationHelper.stderr);
+  fail("Mutation-looking view-local helper failed for an unexpected reason.");
 }
 
 console.log("[components] OK");
@@ -282,6 +326,52 @@ function writeInvalidFixtures() {
     "\t\t\ttone: \"warm\",",
     "\t\t\tbody: Slot.content()",
     "\t\t}}>Bad slot name</component>;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  writeFileSync(join(invalidSourceDir, "InvalidDynamicHelperMain.hx"), [
+    "import views.BadDynamicHelperView;",
+    "class InvalidDynamicHelperMain { static function main():Void { Sys.println(BadDynamicHelperView != null); } }",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "views", "BadDynamicHelperView.hx"), [
+    "package views;",
+    "import rails.action_view.HtmlNode;",
+    "@:railsTemplate(\"components/bad_dynamic_helper\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadDynamicHelperView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <p>${label(\"bad\")}</p>;",
+    "\t}",
+    "\tstatic function label(value:String):Dynamic {",
+    "\t\treturn value;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  writeFileSync(join(invalidSourceDir, "InvalidMutationHelperMain.hx"), [
+    "import views.BadMutationHelperView;",
+    "class InvalidMutationHelperMain { static function main():Void { Sys.println(BadMutationHelperView != null); } }",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "views", "BadMutationHelperView.hx"), [
+    "package views;",
+    "import rails.action_view.HtmlNode;",
+    "class HelperTarget {",
+    "\tpublic function new() {}",
+    "\tpublic function update():String { return \"mutated\"; }",
+    "}",
+    "@:railsTemplate(\"components/bad_mutation_helper\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadMutationHelperView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <p>${label()}</p>;",
+    "\t}",
+    "\tstatic function label():String {",
+    "\t\treturn new HelperTarget().update();",
     "\t}",
     "}",
     "",

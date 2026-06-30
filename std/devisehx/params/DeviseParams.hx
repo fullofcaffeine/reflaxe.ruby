@@ -10,7 +10,11 @@ import rails.active_record.Field;
 	so Haxe verifies the field owner matches the Devise scope model. The compiler
 	erases the facade to normal Devise/Rails Ruby:
 	`devise_parameter_sanitizer.permit(:sign_up, keys: [:name])`.
+
+	`@:rubyNoEmit` marks this as an erased typed facade; runtime behavior remains
+	Devise's parameter sanitizer, not a generated DeviseHx Ruby class.
 **/
+@:rubyNoEmit
 class DeviseParams {
 	public static function permit<TModel>(scope:DeviseScope<TModel>, action:SanitizerAction, keys:Array<Field<TModel, Dynamic>>):Void {}
 

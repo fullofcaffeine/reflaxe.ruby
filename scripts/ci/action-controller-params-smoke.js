@@ -50,9 +50,9 @@ if (!compileWithFirstAvailableReflaxe()) {
 }
 
 for (const file of [
-  "app/haxe_gen/controllers/todos_controller.rb",
-  "app/haxe_gen/main.rb",
-  "config/initializers/hxruby_autoload.rb",
+  "app/controllers/todos_controller.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -62,11 +62,22 @@ for (const file of [
   }
 }
 
-const controllerRuby = readFileSync(join(outputDir, "app", "haxe_gen", "controllers", "todos_controller.rb"), "utf8");
+for (const legacyFile of [
+  "app/haxe_gen/controllers/todos_controller.rb",
+  "app/haxe_gen/main.rb",
+  "config/initializers/hxruby_autoload.rb",
+]) {
+  const fullPath = join(outputDir, legacyFile);
+  if (existsSync(fullPath)) {
+    console.error(`ActionController smoke should not emit legacy haxe_gen/autoload file: ${fullPath}`);
+    process.exit(1);
+  }
+}
+
+const controllerRuby = readFileSync(join(outputDir, "app", "controllers", "todos_controller.rb"), "utf8");
 for (const expected of [
   /require "action_controller\/railtie"/,
-  /module Controllers/,
-  /class TodosController < ActionController::Base/,
+  /class TodosController < ApplicationController/,
   /protect_from_forgery with: :exception, prepend: true, except: \[:index\]/,
   /before_action :authenticate_user, only: \[:create\]/,
   /after_action :audit_response, only: \[:create\]/,
@@ -77,36 +88,36 @@ for (const expected of [
   /def authenticate_user\(\)/,
   /def audit_response\(\)/,
   /def load_tenant\(\)/,
-  /def not_found\(e__hx\d+\)/,
-  /def csrf_failure\(e__hx\d+\)/,
+  /def not_found\(e(?:__hx\d+)?\)/,
+  /def csrf_failure\(e(?:__hx\d+)?\)/,
   /self\.render\(plain: "Invalid CSRF token", status: :forbidden\)/,
-  /attrs__hx\d+ = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, \{metadata: \[:source, :priority\]\}, \{tags: \[\]\}\]\)/,
-  /request_method__hx\d+ = self\.request\(\)\.request_method\(\)/,
-  /request_path__hx\d+ = self\.request\(\)\.path\(\)/,
-  /request_format__hx\d+ = self\.request\(\)\.format\(\)/,
-  /wants_json__hx\d+ = request_format__hx\d+\.json\?\(\)/,
-  /request_format_name__hx\d+ = request_format__hx\d+\.to_s\(\)/,
-  /accepted_formats__hx\d+ = self\.request\(\)\.accepts\(\)/,
-  /request_formats__hx\d+ = self\.request\(\)\.formats\(\)/,
-  /preferred_format__hx\d+ = self\.request\(\)\.negotiate_mime\(\[Mime\[:html\], Mime\[:json\]\]\)/,
-  /preferred_format_name__hx\d+ = \(if \(preferred_format__hx\d+ == nil\) then "" else preferred_format__hx\d+\.to_s\(\) end\)/,
-  /content_mime_type__hx\d+ = self\.request\(\)\.content_mime_type\(\)/,
-  /request_media_type__hx\d+ = self\.request\(\)\.media_type\(\)/,
+  /attrs(?:__hx\d+)? = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :is_completed, \{metadata: \[:source, :priority\]\}, \{tags: \[\]\}\]\)/,
+  /request_method(?:__hx\d+)? = self\.request\(\)\.request_method\(\)/,
+  /request_path(?:__hx\d+)? = self\.request\(\)\.path\(\)/,
+  /request_format(?:__hx\d+)? = self\.request\(\)\.format\(\)/,
+  /wants_json(?:__hx\d+)? = request_format(?:__hx\d+)?\.json\?\(\)/,
+  /request_format_name(?:__hx\d+)? = request_format(?:__hx\d+)?\.to_s\(\)/,
+  /accepted_formats(?:__hx\d+)? = self\.request\(\)\.accepts\(\)/,
+  /request_formats(?:__hx\d+)? = self\.request\(\)\.formats\(\)/,
+  /preferred_format(?:__hx\d+)? = self\.request\(\)\.negotiate_mime\(\[Mime\[:html\], Mime\[:json\]\]\)/,
+  /preferred_format_name(?:__hx\d+)? = \(if \(preferred_format(?:__hx\d+)? == nil\) then "" else preferred_format(?:__hx\d+)?\.to_s\(\) end\)/,
+  /content_mime_type(?:__hx\d+)? = self\.request\(\)\.content_mime_type\(\)/,
+  /request_media_type(?:__hx\d+)? = self\.request\(\)\.media_type\(\)/,
   /self\.request\(\)\.variant=\(\[:phone, :tablet\]\)/,
-  /request_variant__hx\d+ = self\.request\(\)\.variant\(\)/,
-  /wants_phone_variant__hx\d+ = request_variant__hx\d+\.phone\?\(\)/,
-  /request_variant_name__hx\d+ = request_variant__hx\d+\.to_s\(\)/,
-  /current_status__hx\d+ = self\.response\(\)\.status\(\)/,
+  /request_variant(?:__hx\d+)? = self\.request\(\)\.variant\(\)/,
+  /wants_phone_variant(?:__hx\d+)? = request_variant(?:__hx\d+)?\.phone\?\(\)/,
+  /request_variant_name(?:__hx\d+)? = request_variant(?:__hx\d+)?\.to_s\(\)/,
+  /current_status(?:__hx\d+)? = self\.response\(\)\.status\(\)/,
   /self\.fresh_when\(etag: "todos-create"\)/,
-  /cache_is_stale__hx\d+ = self\.stale\?\(weak_etag: "todos-create", template: "controllers\/todos\/create"\)/,
+  /cache_is_stale(?:__hx\d+)? = self\.stale\?\(weak_etag: "todos-create", template: "controllers\/todos\/create"\)/,
   /self\.flash\(\)\[:notice\] = "Todo queued"/,
-  /self\.session\(\)\[:last_todo_title\] = attrs__hx\d+/,
-  /remembered__hx\d+ = self\.session\(\)\[:last_todo_title\]/,
+  /self\.session\(\)\[:last_todo_title\] = attrs(?:__hx\d+)?/,
+  /remembered(?:__hx\d+)? = self\.session\(\)\[:last_todo_title\]/,
   /self\.cookies\(\)\[:todo_filter\] = "open"/,
   /self\.cookies\(\)\.delete\(:stale_filter\)/,
-  /self\.respond_to\(\) do \|format__hx\d+\|/,
-  /format__hx\d+\.html\(\) \{ gthis__hx\d+\.redirect_to\(action: "index"\) \}/,
-  /format__hx\d+\.json\(\) \{ gthis__hx\d+\.render\(json: attrs__hx\d+, status: :created\) \}/,
+  /self\.respond_to\(\) do \|format(?:__hx\d+)?\|/,
+  /format(?:__hx\d+)?\.html\(\) \{ self\.redirect_to\(action: "index"\) \}/,
+  /format(?:__hx\d+)?\.json\(\) \{ self\.render\(json: attrs(?:__hx\d+)?, status: :created\) \}/,
   /self\.send_file\("\/tmp\/todos\.csv", filename: "todos\.csv", type: "text\/csv", disposition: "attachment", status: :ok\)/,
   /self\.send_data\("title,is_completed\\nShip,true\\n", filename: "todos\.csv", type: "text\/csv", disposition: "inline", status: :ok\)/,
   /self\.head\(:no_content\)/,
@@ -117,6 +128,11 @@ for (const expected of [
     console.error(`ActionController output missing expected line: ${expected}`);
     process.exit(1);
   }
+}
+
+if (/gthis(?:__hx\d+)?/.test(controllerRuby)) {
+  console.error("action_controller_params output should use Ruby self directly instead of a generated gthis alias");
+  process.exit(1);
 }
 
 writeInvalidFixtures();
@@ -703,7 +719,6 @@ function writeInvalidFixtures() {
 function materializeRuntimeRailsApp() {
   rmSync(runtimeAppDir, { force: true, recursive: true });
   copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
-  copyTree(join(outputDir, "config"), join(runtimeAppDir, "config"));
 
   writeFile("Gemfile", `source "https://rubygems.org"
 
@@ -729,7 +744,11 @@ Rails.application.initialize!
 `);
 
   writeFile("config/routes.rb", `Rails.application.routes.draw do
-  get "/runtime", to: "controllers/todos#runtime_ok"
+  get "/runtime", to: "todos#runtime_ok"
+end
+`);
+
+  writeFile("app/controllers/application_controller.rb", `class ApplicationController < ActionController::Base
 end
 `);
 
@@ -753,11 +772,11 @@ end
 
 function syntaxCheckRuntimeRailsApp() {
   for (const file of [
-    "app/haxe_gen/controllers/todos_controller.rb",
+    "app/controllers/application_controller.rb",
+    "app/controllers/todos_controller.rb",
     "config/application.rb",
     "config/environment.rb",
     "config/routes.rb",
-    "config/initializers/hxruby_autoload.rb",
     "test/controllers/action_controller_params_runtime_test.rb",
   ]) {
     run("ruby", ["-c", join(runtimeAppDir, file)]);

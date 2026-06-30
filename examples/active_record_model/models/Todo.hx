@@ -14,7 +14,8 @@ import models.User;
 // IntelliSense: editors should complete model fields, generated refs/scopes,
 // relation methods, and association helpers directly from this class.
 // Ruby output: a normal Rails model with `self.table_name`, association macros,
-// validation/schema metadata, enum declarations, and callbacks.
+// validations, enum declarations, and callbacks; typed schema facts stay in
+// compile-time metadata unless a Rails artifact needs them.
 @:railsModel("todos")
 @:railsTimestamps
 class Todo extends rails.active_record.Base<Todo> {

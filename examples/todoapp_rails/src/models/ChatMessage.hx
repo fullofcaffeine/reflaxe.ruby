@@ -11,8 +11,8 @@ import models.User;
 // params, HHX forms, and tests.
 // IntelliSense: editors should complete chat fields, association refs, and the
 // inherited ActiveRecord relation methods.
-// Ruby/Rails output: a normal `ApplicationRecord` model with `belongs_to`,
-// validation, and schema metadata.
+// Ruby/Rails output: a normal `ApplicationRecord` model with `belongs_to` and
+// validation macros; typed schema facts remain compiler metadata.
 @:railsModel("chat_messages")
 @:railsTimestamps
 class ChatMessage extends rails.active_record.Base<ChatMessage> {

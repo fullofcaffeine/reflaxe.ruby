@@ -5,9 +5,9 @@ class Main
     "Main"
   end
   def self.main()
-    value__hx0 = MaybeInt.some(41)
-    empty__hx0 = MaybeInt.none()
-    puts(HXRuby.stringify("constructed"))
+    value = MaybeInt.some(41)
+    empty = MaybeInt.none()
+    puts("constructed".to_s())
   end
 end
 if __FILE__ == $PROGRAM_NAME

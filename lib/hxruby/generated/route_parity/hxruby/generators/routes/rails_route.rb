@@ -11,11 +11,11 @@ module Hxruby
         attr_accessor :verb
         attr_accessor :path
         attr_accessor :target
-        def initialize(prefix__hx0, verb__hx0, path__hx0, target__hx0)
-          self.prefix = prefix__hx0
-          self.verb = verb__hx0
-          self.path = path__hx0
-          self.target = target__hx0
+        def initialize(prefix, verb, path, target)
+          self.prefix = prefix
+          self.verb = verb
+          self.path = path
+          self.target = target
         end
       end
     end

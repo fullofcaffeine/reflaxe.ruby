@@ -17,7 +17,7 @@ import routes.Routes;
 // Ruby/Rails output: ordinary Devise/Rails `sign_in(:user, user)`, flash, and
 // `redirect_to`.
 @:railsController
-class SessionsController extends rails.action_controller.Base {
+class SessionsController extends ApplicationController {
 	static final lifecycle = [];
 
 	public function createGuest() {

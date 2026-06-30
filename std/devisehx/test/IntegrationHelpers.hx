@@ -10,7 +10,11 @@ import devisehx.DeviseScope;
 	to normal Devise test helper calls such as `sign_in(:user, user)`. The scope
 	must be a direct generated field like `UserAuth.scope` so the compiler can
 	read the metadata without evaluating runtime Haxe values.
+
+	`@:rubyNoEmit` keeps the helper surface Haxe-only; generated tests call
+	Devise's own integration helpers directly.
 **/
+@:rubyNoEmit
 class IntegrationHelpers {
 	public static function signIn<TModel>(scope:DeviseScope<TModel>, resource:TModel):Void {}
 

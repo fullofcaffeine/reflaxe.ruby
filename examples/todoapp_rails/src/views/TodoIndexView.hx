@@ -24,7 +24,7 @@ import views.TodoDashboardView;
 // `locals.typedColumnCount`, `Template.of`, and partial-local field names.
 // Ruby/Rails output: `index.html.erb` with ordinary Rails `content_for` and
 // `render partial:` calls.
-@:railsTemplate("controllers/todos/index")
+@:railsTemplate("todos/index")
 @:railsTemplateAst("render")
 class TodoIndexView {
 	public static function render(locals:TodoIndexLocals):HtmlNode {

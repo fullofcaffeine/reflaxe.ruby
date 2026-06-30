@@ -35,10 +35,9 @@ if (!compileWithFirstAvailableReflaxe()) {
 }
 
 for (const file of [
-  "app/haxe_gen/admin/todo_item.rb",
-  "app/haxe_gen/hxruby/core.rb",
-  "app/haxe_gen/main.rb",
-  "config/initializers/hxruby_autoload.rb",
+  "app/lib/railshx/generated/admin/todo_item.rb",
+  "app/lib/railshx/generated/main.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -48,34 +47,32 @@ for (const file of [
   }
 }
 
-const todoRuby = readFileSync(join(outputDir, "app", "haxe_gen", "admin", "todo_item.rb"), "utf8");
-for (const expected of ["module Admin", "class TodoItem", "attr_accessor :title"]) {
-  if (!todoRuby.includes(expected)) {
-    console.error(`Rails autoload file is missing expected constant shape: ${expected}`);
+for (const legacyFile of [
+  "app/haxe_gen/admin/todo_item.rb",
+  "app/haxe_gen/hxruby/core.rb",
+  "app/haxe_gen/main.rb",
+  "config/initializers/hxruby_autoload.rb",
+]) {
+  const fullPath = join(outputDir, legacyFile);
+  if (existsSync(fullPath)) {
+    console.error(`Rails autoload smoke should not emit legacy haxe_gen/autoload file: ${fullPath}`);
     process.exit(1);
   }
 }
 
-const initializer = readFileSync(join(outputDir, "config", "initializers", "hxruby_autoload.rb"), "utf8");
-for (const expected of [
-  'hxruby_root = Rails.root.join("app/haxe_gen")',
-  'hxruby_runtime_root = hxruby_root.join("hxruby")',
-  "Rails.autoloaders.main.ignore(hxruby_runtime_root)",
-  'Dir[hxruby_runtime_root.join("*.rb")].sort.each { |path| require path }',
-  "Rails.application.config.autoload_paths << hxruby_root",
-  "Rails.application.config.eager_load_paths << hxruby_root",
-]) {
-  if (!initializer.includes(expected)) {
-    console.error(`Rails initializer missing expected line: ${expected}`);
+const todoRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "generated", "admin", "todo_item.rb"), "utf8");
+for (const expected of ["module Admin", "class TodoItem", "attr_accessor :title"]) {
+	if (!todoRuby.includes(expected)) {
+		console.error(`Rails autoload file is missing expected constant shape: ${expected}`);
     process.exit(1);
-  }
+	}
 }
 
 const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
 assertOrdered(runRuby, [
-  'require_relative "app/haxe_gen/hxruby/core"',
-  'require_relative "app/haxe_gen/admin/todo_item"',
-  'require_relative "app/haxe_gen/main"',
+  'require_relative "app/lib/railshx/runtime/hxruby/core"',
+  'require_relative "app/lib/railshx/generated/admin/todo_item"',
+  'require_relative "app/lib/railshx/generated/main"',
 ]);
 
 const actual = run("ruby", [join(outputDir, "run.rb")]).stdout;

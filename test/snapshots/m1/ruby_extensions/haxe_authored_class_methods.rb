@@ -4,7 +4,7 @@ module ClassMethodsFromHaxe
   def self.__hx_name()
     "HaxeAuthoredClassMethods"
   end
-  def haxe_class_badge(value__hx0)
-    return ("haxe-class:" + value__hx0)
+  def haxe_class_badge(value)
+    return ("haxe-class:" + value)
   end
 end

@@ -28,7 +28,7 @@ typedef ChatPanelLocals = {
 // `ChatMessageView.roomStream`.
 // Ruby/Rails output: normal ERB with `turbo_stream_from`, `form_with`, typed
 // partial renders, loops, conditionals, and Rails route helpers.
-@:railsTemplate("controllers/todos/_chat_panel")
+@:railsTemplate("todos/_chat_panel")
 @:railsTemplateAst("render")
 class ChatPanelView {
 	public static function render(locals:ChatPanelLocals):HtmlNode {

@@ -18,7 +18,7 @@ import channels.TodosChannel.TodoCable;
 class TodosCableClient {
 	public static function subscribe(consumer:Consumer, listId:String, onTitle:String->Void):Void {
 		var params:TodoSubscriptionParams = {listId: listId};
-		var subscription = Consumer.subscribe(consumer, "Channels::TodosChannel", params, {
+		var subscription = Consumer.subscribe(consumer, "TodosChannel", params, {
 			connected: function():Void {},
 			disconnected: function():Void {},
 			received: function(payload:TodoBroadcast):Void {

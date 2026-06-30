@@ -29,7 +29,7 @@ typedef UserIndexLocals = {
 // Ruby/Rails output: a normal Rails controller rendering a generated ERB view.
 
 @:railsController
-class UsersController extends rails.action_controller.Base {
+class UsersController extends ApplicationController {
 	static final lifecycle = {
 		beforeAction(UserAuth.authenticate, {});
 	};

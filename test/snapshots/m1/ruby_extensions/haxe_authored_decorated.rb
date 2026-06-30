@@ -4,7 +4,7 @@ module DecoratedFromHaxe
   def self.__hx_name()
     "HaxeAuthoredDecorated"
   end
-  def haxe_badge(value__hx0)
-    return ("haxe-module:" + value__hx0)
+  def haxe_badge(value)
+    return ("haxe-module:" + value)
   end
 end

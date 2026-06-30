@@ -50,6 +50,35 @@ DeviseHx must emit or consume ordinary Rails/Devise constructs:
 Do not reimplement Warden, Devise mappings, password flows, session storage,
 mailers, or route helper naming in Haxe. Rails/Devise owns those semantics.
 
+## Ruby No-Emit Facade Contract
+
+DeviseHx facades that exist only for Haxe type checking, macros, and generator
+metadata should be marked with `@:rubyNoEmit`. This is a generic RubyHx compiler
+contract, not a Devise-specific compiler hook and not a Rails-only shortcut. It
+means:
+
+- the type is allowed in Haxe source so users get completion and compile-time
+  checks;
+- RailsHx macros/compiler lowering consume the type or its metadata and emit
+  ordinary Rails/Devise Ruby;
+- the core compiler must not emit a Ruby class/module/enum shell for the facade
+  into Rails app output.
+
+For example, `devisehx.Auth`, `DeviseScope`, `DeviseModuleSpec`, and
+`IntegrationHelpers` are typed authoring surfaces. Their runtime owner is
+Devise/Rails, so generated Ruby should call helpers such as `current_user`,
+`sign_in(:user, user)`, `devise :database_authenticatable`, or `devise_for
+:users` rather than autoloading DeviseHx runtime classes.
+
+Companion layers should use generic contracts like `@:rubyNoEmit`,
+`@:railsMailerSuperclass("Devise::Mailer")`, `@:native`, and generated metadata
+instead of asking the core compiler to recognize a package name such as
+`devisehx`. `@:rubyNoEmit` is for compile-time-only Haxe authoring surfaces;
+`@:railsMailerSuperclass(...)` is for real Rails artifacts whose Ruby superclass
+comes from a gem. Gem-specific behavior belongs in the companion layer or
+generator; the core compiler should only understand reusable RailsHx/RubyHx
+contracts.
+
 ## Public Haxe API Shape
 
 The central type should be a generated scope token that couples a Rails scope,

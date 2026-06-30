@@ -1,0 +1,5 @@
+<%= form_with url: "/profiles", scope: :profile, local: true, multipart: true, class: "profile-upload-form" do |form| %>
+			<%= form.label :avatar, "Avatar" %>
+			<%= form.file_field :avatar, direct_upload: true, accept: "image/png,image/jpeg" %>
+			<%= form.submit "Upload avatar" %>
+		<% end %>

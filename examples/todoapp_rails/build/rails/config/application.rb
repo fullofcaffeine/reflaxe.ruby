@@ -15,7 +15,8 @@ module HXRubyTodoapp
     config.load_defaults 7.0
     config.eager_load = false
     config.root = File.expand_path("..", __dir__)
-    config.paths.add "app/haxe_gen", eager_load: true
+    config.autoload_paths << Rails.root.join("app/lib")
+    config.eager_load_paths << Rails.root.join("app/lib")
     config.assets.paths << Rails.root.join("app/javascript")
     config.action_controller.allow_forgery_protection = false
   end

@@ -13,13 +13,13 @@ module Hxruby
         attr_accessor :target
         attr_accessor :position
         attr_accessor :opaque
-        def initialize(name__hx0, verb__hx0, path__hx0, target__hx0, position__hx0, opaque__hx0)
-          self.name = name__hx0
-          self.verb = verb__hx0
-          self.path = path__hx0
-          self.target = target__hx0
-          self.position = position__hx0
-          self.opaque = opaque__hx0
+        def initialize(name, verb, path, target, position, opaque)
+          self.name = name
+          self.verb = verb
+          self.path = path
+          self.target = target
+          self.position = position
+          self.opaque = opaque
         end
       end
     end
