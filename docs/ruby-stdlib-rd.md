@@ -2,7 +2,8 @@
 
 This document turns the current stdlib/runtime audit into a staged plan for
 RubyHx. It complements `docs/stdlib-ownership.md`,
-`docs/gap-report-guidance.md`, and `docs/stdlib-inventory.json`.
+`docs/ruby-stdlib-facades.md`, `docs/gap-report-guidance.md`, and
+`docs/stdlib-inventory.json`.
 
 ## Goal
 
@@ -116,7 +117,8 @@ Suggested first domains:
 
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
-an adapter.
+an adapter. See `docs/ruby-stdlib-facades.md` for package naming, API shape,
+require metadata, examples, and tests for typed Ruby stdlib facades.
 
 ### Tier 3: Optimizer And Hot-Path Lowering
 

@@ -31,3 +31,5 @@ should lower to ordinary Rails/Turbo markup rather than introducing client
 runtime wrappers.
 
 See `docs/stdlib-ownership.md` and `docs/stdlib-inventory.json`.
+For typed Ruby stdlib facade authoring rules, see
+`docs/ruby-stdlib-facades.md`.
