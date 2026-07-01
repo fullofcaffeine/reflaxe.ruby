@@ -3268,7 +3268,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var receiver = compileExpr(target);
 				switch (fieldAccessRawName(access)) {
 					case "concat":
-						hxrubyCall("array_concat", [receiver, compileParam(params, 0)]);
+						RubyBinary("+", receiver, compileParam(params, 0));
 					case "join":
 						activeBuildContext.isPortable() ? hxrubyCall("array_join",
 							[receiver, compileParam(params, 0)]) : RubyCall(receiver, "join", [compileParam(params, 0)]);
@@ -3293,7 +3293,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "remove":
 						hxrubyCall("array_remove", [receiver, compileParam(params, 0)]);
 					case "contains":
-						hxrubyCall("array_contains", [receiver, compileParam(params, 0)]);
+						RubyCall(receiver, "include?", [compileParam(params, 0)]);
 					case "indexOf":
 						hxrubyCall("array_index_of", [
 							receiver,
@@ -3307,7 +3307,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							params.length > 1 ? compileExpr(params[1]) : RubyNil
 						]);
 					case "copy":
-						hxrubyCall("array_copy", [receiver]);
+						RubyCall(receiver, "dup", []);
 					case "map":
 						hxrubyCall("array_map", [receiver, compileParam(params, 0)]);
 					case "filter":

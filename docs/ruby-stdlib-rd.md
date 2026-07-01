@@ -152,6 +152,35 @@ Preferred outcomes:
 | Ruby library interop | Typed `ruby.*` extern/facade |
 | Rails/gem interop | Typed RailsHx/gem-layer facade or generated extern |
 
+### Array/Lambda/Map Helper Audit
+
+Current Array/Lambda/Map lowering follows the same rule: emit direct Ruby when
+the receiver API is behavior-preserving, and keep helpers only where Haxe
+semantics need an adapter.
+
+- `Array.concat` lowers directly to Ruby `+`: both return a new array without
+  mutating the receiver.
+- `Array.contains` lowers directly to Ruby `include?`: both use equality
+  comparison for membership.
+- `Array.copy` lowers directly to Ruby `dup`: both produce a shallow copy.
+- `Array.join` lowers directly in `ruby_first`, but remains a helper in
+  `portable` because Haxe stringification of elements is stricter than Ruby's
+  default `to_s`.
+- `Array.slice`, `splice`, `insert`, `remove`, `indexOf`, `lastIndexOf`,
+  `resize`, and `sort` stay on `HXRuby` helpers because they encode Haxe
+  boundary normalization, return values, mutation contracts, or comparator
+  calling shape.
+- `Array.map` and `Array.filter` stay on helpers until the Ruby AST has a
+  first-class block-call expression; the helper is currently the semantic bridge
+  between Haxe function values and Ruby blocks.
+- `Lambda` methods are plain Haxe loops today. Their generated Ruby should
+  benefit from safe Array direct lowerings, but the public `Lambda` API should
+  not be rewritten into Ruby `Enumerable` shortcuts until nullability,
+  Iterable/Iterator shape, and callback return semantics are proven.
+- `haxe.ds.*Map` currently uses `ruby.NativeHash`, not `HXRuby`. Keep that
+  direct Ruby hash backend for `StringMap`/`IntMap`/`ObjectMap` unless a Haxe
+  key-identity or iteration-order gap requires a documented helper.
+
 ## Testing Policy
 
 Every std/runtime change should choose the smallest useful gate set:

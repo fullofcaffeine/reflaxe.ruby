@@ -18,7 +18,7 @@ module Hxruby
         def self.compare_manifest_json(manifest_json, rails_routes, devise_facts_json = nil)
           manifest = JSON.parse(manifest_json)
           errors = Hxruby::Generators::Routes::ParityCore.compare_manifest(manifest, rails_routes)
-          return HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.validate_devise_mappings(manifest, devise_facts_json))
+          return (errors + Hxruby::Generators::Routes::ParityCore.validate_devise_mappings(manifest, devise_facts_json))
         end
         def self.compare_manifest(manifest, rails_routes)
           manifest_errors = Hxruby::Generators::Routes::ParityCore.validate_manifest(manifest)
@@ -32,7 +32,7 @@ module Hxruby
           while (g < expected.length)
             route = expected[g]
             g = (g + 1)
-            errors = HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.compare_route(route, routes))
+            errors = (errors + Hxruby::Generators::Routes::ParityCore.compare_route(route, routes))
           end
           return errors
         end
@@ -46,7 +46,7 @@ module Hxruby
           if (!Ruby::NativeHash.exists(manifest, "declarations"))
             HXRuby.array_push(errors, "Haxe-owned route manifest is missing declarations")
           end
-          return HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.hash_array(manifest, "declarations")))
+          return (errors + Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.hash_array(manifest, "declarations")))
         end
         def self.validate_declarations(declarations)
           errors = []
@@ -58,7 +58,7 @@ module Hxruby
             if (!Hxruby::Generators::Routes::ParityCore.supported_declaration_kind(kind))
               HXRuby.array_push(errors, ("unknown Haxe-owned route manifest declaration kind " + ((kind == nil) ? "(missing)" : kind)))
             else
-              errors = HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.children_of(decl)))
+              errors = (errors + Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.children_of(decl)))
             end
           end
           return errors
@@ -92,7 +92,7 @@ end)
             if (mapping == nil)
               HXRuby.array_push(errors, ((("missing Devise mapping " + Hxruby::Generators::Routes::ParityCore.quote(((scope == nil) ? "" : scope))) + " for ") + Hxruby::Generators::Routes::ParityCore.declaration_position(declaration)))
             else
-              errors = HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.compare_devise_mapping(scope, expected, mapping, declaration))
+              errors = (errors + Hxruby::Generators::Routes::ParityCore.compare_devise_mapping(scope, expected, mapping, declaration))
             end
           end
           return errors
@@ -106,7 +106,7 @@ end)
             if (Hxruby::Generators::Routes::ParityCore.hash_string(declaration, "kind") == "deviseFor")
               HXRuby.array_push(out, declaration)
             end
-            out = HXRuby.array_concat(out, Hxruby::Generators::Routes::ParityCore.devise_declarations(Hxruby::Generators::Routes::ParityCore.children_of(declaration)))
+            out = (out + Hxruby::Generators::Routes::ParityCore.devise_declarations(Hxruby::Generators::Routes::ParityCore.children_of(declaration)))
           end
           return out
         end
@@ -242,7 +242,7 @@ end
           while (g < declarations.length)
             decl = declarations[g]
             g = (g + 1)
-            out = HXRuby.array_concat(out, Hxruby::Generators::Routes::ParityCore.flatten_decl(decl, prefix))
+            out = (out + Hxruby::Generators::Routes::ParityCore.flatten_decl(decl, prefix))
           end
           return out
         end
