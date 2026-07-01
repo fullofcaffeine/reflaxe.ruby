@@ -66,7 +66,7 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal "null", HXRuby.stringify(nil)
     assert_equal "true", HXRuby.stringify(true)
     assert_equal "false", HXRuby.stringify(false)
-    assert_equal "[1, 2]", HXRuby.stringify([1, 2])
+    assert_equal "[1,2]", HXRuby.stringify([1, 2])
     assert_equal "TestClassWithToString.toString()", HXRuby.stringify(TestClassWithToString.new)
     assert_equal "Happy", HXRuby.stringify(TestEnumForTypeCheck::Happy.new("Happy", 0))
   end

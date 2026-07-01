@@ -26,25 +26,28 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `IntIterator`, `Lambda`, `Math`, `String`, `StringBuf`, `StringTools`,
-  `haxe.io.BytesBuffer`.
+- Enabled: `Array`, `IntIterator`, `Lambda`, `Math`, `String`, `StringBuf`,
+  `StringTools`, `haxe.io.BytesBuffer`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
-- Tracked but staged: `Array`, `Date`, `EReg`, and `Map`. These have
-  upstream fixtures in the local reference checkout, but they also expose wider
-  Ruby target semantics such as array structural equality/mutation, Ruby
-  timezone behavior, regexp replacement/group behavior, and map key
+- Tracked but staged: `Date`, `EReg`, and `Map`. These have upstream fixtures in
+  the local reference checkout, but they also expose wider Ruby target semantics
+  such as timezone behavior, regexp replacement/group behavior, and map key
   identity/order. Keep them in the manifest until each is enabled or split into
-  a focused follow-up. Current focused follow-ups are `haxe.ruby-bjv.25`
-  (`Array`), `haxe.ruby-bjv.26` (`Date`), `haxe.ruby-bjv.27` (`EReg`), and
-  `haxe.ruby-bjv.28` (`Map`).
+  a focused follow-up. Current focused follow-ups are `haxe.ruby-bjv.26`
+  (`Date`), `haxe.ruby-bjv.27` (`EReg`), and `haxe.ruby-bjv.28` (`Map`).
 
 `Lambda` is enabled directly. It exercises the Ruby-first iterator bridge:
 generated `.iterator()` calls use a compact runtime helper that delegates to
 Haxe iterators when present and wraps native Ruby arrays otherwise. The local
 fixture adapter also makes array-literal comparisons explicit structural
 assertions so compiler equality can keep Haxe's array identity semantics.
+
+`Array` is enabled directly in the portable unitstd lane. It locks in Haxe array
+mutation, slicing/splicing, sorting with method references, dynamic array calls,
+anonymous-object field reads in array callbacks, sparse resize contents, and
+key/value iteration while keeping normal generated `Array ==` as identity.
 
 The first lane is intentionally narrow. It proves the harness, provenance, sync
 workflow, and runtime execution shape without pretending broad Ruby stdlib parity

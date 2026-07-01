@@ -75,7 +75,7 @@ module HXRuby
   def stable_inspect(value)
     case value
     when Array
-      "[" + value.map { |entry| stable_inspect(entry) }.join(", ") + "]"
+      "[" + value.map { |entry| stringify(entry) }.join(",") + "]"
     when Hash
       "{" + value.map { |key, entry| "#{stable_inspect(key)}=>#{stable_inspect(entry)}" }.join(", ") + "}"
     else
@@ -354,6 +354,18 @@ module HXRuby
 
   def array_join(array, separator)
     array.map { |entry| stringify(entry) }.join(separator.to_s)
+  end
+
+  def array_key_value_entries(array)
+    array.each_with_index.map { |value, index| KeyValueEntry.new(index, value) }
+  end
+
+  def array_contents_match?(expected, actual)
+    return false unless expected.is_a?(Array) && actual.is_a?(Array)
+
+    normalized_actual = actual.dup
+    normalized_actual.pop while normalized_actual.length > expected.length && normalized_actual[-1].nil?
+    expected == normalized_actual
   end
 
   def array_push(array, value)

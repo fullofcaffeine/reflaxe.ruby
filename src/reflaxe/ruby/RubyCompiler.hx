@@ -27,6 +27,7 @@ import reflaxe.output.StringOrBytes;
 import reflaxe.ruby.ast.RubyAST.RubyExpr;
 import reflaxe.ruby.ast.RubyAST.RubyFile;
 import reflaxe.ruby.ast.RubyAST.RubyStatement;
+import reflaxe.ruby.ast.RubyASTPrinter;
 import reflaxe.ruby.compiler.RubyBuildContext;
 import reflaxe.ruby.compiler.RubyBuildContextResolver;
 import reflaxe.ruby.naming.RubyNaming;
@@ -2615,7 +2616,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall({expr: TField(target, access)}, params) if (isRubyInteropCall(access)):
 				compileRubyInteropCall(target, access, params);
 			case TCall({expr: TField(target, access)}, params):
-				RubyCall(compileExpr(target), fieldAccessName(access), [for (param in params) compileExpr(param)]);
+				var special = compileSpecialCall({expr: TField(target, access), t: expr.t, pos: expr.pos}, params);
+				special == null ? RubyCall(compileExpr(target), fieldAccessName(access), [for (param in params) compileExpr(param)]) : special;
 			case TCall({expr: TConst(TSuper)}, params):
 				RubyCall(null, "super", [for (param in params) compileExpr(param)]);
 			case TCall(callee, params):
@@ -2624,11 +2626,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name), []);
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
-				var token = actionControllerStaticToken(classType, fieldRef.get().name);
-				var constant = token ?? mathConstantValue(classType.pack, classType.name, fieldRef.get().name);
+				var field = fieldRef.get();
+				var token = actionControllerStaticToken(classType, field.name);
+				var constant = token ?? mathConstantValue(classType.pack, classType.name, field.name);
 				constant == null ? RubyRawExpr((rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType))
 					+ "."
-					+ rubyFieldName(fieldRef.get().name, fieldRef.get().meta)) : RubyRawExpr(constant);
+					+ (isMethodField(field) ? 'method(:${rubyFieldName(field.name, field.meta)})' : rubyFieldName(field.name,
+						field.meta))) : RubyRawExpr(constant);
+			case TField(target, access) if (fieldAccessRawName(access) == "keyValueIterator" && isArrayReceiverFieldAccess(access)):
+				var iteratorExpr = hxrubyCall("native_iterator", [hxrubyCall("array_key_value_entries", [compileExpr(target)])]);
+				RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr) + " }");
+			case TField(target, FAnon(fieldRef)):
+				hxrubyCall("reflect_field", [compileExpr(target), RubyString(fieldRef.get().name)]);
 			case TField(target, access):
 				RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case TTypeExpr(moduleType):
@@ -2721,13 +2730,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (activeRecordSqlCall != null) {
 			return activeRecordSqlCall;
 		}
-		var arrayCall = compileArrayCall(callee, params);
-		if (arrayCall != null) {
-			return arrayCall;
-		}
 		var stringCall = compileStringCall(callee, params);
 		if (stringCall != null) {
 			return stringCall;
+		}
+		var arrayCall = compileArrayCall(callee, params);
+		if (arrayCall != null) {
+			return arrayCall;
 		}
 		var actionControllerStoreCall = compileActionControllerStoreCall(callee, params);
 		if (actionControllerStoreCall != null) {
@@ -3321,7 +3330,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileArrayCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
-			case TField(target, access) if (isArrayFieldAccess(access)):
+			case TField(target, access) if (isArrayReceiverFieldAccess(access)):
 				var receiver = compileExpr(target);
 				switch (fieldAccessRawName(access)) {
 					case "concat":
@@ -3350,7 +3359,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "remove":
 						hxrubyCall("array_remove", [receiver, compileParam(params, 0)]);
 					case "contains":
-						RubyCall(receiver, "include?", [compileParam(params, 0)]);
+						hxrubyCall("array_contains", [receiver, compileParam(params, 0)]);
 					case "indexOf":
 						hxrubyCall("array_index_of", [
 							receiver,
@@ -3371,6 +3380,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						hxrubyCall("array_filter", [receiver, compileParam(params, 0)]);
 					case "resize":
 						hxrubyCall("array_resize", [receiver, compileParam(params, 0)]);
+					case "keyValueIterator":
+						hxrubyCall("native_iterator", [hxrubyCall("array_key_value_entries", [receiver])]);
 					case _:
 						null;
 				}
@@ -3381,7 +3392,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileStringCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
-			case TField(target, access) if (isStringExpr(target)):
+			case TField(target, access) if (isStringExpr(target) || (!isArrayFieldAccess(access) && isStringReceiverFieldAccess(access))):
 				var receiver = printInlineExpr(target);
 				switch (fieldAccessRawName(access)) {
 					case "substr" if (params.length == 1):
@@ -3432,6 +3443,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isStringExpr(expr:TypedExpr):Bool {
 		return TypeTools.toString(expr.t) == "String";
+	}
+
+	static function isStringReceiverFieldAccess(access:haxe.macro.Type.FieldAccess):Bool {
+		return switch (access) {
+			case FStatic(_, _) | FEnum(_, _):
+				false;
+			case _:
+				isKnownStringMethod(fieldAccessRawName(access));
+		}
+	}
+
+	static function isKnownStringMethod(name:String):Bool {
+		return switch (name) {
+			case "substr" | "charAt" | "charCodeAt" | "indexOf" | "lastIndexOf" | "split" | "substring" | "toUpperCase" | "toLowerCase":
+				true;
+			case _:
+				false;
+		}
 	}
 
 	static function isStringComparison(op:haxe.macro.Expr.Binop, lhs:TypedExpr, rhs:TypedExpr):Bool {
@@ -5257,6 +5286,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function isFunctionExpr(expr:TypedExpr):Bool {
 		return switch (expr.expr) {
 			case TFunction(_): true;
+			case _: false;
+		}
+	}
+
+	static function isMethodField(field:ClassField):Bool {
+		return switch (field.kind) {
+			case FMethod(_): true;
 			case _: false;
 		}
 	}
@@ -12549,6 +12585,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case FInstance(classRef, _, _):
 				var classType = classRef.get();
 				fullTypeName(classType.pack, classType.name) == "Array";
+			case _:
+				false;
+		}
+	}
+
+	static function isArrayReceiverFieldAccess(access:haxe.macro.Type.FieldAccess):Bool {
+		return isArrayFieldAccess(access) || switch (access) {
+			case FStatic(_, _) | FEnum(_, _):
+				false;
+			case _:
+				isKnownArrayMethod(fieldAccessRawName(access));
+		}}
+
+	static function isKnownArrayMethod(name:String):Bool {
+		return switch (name) {
+			case "concat" | "join" | "push" | "reverse" | "slice" | "sort" | "splice" | "toString" | "insert" | "remove" | "contains" | "indexOf" |
+				"lastIndexOf" | "copy" | "map" | "filter" | "resize" | "keyValueIterator":
+				true;
 			case _:
 				false;
 		}

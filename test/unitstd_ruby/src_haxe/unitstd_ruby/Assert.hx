@@ -40,7 +40,7 @@ class Assert {
 	}
 
 	public static function arraysSame<T>(expected:Array<T>, actual:Array<T>):Bool {
-		return untyped __ruby__("{0} == {1}", expected, actual);
+		return untyped __ruby__("HXRuby.array_contents_match?({0}, {1})", expected, actual);
 	}
 
 	static function fail(message:String):Void {

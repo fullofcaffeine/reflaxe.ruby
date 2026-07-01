@@ -76,6 +76,8 @@ function compileWithFirstAvailableReflaxe() {
       "-D",
       `ruby_output=${outputDir}`,
       "-D",
+      "reflaxe_ruby_profile=portable",
+      "-D",
       "reflaxe_runtime",
       "-D",
       "no-utf16",
