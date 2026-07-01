@@ -10,6 +10,7 @@ import unitstd_ruby.UpstreamUnitStdMacro;
 class Main {
 	static function main():Void {
 		UpstreamUnitStdMacro.assertSpec("Array.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("Date.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("StringBuf.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("IntIterator.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("String.unit.hx");

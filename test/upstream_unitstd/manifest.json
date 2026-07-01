@@ -10,7 +10,7 @@
   ],
   "modules": [
     {"module": "Array", "status": "enabled", "source": "Array.unit.hx", "fixture": "test/upstream_unitstd/upstream/Array.unit.hx"},
-    {"module": "Date", "status": "skipped-target-specific", "source": "Date.unit.hx", "reason": "Follow-up haxe.ruby-bjv.26 owns enabling after Ruby Time/Date and timezone semantics are triaged against Haxe Date expectations."},
+    {"module": "Date", "status": "enabled", "source": "Date.unit.hx", "fixture": "test/upstream_unitstd/upstream/Date.unit.hx"},
     {"module": "EReg", "status": "skipped-target-specific", "source": "EReg.unit.hx", "reason": "Follow-up haxe.ruby-bjv.27 owns enabling after Ruby Regexp replacement, capture group, state, and global-match semantics are triaged."},
     {"module": "IntIterator", "status": "enabled", "source": "IntIterator.unit.hx", "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx"},
     {"module": "Lambda", "status": "enabled", "source": "Lambda.unit.hx", "fixture": "test/upstream_unitstd/upstream/Lambda.unit.hx"},
