@@ -48,7 +48,15 @@ class RubyASTPrinter {
 					lines.push(indent + line);
 				}
 			case RubyAssign(target, value):
-				lines.push(indent + printExpr(target) + " = " + printExpr(value));
+				var valueLines = splitCodeLines(printExpr(value));
+				if (valueLines.length == 0) {
+					lines.push(indent + printExpr(target) + " = ");
+				} else {
+					lines.push(indent + printExpr(target) + " = " + valueLines[0]);
+					for (line in valueLines.slice(1)) {
+						lines.push(indent + line);
+					}
+				}
 			case RubyReturn(value):
 				lines.push(indent + (value == null ? "return" : "return " + printExpr(value)));
 			case RubyIfStmt(cond, thenBody, elseBody):
@@ -81,7 +89,7 @@ class RubyASTPrinter {
 				].join(", ") + "}";
 			case RubyBinary(op, left, right): "(" + printExpr(left) + " " + op + " " + printExpr(right) + ")";
 			case RubyUnary(op, value): "(" + op + printExpr(value) + ")";
-			case RubyLambda(args, body): "->(" + (args == null ? "" : args.join(", ")) + ") { " + body + " }";
+			case RubyLambda(args, body): printLambda(args, body);
 			case RubyCall(receiver, name, args):
 				var printedArgs = args == null ? "" : [for (arg in args) printExpr(arg)].join(", ");
 				receiver == null ? name + "(" + printedArgs + ")" : printExpr(receiver)
@@ -102,6 +110,21 @@ class RubyASTPrinter {
 		for (statement in body) {
 			writeStatement(lines, statement, indentLevel);
 		}
+	}
+
+	static function printLambda(args:Array<String>, body:Array<RubyStatement>):String {
+		var printedArgs = args == null ? "" : args.join(", ");
+		if (body != null && body.length == 1) {
+			switch (body[0]) {
+				case RubyExprStatement(expr):
+					return "->(" + printedArgs + ") { " + printExpr(expr) + " }";
+				case _:
+			}
+		}
+		var lines = ["->(" + printedArgs + ") do"];
+		writeBody(lines, body, 1);
+		lines.push("end");
+		return lines.join("\n");
 	}
 
 	static function indentation(level:Int):String {

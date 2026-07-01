@@ -2531,7 +2531,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TUnop(op, _, inner): RubyUnary(unopToRuby(op), compileExpr(inner));
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): compileExpr(inner);
 			case TFunction(fn):
-				RubyLambda([for (arg in fn.args) localName(arg.v)], lambdaBody(fn.expr));
+				RubyLambda([for (arg in fn.args) localName(arg.v)], compileRubyBlockBody(fn.expr));
 			case TNew(classRef, _, params):
 				var classType = classRef.get();
 				RubyCall(RubyLocal(coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType)),
@@ -13112,17 +13112,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function rubyConditionalExpr(cond:String, thenExpr:String, elseExpr:String):String {
 		return "(" + cond + " ? " + thenExpr + " : " + elseExpr + ")";
-	}
-
-	static function lambdaBody(expr:TypedExpr):String {
-		return switch (expr.expr) {
-			case TReturn(value):
-				value == null ? "nil" : printInlineExpr(value);
-			case TBlock(exprs) if (exprs.length > 0):
-				lambdaBody(exprs[exprs.length - 1]);
-			case _:
-				printInlineExpr(expr);
-		}
 	}
 
 	static function quoteRubyStringForCode(value:String):String {
