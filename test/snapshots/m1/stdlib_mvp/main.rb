@@ -172,7 +172,7 @@ class Main
     names.set("ruby", 3)
     puts(HXRuby.stringify(names.get("ruby")))
     puts(HXRuby.stringify(names.exists("ruby")))
-    puts(HXRuby.stringify(HXRuby.array_remove(names, "ruby")))
+    puts(HXRuby.stringify(names.remove("ruby")))
     puts(HXRuby.stringify(names.exists("ruby")))
     names.set("ruby", 3)
     names.set("haxe", 4)
@@ -190,7 +190,7 @@ class Main
       key_chars = (key_chars + key__hx1.length)
     end
     puts(HXRuby.stringify(key_chars))
-    names_copy = names.dup()
+    names_copy = names.copy()
     puts(HXRuby.stringify(names_copy.get("haxe")))
     ids = Haxe::Ds::IntMap.new()
     ids.set(7, "seven")

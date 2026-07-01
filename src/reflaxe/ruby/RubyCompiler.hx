@@ -2633,7 +2633,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					+ "."
 					+ (isMethodField(field) ? 'method(:${rubyFieldName(field.name, field.meta)})' : rubyFieldName(field.name,
 						field.meta))) : RubyRawExpr(constant);
-			case TField(target, access) if (fieldAccessRawName(access) == "keyValueIterator" && isArrayReceiverFieldAccess(access)):
+			case TField(target, access) if (fieldAccessRawName(access) == "keyValueIterator"
+				&& isArrayReceiverFieldAccess(target, access)):
 				var iteratorExpr = hxrubyCall("native_iterator", [hxrubyCall("array_key_value_entries", [compileExpr(target)])]);
 				RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr) + " }");
 			case TField(target, FAnon(fieldRef)):
@@ -3330,7 +3331,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileArrayCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
-			case TField(target, access) if (isArrayReceiverFieldAccess(access)):
+			case TField(target, access) if (isArrayReceiverFieldAccess(target, access)):
 				var receiver = compileExpr(target);
 				switch (fieldAccessRawName(access)) {
 					case "concat":
@@ -12590,13 +12591,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function isArrayReceiverFieldAccess(access:haxe.macro.Type.FieldAccess):Bool {
-		return isArrayFieldAccess(access) || switch (access) {
-			case FStatic(_, _) | FEnum(_, _):
+	static function isArrayReceiverFieldAccess(target:TypedExpr, access:haxe.macro.Type.FieldAccess):Bool {
+		if (isArrayFieldAccess(access) || isArrayExpr(target)) {
+			return true;
+		}
+		if (!isKnownArrayMethod(fieldAccessRawName(access))) {
+			return false;
+		}
+		return switch (access) {
+			case FDynamic(_):
+				true;
+			case FAnon(_) | FClosure(_, _): isDynamicExpr(target) || fieldAccessRawName(access) == "keyValueIterator";
+			case FInstance(_, _, _) | FStatic(_, _) | FEnum(_, _):
 				false;
-			case _:
-				isKnownArrayMethod(fieldAccessRawName(access));
-		}}
+		}
+	}
+
+	static function isDynamicExpr(expr:TypedExpr):Bool {
+		return switch (TypeTools.follow(expr.t)) {
+			case TDynamic(_): true;
+			case _: false;
+		}
+	}
 
 	static function isKnownArrayMethod(name:String):Bool {
 		return switch (name) {
