@@ -327,18 +327,18 @@ end)
           diagnostics = []
           if (expected.name != nil)
             named = begin
-  g = []
-  g1 = 0
-g2 = routes
-while (g1 < g2.length)
-  v = g2[g1]
-  g1 = (g1 + 1)
-  if (v.prefix == expected.name)
-    HXRuby.array_push(g, v)
-  end
-end
-  g
-end
+              g = []
+              g1 = 0
+            g2 = routes
+            while (g1 < g2.length)
+              v = g2[g1]
+              g1 = (g1 + 1)
+              if (v.prefix == expected.name)
+                HXRuby.array_push(g, v)
+              end
+            end
+              g
+            end
             if ((named.length > 0) && (!Hxruby::Generators::Routes::ParityCore.any(named, ->(route__hx1) { (route__hx1.verb == expected.verb) })))
               HXRuby.array_push(diagnostics, Hxruby::Generators::Routes::ParityCore.wrong_verb(expected, named))
             end
@@ -347,18 +347,18 @@ end
             end
           end
           same_path_verb = begin
-  g__hx1 = []
-  g1__hx1 = 0
-g2__hx1 = routes
-while (g1__hx1 < g2__hx1.length)
-  v__hx1 = g2__hx1[g1__hx1]
-  g1__hx1 = (g1__hx1 + 1)
-  if ((v__hx1.path == expected.path) && (v__hx1.verb == expected.verb))
-    HXRuby.array_push(g__hx1, v__hx1)
-  end
-end
-  g__hx1
-end
+            g__hx1 = []
+            g1__hx1 = 0
+          g2__hx1 = routes
+          while (g1__hx1 < g2__hx1.length)
+            v__hx1 = g2__hx1[g1__hx1]
+            g1__hx1 = (g1__hx1 + 1)
+            if ((v__hx1.path == expected.path) && (v__hx1.verb == expected.verb))
+              HXRuby.array_push(g__hx1, v__hx1)
+            end
+          end
+            g__hx1
+          end
           if (((expected.target != nil) && (same_path_verb.length > 0)) && (!Hxruby::Generators::Routes::ParityCore.any(same_path_verb, ->(route__hx4) { (route__hx4.target == expected.target) })))
             HXRuby.array_push(diagnostics, Hxruby::Generators::Routes::ParityCore.wrong_target(expected, same_path_verb))
           end
