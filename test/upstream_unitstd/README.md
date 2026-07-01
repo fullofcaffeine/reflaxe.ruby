@@ -26,23 +26,26 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `Array`, `Date`, `IntIterator`, `Lambda`, `Math`, `String`, `StringBuf`,
-  `StringTools`, `haxe.io.BytesBuffer`.
+- Enabled: `Array`, `Date`, `EReg`, `IntIterator`, `Lambda`, `Math`, `String`,
+  `StringBuf`, `StringTools`, `haxe.io.BytesBuffer`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
-- Tracked but staged: `EReg` and `Map`. These have upstream fixtures in
-  the local reference checkout, but they also expose wider Ruby target semantics
-  such as regexp replacement/group behavior and map key identity/order. Keep
-  them in the manifest until each is enabled or split into a focused follow-up.
-  Current focused follow-ups are `haxe.ruby-bjv.27` (`EReg`) and
-  `haxe.ruby-bjv.28` (`Map`).
+- Tracked but staged: `Map`. It has an upstream fixture in the local reference
+  checkout, but also exposes wider Ruby target semantics such as key
+  identity/order. Keep it in the manifest until it is enabled or split into a
+  focused follow-up. The current focused follow-up is `haxe.ruby-bjv.28`.
 
 `Date` is enabled directly. The Ruby lane models Haxe `Date` as a small wrapper
 around Ruby `Time`: local constructors and component getters use local time,
 UTC getters use `getutc`, `getTimezoneOffset()` follows the JavaScript/Haxe
 minute offset sign, and `Date.fromString()` accepts the exact upstream Haxe
 date-time, date-only, and UTC time-only shapes through generated Ruby.
+
+`EReg` is enabled directly. The Ruby lane wraps Ruby `Regexp` while preserving
+Haxe stateful match accessors, non-global versus global split/replace/map
+behavior, `$1`/`$$` replacement expansion, capture-group access, `matchSub`
+offsets, and `EReg.escape()`.
 
 `Lambda` is enabled directly. It exercises the Ruby-first iterator bridge:
 generated `.iterator()` calls use a compact runtime helper that delegates to

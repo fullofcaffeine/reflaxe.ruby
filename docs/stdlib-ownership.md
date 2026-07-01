@@ -74,15 +74,14 @@ layer over editing the fixture. If a fixture must be adapted or skipped for a
 Ruby-specific reason, record that decision in the manifest with a short reason.
 
 The current baseline intentionally enables a focused set of fixtures and tracks
-broader high-leverage fixtures separately. `Array`, `IntIterator`, `Lambda`,
-`Math`, `String`, `StringBuf`, `StringTools`, and `haxe.io.BytesBuffer` run
-directly; `Std` runs through an adapted fixture because upstream assertion
-syntax and duplicate local names need macro-lane accommodation. `Date`, `EReg`,
-and `Map` remain manifest-tracked follow-ups rather than silent omissions
-because they expose larger Ruby semantic questions such as timezone behavior,
-regexp replacement/group behavior, and map key identity/order. Focused
-follow-ups now own those remaining fixtures: `haxe.ruby-bjv.26` (`Date`),
-`haxe.ruby-bjv.27` (`EReg`), and `haxe.ruby-bjv.28` (`Map`).
+broader high-leverage fixtures separately. `Array`, `Date`, `EReg`,
+`IntIterator`, `Lambda`, `Math`, `String`, `StringBuf`, `StringTools`, and
+`haxe.io.BytesBuffer` run directly; `Std` runs through an adapted fixture
+because upstream assertion syntax and duplicate local names need macro-lane
+accommodation. `Map` remains a manifest-tracked follow-up rather than a silent
+omission because it exposes larger Ruby semantic questions around key
+identity/order. The focused follow-up for that remaining fixture is
+`haxe.ruby-bjv.28`.
 
 `Lambda` is enabled as a direct upstream fixture. It locks in the Ruby-first
 iterator bridge for native arrays plus Haxe iterator-bearing objects, and the
@@ -94,6 +93,16 @@ exercises Ruby lowering for Haxe array mutation and copy semantics,
 slice/splice/index bounds, comparator method references, dynamic Array calls,
 anonymous object field reads inside callbacks, sparse resize contents, and
 key/value iterator surfaces.
+
+`Date` is enabled as a direct upstream fixture. It models Haxe `Date` with Ruby
+`Time`, preserving local constructor/getter behavior, UTC getter behavior,
+timezone offset sign, millisecond timestamps, and the accepted Haxe
+`fromString()` input shapes.
+
+`EReg` is enabled as a direct upstream fixture. It wraps Ruby `Regexp` while
+preserving Haxe stateful match accessors, `matchSub` offsets, global versus
+non-global split/replace/map behavior, capture expansion with `$1`/`$$`, and
+`EReg.escape()`.
 
 ## Current Baseline
 

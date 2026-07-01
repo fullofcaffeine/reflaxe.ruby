@@ -3393,7 +3393,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileStringCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
-			case TField(target, access) if (isStringExpr(target) || (!isArrayFieldAccess(access) && isStringReceiverFieldAccess(access))):
+			case TField(target, access)
+				if (isStringExpr(target)
+					|| (!isArrayFieldAccess(access) && isStringReceiverFieldAccess(access) && !isNonStringInstanceFieldAccess(access))):
 				var receiver = printInlineExpr(target);
 				switch (fieldAccessRawName(access)) {
 					case "substr" if (params.length == 1):
@@ -3452,6 +3454,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				false;
 			case _:
 				isKnownStringMethod(fieldAccessRawName(access));
+		}
+	}
+
+	static function isNonStringInstanceFieldAccess(access:haxe.macro.Type.FieldAccess):Bool {
+		return switch (access) {
+			case FInstance(classRef, _, _):
+				var classType = classRef.get();
+				fullTypeName(classType.pack, classType.name) != "String";
+			case _:
+				false;
 		}
 	}
 

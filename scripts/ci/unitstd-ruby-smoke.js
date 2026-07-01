@@ -34,7 +34,7 @@ if (!compileWithFirstAvailableReflaxe()) {
   process.exit(1);
 }
 
-for (const file of ["hxruby/core.rb", "main.rb", "run.rb"]) {
+for (const file of ["e_reg.rb", "hxruby/core.rb", "main.rb", "run.rb"]) {
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     console.error(`Expected generated Ruby file missing: ${fullPath}`);
@@ -51,6 +51,7 @@ if (actual !== "unitstd-ruby ok\n") {
 }
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
+const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
 for (const expectedShape of [
   "StringBuf.new()",
   ".chr(Encoding::UTF_8)",
@@ -59,6 +60,16 @@ for (const expectedShape of [
 ]) {
   if (!mainRuby.includes(expectedShape)) {
     console.error(`Expected generated unitstd Ruby shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of [
+  "Regexp.new(pattern, flags)",
+  "def self.expand_replacement(by, match)",
+  "def match_sub(s, pos, len = nil)",
+]) {
+  if (!eRegRuby.includes(expectedShape)) {
+    console.error(`Expected generated EReg Ruby shape missing: ${expectedShape}`);
     process.exit(1);
   }
 }

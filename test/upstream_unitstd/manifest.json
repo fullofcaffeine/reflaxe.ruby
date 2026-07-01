@@ -11,7 +11,7 @@
   "modules": [
     {"module": "Array", "status": "enabled", "source": "Array.unit.hx", "fixture": "test/upstream_unitstd/upstream/Array.unit.hx"},
     {"module": "Date", "status": "enabled", "source": "Date.unit.hx", "fixture": "test/upstream_unitstd/upstream/Date.unit.hx"},
-    {"module": "EReg", "status": "skipped-target-specific", "source": "EReg.unit.hx", "reason": "Follow-up haxe.ruby-bjv.27 owns enabling after Ruby Regexp replacement, capture group, state, and global-match semantics are triaged."},
+    {"module": "EReg", "status": "enabled", "source": "EReg.unit.hx", "fixture": "test/upstream_unitstd/upstream/EReg.unit.hx"},
     {"module": "IntIterator", "status": "enabled", "source": "IntIterator.unit.hx", "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx"},
     {"module": "Lambda", "status": "enabled", "source": "Lambda.unit.hx", "fixture": "test/upstream_unitstd/upstream/Lambda.unit.hx"},
     {"module": "Map", "status": "skipped-target-specific", "source": "Map.unit.hx", "reason": "Follow-up haxe.ruby-bjv.28 owns enabling after StringMap, IntMap, ObjectMap, helper dependencies, and key identity/order semantics are triaged."},

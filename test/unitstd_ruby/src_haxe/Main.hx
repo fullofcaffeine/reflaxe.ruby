@@ -11,6 +11,7 @@ class Main {
 	static function main():Void {
 		UpstreamUnitStdMacro.assertSpec("Array.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Date.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("EReg.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("StringBuf.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("IntIterator.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("String.unit.hx");
@@ -19,6 +20,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("Math.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
+		unitstd_ruby.ERegSemantics.run();
 		unitstd_ruby.StdNumericParsing.run();
 		Sys.println("unitstd-ruby ok");
 	}
