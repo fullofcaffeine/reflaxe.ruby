@@ -22,6 +22,12 @@ true
 true
 false
 true
+ruby
+3
+true
+{"name":"ruby","count":2}
+["ruby",null,true]
+true
 typed
 true
 true

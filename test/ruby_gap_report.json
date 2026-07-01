@@ -3,8 +3,8 @@
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
     "total": 202,
-    "implemented": 199,
-    "missing": 3,
+    "implemented": 200,
+    "missing": 2,
     "planned": 0,
     "deferred": 0,
     "byOwner": {
@@ -24,22 +24,14 @@
       },
       "std/_std": {
         "total": 8,
-        "implemented": 5,
-        "missing": 3,
+        "implemented": 6,
+        "missing": 2,
         "planned": 0,
         "deferred": 0
       }
     }
   },
   "gaps": [
-    {
-      "id": "std.json",
-      "owner": "std/_std",
-      "status": "missing",
-      "path": "std/_std/haxe/Json.cross.hx",
-      "surface": "haxe.Json",
-      "reason": "Use Ruby JSON runtime while preserving Haxe API."
-    },
     {
       "id": "std.sys.file",
       "owner": "std/_std",

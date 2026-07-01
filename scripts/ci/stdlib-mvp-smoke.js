@@ -52,6 +52,53 @@ if (actual !== expected) {
   process.exit(1);
 }
 
+const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
+const haxeJsonRuby = readFileSync(join(outputDir, "haxe", "json.rb"), "utf8");
+for (const expectedJsonShape of [
+  'require "json"',
+  "JSON.parse(text)",
+  "JSON.generate(value)",
+  "JSON.pretty_generate(value, indent: space)",
+]) {
+  if (!runRuby.includes(expectedJsonShape) && !haxeJsonRuby.includes(expectedJsonShape)) {
+    console.error(`Expected haxe.Json Ruby shape missing: ${expectedJsonShape}`);
+    console.error(haxeJsonRuby);
+    process.exit(1);
+  }
+}
+for (const forbiddenJsonShape of ["HXRuby.json_parse", "HXRuby.json_stringify"]) {
+  if (haxeJsonRuby.includes(forbiddenJsonShape)) {
+    console.error(`haxe.Json should use Ruby JSON directly, not ${forbiddenJsonShape}.`);
+    console.error(haxeJsonRuby);
+    process.exit(1);
+  }
+}
+
+const jsonFailureProbe = run("ruby", ["-e", [
+  `$LOAD_PATH.unshift(${JSON.stringify(outputDir)})`,
+  `require "json"`,
+  `require_relative ${JSON.stringify(join(outputDir, "hxruby", "core"))}`,
+  `require_relative ${JSON.stringify(join(outputDir, "hxruby", "hx_exception"))}`,
+  `require_relative ${JSON.stringify(join(outputDir, "haxe", "json"))}`,
+  `begin`,
+  `  Haxe::Json.parse("{")`,
+  `  puts "missing parser error"`,
+  `rescue JSON::ParserError`,
+  `  puts "parser error"`,
+  `end`,
+  `begin`,
+  `  Haxe::Json.stringify({"name" => "ruby"}, ->(_key, value) { value })`,
+  `  puts "missing replacer error"`,
+  `rescue HxException`,
+  `  puts "replacer error"`,
+  `end`,
+].join("\n")]).stdout;
+if (jsonFailureProbe !== "parser error\nreplacer error\n") {
+  console.error("haxe.Json failure probe mismatch");
+  console.error(`actual: ${JSON.stringify(jsonFailureProbe)}`);
+  process.exit(1);
+}
+
 const mathRuby = readFileSync(join(outputDir, "math.rb"), "utf8");
 for (const expectedMathShape of [
   /def self\.abs\(v\)\n\s+return v\.abs/,

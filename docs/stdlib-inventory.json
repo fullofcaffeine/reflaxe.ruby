@@ -1561,7 +1561,7 @@
     {
       "id": "std.json",
       "owner": "std/_std",
-      "status": "missing",
+      "status": "implemented",
       "path": "std/_std/haxe/Json.cross.hx",
       "surface": "haxe.Json",
       "reason": "Use Ruby JSON runtime while preserving Haxe API."

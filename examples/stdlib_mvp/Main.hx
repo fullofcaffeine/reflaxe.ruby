@@ -35,6 +35,13 @@ class Main {
 		Sys.println(Math.isNaN(Math.sqrt(-1)));
 		Sys.println(Math.isFinite(Math.POSITIVE_INFINITY));
 		Sys.println(Std.random(10) >= 0);
+		var parsedJson:Dynamic = haxe.Json.parse("{\"name\":\"ruby\",\"count\":2,\"items\":[1,null,true]}");
+		Sys.println(Reflect.field(parsedJson, "name"));
+		Sys.println(Reflect.field(parsedJson, "count") + 1);
+		Sys.println(Reflect.field(parsedJson, "items")[1] == null);
+		Sys.println(haxe.Json.stringify({name: "ruby", count: 2}));
+		Sys.println(haxe.Json.stringify(["ruby", null, true]));
+		Sys.println(StringTools.contains(haxe.Json.stringify({nested: {ok: true}}, null, "  "), "\n  \"nested\""));
 		Sys.putEnv("HXRUBY_STDLIB_MVP", "typed");
 		Sys.println(Sys.getEnv("HXRUBY_STDLIB_MVP"));
 		Sys.println(Sys.getCwd().length > 0);
