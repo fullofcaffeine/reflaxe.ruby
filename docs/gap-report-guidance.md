@@ -58,15 +58,13 @@ Ruby core classes or leave the fixture untracked.
 
 As of the current report:
 
-- Total tracked surfaces: `31`
-- Implemented: `27`
-- Missing: `4`
+- Total tracked surfaces: `202`
+- Implemented: `202`
+- Missing: `0`
 
-Remaining gaps are concentrated in general stdlib parity:
-
-- `haxe.Json`
-- `Reflect`
-- `sys.FileSystem`
-- `sys.io.File`
-
-Rails MVP surfaces are tracked as implemented. New Rails or Ruby interop APIs should still get inventory entries so the report stays useful as a release-readiness artifact.
+The report is currently green with no missing tracked std/runtime surfaces. New
+Rails, Ruby interop, Haxe std override, or runtime APIs should still get
+inventory entries so the report stays useful as a release-readiness artifact.
+When upstream Haxe has a matching `unitstd` fixture, update
+`test/upstream_unitstd/manifest.json` at the same time so runtime parity and
+inventory coverage do not drift.

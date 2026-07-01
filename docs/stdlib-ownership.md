@@ -73,6 +73,17 @@ upstream fixture exposes a real target gap, prefer fixing the compiler/std/runti
 layer over editing the fixture. If a fixture must be adapted or skipped for a
 Ruby-specific reason, record that decision in the manifest with a short reason.
 
+The current baseline intentionally enables a narrow set of fixtures and tracks
+broader high-leverage fixtures separately. `IntIterator`, `Math`, `String`,
+`StringBuf`, `StringTools`, and `haxe.io.BytesBuffer` run directly; `Std` runs
+through an adapted fixture because upstream assertion syntax and duplicate local
+names need macro-lane accommodation. `Array`, `Date`, `EReg`, `Lambda`, and
+`Map` remain manifest-tracked follow-ups rather than silent omissions because
+they expose larger Ruby semantic questions such as structural array equality,
+timezone behavior, regexp replacement/group behavior, collection class names,
+and map key identity/order. Enable those fixture-by-fixture with focused std
+fixes and runtime/snapshot coverage under `haxe.ruby-bjv.20`.
+
 ## Current Baseline
 
 The repo now has committed stdlib and runtime surfaces for the Ruby/Rails MVP:

@@ -28,6 +28,15 @@ Current upstream runtime fixtures:
 
 - Enabled: `IntIterator`, `Math`, `String`, `StringBuf`, `StringTools`,
   `haxe.io.BytesBuffer`.
+- Adapted: `Std`. The local copy preserves the upstream assertions that matter
+  for this lane, while avoiding macro-expansion local-name collisions and
+  ignoring upstream `unspec(...)` markers.
+- Tracked but staged: `Array`, `Date`, `EReg`, `Lambda`, and `Map`. These have
+  upstream fixtures in the local reference checkout, but they also expose wider
+  Ruby target semantics such as array structural equality/mutation, Ruby
+  timezone behavior, regexp replacement/group behavior, collection class names,
+  and map key identity/order. Keep them in the manifest until each is enabled
+  under `haxe.ruby-bjv.20` or split into a focused follow-up.
 
 The first lane is intentionally narrow. It proves the harness, provenance, sync
 workflow, and runtime execution shape without pretending broad Ruby stdlib parity
