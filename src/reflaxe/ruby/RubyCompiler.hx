@@ -257,6 +257,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			return null;
 		}
+		if (isErasedSysStdFacade(classType)) {
+			collectModuleRequires(classType.meta);
+			return null;
+		}
 		if (buildContext.railsMode && shouldSuppressRailsRubyType(classType, varFields, funcFields)) {
 			return null;
 		}
@@ -388,6 +392,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (hasRubyNoEmit(enumType.meta)) {
 			return null;
 		}
+		if (isErasedSysStdPack(enumType.pack)) {
+			requireRegistry.collectMeta(enumType.meta);
+			return null;
+		}
 		if (buildContext.railsMode && isCompilerOwnedSupportType(enumType.pack, enumType.name)) {
 			return null;
 		}
@@ -422,6 +430,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return null;
 		}
 		if (hasRubyNoEmit(abstractType.meta)) {
+			return null;
+		}
+		if (isErasedSysStdPack(abstractType.pack)) {
+			requireRegistry.collectMeta(abstractType.meta);
 			return null;
 		}
 		if (buildContext.railsMode) {
@@ -944,6 +956,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return true;
 		}
 		return pack.length > 0 && pack[0] == "reflaxe";
+	}
+
+	static function isErasedSysStdFacade(classType:ClassType):Bool {
+		// Haxe has both a top-level `Sys` class and a lowercase `sys.*` package.
+		// Ruby constants cannot represent both as `Sys`, so sys.* std facades
+		// must inline/direct-lower instead of emitting runtime namespace shells.
+		return isErasedSysStdPack(classType.pack);
+	}
+
+	static function isErasedSysStdPack(pack:Array<String>):Bool {
+		return pack.length > 0 && pack[0] == "sys";
 	}
 
 	static function isDeviseHxMetadataContract(varFields:Array<ClassVarData>):Bool {

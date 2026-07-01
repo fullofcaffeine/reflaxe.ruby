@@ -42,6 +42,58 @@ class Main {
 		Sys.println(haxe.Json.stringify({name: "ruby", count: 2}));
 		Sys.println(haxe.Json.stringify(["ruby", null, true]));
 		Sys.println(StringTools.contains(haxe.Json.stringify({nested: {ok: true}}, null, "  "), "\n  \"nested\""));
+		// Strict snapshot builds focus on app-authored raw-boundary checks. The
+		// runtime smoke below still exercises sys.* direct Ruby std lowering.
+		#if !reflaxe_ruby_strict_examples
+		var fsRoot = "test/.generated/stdlib_mvp/fs_probe";
+		var fsNested = fsRoot + "/nested";
+		var fsFile = fsNested + "/note.txt";
+		var fsCopy = fsNested + "/copy.txt";
+		var fsRenamed = fsNested + "/renamed.txt";
+		var fsBytes = fsNested + "/bytes.bin";
+		if (sys.FileSystem.exists(fsRenamed)) {
+			sys.FileSystem.deleteFile(fsRenamed);
+		}
+		if (sys.FileSystem.exists(fsCopy)) {
+			sys.FileSystem.deleteFile(fsCopy);
+		}
+		if (sys.FileSystem.exists(fsFile)) {
+			sys.FileSystem.deleteFile(fsFile);
+		}
+		if (sys.FileSystem.exists(fsBytes)) {
+			sys.FileSystem.deleteFile(fsBytes);
+		}
+		if (sys.FileSystem.exists(fsNested)) {
+			sys.FileSystem.deleteDirectory(fsNested);
+		}
+		if (sys.FileSystem.exists(fsRoot)) {
+			sys.FileSystem.deleteDirectory(fsRoot);
+		}
+		sys.FileSystem.createDirectory(fsNested);
+		sys.io.File.saveContent(fsFile, "typed fs");
+		Sys.println(sys.FileSystem.exists(fsFile));
+		Sys.println(sys.FileSystem.isDirectory(fsNested));
+		Sys.println(sys.io.File.getContent(fsFile));
+		var fsStat = sys.FileSystem.stat(fsFile);
+		Sys.println(fsStat.size);
+		Sys.println(sys.FileSystem.absolutePath(fsFile).length > fsFile.length);
+		Sys.println(sys.FileSystem.fullPath(fsFile).length > fsFile.length);
+		sys.io.File.copy(fsFile, fsCopy);
+		Sys.println(sys.io.File.getContent(fsCopy));
+		sys.io.File.saveBytes(fsBytes, haxe.io.Bytes.ofString("bin"));
+		Sys.println(sys.io.File.getBytes(fsBytes).toString());
+		var fsEntries = sys.FileSystem.readDirectory(fsNested);
+		Sys.println(fsEntries.indexOf("note.txt") >= 0);
+		sys.FileSystem.rename(fsFile, fsRenamed);
+		Sys.println(sys.FileSystem.exists(fsRenamed));
+		Sys.println(!sys.FileSystem.exists(fsFile));
+		sys.FileSystem.deleteFile(fsRenamed);
+		sys.FileSystem.deleteFile(fsCopy);
+		sys.FileSystem.deleteFile(fsBytes);
+		sys.FileSystem.deleteDirectory(fsNested);
+		sys.FileSystem.deleteDirectory(fsRoot);
+		Sys.println(!sys.FileSystem.exists(fsRoot));
+		#end
 		Sys.putEnv("HXRUBY_STDLIB_MVP", "typed");
 		Sys.println(Sys.getEnv("HXRUBY_STDLIB_MVP"));
 		Sys.println(Sys.getCwd().length > 0);

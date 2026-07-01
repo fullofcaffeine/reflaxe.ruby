@@ -47,6 +47,13 @@ class Bytes {
 		return new Bytes(len, [for (i in 0...len) get(pos + i)]);
 	}
 
+	public function getString(pos:Int, len:Int, ?encoding:Encoding):String {
+		if (pos < 0 || len < 0 || pos + len > length) {
+			throw Error.OutsideBounds;
+		}
+		return sub(pos, len).toString();
+	}
+
 	public function getInt32(pos:Int):Int {
 		return untyped __ruby__("{0}.slice({1}, 4).pack('C*').unpack1('l<')", data, pos);
 	}

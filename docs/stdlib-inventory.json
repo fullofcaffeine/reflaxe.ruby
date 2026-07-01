@@ -1609,7 +1609,7 @@
     {
       "id": "std.sys.filesystem",
       "owner": "std/_std",
-      "status": "missing",
+      "status": "implemented",
       "path": "std/_std/sys/FileSystem.hx",
       "surface": "sys.FileSystem",
       "reason": "Filesystem primitives backed by Ruby File, Dir, and FileUtils."
@@ -1617,7 +1617,7 @@
     {
       "id": "std.sys.file",
       "owner": "std/_std",
-      "status": "missing",
+      "status": "implemented",
       "path": "std/_std/sys/io/File.hx",
       "surface": "sys.io.File",
       "reason": "File read/write APIs backed by Ruby IO."

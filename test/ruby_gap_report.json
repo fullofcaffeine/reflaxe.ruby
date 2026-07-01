@@ -3,8 +3,8 @@
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
     "total": 202,
-    "implemented": 200,
-    "missing": 2,
+    "implemented": 202,
+    "missing": 0,
     "planned": 0,
     "deferred": 0,
     "byOwner": {
@@ -24,29 +24,12 @@
       },
       "std/_std": {
         "total": 8,
-        "implemented": 6,
-        "missing": 2,
+        "implemented": 8,
+        "missing": 0,
         "planned": 0,
         "deferred": 0
       }
     }
   },
-  "gaps": [
-    {
-      "id": "std.sys.file",
-      "owner": "std/_std",
-      "status": "missing",
-      "path": "std/_std/sys/io/File.hx",
-      "surface": "sys.io.File",
-      "reason": "File read/write APIs backed by Ruby IO."
-    },
-    {
-      "id": "std.sys.filesystem",
-      "owner": "std/_std",
-      "status": "missing",
-      "path": "std/_std/sys/FileSystem.hx",
-      "surface": "sys.FileSystem",
-      "reason": "Filesystem primitives backed by Ruby File, Dir, and FileUtils."
-    }
-  ]
+  "gaps": []
 }

@@ -53,6 +53,7 @@ if (actual !== expected) {
 }
 
 const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
+const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 const haxeJsonRuby = readFileSync(join(outputDir, "haxe", "json.rb"), "utf8");
 for (const expectedJsonShape of [
   'require "json"',
@@ -97,6 +98,43 @@ if (jsonFailureProbe !== "parser error\nreplacer error\n") {
   console.error("haxe.Json failure probe mismatch");
   console.error(`actual: ${JSON.stringify(jsonFailureProbe)}`);
   process.exit(1);
+}
+
+for (const erasedSysFile of ["sys/file_system.rb", "sys/io/file.rb"]) {
+  if (existsSync(join(outputDir, erasedSysFile))) {
+    console.error(`sys.* std facades should inline/direct-lower, not emit ${erasedSysFile}.`);
+    process.exit(1);
+  }
+}
+if (existsSync(join(outputDir, "sys"))) {
+  console.error("sys.* std facades should not emit a nested sys/ runtime namespace.");
+  process.exit(1);
+}
+for (const expectedFileShape of [
+  "::File.write(",
+  "::File.read(",
+  "::File.stat(",
+  "::File.expand_path(",
+  "::File.realpath(",
+  "::FileUtils.mkdir_p(",
+  "::FileUtils.copy_file(",
+  "::File.binread(",
+  "::File.binwrite(",
+  "::Dir.children(",
+  "::Dir.rmdir(",
+]) {
+  if (!mainRuby.includes(expectedFileShape)) {
+    console.error(`Expected direct Ruby file-system shape missing: ${expectedFileShape}`);
+    console.error(mainRuby);
+    process.exit(1);
+  }
+}
+for (const forbiddenSysShape of ["Sys::FileSystem", "Sys::Io::File_", "HXRuby.file_"]) {
+  if (mainRuby.includes(forbiddenSysShape) || runRuby.includes(`require_relative "${forbiddenSysShape}"`)) {
+    console.error(`sys.* output should not depend on ${forbiddenSysShape}.`);
+    console.error(mainRuby);
+    process.exit(1);
+  }
 }
 
 const mathRuby = readFileSync(join(outputDir, "math.rb"), "utf8");
