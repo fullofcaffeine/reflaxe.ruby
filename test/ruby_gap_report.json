@@ -3,8 +3,8 @@
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
     "total": 202,
-    "implemented": 198,
-    "missing": 4,
+    "implemented": 199,
+    "missing": 3,
     "planned": 0,
     "deferred": 0,
     "byOwner": {
@@ -17,8 +17,8 @@
       },
       "std": {
         "total": 191,
-        "implemented": 190,
-        "missing": 1,
+        "implemented": 191,
+        "missing": 0,
         "planned": 0,
         "deferred": 0
       },
@@ -39,14 +39,6 @@
       "path": "std/_std/haxe/Json.cross.hx",
       "surface": "haxe.Json",
       "reason": "Use Ruby JSON runtime while preserving Haxe API."
-    },
-    {
-      "id": "std.reflect",
-      "owner": "std",
-      "status": "missing",
-      "path": "std/Reflect.cross.hx",
-      "surface": "Reflect",
-      "reason": "Dynamic field access and method calls for Ruby objects."
     },
     {
       "id": "std.sys.file",

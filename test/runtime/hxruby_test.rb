@@ -31,6 +31,36 @@ class TestClassWithToString
   end
 end
 
+class TestReflectBox
+  attr_accessor :label
+
+  def initialize(label)
+    @label = label
+  end
+
+  def get_label
+    "get:#{label}"
+  end
+
+  def set_label(value)
+    self.label = "set:#{value}"
+  end
+
+  def describe(prefix)
+    "#{prefix}:#{label}"
+  end
+
+  def ping
+    "pong:#{label}"
+  end
+end
+
+class TestReflectStatics
+  def self.answer
+    42
+  end
+end
+
 class HXRubyRuntimeTest < Minitest::Test
   def test_stringify_matches_haxe_basics
     assert_equal "null", HXRuby.stringify(nil)
@@ -143,6 +173,58 @@ class HXRubyRuntimeTest < Minitest::Test
     assert HXRuby.is_of_type(TestInterfaceImplementor.new, TestInterfaceForTypeCheck)
     assert HXRuby.is_of_type(TestEnumForTypeCheck::Happy.new("Happy", 0), TestEnumForTypeCheck)
     refute HXRuby.is_of_type(nil, Dynamic)
+  end
+
+  def test_reflect_hash_fields_and_copy
+    object = { "name" => "ruby", count: nil }
+
+    assert HXRuby.reflect_has_field(object, "name")
+    assert HXRuby.reflect_has_field(object, "count")
+    assert_equal "ruby", HXRuby.reflect_field(object, "name")
+    assert_nil HXRuby.reflect_field(object, "count")
+
+    HXRuby.reflect_set_field(object, "name", "haxe")
+    assert_equal "haxe", HXRuby.reflect_field(object, "name")
+    assert_equal %w[count name], HXRuby.reflect_fields(object)
+
+    copy = HXRuby.reflect_copy(object)
+    HXRuby.reflect_set_field(copy, "name", "ruby")
+    assert_equal "haxe", HXRuby.reflect_field(object, "name")
+    assert_equal "ruby", HXRuby.reflect_field(copy, "name")
+
+    assert HXRuby.reflect_delete_field(object, "count")
+    refute HXRuby.reflect_has_field(object, "count")
+    refute HXRuby.reflect_delete_field(object, "missing")
+  end
+
+  def test_reflect_object_fields_properties_and_methods
+    box = TestReflectBox.new("typed")
+
+    assert HXRuby.reflect_has_field(box, "label")
+    assert_equal "typed", HXRuby.reflect_field(box, "label")
+    HXRuby.reflect_set_field(box, "label", "updated")
+    assert_equal "get:updated", HXRuby.reflect_get_property(box, "label")
+    HXRuby.reflect_set_property(box, "label", "property")
+    assert_equal "set:property", box.label
+    assert_equal "box:set:property", HXRuby.reflect_call_method(box, HXRuby.reflect_field(box, "describe"), ["box"])
+    assert_equal "pong:set:property", HXRuby.reflect_call_method(box, HXRuby.reflect_field(box, "ping"), [])
+    assert_includes HXRuby.reflect_fields(box), "describe"
+  end
+
+  def test_reflect_predicates_and_type_field_lists
+    box = TestReflectBox.new("typed")
+    method = HXRuby.reflect_field(box, "describe")
+    var_args = HXRuby.reflect_make_var_args(->(values) { values.sum })
+
+    assert_equal 6, var_args.call(1, 2, 3)
+    assert HXRuby.reflect_is_function(var_args)
+    assert_operator HXRuby.reflect_compare(1, 2), :<, 0
+    assert HXRuby.reflect_compare_methods(method, HXRuby.reflect_field(box, "describe"))
+    assert HXRuby.reflect_is_object(box)
+    refute HXRuby.reflect_is_object("no")
+    assert HXRuby.reflect_is_enum_value(TestEnumForTypeCheck::Happy.new("Happy", 0))
+    assert_includes HXRuby.type_instance_fields(TestReflectBox), "describe"
+    assert_includes HXRuby.type_class_fields(TestReflectStatics), "answer"
   end
 
   def test_math_helpers_preserve_haxe_shapes

@@ -80,6 +80,36 @@ class Main {
 		Sys.println(Type.enumConstructor(Type.typeof(1.5)));
 		Sys.println(Type.enumConstructor(Type.typeof(true)));
 		Sys.println(Type.enumConstructor(Type.typeof(StdTypeColor.Red)));
+		var reflected:Dynamic = {name: "ruby", count: 2};
+		Sys.println(Reflect.hasField(reflected, "name"));
+		Sys.println(Reflect.field(reflected, "name"));
+		Reflect.setField(reflected, "count", 3);
+		Sys.println(Reflect.field(reflected, "count"));
+		Sys.println(Reflect.fields(reflected).join("|"));
+		var reflectedCopy:Dynamic = Reflect.copy(reflected);
+		Reflect.setField(reflectedCopy, "name", "haxe");
+		Sys.println(Reflect.field(reflected, "name") + ":" + Reflect.field(reflectedCopy, "name"));
+		Sys.println(Reflect.deleteField(reflected, "count"));
+		Sys.println(Reflect.hasField(reflected, "count"));
+		var reflectedBox:Dynamic = new StdReflectBox("typed");
+		Sys.println(Reflect.hasField(reflectedBox, "label"));
+		Sys.println(Reflect.field(reflectedBox, "label"));
+		Reflect.setField(reflectedBox, "label", "updated");
+		Sys.println(Reflect.getProperty(reflectedBox, "label"));
+		Reflect.setProperty(reflectedBox, "label", "property");
+		Sys.println(reflectedBox.label);
+		Sys.println(Reflect.callMethod(reflectedBox, Reflect.field(reflectedBox, "describe"), ["box"]));
+		Sys.println(Reflect.callMethod(reflectedBox, Reflect.field(reflectedBox, "ping"), []));
+		var varArgs = Reflect.makeVarArgs(function(values:Array<Dynamic>) return values.length);
+		Sys.println(varArgs(1, 2, 3));
+		Sys.println(Reflect.isFunction(varArgs));
+		Sys.println(Reflect.compare(1, 2) < 0);
+		Sys.println(Reflect.compareMethods(Reflect.field(reflectedBox, "describe"), Reflect.field(reflectedBox, "describe")));
+		Sys.println(Reflect.isObject(reflectedBox));
+		Sys.println(Reflect.isObject("no"));
+		Sys.println(Reflect.isEnumValue(StdTypeColor.Red));
+		Sys.println(Type.getInstanceFields(StdReflectBox).indexOf("describe") >= 0);
+		Sys.println(Type.getClassFields(StdReflectStatics).indexOf("answer") >= 0);
 
 		var numbers = [1, 2, 3];
 		Sys.println(numbers.push(4));
@@ -158,6 +188,37 @@ class Main {
 
 class StdTypeBox {
 	public function new() {}
+}
+
+class StdReflectBox {
+	public var label:String;
+
+	public function new(label:String) {
+		this.label = label;
+	}
+
+	public function get_label():String {
+		return "get:" + label;
+	}
+
+	public function set_label(value:String):String {
+		label = "set:" + value;
+		return label;
+	}
+
+	public function describe(prefix:String):String {
+		return prefix + ":" + label;
+	}
+
+	public function ping():String {
+		return "pong:" + label;
+	}
+}
+
+class StdReflectStatics {
+	public static function answer():Int {
+		return 42;
+	}
 }
 
 enum StdTypeColor {

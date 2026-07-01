@@ -2781,6 +2781,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				compileRubyParseInt(params[0]);
 			case ["Std", "parseFloat"]:
 				compileRubyParseFloat(params[0]);
+			case ["Reflect", name]:
+				compileReflectCall(name, params);
 			case ["Sys", "println"]:
 				RubyCall(null, "puts", [compileRubyStringifyParam(params[0])]);
 			case ["Sys", "print"]:
@@ -3221,6 +3223,43 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileRubyParseFloat(value:TypedExpr):RubyExpr {
 		return hxrubyCall("parse_float", [compileExpr(value)]);
+	}
+
+	static function compileReflectCall(name:String, params:Array<TypedExpr>):RubyExpr {
+		return switch name {
+			case "hasField":
+				hxrubyCall("reflect_has_field", [compileParam(params, 0), compileParam(params, 1)]);
+			case "field":
+				hxrubyCall("reflect_field", [compileParam(params, 0), compileParam(params, 1)]);
+			case "setField":
+				hxrubyCall("reflect_set_field", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+			case "getProperty":
+				hxrubyCall("reflect_get_property", [compileParam(params, 0), compileParam(params, 1)]);
+			case "setProperty":
+				hxrubyCall("reflect_set_property", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+			case "callMethod":
+				hxrubyCall("reflect_call_method", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+			case "fields":
+				hxrubyCall("reflect_fields", [compileParam(params, 0)]);
+			case "isFunction":
+				hxrubyCall("reflect_is_function", [compileParam(params, 0)]);
+			case "compare":
+				hxrubyCall("reflect_compare", [compileParam(params, 0), compileParam(params, 1)]);
+			case "compareMethods":
+				hxrubyCall("reflect_compare_methods", [compileParam(params, 0), compileParam(params, 1)]);
+			case "isObject":
+				hxrubyCall("reflect_is_object", [compileParam(params, 0)]);
+			case "isEnumValue":
+				hxrubyCall("reflect_is_enum_value", [compileParam(params, 0)]);
+			case "deleteField":
+				hxrubyCall("reflect_delete_field", [compileParam(params, 0), compileParam(params, 1)]);
+			case "copy":
+				hxrubyCall("reflect_copy", [compileParam(params, 0)]);
+			case "makeVarArgs":
+				hxrubyCall("reflect_make_var_args", [compileParam(params, 0)]);
+			case _:
+				RubyNil;
+		}
 	}
 
 	static function compileArrayCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {

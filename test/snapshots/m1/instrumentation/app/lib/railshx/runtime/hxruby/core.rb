@@ -643,11 +643,15 @@ module HXRuby
   end
 
   def type_instance_fields(_type)
-    []
+    return [] unless _type.is_a?(Class)
+
+    _type.public_instance_methods(false).map(&:to_s).reject { |name| name.end_with?("=") }.sort
   end
 
   def type_class_fields(_type)
-    []
+    return [] unless _type.respond_to?(:singleton_methods)
+
+    _type.singleton_methods(false).map(&:to_s).reject { |name| name.end_with?("=") || name.start_with?("__hx_") }.sort
   end
 
   def type_enum_constructs(type)
@@ -660,6 +664,146 @@ module HXRuby
       .map { |item| type.public_send(item[:method]) }
   end
 
+  def reflect_has_field(object, field)
+    name = field.to_s
+    return object.key?(name) || object.key?(name.to_sym) if object.is_a?(Hash)
+    return false if object.nil?
+
+    object.respond_to?(name) || object.respond_to?(:"#{name}=") || object.instance_variable_defined?(:"@#{name}")
+  end
+
+  def reflect_field(object, field)
+    name = field.to_s
+    return hash_field(object, name) if object.is_a?(Hash)
+    return nil if object.nil?
+
+    ivar = :"@#{name}"
+    return object.instance_variable_get(ivar) if object.instance_variable_defined?(ivar)
+    return object.method(name) if object.respond_to?(name)
+
+    nil
+  rescue NameError
+    nil
+  end
+
+  def reflect_set_field(object, field, value)
+    name = field.to_s
+    if object.is_a?(Hash)
+      object[name] = value
+      return value
+    end
+    return value if object.nil?
+
+    setter = :"#{name}="
+    object.respond_to?(setter) ? object.public_send(setter, value) : object.instance_variable_set(:"@#{name}", value)
+    value
+  end
+
+  def reflect_get_property(object, field)
+    name = field.to_s
+    getter = "get_#{name}"
+    return object.public_send(getter) if !object.is_a?(Hash) && object&.respond_to?(getter)
+
+    reflect_field(object, name)
+  end
+
+  def reflect_set_property(object, field, value)
+    name = field.to_s
+    setter = "set_#{name}"
+    if !object.is_a?(Hash) && object&.respond_to?(setter)
+      object.public_send(setter, value)
+    else
+      reflect_set_field(object, name, value)
+    end
+    value
+  end
+
+  def reflect_call_method(_object, function, args)
+    return nil unless function.respond_to?(:call)
+
+    function.call(*(args || []))
+  end
+
+  def reflect_fields(object)
+    return [] if object.nil?
+    return object.keys.map(&:to_s).sort if object.is_a?(Hash)
+
+    names = object.public_methods(false).map(&:to_s).reject { |name| name.end_with?("=") || name.start_with?("__hx_") }
+    names.concat(object.instance_variables.map { |ivar| ivar.to_s.delete_prefix("@") })
+    names.uniq.sort
+  end
+
+  def reflect_is_function(value)
+    value.respond_to?(:call)
+  end
+
+  def reflect_compare(left, right)
+    return 0 if left.nil? && right.nil?
+    return 1 if left.nil?
+    return -1 if right.nil?
+    return 0 if left == right
+
+    compared = left <=> right if left.respond_to?(:<=>)
+    return compared unless compared.nil?
+
+    left.object_id < right.object_id ? -1 : 1
+  end
+
+  def reflect_compare_methods(left, right)
+    return false if left.nil? || right.nil?
+
+    left == right
+  end
+
+  def reflect_is_object(value)
+    return false if value.nil? || value == true || value == false
+    return false if value.is_a?(Numeric) || value.is_a?(String) || value.respond_to?(:__hx_tag)
+
+    value.is_a?(Hash) || value.is_a?(Array) || value.is_a?(Class) || value.is_a?(Module) || !reflect_is_function(value)
+  end
+
+  def reflect_is_enum_value(value)
+    !value.nil? && value.respond_to?(:__hx_tag)
+  end
+
+  def reflect_delete_field(object, field)
+    name = field.to_s
+    if object.is_a?(Hash)
+      if object.key?(name)
+        object.delete(name)
+        return true
+      end
+      symbol = name.to_sym
+      if object.key?(symbol)
+        object.delete(symbol)
+        return true
+      end
+
+      return false
+    end
+    return false if object.nil?
+
+    ivar = :"@#{name}"
+    if object.instance_variable_defined?(ivar)
+      object.remove_instance_variable(ivar)
+      return true
+    end
+    false
+  end
+
+  def reflect_copy(object)
+    return nil if object.nil?
+    return object.dup if object.is_a?(Hash)
+
+    copy = {}
+    reflect_fields(object).each { |field| copy[field] = reflect_field(object, field) }
+    copy
+  end
+
+  def reflect_make_var_args(function)
+    ->(*args) { function.call(args) }
+  end
+
   def typeof(value)
     return ValueType.t_null if value.nil?
     return ValueType.t_bool if value == true || value == false
@@ -670,6 +814,13 @@ module HXRuby
     return ValueType.t_enum(type_get_enum(value)) if type_get_enum(value)
 
     ValueType.t_object
+  end
+
+  def hash_field(hash, name)
+    return hash[name] if hash.key?(name)
+
+    symbol = name.to_sym
+    hash.key?(symbol) ? hash[symbol] : nil
   end
 
   def haxe_type?(type, name)

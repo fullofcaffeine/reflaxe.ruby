@@ -1545,7 +1545,7 @@
     {
       "id": "std.reflect",
       "owner": "std",
-      "status": "missing",
+      "status": "implemented",
       "path": "std/Reflect.cross.hx",
       "surface": "Reflect",
       "reason": "Dynamic field access and method calls for Ruby objects."
