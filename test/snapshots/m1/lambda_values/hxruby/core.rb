@@ -284,6 +284,12 @@ module HXRuby
     NativeIterator.new(values)
   end
 
+  def iterator(values)
+    return values.iterator if values.respond_to?(:iterator)
+
+    native_iterator(values)
+  end
+
   def string_tools_is_space(value, position)
     code = string_char_code_at(value, position)
     (code && code > 8 && code < 14) || code == 32

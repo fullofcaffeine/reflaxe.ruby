@@ -33,6 +33,16 @@ class Assert {
 		}
 	}
 
+	public static function sameArray<T>(expected:Array<T>, actual:Array<T>, message:String):Void {
+		if (!arraysSame(expected, actual)) {
+			fail(message + " expected " + Std.string(expected) + " but got " + Std.string(actual));
+		}
+	}
+
+	public static function arraysSame<T>(expected:Array<T>, actual:Array<T>):Bool {
+		return untyped __ruby__("{0} == {1}", expected, actual);
+	}
+
 	static function fail(message:String):Void {
 		throw "unitstd-ruby assertion failed: " + message;
 	}

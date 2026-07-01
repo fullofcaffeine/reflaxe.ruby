@@ -697,10 +697,39 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var wrapped = statement;
 		var i = pack.length - 1;
 		while (i >= 0) {
-			wrapped = RubyModuleDecl(rubyConstantName(pack[i]), [wrapped]);
+			var constant = rubyConstantName(pack[i]);
+			wrapped = isPrivateImplementationPackPart(pack[i]) ? wrapInPrivateImplementationOwner(pack, i, constant,
+				wrapped) : RubyModuleDecl(constant, [wrapped]);
 			i -= 1;
 		}
 		return wrapped;
+	}
+
+	static function isPrivateImplementationPackPart(part:String):Bool {
+		return part != null && part.length > 1 && part.charAt(0) == "_";
+	}
+
+	static function wrapInPrivateImplementationOwner(pack:Array<String>, index:Int, constant:String, wrapped:RubyStatement):RubyStatement {
+		// Haxe stores private module implementation types in packages named
+		// after the owner, such as haxe.ds._List.ListIterator or _Any.Any_Impl_.
+		// Ruby constants care about the owner's runtime kind: classes reopen
+		// with `class`, while abstracts/enums/interfaces reopen with `module`.
+		return privateImplementationOwnerIsClass(pack, index) ? RubyClassDecl(constant, [wrapped]) : RubyModuleDecl(constant, [wrapped]);
+	}
+
+	static function privateImplementationOwnerIsClass(pack:Array<String>, index:Int):Bool {
+		var ownerPack = pack.slice(0, index);
+		ownerPack.push(pack[index].substr(1));
+		try {
+			return switch (Context.getType(ownerPack.join("."))) {
+				case TInst(t, _): var classType = t.get(); !classType.isInterface && !isRubyModuleType(classType) && fullTypeName(classType.pack,
+						classType.name) != "Math";
+				case _:
+					false;
+			}
+		} catch (_:Dynamic) {
+			return false;
+		}
 	}
 
 	static function fullTypeName(pack:Array<String>, name:String):String {
@@ -2578,6 +2607,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					[for (param in params) compileExpr(param)]);
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionControllerStaticToken(classRef.get(), fieldRef.get().name) != null):
 				RubyRawExpr(actionControllerStaticToken(classRef.get(), fieldRef.get().name));
+			case TCall({expr: TField(target, access)}, []) if (fieldAccessRawName(access) == "iterator"):
+				// Reflaxe expands Haxe `for` loops into `.iterator()` calls before
+				// Ruby lowering. Route those through the compact runtime bridge so
+				// native Ruby arrays and Haxe iterator-bearing objects both work.
+				hxrubyCall("iterator", [compileExpr(target)]);
 			case TCall({expr: TField(target, access)}, params) if (isRubyInteropCall(access)):
 				compileRubyInteropCall(target, access, params);
 			case TCall({expr: TField(target, access)}, params):
@@ -5321,13 +5355,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function renderFor(v:TVar, iterable:TypedExpr, body:TypedExpr):String {
 		var iteratorName = loopIteratorName(v, iterable);
 		var lines = [
-			iteratorName + " = " + printInlineExpr(iterable),
+			iteratorName + " = " + loopIteratorExpression(iterable),
 			"while " + iteratorName + ".has_next()",
 			"  " + localName(v) + " = " + iteratorName + ".next_()"
 		];
 		appendIndentedLines(lines, renderStatements(compileFunctionBody(body)), 1);
 		lines.push("end");
 		return lines.join("\n");
+	}
+
+	static function loopIteratorExpression(iterable:TypedExpr):String {
+		return switch (iterable.expr) {
+			case TCall({expr: TField(target, access)}, []) if (fieldAccessRawName(access) == "iterator"):
+				// Haxe lowers `for` to `.iterator()`, but Ruby-first std values
+				// such as Array are native Ruby objects. Keep the bridge compact:
+				// use a Haxe iterator when present, otherwise wrap Enumerable data.
+				"HXRuby.iterator(" + printInlineExpr(target) + ")";
+			case _:
+				var rendered = printInlineExpr(iterable);
+				var suffix = ".iterator()";
+				if (StringTools.endsWith(rendered, suffix)) {
+					"HXRuby.iterator(" + rendered.substr(0, rendered.length - suffix.length) + ")";
+				} else {
+					rendered;
+				}
+		}
 	}
 
 	static function switchScrutineeCode(expr:TypedExpr):String {
@@ -13084,8 +13136,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (op) {
 			case OpDiv:
 				hxrubyCall("math_divide", [compileExpr(lhs), compileExpr(rhs)]);
+			case OpEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
+				RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]);
+			case OpNotEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
+				RubyUnary("!", RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]));
 			case _:
 				RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
+		}
+	}
+
+	static function isArrayExpr(expr:TypedExpr):Bool {
+		return switch (TypeTools.follow(expr.t)) {
+			case TInst(classRef, _):
+				var classType = classRef.get();
+				fullTypeName(classType.pack, classType.name) == "Array";
+			case _:
+				false;
 		}
 	}
 

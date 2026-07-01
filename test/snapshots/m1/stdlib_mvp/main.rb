@@ -177,7 +177,7 @@ class Main
     names.set("ruby", 3)
     names.set("haxe", 4)
     total = 0
-    value = names.iterator()
+    value = HXRuby.iterator(names)
     while value.has_next()
       value__hx1 = value.next_()
       total = (total + value__hx1)

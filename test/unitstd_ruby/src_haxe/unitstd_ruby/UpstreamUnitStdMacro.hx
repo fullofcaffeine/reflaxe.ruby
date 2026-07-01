@@ -52,6 +52,18 @@ class UpstreamUnitStdMacro {
 			case EBinop(OpNotEq, left, right) if (boolLiteralValue(left) != null):
 				boolLiteralValue(left) ? assertFalse(right, expression, relativePath) : assertTrue(right, expression, relativePath);
 
+			case EBinop(OpEq, left, right) if (isArrayLiteral(left)):
+				assertSameArray(left, right, expression, relativePath);
+
+			case EBinop(OpEq, left, right) if (isArrayLiteral(right)):
+				assertSameArray(right, left, expression, relativePath);
+
+			case EBinop(OpNotEq, left, right) if (isArrayLiteral(left)):
+				assertNotSameArray(left, right, expression, relativePath);
+
+			case EBinop(OpNotEq, left, right) if (isArrayLiteral(right)):
+				assertNotSameArray(right, left, expression, relativePath);
+
 			case EBinop(OpEq, left, right):
 				assertTrue({expr: EBinop(OpEq, left, right), pos: expression.pos}, expression, relativePath);
 
@@ -77,7 +89,7 @@ class UpstreamUnitStdMacro {
 				assertFloatNear(actual, expected, expression, relativePath);
 
 			case ECall({expr: EConst(CIdent("aeq"))}, [expected, actual]):
-				assertTrue({expr: EBinop(OpEq, actual, expected), pos: expression.pos}, expression, relativePath);
+				assertSameArray(expected, actual, expression, relativePath);
 
 			case ECall({expr: EConst(CIdent("unspec"))}, [_]):
 				macro {};
@@ -131,6 +143,14 @@ class UpstreamUnitStdMacro {
 		return macro unitstd_ruby.Assert.inDelta($expected, $actual, 0.00001, $v{message(source, relativePath)});
 	}
 
+	static function assertSameArray(expected:Expr, actual:Expr, source:Expr, relativePath:String):Expr {
+		return macro unitstd_ruby.Assert.sameArray($expected, $actual, $v{message(source, relativePath)});
+	}
+
+	static function assertNotSameArray(expected:Expr, actual:Expr, source:Expr, relativePath:String):Expr {
+		return macro unitstd_ruby.Assert.isFalse(unitstd_ruby.Assert.arraysSame($expected, $actual), $v{message(source, relativePath)});
+	}
+
 	static function boolLiteralValue(expression:Expr):Null<Bool> {
 		return switch expression.expr {
 			case EConst(CIdent("true")):
@@ -139,6 +159,15 @@ class UpstreamUnitStdMacro {
 				false;
 			default:
 				null;
+		}
+	}
+
+	static function isArrayLiteral(expression:Expr):Bool {
+		return switch expression.expr {
+			case EArrayDecl(_):
+				true;
+			default:
+				false;
 		}
 	}
 

@@ -145,6 +145,16 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal [122, 1103, 55_361, 57_102], entries.map(&:value)
   end
 
+  def test_iterator_prefers_haxe_iterator_and_wraps_native_arrays
+    native = HXRuby.iterator([7])
+    assert native.has_next
+    assert_equal 7, native.next_
+    refute native.has_next
+
+    haxe_like = Struct.new(:iterator).new(:kept)
+    assert_equal :kept, HXRuby.iterator(haxe_like)
+  end
+
   def test_data_define_compatibility_and_enum_metadata
     option = Data.define(:value, :__hx_tag, :__hx_index)
     some = option.new(41, "Some", 1)
