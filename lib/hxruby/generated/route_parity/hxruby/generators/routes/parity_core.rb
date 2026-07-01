@@ -488,7 +488,7 @@ end)
             return []
           end
           value = Ruby::NativeHash.get(hash, key)
-          return ((value == nil) ? [] : value)
+          return (value.equal?(nil) ? [] : value)
         end
       end
     end
