@@ -12,6 +12,26 @@ This repo keeps target stdlib work split by ownership and classpath behavior.
 
 That order is intentional. Overrides in `std/_std` must win over additive Ruby std surfaces in `std`, and both must be visible before Reflaxe compiler internals are typed.
 
+## Layering Contract
+
+RubyHx has two std-facing layers that intentionally compose:
+
+- `std/_std/**` and `.cross.hx` files provide Haxe std semantics for portable
+  Haxe code.
+- `std/ruby/**` provides typed Ruby-shaped facades for Ruby libraries and runtime
+  values.
+
+Haxe std overrides may consume the lower-level RubyHx facades when that keeps the
+implementation direct and typed. For example, `haxe.ds.*Map` uses
+`ruby.NativeHashData<K, V>` internally so map implementations emit ordinary Ruby
+`Hash` operations without exposing a broad `Dynamic` hash to Haxe callers.
+
+Those RubyHx facades are also valid public authoring surfaces for developers who
+want a typed Ruby layer instead of a Haxe-stdlib-first abstraction. Keep that
+surface typed with generics, abstracts, externs, typedefs, or narrow unchecked
+wrappers; do not make Ruby-shaped APIs loose just because they are closer to the
+target runtime.
+
 ## `std/`
 
 Use `std/` for additive Ruby target surfaces:
