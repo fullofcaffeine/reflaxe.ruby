@@ -14,6 +14,7 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "action_mailer");
+const generatedMailerDir = join(root, "test", ".generated", "action_mailer_generator_rspec");
 const runtimeAppDir = join(root, "test", ".generated", "action_mailer_runtime");
 const invalidSourceDir = join(root, "test", ".generated", "action_mailer_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "action_mailer_invalid_out");
@@ -43,6 +44,7 @@ function run(command, args, options = {}) {
 }
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(generatedMailerDir, { force: true, recursive: true });
 rmSync(runtimeAppDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
@@ -54,6 +56,30 @@ if (!reflaxeSrc) {
 }
 
 compileActionMailer(outputDir);
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "mailer.rb"),
+  "UserMailer",
+  "welcome",
+  "--output",
+  generatedMailerDir,
+  "--test-adapter",
+  "rspec",
+]);
+assertGeneratedMailerFile("test_haxe/mailers/UserMailerHaxeSpec.hx", [
+  "// Demonstrates: a Haxe-authored Rails/RSpec source file for the mailer.",
+  '@:railsTestAdapter("rails.rspec")',
+  '@:railsTest("mailers/user_mailer_haxe_spec")',
+  "class UserMailerHaxeSpec extends ModelTestCase",
+  "var mail = UserMailer.withParams({",
+  "notNil(mail);",
+]);
+const generatedMailerTest = readFileSync(join(generatedMailerDir, "test_haxe", "mailers", "UserMailerHaxeSpec.hx"), "utf8");
+if (generatedMailerTest.includes("Dynamic")) {
+  console.error("Generated mailer test source should not contain Dynamic.");
+  process.exit(1);
+}
 
 for (const file of [
   "app/mailers/user_mailer.rb",
@@ -289,6 +315,21 @@ function compileActionMailer(targetDir, options = {}) {
     options.main ?? "Main",
   ];
   return run("haxe", args, { allowFailure: options.allowFailure });
+}
+
+function assertGeneratedMailerFile(relativePath, snippets) {
+  const path = join(generatedMailerDir, relativePath);
+  if (!existsSync(path)) {
+    console.error(`Expected generated mailer file missing: ${path}`);
+    process.exit(1);
+  }
+  const content = readFileSync(path, "utf8");
+  for (const snippet of snippets) {
+    if (!content.includes(snippet)) {
+      console.error(`${relativePath} missing expected output: ${snippet}`);
+      process.exit(1);
+    }
+  }
 }
 
 function writeInvalidFixture() {

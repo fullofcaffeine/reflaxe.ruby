@@ -221,6 +221,15 @@ const cases = [
 	      "_GeneratedFiles.json",
 	    ],
 	  },
+  {
+    name: "rails_test_adapters",
+    defines: ["reflaxe_ruby_rails"],
+    files: [
+      "test/generated/models/adapter_model_haxe_test.rb",
+      "spec/generated/models/adapter_model_haxe_spec.rb",
+      "spec/generated/controllers/adapter_request_haxe_spec.rb",
+    ],
+  },
 ];
 
 const routeGeneratorCases = [

@@ -556,7 +556,7 @@
       "status": "implemented",
       "path": "std/rails/test/Assert.hx",
       "surface": "rails.test.Assert",
-      "reason": "Typed Haxe-authored Rails test assertion facade lowered by the compiler to ordinary Minitest and ActionDispatch helpers without a RailsHx runtime assertion layer."
+      "reason": "Typed Haxe-authored Rails test assertion facade lowered by the compiler to ordinary Minitest or RSpec helpers without a RailsHx runtime assertion layer."
     },
     {
       "id": "std.rails.test_dsl",
@@ -564,7 +564,7 @@
       "status": "implemented",
       "path": "std/rails/test/Dsl.hx",
       "surface": "rails.test.Dsl",
-      "reason": "Compiler-erased Rails test declaration DSL for Haxe-authored tests, including typed test/setup/teardown marker calls lowered to Rails Minitest blocks."
+      "reason": "Compiler-erased Rails test declaration DSL for Haxe-authored tests, including typed test/setup/teardown marker calls lowered to the selected Rails test adapter."
     },
     {
       "id": "std.rails.test_model_test_case",
@@ -572,7 +572,7 @@
       "status": "implemented",
       "path": "std/rails/test/ModelTestCase.hx",
       "surface": "rails.test.ModelTestCase",
-      "reason": "Typed marker base class for Haxe-authored ActiveSupport::TestCase model tests emitted as Rails test artifacts."
+      "reason": "Typed marker base class for Haxe-authored Rails model tests emitted as ActiveSupport::TestCase or RSpec model artifacts."
     },
     {
       "id": "std.rails.test_request_test_case",
@@ -580,7 +580,7 @@
       "status": "implemented",
       "path": "std/rails/test/RequestTestCase.hx",
       "surface": "rails.test.RequestTestCase",
-      "reason": "Typed marker base class for Haxe-authored ActionDispatch::IntegrationTest request tests emitted as Rails test artifacts."
+      "reason": "Typed marker base class for Haxe-authored Rails request tests emitted as ActionDispatch::IntegrationTest or RSpec request artifacts."
     },
     {
       "id": "std.rails.test_request",
@@ -628,7 +628,7 @@
       "status": "implemented",
       "path": "std/rails/test/TestDescription.hx",
       "surface": "rails.test.TestDescription",
-      "reason": "Typed description token for RailsHx test declarations so test labels stay explicit and compiler validated before lowering to Rails Minitest."
+      "reason": "Typed description token for RailsHx test declarations so test labels stay explicit and compiler validated before lowering to the selected Rails test adapter."
     },
     {
       "id": "std.rails.model_macro",

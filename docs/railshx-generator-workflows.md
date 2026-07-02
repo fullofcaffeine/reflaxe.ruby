@@ -272,6 +272,7 @@ template paths, not arbitrary filesystem writes.
 ```bash
 bin/rails generate hxruby:test models/todo
 bin/rails generate hxruby:test controllers/todos_request --type request
+bin/rails generate hxruby:test models/todo --adapter=rspec
 ```
 
 These commands create `test_haxe/**/*.hx` sources using the canonical
@@ -289,10 +290,17 @@ class TodoHaxeTest extends ModelTestCase {
 }
 ```
 
+Minitest is the default adapter and emits `test/generated/**/*_test.rb`.
+`--adapter=rspec` emits `@:railsTestAdapter("rails.rspec")` and compiles to
+`spec/generated/**/*_spec.rb`. `--adapter=auto` chooses RSpec when the app has
+`spec/rails_helper.rb`, `spec/spec_helper.rb`, or `rspec-rails` in
+`Gemfile`/`Gemfile.lock`; otherwise it stays on Minitest.
+
 Rails still runs the generated Ruby test:
 
 ```bash
 bundle exec rake hxruby:test
+bundle exec rake hxruby:test HXRUBY_TEST_ADAPTER=rspec
 ```
 
 Generated RailsHx app and scaffold tests should use this Haxe-authored path by
@@ -311,7 +319,9 @@ bin/rails generate hxruby:scaffold Todo title:string! completed:boolean \
 
 Composes model, migration snapshot, controller, HHX views, route declarations,
 and a Haxe-authored Rails test. The generated test compiles into ordinary
-Minitest output under `test/generated/**`.
+Minitest output under `test/generated/**` by default. Pass
+`--test-adapter=rspec` or `TEST_ADAPTER=rspec` when generating to target
+RSpec output under `spec/generated/**`.
 
 Run:
 

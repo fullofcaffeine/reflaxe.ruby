@@ -3,12 +3,13 @@ package rails.test;
 import rails.action_controller.Status;
 
 /**
-	Typed Rails/Minitest assertion facade.
+	Typed RailsHx assertion facade.
 
 	These helpers exist for Haxe authoring ergonomics and IntelliSense. The Ruby
 	compiler recognizes calls to this class inside `@:railsTest` sources and
-	lowers them directly to ordinary Minitest helpers such as `assert_equal`.
-	The fallback bodies fail loudly if a helper escapes compiler lowering.
+	lowers them directly to ordinary helpers for the selected adapter, such as
+	Minitest `assert_equal` or RSpec `expect(...).to eq(...)`. The fallback
+	bodies fail loudly if a helper escapes compiler lowering.
 **/
 class Assert {
 	public static function equal<T>(expected:T, actual:T):Void {
@@ -43,35 +44,35 @@ class Assert {
 		unlowered("assertFalse");
 	}
 
-	public static function includes<T>(collection:Dynamic, value:T):Void {
+	public static function includes<C, T>(collection:C, value:T):Void {
 		unlowered("includes");
 	}
 
-	public static function assertIncludes<T>(collection:Dynamic, value:T):Void {
+	public static function assertIncludes<C, T>(collection:C, value:T):Void {
 		unlowered("assertIncludes");
 	}
 
-	public static function notIncludes<T>(collection:Dynamic, value:T):Void {
+	public static function notIncludes<C, T>(collection:C, value:T):Void {
 		unlowered("notIncludes");
 	}
 
-	public static function assertNotIncludes<T>(collection:Dynamic, value:T):Void {
+	public static function assertNotIncludes<C, T>(collection:C, value:T):Void {
 		unlowered("assertNotIncludes");
 	}
 
-	public static function nilValue(value:Dynamic):Void {
+	public static function nilValue<T>(value:Null<T>):Void {
 		unlowered("nilValue");
 	}
 
-	public static function assertNil(value:Dynamic):Void {
+	public static function assertNil<T>(value:Null<T>):Void {
 		unlowered("assertNil");
 	}
 
-	public static function notNil(value:Dynamic):Void {
+	public static function notNil<T>(value:Null<T>):Void {
 		unlowered("notNil");
 	}
 
-	public static function assertNotNil(value:Dynamic):Void {
+	public static function assertNotNil<T>(value:Null<T>):Void {
 		unlowered("assertNotNil");
 	}
 
@@ -83,11 +84,11 @@ class Assert {
 		unlowered("assertRedirectedTo");
 	}
 
-	public static function assertDifference(measure:Void->Dynamic, difference:Int, body:Void->Void):Void {
+	public static function assertDifference<T>(measure:Void->T, difference:Int, body:Void->Void):Void {
 		unlowered("assertDifference");
 	}
 
-	public static function assertNoDifference(measure:Void->Dynamic, body:Void->Void):Void {
+	public static function assertNoDifference<T>(measure:Void->T, body:Void->Void):Void {
 		unlowered("assertNoDifference");
 	}
 

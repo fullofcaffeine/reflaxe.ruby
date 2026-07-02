@@ -8,6 +8,17 @@ import reflaxe.ruby.naming.RubyNaming;
 #end
 
 /**
+	Phantom type for compiler-erased Rails request params payloads.
+
+	The Ruby compiler lowers `RequestParams.model(...)` calls directly to a
+	Rails params hash. This carrier gives Haxe request options a precise type
+	without exposing a raw dynamic hash in app-facing test code.
+**/
+class RequestParamsPayload<TAttrs> {
+	private function new() {}
+}
+
+/**
 	Typed request-param helpers for Haxe-authored Rails tests.
 
 	`model(Todo.railsParamKey, {...})` is a macro so it can validate object
@@ -26,7 +37,7 @@ class RequestParams {
 		return macro rails.test.RequestParams.modelRoot($v{RubyNaming.toLocalName(model.name)}, $attrs);
 	}
 
-	public static function modelRoot(root:String, attrs:Dynamic):Dynamic {
+	public static function modelRoot<TAttrs>(root:String, attrs:TAttrs):RequestParamsPayload<TAttrs> {
 		throw "rails.test.RequestParams.modelRoot must be lowered by reflaxe.ruby.";
 	}
 

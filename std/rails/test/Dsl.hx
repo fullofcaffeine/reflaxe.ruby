@@ -6,8 +6,8 @@ package rails.test;
 	These functions are valid, typed Haxe calls so editors can complete them and
 	the Haxe typer can check lambda bodies. The Ruby compiler consumes calls at
 	the top level of an `@:railsTests static function define():Void` host and
-	emits ordinary Rails/Minitest blocks. If these methods reach runtime, the
-	compiler missed a required lowering step.
+	emits ordinary blocks for the selected Rails test adapter. If these methods
+	reach runtime, the compiler missed a required lowering step.
 **/
 class Dsl {
 	public static function test(description:TestDescription, body:Void->Void):Void {

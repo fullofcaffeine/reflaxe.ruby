@@ -432,13 +432,14 @@ Keep RailsHx tasks as composition and validation helpers:
   production checks and asset compilation.
 - `hxruby:gen:template`: generate a typed Rails HHX source skeleton for a view
   or partial. It creates Haxe only; ERB remains compiler output.
-- `hxruby:gen:test`: generate a Haxe-authored Rails/Minitest source using
-  `@:railsTests static function define():Void`. Rails still runs the generated
-  Ruby test through `hxruby:test` / `bin/rails test`. Generated RailsHx app,
-  scaffold, mailer, and focused test templates should default to Haxe-authored
-  tests unless an explicit option such as `--skip-tests` or a future
-  target-language flag says otherwise; raw Ruby/Rails tests remain supported
-  beside them.
+- `hxruby:gen:test`: generate a Haxe-authored Rails test source using
+  `@:railsTests static function define():Void`. Minitest is the default output
+  adapter; RSpec is explicit through adapter metadata/generator config. Rails
+  still runs the generated Ruby test through `hxruby:test` / `bin/rails test`
+  or RSpec when selected. Generated RailsHx app, scaffold, mailer, and focused
+  test templates should default to Haxe-authored tests unless an explicit
+  option such as `--skip-tests` or a target-language flag says otherwise; raw
+  Ruby/Rails tests remain supported beside them.
 
 Avoid task names that imply RailsHx owns Rails runtime behavior, especially
 database migration execution. The pattern is always: compile generated artifacts

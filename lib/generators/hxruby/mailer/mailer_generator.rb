@@ -19,8 +19,9 @@ if defined?(Rails::Generators::Base)
       class_option :previews_package, type: :string, default: "previews", desc: "Haxe package for preview classes"
       class_option :tests_dir, type: :string, default: "test_haxe/mailers", desc: "Haxe-authored Rails test source directory"
       class_option :tests_package, type: :string, default: "test_haxe.mailers", desc: "Haxe package for generated test classes"
+      class_option :test_adapter, type: :string, default: "minitest", desc: "Test adapter: minitest, rspec, or auto"
       class_option :skip_preview, type: :boolean, default: false, desc: "Skip the Haxe-authored ActionMailer preview"
-      class_option :skip_test, type: :boolean, default: false, desc: "Skip the Haxe-authored Rails/Minitest source"
+      class_option :skip_test, type: :boolean, default: false, desc: "Skip the Haxe-authored Rails test source"
       class_option :force, type: :boolean, default: false, desc: "Overwrite non-owned files and take RailsHx ownership"
 
       def generate_mailer
@@ -36,6 +37,7 @@ if defined?(Rails::Generators::Base)
           "--previews-package", hxruby_option(:previews_package, "previews"),
           "--tests-dir", hxruby_option(:tests_dir, "test_haxe/mailers"),
           "--tests-package", hxruby_option(:tests_package, "test_haxe.mailers"),
+          "--test-adapter", hxruby_option(:test_adapter, "minitest"),
         ]
         args << "--skip-preview" if hxruby_flag?(:skip_preview)
         args << "--skip-test" if hxruby_flag?(:skip_test)

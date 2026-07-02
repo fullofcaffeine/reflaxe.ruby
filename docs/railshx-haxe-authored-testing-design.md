@@ -8,9 +8,11 @@ RailsHx supports two first-class testing paths, and apps can choose per test:
 The beginner mental model is simple: Haxe is the authoring language, Rails and
 Playwright are still the runners. A Haxe-authored Rails test should feel like a
 typed version of a normal Minitest/request test, then compile into a normal
-`*_test.rb` file. A Haxe-authored browser test should feel like a typed version
-of a normal Playwright spec, then compile through Genes into modern JavaScript
-that Playwright can run.
+`*_test.rb` file by default. When a test class opts into
+`@:railsTestAdapter("rails.rspec")`, the same typed Haxe source compiles into a
+normal `*_spec.rb` file. A Haxe-authored browser test should feel like a typed
+version of a normal Playwright spec, then compile through Genes into modern
+JavaScript that Playwright can run.
 
 Generated RailsHx code should look and behave like hand-written target code. A
 team must be able to use ordinary Minitest, RSpec, Rails request tests, Rails
@@ -80,7 +82,8 @@ If you are new to RailsHx testing, start with this rule of thumb:
   migration-path checks, or a tiny browser assertion with no shared Haxe
   contracts.
 
-For a Rails model or request test, write Haxe under `test_haxe/**`:
+For a Rails model or request test, write Haxe under `test_haxe/**`. Omitting
+`@:railsTestAdapter` uses the default `rails.minitest` adapter:
 
 ```haxe
 import models.Todo;
@@ -111,6 +114,30 @@ bundle exec rake hxruby:test
 ```
 
 Rails still runs generated Ruby/Minitest output under `test/generated/**`.
+
+To emit RSpec instead, keep the same typed DSL and add explicit adapter
+metadata:
+
+```haxe
+import rails.test.Assert.*;
+import rails.test.Dsl.*;
+import rails.test.ModelTestCase;
+
+@:railsTestAdapter("rails.rspec")
+@:railsTest("models/todo_haxe_spec")
+class TodoHaxeSpec extends ModelTestCase {
+	@:railsTests
+	static function define():Void {
+		test("compiled to an rspec expectation", () -> {
+			truthy(true);
+		});
+	}
+}
+```
+
+This emits `spec/generated/models/todo_haxe_spec.rb` and lowers the assertion
+to ordinary RSpec `expect(...)` syntax. The compiler rejects adapter/path
+mismatches such as `rails.rspec` with an `_test` path.
 
 For a browser test, write Haxe under `e2e_haxe/**` and compile through Genes:
 
@@ -164,8 +191,8 @@ APIs:
 
 - Rails fixtures/factories: typed fixture lookup or typed FactoryBot wrappers.
 - Request params: richer nested/non-model builders beyond `RequestParams.model`.
-- Assertions: more Rails/Minitest helpers where examples currently need raw
-  Ruby-shaped checks.
+- Assertions: more adapter-aware Rails test helpers where examples currently
+  need raw Ruby-shaped checks.
 - Browser tests: typed helpers for common Playwright waits, route assertions,
   Turbo lifecycle waits, and shared hook exports.
 - Output modes: decide later whether Haxe-authored browser tests need direct
@@ -173,8 +200,9 @@ APIs:
 
 ## Rails Test API Shape
 
-The first Rails test slice should target Minitest because Rails ships with it
-and the todoapp already uses it.
+Rails/Minitest is the default adapter because Rails ships with it and the
+todoapp already uses it. Optional adapters such as RSpec must be explicit so
+RailsHx does not force dependencies into apps that do not use them.
 
 Example source:
 
@@ -422,7 +450,7 @@ test-output mode with snapshots rather than the default browser-test path.
 Haxe-authored tests should have explicit output roots:
 
 - Rails tests: `test/generated/**/*_test.rb` by default.
-- RSpec, if supported later: `spec/generated/**/*_spec.rb`.
+- RSpec adapter: `spec/generated/**/*_spec.rb`.
 - Playwright tests: Genes emits the module tree under
   `e2e/generated/<suite>/`, and the runner writes a tiny disposable
   `e2e/generated/<suite>.spec.js` wrapper that imports the real entry so
@@ -459,8 +487,10 @@ forms while Rails still executes ordinary test files.
 2. Implement minimal `rails.test.Assert`, `rails.test.Dsl`, and
    `rails.test.ModelTestCase`.
 3. Implement `@:railsTest("path")` lowering to Minitest files under
-   `test/generated`, with `@:railsTests static function define():Void` as the
-   canonical compiler-erased declaration host and explicit `@:test` methods as
+   `test/generated` by default and RSpec files under `spec/generated` when
+   `@:railsTestAdapter("rails.rspec")` is present, with
+   `@:railsTests static function define():Void` as the canonical
+   compiler-erased declaration host and explicit `@:test` methods as
    compatibility.
 4. Add request-test helpers: `get`, `post`, `assertResponse`,
    `assertRedirectedTo`, `assertDifference`, and `assertNoDifference`.
@@ -470,8 +500,8 @@ forms while Rails still executes ordinary test files.
 
 ## Open Questions
 
-- Whether RSpec should be a first-class output mode or an extension after
-  Minitest.
+- Which additional framework adapters should be package-provided after the
+  built-in Minitest/RSpec adapters.
 - Whether Haxe-authored Playwright needs a later TypeScript output mode for
   richer editor integration, or whether Haxe-to-JS plus typed externs remains
   sufficient.

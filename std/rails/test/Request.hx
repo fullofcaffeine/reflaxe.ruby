@@ -9,26 +9,26 @@ package rails.test;
 	`response.body`; if they reach runtime, the compiler missed a required
 	RailsHx lowering step.
 **/
-typedef RequestOptions = {
-	@:optional var params:Dynamic;
-	@:optional var headers:Dynamic;
+typedef RequestOptions<TParams, THeaders> = {
+	@:optional var params:TParams;
+	@:optional var headers:THeaders;
 	@:optional var as:String;
 }
 
 class Request {
-	public static function get(path:String, ?options:RequestOptions):Void {
+	public static function get<TParams, THeaders>(path:String, ?options:RequestOptions<TParams, THeaders>):Void {
 		unlowered("get");
 	}
 
-	public static function post(path:String, ?options:RequestOptions):Void {
+	public static function post<TParams, THeaders>(path:String, ?options:RequestOptions<TParams, THeaders>):Void {
 		unlowered("post");
 	}
 
-	public static function patch(path:String, ?options:RequestOptions):Void {
+	public static function patch<TParams, THeaders>(path:String, ?options:RequestOptions<TParams, THeaders>):Void {
 		unlowered("patch");
 	}
 
-	public static function delete(path:String, ?options:RequestOptions):Void {
+	public static function delete<TParams, THeaders>(path:String, ?options:RequestOptions<TParams, THeaders>):Void {
 		unlowered("delete");
 	}
 

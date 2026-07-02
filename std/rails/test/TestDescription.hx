@@ -1,7 +1,7 @@
 package rails.test;
 
 /**
-	Typed carrier for Rails/Minitest test descriptions.
+	Typed carrier for RailsHx test descriptions.
 
 	The abstract intentionally erases to `String` for Ruby output, while giving
 	RailsHx a distinct type to document intent and tighten validation in the

@@ -156,6 +156,11 @@ typedef LocalNameScope = {
 	capturedSelfAliases:Map<Int, Bool>
 }
 
+enum RailsTestAdapter {
+	RailsMinitest;
+	RailsRspec;
+}
+
 class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFile, RubyFile> {
 	public var currentCompilationContext:Null<CompilationContext>;
 
@@ -178,6 +183,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static var needsHxException:Bool = false;
 	static var hxrubyCallCount:Int = 0;
 	static var localNameScope:Null<LocalNameScope> = null;
+	static var currentRailsTestAdapter:RailsTestAdapter = RailsMinitest;
 
 	public function new() {
 		super();
@@ -210,6 +216,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		needsHxException = false;
 		hxrubyCallCount = 0;
 		localNameScope = null;
+		currentRailsTestAdapter = RailsMinitest;
 	}
 
 	override public function onCompileEnd():Void {
@@ -786,9 +793,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return compileMethod(field);
 	}
 
-	static function compileRailsTestMethod(field:ClassFuncData):RubyStatement {
+	static function compileRailsTestMethod(field:ClassFuncData, adapter:RailsTestAdapter):RubyStatement {
 		return withLocalNameScope([for (arg in field.args) if (arg.tvar != null) arg.tvar], () -> {
-			return RubyRawStatement(renderRailsTestBlock("test", railsTestDescription(field), field.expr));
+			return withRailsTestAdapter(adapter, () -> RubyRawStatement(renderRailsTestBlock("test", railsTestDescription(field), field.expr, adapter)));
 		});
 	}
 
@@ -3190,8 +3197,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (info.owner != "rails.test.Assert") {
 			return null;
 		}
+		return switch (currentRailsTestAdapter) {
+			case RailsMinitest: compileRailsTestMinitestAssertionCall(info.name, params);
+			case RailsRspec: compileRailsTestRspecAssertionCall(info.name, params);
+		}
+	}
+
+	static function compileRailsTestMinitestAssertionCall(name:String, params:Array<TypedExpr>):Null<RubyExpr> {
 		var args = [for (param in params) compileExpr(param)];
-		return switch (info.name) {
+		return switch (name) {
 			case "equal":
 				RubyCall(null, "assert_equal", args);
 			case "assertEqual":
@@ -3233,6 +3247,44 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr("assert_difference(" + renderRubyProc(params[0]) + ", " + printInlineExpr(params[1]) + ") " + renderRubyBlock(params[2]));
 			case "assertNoDifference" if (params.length == 2):
 				RubyRawExpr("assert_no_difference(" + renderRubyProc(params[0]) + ") " + renderRubyBlock(params[1]));
+			case _:
+				null;
+		}
+	}
+
+	static function compileRailsTestRspecAssertionCall(name:String, params:Array<TypedExpr>):Null<RubyExpr> {
+		return switch (name) {
+			case "equal" | "assertEqual" if (params.length == 2):
+				RubyRawExpr("expect(" + printInlineExpr(params[1]) + ").to eq(" + printInlineExpr(params[0]) + ")");
+			case "notEqual" | "assertNotEqual" if (params.length == 2):
+				RubyRawExpr("expect(" + printInlineExpr(params[1]) + ").not_to eq(" + printInlineExpr(params[0]) + ")");
+			case "truthy" | "assertTrue" if (params.length == 1):
+				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").to be_truthy");
+			case "falsy" | "assertFalse" if (params.length == 1):
+				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").to be_falsey");
+			case "includes" | "assertIncludes" if (params.length == 2):
+				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").to include(" + printInlineExpr(params[1]) + ")");
+			case "notIncludes" | "assertNotIncludes" if (params.length == 2):
+				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").not_to include(" + printInlineExpr(params[1]) + ")");
+			case "nilValue" | "assertNil" if (params.length == 1):
+				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").to be_nil");
+			case "notNil" | "assertNotNil" if (params.length == 1):
+				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").not_to be_nil");
+			case "assertResponse" if (params.length == 1):
+				var status = railsStatusArg(params[0]);
+				RubyRawExpr("expect(response).to have_http_status(" + (status == null ? printInlineExpr(params[0]) : status) + ")");
+			case "assertRedirectedTo" if (params.length == 1):
+				RubyRawExpr("expect(response).to redirect_to(" + printInlineExpr(params[0]) + ")");
+			case "assertDifference" if (params.length == 3):
+				RubyRawExpr("expect "
+					+ renderRubyBlock(params[2])
+					+ ".to change "
+					+ renderRubyBlock(params[0])
+					+ ".by("
+					+ printInlineExpr(params[1])
+					+ ")");
+			case "assertNoDifference" if (params.length == 2):
+				RubyRawExpr("expect " + renderRubyBlock(params[1]) + ".not_to change " + renderRubyBlock(params[0]));
 			case _:
 				null;
 		}
@@ -9669,15 +9721,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			Context.error("@:railsTest requires -D reflaxe_ruby_rails.", classType.pos);
 			return;
 		}
+		var adapter = railsTestAdapter(classType);
 		var testPath = metaStringParam(classType.meta, ":railsTest", 0);
 		if (testPath == null) {
 			Context.error("@:railsTest expects a Rails test path string such as \"models/todo_haxe_test\".", classType.pos);
 			return;
 		}
-		validateRailsTestPath(testPath, classType.pos, "@:railsTest");
-		var outputPath = railsTestOutputPath(testPath);
+		var outputPath = switch (adapter) {
+			case RailsMinitest:
+				validateRailsTestPath(testPath, classType.pos, "@:railsTest");
+				railsTestOutputPath(testPath);
+			case RailsRspec:
+				validateRailsSpecPath(testPath, classType.pos, "@:railsTest");
+				railsSpecOutputPath(testPath);
+		}
 		if (emittedRailsTestPaths.exists(outputPath)) {
-			Context.error('@:railsTest emits duplicate test file ${outputPath}; first emitted by ${emittedRailsTestPaths.get(outputPath)}.', classType.pos);
+			Context.error('@:railsTest emits duplicate test/spec file ${outputPath}; first emitted by ${emittedRailsTestPaths.get(outputPath)}.',
+				classType.pos);
 			return;
 		}
 		emittedRailsTestPaths.set(outputPath, fullTypeName(classType.pack, classType.name));
@@ -9694,7 +9754,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				if (decl.kind == "test") {
 					validateRailsTestDescription(decl.description, decl.pos, testDescriptions);
 				}
-				body = body.concat(renderStatements([compileRailsTestDecl(decl)]));
+				body = body.concat(renderStatements([compileRailsTestDecl(decl, adapter)]));
 			}
 		}
 		for (field in funcFields) {
@@ -9709,7 +9769,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			validateRailsTestMethod(field);
 			validateRailsTestDescription(railsTestDescription(field), field.field.pos, testDescriptions);
-			body = body.concat(renderStatements([compileRailsTestMethod(field)]));
+			body = body.concat(renderStatements([compileRailsTestMethod(field, adapter)]));
 		}
 		if (body.length == 0) {
 			Context.error("@:railsTest classes must define at least one @:railsTests declaration function or @:test method.", classType.pos);
@@ -9717,21 +9777,59 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 
 		var renderedBody = body.join("\n");
-		var lines = ["# Generated by RailsHx from @:railsTest.",
-			"require \"test_helper\"",
-			"",
-			"class "
-			+ RubyNaming.toConstantName(classType.name)
-			+ " < "
-			+ railsTestSuperclass(classType)];
-		if (railsTestUsesDeviseIntegrationHelpers(renderedBody)) {
-			lines.push("  include Devise::Test::IntegrationHelpers");
-		}
-		for (line in body) {
-			lines.push("  " + line);
-		}
-		lines.push("end");
+		var lines = railsTestArtifactLines(classType, adapter, body, renderedBody);
 		setRailsExtraFile(outputPath, normalizeGeneratedText(lines.join("\n")), classType.pos);
+	}
+
+	static function railsTestAdapter(classType:ClassType):RailsTestAdapter {
+		var value = metaStringParam(classType.meta, ":railsTestAdapter", 0);
+		return switch (value) {
+			case null | "rails.minitest" | "minitest":
+				RailsMinitest;
+			case "rails.rspec" | "rspec":
+				RailsRspec;
+			case _:
+				Context.error('@:railsTestAdapter must be "rails.minitest" or "rails.rspec".', classType.pos);
+				RailsMinitest;
+		}
+	}
+
+	static function railsTestArtifactLines(classType:ClassType, adapter:RailsTestAdapter, body:Array<String>, renderedBody:String):Array<String> {
+		return switch (adapter) {
+			case RailsMinitest:
+				var lines = ["# Generated by RailsHx from @:railsTest.",
+					"require \"test_helper\"",
+					"",
+					"class "
+					+ RubyNaming.toConstantName(classType.name)
+					+ " < "
+					+ railsTestSuperclass(classType)];
+				if (railsTestUsesDeviseIntegrationHelpers(renderedBody)) {
+					lines.push("  include Devise::Test::IntegrationHelpers");
+				}
+				for (line in body) {
+					lines.push("  " + line);
+				}
+				lines.push("end");
+				lines;
+			case RailsRspec:
+				var lines = ["# Generated by RailsHx from @:railsTest.",
+					"require \"rails_helper\"",
+					"",
+					"RSpec.describe "
+					+ quoteRubyStringForCode(RubyNaming.toConstantName(classType.name))
+					+ ", type: :"
+					+ railsTestRSpecType(classType)
+					+ " do"];
+				if (railsTestUsesDeviseIntegrationHelpers(renderedBody)) {
+					lines.push("  include Devise::Test::IntegrationHelpers");
+				}
+				for (line in body) {
+					lines.push("  " + line);
+				}
+				lines.push("end");
+				lines;
+		}
 	}
 
 	function emitRailsMailerPreviewArtifact(classType:ClassType, funcFields:Array<ClassFuncData>):Void {
@@ -9790,6 +9888,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsTestSuperclass(classType:ClassType):String {
 		return classExtends(classType, "rails.test.RequestTestCase") ? "ActionDispatch::IntegrationTest" : "ActiveSupport::TestCase";
+	}
+
+	static function railsTestRSpecType(classType:ClassType):String {
+		return classExtends(classType, "rails.test.RequestTestCase") ? "request" : "model";
 	}
 
 	static function classExtends(classType:ClassType, expectedFullName:String):Bool {
@@ -10022,23 +10124,47 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		seen.set(description, pos);
 	}
 
-	static function compileRailsTestDecl(decl:RailsTestDecl):RubyStatement {
+	static function compileRailsTestDecl(decl:RailsTestDecl, adapter:RailsTestAdapter):RubyStatement {
 		return withLocalNameScope([], () -> {
-			return RubyRawStatement(renderRailsTestBlock(decl.kind, decl.description, decl.body));
+			return withRailsTestAdapter(adapter, () -> RubyRawStatement(renderRailsTestBlock(decl.kind, decl.description, decl.body, adapter)));
 		});
 	}
 
-	static function renderRailsTestBlock(kind:String, description:Null<String>, bodyExpr:TypedExpr):String {
+	static function withRailsTestAdapter<T>(adapter:RailsTestAdapter, run:Void->T):T {
+		var previous = currentRailsTestAdapter;
+		currentRailsTestAdapter = adapter;
+		var result = run();
+		currentRailsTestAdapter = previous;
+		return result;
+	}
+
+	static function renderRailsTestBlock(kind:String, description:Null<String>, bodyExpr:TypedExpr, adapter:RailsTestAdapter):String {
 		var body = renderStatements(compileRubyBlockBody(bodyExpr));
-		var lines = switch (kind) {
-			case "test":
-				[
-					"test " + quoteRubyStringForCode(description == null ? "unnamed test" : description) + " do"
-				];
-			case "setup" | "teardown":
-				[kind + " do"];
-			case _:
-				[kind + " do"];
+		var lines = switch (adapter) {
+			case RailsMinitest:
+				switch (kind) {
+					case "test":
+						[
+							"test " + quoteRubyStringForCode(description == null ? "unnamed test" : description) + " do"
+						];
+					case "setup" | "teardown":
+						[kind + " do"];
+					case _:
+						[kind + " do"];
+				}
+			case RailsRspec:
+				switch (kind) {
+					case "test":
+						[
+							"it " + quoteRubyStringForCode(description == null ? "unnamed test" : description) + " do"
+						];
+					case "setup":
+						["before do"];
+					case "teardown":
+						["after do"];
+					case _:
+						[kind + " do"];
+				}
 		}
 		appendIndentedLines(lines, body, 1);
 		lines.push("end");
@@ -12521,6 +12647,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return RailsArtifactPaths.testOutputPath(path);
 	}
 
+	static function railsSpecOutputPath(path:String):String {
+		return RailsArtifactPaths.specOutputPath(path);
+	}
+
 	static function railsMailerPreviewOutputPath(path:String):String {
 		return RailsArtifactPaths.mailerPreviewOutputPath(path);
 	}
@@ -12535,6 +12665,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function validateRailsTestPath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
 		RailsArtifactPaths.validateTestPath(path, pos, context);
+	}
+
+	static function validateRailsSpecPath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {
+		RailsArtifactPaths.validateSpecPath(path, pos, context);
 	}
 
 	static function validateRailsMailerPreviewPath(path:String, pos:haxe.macro.Expr.Position, context:String):Void {

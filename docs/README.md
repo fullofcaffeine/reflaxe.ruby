@@ -64,6 +64,8 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - `examples/active_support_facades`: typed facades over Ruby/Rails extension-style APIs.
 - `examples/rails_routes_dsl`: focused Haxe-owned Rails route DSL fixture with
   committed `config/routes.rb` and route-manifest snapshots.
+- `examples/rails_test_adapters`: focused Haxe-authored Rails test fixture for
+  default Minitest and explicit RSpec adapter output.
 - `examples/rails_interop_app`: gradual Rails adoption with existing Ruby/ERB seams.
 - `examples/todoapp_rails`: canonical RailsHx dogfood app with HHX, ActiveRecord, migrations, DeviseHx, Haxe-authored JS, Rails tests, production smoke, and Playwright.
 

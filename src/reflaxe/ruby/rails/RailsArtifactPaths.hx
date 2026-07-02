@@ -31,6 +31,15 @@ class RailsArtifactPaths {
 		return "test/generated/" + normalized;
 	}
 
+	public static function specOutputPath(path:String):String {
+		var normalized = normalizeSpecPath(path);
+		normalized = stripLeadingSlashes(normalized);
+		if (!StringTools.endsWith(normalized, ".rb")) {
+			normalized += ".rb";
+		}
+		return "spec/generated/" + normalized;
+	}
+
 	public static function mailerPreviewOutputPath(path:String):String {
 		var normalized = normalizeMailerPreviewPath(path);
 		normalized = stripLeadingSlashes(normalized);
@@ -80,6 +89,19 @@ class RailsArtifactPaths {
 		validateSegments(normalized, pos, context);
 	}
 
+	public static function validateSpecPath(path:String, pos:Position, context:String):Void {
+		var normalized = normalizeSpecPath(path);
+		if (isUnsafeRelativePath(path, normalized)) {
+			Context.error(context + " path must be a safe Rails spec path relative to spec/generated.", pos);
+			return;
+		}
+		if (!StringTools.endsWith(normalized, "_spec") && !StringTools.endsWith(normalized, "_spec.rb")) {
+			Context.error(context + " path must end with _spec or _spec.rb so RSpec discovers it.", pos);
+			return;
+		}
+		validateSegments(normalized, pos, context);
+	}
+
 	public static function validateMailerPreviewPath(path:String, pos:Position, context:String):Void {
 		var normalized = normalizeMailerPreviewPath(path);
 		if (isUnsafeRelativePath(path, normalized)) {
@@ -98,6 +120,10 @@ class RailsArtifactPaths {
 	}
 
 	public static function normalizeTestPath(path:String):String {
+		return StringTools.replace(path == null ? "" : StringTools.trim(path), "\\", "/");
+	}
+
+	public static function normalizeSpecPath(path:String):String {
 		return StringTools.replace(path == null ? "" : StringTools.trim(path), "\\", "/");
 	}
 

@@ -18,6 +18,7 @@ require "hxruby/generators/routes_parity"
 require "hxruby/generators/scaffold"
 require "hxruby/generators/template"
 require "hxruby/generators/test"
+require "hxruby/generators/test_adapter"
 
 module HXRuby
   module Tasks
@@ -85,7 +86,12 @@ module HXRuby
         task :test do
           compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
           compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
-          rails(["test", *Shellwords.split(ENV.fetch("ARGS", ""))])
+          test_adapter = HXRuby::Generators::TestAdapter.resolve(ENV.fetch("HXRUBY_TEST_ADAPTER", "minitest"), root: Dir.pwd)
+          if HXRuby::Generators::TestAdapter.rspec?(test_adapter)
+            rspec(Shellwords.split(ENV.fetch("ARGS", "")))
+          else
+            rails(["test", *Shellwords.split(ENV.fetch("ARGS", ""))])
+          end
         end
 
         desc "Compile RailsHx server/client artifacts and start Rails. Use WATCH=1 for server + watchers"
@@ -186,6 +192,7 @@ module HXRuby
             args += ["--previews-package", ENV["PREVIEWS_PACKAGE"]] if ENV["PREVIEWS_PACKAGE"]
             args += ["--tests-dir", ENV["TESTS_DIR"]] if ENV["TESTS_DIR"]
             args += ["--tests-package", ENV["TESTS_PACKAGE"]] if ENV["TESTS_PACKAGE"]
+            args += ["--test-adapter", ENV["TEST_ADAPTER"]] if ENV["TEST_ADAPTER"]
             args << "--skip-preview" if truthy?(ENV["SKIP_PREVIEW"])
             args << "--skip-test" if truthy?(ENV["SKIP_TEST"])
             args << "--force" if truthy?(ENV["FORCE"])
@@ -204,7 +211,7 @@ module HXRuby
             HXRuby::Generators::Template.run(args)
           end
 
-          desc "Generate a Haxe-authored Rails/Minitest source"
+          desc "Generate a Haxe-authored Rails test source"
           task :test do
             name = ENV["NAME"] || abort("NAME is required, for example: rake hxruby:gen:test NAME=models/todo")
             args = [name]
@@ -213,6 +220,7 @@ module HXRuby
             args += ["--haxe-dir", ENV["HAXE_DIR"]] if ENV["HAXE_DIR"]
             args += ["--package", ENV["PACKAGE"]] if ENV["PACKAGE"]
             args += ["--description", ENV["DESCRIPTION"]] if ENV["DESCRIPTION"]
+            args += ["--adapter", ENV["ADAPTER"]] if ENV["ADAPTER"]
             args << "--force" if truthy?(ENV["FORCE"])
             HXRuby::Generators::Test.run(args)
           end
@@ -225,6 +233,7 @@ module HXRuby
             args += ["--validate", ENV["VALIDATE"]] if ENV["VALIDATE"]
             args += ["--output", ENV["OUTPUT"]] if ENV["OUTPUT"]
             args += ["--routes", ENV["ROUTES"]] if ENV["ROUTES"]
+            args += ["--test-adapter", ENV["TEST_ADAPTER"]] if ENV["TEST_ADAPTER"]
             args << "--controller" if truthy?(ENV["CONTROLLER"])
             args << "--skip-tests" if truthy?(ENV["SKIP_TESTS"])
             args << "--force" if truthy?(ENV["FORCE"])
@@ -444,6 +453,10 @@ module HXRuby
 
     def rails(args, env: {})
       sh(env.map { |key, value| "#{key}=#{value.to_s.shellescape}" }.concat([rails_command.shellescape, *args.map(&:shellescape)]).join(" "))
+    end
+
+    def rspec(args)
+      sh(["bundle", "exec", "rspec", *args].map(&:shellescape).join(" "))
     end
 
     def rake_command

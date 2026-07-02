@@ -13,6 +13,7 @@ if defined?(Rails::Generators::Base)
       class_option :validate, type: :string, default: "", desc: "Comma-separated fields with presence validation"
       class_option :controller, type: :boolean, default: false, desc: "Generate a typed controller scaffold"
       class_option :routes, type: :string, default: "haxe", desc: "Route mode: haxe, snippet, rails, or none"
+      class_option :test_adapter, type: :string, default: "minitest", desc: "Test adapter: minitest, rspec, or auto"
       class_option :skip_tests, type: :boolean, default: false, desc: "Skip generated Haxe-authored Rails test stubs"
       class_option :output, type: :string, default: ".", desc: "Output root"
       class_option :force, type: :boolean, default: false, desc: "Overwrite non-owned files and take RailsHx ownership"
@@ -25,6 +26,7 @@ if defined?(Rails::Generators::Base)
         ]
         args += ["--validate", hxruby_option(:validate, "")] unless hxruby_option(:validate, "").to_s.empty?
         args += ["--routes", hxruby_option(:routes, "haxe")]
+        args += ["--test-adapter", hxruby_option(:test_adapter, "minitest")]
         args << "--controller" if hxruby_flag?(:controller)
         args << "--skip-tests" if hxruby_flag?(:skip_tests)
         args << "--force" if hxruby_flag?(:force)
