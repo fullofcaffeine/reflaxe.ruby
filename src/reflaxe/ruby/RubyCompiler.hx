@@ -113,6 +113,18 @@ typedef RailsManifestEntry = {
 	content:String
 }
 
+typedef RailsCompilerManifest = {
+	version:Int,
+	outputs:Array<RailsCompilerManifestOutput>
+}
+
+typedef RailsCompilerManifestOutput = {
+	output:String,
+	kind:String,
+	source:String,
+	sha256:String
+}
+
 typedef RubyMetadataField = {
 	field:String,
 	expr:haxe.macro.Expr
@@ -9843,13 +9855,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return;
 		}
 		var manifestPath = Path.normalize(Path.join([outputRoot, ".railshx", "manifest.json"]));
-		var outputs:Array<Dynamic> = [];
+		var outputs:Array<RailsCompilerManifestOutput> = [];
 		if (FileSystem.exists(manifestPath)) {
 			try {
-				var parsed:Dynamic = haxe.Json.parse(File.getContent(manifestPath));
-				var parsedOutputs:Dynamic = Reflect.field(parsed, "outputs");
-				if (Std.isOfType(parsedOutputs, Array)) {
-					outputs = cast parsedOutputs;
+				// haxe.Json.parse is the external JSON boundary; after parsing, keep
+				// only typed manifest records so compiler-owned JSON construction
+				// does not spread Dynamic/Reflect through the manifest writer.
+				var parsed:RailsCompilerManifest = haxe.Json.parse(File.getContent(manifestPath));
+				if (parsed != null && Std.isOfType(parsed.outputs, Array)) {
+					outputs = parsed.outputs;
 				}
 			} catch (e:Dynamic) {
 				Context.error('Invalid RailsHx manifest ${manifestPath}: ${Std.string(e)}', pos);
@@ -9862,21 +9876,30 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		outputs = [
 			for (existing in outputs)
-				if (!replacing.exists(Std.string(Reflect.field(existing, "output")))) existing
+				if (!replacing.exists(existing.output)) existing
 		];
 		for (entry in entries) {
-			var item:Dynamic = {};
-			Reflect.setField(item, "output", entry.output);
-			Reflect.setField(item, "kind", entry.kind);
-			Reflect.setField(item, "source", entry.source);
-			Reflect.setField(item, "sha256", haxe.crypto.Sha256.encode(entry.content));
-			outputs.push(item);
+			outputs.push({
+				output: entry.output,
+				kind: entry.kind,
+				source: entry.source,
+				sha256: haxe.crypto.Sha256.encode(entry.content)
+			});
 		}
-		outputs.sort((a, b) -> Reflect.compare(Std.string(Reflect.field(a, "output")), Std.string(Reflect.field(b, "output"))));
-		var manifest:Dynamic = {};
-		Reflect.setField(manifest, "version", 1);
-		Reflect.setField(manifest, "outputs", outputs);
+		outputs.sort((a, b) -> compareRailsManifestOutput(a.output, b.output));
+		var manifest:RailsCompilerManifest = {
+			version: 1,
+			outputs: outputs
+		};
 		setExtraFile(OutputPath.fromStr(".railshx/manifest.json"), haxe.Json.stringify(manifest, null, "  ") + "\n");
+	}
+
+	static function compareRailsManifestOutput(a:String, b:String):Int {
+		if (a < b)
+			return -1;
+		if (a > b)
+			return 1;
+		return 0;
 	}
 
 	static function validateRailsTestMethod(field:ClassFuncData):Void {
