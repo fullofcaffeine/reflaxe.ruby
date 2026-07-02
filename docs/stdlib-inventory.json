@@ -151,6 +151,22 @@
       "reason": "Target-local Ruby Hash operations used by Haxe map overrides."
     },
     {
+      "id": "std.ruby.native_hash_data",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/NativeHashData.hx",
+      "surface": "ruby.NativeHashData",
+      "reason": "Opaque generic handle for Ruby Hash storage so map std helpers keep key/value types without exposing raw Dynamic handles."
+    },
+    {
+      "id": "std.ruby.native_hash_entry",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/NativeHashEntry.hx",
+      "surface": "ruby.NativeHashEntry",
+      "reason": "Typed structural key/value entry shape returned by Ruby Hash-backed map keyValueIterator implementations."
+    },
+    {
       "id": "std.ruby.native_iterator",
       "owner": "std",
       "status": "implemented",
@@ -1588,7 +1604,7 @@
       "status": "implemented",
       "path": "std/_std/haxe/ds/ObjectMap.cross.hx",
       "surface": "haxe.ds.ObjectMap",
-      "reason": "Object identity map semantics for Ruby."
+      "reason": "Ruby Hash#compare_by_identity-backed map preserving Haxe object-key identity semantics."
     },
     {
       "id": "std.io.bytes",

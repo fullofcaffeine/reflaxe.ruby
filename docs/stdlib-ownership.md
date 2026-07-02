@@ -75,13 +75,10 @@ Ruby-specific reason, record that decision in the manifest with a short reason.
 
 The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `EReg`,
-`IntIterator`, `Lambda`, `Math`, `String`, `StringBuf`, `StringTools`, and
-`haxe.io.BytesBuffer` run directly; `Std` runs through an adapted fixture
+`IntIterator`, `Lambda`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
+and `haxe.io.BytesBuffer` run directly; `Std` runs through an adapted fixture
 because upstream assertion syntax and duplicate local names need macro-lane
-accommodation. `Map` remains a manifest-tracked follow-up rather than a silent
-omission because it exposes larger Ruby semantic questions around key
-identity/order. The focused follow-up for that remaining fixture is
-`haxe.ruby-bjv.28`.
+accommodation.
 
 `Lambda` is enabled as a direct upstream fixture. It locks in the Ruby-first
 iterator bridge for native arrays plus Haxe iterator-bearing objects, and the
@@ -103,6 +100,10 @@ timezone offset sign, millisecond timestamps, and the accepted Haxe
 preserving Haxe stateful match accessors, `matchSub` offsets, global versus
 non-global split/replace/map behavior, capture expansion with `$1`/`$$`, and
 `EReg.escape()`.
+
+`Map` is enabled as a direct upstream fixture. `StringMap` and `IntMap` use
+normal Ruby `Hash`; `ObjectMap` uses `Hash#compare_by_identity` to preserve Haxe
+object-key identity while retaining Ruby insertion-order iteration.
 
 ## Current Baseline
 

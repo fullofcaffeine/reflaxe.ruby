@@ -69,6 +69,8 @@ for (const required of [
   "src/reflaxe/ruby/macros/RubyExtensionMacro.hx",
   "std/Std.cross.hx",
   "std/ruby/StandardError.hx",
+  "std/ruby/NativeHashData.hx",
+  "std/ruby/NativeHashEntry.hx",
   "std/devisehx/Auth.hx",
   "std/devisehx/AuthFilter.hx",
   "std/devisehx/DeviseScope.hx",

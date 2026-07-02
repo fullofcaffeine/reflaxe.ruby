@@ -2628,14 +2628,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				var classType = classRef.get();
 				var field = fieldRef.get();
 				var token = actionControllerStaticToken(classType, field.name);
-				var constant = token ?? mathConstantValue(classType.pack, classType.name, field.name);
+				var constant = token ?? mathConstantValue(classType.pack, classType.name, field.name) ?? staticRuntimeMethodValue(classType, field.name);
 				constant == null ? RubyRawExpr((rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType))
 					+ "."
 					+ (isMethodField(field) ? 'method(:${rubyFieldName(field.name, field.meta)})' : rubyFieldName(field.name,
 						field.meta))) : RubyRawExpr(constant);
 			case TField(target, access) if (fieldAccessRawName(access) == "keyValueIterator"
 				&& isArrayReceiverFieldAccess(target, access)):
-				var iteratorExpr = hxrubyCall("native_iterator", [hxrubyCall("array_key_value_entries", [compileExpr(target)])]);
+				var iteratorExpr = hxrubyCall("key_value_iterator", [compileExpr(target)]);
 				RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr) + " }");
 			case TField(target, FAnon(fieldRef)):
 				hxrubyCall("reflect_field", [compileExpr(target), RubyString(fieldRef.get().name)]);
@@ -3382,7 +3382,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "resize":
 						hxrubyCall("array_resize", [receiver, compileParam(params, 0)]);
 					case "keyValueIterator":
-						hxrubyCall("native_iterator", [hxrubyCall("array_key_value_entries", [receiver])]);
+						hxrubyCall("key_value_iterator", [receiver]);
 					case _:
 						null;
 				}
@@ -5356,6 +5356,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "nativeApp" | "get_nativeApp": ":native_app";
 					case _: null;
 				}
+			case _:
+				null;
+		}
+	}
+
+	static function staticRuntimeMethodValue(classType:ClassType, fieldName:String):Null<String> {
+		return switch [fullTypeName(classType.pack, classType.name), fieldName] {
+			case ["Reflect", "compare"]:
+				// `Reflect` is compiler-erased; method references need the runtime
+				// helper directly when passed as callbacks such as Array.sort.
+				"HXRuby.method(:reflect_compare)";
+			case ["Reflect", "compareMethods"]:
+				"HXRuby.method(:reflect_compare_methods)";
 			case _:
 				null;
 		}

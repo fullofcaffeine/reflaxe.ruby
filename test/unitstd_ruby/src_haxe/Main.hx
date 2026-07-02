@@ -17,10 +17,12 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("String.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("StringTools.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Lambda.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("Map.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Math.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		unitstd_ruby.ERegSemantics.run();
+		unitstd_ruby.MapSemantics.run();
 		unitstd_ruby.StdNumericParsing.run();
 		Sys.println("unitstd-ruby ok");
 	}

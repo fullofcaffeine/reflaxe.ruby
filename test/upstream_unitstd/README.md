@@ -26,15 +26,14 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `Array`, `Date`, `EReg`, `IntIterator`, `Lambda`, `Math`, `String`,
-  `StringBuf`, `StringTools`, `haxe.io.BytesBuffer`.
+- Enabled: `Array`, `Date`, `EReg`, `IntIterator`, `Lambda`, `Map`, `Math`,
+  `String`, `StringBuf`, `StringTools`, `haxe.io.BytesBuffer`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
-- Tracked but staged: `Map`. It has an upstream fixture in the local reference
-  checkout, but also exposes wider Ruby target semantics such as key
-  identity/order. Keep it in the manifest until it is enabled or split into a
-  focused follow-up. The current focused follow-up is `haxe.ruby-bjv.28`.
+- `Map` is enabled directly. RubyHx backs `StringMap` and `IntMap` with normal
+  Ruby `Hash`, and backs `ObjectMap` with `Hash#compare_by_identity` so object
+  keys keep Haxe identity semantics while preserving Ruby insertion order.
 
 `Date` is enabled directly. The Ruby lane models Haxe `Date` as a small wrapper
 around Ruby `Time`: local constructors and component getters use local time,
@@ -57,6 +56,11 @@ assertions so compiler equality can keep Haxe's array identity semantics.
 mutation, slicing/splicing, sorting with method references, dynamic array calls,
 anonymous-object field reads in array callbacks, sparse resize contents, and
 key/value iteration while keeping normal generated `Array ==` as identity.
+
+`Map` is enabled directly in the portable unitstd lane. It exercises
+`StringMap`, `IntMap`, hash-code object keys, plain object identity keys, map
+literals, `[]` map access, copying, removal, and `KeyValueIterable` unification
+through Ruby's native hash-backed map implementation.
 
 The first lane is intentionally narrow. It proves the harness, provenance, sync
 workflow, and runtime execution shape without pretending broad Ruby stdlib parity

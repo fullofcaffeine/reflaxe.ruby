@@ -179,9 +179,11 @@ semantics need an adapter.
   benefit from safe Array direct lowerings, but the public `Lambda` API should
   not be rewritten into Ruby `Enumerable` shortcuts until nullability,
   Iterable/Iterator shape, and callback return semantics are proven.
-- `haxe.ds.*Map` currently uses `ruby.NativeHash`, not `HXRuby`. Keep that
-  direct Ruby hash backend for `StringMap`/`IntMap`/`ObjectMap` unless a Haxe
-  key-identity or iteration-order gap requires a documented helper.
+- `haxe.ds.*Map` currently uses typed `ruby.NativeHash`, not `HXRuby`.
+  `StringMap` and `IntMap` use normal Ruby `Hash`; `ObjectMap` uses an identity
+  hash so same-shape object keys do not collapse. Keep this direct Ruby backend
+  unless another Haxe key-identity or iteration-order gap requires a documented
+  helper.
 
 ## Testing Policy
 

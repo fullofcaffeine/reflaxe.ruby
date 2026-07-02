@@ -360,6 +360,13 @@ module HXRuby
     array.each_with_index.map { |value, index| KeyValueEntry.new(index, value) }
   end
 
+  def key_value_iterator(value)
+    return NativeIterator.new(array_key_value_entries(value)) if value.is_a?(Array)
+    return value.key_value_iterator if value.respond_to?(:key_value_iterator)
+
+    raise NoMethodError, "undefined keyValueIterator for #{value.inspect}"
+  end
+
   def array_contents_match?(expected, actual)
     return false unless expected.is_a?(Array) && actual.is_a?(Array)
 

@@ -8,6 +8,9 @@ module Ruby
     def self.create()
       return {}
     end
+    def self.create_identity()
+      return {}.compare_by_identity
+    end
     def self.set(hash, key, value)
       hash[key] = value
     end
@@ -27,7 +30,7 @@ module Ruby
       return hash.values
     end
     def self.entries(hash)
-      return hash.map { |key, value| Struct.new(:key, :value).new(key, value) }
+      return hash.map { |key, value| HXRuby::KeyValueEntry.new(key, value) }
     end
     def self.copy_into(target, source)
       target.replace(source)
