@@ -1,46 +1,51 @@
 # RailsHx Production Readiness
 
 RailsHx is intended to become production-ready for real Rails applications, not
-only a compiler demo. The current state is an alpha with strong typed compiler
-coverage and a credible production path, but production readiness is not declared
-until the gates in this document are met.
+only a compiler demo. The production-readiness gate for the documented `0.x`
+beta contract is satisfied when the checks and ownership rules in this document
+stay green. This is still a beta contract: supported surfaces are production
+ready, but new Rails/Ruby surfaces must be added through explicit beads, tests,
+and compatibility notes before users should rely on them.
 
 Tracking epic: `haxe.ruby-bjv` RailsHx production readiness.
 
 ## Current Status
 
-RailsHx already proves the main shape:
+RailsHx now proves the main production shape:
 
 - Haxe-authored Rails models, relations, controllers, params, migrations, routes,
   HHX templates, generators, and Rails interop can emit Rails-native artifacts.
 - The canonical todo app and mixed adoption fixtures cover compile-time output,
-  Ruby syntax, browser smoke, and optional Rails runtime lanes.
+  Ruby syntax, browser smoke, mandatory Rails runtime lanes, production asset
+  checks, and release artifact shape.
 - Strict examples reject raw `__ruby__`; raw ERB and external templates are
   explicit migration/interop paths rather than the default authoring style.
 
-The remaining gap is production confidence: mandatory runtime coverage, deploy
-evidence, API completeness, safe escape-hatch policy, and polished app/generator
-workflow.
+The production-readiness gate is closed for the documented beta surface:
+mandatory runtime coverage, deploy evidence, API completeness audits, safe
+escape-hatch policy, and Rails-native app/generator workflows are tracked and
+covered. Future breadth remains normal beta evolution, not an implicit blocker
+for the closed readiness gate.
 
 ## Supported Baseline And Adoption Guidance
 
-Until `haxe.ruby-bjv` is closed, RailsHx should be described as alpha for
-production Rails adoption. Teams may pilot it in controlled apps, but should
-pin compiler/runtime versions, keep generated artifacts in CI, run the runtime
-gates below, and expect API gaps to become explicit beads before broad rollout.
+RailsHx should be described as production-ready for the documented beta
+contract, not as a stable `1.x` API. Teams should pin compiler/runtime versions,
+keep generated artifacts in CI, run the gates below, and expect unsupported API
+gaps to become explicit beads before broad rollout.
 
 The current supported toolchain baseline is documented in
 [Compatibility Matrix](compatibility-matrix.md): Haxe `4.3.7`, Node `20`, and
 Ruby `3.2`, `3.3`, and `4.0` in CI. Rails output targets Rails 7+/8-style app
 shape unless a future compatibility row narrows or expands that contract.
 
-Support expectation before production readiness:
+Support expectation for production-beta use:
 
 - No silent production blockers: file or link a bead under `haxe.ruby-bjv`.
 - No untracked unsafe shortcuts: raw Ruby/ERB/SQL/Dynamic paths must be explicit
   and documented.
 - No unsupported-version promises: users should stay on the documented matrix.
-- No production-ready claim until every P0/P1 gate in this doc is closed.
+- No stable `1.x` compatibility promise while public versioning remains `0.x`.
 
 ## Production-Ready Definition
 
@@ -70,6 +75,10 @@ RailsHx can be called production-ready when all of these are true:
 
 ## Tracked Work
 
+The P0/P1 readiness gates below are closed. Non-blocking breadth and R&D should
+be tracked as new follow-up beads without silently widening the production
+contract.
+
 | Bead | Gate | Required outcome |
 | --- | --- | --- |
 | `haxe.ruby-bjv.1` | Mandatory Rails runtime CI | `rake test:rails:runtime` is the local required gate for supported Ruby/Rails lanes, with clear failure staging. CI runs the underlying npm script directly. |
@@ -85,14 +94,14 @@ Generator/task ownership details are tracked in
 [RailsHx Generators And Rails Tasks Design](railshx-generators-and-tasks-design.md).
 Generated-file ownership details are tracked in
 [RailsHx Generated Artifact Ownership](railshx-generated-artifact-ownership.md).
-Follow-up beads under `haxe.ruby-bjv` cover manifest-backed generated artifact
-ownership, production migration snapshots, namespaced Rails generator hardening,
-schema adoption, migration-history collision checks, and `hxruby:doctor` /
-`hxruby:check`.
+Historical follow-up beads under `haxe.ruby-bjv` covered manifest-backed
+generated artifact ownership, production migration snapshots, namespaced Rails
+generator hardening, schema adoption, migration-history collision checks, and
+`hxruby:doctor` / `hxruby:check`.
 
 ## Graduation Gates
 
-Before declaring production readiness, run and record:
+To maintain the production-ready beta contract, run and record:
 
 ```bash
 npm test

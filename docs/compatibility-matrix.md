@@ -32,12 +32,11 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 
 ## Rails Mode
 
-RailsHx is currently alpha for production Rails adoption. The supported surfaces
-below are tested and documented, but production readiness is tracked separately
-by `haxe.ruby-bjv`; see [RailsHx Production Readiness](railshx-production-readiness.md)
-for the mandatory runtime, deploy, security, API-completeness, generator, and
-support gates required before declaring production-ready status. The current
-typed API production blockers are inventoried in
+RailsHx satisfies the production-readiness gate for the documented `0.x` beta
+contract. The supported surfaces below are tested and documented; see
+[RailsHx Production Readiness](railshx-production-readiness.md) for the
+mandatory runtime, deploy, security, API-completeness, generator, and support
+gates that maintain that status. The typed API production audit is tracked in
 [RailsHx Typed API Production Gap Audit](railshx-typed-api-production-gap-audit.md).
 Unsafe boundary policy is tracked in
 [RailsHx Escape Hatch And Security Audit](railshx-escape-hatch-security-audit.md).
