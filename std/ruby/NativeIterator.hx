@@ -2,10 +2,10 @@ package ruby;
 
 @:rubyAllowRaw
 class NativeIterator<T> {
-	final values:Dynamic;
+	final values:Array<T>;
 	var index:Int = 0;
 
-	public function new(values:Dynamic) {
+	public function new(values:Array<T>) {
 		this.values = values;
 	}
 

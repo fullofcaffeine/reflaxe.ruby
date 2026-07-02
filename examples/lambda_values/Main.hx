@@ -12,5 +12,14 @@ class Main {
 			return x + 1;
 		};
 		Sys.println(addOne(2));
+
+		var sum = function(values:Array<Int>):Int {
+			var total = 0;
+			for (value in values.iterator()) {
+				total += value;
+			}
+			return total;
+		};
+		Sys.println(sum([1, 2, 3]));
 	}
 }

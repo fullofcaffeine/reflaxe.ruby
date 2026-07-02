@@ -8,20 +8,20 @@ class Main
     number = 2
     case number
     when 1
-      puts("one".to_s())
+      puts(HXRuby.stringify("one"))
     when 2
-      puts("two".to_s())
+      puts(HXRuby.stringify("two"))
     else
-      puts("other".to_s())
+      puts(HXRuby.stringify("other"))
     end
     color = Color.green()
     case color.__hx_index
     when 0
-      puts("red".to_s())
+      puts(HXRuby.stringify("red"))
     when 1
-      puts("green".to_s())
+      puts(HXRuby.stringify("green"))
     when 2
-      puts("blue".to_s())
+      puts(HXRuby.stringify("blue"))
     end
   end
 end

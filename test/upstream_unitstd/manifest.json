@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "referenceRoot": "haxe/tests/unit/src/unitstd",
+  "statusValues": [
+    "enabled",
+    "adapted",
+    "skipped-target-specific",
+    "skipped-unsupported",
+    "no-upstream-spec"
+  ],
+  "modules": [
+    {"module": "Array", "status": "enabled", "source": "Array.unit.hx", "fixture": "test/upstream_unitstd/upstream/Array.unit.hx"},
+    {"module": "Date", "status": "enabled", "source": "Date.unit.hx", "fixture": "test/upstream_unitstd/upstream/Date.unit.hx"},
+    {"module": "EReg", "status": "enabled", "source": "EReg.unit.hx", "fixture": "test/upstream_unitstd/upstream/EReg.unit.hx"},
+    {"module": "IntIterator", "status": "enabled", "source": "IntIterator.unit.hx", "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx"},
+    {"module": "Lambda", "status": "enabled", "source": "Lambda.unit.hx", "fixture": "test/upstream_unitstd/upstream/Lambda.unit.hx"},
+    {"module": "Map", "status": "enabled", "source": "Map.unit.hx", "fixture": "test/upstream_unitstd/upstream/Map.unit.hx"},
+    {"module": "Math", "status": "enabled", "source": "Math.unit.hx", "fixture": "test/upstream_unitstd/upstream/Math.unit.hx"},
+    {"module": "Std", "status": "adapted", "source": "Std.unit.hx", "fixture": "test/upstream_unitstd/upstream/Std.unit.hx", "reason": "Adapted to avoid duplicate local names in the macro-expanded Ruby lane; unspec markers are ignored and in-expression assertions are handled by UpstreamUnitStdMacro."},
+    {"module": "String", "status": "enabled", "source": "String.unit.hx", "fixture": "test/upstream_unitstd/upstream/String.unit.hx"},
+    {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
+    {"module": "StringTools", "status": "enabled", "source": "StringTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringTools.unit.hx"},
+    {"module": "haxe.io.Bytes", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; Bytes behavior is covered by local runtime tests and future adjacent upstream haxe.io fixtures."},
+    {"module": "haxe.io.BytesBuffer", "status": "enabled", "source": "haxe/io/BytesBuffer.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/BytesBuffer.unit.hx"}
+  ]
+}

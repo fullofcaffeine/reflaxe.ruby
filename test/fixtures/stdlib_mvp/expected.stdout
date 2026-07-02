@@ -6,6 +6,7 @@ true
 true
 true
 typed ruby
+\1
 00FF
 typed ruby
 true
@@ -20,6 +21,24 @@ true
 8
 true
 false
+true
+ruby
+3
+true
+{"name":"ruby","count":2}
+["ruby",null,true]
+true
+true
+true
+typed fs
+8
+true
+true
+typed fs
+bin
+true
+true
+true
 true
 typed
 true
@@ -51,33 +70,55 @@ TInt
 TFloat
 TBool
 TEnum
+true
+ruby
+3
+count|name
+ruby:haxe
+true
+false
+true
+typed
+get:updated
+set:property
+box:set:property
+pong:set:property
+3
+true
+true
+true
+true
+false
+true
+true
+true
 4
 1:2:3:4
 4
 1
-[0, 2, 3]
-[0, 2, 3, 4, 5]
-[0, 2, 3]
-[-1, 0, 2, 3, 4]
-[2, 3, 4]
+[0,2,3]
+[0,2,3,4,5]
+[0,2,3]
+[-1,0,2,3,4]
+[2,3,4]
 []
-[2, 3]
-[-1, 0, 4]
+[2,3]
+[-1,0,4]
 true
 false
 true
 1
 0
 1
-[-1, 4]
-[-1, 4, 9]
-[-2, 8]
+[-1,4]
+[-1,4,9]
+[-2,8]
 [4]
 4
 true
 [1]
-[1, 2, 3]
-[3, 2, 1]
+[1,2,3]
+[3,2,1]
 3
 true
 true

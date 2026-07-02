@@ -11,14 +11,14 @@ module Hxruby
         def self.main()
           nil
         end
-        def self.compare_manifest_file(manifest_path, rails_routes, devise_facts_path)
-          devise_facts_json = (if (devise_facts_path == nil) then nil else File.read(devise_facts_path) end)
+        def self.compare_manifest_file(manifest_path, rails_routes, devise_facts_path = nil)
+          devise_facts_json = ((devise_facts_path == nil) ? nil : File.read(devise_facts_path))
           return Hxruby::Generators::Routes::ParityCore.compare_manifest_json(File.read(manifest_path), rails_routes, devise_facts_json)
         end
-        def self.compare_manifest_json(manifest_json, rails_routes, devise_facts_json)
+        def self.compare_manifest_json(manifest_json, rails_routes, devise_facts_json = nil)
           manifest = JSON.parse(manifest_json)
           errors = Hxruby::Generators::Routes::ParityCore.compare_manifest(manifest, rails_routes)
-          return HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.validate_devise_mappings(manifest, devise_facts_json))
+          return (errors + Hxruby::Generators::Routes::ParityCore.validate_devise_mappings(manifest, devise_facts_json))
         end
         def self.compare_manifest(manifest, rails_routes)
           manifest_errors = Hxruby::Generators::Routes::ParityCore.validate_manifest(manifest)
@@ -32,21 +32,21 @@ module Hxruby
           while (g < expected.length)
             route = expected[g]
             g = (g + 1)
-            errors = HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.compare_route(route, routes))
+            errors = (errors + Hxruby::Generators::Routes::ParityCore.compare_route(route, routes))
           end
           return errors
         end
         def self.validate_manifest(manifest)
           errors = []
           version = Hxruby::Generators::Routes::ParityCore.hash_value(manifest, "version")
-          version_text = (if (version == nil) then "" else ((__hx_value = version).nil? ? "null" : __hx_value.to_s) end)
+          version_text = ((version == nil) ? "" : HXRuby.stringify(version))
           if ((version_text != "1") && (version_text != "2"))
-            HXRuby.array_push(errors, ("unsupported Haxe-owned route manifest version " + (if (version_text == "") then "(missing)" else version_text end)))
+            HXRuby.array_push(errors, ("unsupported Haxe-owned route manifest version " + ((version_text == "") ? "(missing)" : version_text)))
           end
           if (!Ruby::NativeHash.exists(manifest, "declarations"))
             HXRuby.array_push(errors, "Haxe-owned route manifest is missing declarations")
           end
-          return HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.hash_array(manifest, "declarations")))
+          return (errors + Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.hash_array(manifest, "declarations")))
         end
         def self.validate_declarations(declarations)
           errors = []
@@ -56,22 +56,22 @@ module Hxruby
             g = (g + 1)
             kind = Hxruby::Generators::Routes::ParityCore.hash_string(decl, "kind")
             if (!Hxruby::Generators::Routes::ParityCore.supported_declaration_kind(kind))
-              HXRuby.array_push(errors, ("unknown Haxe-owned route manifest declaration kind " + (if (kind == nil) then "(missing)" else kind end)))
+              HXRuby.array_push(errors, ("unknown Haxe-owned route manifest declaration kind " + ((kind == nil) ? "(missing)" : kind)))
             else
-              errors = HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.children_of(decl)))
+              errors = (errors + Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.children_of(decl)))
             end
           end
           return errors
         end
         def self.supported_declaration_kind(kind)
-          return (if (kind == nil) then false else case kind
+          return ((kind == nil) ? false : case kind
 when "collection", "constraints", "controller", "defaults", "deviseFor", "match", "member", "mount", "namespace", "rawRuby", "resource", "resources", "root", "scope", "verb"
   true
 else
   false
-end end)
+end)
         end
-        def self.validate_devise_mappings(manifest, devise_facts_json)
+        def self.validate_devise_mappings(manifest, devise_facts_json = nil)
           declarations = Hxruby::Generators::Routes::ParityCore.devise_declarations(Hxruby::Generators::Routes::ParityCore.hash_array(manifest, "declarations"))
           if (declarations.length == 0)
             return []
@@ -88,11 +88,11 @@ end end)
             g = (g + 1)
             expected = Ruby::NativeHash.get(declaration, "expectedMapping")
             scope = Hxruby::Generators::Routes::ParityCore.hash_string(expected, "name")
-            mapping = (if ((mappings == nil) || (scope == nil)) then nil else Ruby::NativeHash.get(mappings, scope) end)
+            mapping = (((mappings == nil) || (scope == nil)) ? nil : Ruby::NativeHash.get(mappings, scope))
             if (mapping == nil)
-              HXRuby.array_push(errors, ((("missing Devise mapping " + Hxruby::Generators::Routes::ParityCore.quote((if (scope == nil) then "" else scope end))) + " for ") + Hxruby::Generators::Routes::ParityCore.declaration_position(declaration)))
+              HXRuby.array_push(errors, ((("missing Devise mapping " + Hxruby::Generators::Routes::ParityCore.quote(((scope == nil) ? "" : scope))) + " for ") + Hxruby::Generators::Routes::ParityCore.declaration_position(declaration)))
             else
-              errors = HXRuby.array_concat(errors, Hxruby::Generators::Routes::ParityCore.compare_devise_mapping(scope, expected, mapping, declaration))
+              errors = (errors + Hxruby::Generators::Routes::ParityCore.compare_devise_mapping(scope, expected, mapping, declaration))
             end
           end
           return errors
@@ -106,7 +106,7 @@ end end)
             if (Hxruby::Generators::Routes::ParityCore.hash_string(declaration, "kind") == "deviseFor")
               HXRuby.array_push(out, declaration)
             end
-            out = HXRuby.array_concat(out, Hxruby::Generators::Routes::ParityCore.devise_declarations(Hxruby::Generators::Routes::ParityCore.children_of(declaration)))
+            out = (out + Hxruby::Generators::Routes::ParityCore.devise_declarations(Hxruby::Generators::Routes::ParityCore.children_of(declaration)))
           end
           return out
         end
@@ -114,14 +114,14 @@ end end)
           errors = []
           expected_class = Hxruby::Generators::Routes::ParityCore.hash_string(expected, "className")
           expected_path = Hxruby::Generators::Routes::ParityCore.hash_string(expected, "path")
-          expected_values = [Hxruby::Generators::Routes::DeviseExpectedField.new("name", scope), Hxruby::Generators::Routes::DeviseExpectedField.new("className", (if (expected_class == nil) then "" else expected_class end)), Hxruby::Generators::Routes::DeviseExpectedField.new("path", (if (expected_path == nil) then "" else expected_path end)), Hxruby::Generators::Routes::DeviseExpectedField.new("scopedPath", (if (expected_path == nil) then "" else expected_path end))]
+          expected_values = [Hxruby::Generators::Routes::DeviseExpectedField.new("name", scope), Hxruby::Generators::Routes::DeviseExpectedField.new("className", ((expected_class == nil) ? "" : expected_class)), Hxruby::Generators::Routes::DeviseExpectedField.new("path", ((expected_path == nil) ? "" : expected_path)), Hxruby::Generators::Routes::DeviseExpectedField.new("scopedPath", ((expected_path == nil) ? "" : expected_path))]
           g = 0
           while (g < expected_values.length)
             field = expected_values[g]
             g = (g + 1)
             actual_value = Hxruby::Generators::Routes::ParityCore.hash_string(mapping, field.name)
             if (actual_value != field.value)
-              HXRuby.array_push(errors, ((((((((("wrong Devise mapping " + Hxruby::Generators::Routes::ParityCore.quote(scope)) + " ") + field.name) + " for ") + Hxruby::Generators::Routes::ParityCore.declaration_position(declaration)) + ": expected ") + Hxruby::Generators::Routes::ParityCore.quote(field.value)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.quote((if (actual_value == nil) then "" else actual_value end))))
+              HXRuby.array_push(errors, ((((((((("wrong Devise mapping " + Hxruby::Generators::Routes::ParityCore.quote(scope)) + " ") + field.name) + " for ") + Hxruby::Generators::Routes::ParityCore.declaration_position(declaration)) + ": expected ") + Hxruby::Generators::Routes::ParityCore.quote(field.value)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.quote(((actual_value == nil) ? "" : actual_value))))
             end
           end
           if (Hxruby::Generators::Routes::ParityCore.hash_value(mapping, "modelHasDevise") != true)
@@ -131,13 +131,13 @@ end end)
         end
         def self.declaration_position(declaration)
           position = Hxruby::Generators::Routes::ParityCore.hash_string(declaration, "position")
-          return (if ((position == nil) || (position == "")) then "unknown route position" else position end)
+          return (((position == nil) || (position == "")) ? "unknown route position" : position)
         end
         def self.parse_routes(input)
           routes = []
           previous_prefix = nil
           g = 0
-          g1 = input.split("\n")
+          g1 = HXRuby.string_split(input, "\n")
           while (g < g1.length)
             raw_line = g1[g]
             g = (g + 1)
@@ -170,13 +170,13 @@ end end)
             return []
           end
           raw_prefix = HXRuby.array_slice(tokens, 0, verb_index).join("_")
-          prefix = (if (raw_prefix == "") then previous_prefix else raw_prefix end)
+          prefix = ((raw_prefix == "") ? previous_prefix : raw_prefix)
           if ((prefix == nil) || (prefix == ""))
             return []
           end
           routes = []
           g = 0
-          g1 = tokens[verb_index].split("|")
+          g1 = HXRuby.string_split(tokens[verb_index], "|")
           while (g < g1.length)
             verb = g1[g]
             g = (g + 1)
@@ -193,7 +193,7 @@ end end)
         def self.non_empty_tokens(line)
           out = []
           g = 0
-          g1 = line.split(" ")
+          g1 = HXRuby.string_split(line, " ")
           while (g < g1.length)
             token = g1[g]
             g = (g + 1)
@@ -214,7 +214,7 @@ end end)
           return -1
         end
         def self.route_verb(token)
-          parts = token.split("|")
+          parts = HXRuby.string_split(token, "|")
           g = 0
           while (g < parts.length)
             part = parts[g]
@@ -242,13 +242,13 @@ end
           while (g < declarations.length)
             decl = declarations[g]
             g = (g + 1)
-            out = HXRuby.array_concat(out, Hxruby::Generators::Routes::ParityCore.flatten_decl(decl, prefix))
+            out = (out + Hxruby::Generators::Routes::ParityCore.flatten_decl(decl, prefix))
           end
           return out
         end
         def self.flatten_decl(decl, prefix)
           kind = Hxruby::Generators::Routes::ParityCore.hash_string(decl, "kind")
-          return (if (kind == nil) then [] else case kind
+          return ((kind == nil) ? [] : case kind
 when "constraints", "controller", "defaults"
   Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.children_of(decl), prefix)
 when "deviseFor"
@@ -280,14 +280,14 @@ when "verb"
   [Hxruby::Generators::Routes::ParityCore.expected_route(decl, Hxruby::Generators::Routes::ParityCore.nullable_name(decl), Hxruby::Generators::Routes::ParityCore.hash_string(decl, "verb"), Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")), Hxruby::Generators::Routes::ParityCore.hash_string(decl, "target"))]
 else
   []
-end end)
+end)
         end
         def self.expected_route(decl, name, verb, path, target)
           return Hxruby::Generators::Routes::ManifestRoute.new(name, verb, path, target, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "position"), false)
         end
         def self.nullable_name(decl)
           name = Hxruby::Generators::Routes::ParityCore.hash_string(decl, "name")
-          return (if ((name == nil) || (name == "")) then nil else name end)
+          return (((name == nil) || (name == "")) ? nil : name)
         end
         def self.children_of(decl)
           return Hxruby::Generators::Routes::ParityCore.hash_array(decl, "children")
@@ -295,8 +295,8 @@ end end)
         def self.joined_path(prefix, path)
           joined = []
           Hxruby::Generators::Routes::ParityCore.append_path_piece(joined, prefix)
-          Hxruby::Generators::Routes::ParityCore.append_path_piece(joined, (if (path == nil) then "" else path end))
-          return (if (joined.length == 0) then "/" else ("/" + joined.join("/")) end)
+          Hxruby::Generators::Routes::ParityCore.append_path_piece(joined, ((path == nil) ? "" : path))
+          return ((joined.length == 0) ? "/" : ("/" + joined.join("/")))
         end
         def self.append_path_piece(out, value)
           if (value == "")
@@ -310,10 +310,10 @@ end end)
         def self.trim_slashes(value)
           out = value
           while out.start_with?("/")
-            out = out[1..]
+            out = HXRuby.string_substr(out, 1)
           end
           while out.end_with?("/")
-            out = out[0, (out.length - 1)]
+            out = HXRuby.string_substr(out, 0, (out.length - 1))
           end
           return out
         end
@@ -327,18 +327,18 @@ end end)
           diagnostics = []
           if (expected.name != nil)
             named = begin
-  g = []
-  g1 = 0
-g2 = routes
-while (g1 < g2.length)
-  v = g2[g1]
-  g1 = (g1 + 1)
-  if (v.prefix == expected.name)
-    HXRuby.array_push(g, v)
-  end
-end
-  g
-end
+              g = []
+              g1 = 0
+            g2 = routes
+            while (g1 < g2.length)
+              v = g2[g1]
+              g1 = (g1 + 1)
+              if (v.prefix == expected.name)
+                HXRuby.array_push(g, v)
+              end
+            end
+              g
+            end
             if ((named.length > 0) && (!Hxruby::Generators::Routes::ParityCore.any(named, ->(route__hx1) { (route__hx1.verb == expected.verb) })))
               HXRuby.array_push(diagnostics, Hxruby::Generators::Routes::ParityCore.wrong_verb(expected, named))
             end
@@ -347,18 +347,18 @@ end
             end
           end
           same_path_verb = begin
-  g__hx1 = []
-  g1__hx1 = 0
-g2__hx1 = routes
-while (g1__hx1 < g2__hx1.length)
-  v__hx1 = g2__hx1[g1__hx1]
-  g1__hx1 = (g1__hx1 + 1)
-  if ((v__hx1.path == expected.path) && (v__hx1.verb == expected.verb))
-    HXRuby.array_push(g__hx1, v__hx1)
-  end
-end
-  g__hx1
-end
+            g__hx1 = []
+            g1__hx1 = 0
+          g2__hx1 = routes
+          while (g1__hx1 < g2__hx1.length)
+            v__hx1 = g2__hx1[g1__hx1]
+            g1__hx1 = (g1__hx1 + 1)
+            if ((v__hx1.path == expected.path) && (v__hx1.verb == expected.verb))
+              HXRuby.array_push(g__hx1, v__hx1)
+            end
+          end
+            g__hx1
+          end
           if (((expected.target != nil) && (same_path_verb.length > 0)) && (!Hxruby::Generators::Routes::ParityCore.any(same_path_verb, ->(route__hx4) { (route__hx4.target == expected.target) })))
             HXRuby.array_push(diagnostics, Hxruby::Generators::Routes::ParityCore.wrong_target(expected, same_path_verb))
           end
@@ -404,7 +404,7 @@ g2 = routes
 while (g1 < g2.length)
   v = g2[g1]
   g1 = (g1 + 1)
-  HXRuby.array_push(g, (if (v.target == nil) then "" else v.target end))
+  HXRuby.array_push(g, ((v.target == nil) ? "" : v.target))
 end
   g
 end).join(", "))
@@ -426,7 +426,7 @@ g
 end.join(" ")
         end
         def self.upper(value)
-          return (if (value == nil) then "" else case value
+          return ((value == nil) ? "" : case value
 when "delete"
   "DELETE"
 when "get"
@@ -443,7 +443,7 @@ when "put"
   "PUT"
 else
   value
-end end)
+end)
         end
         def self.quote(value)
           return (("\"" + value) + "\"")
@@ -488,7 +488,7 @@ end end)
             return []
           end
           value = Ruby::NativeHash.get(hash, key)
-          return (if (value == nil) then [] else value end)
+          return (value.equal?(nil) ? [] : value)
         end
       end
     end

@@ -7,7 +7,7 @@ class Main
   def self.main()
     value = MaybeInt.some(41)
     empty = MaybeInt.none()
-    puts("constructed".to_s())
+    puts(HXRuby.stringify("constructed"))
   end
 end
 if __FILE__ == $PROGRAM_NAME

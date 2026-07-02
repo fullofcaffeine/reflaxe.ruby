@@ -28,6 +28,12 @@ Validate that committed std/runtime files are represented:
 npm run test:stdlib-inventory
 ```
 
+Run upstream Haxe std runtime fixtures selected for Ruby:
+
+```bash
+npm run test:unitstd-ruby
+```
+
 ## Inventory Rules
 
 Each entry in `docs/stdlib-inventory.json` must include:
@@ -41,19 +47,24 @@ Each entry in `docs/stdlib-inventory.json` must include:
 
 Use `std/` for additive Ruby/Rails APIs and `std/_std/` for upstream Haxe std overrides that need classpath precedence. Use `runtime/hxruby/` for Ruby files copied or required by generated output.
 
+When changing a std/runtime surface that has a matching upstream Haxe
+`unitstd` fixture, update `test/upstream_unitstd/manifest.json` in the same
+change. Prefer enabling the fixture once it passes. If the Ruby target needs a
+runtime helper to preserve Haxe semantics, keep it in `runtime/hxruby` and add
+or update inventory/gap-report entries as appropriate; do not silently patch
+Ruby core classes or leave the fixture untracked.
+
 ## Current Gap Summary
 
 As of the current report:
 
-- Total tracked surfaces: `31`
-- Implemented: `27`
-- Missing: `4`
+- Total tracked surfaces: `202`
+- Implemented: `202`
+- Missing: `0`
 
-Remaining gaps are concentrated in general stdlib parity:
-
-- `haxe.Json`
-- `Reflect`
-- `sys.FileSystem`
-- `sys.io.File`
-
-Rails MVP surfaces are tracked as implemented. New Rails or Ruby interop APIs should still get inventory entries so the report stays useful as a release-readiness artifact.
+The report is currently green with no missing tracked std/runtime surfaces. New
+Rails, Ruby interop, Haxe std override, or runtime APIs should still get
+inventory entries so the report stays useful as a release-readiness artifact.
+When upstream Haxe has a matching `unitstd` fixture, update
+`test/upstream_unitstd/manifest.json` at the same time so runtime parity and
+inventory coverage do not drift.

@@ -1,13 +1,15 @@
 package haxe.ds;
 
 import ruby.NativeHash;
+import ruby.NativeHashData;
+import ruby.NativeHashEntry;
 import ruby.NativeIterator;
 
 class ObjectMap<K:{}, V> implements haxe.Constraints.IMap<K, V> {
-	final data:Dynamic;
+	final data:NativeHashData<K, V>;
 
 	public function new() {
-		data = NativeHash.create();
+		data = NativeHash.createIdentity();
 	}
 
 	public function set(key:K, value:V):Void
@@ -29,7 +31,7 @@ class ObjectMap<K:{}, V> implements haxe.Constraints.IMap<K, V> {
 		return new NativeIterator<V>(NativeHash.values(data));
 
 	public function keyValueIterator():KeyValueIterator<K, V>
-		return cast new NativeIterator<Dynamic>(NativeHash.entries(data));
+		return new NativeIterator<NativeHashEntry<K, V>>(NativeHash.entries(data));
 
 	public function copy():ObjectMap<K, V> {
 		var out = new ObjectMap<K, V>();

@@ -73,7 +73,7 @@ autoloading, or production assets.
 
 ## Current Decision
 
-RailsHx production readiness remains blocked on the follow-up beads above, but
-the escape hatches are now named and auditable. New RailsHx work should not add
-another unsafe boundary unless this document is updated, a bead is filed, and
-the API name makes the risk obvious.
+RailsHx production readiness is no longer blocked by unnamed escape hatches:
+the current escape hatches are named and auditable. New RailsHx work should not
+add another unsafe boundary unless this document is updated, a bead is filed,
+and the API name makes the risk obvious.

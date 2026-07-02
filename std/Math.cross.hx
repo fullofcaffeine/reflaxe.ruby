@@ -47,7 +47,7 @@ class Math {
 	}
 
 	public static function exp(v:Float):Float {
-		return untyped __ruby__("HXRuby.math_unary(:exp, {0})", v);
+		return untyped __ruby__("::Math.exp({0})", v);
 	}
 
 	public static function log(v:Float):Float {
@@ -78,16 +78,16 @@ class Math {
 		return untyped __ruby__("rand");
 	}
 
-	public static inline function ffloor(v:Float):Float {
-		return floor(v);
+	public static function ffloor(v:Float):Float {
+		return untyped __ruby__("HXRuby.math_ffloor({0})", v);
 	}
 
-	public static inline function fceil(v:Float):Float {
-		return ceil(v);
+	public static function fceil(v:Float):Float {
+		return untyped __ruby__("HXRuby.math_fceil({0})", v);
 	}
 
-	public static inline function fround(v:Float):Float {
-		return round(v);
+	public static function fround(v:Float):Float {
+		return untyped __ruby__("HXRuby.math_fround({0})", v);
 	}
 
 	public static function isFinite(f:Float):Bool {
@@ -95,6 +95,6 @@ class Math {
 	}
 
 	public static function isNaN(f:Float):Bool {
-		return untyped __ruby__("HXRuby.math_nan?({0})", f);
+		return untyped __ruby__("{0}.respond_to?(:nan?) && {0}.nan?", f);
 	}
 }

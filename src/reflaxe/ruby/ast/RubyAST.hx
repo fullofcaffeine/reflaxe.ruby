@@ -31,7 +31,7 @@ enum RubyExpr {
 	RubyHash(fields:Array<RubyHashField>);
 	RubyBinary(op:String, left:RubyExpr, right:RubyExpr);
 	RubyUnary(op:String, expr:RubyExpr);
-	RubyLambda(args:Array<String>, body:String);
+	RubyLambda(args:Array<String>, body:Array<RubyStatement>);
 	RubyCall(?receiver:RubyExpr, name:String, args:Array<RubyExpr>);
 	RubyRawExpr(code:String);
 }

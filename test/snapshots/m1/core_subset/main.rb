@@ -7,18 +7,18 @@ class Main
   def self.main()
     total = 7
     if (total > 5)
-      puts("big".to_s())
+      puts(HXRuby.stringify("big"))
     else
-      puts("small".to_s())
+      puts(HXRuby.stringify("small"))
     end
     i = 0
     while (i < 2)
-      puts("loop".to_s())
+      puts(HXRuby.stringify("loop"))
       i = (i + 1)
     end
-    puts([1, 2, 3].to_s())
-    puts({"name" => "ruby", "count" => 3}.to_s())
-    puts("done".to_s())
+    puts(HXRuby.stringify([1, 2, 3]))
+    puts(HXRuby.stringify({"name" => "ruby", "count" => 3}))
+    puts(HXRuby.stringify("done"))
   end
 end
 if __FILE__ == $PROGRAM_NAME

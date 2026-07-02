@@ -7,9 +7,9 @@ class Main
     "Main"
   end
   def self.main()
-    subscription = ActiveSupport::Notifications.subscribe("todo.shipped") { |event| puts(((event.payload[:list_id] + ":") + event.payload[:count].to_s()).to_s()) }
+    subscription = ActiveSupport::Notifications.subscribe("todo.shipped") { |event| puts(HXRuby.stringify(((event.payload[:list_id] + ":") + HXRuby.stringify(event.payload[:count])))) }
     label = ActiveSupport::Notifications.instrument("todo.shipped", {list_id: "open", count: 2}) { "instrumented" }
-    puts(label.to_s())
+    puts(HXRuby.stringify(label))
     ActiveSupport::Notifications.unsubscribe(subscription)
   end
 end

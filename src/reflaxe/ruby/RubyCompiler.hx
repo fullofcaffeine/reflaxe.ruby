@@ -27,6 +27,7 @@ import reflaxe.output.StringOrBytes;
 import reflaxe.ruby.ast.RubyAST.RubyExpr;
 import reflaxe.ruby.ast.RubyAST.RubyFile;
 import reflaxe.ruby.ast.RubyAST.RubyStatement;
+import reflaxe.ruby.ast.RubyASTPrinter;
 import reflaxe.ruby.compiler.RubyBuildContext;
 import reflaxe.ruby.compiler.RubyBuildContextResolver;
 import reflaxe.ruby.naming.RubyNaming;
@@ -112,6 +113,18 @@ typedef RailsManifestEntry = {
 	content:String
 }
 
+typedef RailsCompilerManifest = {
+	version:Int,
+	outputs:Array<RailsCompilerManifestOutput>
+}
+
+typedef RailsCompilerManifestOutput = {
+	output:String,
+	kind:String,
+	source:String,
+	sha256:String
+}
+
 typedef RubyMetadataField = {
 	field:String,
 	expr:haxe.macro.Expr
@@ -160,8 +173,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static inline final RAILS_GENERATED_SUPPORT_ROOT = "app/lib/railshx/generated";
 	static inline final RAILS_VENDOR_RUNTIME_ROOT = "app/lib/railshx/runtime";
 	static var activeBuildContext:RubyBuildContext = RubyBuildContext.legacyDefaults();
+	static var needsCoreRuntime:Bool = false;
 	static var needsDataDefine:Bool = false;
 	static var needsHxException:Bool = false;
+	static var hxrubyCallCount:Int = 0;
 	static var localNameScope:Null<LocalNameScope> = null;
 
 	public function new() {
@@ -190,8 +205,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		emittedRailsMigrations = [];
 		requireRegistry = new RequireRegistry();
 		didEmitMain = false;
+		needsCoreRuntime = false;
 		needsDataDefine = false;
 		needsHxException = false;
+		hxrubyCallCount = 0;
 		localNameScope = null;
 	}
 
@@ -199,15 +216,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (buildContext.railsMode && !buildContext.usesRailsNativeLayout()) {
 			setRailsAutoloadInitializer();
 		}
-		if (!didEmitMain) {
-			return;
+		if (didEmitMain || needsCoreRuntime) {
+			setRuntimeExtraFile("core.rb");
 		}
-		setRuntimeExtraFile("core.rb");
 		if (needsDataDefine) {
 			setRuntimeExtraFile("data_define.rb");
 		}
 		if (needsHxException) {
 			setRuntimeExtraFile("hx_exception.rb");
+		}
+		if (!didEmitMain) {
+			return;
 		}
 		var paths = [outputRelativePath("hxruby/core.rb", true)];
 		if (needsDataDefine) {
@@ -249,6 +268,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("@:rubyNoEmit marks a type as compile-time-only, so it cannot also declare a Rails artifact metadata such as @:railsModel, @:railsController, @:railsTemplate, or @:railsMigration.",
 					classType.pos);
 			}
+			return null;
+		}
+		if (isErasedSysStdFacade(classType)) {
+			collectModuleRequires(classType.meta);
 			return null;
 		}
 		if (buildContext.railsMode && shouldSuppressRailsRubyType(classType, varFields, funcFields)) {
@@ -316,11 +339,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			requireRegistry.addRequire("active_support/concern");
 			moduleRequires.addRequire("active_support/concern");
 		}
+		addHaxeHierarchyRequires(moduleRequires, classType);
 		var classBody:Array<RubyStatement> = [];
 		classBody.push(typeNameMetadata(fullTypeName(classType.pack, classType.name)));
 		if (isRubyConcern) {
 			classBody.push(RubyRawStatement("extend ActiveSupport::Concern"));
 		}
+		classBody = classBody.concat(haxeInterfaceIncludeStatements(classType));
 		classBody = classBody.concat(rubyExtensionStatements(classType.meta, classType));
 		for (field in varFields) {
 			var mathConstant = mathConstantValue(classType.pack, classType.name, field.field.name);
@@ -329,6 +354,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var concernClassMethods:Array<RubyStatement> = [];
 		for (field in funcFields) {
 			if (field.expr == null) {
+				continue;
+			}
+			if (isNativeRubyMathMethod(classType, field.field.name)) {
 				continue;
 			}
 			if (hasMeta(field.field.meta, ":rubyExternStub")) {
@@ -377,6 +405,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (hasRubyNoEmit(enumType.meta)) {
 			return null;
 		}
+		if (isErasedSysStdPack(enumType.pack)) {
+			requireRegistry.collectMeta(enumType.meta);
+			return null;
+		}
 		if (buildContext.railsMode && isCompilerOwnedSupportType(enumType.pack, enumType.name)) {
 			return null;
 		}
@@ -400,19 +432,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	override public function compileTypedefImpl(typedefType:DefType):Null<RubyFile> {
-		if (isMacroOnlyRuntimeType(typedefType.pack)) {
-			return null;
-		}
-		if (hasRubyNoEmit(typedefType.meta)) {
-			return null;
-		}
-		if (buildContext.railsMode) {
-			return null;
-		}
-		setRubyOutputPath(typedefType.pack, typedefType.name);
-		return typeShell(typedefType.pack, typedefType.name, RubyModuleDecl(RubyNaming.toConstantName(typedefType.name), [
-			RubyComment("Haxe typedef " + fullTypeName(typedefType.pack, typedefType.name) + " has no Ruby runtime body.")
-		]), collectModuleRequires(typedefType.meta));
+		// Haxe typedefs are compile-time aliases. Emitting an empty Ruby constant
+		// makes generated output look less like handwritten Ruby and can collide
+		// with real runtime carriers, for example haxe._Int64.___Int64.
+		return null;
 	}
 
 	override public function compileAbstractImpl(abstractType:AbstractType):Null<RubyFile> {
@@ -420,6 +443,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return null;
 		}
 		if (hasRubyNoEmit(abstractType.meta)) {
+			return null;
+		}
+		if (isErasedSysStdPack(abstractType.pack)) {
+			requireRegistry.collectMeta(abstractType.meta);
 			return null;
 		}
 		if (buildContext.railsMode) {
@@ -446,11 +473,82 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function rubyClassDeclaration(classType:ClassType, body:Array<RubyStatement>):RubyStatement {
 		var constant = RubyNaming.toConstantName(classType.name);
+		if (classType.isInterface) {
+			return RubyModuleDecl(constant, body);
+		}
 		if (isRubyModuleType(classType) || fullTypeName(classType.pack, classType.name) == "Math") {
 			return RubyModuleDecl(isRubyModuleType(classType) ? rubyModuleDeclarationName(classType) : constant, body);
 		}
-		var superclass = nativeExternSuperclassName(classType);
+		var superclass = rubySuperclassName(classType);
 		return superclass == null ? RubyClassDecl(constant, body) : RubyClassDeclWithSuper(constant, superclass, body);
+	}
+
+	static function haxeInterfaceIncludeStatements(classType:ClassType):Array<RubyStatement> {
+		if (classType.interfaces == null || classType.interfaces.length == 0) {
+			return [];
+		}
+		return [
+			for (implemented in classType.interfaces) {
+				var interfaceType = implemented.t.get();
+				RubyRawStatement("include " + rubyClassConstantPath(interfaceType));
+			}
+		];
+	}
+
+	static function addHaxeHierarchyRequires(moduleRequires:RequireRegistry, classType:ClassType):Void {
+		if (classType.superClass != null) {
+			var superclass = classType.superClass.t.get();
+			if (!superclass.isExtern) {
+				moduleRequires.addRequireRelative(rubyRequireRelativePathFrom(classType.pack, superclass.pack, superclass.name));
+			}
+		}
+		if (classType.interfaces == null) {
+			return;
+		}
+		for (implemented in classType.interfaces) {
+			var interfaceType = implemented.t.get();
+			if (!interfaceType.isExtern) {
+				moduleRequires.addRequireRelative(rubyRequireRelativePathFrom(classType.pack, interfaceType.pack, interfaceType.name));
+			}
+		}
+	}
+
+	static function rubyRequireRelativePathFrom(fromPack:Array<String>, targetPack:Array<String>, targetName:String):String {
+		var fromParts = rubyFileDirParts(fromPack);
+		var targetParts = rubyFileDirParts(targetPack);
+		targetParts.push(RubyNaming.fileName(targetName));
+		var common = 0;
+		while (common < fromParts.length && common < targetParts.length && fromParts[common] == targetParts[common]) {
+			common++;
+		}
+		var out:Array<String> = [];
+		for (_ in common...fromParts.length) {
+			out.push("..");
+		}
+		for (i in common...targetParts.length) {
+			out.push(targetParts[i]);
+		}
+		return out.length == 0 ? "." : out.join("/");
+	}
+
+	static function rubyFileDirParts(pack:Array<String>):Array<String> {
+		var dir = RubyNaming.fileDir(pack);
+		return dir == null || dir == "" ? [] : dir.split("/");
+	}
+
+	static function rubySuperclassName(classType:ClassType):Null<String> {
+		var native = nativeExternSuperclassName(classType);
+		if (native != null) {
+			return native;
+		}
+		if (classType.superClass == null) {
+			return null;
+		}
+		var superclass = classType.superClass.t.get();
+		if (superclass.isExtern) {
+			return null;
+		}
+		return rubyClassConstantPath(superclass);
 	}
 
 	static function nativeExternSuperclassName(classType:ClassType):Null<String> {
@@ -612,10 +710,39 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var wrapped = statement;
 		var i = pack.length - 1;
 		while (i >= 0) {
-			wrapped = RubyModuleDecl(rubyConstantName(pack[i]), [wrapped]);
+			var constant = rubyConstantName(pack[i]);
+			wrapped = isPrivateImplementationPackPart(pack[i]) ? wrapInPrivateImplementationOwner(pack, i, constant,
+				wrapped) : RubyModuleDecl(constant, [wrapped]);
 			i -= 1;
 		}
 		return wrapped;
+	}
+
+	static function isPrivateImplementationPackPart(part:String):Bool {
+		return part != null && part.length > 1 && part.charAt(0) == "_";
+	}
+
+	static function wrapInPrivateImplementationOwner(pack:Array<String>, index:Int, constant:String, wrapped:RubyStatement):RubyStatement {
+		// Haxe stores private module implementation types in packages named
+		// after the owner, such as haxe.ds._List.ListIterator or _Any.Any_Impl_.
+		// Ruby constants care about the owner's runtime kind: classes reopen
+		// with `class`, while abstracts/enums/interfaces reopen with `module`.
+		return privateImplementationOwnerIsClass(pack, index) ? RubyClassDecl(constant, [wrapped]) : RubyModuleDecl(constant, [wrapped]);
+	}
+
+	static function privateImplementationOwnerIsClass(pack:Array<String>, index:Int):Bool {
+		var ownerPack = pack.slice(0, index);
+		ownerPack.push(pack[index].substr(1));
+		try {
+			return switch (Context.getType(ownerPack.join("."))) {
+				case TInst(t, _): var classType = t.get(); !classType.isInterface && !isRubyModuleType(classType) && fullTypeName(classType.pack,
+						classType.name) != "Math";
+				case _:
+					false;
+			}
+		} catch (_:Dynamic) {
+			return false;
+		}
 	}
 
 	static function fullTypeName(pack:Array<String>, name:String):String {
@@ -643,8 +770,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				name = "self." + name;
 			}
 			var args = [
-				for (arg in field.args)
-					arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar)
+				for (arg in field.args) {
+					var argName = arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar);
+					arg.opt ? argName + " = nil" : argName;
+				}
 			];
 			return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
 		});
@@ -767,6 +896,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function isNativeRubyMathMethod(classType:ClassType, fieldName:String):Bool {
+		if (fullTypeName(classType.pack, classType.name) != "Math") {
+			return false;
+		}
+		// Haxe Math emits as Ruby's Math module. If a method is already
+		// behavior-compatible with Ruby, do not emit a wrapper that overrides
+		// the native method and forces an avoidable HXRuby call.
+		return switch (fieldName) {
+			case "exp":
+				true;
+			case _:
+				false;
+		}
+	}
+
 	static function typeNameMetadata(name:String):RubyStatement {
 		return RubyRawStatement("def self.__hx_name()\n  " + quoteRubyStringForCode(name) + "\nend");
 	}
@@ -854,6 +998,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return true;
 		}
 		return pack.length > 0 && pack[0] == "reflaxe";
+	}
+
+	static function isErasedSysStdFacade(classType:ClassType):Bool {
+		// Haxe has both a top-level `Sys` class and a lowercase `sys.*` package.
+		// Ruby constants cannot represent both as `Sys`, so sys.* std facades
+		// must inline/direct-lower instead of emitting runtime namespace shells.
+		return isErasedSysStdPack(classType.pack);
+	}
+
+	static function isErasedSysStdPack(pack:Array<String>):Bool {
+		return pack.length > 0 && pack[0] == "sys";
 	}
 
 	static function isDeviseHxMetadataContract(varFields:Array<ClassVarData>):Bool {
@@ -975,6 +1130,45 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return buildContext.usesRailsNativeLayout() ? statement : wrapInModules(classType.pack, statement);
 	}
 
+	function addRailsRuntimeCoreRequireIfNeeded(moduleRequires:RequireRegistry, classType:ClassType, callsBefore:Int):Void {
+		if (!buildContext.usesRailsNativeLayout() || hxrubyCallCount <= callsBefore) {
+			return;
+		}
+		var sourcePath = railsNativeRubyPath(classType);
+		if (sourcePath == null) {
+			return;
+		}
+		moduleRequires.addRequireRelative(relativeRequirePath(sourcePath, outputRelativePath("hxruby/core.rb", true)));
+	}
+
+	static function relativeRequirePath(fromFile:String, toFile:String):String {
+		var fromDir = pathDir(normalizeRubyOutputFilePath(fromFile));
+		var toPath = normalizeRubyOutputFilePath(StringTools.endsWith(toFile, ".rb") ? toFile.substr(0, toFile.length - 3) : toFile);
+		var fromParts = splitPath(fromDir);
+		var toParts = splitPath(toPath);
+		var common = 0;
+		while (common < fromParts.length && common < toParts.length && fromParts[common] == toParts[common]) {
+			common++;
+		}
+		var out = new Array<String>();
+		for (_ in common...fromParts.length) {
+			out.push("..");
+		}
+		for (i in common...toParts.length) {
+			out.push(toParts[i]);
+		}
+		return out.length == 0 ? "." : out.join("/");
+	}
+
+	static function pathDir(path:String):String {
+		var slash = path.lastIndexOf("/");
+		return slash < 0 ? "" : path.substr(0, slash);
+	}
+
+	static function splitPath(path:String):Array<String> {
+		return [for (part in path.split("/")) if (part != "") part];
+	}
+
 	function railsControllerSuperclass(classType:ClassType):String {
 		if (isRailsApplicationController(classType)) {
 			return "ActionController::Base";
@@ -995,6 +1189,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	function compileRailsControllerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
 			moduleRequires:RequireRegistry):RubyFile {
+		var hxrubyCallsBefore = hxrubyCallCount;
 		validateDeviseCurrentRequiredFlow(varFields, funcFields);
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
@@ -1028,6 +1223,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			RubyComment("Generated by reflaxe.ruby"),
 			RubyComment("Rails controller output; Zeitwerk path should match the Ruby constant.")
 		];
+		addRailsRuntimeCoreRequireIfNeeded(moduleRequires, classType, hxrubyCallsBefore);
 		statements = statements.concat(requirePreludeStatements(moduleRequires));
 		statements.push(railsArtifactStatement(classType, RubyRawStatement(lines.join("\n"))));
 		return {
@@ -1038,6 +1234,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	function compileRailsMailerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
 			moduleRequires:RequireRegistry):RubyFile {
+		var hxrubyCallsBefore = hxrubyCallCount;
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		for (field in varFields) {
@@ -1067,6 +1264,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			RubyComment("Generated by reflaxe.ruby"),
 			RubyComment("Rails mailer output; Zeitwerk path should match the Ruby constant.")
 		];
+		addRailsRuntimeCoreRequireIfNeeded(moduleRequires, classType, hxrubyCallsBefore);
 		statements = statements.concat(requirePreludeStatements(moduleRequires));
 		statements.push(railsArtifactStatement(classType, RubyRawStatement(lines.join("\n"))));
 		return {
@@ -1076,6 +1274,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	function compileRailsJobImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, moduleRequires:RequireRegistry):RubyFile {
+		var hxrubyCallsBefore = hxrubyCallCount;
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		body = body.concat(railsJobLifecycleLines(varFields));
@@ -1106,6 +1305,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			RubyComment("Generated by reflaxe.ruby"),
 			RubyComment("Rails job output; Zeitwerk path should match the Ruby constant.")
 		];
+		addRailsRuntimeCoreRequireIfNeeded(moduleRequires, classType, hxrubyCallsBefore);
 		statements = statements.concat(requirePreludeStatements(moduleRequires));
 		statements.push(railsArtifactStatement(classType, RubyRawStatement(lines.join("\n"))));
 		return {
@@ -1116,6 +1316,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	function compileRailsChannelImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
 			moduleRequires:RequireRegistry):RubyFile {
+		var hxrubyCallsBefore = hxrubyCallCount;
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		for (field in varFields) {
@@ -1143,6 +1344,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			RubyComment("Generated by reflaxe.ruby"),
 			RubyComment("Rails ActionCable channel output; Zeitwerk path should match the Ruby constant.")
 		];
+		addRailsRuntimeCoreRequireIfNeeded(moduleRequires, classType, hxrubyCallsBefore);
 		statements = statements.concat(requirePreludeStatements(moduleRequires));
 		statements.push(railsArtifactStatement(classType, RubyRawStatement(lines.join("\n"))));
 		return {
@@ -1153,6 +1355,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	function compileRailsCableConnectionImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
 			moduleRequires:RequireRegistry):RubyFile {
+		var hxrubyCallsBefore = hxrubyCallCount;
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		body = body.concat(railsCableConnectionIdentifierLines(classType, varFields));
@@ -1193,6 +1396,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			RubyComment("Generated by reflaxe.ruby"),
 			RubyComment("Rails ActionCable connection output; Zeitwerk path should match the Ruby constant.")
 		];
+		addRailsRuntimeCoreRequireIfNeeded(moduleRequires, classType, hxrubyCallsBefore);
 		statements = statements.concat(requirePreludeStatements(moduleRequires));
 		statements.push(railsArtifactStatement(classType, RubyRawStatement(lines.join("\n"))));
 		return {
@@ -1980,6 +2184,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	function compileRailsModelImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
 			moduleRequires:RequireRegistry):RubyFile {
+		var hxrubyCallsBefore = hxrubyCallCount;
 		var body:Array<String> = [];
 		var tableName = railsModelTableName(classType);
 		if (tableName != null) {
@@ -2059,6 +2264,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			RubyComment("Generated by reflaxe.ruby"),
 			RubyComment("Rails model output; Zeitwerk path should match the Ruby constant.")
 		];
+		addRailsRuntimeCoreRequireIfNeeded(moduleRequires, classType, hxrubyCallsBefore);
 		statements = statements.concat(requirePreludeStatements(moduleRequires));
 		statements.push(railsArtifactStatement(classType, RubyRawStatement(lines.join("\n"))));
 		return {
@@ -2334,7 +2540,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TBinop(OpAssign, lhs, rhs):
 				return RubyAssign(compileAssignable(lhs), compileExpr(rhs));
 			case TBinop(OpAssignOp(op), lhs, rhs):
-				return RubyAssign(compileAssignable(lhs), RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs)));
+				return RubyAssign(compileAssignable(lhs), compileBinaryOp(op, lhs, rhs));
 			case TUnop(OpIncrement, _, inner):
 				return RubyAssign(compileAssignable(inner), RubyBinary("+", compileExpr(inner), RubyInt("1")));
 			case TUnop(OpDecrement, _, inner):
@@ -2380,19 +2586,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TArray(target, index): RubyRawExpr(printInlineExpr(target) + "[" + printInlineExpr(index) + "]");
 			case TArrayDecl(values): RubyArray([for (value in values) compileExpr(value)]);
 			case TObjectDecl(fields): RubyHash([for (field in fields) {key: field.name, value: compileExpr(field.expr)}]);
-			case TBinop(op, lhs, rhs): RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
+			case TBinop(op, lhs, rhs) if (isStringComparison(op, lhs, rhs)):
+				RubyBinary(binopToRuby(op), hxrubyCall("string_compare", [compileExpr(lhs), compileExpr(rhs)]), RubyInt("0"));
+			case TBinop(op, lhs, rhs): compileBinaryOp(op, lhs, rhs);
+			case TUnop(OpIncrement, postFix, inner):
+				compileIncrementExpr(inner, 1, postFix);
+			case TUnop(OpDecrement, postFix, inner):
+				compileIncrementExpr(inner, -1, postFix);
 			case TUnop(op, _, inner): RubyUnary(unopToRuby(op), compileExpr(inner));
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): compileExpr(inner);
 			case TFunction(fn):
-				RubyLambda([for (arg in fn.args) localName(arg.v)], lambdaBody(fn.expr));
+				RubyLambda([for (arg in fn.args) localName(arg.v)], compileRubyBlockBody(fn.expr));
 			case TNew(classRef, _, params):
 				var classType = classRef.get();
-				RubyCall(RubyLocal(rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType)), "new", [for (param in params) compileExpr(param)]);
+				RubyCall(RubyLocal(coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType)),
+					"new", [for (param in params) compileExpr(param)]);
 			case TBlock(exprs):
 				RubyRawExpr("begin\n" + [for (stmt in compileStatementList(exprs)) "  " + statementToInlineRuby(stmt)].join("\n") + "\nend");
 			case TIf(cond, eThen, eElse):
-				RubyRawExpr("(if " + printInlineExpr(cond) + " then " + printInlineExpr(eThen) + " else " + (eElse == null ? "nil" : printInlineExpr(eElse))
-					+ " end)");
+				RubyRawExpr(rubyConditionalExpr(printInlineExpr(cond), printInlineExpr(eThen), eElse == null ? "nil" : printInlineExpr(eElse)));
 			case TSwitch(switchExpr, cases, edef):
 				RubyRawExpr(renderSwitch(switchExpr, cases, edef));
 			case TTry(tryExpr, catches):
@@ -2408,10 +2620,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					[for (param in params) compileExpr(param)]);
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionControllerStaticToken(classRef.get(), fieldRef.get().name) != null):
 				RubyRawExpr(actionControllerStaticToken(classRef.get(), fieldRef.get().name));
+			case TCall({expr: TField(target, access)}, []) if (fieldAccessRawName(access) == "iterator"):
+				// Reflaxe expands Haxe `for` loops into `.iterator()` calls before
+				// Ruby lowering. Route those through the compact runtime bridge so
+				// native Ruby arrays and Haxe iterator-bearing objects both work.
+				hxrubyCall("iterator", [compileExpr(target)]);
 			case TCall({expr: TField(target, access)}, params) if (isRubyInteropCall(access)):
 				compileRubyInteropCall(target, access, params);
 			case TCall({expr: TField(target, access)}, params):
-				RubyCall(compileExpr(target), fieldAccessName(access), [for (param in params) compileExpr(param)]);
+				var special = compileSpecialCall({expr: TField(target, access), t: expr.t, pos: expr.pos}, params);
+				special == null ? RubyCall(compileExpr(target), fieldAccessName(access), [for (param in params) compileExpr(param)]) : special;
 			case TCall({expr: TConst(TSuper)}, params):
 				RubyCall(null, "super", [for (param in params) compileExpr(param)]);
 			case TCall(callee, params):
@@ -2420,11 +2638,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name), []);
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
-				var token = actionControllerStaticToken(classType, fieldRef.get().name);
-				var constant = token ?? mathConstantValue(classType.pack, classType.name, fieldRef.get().name);
+				var field = fieldRef.get();
+				var token = actionControllerStaticToken(classType, field.name);
+				var constant = token ?? mathConstantValue(classType.pack, classType.name, field.name) ?? staticRuntimeMethodValue(classType, field.name);
 				constant == null ? RubyRawExpr((rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType))
 					+ "."
-					+ rubyFieldName(fieldRef.get().name, fieldRef.get().meta)) : RubyRawExpr(constant);
+					+ (isMethodField(field) ? 'method(:${rubyFieldName(field.name, field.meta)})' : rubyFieldName(field.name,
+						field.meta))) : RubyRawExpr(constant);
+			case TField(target, access) if (fieldAccessRawName(access) == "keyValueIterator"
+				&& isArrayReceiverFieldAccess(target, access)):
+				var iteratorExpr = hxrubyCall("key_value_iterator", [compileExpr(target)]);
+				RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr) + " }");
+			case TField(target, FAnon(fieldRef)):
+				hxrubyCall("reflect_field", [compileExpr(target), RubyString(fieldRef.get().name)]);
 			case TField(target, access):
 				RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case TTypeExpr(moduleType):
@@ -2441,6 +2667,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access): RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case _: RubyRawExpr(printInlineExpr(expr));
 		}
+	}
+
+	static function compileIncrementExpr(inner:TypedExpr, delta:Int, postFix:Bool):RubyExpr {
+		var target = reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileAssignable(inner));
+		var op = delta > 0 ? "+" : "-";
+		var amount = Std.string(delta > 0 ? delta : -delta);
+		var assignment = target + " = " + target + " " + op + " " + amount;
+		return postFix ? RubyRawExpr("(" + target + ").tap { " + assignment + " }") : RubyRawExpr("(" + assignment + ")");
 	}
 
 	static function compileUntypedConst(expr:Null<haxe.macro.Expr>):RubyExpr {
@@ -2491,7 +2725,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return rubyPatchCall;
 		}
 		if (isIdentifierCallee(callee, "__is__")) {
-			return RubyCall(RubyLocal("HXRuby"), "is_of_type", [compileParam(params, 0), compileParam(params, 1)]);
+			return hxrubyCall("is_of_type", [compileParam(params, 0), compileParam(params, 1)]);
 		}
 		var activeRecordCall = compileActiveRecordRelationCall(callee, params);
 		if (activeRecordCall != null) {
@@ -2509,13 +2743,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (activeRecordSqlCall != null) {
 			return activeRecordSqlCall;
 		}
-		var arrayCall = compileArrayCall(callee, params);
-		if (arrayCall != null) {
-			return arrayCall;
-		}
 		var stringCall = compileStringCall(callee, params);
 		if (stringCall != null) {
 			return stringCall;
+		}
+		var arrayCall = compileArrayCall(callee, params);
+		if (arrayCall != null) {
+			return arrayCall;
 		}
 		var actionControllerStoreCall = compileActionControllerStoreCall(callee, params);
 		if (actionControllerStoreCall != null) {
@@ -2548,6 +2782,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var info = staticCallInfo(callee);
 		if (info == null) {
 			return null;
+		}
+		var stringStaticCall = compileStringStaticCall(info, params);
+		if (stringStaticCall != null) {
+			return stringStaticCall;
 		}
 		var railsTestAssertion = compileRailsTestAssertionCall(info, params);
 		if (railsTestAssertion != null) {
@@ -2622,6 +2860,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				compileRubyParseInt(params[0]);
 			case ["Std", "parseFloat"]:
 				compileRubyParseFloat(params[0]);
+			case ["Reflect", name]:
+				compileReflectCall(name, params);
 			case ["Sys", "println"]:
 				RubyCall(null, "puts", [compileRubyStringifyParam(params[0])]);
 			case ["Sys", "print"]:
@@ -2648,8 +2888,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyCall(compileParam(params, 0), "lstrip", []);
 			case ["StringTools", "rtrim"]:
 				RubyCall(compileParam(params, 0), "rstrip", []);
+			case ["StringTools", "htmlEscape"]:
+				hxrubyCall("html_escape", [
+					compileParam(params, 0),
+					params.length > 1 ? compileExpr(params[1]) : RubyBool(false)
+				]);
+			case ["StringTools", "htmlUnescape"]:
+				hxrubyCall("html_unescape", [compileParam(params, 0)]);
+			case ["StringTools", "isSpace"]:
+				hxrubyCall("string_tools_is_space", [compileParam(params, 0), compileParam(params, 1)]);
+			case ["StringTools", "lpad"]:
+				hxrubyCall("string_tools_lpad", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+			case ["StringTools", "rpad"]:
+				hxrubyCall("string_tools_rpad", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
 			case ["StringTools", "replace"]:
-				RubyCall(compileParam(params, 0), "gsub", [compileParam(params, 1), compileParam(params, 2)]);
+				var search = typedStringLiteral(params[1]);
+				var replacement = typedStringLiteral(params[2]);
+				if (search != null && search != "" && replacement != null && replacement.indexOf("\\") == -1) {
+					RubyCall(compileParam(params, 0), "gsub", [compileParam(params, 1), compileParam(params, 2)]);
+				} else {
+					hxrubyCall("string_tools_replace", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+				}
 			case ["StringTools", "startsWith"]:
 				RubyCall(compileParam(params, 0), "start_with?", [compileParam(params, 1)]);
 			case ["StringTools", "endsWith"]:
@@ -2657,11 +2916,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case ["StringTools", "contains"]:
 				RubyCall(compileParam(params, 0), "include?", [compileParam(params, 1)]);
 			case ["StringTools", "hex"]:
-				RubyCall(RubyLocal("HXRuby"), "hex", [compileParam(params, 0), params.length > 1 ? compileExpr(params[1]) : RubyNil]);
+				hxrubyCall("hex", [compileParam(params, 0), params.length > 1 ? compileExpr(params[1]) : RubyNil]);
 			case ["StringTools", "urlEncode"]:
-				RubyCall(RubyLocal("HXRuby"), "url_encode", [compileParam(params, 0)]);
+				hxrubyCall("url_encode", [compileParam(params, 0)]);
 			case ["StringTools", "urlDecode"]:
-				RubyCall(RubyLocal("HXRuby"), "url_decode", [compileParam(params, 0)]);
+				hxrubyCall("url_decode", [compileParam(params, 0)]);
+			case ["StringTools", "fastCodeAt"]:
+				hxrubyCall("string_tools_fast_code_at", [compileParam(params, 0), compileParam(params, 1)]);
+			case ["StringTools", "isEof"]:
+				hxrubyCall("string_tools_is_eof", [compileParam(params, 0)]);
+			case ["StringTools", "iterator"]:
+				hxrubyCall("native_iterator", [hxrubyCall("string_utf16_units", [compileParam(params, 0)])]);
+			case ["StringTools", "keyValueIterator"]:
+				hxrubyCall("native_iterator", [hxrubyCall("string_utf16_key_value_units", [compileParam(params, 0)])]);
 			case _:
 				null;
 		}
@@ -3011,104 +3278,123 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyStringify(value:RubyExpr):RubyExpr {
-		return activeBuildContext.isPortable() ? RubyCall(RubyLocal("HXRuby"), "stringify", [value]) : RubyCall(value, "to_s", []);
+		return hxrubyCall("stringify", [value]);
+	}
+
+	static function hxrubyCall(method:String, args:Array<RubyExpr>):RubyExpr {
+		needsCoreRuntime = true;
+		hxrubyCallCount++;
+		return RubyCall(RubyLocal("HXRuby"), method, args);
 	}
 
 	static function compileRubyStringifyParam(value:TypedExpr):RubyExpr {
-		if (activeBuildContext.isPortable()) {
-			return RubyCall(RubyLocal("HXRuby"), "stringify", [compileExpr(value)]);
-		}
 		return switch (value.expr) {
 			case TConst(TNull):
 				RubyString("null");
-			case _ if (canStringifyWithPlainToS(value)):
-				RubyCall(compileExpr(value), "to_s", []);
 			case _:
-				var source = printInlineExpr(value);
-				RubyRawExpr("((__hx_value = " + source + ').nil? ? "null" : __hx_value.to_s)');
-		}
-	}
-
-	static function canStringifyWithPlainToS(value:TypedExpr):Bool {
-		if (isNullableType(value.t)) {
-			return false;
-		}
-		return switch (TypeTools.follow(value.t)) {
-			case TDynamic(_) | TMono(_):
-				false;
-			case _:
-				true;
+				hxrubyCall("stringify", [compileExpr(value)]);
 		}
 	}
 
 	static function compileRubyParseInt(value:TypedExpr):RubyExpr {
-		if (activeBuildContext.isPortable()) {
-			return RubyCall(RubyLocal("HXRuby"), "parse_int", [compileExpr(value)]);
-		}
-		var source = printInlineExpr(value);
-		return RubyRawExpr("(Integer(" + source + ".to_s, 10) rescue nil)");
+		return hxrubyCall("parse_int", [compileExpr(value)]);
 	}
 
 	static function compileRubyParseFloat(value:TypedExpr):RubyExpr {
-		if (activeBuildContext.isPortable()) {
-			return RubyCall(RubyLocal("HXRuby"), "parse_float", [compileExpr(value)]);
+		return hxrubyCall("parse_float", [compileExpr(value)]);
+	}
+
+	static function compileReflectCall(name:String, params:Array<TypedExpr>):RubyExpr {
+		return switch name {
+			case "hasField":
+				hxrubyCall("reflect_has_field", [compileParam(params, 0), compileParam(params, 1)]);
+			case "field":
+				hxrubyCall("reflect_field", [compileParam(params, 0), compileParam(params, 1)]);
+			case "setField":
+				hxrubyCall("reflect_set_field", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+			case "getProperty":
+				hxrubyCall("reflect_get_property", [compileParam(params, 0), compileParam(params, 1)]);
+			case "setProperty":
+				hxrubyCall("reflect_set_property", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+			case "callMethod":
+				hxrubyCall("reflect_call_method", [compileParam(params, 0), compileParam(params, 1), compileParam(params, 2)]);
+			case "fields":
+				hxrubyCall("reflect_fields", [compileParam(params, 0)]);
+			case "isFunction":
+				hxrubyCall("reflect_is_function", [compileParam(params, 0)]);
+			case "compare":
+				hxrubyCall("reflect_compare", [compileParam(params, 0), compileParam(params, 1)]);
+			case "compareMethods":
+				hxrubyCall("reflect_compare_methods", [compileParam(params, 0), compileParam(params, 1)]);
+			case "isObject":
+				hxrubyCall("reflect_is_object", [compileParam(params, 0)]);
+			case "isEnumValue":
+				hxrubyCall("reflect_is_enum_value", [compileParam(params, 0)]);
+			case "deleteField":
+				hxrubyCall("reflect_delete_field", [compileParam(params, 0), compileParam(params, 1)]);
+			case "copy":
+				hxrubyCall("reflect_copy", [compileParam(params, 0)]);
+			case "makeVarArgs":
+				hxrubyCall("reflect_make_var_args", [compileParam(params, 0)]);
+			case _:
+				RubyNil;
 		}
-		var source = printInlineExpr(value);
-		return RubyRawExpr("(Float(" + source + ".to_s) rescue nil)");
 	}
 
 	static function compileArrayCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
-			case TField(target, access) if (isArrayFieldAccess(access)):
+			case TField(target, access) if (isArrayReceiverFieldAccess(target, access)):
 				var receiver = compileExpr(target);
 				switch (fieldAccessRawName(access)) {
 					case "concat":
-						RubyCall(RubyLocal("HXRuby"), "array_concat", [receiver, compileParam(params, 0)]);
+						RubyBinary("+", receiver, compileParam(params, 0));
 					case "join":
-						activeBuildContext.isPortable() ? RubyCall(RubyLocal("HXRuby"), "array_join",
+						activeBuildContext.isPortable() ? hxrubyCall("array_join",
 							[receiver, compileParam(params, 0)]) : RubyCall(receiver, "join", [compileParam(params, 0)]);
 					case "push":
-						RubyCall(RubyLocal("HXRuby"), "array_push", [receiver, compileParam(params, 0)]);
+						hxrubyCall("array_push", [receiver, compileParam(params, 0)]);
 					case "reverse":
-						RubyCall(RubyLocal("HXRuby"), "array_reverse", [receiver]);
+						hxrubyCall("array_reverse", [receiver]);
 					case "slice":
-						RubyCall(RubyLocal("HXRuby"), "array_slice", [
+						hxrubyCall("array_slice", [
 							receiver,
 							compileParam(params, 0),
 							params.length > 1 ? compileExpr(params[1]) : RubyNil
 						]);
 					case "sort":
-						RubyCall(RubyLocal("HXRuby"), "array_sort", [receiver, compileParam(params, 0)]);
+						hxrubyCall("array_sort", [receiver, compileParam(params, 0)]);
 					case "splice":
-						RubyCall(RubyLocal("HXRuby"), "array_splice", [receiver, compileParam(params, 0), compileParam(params, 1)]);
+						hxrubyCall("array_splice", [receiver, compileParam(params, 0), compileParam(params, 1)]);
 					case "toString":
 						compileRubyStringify(receiver);
 					case "insert":
-						RubyCall(RubyLocal("HXRuby"), "array_insert", [receiver, compileParam(params, 0), compileParam(params, 1)]);
+						hxrubyCall("array_insert", [receiver, compileParam(params, 0), compileParam(params, 1)]);
 					case "remove":
-						RubyCall(RubyLocal("HXRuby"), "array_remove", [receiver, compileParam(params, 0)]);
+						hxrubyCall("array_remove", [receiver, compileParam(params, 0)]);
 					case "contains":
-						RubyCall(RubyLocal("HXRuby"), "array_contains", [receiver, compileParam(params, 0)]);
+						hxrubyCall("array_contains", [receiver, compileParam(params, 0)]);
 					case "indexOf":
-						RubyCall(RubyLocal("HXRuby"), "array_index_of", [
+						hxrubyCall("array_index_of", [
 							receiver,
 							compileParam(params, 0),
 							params.length > 1 ? compileExpr(params[1]) : RubyNil
 						]);
 					case "lastIndexOf":
-						RubyCall(RubyLocal("HXRuby"), "array_last_index_of", [
+						hxrubyCall("array_last_index_of", [
 							receiver,
 							compileParam(params, 0),
 							params.length > 1 ? compileExpr(params[1]) : RubyNil
 						]);
 					case "copy":
-						RubyCall(RubyLocal("HXRuby"), "array_copy", [receiver]);
+						RubyCall(receiver, "dup", []);
 					case "map":
-						RubyCall(RubyLocal("HXRuby"), "array_map", [receiver, compileParam(params, 0)]);
+						hxrubyCall("array_map", [receiver, compileParam(params, 0)]);
 					case "filter":
-						RubyCall(RubyLocal("HXRuby"), "array_filter", [receiver, compileParam(params, 0)]);
+						hxrubyCall("array_filter", [receiver, compileParam(params, 0)]);
 					case "resize":
-						RubyCall(RubyLocal("HXRuby"), "array_resize", [receiver, compileParam(params, 0)]);
+						hxrubyCall("array_resize", [receiver, compileParam(params, 0)]);
+					case "keyValueIterator":
+						hxrubyCall("key_value_iterator", [receiver]);
 					case _:
 						null;
 				}
@@ -3119,15 +3405,33 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileStringCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
-			case TField(target, access) if (isStringExpr(target)):
+			case TField(target, access)
+				if (isStringExpr(target)
+					|| (!isArrayFieldAccess(access) && isStringReceiverFieldAccess(access) && !isNonStringInstanceFieldAccess(access))):
 				var receiver = printInlineExpr(target);
 				switch (fieldAccessRawName(access)) {
 					case "substr" if (params.length == 1):
-						RubyRawExpr(receiver + "[" + printParam(params, 0) + "..]");
+						hxrubyCall("string_substr", [compileExpr(target), compileParam(params, 0)]);
 					case "substr" if (params.length == 2):
-						RubyRawExpr(receiver + "[" + printParam(params, 0) + ", " + printParam(params, 1) + "]");
+						hxrubyCall("string_substr", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
 					case "charAt" if (params.length == 1):
-						RubyRawExpr("(" + receiver + "[" + printParam(params, 0) + "] || \"\")");
+						hxrubyCall("string_char_at", [compileExpr(target), compileParam(params, 0)]);
+					case "charCodeAt" if (params.length == 1):
+						hxrubyCall("string_char_code_at", [compileExpr(target), compileParam(params, 0)]);
+					case "indexOf" if (params.length == 1):
+						hxrubyCall("string_index_of", [compileExpr(target), compileParam(params, 0)]);
+					case "indexOf" if (params.length == 2):
+						hxrubyCall("string_index_of", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
+					case "lastIndexOf" if (params.length == 1):
+						hxrubyCall("string_last_index_of", [compileExpr(target), compileParam(params, 0)]);
+					case "lastIndexOf" if (params.length == 2):
+						hxrubyCall("string_last_index_of", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
+					case "split" if (params.length == 1):
+						hxrubyCall("string_split", [compileExpr(target), compileParam(params, 0)]);
+					case "substring" if (params.length == 1):
+						hxrubyCall("string_substring", [compileExpr(target), compileParam(params, 0)]);
+					case "substring" if (params.length == 2):
+						hxrubyCall("string_substring", [compileExpr(target), compileParam(params, 0), compileParam(params, 1)]);
 					case "toUpperCase" if (params.length == 0):
 						RubyCall(compileExpr(target), "upcase", []);
 					case "toLowerCase" if (params.length == 0):
@@ -3140,8 +3444,56 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function compileStringStaticCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
+		if (info.owner != "String") {
+			return null;
+		}
+		return switch info.name {
+			case "fromCharCode" if (params.length == 1):
+				RubyRawExpr("(" + printParam(params, 0) + ").chr(Encoding::UTF_8)");
+			case _:
+				null;
+		}
+	}
+
 	static function isStringExpr(expr:TypedExpr):Bool {
 		return TypeTools.toString(expr.t) == "String";
+	}
+
+	static function isStringReceiverFieldAccess(access:haxe.macro.Type.FieldAccess):Bool {
+		return switch (access) {
+			case FStatic(_, _) | FEnum(_, _):
+				false;
+			case _:
+				isKnownStringMethod(fieldAccessRawName(access));
+		}
+	}
+
+	static function isNonStringInstanceFieldAccess(access:haxe.macro.Type.FieldAccess):Bool {
+		return switch (access) {
+			case FInstance(classRef, _, _):
+				var classType = classRef.get();
+				fullTypeName(classType.pack, classType.name) != "String";
+			case _:
+				false;
+		}
+	}
+
+	static function isKnownStringMethod(name:String):Bool {
+		return switch (name) {
+			case "substr" | "charAt" | "charCodeAt" | "indexOf" | "lastIndexOf" | "split" | "substring" | "toUpperCase" | "toLowerCase":
+				true;
+			case _:
+				false;
+		}
+	}
+
+	static function isStringComparison(op:haxe.macro.Expr.Binop, lhs:TypedExpr, rhs:TypedExpr):Bool {
+		return switch op {
+			case OpGt | OpGte | OpLt | OpLte: isStringExpr(lhs) && isStringExpr(rhs);
+			case _:
+				false;
+		}
 	}
 
 	static function compileActiveRecordRelationCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -3287,7 +3639,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))
 			];
 			var keyArray = RubyRawExpr("[" + [for (key in keys) quoteRubyStringForCode(key)].join(", ") + "]");
-			return RubyCall(RubyLocal("HXRuby"), "active_record_projection", [RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keyArray]);
+			return hxrubyCall("active_record_projection", [RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keyArray]);
 		}
 		if (info.name == "group" && params.length == 4) {
 			var groupField = staticString(params[1]);
@@ -3307,7 +3659,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			var grouped = RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(groupField))]);
 			var keyArray = RubyRawExpr("[" + [for (key in keys) quoteRubyStringForCode(key)].join(", ") + "]");
-			return RubyCall(RubyLocal("HXRuby"), "active_record_projection", [RubyCall(grouped, "pluck", pluckArgs), keyArray]);
+			return hxrubyCall("active_record_projection", [RubyCall(grouped, "pluck", pluckArgs), keyArray]);
 		}
 		return null;
 	}
@@ -3324,7 +3676,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				Context.error("GroupRuntime.count expects static field and key-kind strings emitted by Group.count.", callee.pos);
 			}
 			var groupedCount = RubyCall(RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]), "count", []);
-			return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [groupedCount, RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))]);
+			return hxrubyCall("active_record_group_count", [groupedCount, RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))]);
 		}
 		if (info.name == "countHaving" && params.length == 4) {
 			var fieldName = staticString(params[1]);
@@ -3335,7 +3687,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			var grouped = RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
 			var having = RubyCall(grouped, "having", [RubyRawExpr(predicate)]);
-			return RubyCall(RubyLocal("HXRuby"), "active_record_group_count", [
+			return hxrubyCall("active_record_group_count", [
 				RubyCall(having, "count", []),
 				RubyRawExpr(":" + RubyNaming.toMethodName(keyKind))
 			]);
@@ -4615,7 +4967,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileStdIsOfType(params:Array<TypedExpr>):RubyExpr {
-		return RubyCall(RubyLocal("HXRuby"), "is_of_type", [compileParam(params, 0), compileTypeCheckParam(params, 1)]);
+		return hxrubyCall("is_of_type", [compileParam(params, 0), compileTypeCheckParam(params, 1)]);
 	}
 
 	static function compileTypeCheckParam(params:Array<TypedExpr>, index:Int):RubyExpr {
@@ -4963,6 +5315,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function isMethodField(field:ClassField):Bool {
+		return switch (field.kind) {
+			case FMethod(_): true;
+			case _: false;
+		}
+	}
+
 	static function isObjectDeclExpr(expr:TypedExpr):Bool {
 		return switch (expr.expr) {
 			case TObjectDecl(_): true;
@@ -5014,6 +5373,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function staticRuntimeMethodValue(classType:ClassType, fieldName:String):Null<String> {
+		return switch [fullTypeName(classType.pack, classType.name), fieldName] {
+			case ["Reflect", "compare"]:
+				// `Reflect` is compiler-erased; method references need the runtime
+				// helper directly when passed as callbacks such as Array.sort.
+				"HXRuby.method(:reflect_compare)";
+			case ["Reflect", "compareMethods"]:
+				"HXRuby.method(:reflect_compare_methods)";
+			case _:
+				null;
+		}
+	}
+
 	static function compileParam(params:Array<TypedExpr>, index:Int):RubyExpr {
 		return index < params.length ? compileExpr(params[index]) : RubyNil;
 	}
@@ -5057,13 +5429,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function renderFor(v:TVar, iterable:TypedExpr, body:TypedExpr):String {
 		var iteratorName = loopIteratorName(v, iterable);
 		var lines = [
-			iteratorName + " = " + printInlineExpr(iterable),
+			iteratorName + " = " + loopIteratorExpression(iterable),
 			"while " + iteratorName + ".has_next()",
 			"  " + localName(v) + " = " + iteratorName + ".next_()"
 		];
 		appendIndentedLines(lines, renderStatements(compileFunctionBody(body)), 1);
 		lines.push("end");
 		return lines.join("\n");
+	}
+
+	static function loopIteratorExpression(iterable:TypedExpr):String {
+		return switch (iterable.expr) {
+			case TCall({expr: TField(target, access)}, []) if (fieldAccessRawName(access) == "iterator"):
+				// Haxe lowers `for` to `.iterator()`, but Ruby-first std values
+				// such as Array are native Ruby objects. Keep the bridge compact:
+				// use a Haxe iterator when present, otherwise wrap Enumerable data.
+				"HXRuby.iterator(" + printInlineExpr(target) + ")";
+			case _:
+				var rendered = printInlineExpr(iterable);
+				var suffix = ".iterator()";
+				if (StringTools.endsWith(rendered, suffix)) {
+					"HXRuby.iterator(" + rendered.substr(0, rendered.length - suffix.length) + ")";
+				} else {
+					rendered;
+				}
+		}
 	}
 
 	static function switchScrutineeCode(expr:TypedExpr):String {
@@ -5120,18 +5510,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	function setRailsAutoloadInitializer():Void {
-		var root = buildContext.railsOutputRoot;
+		var root = buildContext.usesRailsNativeLayout() ? RAILS_GENERATED_SUPPORT_ROOT : buildContext.railsOutputRoot;
+		var runtimeRoot = buildContext.usesRailsNativeLayout() ? RAILS_VENDOR_RUNTIME_ROOT : buildContext.railsOutputRoot + "/hxruby";
 		var lines = [
 			"# Generated by reflaxe.ruby",
 			"hxruby_root = Rails.root.join(" + quoteRubyStringForCode(root) + ")",
-			"hxruby_runtime_root = hxruby_root.join(\"hxruby\")",
+			"hxruby_runtime_root = Rails.root.join(" + quoteRubyStringForCode(runtimeRoot) + ")",
 			"Rails.autoloaders.main.ignore(hxruby_runtime_root) if defined?(Rails.autoloaders) && hxruby_runtime_root.exist?",
-			"Dir[hxruby_runtime_root.join(\"*.rb\")].sort.each { |path| require path }",
-			"Rails.application.config.autoload_paths << hxruby_root",
-			"Rails.application.config.eager_load_paths << hxruby_root",
+			buildContext.usesRailsNativeLayout() ? null : "Dir[hxruby_runtime_root.join(\"*.rb\")].sort.each { |path| require path }",
+			"Rails.application.config.autoload_paths = Rails.application.config.autoload_paths + [hxruby_root.to_s]",
+			"Rails.application.config.eager_load_paths = Rails.application.config.eager_load_paths + [hxruby_root.to_s]",
 			""
 		];
-		setRailsExtraFile("config/initializers/hxruby_autoload.rb", lines.join("\n"), Context.currentPos());
+		setRailsExtraFile("config/initializers/hxruby_autoload.rb", [for (line in lines) if (line != null) line].join("\n"), Context.currentPos());
 	}
 
 	function emitRailsMigrationArtifact(classType:ClassType, varFields:Array<ClassVarData>):Void {
@@ -9464,13 +9855,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return;
 		}
 		var manifestPath = Path.normalize(Path.join([outputRoot, ".railshx", "manifest.json"]));
-		var outputs:Array<Dynamic> = [];
+		var outputs:Array<RailsCompilerManifestOutput> = [];
 		if (FileSystem.exists(manifestPath)) {
 			try {
-				var parsed:Dynamic = haxe.Json.parse(File.getContent(manifestPath));
-				var parsedOutputs:Dynamic = Reflect.field(parsed, "outputs");
-				if (Std.isOfType(parsedOutputs, Array)) {
-					outputs = cast parsedOutputs;
+				// haxe.Json.parse is the external JSON boundary; after parsing, keep
+				// only typed manifest records so compiler-owned JSON construction
+				// does not spread Dynamic/Reflect through the manifest writer.
+				var parsed:RailsCompilerManifest = haxe.Json.parse(File.getContent(manifestPath));
+				if (parsed != null && Std.isOfType(parsed.outputs, Array)) {
+					outputs = parsed.outputs;
 				}
 			} catch (e:Dynamic) {
 				Context.error('Invalid RailsHx manifest ${manifestPath}: ${Std.string(e)}', pos);
@@ -9483,21 +9876,30 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		outputs = [
 			for (existing in outputs)
-				if (!replacing.exists(Std.string(Reflect.field(existing, "output")))) existing
+				if (!replacing.exists(existing.output)) existing
 		];
 		for (entry in entries) {
-			var item:Dynamic = {};
-			Reflect.setField(item, "output", entry.output);
-			Reflect.setField(item, "kind", entry.kind);
-			Reflect.setField(item, "source", entry.source);
-			Reflect.setField(item, "sha256", haxe.crypto.Sha256.encode(entry.content));
-			outputs.push(item);
+			outputs.push({
+				output: entry.output,
+				kind: entry.kind,
+				source: entry.source,
+				sha256: haxe.crypto.Sha256.encode(entry.content)
+			});
 		}
-		outputs.sort((a, b) -> Reflect.compare(Std.string(Reflect.field(a, "output")), Std.string(Reflect.field(b, "output"))));
-		var manifest:Dynamic = {};
-		Reflect.setField(manifest, "version", 1);
-		Reflect.setField(manifest, "outputs", outputs);
+		outputs.sort((a, b) -> compareRailsManifestOutput(a.output, b.output));
+		var manifest:RailsCompilerManifest = {
+			version: 1,
+			outputs: outputs
+		};
 		setExtraFile(OutputPath.fromStr(".railshx/manifest.json"), haxe.Json.stringify(manifest, null, "  ") + "\n");
+	}
+
+	static function compareRailsManifestOutput(a:String, b:String):Int {
+		if (a < b)
+			return -1;
+		if (a > b)
+			return 1;
+		return 0;
 	}
 
 	static function validateRailsTestMethod(field:ClassFuncData):Void {
@@ -11871,13 +12273,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall(callee, params):
 				printTemplateExpr(callee, scope) + ".call(" + [for (param in params) printTemplateExpr(param, scope)].join(", ") + ")";
 			case TIf(cond, eThen, eElse):
-				"(if "
-				+ printTemplateExpr(cond, scope)
-				+ " then "
-				+ printTemplateExpr(eThen, scope)
-				+ " else "
-				+ (eElse == null ? "nil" : printTemplateExpr(eElse, scope))
-				+ " end)";
+				rubyConditionalExpr(printTemplateExpr(cond, scope), printTemplateExpr(eThen, scope), eElse == null ? "nil" : printTemplateExpr(eElse, scope));
 			case _:
 				simplifyTemplateRubyIdentityBegin(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(unwrapped)));
 		}
@@ -12238,6 +12634,39 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case FInstance(classRef, _, _):
 				var classType = classRef.get();
 				fullTypeName(classType.pack, classType.name) == "Array";
+			case _:
+				false;
+		}
+	}
+
+	static function isArrayReceiverFieldAccess(target:TypedExpr, access:haxe.macro.Type.FieldAccess):Bool {
+		if (isArrayFieldAccess(access) || isArrayExpr(target)) {
+			return true;
+		}
+		if (!isKnownArrayMethod(fieldAccessRawName(access))) {
+			return false;
+		}
+		return switch (access) {
+			case FDynamic(_):
+				true;
+			case FAnon(_) | FClosure(_, _): isDynamicExpr(target) || fieldAccessRawName(access) == "keyValueIterator";
+			case FInstance(_, _, _) | FStatic(_, _) | FEnum(_, _):
+				false;
+		}
+	}
+
+	static function isDynamicExpr(expr:TypedExpr):Bool {
+		return switch (TypeTools.follow(expr.t)) {
+			case TDynamic(_): true;
+			case _: false;
+		}
+	}
+
+	static function isKnownArrayMethod(name:String):Bool {
+		return switch (name) {
+			case "concat" | "join" | "push" | "reverse" | "slice" | "sort" | "splice" | "toString" | "insert" | "remove" | "contains" | "indexOf" |
+				"lastIndexOf" | "copy" | "map" | "filter" | "resize" | "keyValueIterator":
+				true;
 			case _:
 				false;
 		}
@@ -12821,6 +13250,29 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return name == "gthis" || name == "_gthis";
 	}
 
+	static function compileBinaryOp(op:haxe.macro.Expr.Binop, lhs:TypedExpr, rhs:TypedExpr):RubyExpr {
+		return switch (op) {
+			case OpDiv:
+				hxrubyCall("math_divide", [compileExpr(lhs), compileExpr(rhs)]);
+			case OpEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
+				RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]);
+			case OpNotEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
+				RubyUnary("!", RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]));
+			case _:
+				RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
+		}
+	}
+
+	static function isArrayExpr(expr:TypedExpr):Bool {
+		return switch (TypeTools.follow(expr.t)) {
+			case TInst(classRef, _):
+				var classType = classRef.get();
+				fullTypeName(classType.pack, classType.name) == "Array";
+			case _:
+				false;
+		}
+	}
+
 	static function loopIteratorName(v:TVar, iterable:TypedExpr):String {
 		var pos = Context.getPosInfos(iterable.pos);
 		return "__hx_iter_" + localName(v) + "_" + pos.min;
@@ -12865,15 +13317,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(expr));
 	}
 
-	static function lambdaBody(expr:TypedExpr):String {
-		return switch (expr.expr) {
-			case TReturn(value):
-				value == null ? "nil" : printInlineExpr(value);
-			case TBlock(exprs) if (exprs.length > 0):
-				lambdaBody(exprs[exprs.length - 1]);
-			case _:
-				printInlineExpr(expr);
-		}
+	static function rubyConditionalExpr(cond:String, thenExpr:String, elseExpr:String):String {
+		return "(" + cond + " ? " + thenExpr + " : " + elseExpr + ")";
 	}
 
 	static function quoteRubyStringForCode(value:String):String {

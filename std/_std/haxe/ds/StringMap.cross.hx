@@ -1,10 +1,12 @@
 package haxe.ds;
 
 import ruby.NativeHash;
+import ruby.NativeHashData;
+import ruby.NativeHashEntry;
 import ruby.NativeIterator;
 
 class StringMap<T> implements haxe.Constraints.IMap<String, T> {
-	final data:Dynamic;
+	final data:NativeHashData<String, T>;
 
 	public function new() {
 		data = NativeHash.create();
@@ -29,7 +31,7 @@ class StringMap<T> implements haxe.Constraints.IMap<String, T> {
 		return new NativeIterator<T>(NativeHash.values(data));
 
 	public function keyValueIterator():KeyValueIterator<String, T>
-		return cast new NativeIterator<Dynamic>(NativeHash.entries(data));
+		return new NativeIterator<NativeHashEntry<String, T>>(NativeHash.entries(data));
 
 	public function copy():StringMap<T> {
 		var out = new StringMap<T>();

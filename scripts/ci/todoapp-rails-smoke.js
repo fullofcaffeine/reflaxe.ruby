@@ -535,6 +535,7 @@ for (const file of [
   "app/models/todo.rb",
   "app/models/user.rb",
   "app/models/chat_message.rb",
+  "app/lib/railshx/runtime/hxruby/core.rb",
   "app/views/todos/index.html.erb",
   "app/views/todos/_card.html.erb",
   "app/views/todos/_app_top_bar.html.erb",
@@ -544,12 +545,12 @@ for (const file of [
   "app/views/todos/_list.html.erb",
   "app/views/todos/_summary.html.erb",
   "app/views/todos/_typed_form.html.erb",
-  "app/views/devise/sessions/new.html.erb",
-  "app/views/layouts/application.html.erb",
-  "config/routes.rb",
-  "db/migrate/20260101000000_create_todos.rb",
-  "db/migrate/20260101000001_update_todos.rb",
-  "db/migrate/20260101000002_update_users.rb",
+	"app/views/devise/sessions/new.html.erb",
+	"app/views/layouts/application.html.erb",
+	"config/routes.rb",
+	"db/migrate/20260101000000_create_todos.rb",
+	"db/migrate/20260101000001_update_todos.rb",
+	"db/migrate/20260101000002_update_users.rb",
   "db/migrate/20260101000003_create_chat_messages.rb",
   "db/migrate/20260101000004_add_devise_to_users.rb",
   "test/generated/models/todo_haxe_test.rb",
@@ -563,11 +564,10 @@ for (const file of [
 }
 
 for (const forbidden of [
-  "app/haxe_gen",
-  "app/lib/railshx/generated",
-  "app/lib/railshx/runtime",
-  "config/initializers/hxruby_autoload.rb",
-  "run.rb",
+	"app/haxe_gen",
+	"app/lib/railshx/generated",
+	"config/initializers/hxruby_autoload.rb",
+	"run.rb",
 ]) {
   const fullPath = join(outputDir, forbidden);
   if (existsSync(fullPath)) {
@@ -616,9 +616,10 @@ for (const expected of [
   'validates :name, exclusion: {within: ["admin", "root", "system"]}',
   "validates :email, presence: true, uniqueness: true, format: {with: /\\A[^@]+@[^@]+\\z/}",
   'validates :role, inclusion: {within: ["member", "admin", "maintainer", "guest"]}',
+  'require_relative "../lib/railshx/runtime/hxruby/core"',
   "def role_label()",
   "def initials()",
-  "trimmed[0, 1].upcase()",
+  "HXRuby.string_substr(trimmed, 0, 1).upcase()",
 ]) {
   if (!userRuby.includes(expected)) {
     console.error(`todoapp_rails user model output missing expected line: ${expected}`);
@@ -817,7 +818,7 @@ for (const expected of [
   /todo(?:__hx\d+)? = Todo\.where\(id: self\.param_id\(\), user_id: current_user(?:__hx\d+)?\.id\)\.first\(\)/,
   /todo(?:__hx\d+)?\.update\(is_completed: true\)/,
   /self\.flash\(\)\[:notice\] = "Todo completed"/,
-  /"Todo report for " \+ label(?:__hx\d+)?.*count(?:__hx\d+)?\.to_s\(\).*" todos"/,
+  /"Todo report for " \+ label(?:__hx\d+)?.*(?:HXRuby\.stringify\(count(?:__hx\d+)?\)|count(?:__hx\d+)?\.to_s\(\)).*" todos"/,
   /self\.render\(plain: .*status: :ok\)/,
   /self\.send_data\(.*"RailsHx file route: " \+ label(?:__hx\d+)?.*"\\n".*filename: "todoapp-route\.txt", type: "text\/plain", disposition: "inline", status: :ok\)/,
 ]) {
@@ -1334,7 +1335,7 @@ for (const expected of [
   '<%= link_to "#open-work", class: "typed-route-link", data: {railshx_scroll: true} do %>',
   '<%= link_to legacy_health_path(), class: "typed-route-link rails-owned-route-link" do %>',
   "Rails-owned route, typed in Haxe",
-  '<span><%= (if todos.length > 0 then "Jump to open work" else "Jump to the empty state" end) %></span>',
+  '<span><%= (todos.length > 0 ? "Jump to open work" : "Jump to the empty state") %></span>',
   '<span class="typed-route-count"><%= todos.length %></span>',
   '<% end %>',
   '<%= render partial: "todos/summary", locals: {todos: todos} %>',

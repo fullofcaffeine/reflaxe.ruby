@@ -78,7 +78,7 @@ try {
   const runtimeCheck = [
     "require 'hxruby'",
     `abort 'version mismatch' unless HXRuby::VERSION == ${JSON.stringify(packageJson.version)}`,
-    "abort 'stringify mismatch' unless HXRuby.stringify([1, 2]) == '[1, 2]'",
+    "abort 'stringify mismatch' unless HXRuby.stringify([1, 2]) == '[1,2]'",
     "raise HxException.new({ 'message' => 'boom' }) rescue (ex = $!)",
     "abort 'exception mismatch' unless ex.message == '{\"message\"=>\"boom\"}'",
   ].join("; ");

@@ -391,7 +391,7 @@ function expectPatchOnlyRequireOutput() {
     process.exit(1);
   }
   const mainRuby = readFileSync(join(patchOnlyOutputDir, "main.rb"), "utf8");
-  if (!mainRuby.includes('puts("".blank?().to_s())')) {
+  if (!mainRuby.includes('puts(HXRuby.stringify("".blank?()))')) {
     console.error("Expected patch-only call to lower to direct receiver dispatch.");
     console.error(mainRuby);
     process.exit(1);

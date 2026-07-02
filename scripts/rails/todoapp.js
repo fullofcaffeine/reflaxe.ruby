@@ -219,6 +219,10 @@ module HXRubyTodoapp
     config.eager_load_paths << Rails.root.join("app/lib")
     config.assets.paths << Rails.root.join("app/javascript")
     config.action_controller.allow_forgery_protection = false
+
+    initializer "railshx.ignore_runtime", before: :set_autoload_paths do
+      Rails.autoloaders.main.ignore(Rails.root.join("app/lib/railshx/runtime"))
+    end
   end
 end
 `);

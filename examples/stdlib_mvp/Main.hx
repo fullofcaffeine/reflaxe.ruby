@@ -19,6 +19,7 @@ class Main {
 		Sys.println(StringTools.endsWith("reflaxe.ruby", "ruby"));
 		Sys.println(StringTools.contains("haxe to ruby", "ruby"));
 		Sys.println(StringTools.replace("typed rails", "rails", "ruby"));
+		Sys.println(StringTools.replace("a", "a", "\\1"));
 		Sys.println(StringTools.hex(255, 4));
 		Sys.println(StringTools.urlDecode("typed+ruby"));
 		Sys.println(Math.PI > 3);
@@ -34,6 +35,65 @@ class Main {
 		Sys.println(Math.isNaN(Math.sqrt(-1)));
 		Sys.println(Math.isFinite(Math.POSITIVE_INFINITY));
 		Sys.println(Std.random(10) >= 0);
+		var parsedJson:Dynamic = haxe.Json.parse("{\"name\":\"ruby\",\"count\":2,\"items\":[1,null,true]}");
+		Sys.println(Reflect.field(parsedJson, "name"));
+		Sys.println(Reflect.field(parsedJson, "count") + 1);
+		Sys.println(Reflect.field(parsedJson, "items")[1] == null);
+		Sys.println(haxe.Json.stringify({name: "ruby", count: 2}));
+		Sys.println(haxe.Json.stringify(["ruby", null, true]));
+		Sys.println(StringTools.contains(haxe.Json.stringify({nested: {ok: true}}, null, "  "), "\n  \"nested\""));
+		// Strict snapshot builds focus on app-authored raw-boundary checks. The
+		// runtime smoke below still exercises sys.* direct Ruby std lowering.
+		#if !reflaxe_ruby_strict_examples
+		var fsRoot = "test/.generated/stdlib_mvp/fs_probe";
+		var fsNested = fsRoot + "/nested";
+		var fsFile = fsNested + "/note.txt";
+		var fsCopy = fsNested + "/copy.txt";
+		var fsRenamed = fsNested + "/renamed.txt";
+		var fsBytes = fsNested + "/bytes.bin";
+		if (sys.FileSystem.exists(fsRenamed)) {
+			sys.FileSystem.deleteFile(fsRenamed);
+		}
+		if (sys.FileSystem.exists(fsCopy)) {
+			sys.FileSystem.deleteFile(fsCopy);
+		}
+		if (sys.FileSystem.exists(fsFile)) {
+			sys.FileSystem.deleteFile(fsFile);
+		}
+		if (sys.FileSystem.exists(fsBytes)) {
+			sys.FileSystem.deleteFile(fsBytes);
+		}
+		if (sys.FileSystem.exists(fsNested)) {
+			sys.FileSystem.deleteDirectory(fsNested);
+		}
+		if (sys.FileSystem.exists(fsRoot)) {
+			sys.FileSystem.deleteDirectory(fsRoot);
+		}
+		sys.FileSystem.createDirectory(fsNested);
+		sys.io.File.saveContent(fsFile, "typed fs");
+		Sys.println(sys.FileSystem.exists(fsFile));
+		Sys.println(sys.FileSystem.isDirectory(fsNested));
+		Sys.println(sys.io.File.getContent(fsFile));
+		var fsStat = sys.FileSystem.stat(fsFile);
+		Sys.println(fsStat.size);
+		Sys.println(sys.FileSystem.absolutePath(fsFile).length > fsFile.length);
+		Sys.println(sys.FileSystem.fullPath(fsFile).length > fsFile.length);
+		sys.io.File.copy(fsFile, fsCopy);
+		Sys.println(sys.io.File.getContent(fsCopy));
+		sys.io.File.saveBytes(fsBytes, haxe.io.Bytes.ofString("bin"));
+		Sys.println(sys.io.File.getBytes(fsBytes).toString());
+		var fsEntries = sys.FileSystem.readDirectory(fsNested);
+		Sys.println(fsEntries.indexOf("note.txt") >= 0);
+		sys.FileSystem.rename(fsFile, fsRenamed);
+		Sys.println(sys.FileSystem.exists(fsRenamed));
+		Sys.println(!sys.FileSystem.exists(fsFile));
+		sys.FileSystem.deleteFile(fsRenamed);
+		sys.FileSystem.deleteFile(fsCopy);
+		sys.FileSystem.deleteFile(fsBytes);
+		sys.FileSystem.deleteDirectory(fsNested);
+		sys.FileSystem.deleteDirectory(fsRoot);
+		Sys.println(!sys.FileSystem.exists(fsRoot));
+		#end
 		Sys.putEnv("HXRUBY_STDLIB_MVP", "typed");
 		Sys.println(Sys.getEnv("HXRUBY_STDLIB_MVP"));
 		Sys.println(Sys.getCwd().length > 0);
@@ -79,6 +139,36 @@ class Main {
 		Sys.println(Type.enumConstructor(Type.typeof(1.5)));
 		Sys.println(Type.enumConstructor(Type.typeof(true)));
 		Sys.println(Type.enumConstructor(Type.typeof(StdTypeColor.Red)));
+		var reflected:Dynamic = {name: "ruby", count: 2};
+		Sys.println(Reflect.hasField(reflected, "name"));
+		Sys.println(Reflect.field(reflected, "name"));
+		Reflect.setField(reflected, "count", 3);
+		Sys.println(Reflect.field(reflected, "count"));
+		Sys.println(Reflect.fields(reflected).join("|"));
+		var reflectedCopy:Dynamic = Reflect.copy(reflected);
+		Reflect.setField(reflectedCopy, "name", "haxe");
+		Sys.println(Reflect.field(reflected, "name") + ":" + Reflect.field(reflectedCopy, "name"));
+		Sys.println(Reflect.deleteField(reflected, "count"));
+		Sys.println(Reflect.hasField(reflected, "count"));
+		var reflectedBox:Dynamic = new StdReflectBox("typed");
+		Sys.println(Reflect.hasField(reflectedBox, "label"));
+		Sys.println(Reflect.field(reflectedBox, "label"));
+		Reflect.setField(reflectedBox, "label", "updated");
+		Sys.println(Reflect.getProperty(reflectedBox, "label"));
+		Reflect.setProperty(reflectedBox, "label", "property");
+		Sys.println(reflectedBox.label);
+		Sys.println(Reflect.callMethod(reflectedBox, Reflect.field(reflectedBox, "describe"), ["box"]));
+		Sys.println(Reflect.callMethod(reflectedBox, Reflect.field(reflectedBox, "ping"), []));
+		var varArgs = Reflect.makeVarArgs(function(values:Array<Dynamic>) return values.length);
+		Sys.println(varArgs(1, 2, 3));
+		Sys.println(Reflect.isFunction(varArgs));
+		Sys.println(Reflect.compare(1, 2) < 0);
+		Sys.println(Reflect.compareMethods(Reflect.field(reflectedBox, "describe"), Reflect.field(reflectedBox, "describe")));
+		Sys.println(Reflect.isObject(reflectedBox));
+		Sys.println(Reflect.isObject("no"));
+		Sys.println(Reflect.isEnumValue(StdTypeColor.Red));
+		Sys.println(Type.getInstanceFields(StdReflectBox).indexOf("describe") >= 0);
+		Sys.println(Type.getClassFields(StdReflectStatics).indexOf("answer") >= 0);
 
 		var numbers = [1, 2, 3];
 		Sys.println(numbers.push(4));
@@ -157,6 +247,37 @@ class Main {
 
 class StdTypeBox {
 	public function new() {}
+}
+
+class StdReflectBox {
+	public var label:String;
+
+	public function new(label:String) {
+		this.label = label;
+	}
+
+	public function get_label():String {
+		return "get:" + label;
+	}
+
+	public function set_label(value:String):String {
+		label = "set:" + value;
+		return label;
+	}
+
+	public function describe(prefix:String):String {
+		return prefix + ":" + label;
+	}
+
+	public function ping():String {
+		return "pong:" + label;
+	}
+}
+
+class StdReflectStatics {
+	public static function answer():Int {
+		return 42;
+	}
 }
 
 enum StdTypeColor {

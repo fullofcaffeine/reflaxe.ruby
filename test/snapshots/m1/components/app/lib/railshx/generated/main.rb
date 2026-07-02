@@ -7,7 +7,7 @@ class Main
   def self.main()
     card = Views::ComponentCardView
     shell = Views::ComponentShellView
-    puts(((card != nil) && (shell != nil)).to_s())
+    puts(HXRuby.stringify(((card != nil) && (shell != nil))))
   end
 end
 if __FILE__ == $PROGRAM_NAME

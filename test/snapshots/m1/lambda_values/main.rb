@@ -6,7 +6,20 @@ class Main
   end
   def self.main()
     add_one = ->(x) { (x + 1) }
-    puts(add_one.call(2).to_s())
+    puts(HXRuby.stringify(add_one.call(2)))
+    sum = ->(values) do
+      total = 0
+      g_current = nil
+      g_array = nil
+      g_current = 0
+      g_array = values
+      while (g_current < g_array.length)
+        value = g_array[(g_current).tap { g_current = g_current + 1 }]
+        total = (total + value)
+      end
+      total
+    end
+    puts(HXRuby.stringify(sum.call([1, 2, 3])))
   end
 end
 if __FILE__ == $PROGRAM_NAME

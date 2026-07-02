@@ -7,14 +7,14 @@ class Main
   end
   def self.main()
     count = 2
-    puts(NativeInterop.describe(name: "ruby", count: 2).to_s())
-    puts(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count).to_s())
-    NativeInterop.each([1, 2]) { |value| puts(value.to_s()) }
+    puts(HXRuby.stringify(NativeInterop.describe(name: "ruby", count: 2)))
+    puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count)))
+    NativeInterop.each([1, 2]) { |value| puts(HXRuby.stringify(value)) }
     NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count) do |value__hx1|
       Kernel.print("item=")
-      puts(value__hx1.to_s())
+      puts(HXRuby.stringify(value__hx1))
     end
-    puts(NativeInterop.accept_symbol(:ready).to_s())
+    puts(HXRuby.stringify(NativeInterop.accept_symbol(:ready)))
     Kernel.puts("kernel")
   end
 end

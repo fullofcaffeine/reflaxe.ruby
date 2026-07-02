@@ -1,10 +1,12 @@
 package haxe.ds;
 
 import ruby.NativeHash;
+import ruby.NativeHashData;
+import ruby.NativeHashEntry;
 import ruby.NativeIterator;
 
 class IntMap<T> implements haxe.Constraints.IMap<Int, T> {
-	final data:Dynamic;
+	final data:NativeHashData<Int, T>;
 
 	public function new() {
 		data = NativeHash.create();
@@ -29,7 +31,7 @@ class IntMap<T> implements haxe.Constraints.IMap<Int, T> {
 		return new NativeIterator<T>(NativeHash.values(data));
 
 	public function keyValueIterator():KeyValueIterator<Int, T>
-		return cast new NativeIterator<Dynamic>(NativeHash.entries(data));
+		return new NativeIterator<NativeHashEntry<Int, T>>(NativeHash.entries(data));
 
 	public function copy():IntMap<T> {
 		var out = new IntMap<T>();

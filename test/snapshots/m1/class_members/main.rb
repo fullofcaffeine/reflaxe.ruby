@@ -6,7 +6,7 @@ class Main
   end
   def self.main()
     Counter.value = 1
-    puts(Counter.next_().to_s())
+    puts(HXRuby.stringify(Counter.next_()))
   end
 end
 if __FILE__ == $PROGRAM_NAME
