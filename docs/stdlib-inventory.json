@@ -164,7 +164,7 @@
       "status": "implemented",
       "path": "std/ruby/NativeHashEntry.hx",
       "surface": "ruby.NativeHashEntry",
-      "reason": "Typed structural key/value entry shape returned by Ruby Hash-backed map keyValueIterator implementations."
+      "reason": "Tiny typed generated key/value record returned by Ruby Hash-backed map keyValueIterator implementations without depending on the HXRuby core runtime."
     },
     {
       "id": "std.ruby.native_iterator",
@@ -428,7 +428,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/GroupRuntime.hx",
       "surface": "rails.active_record.GroupRuntime",
-      "reason": "Internal compiler marker used by Group.count and Group.countHaving so app code stays typed while generated Ruby emits Rails-native group(:field).count / having(...) plus HXRuby map shaping."
+      "reason": "Internal compiler marker used by Group.count and Group.countHaving so app code stays typed while generated Ruby emits Rails-native group(:field).count / having(...) plus inline map shaping."
     },
     {
       "id": "std.rails.active_record_lock",
@@ -500,7 +500,7 @@
       "status": "implemented",
       "path": "std/rails/active_record/ProjectionRuntime.hx",
       "surface": "rails.active_record.ProjectionRuntime",
-      "reason": "Internal compiler marker used by Projection.pluck and Projection.group so app code stays typed while generated Ruby emits Rails-native pluck/group/pluck plus HXRuby row shaping."
+      "reason": "Internal compiler marker used by Projection.pluck and Projection.group so app code stays typed while generated Ruby emits Rails-native pluck/group/pluck plus inline row shaping."
     },
     {
       "id": "std.rails.active_record_association",

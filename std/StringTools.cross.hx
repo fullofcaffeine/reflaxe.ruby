@@ -1,13 +1,15 @@
 package;
 
+@:rubyRequire("cgi")
+@:rubyRequire("uri")
 class StringTools {
 	public static function htmlEscape(s:String, ?quotes:Bool = false):String {
-		var out = replace(replace(replace(s, "&", "&amp;"), "<", "&lt;"), ">", "&gt;");
-		return quotes ? replace(replace(out, "\"", "&quot;"), "'", "&#039;") : out;
+		return quotes ? untyped __ruby__("{0}.to_s.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub(34.chr, '&quot;').gsub(39.chr, '&#039;')",
+			s) : untyped __ruby__("{0}.to_s.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;')", s);
 	}
 
 	public static function htmlUnescape(s:String):String {
-		return replace(replace(replace(replace(replace(s, "&lt;", "<"), "&gt;", ">"), "&quot;", "\""), "&#039;", "'"), "&amp;", "&");
+		return untyped __ruby__("{0}.to_s.gsub('&lt;', '<').gsub('&gt;', '>').gsub('&quot;', 34.chr).gsub('&#039;', 39.chr).gsub('&amp;', '&')", s);
 	}
 
 	public static function contains(s:String, value:String):Bool {
@@ -71,34 +73,24 @@ class StringTools {
 	}
 
 	public static function replace(s:String, sub:String, by:String):String {
-		if (sub == "") {
-			if (by == "") {
-				return s;
-			}
-			return s.split("").join(by);
-		}
-		return s.split(sub).join(by);
+		return
+			untyped __ruby__("(begin string = {0}.to_s; needle = {1}.to_s; by = {2}.to_s; if needle.empty?; by.empty? ? string : string.each_char.to_a.join(by); else string.gsub(needle) { by }; end end)",
+			s, sub, by);
 	}
 
 	public static function hex(n:Int, ?digits:Int):String {
-		var out = "";
-		var chars = "0123456789ABCDEF";
-		do {
-			out = chars.charAt(n & 15) + out;
-			n = n >>> 4;
-		} while (n > 0);
-		while (digits != null && out.length < digits) {
-			out = "0" + out;
-		}
-		return out;
+		return
+			untyped __ruby__("(->(value, digits) { out = (value.to_i & 0xffffffff).to_s(16).upcase; digits.nil? ? out : out.rjust(digits.to_i, '0') }).call({0}, {1})",
+				n,
+			digits);
 	}
 
 	public static function urlEncode(s:String):String {
-		return s;
+		return untyped __ruby__("URI.encode_www_form_component({0}.to_s)", s);
 	}
 
 	public static function urlDecode(s:String):String {
-		return s;
+		return untyped __ruby__("CGI.unescape({0}.to_s)", s);
 	}
 
 	public static function fastCodeAt(s:String, index:Int):Int {

@@ -2,6 +2,7 @@
 
 require "optparse"
 require_relative "../core"
+require_relative "../generated/route_parity/ruby/native_hash_entry"
 require_relative "../generated/route_parity/ruby/native_hash"
 require_relative "../generated/route_parity/hxruby/generators/routes/devise_expected_field"
 require_relative "../generated/route_parity/hxruby/generators/routes/manifest_route"

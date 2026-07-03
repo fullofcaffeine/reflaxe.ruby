@@ -35,7 +35,7 @@ class NativeHash {
 	}
 
 	public static function entries<K, V>(hash:NativeHashData<K, V>):Array<NativeHashEntry<K, V>> {
-		return untyped __ruby__("{0}.map { |key, value| HXRuby::KeyValueEntry.new(key, value) }", hash);
+		return untyped __ruby__("{0}.map { |key, value| Ruby::NativeHashEntry.new(key, value) }", hash);
 	}
 
 	public static function copyInto<K, V>(target:NativeHashData<K, V>, source:NativeHashData<K, V>):Void {

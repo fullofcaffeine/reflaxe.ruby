@@ -84,9 +84,6 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_in_delta 5.3, HXRuby.parse_float("5.3 1"), 0.0001
     assert_in_delta 6.0, HXRuby.parse_float("6e"), 0.0001
     assert HXRuby.parse_float("nope").nan?
-    assert_equal "00FF", HXRuby.hex(255, 4)
-    assert_equal "typed+ruby", HXRuby.url_encode("typed ruby")
-    assert_equal "typed ruby", HXRuby.url_decode("typed+ruby")
     assert_equal "ab", HXRuby.string_substr("abcd", 0, 2)
     assert_equal "abc", HXRuby.string_substr("abcd", 0, -1)
     assert_equal "", HXRuby.string_substr("abcd", 0, -9)
@@ -114,16 +111,11 @@ class HXRubyRuntimeTest < Minitest::Test
   end
 
   def test_string_tools_helpers
-    assert_equal "&lt;a href=&quot;x&quot;&gt;&#039;y&#039;&amp;&lt;/a&gt;", HXRuby.html_escape("<a href=\"x\">'y'&</a>", true)
-    assert_equal "<a href=\"x\">'y'&</a>", HXRuby.html_unescape("&lt;a href=&quot;x&quot;&gt;&#039;y&#039;&amp;&lt;/a&gt;")
     assert HXRuby.string_tools_is_space(" a", 0)
     refute HXRuby.string_tools_is_space(" a", 1)
     assert_equal "--hi", HXRuby.string_tools_lpad("hi", "-", 4)
     assert_equal "hi--", HXRuby.string_tools_rpad("hi", "-", 4)
     assert_equal "hi", HXRuby.string_tools_lpad("hi", "", 4)
-    assert_equal "axbxc", HXRuby.string_tools_replace("abc", "", "x")
-    assert_equal "axa", HXRuby.string_tools_replace("abba", "bb", "x")
-    assert_equal "\\1", HXRuby.string_tools_replace("a", "a", "\\1")
     assert_equal 0xD83D, HXRuby.string_tools_fast_code_at("😀", 0)
     assert_equal 0, HXRuby.string_tools_fast_code_at("A", 99)
     assert HXRuby.string_tools_is_eof(nil)

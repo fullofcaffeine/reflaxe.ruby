@@ -87,7 +87,6 @@ for (const file of [
   "app/views/mailers/user_mailer/welcome.text.erb",
   "test/mailers/previews/user_mailer_preview.rb",
   "app/lib/railshx/generated/main.rb",
-  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);

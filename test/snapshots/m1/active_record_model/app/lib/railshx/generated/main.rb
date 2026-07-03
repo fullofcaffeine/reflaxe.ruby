@@ -78,13 +78,13 @@ class Main
     relation_last = assigned.last()
     titles = Todo.pluck(:title)
     assigned_ids = assigned.pluck(:id)
-    projected = HXRuby.active_record_projection(Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
-    projected_from_model = HXRuby.active_record_projection(Todo.pluck(:id, :external_id), ["id", "externalId"])
-    grouped_projection = HXRuby.active_record_projection(Todo.where(status: "open").group(:status).pluck(:status, Todo.arel_table[:id].count, Todo.arel_table[:user_id].sum, Todo.arel_table[:user_id].average, Todo.arel_table[:id].minimum, Todo.arel_table[:title].maximum), ["status", "todoCount", "userIdSum", "averageUserId", "minId", "maxTitle"])
-    status_counts = HXRuby.active_record_group_count(Todo.where(status: "open").group(:status).count(), :string)
-    busy_status_counts = HXRuby.active_record_group_count(Todo.where(status: "open").group(:status).having(Todo.arel_table[:id].count.gt(1)).count(), :string)
-    user_counts = HXRuby.active_record_group_count(Todo.group(:user_id).count(), :int)
-    event_counts = HXRuby.active_record_group_count(AuditLog.where(event_count: 1).group(:event_count).count(), :int)
+    projected = (Todo.where(status: "open").pluck(:id, :title).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "title" => values[1]} })
+    projected_from_model = (Todo.pluck(:id, :external_id).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "externalId" => values[1]} })
+    grouped_projection = (Todo.where(status: "open").group(:status).pluck(:status, Todo.arel_table[:id].count, Todo.arel_table[:user_id].sum, Todo.arel_table[:user_id].average, Todo.arel_table[:id].minimum, Todo.arel_table[:title].maximum).map { |row| values = row.is_a?(Array) ? row : [row]; {"status" => values[0], "todoCount" => values[1], "userIdSum" => values[2], "averageUserId" => values[3], "minId" => values[4], "maxTitle" => values[5]} })
+    status_counts = (Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
+    busy_status_counts = (Todo.where(status: "open").group(:status).having(Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
+    user_counts = (Todo.group(:user_id).count().each_with_object(Haxe::Ds::IntMap.new) { |(key, value), map| map.set(key.to_i, value.to_i) })
+    event_counts = (AuditLog.where(event_count: 1).group(:event_count).count().each_with_object(Haxe::Ds::IntMap.new) { |(key, value), map| map.set(key.to_i, value.to_i) })
     min_id = Todo.minimum(:id)
     max_title = Todo.maximum(:title)
     assigned_max_id = assigned.maximum(:id)
@@ -185,6 +185,5 @@ class Main
 end
 if __FILE__ == $PROGRAM_NAME
   $LOAD_PATH.unshift(__dir__)
-  require_relative "hxruby/core"
   Main.main()
 end

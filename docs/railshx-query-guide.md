@@ -511,11 +511,11 @@ Models::Todo.where(status: "open").reorder(id: :desc, title: :asc)
 Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
-HXRuby.active_record_projection(Models::Todo.where(status: "open").pluck(:id, :title), ["id", "title"])
-HXRuby.active_record_projection(Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum), ["status", "todoCount", "userIdSum", "averageUserId", "minId", "maxTitle"])
-HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).count(), :string)
-HXRuby.active_record_group_count(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)
-HXRuby.active_record_group_count(Models::Todo.group(:user_id).count(), :int)
+(Models::Todo.where(status: "open").pluck(:id, :title).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "title" => values[1]} })
+(Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum).map { |row| values = row.is_a?(Array) ? row : [row]; {"status" => values[0], "todoCount" => values[1], "userIdSum" => values[2], "averageUserId" => values[3], "minId" => values[4], "maxTitle" => values[5]} })
+(Models::Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
+(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
+(Models::Todo.group(:user_id).count().each_with_object(Haxe::Ds::IntMap.new) { |(key, value), map| map.set(key.to_i, value.to_i) })
 Models::Todo.minimum(:id)
 Models::Todo.where(status: "open").maximum(:title)
 Models::Todo.sum(:user_id)
@@ -607,7 +607,7 @@ fields from another model are rejected by Haxe before Rails runs.
 non-empty object literal of generated field refs from the source model; the
 return type is inferred from the object keys and field value types, such as
 `Array<{id:Int, title:String}>`. Generated Ruby still uses Rails `pluck(:id,
-:title)` and a small `HXRuby` row shaper so app code sees named rows instead of
+:title)` plus an inline `map` block that returns named rows instead of
 positional arrays.
 
 `Projection.group(...)` is for selected grouped aggregate result rows. The spec
@@ -618,7 +618,7 @@ aggregate expression types become the row value types, so editors can complete
 `row.todoCount` as `Int` and `row.maxTitle` as `String`. Generated Ruby remains
 Rails-shaped:
 `group(:status).pluck(:status, Model.arel_table[:id].count, ...)` plus the same
-small row shaper. v1 rejects arbitrary non-grouped fields to avoid generating
+inline row shaper. v1 rejects arbitrary non-grouped fields to avoid generating
 invalid SQL.
 
 `Group.count(...)` is for typed grouped counts. `String` fields return

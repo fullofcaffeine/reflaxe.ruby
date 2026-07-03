@@ -2,7 +2,6 @@
 $LOAD_PATH.unshift(__dir__)
 require "active_record"
 require "active_storage/engine"
-require_relative "app/lib/railshx/runtime/hxruby/core"
 require_relative "app/lib/railshx/generated/main"
 require_relative "app/models/profile"
 Main.main

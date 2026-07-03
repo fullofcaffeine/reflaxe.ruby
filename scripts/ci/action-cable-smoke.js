@@ -56,7 +56,6 @@ for (const file of [
   "app/channels/application_cable/connection.rb",
   "app/channels/todos_channel.rb",
   "app/lib/railshx/generated/main.rb",
-  "app/lib/railshx/runtime/hxruby/core.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);

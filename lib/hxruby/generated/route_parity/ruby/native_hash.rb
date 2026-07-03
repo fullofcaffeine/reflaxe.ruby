@@ -30,7 +30,7 @@ module Ruby
       return hash.values
     end
     def self.entries(hash)
-      return hash.map { |key, value| HXRuby::KeyValueEntry.new(key, value) }
+      return hash.map { |key, value| Ruby::NativeHashEntry.new(key, value) }
     end
     def self.copy_into(target, source)
       target.replace(source)

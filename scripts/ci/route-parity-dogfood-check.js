@@ -10,6 +10,8 @@ const generatedRoot = join(root, "lib", "hxruby", "generated", "route_parity");
 const update = process.env.UPDATE_ROUTE_PARITY_GENERATED === "1";
 
 const trackedFiles = [
+  "hxruby/core.rb",
+  "ruby/native_hash_entry.rb",
   "ruby/native_hash.rb",
   "hxruby/generators/routes/devise_expected_field.rb",
   "hxruby/generators/routes/manifest_route.rb",

@@ -5,6 +5,7 @@ require "json"
 require "set"
 require_relative "./support/native_date"
 require_relative "./support/native_time"
+require_relative "hxruby/core"
 class Main
   def self.__hx_name()
     "Main"
@@ -17,6 +18,5 @@ class Main
 end
 if __FILE__ == $PROGRAM_NAME
   $LOAD_PATH.unshift(__dir__)
-  require_relative "hxruby/core"
   Main.main()
 end

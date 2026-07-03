@@ -13,6 +13,5 @@ class Main
 end
 if __FILE__ == $PROGRAM_NAME
   $LOAD_PATH.unshift(__dir__)
-  require_relative "hxruby/core"
   Main.main()
 end

@@ -61,8 +61,8 @@ Generated Ruby stays Rails/Arel-shaped:
 ```ruby
 Models::Todo.where(Models::Todo.arel_table[:id].gt(1))
 Models::Todo.where.not(Models::Todo.arel_table[:title].lower.eq("ship"))
-HXRuby.active_record_group_count(Models::Todo.group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count(), :string)
-HXRuby.active_record_projection(Models::Todo.group(:status).pluck(:status, Models::Todo.arel_table[:id].count), ["status", "todoCount"])
+(Models::Todo.group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
+(Models::Todo.group(:status).pluck(:status, Models::Todo.arel_table[:id].count).map { |row| values = row.is_a?(Array) ? row : [row]; {"status" => values[0], "todoCount" => values[1]} })
 Models::Todo.order(Models::Todo.arel_table[:title].lower.asc)
 ```
 

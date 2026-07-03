@@ -61,7 +61,6 @@ compileActiveStorage(outputDir);
 for (const file of [
   "app/models/profile.rb",
   "app/lib/railshx/generated/main.rb",
-  "app/lib/railshx/runtime/hxruby/core.rb",
   "app/views/profiles/_upload_form.html.erb",
   "run.rb",
 ]) {

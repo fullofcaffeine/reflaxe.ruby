@@ -65,15 +65,12 @@ var groupedRows:Array<{status:String, todoCount:Int}> = Projection.group(
 Generated Ruby must keep ActiveRecord visible:
 
 ```ruby
-HXRuby.active_record_projection(
-  Models::Todo.where(status: "open").pluck(:id, :title),
-  ["id", "title"]
-)
+Models::Todo.where(status: "open").pluck(:id, :title).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "title" => values[1]} }
 ```
 
-The runtime helper returns Ruby hashes with string keys so generated Haxe
+The inline row shaper returns Ruby hashes with string keys so generated Haxe
 anonymous-object field access stays compatible with the existing Ruby target
-object representation.
+object representation without requiring the shared HXRuby runtime.
 
 ### Grouped Aggregate Projection API
 
@@ -94,10 +91,7 @@ row API.
 Generated Ruby keeps ActiveRecord and Arel visible:
 
 ```ruby
-HXRuby.active_record_projection(
-  Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count),
-  ["status", "todoCount"]
-)
+Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count).map { |row| values = row.is_a?(Array) ? row : [row]; {"status" => values[0], "todoCount" => values[1]} }
 ```
 
 ### Grouped Count API
@@ -116,14 +110,11 @@ HXRuby.active_record_projection(
 Generated Ruby:
 
 ```ruby
-HXRuby.active_record_group_count(
-  Models::Todo.where(status: "open").group(:status).count,
-  :string
-)
+Models::Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) }
 ```
 
-The runtime helper converts Rails' hash result into the Haxe map implementation
-expected by the return type.
+The inline map shaper converts Rails' hash result into the Haxe map
+implementation expected by the return type.
 
 ## Validation And Failures
 
@@ -157,7 +148,8 @@ Implementation should produce clear macro errors:
   Ruby escapes.
 - Reuse existing field-ref metadata extraction (`@:railsField`) and owner typing
   patterns from `ParamsMacro`/`ModelMacro`.
-- Add runtime helpers only for result shaping, not query construction.
+- Keep result shaping inline when Ruby can express it directly; add runtime
+  helpers only when the compiler cannot preserve semantics with idiomatic Ruby.
 - Keep single-field `select`, `pluck`, `minimum`, and `maximum` unchanged.
 
 ## Follow-Up Beads

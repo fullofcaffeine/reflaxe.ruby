@@ -34,7 +34,6 @@ compileTurboStreams(outputDir);
 // syntax, and negative typing diagnostics for locals and stream targets.
 for (const file of [
   "app/lib/railshx/generated/main.rb",
-  "app/lib/railshx/runtime/hxruby/core.rb",
   "app/views/todos/_todo.html.erb",
   "run.rb",
 ]) {

@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "cgi"
-require "uri"
-
 module HXRuby
   class NativeIterator
     def initialize(values)
@@ -102,38 +99,6 @@ module HXRuby
     return Float::NAN if match.nil?
 
     match[0].to_f
-  end
-
-  def hex(value, digits = nil)
-    out = (value.to_i & 0xffffffff).to_s(16).upcase
-    digits.nil? ? out : out.rjust(digits.to_i, "0")
-  end
-
-  def url_encode(value)
-    URI.encode_www_form_component(value.to_s)
-  end
-
-  def url_decode(value)
-    CGI.unescape(value.to_s)
-  end
-
-  def html_escape(value, quotes = false)
-    out = value.to_s
-      .gsub("&", "&amp;")
-      .gsub("<", "&lt;")
-      .gsub(">", "&gt;")
-    return out unless quotes
-
-    out.gsub("\"", "&quot;").gsub("'", "&#039;")
-  end
-
-  def html_unescape(value)
-    value.to_s
-      .gsub("&lt;", "<")
-      .gsub("&gt;", ">")
-      .gsub("&quot;", "\"")
-      .gsub("&#039;", "'")
-      .gsub("&amp;", "&")
   end
 
   def string_substr(value, position, count = nil)
@@ -313,43 +278,12 @@ module HXRuby
     out
   end
 
-  def string_tools_replace(value, search, replacement)
-    string = value.to_s
-    needle = search.to_s
-    by = replacement.to_s
-    return string if needle.empty? && by.empty?
-    return string.each_char.to_a.join(by) if needle.empty?
-
-    string.gsub(needle) { by }
-  end
-
   def string_tools_fast_code_at(value, position)
     string_char_code_at(value, position) || 0
   end
 
   def string_tools_is_eof(value)
     value.nil? || value == 0
-  end
-
-  def array_concat(array, other)
-    array + other
-  end
-
-  def active_record_projection(rows, keys)
-    rows.map do |row|
-      values = row.is_a?(Array) ? row : [row]
-      keys.each_with_index.each_with_object({}) do |(key, index), out|
-        out[key.to_s] = values[index]
-      end
-    end
-  end
-
-  def active_record_group_count(counts, key_kind)
-    map = key_kind == :int ? Haxe::Ds::IntMap.new : Haxe::Ds::StringMap.new
-    counts.each do |key, value|
-      map.set(key_kind == :int ? key.to_i : key.to_s, value.to_i)
-    end
-    map
   end
 
   def array_join(array, separator)
@@ -373,16 +307,6 @@ module HXRuby
     normalized_actual = actual.dup
     normalized_actual.pop while normalized_actual.length > expected.length && normalized_actual[-1].nil?
     expected == normalized_actual
-  end
-
-  def array_push(array, value)
-    array << value
-    array.length
-  end
-
-  def array_reverse(array)
-    array.reverse!
-    nil
   end
 
   def array_slice(array, position, end_position = nil)
@@ -431,10 +355,6 @@ module HXRuby
     true
   end
 
-  def array_contains(array, value)
-    array.include?(value)
-  end
-
   def array_index_of(array, value, from_index = nil)
     length = array.length
     start = from_index.nil? ? 0 : from_index.to_i
@@ -468,10 +388,6 @@ module HXRuby
       index -= 1
     end
     -1
-  end
-
-  def array_copy(array)
-    array.dup
   end
 
   def array_map(array, mapper)
