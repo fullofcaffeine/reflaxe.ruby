@@ -10305,7 +10305,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				|| hasMeta(helper.field.meta, ":rubyExternStub")) {
 				continue;
 			}
-			var body = extractTemplateScalarReturn(helper.expr);
+			var body = extractTemplateHelperReturn(helper.expr);
 			if (body == null) {
 				continue;
 			}
@@ -10324,7 +10324,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return owner + "." + fieldName;
 	}
 
-	static function extractTemplateScalarReturn(expr:TypedExpr):Null<TypedExpr> {
+	static function extractTemplateHelperReturn(expr:TypedExpr):Null<TypedExpr> {
 		var unwrapped = unwrapTemplateExpr(expr);
 		return switch (unwrapped.expr) {
 			case TReturn(value): value == null ? null : unwrapTemplateExpr(value);
@@ -10332,7 +10332,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				if (exprs == null || exprs.length == 0) {
 					null;
 				} else {
-					extractTemplateScalarReturn(exprs[exprs.length - 1]);
+					extractTemplateHelperReturn(exprs[exprs.length - 1]);
 				}
 			case _: unwrapped;
 		}
@@ -10361,6 +10361,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function lowerTemplateNode(expr:TypedExpr, scope:RailsTemplateScope):String {
 		var node = unwrapTemplateExpr(expr);
+		var helperNode = templateViewHelperNode(node, scope);
+		if (helperNode != null) {
+			return helperNode;
+		}
 		return switch (node.expr) {
 			case TCall(fn, params):
 				switch (templateCtorName(fn, "HtmlNode")) {
@@ -10376,7 +10380,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							Context.error("HtmlNode.ExprText expects one argument.", node.pos);
 							"";
 						} else {
-							"<%= " + printTemplateExpr(params[0], scope) + " %>";
+							var helperNode = templateViewHelperNode(params[0], scope);
+							if (helperNode != null) {
+								helperNode;
+							} else {
+								"<%= " + printTemplateExpr(params[0], scope) + " %>";
+							}
 						}
 					case "Fragment":
 						if (params.length != 1) {
@@ -12474,14 +12483,55 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (helper == null) {
 			return null;
 		}
-		if (!isTemplateScalarType(helper.ret)) {
-			Context.error('View-local helper ${helper.owner}.${helper.field.name} must return a known scalar display type such as String, Bool, Int, or Float. Markup-returning helpers are a future RailsHx slice.',
+		if (isTemplateHtmlNodeType(helper.ret)) {
+			Context.error('View-local helper ${helper.owner}.${helper.field.name} returns HtmlNode; use it as HHX child markup, not inside a text or attribute expression.',
 				helper.field.pos);
 			return "nil";
 		}
+		if (!isTemplateScalarType(helper.ret)) {
+			Context.error('View-local helper ${helper.owner}.${helper.field.name} must return a known scalar display type such as String, Bool, Int, or Float for text/attribute use, or HtmlNode for HHX child markup.',
+				helper.field.pos);
+			return "nil";
+		}
+		var helperScope = templateViewHelperCallScope(helper, field, params, scope);
+		if (helperScope == null) {
+			return "nil";
+		}
+		validateTemplateViewHelperBody(helper, helperScope);
+		return "(" + printTemplateExpr(helper.body, helperScope) + ")";
+	}
+
+	static function templateViewHelperNode(expr:TypedExpr, scope:RailsTemplateScope):Null<String> {
+		var unwrapped = unwrapTemplateExpr(expr);
+		return switch (unwrapped.expr) {
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params):
+				var classType = classRef.get();
+				var field = fieldRef.get();
+				var helper = scope.viewHelpers.get(templateViewHelperKey(fullTypeName(classType.pack, classType.name), field.name));
+				if (helper == null || !isTemplateHtmlNodeType(helper.ret)) {
+					null;
+				} else {
+					var helperScope = templateViewHelperCallScope(helper, field, params, scope);
+					if (helperScope == null) {
+						"";
+					} else {
+						validateTemplateViewHelperBody(helper, helperScope);
+						// Markup helpers are compile-time HHX composition: their returned
+						// HtmlNode is lowered here, so generated ERB stays Rails-native and
+						// no helper runtime method leaks into app output.
+						lowerTemplateNode(helper.body, helperScope);
+					}
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function templateViewHelperCallScope(helper:RailsTemplateHelper, field:ClassField, params:Array<TypedExpr>,
+			scope:RailsTemplateScope):Null<RailsTemplateScope> {
 		if (params.length != helper.args.length) {
 			Context.error('View-local helper ${helper.owner}.${helper.field.name} expects ${helper.args.length} arguments, got ${params.length}.', field.pos);
-			return "nil";
+			return null;
 		}
 		var helperScope = cloneTemplateScope(scope);
 		for (index in 0...helper.args.length) {
@@ -12490,14 +12540,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				helperScope.localNames.set(arg.tvar.id, "(" + printTemplateExpr(params[index], scope) + ")");
 			}
 		}
-		validateTemplateViewHelperBody(helper, helperScope);
-		return "(" + printTemplateExpr(helper.body, helperScope) + ")";
+		return helperScope;
 	}
 
 	static function isTemplateScalarType(type:Type):Bool {
 		return switch (TypeTools.follow(type)) {
 			case TAbstract(ref, _): var abstractType = ref.get(); abstractType.pack.length == 0 && ["Bool", "Int", "Float"].indexOf(abstractType.name) != -1;
 			case TInst(ref, _): var classType = ref.get(); classType.pack.length == 0 && classType.name == "String";
+			case _:
+				false;
+		}
+	}
+
+	static function isTemplateHtmlNodeType(type:Type):Bool {
+		return switch (TypeTools.follow(type)) {
+			case TEnum(ref, _): var enumType = ref.get(); enumType.pack.join(".") == "rails.action_view" && enumType.name == "HtmlNode";
 			case _:
 				false;
 		}

@@ -53,15 +53,16 @@ for (const file of ["app/lib/railshx/generated/main.rb", "run.rb"]) {
 const cardErb = readFileSync(join(outputDir, "app", "views", "components", "_card.html.erb"), "utf8");
 for (const expected of [
   '<article class="<%= ("component-card component-card--" + (tone)) %>">',
+  '<span class="component-eyebrow"><%= "RailsHx " + ("component") %></span>',
   '<h2><%= ("Typed: " + (title)) %></h2>',
 ]) {
   if (!cardErb.includes(expected)) {
     fail(`Expected view-local helper expression missing from generated component ERB: ${expected}`);
   }
 }
-for (const unexpected of ["ComponentCardView", "card_class", "heading(", "__hx"]) {
+for (const unexpected of ["ComponentCardView", "card_class", "eyebrow(", "heading(", "__hx"]) {
   if (cardErb.includes(unexpected)) {
-    fail(`Generated component ERB should inline scalar view-local helpers without runtime scaffolding: ${unexpected}`);
+    fail(`Generated component ERB should inline view-local helpers without runtime scaffolding: ${unexpected}`);
   }
 }
 
@@ -151,6 +152,20 @@ if (!/view-local helper .* must return a known scalar display type/i.test(invali
   fail("Dynamic view-local helper failed for an unexpected reason.");
 }
 
+const invalidMarkupAttributeHelper = compileComponents(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidMarkupAttributeHelperMain",
+  allowFailure: true,
+});
+if (invalidMarkupAttributeHelper.status === 0) {
+  fail("Expected markup view-local helper used in an attribute to fail.");
+}
+if (!/returns HtmlNode; use it as HHX child markup/i.test(invalidMarkupAttributeHelper.stderr + invalidMarkupAttributeHelper.stdout)) {
+  process.stdout.write(invalidMarkupAttributeHelper.stdout);
+  process.stderr.write(invalidMarkupAttributeHelper.stderr);
+  fail("Markup view-local helper attribute misuse failed for an unexpected reason.");
+}
+
 const invalidMutationHelper = compileComponents(invalidOutputDir, {
   classPath: invalidSourceDir,
   main: "InvalidMutationHelperMain",
@@ -163,6 +178,20 @@ if (!/View-local helper .* calls "update"/.test(invalidMutationHelper.stderr + i
   process.stdout.write(invalidMutationHelper.stdout);
   process.stderr.write(invalidMutationHelper.stderr);
   fail("Mutation-looking view-local helper failed for an unexpected reason.");
+}
+
+const invalidMarkupMutationHelper = compileComponents(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidMarkupMutationHelperMain",
+  allowFailure: true,
+});
+if (invalidMarkupMutationHelper.status === 0) {
+  fail("Expected mutation-looking markup view-local helper compile to fail.");
+}
+if (!/View-local helper .* calls "update"/.test(invalidMarkupMutationHelper.stderr + invalidMarkupMutationHelper.stdout)) {
+  process.stdout.write(invalidMarkupMutationHelper.stdout);
+  process.stderr.write(invalidMarkupMutationHelper.stderr);
+  fail("Mutation-looking markup view-local helper failed for an unexpected reason.");
 }
 
 console.log("[components] OK");
@@ -352,6 +381,27 @@ function writeInvalidFixtures() {
     "",
   ].join("\n"));
 
+  writeFileSync(join(invalidSourceDir, "InvalidMarkupAttributeHelperMain.hx"), [
+    "import views.BadMarkupAttributeHelperView;",
+    "class InvalidMarkupAttributeHelperMain { static function main():Void { Sys.println(BadMarkupAttributeHelperView != null); } }",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "views", "BadMarkupAttributeHelperView.hx"), [
+    "package views;",
+    "import rails.action_view.HtmlNode;",
+    "@:railsTemplate(\"components/bad_markup_attribute_helper\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadMarkupAttributeHelperView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <p class=${label(\"bad\")}>Bad markup helper</p>;",
+    "\t}",
+    "\tstatic function label(value:String):HtmlNode {",
+    "\t\treturn <strong>${value}</strong>;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
   writeFileSync(join(invalidSourceDir, "InvalidMutationHelperMain.hx"), [
     "import views.BadMutationHelperView;",
     "class InvalidMutationHelperMain { static function main():Void { Sys.println(BadMutationHelperView != null); } }",
@@ -372,6 +422,31 @@ function writeInvalidFixtures() {
     "\t}",
     "\tstatic function label():String {",
     "\t\treturn new HelperTarget().update();",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  writeFileSync(join(invalidSourceDir, "InvalidMarkupMutationHelperMain.hx"), [
+    "import views.BadMarkupMutationHelperView;",
+    "class InvalidMarkupMutationHelperMain { static function main():Void { Sys.println(BadMarkupMutationHelperView != null); } }",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "views", "BadMarkupMutationHelperView.hx"), [
+    "package views;",
+    "import rails.action_view.HtmlNode;",
+    "class MarkupHelperTarget {",
+    "\tpublic function new() {}",
+    "\tpublic function update():String { return \"mutated\"; }",
+    "}",
+    "@:railsTemplate(\"components/bad_markup_mutation_helper\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadMarkupMutationHelperView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <p>${label()}</p>;",
+    "\t}",
+    "\tstatic function label():HtmlNode {",
+    "\t\treturn <strong>${new MarkupHelperTarget().update()}</strong>;",
     "\t}",
     "}",
     "",

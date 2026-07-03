@@ -31,6 +31,24 @@ class CardView {
 }
 ```
 
+Small presentation helpers can live next to the component partial. Use scalar
+helpers for text or attribute values, and `HtmlNode` helpers for repeated child
+markup:
+
+```haxe
+static function badge(text:String):HtmlNode {
+	return <span class="badge">${text}</span>;
+}
+
+static function cardClass(tone:String):String {
+	return "card card--" + tone;
+}
+```
+
+Calls such as `${badge("New")}` lower to markup at the call site, while
+`class=${cardClass(locals.tone)}` lowers to an escaped ERB expression. No Ruby
+helper method or component runtime is emitted for these view-local helpers.
+
 ## Rendering
 
 Prefer `Component.of(...)` for RailsHx-owned components:

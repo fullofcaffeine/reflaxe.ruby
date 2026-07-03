@@ -135,15 +135,17 @@ static function badge(text:String):HtmlNode {
 }
 ```
 
-Desired lowering:
+Supported lowering:
 
 ```haxe
 ${badge("New")}
 ```
 
 should emit the helper's markup at the call site when all arguments can be
-lowered through HHX. This is more compiler work than string helpers, so it
-should be a second slice after simple expression helpers.
+lowered through HHX. The first supported markup slice is same-class static
+helpers returning `HtmlNode`, used as HHX child markup. Text and attribute
+positions still require scalar helpers so markup fragments do not accidentally
+become escaped strings.
 
 ### Shared Helpers
 
@@ -170,8 +172,8 @@ of relying on incidental expression printing.
 3. Require helper arguments and return types to be known. `Dynamic` should fail
    unless a deliberately named escape hatch exists.
 4. Allow only helper return types the template lowerer understands:
-   `String`, `Bool`, `Int`, `Float`, Rails-safe scalar abstracts, and later
-   `HtmlNode`.
+   `String`, `Bool`, `Int`, `Float`, Rails-safe scalar abstracts, and
+   `HtmlNode` when the helper is used as child markup.
 5. Reject or warn on helpers that touch obvious non-view surfaces such as
    `ActiveRecord` query methods, controller stores, session, cookies, jobs, file
    IO, raw Ruby, or `untyped`.
@@ -209,7 +211,7 @@ Good beginner diagnostics matter more than clever lowering. Examples:
 - `TodoCardView.cardClass returns Dynamic; view-local helpers must return a known display type such as String or HtmlNode.`
 - `TodoCardView.loadTodos calls Todo.where(...). View-local helpers must not query the database; load data in the controller and pass it through typed locals.`
 - `TodoCardView.saveLabel mutates locals.todo. View-local helpers must be pure presentation logic.`
-- `badge(...) returns HtmlNode, but markup-returning helpers are not enabled yet. Use a partial/component or inline HHX for now.`
+- `badge(...) returns HtmlNode; use it as HHX child markup, not inside a text or attribute expression.`
 
 ## Tests
 
@@ -221,7 +223,9 @@ The implementation should include:
 - a compile-fail test for `Dynamic` helper returns;
 - a compile-fail test for database/query calls inside a helper;
 - a compile-fail test for mutations inside a helper;
-- a future positive test for `HtmlNode` helper composition;
+- a positive test for `HtmlNode` helper composition;
+- a compile-fail test for using a `HtmlNode` helper in a scalar attribute/text
+  position;
 - todoapp coverage once the API is ready, because the todoapp is the canonical
   dogfood app for RailsHx ergonomics.
 
@@ -246,7 +250,8 @@ View-local helpers do not replace view models completely. Use this rule:
 3. Add purity diagnostics for the most dangerous surfaces: queries, mutation,
    `untyped`, raw Ruby, controller/session/cookie/job/file IO calls.
 4. Add todoapp examples where helpers remove noisy repeated presentation logic.
-5. Add `HtmlNode` returning helpers after scalar helpers are stable.
+5. Add same-class static `HtmlNode` returning helpers after scalar helpers are
+   stable.
 6. Revisit an instance-style surface only after static helpers are proven:
 
    ```haxe
@@ -276,8 +281,8 @@ Ask the reviewer to challenge these points:
 
 ## Recommendation
 
-Implement static same-class scalar helpers first. It is the smallest feature
-that gives authors the React-like local-function ergonomics they want, keeps
-output Rails-native, and creates a clear place for diagnostics. Treat
-`HtmlNode` helper composition and instance-style views as follow-up R&D after
-the scalar helper contract is tested in the todoapp.
+Keep static same-class scalar helpers as the base contract and support
+same-class `HtmlNode` helpers for local markup fragments once the scalar path is
+stable. Treat instance-style views and shared/generated Rails helper methods as
+follow-up R&D after the static helper contract is exercised in the todoapp and
+focused component fixtures.
