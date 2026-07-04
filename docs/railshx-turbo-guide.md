@@ -32,6 +32,11 @@ For the broader backend-plus-frontend contract direction, including shared
 ActionCable payloads, Turbo Stream targets, HHX partial locals, generated
 subscription helpers, and Playwright hooks, see
 [RailsHx Full-Stack Hotwire Design](railshx-full-stack-hotwire-design.md).
+The todoapp chat room is the first concrete slice of that pattern:
+`shared/ChatRoomHooks.hx` keeps browser-safe stream/readiness constants
+exportable to Playwright, while `shared/ChatRoomContract.hx` adds the
+server-only `StreamName<TLocals>`, `StreamTarget`, `Template<TLocals>`, and
+locals helpers used by HHX and controllers.
 
 ## Client Events
 

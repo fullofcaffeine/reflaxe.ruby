@@ -3,11 +3,9 @@ package views;
 import models.ChatMessage;
 import models.User;
 import rails.action_view.HtmlNode;
-import rails.action_view.Template;
 import routes.Routes;
+import shared.ChatRoomContract;
 import shared.TodoHooks;
-import views.ChatMessageView;
-import views.ChatMessageView.ChatMessageLocals;
 
 typedef ChatPanelLocals = {
 	var messages:Array<ChatMessage>;
@@ -24,8 +22,8 @@ typedef ChatPanelLocals = {
 // the authenticated `currentUser` in the controller, not a spoofable hidden
 // field; the loop body sees each message as a `ChatMessage` with typed fields.
 // IntelliSense: editors should complete `locals.messages`, `message.body`,
-// `message.userId`, `ChatMessage.f.body`, `Routes.chatMessagesPath`, and
-// `ChatMessageView.roomStream`.
+// `message.userId`, `ChatMessage.f.body`, `Routes.chatMessagesPath`, and chat
+// room contract helpers.
 // Ruby/Rails output: normal ERB with `turbo_stream_from`, `form_with`, typed
 // partial renders, loops, conditionals, and Rails route helpers.
 @:railsTemplate("todos/_chat_panel")
@@ -36,7 +34,7 @@ class ChatPanelView {
 			<div class="chat-panel-header">
 				<div class="chat-panel-kicker">
 					<span class="eyebrow">Typed Turbo room</span>
-					<turbo_stream_from stream=${ChatMessageView.roomStream()} />
+					<turbo_stream_from stream=${ChatRoomContract.messageStream()} />
 				</div>
 				<h2>Ship room</h2>
 				<p>
@@ -48,7 +46,7 @@ class ChatPanelView {
 
 			<ul id=${TodoHooks.chatListId} class=${TodoHooks.chatListClass}>
 				<for ${message in locals.messages}>
-					<partial template=${(Template.of(ChatMessageView) : Template<ChatMessageLocals>)} locals=${{message: message}} />
+					<partial template=${ChatRoomContract.messageTemplate()} locals=${ChatRoomContract.messageLocals(message)} />
 				</for>
 			</ul>
 

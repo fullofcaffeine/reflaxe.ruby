@@ -1,5 +1,6 @@
 package tools;
 
+import shared.ChatRoomHooks;
 import shared.TodoHooks;
 import sys.io.File;
 
@@ -49,6 +50,9 @@ class ExportTodoHooks {
 			line("templateName", TodoHooks.templateMetaName, ","),
 			line("templateContent", TodoHooks.templateMetaContent, ""),
 			"  },",
+			"  streams: {",
+			line("chatRoom", ChatRoomHooks.streamName, ""),
+			"  },",
 			"  selectors: {",
 			line("shell", TodoHooks.classSelector(TodoHooks.shellClass), ","),
 			line("form", TodoHooks.classSelector(TodoHooks.formClass), ","),
@@ -64,6 +68,7 @@ class ExportTodoHooks {
 			line("chatList", TodoHooks.idSelector(TodoHooks.chatListId), ","),
 			line("chatForms", TodoHooks.classSelector(TodoHooks.chatFormClass), ","),
 			line("chatMessages", TodoHooks.classSelector(TodoHooks.chatMessageClass), ","),
+			line("chatStreamSourceConnected", ChatRoomHooks.streamSourceConnectedSelector, ","),
 			line("openWork", TodoHooks.idSelector(TodoHooks.openWorkId), ""),
 			"  }",
 			"} as const",

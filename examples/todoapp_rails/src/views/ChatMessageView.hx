@@ -2,8 +2,6 @@ package views;
 
 import models.ChatMessage;
 import rails.action_view.HtmlNode;
-import rails.turbo.StreamName;
-import rails.turbo.StreamTarget;
 import shared.TodoHooks;
 
 typedef ChatMessageLocals = {
@@ -16,9 +14,10 @@ typedef ChatMessageLocals = {
 // partial renders initial page state and server-side Turbo Stream broadcasts,
 // so no Haxe JS string template can drift from Rails-rendered HTML.
 // Type safety: `ChatMessageLocals` carries a real `ChatMessage`, and stream
-// broadcasts must provide that local before the compiler emits Rails code.
+// broadcasts use `shared.ChatRoomContract` to provide that local before the
+// compiler emits Rails code.
 // IntelliSense: editors should complete `locals.message.body`,
-// `locals.message.userId`, `ChatMessageView.roomStream`, and `roomTarget`.
+// `locals.message.userId`, and chat room contract helpers.
 // Ruby/Rails output: normal `_chat_message.html.erb` rendered by ActionView and
 // `Turbo::StreamsChannel.broadcast_prepend_to`.
 // `@:railsTemplate(...)` binds this Haxe view class to the Rails partial path
@@ -30,14 +29,6 @@ typedef ChatMessageLocals = {
 @:railsTemplate("todos/_chat_message")
 @:railsTemplateAst("render")
 class ChatMessageView {
-	public static inline function roomStream():StreamName<ChatMessageLocals> {
-		return StreamName.named("todoapp:chat");
-	}
-
-	public static inline function roomTarget():StreamTarget {
-		return StreamTarget.named(TodoHooks.chatListId);
-	}
-
 	public static function render(locals:ChatMessageLocals):HtmlNode {
 		return <li class=${TodoHooks.chatMessageClass} data-railshx-chat-message-key=${locals.message.id}>
 			<span class="avatar">#</span>

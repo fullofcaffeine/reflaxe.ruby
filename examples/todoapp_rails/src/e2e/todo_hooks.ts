@@ -34,6 +34,9 @@ export const hooks = {
     templateName: "railshx-template",
     templateContent: "todo-index"
   },
+  streams: {
+    chatRoom: "todoapp:chat"
+  },
   selectors: {
     shell: ".todo-shell",
     form: ".todo-form",
@@ -49,6 +52,7 @@ export const hooks = {
     chatList: "#railshx-chat-list",
     chatForms: ".chat-form",
     chatMessages: ".chat-message",
+    chatStreamSourceConnected: "turbo-cable-stream-source[connected]",
     openWork: "#open-work"
   }
 } as const

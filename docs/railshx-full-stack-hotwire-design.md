@@ -17,8 +17,10 @@ The todoapp chatroom now proves the Rails-native baseline:
 
 - `views/ChatPanelView.hx` subscribes with typed HHX
   `<turbo_stream_from stream=${...} />`.
-- `views/ChatMessageView.hx` owns the typed row partial, stream name, and
-  stream target.
+- `views/ChatMessageView.hx` owns the typed row partial.
+- `shared/ChatRoomHooks.hx` owns browser-safe stream and readiness hook
+  constants, while `shared/ChatRoomContract.hx` adds typed Turbo stream,
+  target, template, and locals helpers for server HHX/controllers.
 - `controllers/ChatMessagesController.hx` creates an ActiveRecord row, then
   broadcasts the server-rendered HHX partial through
   `TurboStreams.broadcastPrependTo(...)`.
@@ -60,10 +62,10 @@ app.
 
 | Surface | Current state | Gap |
 | --- | --- | --- |
-| Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>`, `StreamName<TLocals>`, and `StreamTarget`. The todoapp now dogfoods this with `turbo_stream_from` and server-rendered broadcasts. | Needs model/callback ergonomics and richer stream contract generation. |
+| Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>`, `StreamName<TLocals>`, and `StreamTarget`. The todoapp now dogfoods this with `turbo_stream_from`, server-rendered broadcasts, and a hand-written shared chat room contract. | Needs model/callback ergonomics and reusable stream contract generation. |
 | ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. | Useful for custom payload protocols, but not the canonical DOM update path when Turbo Streams can render a partial. |
 | Haxe JS Turbo client | `Turbo.on*`, `Turbo.renderStreamMessage`, `Turbo.stream`, and Genes ES modules work with importmap. | Client-rendered stream HTML should be generated/typed when deliberately chosen; canonical Hotwire examples should not hand-build DOM fragments. |
-| Shared hooks | `TodoHooks` centralizes ids, attrs, classes, selectors, storage keys, and Playwright exports. | Needs a reusable generator/macro pattern, not only a hand-written sample. |
+| Shared hooks | `TodoHooks` centralizes app-wide ids, attrs, classes, selectors, storage keys, and Playwright exports. `ChatRoomHooks` adds a focused browser-safe Hotwire hook layer for the chat room. | Needs a reusable generator/macro pattern, not only hand-written samples. |
 | Browser tests | Playwright imports generated hook constants and verifies two-session updates. | Needs typed Haxe-authored browser test layer later, but TS Playwright can remain first-class. |
 
 ## Rendering Strategy Comparison
@@ -95,10 +97,9 @@ Create small Haxe-owned contract classes that describe one Hotwire surface:
 package hotwire;
 
 import rails.action_view.Template;
-import rails.action_cable.Stream;
 import rails.turbo.StreamName;
 import rails.turbo.StreamTarget;
-import shared.TodoHooks;
+import shared.ChatRoomHooks;
 import views.ChatMessageRowView;
 
 typedef ChatMessageRowLocals = {
@@ -110,16 +111,12 @@ typedef ChatMessageRowLocals = {
 typedef ChatMessageBroadcast = ChatMessageRowLocals;
 
 class ChatRoomContract {
-	public static inline function cableStream():Stream<ChatMessageBroadcast> {
-		return Stream.named("todoapp:chat");
-	}
-
 	public static inline function turboStream():StreamName<ChatMessageRowLocals> {
-		return StreamName.named("todoapp:chat");
+		return StreamName.named(ChatRoomHooks.streamName);
 	}
 
 	public static inline function listTarget():StreamTarget {
-		return StreamTarget.named(TodoHooks.chatListId);
+		return StreamTarget.named(ChatRoomHooks.listTargetId);
 	}
 
 	public static inline function rowTemplate():Template<ChatMessageRowLocals> {
@@ -284,33 +281,23 @@ closed when the file is missing.
 
 ## Todoapp Migration Path
 
-The current todoapp chat is a good baseline and should stay as a regression
-sentinel. The next dogfood step should add a row HHX partial:
+The current todoapp chat is now the regression sentinel for this design:
 
-```haxe
-@:railsTemplate("controllers/todos/_chat_message")
-@:railsTemplateAst("render")
-class ChatMessageRowView {
-	public static function render(locals:ChatMessageRowLocals):HtmlNode {
-		return <li class=${TodoHooks.chatMessageClass} data-railshx-chat-message-key=${locals.id}>
-			<span class="avatar">#</span>
-			<div>
-				<strong>User ${locals.userId}</strong>
-				<p>${locals.body}</p>
-			</div>
-		</li>;
-	}
-}
-```
-
-Then replace the data-only broadcast with a server-rendered Turbo Stream
-broadcast. The two-session Playwright test should remain the user-facing proof.
+- `ChatMessageView` is the HHX row partial.
+- `ChatRoomHooks` owns browser-safe stream and readiness selector constants.
+- `ChatRoomContract` owns server-side `StreamName<ChatMessageLocals>`,
+  `StreamTarget`, `Template<ChatMessageLocals>`, and locals construction.
+- `ExportTodoHooks` publishes the connected Turbo stream-source selector to
+  Playwright so browser tests do not copy the selector literal.
+- The two-session Playwright test remains the user-facing proof that Rails/Turbo
+  performs the realtime DOM update.
 
 ## Phased Plan
 
-1. **Design and contracts**: land this design, then split implementation beads.
-2. **Server-rendered todoapp row broadcast**: add a typed row HHX partial and
-   dogfood `TurboStreams.broadcastPrependTo(...)`.
+1. **Design and contracts**: landed as this design plus the first todoapp
+   `ChatRoomHooks`/`ChatRoomContract` slice.
+2. **Server-rendered todoapp row broadcast**: landed with the typed
+   `ChatMessageView` HHX partial and `TurboStreams.broadcastPrependTo(...)`.
 3. **Typed channel subscription helper**: infer the channel identifier from
    `@:railsChannel` and remove string channel names from app-facing Haxe JS.
 4. **Hotwire contract macro**: generate stream/target/template/subscription

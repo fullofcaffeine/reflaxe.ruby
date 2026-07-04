@@ -999,6 +999,7 @@ for (const expected of [
   "<text_area>",
   "Haxe-authored JavaScript",
   "models/ChatMessage.hx",
+  "shared/ChatRoomContract.hx",
   "views/ChatPanelView.hx",
   "views/ChatMessageView.hx",
 ]) {
@@ -1117,13 +1118,49 @@ for (const expected of [
 
 const hookExportSource = readFileSync(join(sourceDir, "tools", "ExportTodoHooks.hx"), "utf8");
 for (const expected of [
+  "import shared.ChatRoomHooks;",
   "import shared.TodoHooks;",
   "examples/todoapp_rails/src/e2e/todo_hooks.ts",
   "TodoHooks.classSelector(TodoHooks.formClass)",
   "TodoHooks.classSelector(TodoHooks.chatFormClass)",
+  "ChatRoomHooks.streamName",
+  "ChatRoomHooks.streamSourceConnectedSelector",
 ]) {
   if (!hookExportSource.includes(expected)) {
     console.error(`todoapp_rails hook exporter missing expected content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const chatRoomHooksSource = readFileSync(join(sourceDir, "shared", "ChatRoomHooks.hx"), "utf8");
+for (const expected of [
+  "class ChatRoomHooks",
+  'streamName:ChatRoomStream = "todoapp:chat"',
+  "panelId:DomId = TodoHooks.chatPanelId",
+  "listTargetId:DomId = TodoHooks.chatListId",
+  'streamSourceConnectedSelector:Selector = "turbo-cable-stream-source[connected]"',
+]) {
+  if (!chatRoomHooksSource.includes(expected)) {
+    console.error(`todoapp_rails chat room hooks source missing expected contract content: ${expected}`);
+    process.exit(1);
+  }
+}
+
+const chatRoomContractSource = readFileSync(join(sourceDir, "shared", "ChatRoomContract.hx"), "utf8");
+for (const expected of [
+  "class ChatRoomContract",
+  "messageStream():StreamName<ChatMessageLocals>",
+  "return StreamName.named(ChatRoomHooks.streamName)",
+  "messageTarget():StreamTarget",
+  "return StreamTarget.named(ChatRoomHooks.listTargetId)",
+  "panelTarget():StreamTarget",
+  "return StreamTarget.named(ChatRoomHooks.panelId)",
+  "messageTemplate():Template<ChatMessageLocals>",
+  "Template.of(ChatMessageView)",
+  "messageLocals(message:ChatMessage):ChatMessageLocals",
+]) {
+  if (!chatRoomContractSource.includes(expected)) {
+    console.error(`todoapp_rails chat room contract source missing expected typed ownership: ${expected}`);
     process.exit(1);
   }
 }
@@ -1135,7 +1172,7 @@ for (const expected of [
   "hooks.selectors.sessionForms",
   "hooks.selectors.chatForms",
   "hooks.selectors.chatPanel",
-  "turbo-cable-stream-source[connected]",
+  "hooks.selectors.chatStreamSourceConnected",
   "hooks.attrs.bound",
   "hooks.selectors.openWork",
   "lets admins create, update, and remove users through typed RailsHx CRUD",
@@ -1146,6 +1183,11 @@ for (const expected of [
     console.error(`todoapp_rails Playwright spec missing generated hook usage: ${expected}`);
     process.exit(1);
   }
+}
+
+if (hookSpecSource.includes("locator('turbo-cable-stream-source[connected]')")) {
+  console.error("todoapp_rails Playwright spec should use generated chat stream-source hooks instead of an inline selector");
+  process.exit(1);
 }
 
 const hookManifest = readFileSync(join(sourceDir, "e2e", "todo_hooks.ts"), "utf8");
@@ -1161,6 +1203,8 @@ for (const expected of [
   'sessionFooter: ".session-footer"',
   'chatForms: ".chat-form"',
   'chatPanel: "#railshx-chat-panel"',
+  'chatRoom: "todoapp:chat"',
+  'chatStreamSourceConnected: "turbo-cable-stream-source[connected]"',
   'openWork: "#open-work"',
 ]) {
   if (!hookManifest.includes(expected)) {

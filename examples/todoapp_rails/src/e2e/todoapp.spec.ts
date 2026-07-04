@@ -318,7 +318,7 @@ test('handles importmap-backed Rails form flows (tracked in haxe.ruby-ae6.1)', a
 test('posts a typed RailsHx room note through Turbo-backed Haxe client hooks', async ({ page }) => {
   await gotoAuthenticatedTodos(page)
   await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
-  await expect(page.locator('turbo-cable-stream-source[connected]')).toBeVisible()
+  await expect(page.locator(hooks.selectors.chatStreamSourceConnected)).toBeVisible()
 
   const beforeCount = await page.locator(hooks.selectors.chatMessages).count()
   const body = `Room note ${Date.now()}`
@@ -336,7 +336,7 @@ test('posts a typed RailsHx room note through Turbo-backed Haxe client hooks', a
 test('submits chat composer with Enter and preserves Shift+Enter newlines', async ({ page }) => {
   await gotoAuthenticatedTodos(page)
   await expect(page.locator(hooks.selectors.chatForms).first()).toHaveAttribute(hooks.attrs.bound, 'true')
-  await expect(page.locator('turbo-cable-stream-source[connected]')).toBeVisible()
+  await expect(page.locator(hooks.selectors.chatStreamSourceConnected)).toBeVisible()
 
   const beforeCount = await page.locator(hooks.selectors.chatMessages).count()
   const firstLine = `Keyboard note ${Date.now()}`
@@ -363,10 +363,10 @@ test('broadcasts typed Turbo Stream room notes to another browser session', asyn
   try {
     await gotoAuthenticatedTodos(sender)
     await gotoAuthenticatedTodos(receiver)
-    await expect(sender.locator('turbo-cable-stream-source[connected]')).toHaveCount(1)
-    await expect(receiver.locator('turbo-cable-stream-source[connected]')).toHaveCount(1)
-    await expect(sender.locator('turbo-cable-stream-source[connected]')).toBeVisible()
-    await expect(receiver.locator('turbo-cable-stream-source[connected]')).toBeVisible()
+    await expect(sender.locator(hooks.selectors.chatStreamSourceConnected)).toHaveCount(1)
+    await expect(receiver.locator(hooks.selectors.chatStreamSourceConnected)).toHaveCount(1)
+    await expect(sender.locator(hooks.selectors.chatStreamSourceConnected)).toBeVisible()
+    await expect(receiver.locator(hooks.selectors.chatStreamSourceConnected)).toBeVisible()
 
     const body = `Stream note ${Date.now()}`
     await sender.getByLabel('Add a typed room note').fill(body)
