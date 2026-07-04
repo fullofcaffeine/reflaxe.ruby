@@ -373,8 +373,9 @@ bin/rails generate hxruby:adopt \
 Generates checked Haxe wrappers around existing Ruby services and Rails-owned
 ERB partials so Haxe code can consume them safely during gradual migration.
 
-Failure examples: missing `db/schema.rb`, unsafe paths, unknown DB types without
-`--allow-dynamic`, and non-owned output collisions fail closed.
+Failure examples: missing `db/schema.rb`, `structure.sql` input, unsafe paths,
+unconventional table/column names, Haxe field-name collisions, unknown DB types
+without `--allow-dynamic`, and non-owned output collisions fail closed.
 
 ## Health, Clean, And CI
 

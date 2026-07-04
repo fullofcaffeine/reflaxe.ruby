@@ -1484,6 +1484,7 @@ module HXRuby
       end
 
       class SchemaParser
+        SAFE_RAILS_IDENTIFIER = /\A[a-z][a-z0-9_]*\z/
         COLUMN_TYPE_MAP = {
           "string" => ["String", false],
           "text" => ["String", true],
@@ -1501,6 +1502,9 @@ module HXRuby
           @path = path
           @allow_dynamic = allow_dynamic
           raise Error, "Schema file does not exist: #{path}" unless File.file?(path)
+          if File.extname(path) == ".sql"
+            raise Error, "SQL/structure.sql schema adoption is not supported yet; use db/schema.rb or keep the SQL schema Rails-owned."
+          end
 
           @source = File.read(path)
         end
@@ -1526,8 +1530,10 @@ module HXRuby
 
         def parse_tables
           @source.scan(/^\s*create_table\s+["']([^"']+)["'][^\n]*do\s+\|t\|([\s\S]*?)^\s*end\b/m).map do |name, body|
+            assert_safe_schema_identifier!(name, "schema table name")
             indexes = parse_indexes(body)
             columns = parse_columns(body, indexes)
+            assert_unique_haxe_fields!(name, columns)
             timestamps = columns.any? { |column| column.fetch(:name) == "created_at" } &&
               columns.any? { |column| column.fetch(:name) == "updated_at" }
             {
@@ -1550,6 +1556,7 @@ module HXRuby
             rails_type = match[1]
             name = match[2]
             options = match[3]
+            assert_safe_schema_identifier!(name, reference_type?(rails_type) ? "schema reference name" : "schema column name")
             if reference_type?(rails_type)
               reference_column(name, rails_type, options, indexes)
             else
@@ -1608,6 +1615,7 @@ module HXRuby
 
             columns = match[1].scan(/["']([^"']+)["']/).flatten
             next if columns.empty?
+            columns.each { |column| assert_safe_schema_identifier!(column, "schema index column name") }
 
             {
               columns: columns,
@@ -1619,6 +1627,9 @@ module HXRuby
         def parse_foreign_keys
           @source.scan(/^\s*add_foreign_key\s+["']([^"']+)["'],\s+["']([^"']+)["'](.*)$/).each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(from, to, options), by_table|
             column = options[/\bcolumn:\s+["']([^"']+)["']/, 1] || "#{singular(to)}_id"
+            assert_safe_schema_identifier!(from, "schema foreign-key source table")
+            assert_safe_schema_identifier!(to, "schema foreign-key target table")
+            assert_safe_schema_identifier!(column, "schema foreign-key column")
             by_table[from] << { column: column, to_table: to }
           end
         end
@@ -1673,6 +1684,22 @@ module HXRuby
 
         def haxe_identifier(value)
           Common.haxe_identifier(Common.haxe_method_name(value))
+        end
+
+        def assert_safe_schema_identifier!(value, label)
+          return if value.to_s.match?(SAFE_RAILS_IDENTIFIER)
+
+          raise Error, "Unsupported #{label} #{value.inspect} in #{@path}; schema adoption only supports conventional lowercase Rails identifiers."
+        end
+
+        def assert_unique_haxe_fields!(table_name, columns)
+          by_haxe_name = columns.group_by { |column| column.fetch(:haxe_name) }
+          collision = by_haxe_name.find { |_haxe_name, entries| entries.length > 1 }
+          return unless collision
+
+          haxe_name, entries = collision
+          names = entries.map { |entry| entry.fetch(:name) }.join(", ")
+          raise Error, "Schema table #{table_name.inspect} maps multiple columns to Haxe field #{haxe_name}: #{names}."
         end
 
         def class_name(value)

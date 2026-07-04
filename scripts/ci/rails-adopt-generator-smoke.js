@@ -436,6 +436,74 @@ assertManifest([
   ["src_haxe/models/Widget.hx", "haxe_adopted_schema_model"],
 ]);
 
+writeFileSync(join(outputDir, "db", "structure.sql"), [
+  "CREATE TABLE widgets (",
+  "  id bigint PRIMARY KEY,",
+  "  slug citext NOT NULL",
+  ");",
+  "",
+].join("\n"));
+expectGeneratorFailure("structure.sql schema source", [
+  "--output",
+  outputDir,
+  "--schema",
+  "--from",
+  "db/structure.sql",
+  "--discover",
+], "SQL/structure.sql schema adoption is not supported");
+
+writeFileSync(join(outputDir, "db", "schema_unsafe_table.rb"), [
+  "ActiveRecord::Schema[7.2].define(version: 2026_01_01_000003) do",
+  '  create_table "legacy-items", force: :cascade do |t|',
+  '    t.string "name"',
+  "  end",
+  "end",
+  "",
+].join("\n"));
+expectGeneratorFailure("unsafe schema table name", [
+  "--output",
+  outputDir,
+  "--schema",
+  "--from",
+  "db/schema_unsafe_table.rb",
+  "--discover",
+], "Unsupported schema table name");
+
+writeFileSync(join(outputDir, "db", "schema_unsafe_column.rb"), [
+  "ActiveRecord::Schema[7.2].define(version: 2026_01_01_000004) do",
+  '  create_table "widgets", force: :cascade do |t|',
+  '    t.string "display-name"',
+  "  end",
+  "end",
+  "",
+].join("\n"));
+expectGeneratorFailure("unsafe schema column name", [
+  "--output",
+  outputDir,
+  "--schema",
+  "--from",
+  "db/schema_unsafe_column.rb",
+  "--discover",
+], "Unsupported schema column name");
+
+writeFileSync(join(outputDir, "db", "schema_haxe_field_collision.rb"), [
+  "ActiveRecord::Schema[7.2].define(version: 2026_01_01_000005) do",
+  '  create_table "widgets", force: :cascade do |t|',
+  '    t.string "class"',
+  '    t.string "class_value"',
+  "  end",
+  "end",
+  "",
+].join("\n"));
+expectGeneratorFailure("schema Haxe field collision", [
+  "--output",
+  outputDir,
+  "--schema",
+  "--from",
+  "db/schema_haxe_field_collision.rb",
+  "--discover",
+], "maps multiple columns to Haxe field classValue");
+
 const migrationsDiscover = run("ruby", [
   "-I",
   join(root, "lib"),

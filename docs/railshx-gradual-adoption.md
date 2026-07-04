@@ -150,10 +150,12 @@ bin/rails generate hxruby:adopt --schema --discover
 bin/rails generate hxruby:adopt --schema --models Todo,User
 ```
 
-The generated Haxe models are typed contracts over `db/schema.rb`; Rails still
-owns the database, historical migrations, and `bin/rails db:migrate`. Ambiguous
-associations are emitted as review comments instead of guessed `belongsTo`
-metadata, and unsupported DB types fail unless `--allow-dynamic` is explicit.
+The generated Haxe models are typed contracts over conventional `db/schema.rb`
+snapshots; Rails still owns the database, historical migrations, and
+`bin/rails db:migrate`. `structure.sql`, unsafe table/column names, and Haxe
+field-name collisions fail closed. Ambiguous associations are emitted as review
+comments instead of guessed `belongsTo` metadata, and unsupported DB types fail
+unless `--allow-dynamic` is explicit.
 
 Historical migrations can be inventoried, but RailsHx does not translate them
 by default:

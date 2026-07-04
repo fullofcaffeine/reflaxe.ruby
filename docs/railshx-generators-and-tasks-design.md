@@ -462,9 +462,10 @@ bin/rails generate hxruby:adopt --template legacy/badge --locals label:String,to
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --rbs sig/legacy_price_formatter.rbs
 ```
 
-Unknown DB types, ambiguous associations, unsupported `structure.sql` input, and
-missing metadata should fail or produce review-marked contracts only with an
-explicit opt-in such as `--allow-dynamic`.
+Unknown DB types, ambiguous associations, unsupported `structure.sql` input,
+unsafe schema identifiers, Haxe field-name collisions, and missing metadata
+should fail or produce review-marked contracts only with an explicit opt-in such
+as `--allow-dynamic`.
 
 Migration-history discovery is deliberately report-only. It should classify
 Rails-owned and RailsHx-owned files, flag duplicate timestamps/classes, and
