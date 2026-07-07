@@ -691,6 +691,14 @@ class ModelMacro {
 							if (!isStringExpr(option.expr)) {
 								throw "@:railsColumn option dbType must be a String literal.";
 							}
+						case "precision":
+							if (!isPositiveIntExpr(option.expr)) {
+								throw "@:railsColumn option precision must be a positive Int literal.";
+							}
+						case "scale":
+							if (!isNonNegativeIntExpr(option.expr)) {
+								throw "@:railsColumn option scale must be a non-negative Int literal.";
+							}
 						case _:
 							throw '@:railsColumn unknown option ${option.field}.';
 					}
@@ -1211,6 +1219,23 @@ class ModelMacro {
 		return switch (expr.expr) {
 			case EConst(CInt(_, _)): true;
 			case _: false;
+		}
+	}
+
+	static function isPositiveIntExpr(expr:Expr):Bool {
+		var value = intExprValue(expr);
+		return value != null && value > 0;
+	}
+
+	static function isNonNegativeIntExpr(expr:Expr):Bool {
+		var value = intExprValue(expr);
+		return value != null && value >= 0;
+	}
+
+	static function intExprValue(expr:Expr):Null<Int> {
+		return switch (expr.expr) {
+			case EConst(CInt(value, _)): Std.parseInt(value);
+			case _: null;
 		}
 	}
 

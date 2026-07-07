@@ -8,6 +8,10 @@ const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "active_record_model");
 const invalidSourceDir = join(root, "test", ".generated", "active_record_model_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "active_record_model_invalid_out");
+const invalidColumnPrecisionSourceDir = join(root, "test", ".generated", "active_record_model_invalid_column_precision_src");
+const invalidColumnPrecisionOutputDir = join(root, "test", ".generated", "active_record_model_invalid_column_precision_out");
+const invalidColumnScaleSourceDir = join(root, "test", ".generated", "active_record_model_invalid_column_scale_src");
+const invalidColumnScaleOutputDir = join(root, "test", ".generated", "active_record_model_invalid_column_scale_out");
 const invalidWhereSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_src");
 const invalidWhereOutputDir = join(root, "test", ".generated", "active_record_model_invalid_where_out");
 const invalidWhereTypeSourceDir = join(root, "test", ".generated", "active_record_model_invalid_where_type_src");
@@ -188,6 +192,10 @@ function run(command, args, options = {}) {
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
+rmSync(invalidColumnPrecisionSourceDir, { force: true, recursive: true });
+rmSync(invalidColumnPrecisionOutputDir, { force: true, recursive: true });
+rmSync(invalidColumnScaleSourceDir, { force: true, recursive: true });
+rmSync(invalidColumnScaleOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereSourceDir, { force: true, recursive: true });
 rmSync(invalidWhereOutputDir, { force: true, recursive: true });
 rmSync(invalidWhereTypeSourceDir, { force: true, recursive: true });
@@ -696,6 +704,8 @@ for (const expected of [
 }
 
 expectInvalidColumnDefaultFailure();
+expectInvalidColumnPrecisionFailure();
+expectInvalidColumnScaleFailure();
 expectInvalidWhereFieldFailure();
 expectInvalidWhereValueTypeFailure();
 expectInvalidWhereNotFieldFailure();
@@ -2840,4 +2850,66 @@ function expectInvalidColumnDefaultFailure() {
     console.error("Unable to find Reflaxe source for invalid ActiveRecord compile check.");
     process.exit(1);
   }
+}
+
+function expectInvalidColumnPrecisionFailure() {
+  mkdirSync(join(invalidColumnPrecisionSourceDir, "models"), { recursive: true });
+  writeFileSync(join(invalidColumnPrecisionSourceDir, "Main.hx"), [
+    "import models.BadPrecisionModel;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad:BadPrecisionModel = null;",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidColumnPrecisionSourceDir, "models", "BadPrecisionModel.hx"), [
+    "package models;",
+    "",
+    "@:railsModel",
+    "class BadPrecisionModel extends rails.active_record.Base<BadPrecisionModel> {",
+    "\t@:railsColumn({dbType: \"decimal\", precision: 0, scale: 2})",
+    "\tpublic var amount:Float;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidColumnPrecisionSourceDir,
+    invalidColumnPrecisionOutputDir,
+    "Expected invalid ActiveRecord column precision compile to fail.",
+    "@:railsColumn option precision must be a positive Int literal."
+  );
+}
+
+function expectInvalidColumnScaleFailure() {
+  mkdirSync(join(invalidColumnScaleSourceDir, "models"), { recursive: true });
+  writeFileSync(join(invalidColumnScaleSourceDir, "Main.hx"), [
+    "import models.BadScaleModel;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad:BadScaleModel = null;",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidColumnScaleSourceDir, "models", "BadScaleModel.hx"), [
+    "package models;",
+    "",
+    "@:railsModel",
+    "class BadScaleModel extends rails.active_record.Base<BadScaleModel> {",
+    "\t@:railsColumn({dbType: \"decimal\", precision: 10, scale: -1})",
+    "\tpublic var amount:Float;",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidColumnScaleSourceDir,
+    invalidColumnScaleOutputDir,
+    "Expected invalid ActiveRecord column scale compile to fail.",
+    "@:railsColumn option scale must be a non-negative Int literal."
+  );
 }

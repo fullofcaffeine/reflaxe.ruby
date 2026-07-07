@@ -514,6 +514,8 @@ module HXRuby
         options = []
         options << "nullable: false" unless column.fetch(:nullable)
         options << "dbType: #{Common.haxe_string(column.fetch(:rails_type))}" if column.fetch(:db_type)
+        options << "precision: #{column.fetch(:precision)}" unless column.fetch(:precision).nil?
+        options << "scale: #{column.fetch(:scale)}" unless column.fetch(:scale).nil?
         options << "defaultValue: #{column.fetch(:default_haxe)}" if column.fetch(:default_haxe)
         options << "index: true" if column.fetch(:index)
         options << "unique: true" if column.fetch(:unique)
@@ -1570,6 +1572,8 @@ module HXRuby
           nullable = !options.match?(/\bnull:\s*false\b/)
           default_haxe = default_literal(options)
           single_column_indexes = indexes.select { |index| index.fetch(:columns) == [name] }
+          precision = rails_type == "decimal" ? int_option(options, "precision") : nil
+          scale = rails_type == "decimal" ? int_option(options, "scale") : nil
           {
             name: name,
             haxe_name: haxe_identifier(name),
@@ -1578,6 +1582,8 @@ module HXRuby
             nullable: nullable,
             default_haxe: default_haxe,
             db_type: type.fetch(:db_type),
+            precision: precision,
+            scale: scale,
             index: single_column_indexes.any?,
             unique: single_column_indexes.any? { |index| index.fetch(:unique) },
             timestamp_column: %w[created_at updated_at].include?(name),
@@ -1598,6 +1604,8 @@ module HXRuby
             nullable: nullable,
             default_haxe: nil,
             db_type: true,
+            precision: nil,
+            scale: nil,
             index: explicit_index.nil? ? single_column_indexes.any? : explicit_index,
             unique: single_column_indexes.any? { |index| index.fetch(:unique) },
             timestamp_column: false,
@@ -1659,9 +1667,6 @@ module HXRuby
         def review_notes_for_column(name, rails_type, type, options)
           notes = []
           notes << "Column #{name} used unsupported type #{rails_type}; generated Dynamic because --allow-dynamic was explicit." if type[:dynamic]
-          precision = int_option(options, "precision")
-          scale = int_option(options, "scale")
-          notes << "Column #{name} declares decimal precision #{precision} and scale #{scale}; RailsHx preserves dbType now, but typed precision/scale metadata is a follow-up." if precision || scale
           notes << "Column #{name} looks like a foreign key; add a typed association after reviewing the target model." if name.end_with?("_id")
           notes
         end

@@ -53,7 +53,9 @@ typedef RailsColumnInfo = {
 	primaryKey:Bool,
 	index:Bool,
 	unique:Bool,
-	dbType:Null<String>
+	dbType:Null<String>,
+	precision:Null<Int>,
+	scale:Null<Int>
 }
 
 typedef RailsBelongsToInfo = {
@@ -2436,7 +2438,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			primaryKey: railsColumnBoolOption(field.meta, "primaryKey", false),
 			index: railsColumnBoolOption(field.meta, "index", false),
 			unique: railsColumnBoolOption(field.meta, "unique", false),
-			dbType: explicitDbType
+			dbType: explicitDbType,
+			precision: railsColumnIntOption(field.meta, "precision"),
+			scale: railsColumnIntOption(field.meta, "scale")
 		};
 	}
 
@@ -2454,6 +2458,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			"unique: " + (info.unique ? "true" : "false"),
 			"db_type: " + (info.dbType == null ? "nil" : rubySymbolLiteral(info.dbType))
 		];
+		if (info.precision != null) {
+			parts.push("precision: " + Std.string(info.precision));
+		}
+		if (info.scale != null) {
+			parts.push("scale: " + Std.string(info.scale));
+		}
 		return "{" + parts.join(", ") + "}";
 	}
 
@@ -13313,6 +13323,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		return switch (expr.expr) {
 			case EConst(CString(value, _)) if (value.length > 0): RubyNaming.toMethodName(value);
+			case _: null;
+		}
+	}
+
+	static function railsColumnIntOption(meta:Null<haxe.macro.Type.MetaAccess>, name:String):Null<Int> {
+		var expr = railsColumnOption(meta, name);
+		if (expr == null) {
+			return null;
+		}
+		return switch (expr.expr) {
+			case EConst(CInt(value, _)): Std.parseInt(value);
 			case _: null;
 		}
 	}
