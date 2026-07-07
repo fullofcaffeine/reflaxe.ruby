@@ -107,7 +107,7 @@ bundle exec rake hxruby:gen:adopt \
   RBS=sig/rbs_price_formatter.rbs
 ```
 
-RBS-backed adoption is file-backed and fail-closed: a missing `--rbs` path is a generator error, and the path must stay inside the app/output root. The first deterministic subset supports class declarations, `initialize`, instance methods, and `self.method` signatures with simple required and optional positional arguments. Known scalar types lower to Haxe types, while unsupported or application-specific RBS types lower to `Dynamic` with TODO/review comments in the generated extern. LLM-generated suggestions may help draft contracts later, but they must remain advisory patches; they do not bypass generator validation, Haxe compilation, Ruby syntax checks, or Rails runtime gates.
+RBS-backed adoption is file-backed and fail-closed: a missing `--rbs` path is a generator error, and the path must stay inside the app/output root. The first deterministic subset supports class declarations, `initialize`, instance methods, and `self.method` signatures with simple required and optional positional arguments. Known scalar types lower to Haxe types, and nilable scalar forms such as `String?` lower to `Null<String>`, while unsupported or application-specific RBS types lower to `Dynamic` with TODO/review comments in the generated extern. LLM-generated suggestions may help draft contracts later, but they must remain advisory patches; they do not bypass generator validation, Haxe compilation, Ruby syntax checks, or Rails runtime gates.
 
 Add or tighten method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
 

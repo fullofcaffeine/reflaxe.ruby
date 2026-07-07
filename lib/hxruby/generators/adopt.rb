@@ -2046,8 +2046,13 @@ module HXRuby
         end
 
         def haxe_type(rbs_type)
-          normalized = rbs_type.to_s.delete_suffix("?")
-          TYPE_MAP.fetch(normalized, "Dynamic")
+          raw = rbs_type.to_s
+          nilable = raw.end_with?("?")
+          normalized = nilable ? raw.delete_suffix("?") : raw
+          mapped = TYPE_MAP.fetch(normalized, "Dynamic")
+          return mapped unless nilable && !%w[Dynamic Void].include?(mapped)
+
+          "Null<#{mapped}>"
         end
       end
 
