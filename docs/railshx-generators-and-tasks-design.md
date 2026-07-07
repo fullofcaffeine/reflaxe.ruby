@@ -321,9 +321,10 @@ The generator supports `CreateTodos`, `AddStatusToTodos`,
 `RemoveStatusFromTodos`, and `AddUserRefToTodos` naming patterns. Alter-table
 migrations use `knownModels: [...]` when supplied; otherwise the inferred target
 table is recorded in `externalTables: [...]`, making the Rails-owned table
-boundary explicit for gradual adoption. `--from-schema db/schema.rb` is accepted
-as a fail-closed checked input boundary and reserved for richer schema-backed
-validation.
+boundary explicit for gradual adoption. `--from-schema db/schema.rb` validates
+the target table plus add/remove column presence against the current conventional
+schema snapshot before generating the Haxe operation snapshot; it does not
+translate historical migrations or change public migration DSL semantics.
 
 `knownModels` validates against the current typed model contract, but migrations
 are historical snapshots. An `AddColumn("todos", "status", ...)` migration remains
@@ -472,6 +473,10 @@ Rails-owned and RailsHx-owned files, flag duplicate timestamps/classes, and
 point users back to current-schema adoption rather than translating old
 migrations. New `hxruby:migration --timestamp ...` runs must refuse timestamps
 and classes already present under `db/migrate`.
+
+Broad schema-history inference, historical migration translation, and public
+migration DSL semantic expansion are blocked behind `haxe_ruby-zsf`, which
+requires a GPT 5.5 Pro review/planning pass before design or implementation.
 
 ## PhoenixHx Comparison
 

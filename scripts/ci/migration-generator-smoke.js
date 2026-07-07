@@ -21,6 +21,20 @@ rmSync(collisionDir, { force: true, recursive: true });
 rmSync(timestampCollisionDir, { force: true, recursive: true });
 rmSync(classCollisionDir, { force: true, recursive: true });
 
+mkdirSync(join(outputDir, "db"), { recursive: true });
+writeFileSync(join(outputDir, "db", "schema.rb"), [
+  "ActiveRecord::Schema[7.2].define(version: 2026_01_01_010100) do",
+  '  create_table "todos", force: :cascade do |t|',
+  '    t.string "title", null: false',
+  '    t.boolean "completed"',
+  '    t.decimal "price", precision: 10, scale: 2',
+  '    t.bigint "user_id"',
+  '    t.index ["completed"], name: "index_todos_on_completed"',
+  "  end",
+  "end",
+  "",
+].join("\n"));
+
 run("ruby", [
   "-I",
   join(root, "lib"),
@@ -66,17 +80,49 @@ run("ruby", [
   outputDir,
 ]);
 
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "AddPriorityToTodos",
+  "priority:integer",
+  "--timestamp",
+  "20260101010109",
+  "--from-schema",
+  "db/schema.rb",
+  "--output",
+  outputDir,
+]);
+
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "RemoveTitleFromTodos",
+  "title:string!",
+  "--timestamp",
+  "20260101010110",
+  "--from-schema",
+  "db/schema.rb",
+  "--output",
+  outputDir,
+]);
+
 writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "import migrations.CreateTodos;",
   "import migrations.AddStatusToTodos;",
   "import migrations.RemoveStatusFromTodos;",
+  "import migrations.AddPriorityToTodos;",
+  "import migrations.RemoveTitleFromTodos;",
   "",
   "class Main {",
   "\tstatic function main() {",
   "\t\tvar create:Class<CreateTodos> = CreateTodos;",
   "\t\tvar add:Class<AddStatusToTodos> = AddStatusToTodos;",
   "\t\tvar remove:Class<RemoveStatusFromTodos> = RemoveStatusFromTodos;",
-  "\t\tSys.println(create != null && add != null && remove != null);",
+  "\t\tvar schemaAdd:Class<AddPriorityToTodos> = AddPriorityToTodos;",
+  "\t\tvar schemaRemove:Class<RemoveTitleFromTodos> = RemoveTitleFromTodos;",
+  "\t\tSys.println(create != null && add != null && remove != null && schemaAdd != null && schemaRemove != null);",
   "\t}",
   "}",
   "",
@@ -115,12 +161,30 @@ assertIncludes("src_haxe/migrations/RemoveStatusFromTodos.hx", [
   'externalTables: ["todos"]',
   'Reversible([RemoveColumn("todos", "status")], [AddColumn("todos", "status", StringColumn({}))])',
 ]);
+assertIncludes("src_haxe/migrations/AddPriorityToTodos.hx", [
+  'models: []',
+  'AddColumn("todos", "priority", IntegerColumn({}))',
+]);
+assertNotIncludes("src_haxe/migrations/AddPriorityToTodos.hx", [
+  "externalTables",
+  "knownModels",
+]);
+assertIncludes("src_haxe/migrations/RemoveTitleFromTodos.hx", [
+  'models: []',
+  'Reversible([RemoveColumn("todos", "title")], [AddColumn("todos", "title", StringColumn({nullable: false}))])',
+]);
+assertNotIncludes("src_haxe/migrations/RemoveTitleFromTodos.hx", [
+  "externalTables",
+  "knownModels",
+]);
 
 const manifest = JSON.parse(readFileSync(join(outputDir, ".railshx", "manifest.json"), "utf8"));
 for (const output of [
   "src_haxe/migrations/CreateTodos.hx",
   "src_haxe/migrations/AddStatusToTodos.hx",
   "src_haxe/migrations/RemoveStatusFromTodos.hx",
+  "src_haxe/migrations/AddPriorityToTodos.hx",
+  "src_haxe/migrations/RemoveTitleFromTodos.hx",
 ]) {
   const entry = manifest.outputs.find((candidate) => candidate.output === output);
   if (!entry || entry.kind !== "haxe_migration_source" || entry.source !== "hxruby:migration" || !entry.sha256) {
@@ -150,21 +214,115 @@ assertIncludes("ruby/db/migrate/20260101010103_remove_status_from_todos.rb", [
   "dir.down do",
   "add_column :todos, :status, :string",
 ]);
+assertIncludes("ruby/db/migrate/20260101010109_add_priority_to_todos.rb", [
+  "add_column :todos, :priority, :integer",
+]);
+assertIncludes("ruby/db/migrate/20260101010110_remove_title_from_todos.rb", [
+  "remove_column :todos, :title",
+  "add_column :todos, :title, :string, null: false",
+]);
 
 const pretend = run("ruby", [
   "-I",
   join(root, "lib"),
   join(root, "scripts", "rails", "migration.rb"),
-  "AddPriorityToTodos",
-  "priority:integer",
+  "AddRankToTodos",
+  "rank:integer",
   "--timestamp",
   "20260101010104",
   "--output",
   outputDir,
   "--pretend",
 ]);
-if (!pretend.stdout.includes("class AddPriorityToTodos extends Migration") || existsSync(join(outputDir, "src_haxe", "migrations", "AddPriorityToTodos.hx"))) {
+if (!pretend.stdout.includes("class AddRankToTodos extends Migration") || existsSync(join(outputDir, "src_haxe", "migrations", "AddRankToTodos.hx"))) {
   console.error("Migration generator --pretend did not print without writing.");
+  process.exit(1);
+}
+
+const schemaUnknownTable = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "AddFlagToTodoss",
+  "flag:boolean",
+  "--timestamp",
+  "20260101010111",
+  "--from-schema",
+  "db/schema.rb",
+  "--output",
+  outputDir,
+], { allowFailure: true });
+if (schemaUnknownTable.status === 0 || !schemaUnknownTable.stderr.includes('--from-schema db/schema.rb does not contain table "todoss"')) {
+  process.stdout.write(schemaUnknownTable.stdout);
+  process.stderr.write(schemaUnknownTable.stderr);
+  console.error("Migration generator did not reject --from-schema unknown table.");
+  process.exit(1);
+}
+
+const schemaExistingColumn = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "AddTitleToTodos",
+  "title:string",
+  "--timestamp",
+  "20260101010112",
+  "--from-schema",
+  "db/schema.rb",
+  "--output",
+  outputDir,
+], { allowFailure: true });
+if (schemaExistingColumn.status === 0 || !schemaExistingColumn.stderr.includes('--from-schema db/schema.rb already contains column "title" on table "todos"')) {
+  process.stdout.write(schemaExistingColumn.stdout);
+  process.stderr.write(schemaExistingColumn.stderr);
+  console.error("Migration generator did not reject --from-schema add of an existing column.");
+  process.exit(1);
+}
+
+const schemaMissingColumn = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "RemoveMissingFromTodos",
+  "missing:string",
+  "--timestamp",
+  "20260101010113",
+  "--from-schema",
+  "db/schema.rb",
+  "--output",
+  outputDir,
+], { allowFailure: true });
+if (schemaMissingColumn.status === 0 || !schemaMissingColumn.stderr.includes('--from-schema db/schema.rb does not contain column "missing" on table "todos"')) {
+  process.stdout.write(schemaMissingColumn.stdout);
+  process.stderr.write(schemaMissingColumn.stderr);
+  console.error("Migration generator did not reject --from-schema remove of an unknown column.");
+  process.exit(1);
+}
+
+writeFileSync(join(outputDir, "db", "structure.sql"), [
+  "CREATE TABLE todos (",
+  "  id bigint PRIMARY KEY,",
+  "  title varchar(255) NOT NULL",
+  ");",
+  "",
+].join("\n"));
+const schemaSql = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "AddScoreToTodos",
+  "score:integer",
+  "--timestamp",
+  "20260101010114",
+  "--from-schema",
+  "db/structure.sql",
+  "--output",
+  outputDir,
+], { allowFailure: true });
+if (schemaSql.status === 0 || !schemaSql.stderr.includes("SQL/structure.sql schema adoption is not supported")) {
+  process.stdout.write(schemaSql.stdout);
+  process.stderr.write(schemaSql.stderr);
+  console.error("Migration generator did not reject SQL --from-schema input.");
   process.exit(1);
 }
 
@@ -257,6 +415,16 @@ function assertIncludes(relativeFile, expectedLines) {
   for (const expected of expectedLines) {
     if (!content.includes(expected)) {
       console.error(`${relativeFile} missing expected line: ${expected}`);
+      process.exit(1);
+    }
+  }
+}
+
+function assertNotIncludes(relativeFile, unexpectedLines) {
+  const content = readFileSync(join(outputDir, relativeFile), "utf8");
+  for (const unexpected of unexpectedLines) {
+    if (content.includes(unexpected)) {
+      console.error(`${relativeFile} contained unexpected line: ${unexpected}`);
       process.exit(1);
     }
   }

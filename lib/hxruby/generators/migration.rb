@@ -2,6 +2,7 @@
 
 require "optparse"
 require_relative "common"
+require_relative "adopt"
 
 module HXRuby
   module Generators
@@ -60,6 +61,7 @@ module HXRuby
         @known_models = Common.split_csv(options.fetch(:known_models))
         @external_tables = options.fetch(:external_tables).map { |table| safe_table_name(table, "--external-table") }
         @from_schema = options.fetch(:from_schema)
+        @schema_path = nil
         @pretend = options.fetch(:pretend)
         @force = options.fetch(:force)
         validate_static_options!
@@ -96,9 +98,9 @@ module HXRuby
         raise Error, "--package must be a safe Haxe package" unless @package_name.match?(PACKAGE_PATTERN)
 
         if @from_schema
-          schema_path = File.expand_path(@from_schema, @output_dir)
-          Common.assert_inside_root!(schema_path, @output_dir)
-          raise Error, "--from-schema must point to an existing schema file" unless File.file?(schema_path)
+          @schema_path = File.expand_path(@from_schema, @output_dir)
+          Common.assert_inside_root!(@schema_path, @output_dir)
+          raise Error, "--from-schema must point to an existing schema file" unless File.file?(@schema_path)
         end
 
         @known_models.each do |model|
@@ -125,6 +127,7 @@ module HXRuby
       def create_table_plan(raw_table)
         table = safe_table_name(Common.file_name(raw_table), "table")
         raise Error, "Create migrations require at least one attribute" if @attributes.empty?
+        validate_schema_create!(table) if @from_schema
 
         {
           table: table,
@@ -144,6 +147,7 @@ module HXRuby
         table = safe_table_name(Common.file_name(raw_table), "table")
         attrs = default_attributes ? default_attributes.map { |entry| parse_attribute(entry) } : @attributes
         raise Error, "#{mode.capitalize} migrations require at least one attribute" if attrs.empty?
+        validate_schema_alter!(mode, table, attrs) if @from_schema
 
         operations = attrs.flat_map do |attribute|
           case mode
@@ -248,6 +252,55 @@ module HXRuby
         return [] if @from_schema
 
         [plan.fetch(:table)]
+      end
+
+      def validate_schema_create!(table)
+        return unless schema_table(table)
+
+        raise Error, "--from-schema #{relative_schema_path} already contains table #{table.inspect}; schema-backed migration generation uses the current schema snapshot and does not translate historical create-table migrations."
+      end
+
+      def validate_schema_alter!(mode, table, attributes)
+        table_info = schema_table(table)
+        unless table_info
+          raise Error, "--from-schema #{relative_schema_path} does not contain table #{table.inspect}; schema-backed migration generation uses the current db/schema.rb snapshot only."
+        end
+
+        columns = table_info.fetch(:columns).to_h { |column| [column.fetch(:name), column] }
+        attributes.each do |attribute|
+          column = schema_column_name(attribute)
+          exists = columns.key?(column)
+          case mode
+          when "add"
+            if exists
+              raise Error, "--from-schema #{relative_schema_path} already contains column #{column.inspect} on table #{table.inspect}; use a change migration or omit --from-schema for intentional historical migration work."
+            end
+          when "remove"
+            unless exists
+              raise Error, "--from-schema #{relative_schema_path} does not contain column #{column.inspect} on table #{table.inspect}; cannot generate a reversible remove migration from unknown current schema."
+            end
+          else
+            raise Error, "Unsupported alter mode #{mode}"
+          end
+        end
+      end
+
+      def schema_table(table)
+        schema_inventory.fetch(:tables).find { |entry| entry.fetch(:name) == table }
+      end
+
+      def schema_inventory
+        @schema_inventory ||= Adopt::SchemaParser.new(@schema_path, allow_dynamic: false).inventory
+      rescue Error => error
+        raise Error, "--from-schema #{error.message}"
+      end
+
+      def schema_column_name(attribute)
+        reference_attribute?(attribute) ? "#{attribute.fetch(:name)}_id" : attribute.fetch(:column)
+      end
+
+      def relative_schema_path
+        Common.relative_path(@output_dir, @schema_path)
       end
 
       def validate_existing_migrations!(relative_path, plan)

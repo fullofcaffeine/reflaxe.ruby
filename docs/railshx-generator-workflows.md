@@ -177,6 +177,8 @@ explicit, preventing a generator from rewriting a hand-written app model.
 ```bash
 bin/rails generate hxruby:migration AddStatusToTodos status:string:index \
   --known-models models.Todo
+bin/rails generate hxruby:migration RemoveTitleFromTodos title:string! \
+  --from-schema db/schema.rb
 ```
 
 Creates an immutable Haxe operation snapshot:
@@ -208,7 +210,11 @@ bundle exec rake hxruby:db:migrate
 ```
 
 Failure example: `--timestamp` fails if any existing migration already uses that
-timestamp, and duplicate migration class names are rejected before Rails runs.
+timestamp, duplicate migration class names are rejected before Rails runs, and
+`--from-schema` fails closed for missing tables/columns or unsupported
+`structure.sql` input. `--from-schema` validates the current `db/schema.rb`
+snapshot only; schema-history inference and public migration DSL expansion are
+tracked separately in blocked bead `haxe_ruby-zsf`.
 
 ## Controller And HHX
 
