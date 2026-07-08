@@ -13522,6 +13522,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (op) {
 			case OpDiv:
 				hxrubyCall("math_divide", [compileExpr(lhs), compileExpr(rhs)]);
+			case OpUShr:
+				RubyRawExpr("((" + printInlineExpr(lhs) + ".to_i & 0xffffffff) >> (" + printInlineExpr(rhs) + ".to_i & 31))");
 			case OpEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
 				RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]);
 			case OpNotEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
@@ -13575,7 +13577,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function unopToRuby(op:haxe.macro.Expr.Unop):String {
 		return switch (op) {
 			case OpNot: "!";
-			case OpNeg | OpNegBits: "-";
+			case OpNeg: "-";
+			case OpNegBits: "~";
 			case OpIncrement | OpDecrement: "";
 			case _: "";
 		}

@@ -328,10 +328,10 @@
     {
       "module": "haxe.crypto.Md5",
       "source": "haxe/crypto/Md5.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback first; consider Ruby Digest only if output shape or performance matters.",
-      "notes": "Portable Haxe semantics should drive the first parity gate."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream Md5 implementation executes as portable Haxe code over RubyHx Bytes; Ruby Digest can remain a later facade or optimization."
     },
     {
       "module": "haxe.crypto.Sha1",

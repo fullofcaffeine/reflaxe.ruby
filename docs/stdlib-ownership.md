@@ -96,9 +96,9 @@ Ruby-specific reason, record that decision in the manifest with a short reason.
 The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
-`StringTools`, `haxe.io.BytesBuffer`, and `haxe.io.Path` run directly; `Std`
-runs through an adapted fixture because upstream assertion syntax and duplicate
-local names need macro-lane accommodation.
+`StringTools`, `haxe.crypto.Md5`, `haxe.io.BytesBuffer`, and `haxe.io.Path` run
+directly; `Std` runs through an adapted fixture because upstream assertion
+syntax and duplicate local names need macro-lane accommodation.
 
 Ruby's broader upstream stdlib candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and the human summary in
@@ -141,6 +141,10 @@ over the Ruby-owned `Date` surface for month-day, seconds, and delta helpers.
 `haxe.io.Path` is enabled as a direct upstream fixture. It proves the portable
 Haxe path parser, formatter, joiner, and normalizer can fall through unchanged
 on Ruby without coupling Haxe `Path` semantics to Ruby's `Pathname`.
+
+`haxe.crypto.Md5` is enabled as a direct upstream fixture. It proves the
+portable Haxe digest implementation can execute over RubyHx `Bytes`; a
+Ruby-native `Digest` facade remains a separate interop or optimization layer.
 
 `EReg` is enabled as a direct upstream fixture. It wraps Ruby `Regexp` while
 preserving Haxe stateful match accessors, `matchSub` offsets, global versus
