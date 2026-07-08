@@ -28,8 +28,8 @@ Current upstream runtime fixtures:
 
 - Enabled: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
   `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
-  `haxe.crypto.Md5`, `haxe.crypto.Sha1`, `haxe.io.BytesBuffer`,
-  `haxe.io.Path`.
+  `haxe.crypto.Md5`, `haxe.crypto.Sha1`, `haxe.crypto.Sha256`,
+  `haxe.io.BytesBuffer`, `haxe.io.Path`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -55,6 +55,10 @@ implementation can execute over RubyHx `Bytes`; Ruby `Digest` remains a
 separate facade or optimization concern.
 
 `haxe.crypto.Sha1` is enabled directly. It proves the portable Haxe SHA-1
+implementation can execute over RubyHx `Bytes` and the Ruby compiler's
+Haxe-compatible 32-bit integer lowering.
+
+`haxe.crypto.Sha256` is enabled directly. It proves the portable Haxe SHA-256
 implementation can execute over RubyHx `Bytes` and the Ruby compiler's
 Haxe-compatible 32-bit integer lowering.
 
