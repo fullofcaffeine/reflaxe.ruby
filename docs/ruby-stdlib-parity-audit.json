@@ -336,10 +336,10 @@
     {
       "module": "haxe.crypto.Sha1",
       "source": "haxe/crypto/Sha1.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback first; consider Ruby Digest only if output shape or performance matters.",
-      "notes": "Portable Haxe semantics should drive the first parity gate."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream Sha1 implementation executes as portable Haxe code over RubyHx Bytes and the Ruby compiler's 32-bit integer lowering."
     },
     {
       "module": "haxe.crypto.Sha224",
