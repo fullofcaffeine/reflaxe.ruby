@@ -51,17 +51,20 @@ Current implemented domains:
 - Core runtime: `runtime/hxruby/core.rb`, `HxException`, and `Data.define`
   compatibility.
 - Haxe core std: `Std`, `Math`, `Type`, `Array`, `Lambda`, `Date`, `EReg`,
-  `StringTools`, `Sys`, `haxe.ds.*`, and `haxe.io.Bytes`/`FPHelper`.
+  `Reflect`, `StringTools`, `Sys`, `haxe.Json`, `haxe.ds.*`,
+  `haxe.io.Bytes`/`FPHelper`, `sys.FileSystem`, and `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
   `ruby.Prelude`, `ruby.StandardError`, `NativeHash`, and `NativeIterator`.
 - RailsHx and DeviseHx typed facades, macros, and generated runtime support.
 
-Tracked missing domains:
+Implemented domains that still need broader upstream parity accounting:
 
 - `Reflect`
+- `Type`
 - `haxe.Json`
 - `sys.FileSystem`
 - `sys.io.File`
+- `haxe.io.FPHelper`
 
 Upstream unitstd coverage is curated in `test/upstream_unitstd/manifest.json`
 and run with:
@@ -70,9 +73,18 @@ and run with:
 npm run test:unitstd-ruby
 ```
 
-Enabled today: `IntIterator`, `Math`, `String`, `StringBuf`, `StringTools`, and
-`haxe.io.BytesBuffer`. The lane also carries a focused local `Std` numeric
-parsing fixture until full upstream `Std.unit.hx` can be enabled.
+Enabled today: `Array`, `Date`, `EReg`, `IntIterator`, `Lambda`, `Map`, `Math`,
+`String`, `StringBuf`, `StringTools`, and `haxe.io.BytesBuffer`. `Std` runs
+through an adapted upstream fixture, and local focused fixtures cover adjacent
+semantic gaps such as numeric parsing.
+
+Broader upstream candidate accounting lives in
+`docs/ruby-stdlib-parity-audit.json` and
+`docs/ruby-stdlib-parity-audit.md`, validated by:
+
+```bash
+npm run test:ruby-stdlib-parity-audit
+```
 
 ## Coverage Tiers
 
@@ -87,15 +99,17 @@ These are required for current examples, RailsHx, and shared Haxe domain code.
 - Every helper should be covered by a runtime test, a generated-shape snapshot
   where relevant, and unitstd parity when an upstream fixture exists.
 
-### Tier 1: Missing Portable Std Surfaces
+### Tier 1: Implemented Portable Std Surfaces Needing Broader Parity
 
-These are the current gap-report misses and should be planned before broad Ruby
-library expansion.
+These surfaces now have Ruby target implementations, but should get stronger
+upstream or focused parity evidence before broad Ruby library expansion.
 
 - `Reflect`
+- `Type`
 - `haxe.Json`
 - `sys.FileSystem`
 - `sys.io.File`
+- `haxe.io.FPHelper`
 
 For each surface, prefer a typed Haxe facade that emits direct Ruby when safe and
 uses `HXRuby` only for stable Haxe semantics.
@@ -191,6 +205,8 @@ Every std/runtime change should choose the smallest useful gate set:
 
 - `npm run test:runtime-minitest` for `runtime/hxruby/**`.
 - `npm run test:unitstd-ruby` for Haxe std semantics.
+- `npm run test:ruby-stdlib-parity-audit` when changing upstream stdlib
+  candidate accounting or the unitstd manifest.
 - `UPDATE_SNAPSHOTS=1 npm run test:snapshots && npm run test:snapshots` for
   generated Ruby shape changes.
 - `npm run test:stdlib-mvp` for broad std smoke coverage.
@@ -221,33 +237,27 @@ For Ruby stdlib facades:
 
 ## First Follow-Up Beads
 
-Create or keep work split into small implementation beads:
+Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
-1. `haxe.ruby-bjv.12.2`: Enable an adapted `Std.unit.hx` parity lane.
-   Focus: `Std.string`, `isOfType`, `downcast`, enum stringification, and the
-   parser cases now covered by `StdNumericParsing`.
+1. Promote one upstream-fallback candidate such as `List`, `DateTools`, or
+   `haxe.io.Path` through `test/upstream_unitstd/manifest.json`.
 
-2. `haxe.ruby-bjv.12.3`: Implement `Reflect` for the Ruby target.
-   Focus: field access, anonymous object/hash boundaries, method closures, and
-   runtime metadata needed by portable code. Direct Ruby reflection is fine where
-   it matches Haxe; helper methods should exist only for semantic gaps.
+2. Add upstream parity coverage for an implemented Ruby-owned surface, starting
+   with `Reflect` or `Type`.
 
-3. `haxe.ruby-bjv.12.4`: Implement `haxe.Json`.
-   Focus: typed wrapper over Ruby JSON where possible, Haxe null/number/string
-   behavior where necessary, and tests against upstream JSON/parser fixtures.
+3. Add focused filesystem parity coverage for `sys.FileSystem` and
+   `sys.io.File`, including exception and newline behavior.
 
-4. `haxe.ruby-bjv.12.5`: Implement `sys.FileSystem` and `sys.io.File`.
-   Focus: direct Ruby `File`, `Dir`, and `FileUtils` calls with Haxe exception
-   behavior documented and tested.
+4. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
+   `haxe.io.FPHelper`.
 
-5. `haxe.ruby-bjv.12.6`: Audit Array/Lambda/Map direct lowering
-   opportunities.
-   Focus: direct Ruby methods for safe cases such as simple iteration and
-   non-mutating transforms, while keeping helpers for Haxe edge semantics.
+5. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
+   remains green: `haxe.ds.StringMap`, `haxe.ds.IntMap`,
+   `haxe.ds.ObjectMap`, `haxe.ds.Vector`, and `haxe.ds.EnumValueMap`.
 
-6. `haxe.ruby-bjv.12.7`: Add Ruby stdlib facade docs for `ruby.File`,
-   `ruby.Json`, `ruby.Kernel`, and future `ruby.Pathname`/`ruby.CSV` style
-   packages.
+6. Add Ruby stdlib facades separately under `std/ruby/**` for
+   `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
+   and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 
 ## Non-Goals
 

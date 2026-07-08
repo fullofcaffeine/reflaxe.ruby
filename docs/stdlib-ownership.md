@@ -100,6 +100,21 @@ and `haxe.io.BytesBuffer` run directly; `Std` runs through an adapted fixture
 because upstream assertion syntax and duplicate local names need macro-lane
 accommodation.
 
+Ruby's broader upstream stdlib candidate accounting lives in
+`docs/ruby-stdlib-parity-audit.json` and the human summary in
+`docs/ruby-stdlib-parity-audit.md`. The audit distinguishes covered Ruby-owned
+surfaces, covered upstream fallbacks, unproven upstream fallback candidates,
+Ruby override candidates, and unsupported or target-specific fixtures. Validate
+it with:
+
+```bash
+npm run test:ruby-stdlib-parity-audit
+```
+
+Use that audit before creating new stdlib implementation beads so the next slice
+promotes one fixture or facade deliberately instead of implying broad stdlib
+completion.
+
 `Lambda` is enabled as a direct upstream fixture. It locks in the Ruby-first
 iterator bridge for native arrays plus Haxe iterator-bearing objects, and the
 fixture adapter now uses explicit structural assertions for array literals so

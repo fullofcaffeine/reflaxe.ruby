@@ -1,0 +1,606 @@
+{
+  "schemaVersion": 1,
+  "referenceRoot": "haxe/tests/unit/src/unitstd",
+  "manifest": "test/upstream_unitstd/manifest.json",
+  "inventory": "docs/stdlib-inventory.json",
+  "classificationValues": {
+    "covered-ruby-override": "Ruby owns an override, compiler lowering, or runtime seam and the current test suite has direct evidence for this surface.",
+    "covered-upstream-fallback": "The surface is covered by the Ruby lane while using upstream Haxe std source, possibly with lower-level Ruby-owned dependencies.",
+    "upstream-fallback-candidate": "No Ruby override is indicated yet; promote only after a fixture or smoke proves upstream fallback works on Ruby.",
+    "ruby-override-needed": "The surface needs or already has Ruby-owned lowering, runtime support, or std/_std replacement before parity can be claimed.",
+    "unsupported-target-specific": "The fixture is not a Ruby runtime parity surface or is outside the current Ruby target contract."
+  },
+  "candidates": [
+    {
+      "module": "AnonFieldAccess",
+      "source": "AnonFieldAccess.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Add a small fixture only after anonymous object field access gaps reappear outside current smoke coverage.",
+      "notes": "This is mostly compiler expression semantics rather than a std module override."
+    },
+    {
+      "module": "Array",
+      "source": "Array.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "std/Array.cross.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "Ruby lowering and HXRuby helpers preserve Haxe array boundary and mutation contracts."
+    },
+    {
+      "module": "Date",
+      "source": "Date.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "std/Date.cross.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "Ruby Time backs Haxe Date with tested local, UTC, timestamp, and parsing semantics."
+    },
+    {
+      "module": "DateTools",
+      "source": "DateTools.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try the upstream fixture after Date edge cases remain green.",
+      "notes": "Likely consumes the Ruby-owned Date surface rather than needing its own override."
+    },
+    {
+      "module": "EReg",
+      "source": "EReg.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "std/EReg.cross.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "Ruby Regexp is wrapped to preserve Haxe stateful match accessors and replacement behavior."
+    },
+    {
+      "module": "EvaluationOrder",
+      "source": "EvaluationOrder.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Use as a compiler-lowering regression fixture if call or assignment ordering changes.",
+      "notes": "Not a std override; useful for generated Ruby expression ordering."
+    },
+    {
+      "module": "Float",
+      "source": "Float.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit alongside Math and Std numeric semantics before enabling the fixture.",
+      "notes": "Ruby Float mostly aligns, but NaN, infinities, parsing, and stringification are compiler/runtime semantic seams."
+    },
+    {
+      "module": "Https",
+      "source": "Https.unit.hx.no",
+      "classification": "unsupported-target-specific",
+      "unitstdStatus": "not-tracked",
+      "next": "Leave out of Ruby runtime parity until HTTP support has a deterministic target contract.",
+      "notes": "The upstream fixture is disabled in the reference checkout."
+    },
+    {
+      "module": "InlineXml",
+      "source": "InlineXml.unit.hx",
+      "classification": "unsupported-target-specific",
+      "unitstdStatus": "not-tracked",
+      "next": "Do not treat as Ruby std parity unless XML authoring support becomes a target feature.",
+      "notes": "This is parser/language fixture coverage, not a Ruby stdlib surface."
+    },
+    {
+      "module": "IntIterator",
+      "source": "IntIterator.unit.hx",
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream fixture executes through generated Ruby without a local IntIterator override."
+    },
+    {
+      "module": "Lambda",
+      "source": "Lambda.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "std/Lambda.cross.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The fixture locks in iterator bridging across native Ruby arrays and Haxe iterator-bearing values."
+    },
+    {
+      "module": "List",
+      "source": "List.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback before adding any Ruby-specific List override.",
+      "notes": "No Ruby-owned List surface exists today."
+    },
+    {
+      "module": "Map",
+      "source": "Map.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "std/_std/haxe/ds/*Map.cross.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The top-level fixture exercises StringMap, IntMap, and ObjectMap over Ruby Hash storage."
+    },
+    {
+      "module": "Math",
+      "source": "Math.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "std/Math.cross.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "Ruby Math is used directly where behavior matches; Haxe-specific edge semantics stay in the override/runtime layer."
+    },
+    {
+      "module": "Reflect",
+      "source": "Reflect.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "owner": "std/Reflect.cross.hx",
+      "next": "Promote an adapted upstream Reflect fixture after current smoke coverage is audited.",
+      "notes": "Reflect exists now, but parity should be proven with upstream field, method, and anonymous-object cases."
+    },
+    {
+      "module": "Ssl",
+      "source": "Ssl.unit.hx",
+      "classification": "unsupported-target-specific",
+      "unitstdStatus": "not-tracked",
+      "next": "Leave for a future network/SSL contract instead of stdlib MVP parity.",
+      "notes": "Network and SSL behavior need environment-controlled tests before Ruby parity can be claimed."
+    },
+    {
+      "module": "Std",
+      "source": "Std.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "adapted",
+      "owner": "std/Std.cross.hx",
+      "next": "Keep the adapted fixture until the macro-expanded lane can consume the upstream file directly.",
+      "notes": "The adapted fixture preserves relevant assertions while avoiding Ruby lane assertion-macro collisions."
+    },
+    {
+      "module": "String",
+      "source": "String.unit.hx",
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "No local String module override exists; compiler lowerings and runtime helpers cover Ruby/Haxe semantic gaps."
+    },
+    {
+      "module": "StringBuf",
+      "source": "StringBuf.unit.hx",
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream implementation executes through the Ruby target without a local override."
+    },
+    {
+      "module": "StringTools",
+      "source": "StringTools.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "std/StringTools.cross.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "Ruby string helpers and HXRuby seams preserve Haxe StringTools semantics."
+    },
+    {
+      "module": "Type",
+      "source": "Type.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "owner": "std/Type.cross.hx",
+      "next": "Promote an adapted Type fixture after enum/class metadata smoke coverage is mapped.",
+      "notes": "Type has a Ruby override, but upstream runtime parity is not yet accounted for in unitstd."
+    },
+    {
+      "module": "Unicode",
+      "source": "Unicode.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit with String and haxe.Utf8 before enabling; expect UTF-16 versus Ruby codepoint seams.",
+      "notes": "Ruby strings are encoding-aware, while Haxe string APIs often expose UTF-16-style positions."
+    },
+    {
+      "module": "UnicodeString",
+      "source": "UnicodeString.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit with Unicode and String iterator fixtures.",
+      "notes": "Likely exercises the same UTF-16/codepoint boundary as String and haxe.Utf8."
+    },
+    {
+      "module": "haxe.CallStack",
+      "source": "haxe/CallStack.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Design a Ruby backtrace mapping before enabling upstream CallStack parity.",
+      "notes": "Ruby backtraces need target-specific normalization to look like Haxe stack items."
+    },
+    {
+      "module": "haxe.DynamicAccess",
+      "source": "haxe/DynamicAccess.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback after anonymous object and native hash boundaries are stable.",
+      "notes": "This should not require a broad public Dynamic surface if the boundary stays contained."
+    },
+    {
+      "module": "haxe.EnumFlags",
+      "source": "haxe/EnumFlags.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try the upstream fixture once enum integer representation is already covered by Type/enum smokes.",
+      "notes": "Likely pure Haxe over Int operations."
+    },
+    {
+      "module": "haxe.Http",
+      "source": "haxe/Http.unit.hx.disabled",
+      "classification": "unsupported-target-specific",
+      "unitstdStatus": "not-tracked",
+      "next": "Leave out until RubyHx has deterministic HTTP fixture infrastructure.",
+      "notes": "The upstream fixture is disabled and network behavior is environment-sensitive."
+    },
+    {
+      "module": "haxe.Int32",
+      "source": "haxe/Int32.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit fixed-width integer behavior before enabling.",
+      "notes": "Ruby Integer is arbitrary precision, so Haxe Int32 overflow behavior may need explicit masking."
+    },
+    {
+      "module": "haxe.Json",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "no-upstream-spec",
+      "owner": "std/_std/haxe/Json.cross.hx",
+      "next": "Add JSON parser/writer parity fixtures from the broader Haxe test suite, not unitstd.",
+      "notes": "No direct unitstd fixture exists, but RubyHx owns this surface through Ruby JSON interop plus Haxe semantics."
+    },
+    {
+      "module": "haxe.Log",
+      "source": "haxe/Log.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback before adding Ruby logging behavior.",
+      "notes": "Likely compile-time and trace behavior rather than a Ruby stdlib facade."
+    },
+    {
+      "module": "haxe.Template",
+      "source": "haxe/Template.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback in a pure Ruby smoke before considering overrides.",
+      "notes": "This is Haxe template semantics and should stay separate from RailsHx HHX/ActionView templates."
+    },
+    {
+      "module": "haxe.Utf8",
+      "source": "haxe/Utf8.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit with Unicode string fixtures before enabling.",
+      "notes": "Ruby string encoding APIs are useful, but Haxe Utf8 has its own byte/codepoint contract."
+    },
+    {
+      "module": "haxe.atomic.AtomicBool",
+      "source": "haxe/atomic/AtomicBool.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until Ruby threading/runtime support has an explicit contract.",
+      "notes": "Atomic behavior cannot be claimed through plain Ruby variables."
+    },
+    {
+      "module": "haxe.atomic.AtomicInt",
+      "source": "haxe/atomic/AtomicInt.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until Ruby threading/runtime support has an explicit contract.",
+      "notes": "Atomic integer operations need target-specific synchronization semantics."
+    },
+    {
+      "module": "haxe.atomic.AtomicObject",
+      "source": "haxe/atomic/AtomicObject.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until Ruby threading/runtime support has an explicit contract.",
+      "notes": "Object identity plus atomic replacement need an explicit Ruby implementation."
+    },
+    {
+      "module": "haxe.crypto.Base64",
+      "source": "haxe/crypto/Base64.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback first; add a ruby.Base64 facade only for Ruby-native authoring or output shape.",
+      "notes": "Pure Haxe fallback may be sufficient for portable code."
+    },
+    {
+      "module": "haxe.crypto.Crc32",
+      "source": "haxe/crypto/Crc32.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback before adding any Ruby zlib-backed lowering.",
+      "notes": "Likely pure Haxe over Bytes."
+    },
+    {
+      "module": "haxe.crypto.Hmac",
+      "source": "haxe/crypto/Hmac.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback after Bytes and hash algorithms are covered.",
+      "notes": "Ruby OpenSSL can be a later optimization or facade, not the first parity assumption."
+    },
+    {
+      "module": "haxe.crypto.Md5",
+      "source": "haxe/crypto/Md5.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback first; consider Ruby Digest only if output shape or performance matters.",
+      "notes": "Portable Haxe semantics should drive the first parity gate."
+    },
+    {
+      "module": "haxe.crypto.Sha1",
+      "source": "haxe/crypto/Sha1.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback first; consider Ruby Digest only if output shape or performance matters.",
+      "notes": "Portable Haxe semantics should drive the first parity gate."
+    },
+    {
+      "module": "haxe.crypto.Sha224",
+      "source": "haxe/crypto/Sha224.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback first; consider Ruby Digest only if output shape or performance matters.",
+      "notes": "Portable Haxe semantics should drive the first parity gate."
+    },
+    {
+      "module": "haxe.crypto.Sha256",
+      "source": "haxe/crypto/Sha256.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback first; consider Ruby Digest only if output shape or performance matters.",
+      "notes": "Portable Haxe semantics should drive the first parity gate."
+    },
+    {
+      "module": "haxe.ds.BalancedTree",
+      "source": "haxe/ds/BalancedTree.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback before adding a Ruby-owned tree implementation.",
+      "notes": "No Ruby override is indicated until comparator or ordering semantics fail."
+    },
+    {
+      "module": "haxe.ds.EnumValueMap",
+      "source": "haxe/ds/EnumValueMap.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit after Type/enum metadata parity is covered.",
+      "notes": "Enum keys depend on generated enum identity and hashing semantics."
+    },
+    {
+      "module": "haxe.ds.GenericStack",
+      "source": "haxe/ds/GenericStack.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback before adding any override.",
+      "notes": "Likely pure Haxe collection behavior."
+    },
+    {
+      "module": "haxe.ds.IntMap",
+      "source": "haxe/ds/IntMap.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "not-tracked",
+      "owner": "std/_std/haxe/ds/IntMap.cross.hx",
+      "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
+      "notes": "The top-level Map.unit.hx already covers IntMap through Ruby Hash storage."
+    },
+    {
+      "module": "haxe.ds.ObjectMap",
+      "source": "haxe/ds/ObjectMap.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "not-tracked",
+      "owner": "std/_std/haxe/ds/ObjectMap.cross.hx",
+      "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
+      "notes": "ObjectMap uses Hash#compare_by_identity to preserve Haxe object-key identity."
+    },
+    {
+      "module": "haxe.ds.StringMap",
+      "source": "haxe/ds/StringMap.unit.hx",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "not-tracked",
+      "owner": "std/_std/haxe/ds/StringMap.cross.hx",
+      "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
+      "notes": "The top-level Map.unit.hx already covers StringMap through Ruby Hash storage."
+    },
+    {
+      "module": "haxe.ds.Vector",
+      "source": "haxe/ds/Vector.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit vector length, null fill, and bounds behavior before enabling.",
+      "notes": "Ruby Array can back Vector, but Haxe fixed-length semantics need proof."
+    },
+    {
+      "module": "haxe.ds.WeakMap",
+      "source": "haxe/ds/WeakMap.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until Ruby weak-reference support is designed.",
+      "notes": "Weak key behavior needs target-owned runtime support."
+    },
+    {
+      "module": "haxe.extern.EitherType",
+      "source": "haxe/extern/EitherType.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback when broad unitstd fixture expansion starts.",
+      "notes": "Primarily a type-system surface with little Ruby runtime ownership."
+    },
+    {
+      "module": "haxe.io.ArrayBufferView",
+      "source": "haxe/io/ArrayBufferView.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until typed-array support is intentionally modeled over Bytes or Ruby arrays.",
+      "notes": "Typed array views need representation decisions beyond the current Bytes MVP."
+    },
+    {
+      "module": "haxe.io.Bytes",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "no-upstream-spec",
+      "owner": "std/_std/haxe/io/Bytes.hx",
+      "next": "Keep covered through local runtime tests and adjacent upstream haxe.io fixtures.",
+      "notes": "No direct unitstd fixture exists, but Bytes is the base for BytesBuffer and future haxe.io parity."
+    },
+    {
+      "module": "haxe.io.BytesBuffer",
+      "source": "haxe/io/BytesBuffer.unit.hx",
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream BytesBuffer implementation runs over RubyHx Bytes."
+    },
+    {
+      "module": "haxe.io.FPHelper",
+      "source": "haxe/io/FPHelper.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "owner": "std/_std/haxe/io/FPHelper.hx",
+      "next": "Add the upstream fixture after Float numeric edge behavior is audited.",
+      "notes": "Binary float packing/unpacking needs explicit proof against Ruby pack/unpack behavior."
+    },
+    {
+      "module": "haxe.io.Float32Array",
+      "source": "haxe/io/Float32Array.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until typed-array support is intentionally modeled.",
+      "notes": "Depends on ArrayBufferView and fixed-width float representation."
+    },
+    {
+      "module": "haxe.io.Float64Array",
+      "source": "haxe/io/Float64Array.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until typed-array support is intentionally modeled.",
+      "notes": "Depends on ArrayBufferView and fixed-width float representation."
+    },
+    {
+      "module": "haxe.io.Int32Array",
+      "source": "haxe/io/Int32Array.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until typed-array support is intentionally modeled.",
+      "notes": "Depends on ArrayBufferView and fixed-width integer representation."
+    },
+    {
+      "module": "haxe.io.Path",
+      "source": "haxe/io/Path.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback before adding Ruby Pathname-style facade coupling.",
+      "notes": "Portable haxe.io.Path should remain separate from Ruby-native ruby.Pathname."
+    },
+    {
+      "module": "haxe.io.UInt16Array",
+      "source": "haxe/io/UInt16Array.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until typed-array support is intentionally modeled.",
+      "notes": "Depends on ArrayBufferView and unsigned fixed-width integer behavior."
+    },
+    {
+      "module": "haxe.io.UInt32Array",
+      "source": "haxe/io/UInt32Array.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until typed-array support is intentionally modeled.",
+      "notes": "Depends on ArrayBufferView and unsigned fixed-width integer behavior."
+    },
+    {
+      "module": "haxe.io.UInt8Array",
+      "source": "haxe/io/UInt8Array.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until typed-array support is intentionally modeled.",
+      "notes": "Depends on ArrayBufferView and unsigned byte behavior."
+    },
+    {
+      "module": "haxe.iterators.StringIteratorUnicode",
+      "source": "haxe/iterators/StringIteratorUnicode.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit with Unicode string fixtures.",
+      "notes": "Iterator positions must be reconciled with Haxe string indexing semantics."
+    },
+    {
+      "module": "haxe.iterators.StringKeyValueIteratorUnicode",
+      "source": "haxe/iterators/StringKeyValueIteratorUnicode.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Audit with Unicode string fixtures.",
+      "notes": "Key/value iteration needs explicit index semantics over Ruby strings."
+    },
+    {
+      "module": "haxe.macro.ComplexTypeTools",
+      "source": "haxe/macro/ComplexTypeTools.macro.unit.hx",
+      "classification": "unsupported-target-specific",
+      "unitstdStatus": "not-tracked",
+      "next": "Leave to Haxe macro/eval tests rather than Ruby runtime parity.",
+      "notes": "Macro tooling runs in the compiler context, not generated Ruby."
+    },
+    {
+      "module": "haxe.macro.ExprTools",
+      "source": "haxe/macro/ExprTools.unit.hx",
+      "classification": "unsupported-target-specific",
+      "unitstdStatus": "not-tracked",
+      "next": "Leave to Haxe macro/eval tests rather than Ruby runtime parity.",
+      "notes": "Macro expression tooling is not a Ruby runtime stdlib surface."
+    },
+    {
+      "module": "haxe.rtti.Rtti",
+      "source": "haxe/rtti/Rtti.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try after Type and Reflect parity coverage is expanded.",
+      "notes": "May be mostly compile-time metadata, but generated runtime shape should be audited."
+    },
+    {
+      "module": "haxe.zip.Compress",
+      "source": "haxe/zip/Compress.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback before adding Ruby Zlib-backed lowering.",
+      "notes": "Ruby Zlib can be a later typed facade or optimization if needed."
+    },
+    {
+      "module": "haxe.zip.Uncompress",
+      "source": "haxe/zip/Uncompress.unit.hx",
+      "classification": "upstream-fallback-candidate",
+      "unitstdStatus": "not-tracked",
+      "next": "Try upstream fallback before adding Ruby Zlib-backed lowering.",
+      "notes": "Ruby Zlib can be a later typed facade or optimization if needed."
+    },
+    {
+      "module": "sys.FileSystem",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "no-upstream-spec",
+      "owner": "std/_std/sys/FileSystem.hx",
+      "next": "Add focused filesystem parity smoke coverage because unitstd has no direct fixture.",
+      "notes": "RubyHx owns this as a Ruby File/Dir/FileUtils-backed Haxe sys surface."
+    },
+    {
+      "module": "sys.io.File",
+      "source": "sys/io/File.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "owner": "std/_std/sys/io/File.hx",
+      "next": "Promote the upstream fixture after exception and newline semantics are audited.",
+      "notes": "RubyHx owns this as a Haxe sys.io facade over Ruby file IO."
+    },
+    {
+      "module": "sys.net.Socket",
+      "source": "sys/net/Socket.unit.hx",
+      "classification": "ruby-override-needed",
+      "unitstdStatus": "not-tracked",
+      "next": "Defer until sys.net support has an explicit Ruby target contract.",
+      "notes": "Socket tests need deterministic runtime infrastructure and target-specific implementation."
+    }
+  ]
+}

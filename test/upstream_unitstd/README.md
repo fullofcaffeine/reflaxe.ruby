@@ -67,6 +67,12 @@ workflow, and runtime execution shape without pretending broad Ruby stdlib parit
 is already complete. Expand the lane fixture-by-fixture as Ruby std support
 hardens.
 
+Use `docs/ruby-stdlib-parity-audit.json` and
+`docs/ruby-stdlib-parity-audit.md` to choose the next fixture. The audit
+separates covered surfaces, upstream fallback candidates, Ruby override
+candidates, and unsupported target-specific fixtures so fixture promotion stays
+deliberate.
+
 Use `scripts/sync-upstream-unitstd-specs.sh` to refresh enabled, unadapted specs
 from a local Haxe reference checkout. The sync normalizes fixture whitespace
 with the repo Haxe formatter so normal formatting gates stay green. Adapted
