@@ -11,6 +11,7 @@
   "modules": [
     {"module": "Array", "status": "enabled", "source": "Array.unit.hx", "fixture": "test/upstream_unitstd/upstream/Array.unit.hx"},
     {"module": "Date", "status": "enabled", "source": "Date.unit.hx", "fixture": "test/upstream_unitstd/upstream/Date.unit.hx"},
+    {"module": "DateTools", "status": "enabled", "source": "DateTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/DateTools.unit.hx"},
     {"module": "EReg", "status": "enabled", "source": "EReg.unit.hx", "fixture": "test/upstream_unitstd/upstream/EReg.unit.hx"},
     {"module": "IntIterator", "status": "enabled", "source": "IntIterator.unit.hx", "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx"},
     {"module": "Lambda", "status": "enabled", "source": "Lambda.unit.hx", "fixture": "test/upstream_unitstd/upstream/Lambda.unit.hx"},

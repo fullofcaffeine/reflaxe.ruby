@@ -11,6 +11,7 @@ class Main {
 	static function main():Void {
 		UpstreamUnitStdMacro.assertSpec("Array.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Date.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("DateTools.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("EReg.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("StringBuf.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("IntIterator.unit.hx");

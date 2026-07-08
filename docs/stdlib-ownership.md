@@ -94,8 +94,8 @@ layer over editing the fixture. If a fixture must be adapted or skipped for a
 Ruby-specific reason, record that decision in the manifest with a short reason.
 
 The current baseline intentionally enables a focused set of fixtures and tracks
-broader high-leverage fixtures separately. `Array`, `Date`, `EReg`,
-`IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
+broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
+`EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
 `StringTools`, and `haxe.io.BytesBuffer` run directly; `Std` runs through an
 adapted fixture because upstream assertion syntax and duplicate local names need
 macro-lane accommodation.
@@ -134,6 +134,9 @@ key/value iterator surfaces.
 `Time`, preserving local constructor/getter behavior, UTC getter behavior,
 timezone offset sign, millisecond timestamps, and the accepted Haxe
 `fromString()` input shapes.
+
+`DateTools` is enabled as a direct upstream fixture. It proves upstream fallback
+over the Ruby-owned `Date` surface for month-day, seconds, and delta helpers.
 
 `EReg` is enabled as a direct upstream fixture. It wraps Ruby `Regexp` while
 preserving Haxe stateful match accessors, `matchSub` offsets, global versus

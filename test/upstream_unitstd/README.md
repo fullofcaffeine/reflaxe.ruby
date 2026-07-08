@@ -26,8 +26,9 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `Array`, `Date`, `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`,
-  `String`, `StringBuf`, `StringTools`, `haxe.io.BytesBuffer`.
+- Enabled: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
+  `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
+  `haxe.io.BytesBuffer`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -40,6 +41,9 @@ around Ruby `Time`: local constructors and component getters use local time,
 UTC getters use `getutc`, `getTimezoneOffset()` follows the JavaScript/Haxe
 minute offset sign, and `Date.fromString()` accepts the exact upstream Haxe
 date-time, date-only, and UTC time-only shapes through generated Ruby.
+
+`DateTools` is enabled directly. It proves upstream fallback over the Ruby-owned
+`Date` surface for month-day, seconds, and delta helpers.
 
 `EReg` is enabled directly. The Ruby lane wraps Ruby `Regexp` while preserving
 Haxe stateful match accessors, non-global versus global split/replace/map

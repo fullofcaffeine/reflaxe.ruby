@@ -40,10 +40,10 @@
     {
       "module": "DateTools",
       "source": "DateTools.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try the upstream fixture after Date edge cases remain green.",
-      "notes": "Likely consumes the Ruby-owned Date surface rather than needing its own override."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream DateTools implementation executes through generated Ruby over the Ruby-owned Date surface."
     },
     {
       "module": "EReg",

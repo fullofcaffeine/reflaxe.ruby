@@ -73,9 +73,9 @@ and run with:
 npm run test:unitstd-ruby
 ```
 
-Enabled today: `Array`, `Date`, `EReg`, `IntIterator`, `Lambda`, `List`, `Map`,
-`Math`, `String`, `StringBuf`, `StringTools`, and `haxe.io.BytesBuffer`. `Std`
-runs through an adapted upstream fixture, and local focused fixtures cover
+Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
+`List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`, and
+`haxe.io.BytesBuffer`. `Std` runs through an adapted upstream fixture, and local focused fixtures cover
 adjacent semantic gaps such as numeric parsing.
 
 Broader upstream candidate accounting lives in
@@ -239,8 +239,9 @@ For Ruby stdlib facades:
 
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
-1. Promote one upstream-fallback candidate such as `DateTools`, `haxe.io.Path`,
-   or `haxe.Template` through `test/upstream_unitstd/manifest.json`.
+1. Promote one upstream-fallback candidate such as `haxe.io.Path`,
+   `haxe.Template`, or `haxe.DynamicAccess` through
+   `test/upstream_unitstd/manifest.json`.
 
 2. Add upstream parity coverage for an implemented Ruby-owned surface, starting
    with `Reflect` or `Type`.
