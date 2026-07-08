@@ -26,7 +26,7 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `Array`, `Date`, `EReg`, `IntIterator`, `Lambda`, `Map`, `Math`,
+- Enabled: `Array`, `Date`, `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`,
   `String`, `StringBuf`, `StringTools`, `haxe.io.BytesBuffer`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
@@ -51,6 +51,10 @@ generated `.iterator()` calls use a compact runtime helper that delegates to
 Haxe iterators when present and wraps native Ruby arrays otherwise. The local
 fixture adapter also makes array-literal comparisons explicit structural
 assertions so compiler equality can keep Haxe's array identity semantics.
+
+`List` is enabled directly. It proves the upstream linked-list implementation
+can fall through unchanged on Ruby, covering mutation, string/join behavior,
+map/filter, and key/value iteration.
 
 `Array` is enabled directly in the portable unitstd lane. It locks in Haxe array
 mutation, slicing/splicing, sorting with method references, dynamic array calls,

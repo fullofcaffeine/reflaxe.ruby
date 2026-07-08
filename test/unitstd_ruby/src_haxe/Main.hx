@@ -17,6 +17,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("String.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("StringTools.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Lambda.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("List.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Map.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Math.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");

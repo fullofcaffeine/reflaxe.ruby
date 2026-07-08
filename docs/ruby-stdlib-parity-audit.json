@@ -106,10 +106,10 @@
     {
       "module": "List",
       "source": "List.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback before adding any Ruby-specific List override.",
-      "notes": "No Ruby-owned List surface exists today."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream List implementation executes through generated Ruby without a local override."
     },
     {
       "module": "Map",

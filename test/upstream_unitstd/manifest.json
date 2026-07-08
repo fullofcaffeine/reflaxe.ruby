@@ -14,6 +14,7 @@
     {"module": "EReg", "status": "enabled", "source": "EReg.unit.hx", "fixture": "test/upstream_unitstd/upstream/EReg.unit.hx"},
     {"module": "IntIterator", "status": "enabled", "source": "IntIterator.unit.hx", "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx"},
     {"module": "Lambda", "status": "enabled", "source": "Lambda.unit.hx", "fixture": "test/upstream_unitstd/upstream/Lambda.unit.hx"},
+    {"module": "List", "status": "enabled", "source": "List.unit.hx", "fixture": "test/upstream_unitstd/upstream/List.unit.hx"},
     {"module": "Map", "status": "enabled", "source": "Map.unit.hx", "fixture": "test/upstream_unitstd/upstream/Map.unit.hx"},
     {"module": "Math", "status": "enabled", "source": "Math.unit.hx", "fixture": "test/upstream_unitstd/upstream/Math.unit.hx"},
     {"module": "Std", "status": "adapted", "source": "Std.unit.hx", "fixture": "test/upstream_unitstd/upstream/Std.unit.hx", "reason": "Adapted to avoid duplicate local names in the macro-expanded Ruby lane; unspec markers are ignored and in-expression assertions are handled by UpstreamUnitStdMacro."},
