@@ -23,6 +23,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("Math.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/io/Path.unit.hx");
 		unitstd_ruby.ERegSemantics.run();
 		unitstd_ruby.MapSemantics.run();
 		unitstd_ruby.StdNumericParsing.run();

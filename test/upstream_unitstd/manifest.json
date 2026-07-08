@@ -23,6 +23,7 @@
     {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
     {"module": "StringTools", "status": "enabled", "source": "StringTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringTools.unit.hx"},
     {"module": "haxe.io.Bytes", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; Bytes behavior is covered by local runtime tests and future adjacent upstream haxe.io fixtures."},
-    {"module": "haxe.io.BytesBuffer", "status": "enabled", "source": "haxe/io/BytesBuffer.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/BytesBuffer.unit.hx"}
+    {"module": "haxe.io.BytesBuffer", "status": "enabled", "source": "haxe/io/BytesBuffer.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/BytesBuffer.unit.hx"},
+    {"module": "haxe.io.Path", "status": "enabled", "source": "haxe/io/Path.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/Path.unit.hx"}
   ]
 }

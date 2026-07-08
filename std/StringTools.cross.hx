@@ -97,6 +97,10 @@ class StringTools {
 		return s.charCodeAt(index);
 	}
 
+	public static inline function unsafeCodeAt(s:String, index:Int):Int {
+		return fastCodeAt(s, index);
+	}
+
 	public static function isEof(c:Null<Int>):Bool {
 		return c == null || c == 0;
 	}
@@ -109,5 +113,17 @@ class StringTools {
 
 	public static function keyValueIterator(s:String):KeyValueIterator<Int, Int> {
 		return cast null;
+	}
+
+	// Upstream Haxe string iterators use @:access(StringTools) to share this
+	// private UTF-16 helper surface with target-specific StringTools overrides.
+	static inline var MIN_SURROGATE_CODE_POINT = 65536;
+
+	static inline function utf16CodePointAt(s:String, index:Int):Int {
+		var c = fastCodeAt(s, index);
+		if (c >= 0xD800 && c <= 0xDBFF) {
+			c = ((c - 0xD7C0) << 10) | (fastCodeAt(s, index + 1) & 0x3FF);
+		}
+		return c;
 	}
 }

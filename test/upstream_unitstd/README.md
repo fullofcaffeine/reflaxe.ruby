@@ -28,7 +28,7 @@ Current upstream runtime fixtures:
 
 - Enabled: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
   `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
-  `haxe.io.BytesBuffer`.
+  `haxe.io.BytesBuffer`, `haxe.io.Path`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -44,6 +44,10 @@ date-time, date-only, and UTC time-only shapes through generated Ruby.
 
 `DateTools` is enabled directly. It proves upstream fallback over the Ruby-owned
 `Date` surface for month-day, seconds, and delta helpers.
+
+`haxe.io.Path` is enabled directly. It proves the portable Haxe path parser,
+formatter, joiner, and normalizer can fall through unchanged on Ruby while
+remaining separate from any Ruby-native `Pathname` facade.
 
 `EReg` is enabled directly. The Ruby lane wraps Ruby `Regexp` while preserving
 Haxe stateful match accessors, non-global versus global split/replace/map

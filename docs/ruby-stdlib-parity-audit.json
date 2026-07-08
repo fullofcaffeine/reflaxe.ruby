@@ -492,10 +492,10 @@
     {
       "module": "haxe.io.Path",
       "source": "haxe/io/Path.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback before adding Ruby Pathname-style facade coupling.",
-      "notes": "Portable haxe.io.Path should remain separate from Ruby-native ruby.Pathname."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream path parser and normalizer execute as portable Haxe code and stay separate from Ruby-native ruby.Pathname."
     },
     {
       "module": "haxe.io.UInt16Array",
