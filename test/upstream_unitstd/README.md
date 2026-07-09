@@ -31,8 +31,8 @@ Current upstream runtime fixtures:
   `haxe.DynamicAccess`, `haxe.EnumFlags`, `haxe.crypto.Base64`,
   `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
   `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
-  `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.io.BytesBuffer`,
-  `haxe.io.Path`, `haxe.Template`.
+  `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
+  `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Template`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -76,6 +76,11 @@ map implementation can fall through unchanged on Ruby, including integer and
 string key ordering, ordered values, copy isolation, removal, key-value
 iteration, and clear semantics. It also guards Haxe default argument lowering
 through the upstream tree node height default.
+
+`haxe.extern.EitherType` is enabled directly. It proves the type-system surface
+needs no Ruby-owned runtime override for this lane: accepted Int/String
+assignments compile and run, while invalid Bool/Float assignments are rejected
+at compile time through the unitstd `HelperMacros.typeError` shim.
 
 `haxe.Template` is enabled directly. It proves the portable Haxe template
 parser/executor can fall through unchanged on Ruby, including context lookup,

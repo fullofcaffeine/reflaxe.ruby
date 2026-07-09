@@ -34,6 +34,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Sha256.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/ds/BalancedTree.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/ds/GenericStack.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/extern/EitherType.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/Path.unit.hx");
 		unitstd_ruby.ERegSemantics.run();

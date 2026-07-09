@@ -427,10 +427,10 @@
     {
       "module": "haxe.extern.EitherType",
       "source": "haxe/extern/EitherType.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback when broad unitstd fixture expansion starts.",
-      "notes": "Primarily a type-system surface with little Ruby runtime ownership."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream EitherType fixture compiles and runs through the Ruby lane without a Ruby override, covering accepted Int/String assignments plus compile-time rejection of invalid Bool/Float assignments through the unitstd HelperMacros.typeError shim."
     },
     {
       "module": "haxe.io.ArrayBufferView",

@@ -133,9 +133,10 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.EnumFlags`,
-`haxe.io.BytesBuffer`, `haxe.io.Path`, and `haxe.Template` run directly; `Std`
-runs through an adapted fixture because upstream assertion syntax and duplicate
-local names need macro-lane accommodation.
+`haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.Path`, and
+`haxe.Template` run directly; `Std` runs through an adapted fixture because
+upstream assertion syntax and duplicate local names need macro-lane
+accommodation.
 
 Ruby's broader upstream stdlib candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and the human summary in
@@ -202,6 +203,11 @@ portable ordered tree map implementation can fall through unchanged on Ruby,
 including integer and string key ordering, ordered values, copy isolation,
 removal, key-value iteration, and clear semantics. It also guards Haxe default
 argument lowering through the upstream tree node height default.
+
+`haxe.extern.EitherType` is enabled as a direct upstream fixture. It proves the
+type-system surface needs no Ruby-owned runtime override for this lane: accepted
+Int/String assignments compile and run, while invalid Bool/Float assignments are
+rejected at compile time through the unitstd `HelperMacros.typeError` shim.
 
 `haxe.Template` is enabled as a direct upstream fixture. It proves the portable
 Haxe template parser/executor can fall through unchanged on Ruby, including
