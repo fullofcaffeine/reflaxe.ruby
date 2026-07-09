@@ -2711,8 +2711,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TEnumIndex(enumExpr):
 				RubyRawExpr(printInlineExpr(enumExpr) + ".__hx_index");
 			case TCall({expr: TField(_, FEnum(enumRef, field))}, params):
-				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name),
-					[for (param in params) compileExpr(param)]);
+				RubyCall(RubyRawExpr(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name), [for (param in params) compileExpr(param)]);
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionControllerStaticToken(classRef.get(), fieldRef.get().name) != null):
 				RubyRawExpr(actionControllerStaticToken(classRef.get(), fieldRef.get().name));
 			case TCall({expr: TField(target, access)}, []) if (fieldAccessRawName(access) == "iterator"):
@@ -2730,7 +2729,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall(callee, params):
 				RubyCall(compileExpr(callee), "call", [for (param in params) compileExpr(param)]);
 			case TField(_, FEnum(enumRef, field)):
-				RubyCall(RubyLocal(RubyNaming.toConstantName(enumRef.get().name)), RubyNaming.toMethodName(field.name), []);
+				RubyCall(RubyRawExpr(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name), []);
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
 				var field = fieldRef.get();
@@ -13267,6 +13266,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return RubyNaming.toConstantName(classType.name);
 		}
 		return rubyConstantPath(classType.pack, classType.name);
+	}
+
+	static function enumRubyConstantPath(enumType:EnumType):String {
+		return rubyNativeName(enumType.meta) ?? rubyConstantPath(enumType.pack, enumType.name);
 	}
 
 	static function isRailsNativeTopLevelConstant(classType:ClassType):Bool {

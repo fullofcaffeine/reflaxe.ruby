@@ -74,6 +74,17 @@ class Bytes {
 		return untyped __ruby__("{0}.slice({1}, 8).pack('C*').unpack1('E')", data, pos);
 	}
 
+	public function toHex():String {
+		var out = new StringBuf();
+		var chars = "0123456789abcdef";
+		for (i in 0...length) {
+			var byte = get(i);
+			out.addChar(chars.charCodeAt(byte >> 4));
+			out.addChar(chars.charCodeAt(byte & 15));
+		}
+		return out.toString();
+	}
+
 	public function toString():String {
 		var out = "";
 		for (byte in data) {

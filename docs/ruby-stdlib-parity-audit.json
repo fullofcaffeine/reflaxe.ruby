@@ -320,10 +320,10 @@
     {
       "module": "haxe.crypto.Hmac",
       "source": "haxe/crypto/Hmac.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback after Bytes and hash algorithms are covered.",
-      "notes": "Ruby OpenSSL can be a later optimization or facade, not the first parity assumption."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream Hmac implementation executes as portable Haxe code over RubyHx Bytes plus the covered MD5/SHA1/SHA256 implementations; Ruby OpenSSL remains a separate native facade or optimization concern."
     },
     {
       "module": "haxe.crypto.Md5",

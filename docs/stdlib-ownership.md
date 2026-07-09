@@ -129,11 +129,12 @@ Ruby-specific reason, record that decision in the manifest with a short reason.
 The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
-`StringTools`, `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Md5`,
-`haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
-`haxe.io.BytesBuffer`, and `haxe.io.Path` run directly; `Std` runs through an
-adapted fixture because upstream assertion syntax and duplicate local names
-need macro-lane accommodation.
+`StringTools`, `haxe.crypto.Base64`, `haxe.crypto.Crc32`,
+`haxe.crypto.Hmac`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
+`haxe.crypto.Sha224`, `haxe.crypto.Sha256`, `haxe.io.BytesBuffer`, and
+`haxe.io.Path` run directly; `Std` runs through an adapted fixture because
+upstream assertion syntax and duplicate local names need macro-lane
+accommodation.
 
 Ruby's broader upstream stdlib candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and the human summary in
@@ -185,6 +186,11 @@ Ruby's native `Base64` stays a separate typed facade or optimization concern.
 portable Haxe Crc32 implementation can execute over RubyHx `Bytes`, while
 Ruby's native `Zlib.crc32` stays a separate typed facade or optimization
 concern.
+
+`haxe.crypto.Hmac` is enabled as a direct upstream fixture. It proves the
+portable Haxe Hmac implementation can execute over RubyHx `Bytes` and the
+already-covered MD5/SHA-1/SHA-256 implementations, while Ruby's native
+`OpenSSL::HMAC` stays a separate typed facade or optimization concern.
 
 `haxe.crypto.Md5` is enabled as a direct upstream fixture. It proves the
 portable Haxe digest implementation can execute over RubyHx `Bytes`; a
