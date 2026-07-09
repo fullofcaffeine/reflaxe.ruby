@@ -27,8 +27,8 @@ The guard checks that:
 | Classification | Count | Meaning |
 | --- | ---: | --- |
 | `covered-ruby-override` | 12 | Ruby owns the override, lowering, or runtime seam and current tests have direct evidence. |
-| `covered-upstream-fallback` | 16 | The Ruby lane covers the surface while using upstream Haxe std source, sometimes over lower-level Ruby-owned dependencies. |
-| `upstream-fallback-candidate` | 10 | No Ruby override is indicated yet. Add a fixture or smoke before promoting to covered. |
+| `covered-upstream-fallback` | 17 | The Ruby lane covers the surface while using upstream Haxe std source, sometimes over lower-level Ruby-owned dependencies. |
+| `upstream-fallback-candidate` | 9 | No Ruby override is indicated yet. Add a fixture or smoke before promoting to covered. |
 | `ruby-override-needed` | 28 | Ruby-owned lowering, runtime support, or `std/ruby/_std` replacement is needed or already exists but lacks upstream parity accounting. |
 | `unsupported-target-specific` | 6 | The fixture is not a Ruby runtime parity surface or is outside the current target contract. |
 
@@ -36,10 +36,10 @@ Unitstd status today:
 
 | Status | Count |
 | --- | ---: |
-| `enabled` | 23 |
+| `enabled` | 24 |
 | `adapted` | 1 |
 | `no-upstream-spec` | 3 |
-| `not-tracked` | 45 |
+| `not-tracked` | 44 |
 
 ## Reading The Buckets
 
@@ -48,11 +48,11 @@ For example, `Array`, `Date`, `EReg`, `Lambda`, `Map`, `Math`, `Std`, and
 `StringTools` are Ruby-owned or compiler-lowered surfaces with upstream unitstd
 coverage. `DateTools`, `IntIterator`, `List`, `String`, `StringBuf`,
 `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Hmac`,
-`haxe.crypto.Md5`, `haxe.crypto.Sha1`, `haxe.crypto.Sha224`,
-`haxe.Template`, `haxe.crypto.Sha256`, `haxe.ds.GenericStack`,
-`haxe.io.BytesBuffer`, and `haxe.io.Path` are covered while falling through to
-upstream Haxe source or using upstream source over lower-level Ruby-owned
-primitives.
+`haxe.DynamicAccess`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
+`haxe.crypto.Sha224`, `haxe.Template`, `haxe.crypto.Sha256`,
+`haxe.ds.GenericStack`, `haxe.io.BytesBuffer`, and `haxe.io.Path` are covered
+while falling through to upstream Haxe source or using upstream source over
+lower-level Ruby-owned primitives.
 
 `upstream-fallback-candidate` is deliberately conservative. It means the next
 move should be to compile and run the upstream fixture before adding a Ruby
@@ -75,8 +75,8 @@ until a separate target contract exists.
 
 Prefer these small follow-up slices over broad stdlib rewrites:
 
-1. Promote one upstream-fallback candidate such as `haxe.DynamicAccess`,
-   `haxe.ds.BalancedTree`, or `haxe.zip.Compress` through
+1. Promote one upstream-fallback candidate such as `haxe.ds.BalancedTree`,
+   `haxe.EnumFlags`, or `haxe.zip.Compress` through
    `test/upstream_unitstd/manifest.json`.
 2. Add upstream parity coverage for an implemented Ruby-owned surface, starting
    with `Reflect` or `Type`.

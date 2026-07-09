@@ -2634,10 +2634,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					return RubyNoop;
 				}
 				return RubyAssign(RubyLocal(localName(v)), init == null ? RubyNil : compileExpr(init));
+			case TBinop(OpAssign, {expr: TField(target, access)}, rhs) if (isReflectiveFieldAccess(target, access)):
+				return RubyExprStatement(hxrubyCall("reflect_set_field", [compileExpr(target), RubyString(fieldAccessRawName(access)), compileExpr(rhs)]));
 			case TBinop(OpAssign, lhs, rhs):
 				return RubyAssign(compileAssignable(lhs), compileExpr(rhs));
 			case TBinop(OpAssignOp(op), lhs, rhs):
-				return RubyAssign(compileAssignable(lhs), compileBinaryOp(op, lhs, rhs));
+				return switch (lhs.expr) {
+					case TField(target, access) if (isReflectiveFieldAccess(target, access)):
+						RubyExprStatement(hxrubyCall("reflect_set_field", [
+							compileExpr(target),
+							RubyString(fieldAccessRawName(access)),
+							compileBinaryOp(op, lhs, rhs)
+						]));
+					case _:
+						RubyAssign(compileAssignable(lhs), compileBinaryOp(op, lhs, rhs));
+				}
 			case TUnop(OpIncrement, _, inner):
 				return RubyAssign(compileAssignable(inner), RubyBinary("+", compileExpr(inner), RubyInt("1")));
 			case TUnop(OpDecrement, _, inner):
@@ -2687,6 +2698,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TArray(target, index): RubyRawExpr(printInlineExpr(target) + "[" + printInlineExpr(index) + "]");
 			case TArrayDecl(values): RubyArray([for (value in values) compileExpr(value)]);
 			case TObjectDecl(fields): RubyHash([for (field in fields) {key: field.name, value: compileExpr(field.expr)}]);
+			case TBinop(OpAssign, {expr: TField(target, access)}, rhs) if (isReflectiveFieldAccess(target, access)):
+				hxrubyCall("reflect_set_field", [compileExpr(target), RubyString(fieldAccessRawName(access)), compileExpr(rhs)]);
+			case TBinop(OpAssignOp(op), lhs, rhs) if (isReflectiveAssignOp(lhs)):
+				switch (lhs.expr) {
+					case TField(target, access):
+						hxrubyCall("reflect_set_field", [
+							compileExpr(target),
+							RubyString(fieldAccessRawName(access)),
+							compileBinaryOp(op, lhs, rhs)
+						]);
+					case _:
+						compileBinaryOp(OpAssignOp(op), lhs, rhs);
+				}
 			case TBinop(op, lhs, rhs) if (isStringComparison(op, lhs, rhs)):
 				RubyBinary(binopToRuby(op), hxrubyCall("string_compare", [compileExpr(lhs), compileExpr(rhs)]), RubyInt("0"));
 			case TBinop(op, lhs, rhs): compileBinaryOp(op, lhs, rhs);
@@ -2758,6 +2782,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr) + " }");
 			case TField(target, access) if (methodFieldValueName(access) != null):
 				RubyRawExpr(printInlineExpr(target) + ".method(:" + methodFieldValueName(access) + ")");
+			case TField(target, access) if (isReflectiveFieldAccess(target, access)):
+				hxrubyCall("reflect_field", [compileExpr(target), RubyString(fieldAccessRawName(access))]);
 			case TField(target, FAnon(fieldRef)):
 				hxrubyCall("reflect_field", [compileExpr(target), RubyString(fieldRef.get().name)]);
 			case TField(target, access):
@@ -13227,6 +13253,29 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function isReflectiveFieldAccess(target:TypedExpr, access:haxe.macro.Type.FieldAccess):Bool {
+		if (isArrayReceiverFieldAccess(target, access)) {
+			return false;
+		}
+		return switch (access) {
+			case FDynamic(_):
+				true;
+			case FAnon(_) | FClosure(_, _):
+				isDynamicExpr(target);
+			case FInstance(_, _, _) | FStatic(_, _) | FEnum(_, _):
+				false;
+		}
+	}
+
+	static function isReflectiveAssignOp(lhs:TypedExpr):Bool {
+		return switch (lhs.expr) {
+			case TField(target, access):
+				isReflectiveFieldAccess(target, access);
+			case _:
+				false;
+		}
+	}
+
 	static function isDynamicExpr(expr:TypedExpr):Bool {
 		return switch (TypeTools.follow(expr.t)) {
 			case TDynamic(_): true;
@@ -13236,7 +13285,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function isKnownArrayMethod(name:String):Bool {
 		return switch (name) {
-			case "concat" | "join" | "push" | "reverse" | "slice" | "sort" | "splice" | "toString" | "insert" | "remove" | "contains" | "indexOf" |
+			case "length" | "concat" | "join" | "push" | "reverse" | "slice" | "sort" | "splice" | "toString" | "insert" | "remove" | "contains" | "indexOf" |
 				"lastIndexOf" | "copy" | "map" | "filter" | "resize" | "keyValueIterator":
 				true;
 			case _:

@@ -96,7 +96,7 @@ class Main
     HXRuby.reflect_set_field(reflected_box, "label", "updated")
     puts(HXRuby.stringify(HXRuby.reflect_get_property(reflected_box, "label")))
     HXRuby.reflect_set_property(reflected_box, "label", "property")
-    puts(HXRuby.stringify(reflected_box.label))
+    puts(HXRuby.stringify(HXRuby.reflect_field(reflected_box, "label")))
     puts(HXRuby.stringify(HXRuby.reflect_call_method(reflected_box, HXRuby.reflect_field(reflected_box, "describe"), ["box"])))
     puts(HXRuby.stringify(HXRuby.reflect_call_method(reflected_box, HXRuby.reflect_field(reflected_box, "ping"), [])))
     var_args = HXRuby.reflect_make_var_args(->(values) { values.length })

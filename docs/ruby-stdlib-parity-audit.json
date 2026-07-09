@@ -216,10 +216,10 @@
     {
       "module": "haxe.DynamicAccess",
       "source": "haxe/DynamicAccess.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback after anonymous object and native hash boundaries are stable.",
-      "notes": "This should not require a broad public Dynamic surface if the boundary stays contained."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream DynamicAccess implementation executes as portable Haxe code on Ruby over object field access, bracket access, key iteration, value iteration, and removal; this remains contained and does not imply a broad public Dynamic surface."
     },
     {
       "module": "haxe.EnumFlags",
