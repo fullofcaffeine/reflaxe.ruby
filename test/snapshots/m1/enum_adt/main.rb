@@ -8,7 +8,13 @@ class Main
   def self.main()
     value = MaybeInt.some(41)
     empty = MaybeInt.none()
+    optional = MaybeInt.optional()
     puts(HXRuby.stringify("constructed"))
+    ((optional.__hx_index == 2) ? begin
+      g = optional.value
+      value__hx1 = g
+    puts(HXRuby.stringify((value__hx1 == nil)))
+    end : puts(HXRuby.stringify(false)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

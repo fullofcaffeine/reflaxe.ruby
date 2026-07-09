@@ -5,7 +5,7 @@ module MaybeInt
     "MaybeInt"
   end
   def self.__hx_constructs()
-    [{name: "None", index: 0, method: :none, arity: 0}, {name: "Some", index: 1, method: :some, arity: 1}]
+    [{name: "None", index: 0, method: :none, arity: 0}, {name: "Some", index: 1, method: :some, arity: 1}, {name: "Optional", index: 2, method: :optional, arity: 1}]
   end
   None = Data.define(:__hx_tag, :__hx_index)
   def self.none()
@@ -14,5 +14,9 @@ module MaybeInt
   Some = Data.define(:value, :__hx_tag, :__hx_index)
   def self.some(value)
     Some.new(value, "Some", 1)
+  end
+  Optional = Data.define(:value, :__hx_tag, :__hx_index)
+  def self.optional(value = nil)
+    Optional.new(value, "Optional", 2)
   end
 end

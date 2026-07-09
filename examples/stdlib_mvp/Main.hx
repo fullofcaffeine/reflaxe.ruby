@@ -165,7 +165,7 @@ class Main {
 		Sys.println(Reflect.compare(1, 2) < 0);
 		Sys.println(Reflect.compareMethods(Reflect.field(reflectedBox, "describe"), Reflect.field(reflectedBox, "describe")));
 		Sys.println(Reflect.isObject(reflectedBox));
-		Sys.println(Reflect.isObject("no"));
+		Sys.println(Reflect.isObject("yes"));
 		Sys.println(Reflect.isEnumValue(StdTypeColor.Red));
 		Sys.println(Type.getInstanceFields(StdReflectBox).indexOf("describe") >= 0);
 		Sys.println(Type.getClassFields(StdReflectStatics).indexOf("answer") >= 0);

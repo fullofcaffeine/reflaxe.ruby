@@ -132,11 +132,11 @@
     {
       "module": "Reflect",
       "source": "Reflect.unit.hx",
-      "classification": "ruby-override-needed",
-      "unitstdStatus": "not-tracked",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "adapted",
       "owner": "std/ruby/_std/Reflect.hx",
-      "next": "Promote an adapted upstream Reflect fixture after current smoke coverage is audited.",
-      "notes": "Reflect exists now, but parity should be proven with upstream field, method, and anonymous-object cases."
+      "next": "Keep covered by npm run test:unitstd-ruby and focused runtime reflection tests.",
+      "notes": "The adapted upstream fixture covers anonymous-object and Haxe-owned object fields, properties, methods, comparison, copying, deletion, function identity, String object classification, enum values, and optional enum-constructor defaults over the Ruby Reflect override and HXRuby boundary."
     },
     {
       "module": "Ssl",

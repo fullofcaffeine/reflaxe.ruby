@@ -21,6 +21,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("List.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Map.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Math.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("Reflect.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/DynamicAccess.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/EnumFlags.unit.hx");
@@ -89,4 +90,61 @@ private enum EnumFlagTest2 {
 	EF_29;
 	EF_30;
 	EF_31;
+}
+
+@:keep
+private class C {
+	public var v:String;
+	public var prop(default, null):String;
+
+	public function new() {
+		v = "var";
+		prop = "prop";
+	}
+
+	public function func():Void {}
+}
+
+@:keep
+private class C2 {
+	public var v:String;
+	public var prop(default, null):String;
+	@:isVar public var propAcc(get, set):String;
+
+	public function new() {
+		v = "var";
+		prop = "prop";
+		propAcc = "0";
+	}
+
+	public function func():String {
+		return "foo";
+	}
+
+	public function get_propAcc():String {
+		return "1";
+	}
+
+	public function set_propAcc(value:String):String {
+		return this.propAcc = value.toUpperCase();
+	}
+}
+
+private class CChild extends C {}
+
+private class EmptyClass {
+	public function new() {}
+}
+
+@:keep
+private class ReallyEmptyClass {}
+
+private enum E {
+	NoArgs;
+	OneArg(value:Int);
+}
+
+private enum EVMTest {
+	EVMA;
+	EVMB(?value:String);
 }

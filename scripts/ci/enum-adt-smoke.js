@@ -59,13 +59,15 @@ const contract = run("ruby", [
     `require ${JSON.stringify(join(outputDir, "maybe_int.rb"))}`,
     "some = MaybeInt.some(41)",
     "none = MaybeInt.none",
+    "optional = MaybeInt.optional",
     "puts some.__hx_tag",
     "puts some.value + 1",
     "puts none.__hx_index",
+    "puts optional.value.nil?",
   ].join("; "),
 ]).stdout;
 
-const expectedContract = "Some\n42\n0\n";
+const expectedContract = "Some\n42\n0\ntrue\n";
 if (contract !== expectedContract) {
   console.error("enum_adt constructor contract mismatch");
   console.error(`expected: ${JSON.stringify(expectedContract)}`);

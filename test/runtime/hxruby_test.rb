@@ -33,9 +33,15 @@ end
 
 class TestReflectBox
   attr_accessor :label
+  attr_accessor :camel_value
+
+  def self.__hx_name
+    "TestReflectBox"
+  end
 
   def initialize(label)
     @label = label
+    @camel_value = "camel"
   end
 
   def get_label
@@ -210,6 +216,9 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal "set:property", box.label
     assert_equal "box:set:property", HXRuby.reflect_call_method(box, HXRuby.reflect_field(box, "describe"), ["box"])
     assert_equal "pong:set:property", HXRuby.reflect_call_method(box, HXRuby.reflect_field(box, "ping"), [])
+    assert_equal "camel", HXRuby.reflect_field(box, "camelValue")
+    HXRuby.reflect_set_field(box, "camelValue", "mapped")
+    assert_equal "mapped", box.camel_value
     assert_includes HXRuby.reflect_fields(box), "describe"
   end
 
@@ -223,7 +232,7 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_operator HXRuby.reflect_compare(1, 2), :<, 0
     assert HXRuby.reflect_compare_methods(method, HXRuby.reflect_field(box, "describe"))
     assert HXRuby.reflect_is_object(box)
-    refute HXRuby.reflect_is_object("no")
+    assert HXRuby.reflect_is_object("yes")
     assert HXRuby.reflect_is_enum_value(TestEnumForTypeCheck::Happy.new("Happy", 0))
     assert_includes HXRuby.type_instance_fields(TestReflectBox), "describe"
     assert_includes HXRuby.type_class_fields(TestReflectStatics), "answer"

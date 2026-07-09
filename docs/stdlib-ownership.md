@@ -134,9 +134,9 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.EnumFlags`,
 `haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, and
-`haxe.Template` run directly; `Std` runs through an adapted fixture because
-upstream assertion syntax and duplicate local names need macro-lane
-accommodation.
+`haxe.Template` run directly. `Reflect` runs through an adapted fixture because
+upstream section-local names need macro-lane accommodation; `Std` remains
+adapted for its assertion syntax, duplicate locals, and `unspec(...)` markers.
 
 Ruby's broader upstream stdlib candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and the human summary in
@@ -152,6 +152,13 @@ npm run test:ruby-stdlib-parity-audit
 Use that audit before creating new stdlib implementation beads so the next slice
 promotes one fixture or facade deliberately instead of implying broad stdlib
 completion.
+
+`Reflect` runs through an adapted upstream fixture whose assertions remain
+aligned with upstream while lexical blocks preserve section-local names in the
+macro-expanded Ruby lane. It covers anonymous-object keys plus Haxe-owned field,
+property, and method names; function/method identity; compare/copy/delete;
+String object classification; enum-value detection; and optional enum
+constructor defaults over `std/ruby/_std/Reflect.hx` and compact HXRuby helpers.
 
 `Lambda` is enabled as a direct upstream fixture. It locks in the Ruby-first
 iterator bridge for native arrays plus Haxe iterator-bearing objects, and the

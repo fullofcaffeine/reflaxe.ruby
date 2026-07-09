@@ -33,9 +33,10 @@ Current upstream runtime fixtures:
   `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
   `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
   `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`.
-- Adapted: `Std`. The local copy preserves the upstream assertions that matter
-  for this lane, while avoiding macro-expansion local-name collisions and
-  ignoring upstream `unspec(...)` markers.
+- Adapted: `Reflect` and `Std`. `Reflect` adds lexical blocks around upstream
+  sections whose locals collide when expanded into one method. `Std` avoids
+  similar macro-expansion collisions and ignores upstream `unspec(...)`
+  markers; both retain the assertions owned by this lane.
 - `Map` is enabled directly. RubyHx backs `StringMap` and `IntMap` with normal
   Ruby `Hash`, and backs `ObjectMap` with `Hash#compare_by_identity` so object
   keys keep Haxe identity semantics while preserving Ruby insertion order.
@@ -88,6 +89,12 @@ fixture's injected `haxe.PosInfos`, and raises when rebound to null without a
 Ruby-specific Log override. Its upstream whitespace is preserved verbatim and
 excluded from repo formatting because the spec intentionally asserts the source
 line number injected into `trace`.
+
+`Reflect` is adapted with lexical section blocks while retaining upstream field,
+property, method, compare, copy, delete, object, and enum-value assertions. It
+proves Haxe-owned camelCase names map to generated Ruby members without changing
+open anonymous-object/Hash keys, Strings retain Haxe object classification, and
+optional enum constructor payloads default to null in generated Ruby.
 
 `haxe.Template` is enabled directly. It proves the portable Haxe template
 parser/executor can fall through unchanged on Ruby, including context lookup,

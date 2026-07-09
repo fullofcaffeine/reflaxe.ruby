@@ -26,10 +26,10 @@ The guard checks that:
 
 | Classification | Count | Meaning |
 | --- | ---: | --- |
-| `covered-ruby-override` | 12 | Ruby owns the override, lowering, or runtime seam and current tests have direct evidence. |
+| `covered-ruby-override` | 13 | Ruby owns the override, lowering, or runtime seam and current tests have direct evidence. |
 | `covered-upstream-fallback` | 21 | The Ruby lane covers the surface while using upstream Haxe std source, sometimes over lower-level Ruby-owned dependencies. |
 | `upstream-fallback-candidate` | 5 | No Ruby override is indicated yet. Add a fixture or smoke before promoting to covered. |
-| `ruby-override-needed` | 28 | Ruby-owned lowering, runtime support, or `std/ruby/_std` replacement is needed or already exists but lacks upstream parity accounting. |
+| `ruby-override-needed` | 27 | Ruby-owned lowering, runtime support, or `std/ruby/_std` replacement is needed or already exists but lacks upstream parity accounting. |
 | `unsupported-target-specific` | 6 | The fixture is not a Ruby runtime parity surface or is outside the current target contract. |
 
 Unitstd status today:
@@ -37,14 +37,14 @@ Unitstd status today:
 | Status | Count |
 | --- | ---: |
 | `enabled` | 28 |
-| `adapted` | 1 |
+| `adapted` | 2 |
 | `no-upstream-spec` | 3 |
-| `not-tracked` | 40 |
+| `not-tracked` | 39 |
 
 ## Reading The Buckets
 
 `covered-*` means the current repository has parity evidence for that surface.
-For example, `Array`, `Date`, `EReg`, `Lambda`, `Map`, `Math`, `Std`, and
+For example, `Array`, `Date`, `EReg`, `Lambda`, `Map`, `Math`, `Reflect`, `Std`, and
 `StringTools` are Ruby-owned or compiler-lowered surfaces with upstream unitstd
 coverage. `DateTools`, `IntIterator`, `List`, `String`, `StringBuf`,
 `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Hmac`,
@@ -62,7 +62,7 @@ override. It does not mean parity has already been proven.
 `ruby-override-needed` includes two cases:
 
 - implemented surfaces that still need upstream parity accounting, such as
-  `Reflect`, `Type`, `haxe.Json`, `sys.FileSystem`, `sys.io.File`, and
+  `Type`, `haxe.Json`, `sys.FileSystem`, `sys.io.File`, and
   `haxe.io.FPHelper`;
 - unimplemented or deferred semantic surfaces where Ruby behavior cannot be
   assumed to match Haxe, such as atomics, typed arrays, weak maps, Unicode
@@ -80,7 +80,7 @@ Prefer these small follow-up slices over broad stdlib rewrites:
    `haxe.zip.Compress`, or `haxe.zip.Uncompress` through
    `test/upstream_unitstd/manifest.json`.
 2. Add upstream parity coverage for an implemented Ruby-owned surface, starting
-   with `Reflect` or `Type`.
+   with `Type` or `haxe.Json`.
 3. Add focused filesystem parity coverage for `sys.FileSystem` and
    `sys.io.File`, because those are Ruby-owned Haxe sys surfaces.
 4. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and

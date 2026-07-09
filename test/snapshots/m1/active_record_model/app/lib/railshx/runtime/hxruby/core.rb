@@ -40,6 +40,11 @@ module HXRuby
   RUBY_MATH_BINARY = {
     atan2: ::Math.method(:atan2)
   }.freeze
+  RUBY_RESERVED_METHOD_NAMES = %w[
+    BEGIN END alias and begin break case class def defined? do else elsif end
+    ensure false for if in module next nil not or redo rescue retry return self
+    super then true undef unless until when while yield
+  ].freeze
 
   module_function
 
@@ -606,18 +611,20 @@ module HXRuby
   end
 
   def reflect_has_field(object, field)
-    name = field.to_s
-    return object.key?(name) || object.key?(name.to_sym) if object.is_a?(Hash)
+    source_name = field.to_s
+    return object.key?(source_name) || object.key?(source_name.to_sym) if object.is_a?(Hash)
     return false if object.nil?
 
+    name = reflect_member_name(object, source_name)
     object.respond_to?(name) || object.respond_to?(:"#{name}=") || object.instance_variable_defined?(:"@#{name}")
   end
 
   def reflect_field(object, field)
-    name = field.to_s
-    return hash_field(object, name) if object.is_a?(Hash)
+    source_name = field.to_s
+    return hash_field(object, source_name) if object.is_a?(Hash)
     return nil if object.nil?
 
+    name = reflect_member_name(object, source_name)
     ivar = :"@#{name}"
     return object.instance_variable_get(ivar) if object.instance_variable_defined?(ivar)
     return object.method(name) if object.respond_to?(name)
@@ -628,20 +635,21 @@ module HXRuby
   end
 
   def reflect_set_field(object, field, value)
-    name = field.to_s
+    source_name = field.to_s
     if object.is_a?(Hash)
-      object[name] = value
+      object[source_name] = value
       return value
     end
     return value if object.nil?
 
+    name = reflect_member_name(object, source_name)
     setter = :"#{name}="
     object.respond_to?(setter) ? object.public_send(setter, value) : object.instance_variable_set(:"@#{name}", value)
     value
   end
 
   def reflect_get_property(object, field)
-    name = field.to_s
+    name = reflect_member_name(object, field)
     getter = "get_#{name}"
     return object.public_send(getter) if !object.is_a?(Hash) && object&.respond_to?(getter)
 
@@ -649,7 +657,7 @@ module HXRuby
   end
 
   def reflect_set_property(object, field, value)
-    name = field.to_s
+    name = reflect_member_name(object, field)
     setter = "set_#{name}"
     if !object.is_a?(Hash) && object&.respond_to?(setter)
       object.public_send(setter, value)
@@ -698,7 +706,7 @@ module HXRuby
 
   def reflect_is_object(value)
     return false if value.nil? || value == true || value == false
-    return false if value.is_a?(Numeric) || value.is_a?(String) || value.respond_to?(:__hx_tag)
+    return false if value.is_a?(Numeric) || value.respond_to?(:__hx_tag)
 
     value.is_a?(Hash) || value.is_a?(Array) || value.is_a?(Class) || value.is_a?(Module) || !reflect_is_function(value)
   end
@@ -708,13 +716,13 @@ module HXRuby
   end
 
   def reflect_delete_field(object, field)
-    name = field.to_s
+    source_name = field.to_s
     if object.is_a?(Hash)
-      if object.key?(name)
-        object.delete(name)
+      if object.key?(source_name)
+        object.delete(source_name)
         return true
       end
-      symbol = name.to_sym
+      symbol = source_name.to_sym
       if object.key?(symbol)
         object.delete(symbol)
         return true
@@ -724,6 +732,7 @@ module HXRuby
     end
     return false if object.nil?
 
+    name = reflect_member_name(object, source_name)
     ivar = :"@#{name}"
     if object.instance_variable_defined?(ivar)
       object.remove_instance_variable(ivar)
@@ -743,6 +752,37 @@ module HXRuby
 
   def reflect_make_var_args(function)
     ->(*args) { function.call(args) }
+  end
+
+  def reflect_member_name(object, field)
+    source_name = field.to_s
+    return source_name unless haxe_reflection_receiver?(object)
+
+    reflect_ruby_method_name(source_name)
+  end
+
+  def haxe_reflection_receiver?(object)
+    object.respond_to?(:__hx_name) || object.class.respond_to?(:__hx_name)
+  end
+
+  # Mirrors RubyNaming.toMethodName for dynamic strings crossing Reflect's
+  # Haxe-owned object boundary. Hash keys and native Ruby objects stay exact.
+  def reflect_ruby_method_name(name)
+    source = name.to_s.delete("`")
+    return "initialize" if source == "new"
+
+    snake = source
+      .gsub(/([A-Z]+)([A-Z][a-z])/, '\\1_\\2')
+      .gsub(/([a-z0-9])([A-Z])/, '\\1_\\2')
+      .downcase
+    identifier = snake
+      .gsub(/[^a-z0-9_]/, "_")
+      .gsub(/_+/, "_")
+      .sub(/\A_+/, "")
+      .sub(/_+\z/, "")
+    identifier = "hx_method" if identifier.empty?
+    identifier = "hx_#{identifier}" if identifier.match?(/\A[0-9]/)
+    RUBY_RESERVED_METHOD_NAMES.include?(identifier) ? "#{identifier}_" : identifier
   end
 
   def typeof(value)

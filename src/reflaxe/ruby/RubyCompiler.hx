@@ -1047,12 +1047,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			var ctorName = RubyNaming.toConstantName(option.name);
 			var methodName = RubyNaming.toMethodName(option.name);
 			var argNames = [for (arg in option.args) RubyNaming.toLocalName(arg.name)];
+			// Haxe optional enum payloads may be omitted; Ruby defaults preserve that
+			// call shape while the generated Data record still stores the resulting nil.
+			var argSignatures = [
+				for (index => arg in option.args)
+					arg.opt ? argNames[index] + " = nil" : argNames[index]
+			];
 			metadata.push("{name: " + quoteRubyStringForCode(option.name) + ", index: " + Std.string(index) + ", method: " + rubySymbolLiteral(methodName)
 				+ ", arity: " + Std.string(argNames.length) + "}");
 			var dataFields = argNames.concat(["__hx_tag", "__hx_index"]);
 			out.push(RubyRawStatement(ctorName + " = Data.define(" + [for (name in dataFields) ":" + name].join(", ") + ")"));
 			var ctorArgs = argNames.concat([quoteRubyStringForCode(option.name), Std.string(index)]);
-			out.push(RubyRawStatement("def self." + methodName + "(" + argNames.join(", ") + ")\n  " + ctorName + ".new(" + ctorArgs.join(", ") + ")\nend"));
+			out.push(RubyRawStatement("def self." + methodName + "(" + argSignatures.join(", ") + ")\n  " + ctorName + ".new(" + ctorArgs.join(", ") +
+				")\nend"));
 			index++;
 		}
 		out.insert(1, RubyRawStatement("def self.__hx_constructs()\n  [" + metadata.join(", ") + "]\nend"));

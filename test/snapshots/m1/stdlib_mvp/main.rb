@@ -105,7 +105,7 @@ class Main
     puts(HXRuby.stringify((HXRuby.reflect_compare(1, 2) < 0)))
     puts(HXRuby.stringify(HXRuby.reflect_compare_methods(HXRuby.reflect_field(reflected_box, "describe"), HXRuby.reflect_field(reflected_box, "describe"))))
     puts(HXRuby.stringify(HXRuby.reflect_is_object(reflected_box)))
-    puts(HXRuby.stringify(HXRuby.reflect_is_object("no")))
+    puts(HXRuby.stringify(HXRuby.reflect_is_object("yes")))
     puts(HXRuby.stringify(HXRuby.reflect_is_enum_value(StdTypeColor.red())))
     puts(HXRuby.stringify((HXRuby.array_index_of(Type.get_instance_fields(StdReflectBox), "describe", nil) >= 0)))
     puts(HXRuby.stringify((HXRuby.array_index_of(Type.get_class_fields(StdReflectStatics), "answer", nil) >= 0)))

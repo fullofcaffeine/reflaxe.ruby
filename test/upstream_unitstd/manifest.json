@@ -18,6 +18,7 @@
     {"module": "List", "status": "enabled", "source": "List.unit.hx", "fixture": "test/upstream_unitstd/upstream/List.unit.hx"},
     {"module": "Map", "status": "enabled", "source": "Map.unit.hx", "fixture": "test/upstream_unitstd/upstream/Map.unit.hx"},
     {"module": "Math", "status": "enabled", "source": "Math.unit.hx", "fixture": "test/upstream_unitstd/upstream/Math.unit.hx"},
+    {"module": "Reflect", "status": "adapted", "source": "Reflect.unit.hx", "fixture": "test/upstream_unitstd/upstream/Reflect.unit.hx", "reason": "Adapted with lexical blocks so upstream sections that reuse local names can expand into one Ruby lane method; assertions remain aligned with the upstream fixture."},
     {"module": "Std", "status": "adapted", "source": "Std.unit.hx", "fixture": "test/upstream_unitstd/upstream/Std.unit.hx", "reason": "Adapted to avoid duplicate local names in the macro-expanded Ruby lane; unspec markers are ignored and in-expression assertions are handled by UpstreamUnitStdMacro."},
     {"module": "String", "status": "enabled", "source": "String.unit.hx", "fixture": "test/upstream_unitstd/upstream/String.unit.hx"},
     {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
