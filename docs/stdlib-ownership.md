@@ -131,10 +131,10 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
 `StringTools`, `haxe.crypto.Base64`, `haxe.crypto.Crc32`,
 `haxe.crypto.Hmac`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
-`haxe.crypto.Sha224`, `haxe.crypto.Sha256`, `haxe.io.BytesBuffer`, and
-`haxe.io.Path` run directly; `Std` runs through an adapted fixture because
-upstream assertion syntax and duplicate local names need macro-lane
-accommodation.
+`haxe.crypto.Sha224`, `haxe.crypto.Sha256`, `haxe.ds.GenericStack`,
+`haxe.io.BytesBuffer`, and `haxe.io.Path` run directly; `Std` runs through an
+adapted fixture because upstream assertion syntax and duplicate local names
+need macro-lane accommodation.
 
 Ruby's broader upstream stdlib candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and the human summary in
@@ -191,6 +191,10 @@ concern.
 portable Haxe Hmac implementation can execute over RubyHx `Bytes` and the
 already-covered MD5/SHA-1/SHA-256 implementations, while Ruby's native
 `OpenSSL::HMAC` stays a separate typed facade or optimization concern.
+
+`haxe.ds.GenericStack` is enabled as a direct upstream fixture. It proves the
+portable Haxe linked stack implementation can fall through unchanged on Ruby,
+including null values, LIFO order, and removal behavior.
 
 `haxe.crypto.Md5` is enabled as a direct upstream fixture. It proves the
 portable Haxe digest implementation can execute over RubyHx `Bytes`; a

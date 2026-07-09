@@ -30,7 +30,8 @@ Current upstream runtime fixtures:
   `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
   `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Hmac`,
   `haxe.crypto.Md5`, `haxe.crypto.Sha1`, `haxe.crypto.Sha224`,
-  `haxe.crypto.Sha256`, `haxe.io.BytesBuffer`, `haxe.io.Path`.
+  `haxe.crypto.Sha256`, `haxe.ds.GenericStack`, `haxe.io.BytesBuffer`,
+  `haxe.io.Path`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -64,6 +65,10 @@ separate facade or optimization concern.
 implementation can execute over RubyHx `Bytes` and the already-covered
 MD5/SHA-1/SHA-256 implementations; Ruby `OpenSSL::HMAC` remains a separate
 facade or optimization concern.
+
+`haxe.ds.GenericStack` is enabled directly. It proves the portable Haxe linked
+stack implementation can fall through unchanged on Ruby, including null values,
+LIFO order, and removal behavior.
 
 `haxe.crypto.Md5` is enabled directly. It proves the portable Haxe digest
 implementation can execute over RubyHx `Bytes`; Ruby `Digest` remains a

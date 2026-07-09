@@ -2654,6 +2654,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TThrow(thrown):
 				needsHxException = true;
 				return RubyRawStatement("raise HxException.new(" + printInlineExpr(thrown) + ")");
+			case TBreak:
+				return RubyRawStatement("break");
+			case TContinue:
+				return RubyRawStatement("next");
 			case TReturn(value):
 				return RubyReturn(value == null ? null : compileExpr(value));
 			case _:
@@ -2708,6 +2712,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TThrow(thrown):
 				needsHxException = true;
 				RubyRawExpr("(raise HxException.new(" + printInlineExpr(thrown) + "))");
+			case TBreak:
+				RubyRawExpr("break");
+			case TContinue:
+				RubyRawExpr("next");
 			case TEnumIndex(enumExpr):
 				RubyRawExpr(printInlineExpr(enumExpr) + ".__hx_index");
 			case TCall({expr: TField(_, FEnum(enumRef, field))}, params):

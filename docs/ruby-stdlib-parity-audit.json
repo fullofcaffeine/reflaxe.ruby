@@ -376,10 +376,10 @@
     {
       "module": "haxe.ds.GenericStack",
       "source": "haxe/ds/GenericStack.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback before adding any override.",
-      "notes": "Likely pure Haxe collection behavior."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream GenericStack implementation executes as portable Haxe code without a local Ruby override."
     },
     {
       "module": "haxe.ds.IntMap",
