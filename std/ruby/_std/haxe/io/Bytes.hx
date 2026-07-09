@@ -33,6 +33,10 @@ class Bytes {
 		return data;
 	}
 
+	public static function fastGet(data:Array<Int>, pos:Int):Int {
+		return data[pos] & 0xff;
+	}
+
 	public function set(pos:Int, value:Int):Void {
 		data[pos] = value & 0xff;
 	}

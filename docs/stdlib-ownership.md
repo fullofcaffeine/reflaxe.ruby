@@ -129,7 +129,7 @@ Ruby-specific reason, record that decision in the manifest with a short reason.
 The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
-`StringTools`, `haxe.crypto.Base64`, `haxe.crypto.Md5`,
+`StringTools`, `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.io.BytesBuffer`, and `haxe.io.Path` run directly; `Std` runs through an
 adapted fixture because upstream assertion syntax and duplicate local names
@@ -180,6 +180,11 @@ on Ruby without coupling Haxe `Path` semantics to Ruby's `Pathname`.
 `haxe.crypto.Base64` is enabled as a direct upstream fixture. It proves the
 portable Haxe Base64 implementation can execute over RubyHx `Bytes`, while
 Ruby's native `Base64` stays a separate typed facade or optimization concern.
+
+`haxe.crypto.Crc32` is enabled as a direct upstream fixture. It proves the
+portable Haxe Crc32 implementation can execute over RubyHx `Bytes`, while
+Ruby's native `Zlib.crc32` stays a separate typed facade or optimization
+concern.
 
 `haxe.crypto.Md5` is enabled as a direct upstream fixture. It proves the
 portable Haxe digest implementation can execute over RubyHx `Bytes`; a

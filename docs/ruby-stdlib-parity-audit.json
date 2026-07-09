@@ -312,10 +312,10 @@
     {
       "module": "haxe.crypto.Crc32",
       "source": "haxe/crypto/Crc32.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback before adding any Ruby zlib-backed lowering.",
-      "notes": "Likely pure Haxe over Bytes."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream Crc32 implementation executes as portable Haxe code over RubyHx Bytes; Ruby zlib remains a separate native facade or optimization concern."
     },
     {
       "module": "haxe.crypto.Hmac",

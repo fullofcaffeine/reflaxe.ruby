@@ -28,9 +28,9 @@ Current upstream runtime fixtures:
 
 - Enabled: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
   `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
-  `haxe.crypto.Base64`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
-  `haxe.crypto.Sha224`, `haxe.crypto.Sha256`, `haxe.io.BytesBuffer`,
-  `haxe.io.Path`.
+  `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Md5`,
+  `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
+  `haxe.io.BytesBuffer`, `haxe.io.Path`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -55,6 +55,10 @@ remaining separate from any Ruby-native `Pathname` facade.
 implementation can execute over RubyHx `Bytes` for padded and unpadded standard
 and URL-safe encode/decode behavior. Ruby `Base64` remains a separate facade or
 optimization concern.
+
+`haxe.crypto.Crc32` is enabled directly. It proves the portable Haxe Crc32
+implementation can execute over RubyHx `Bytes`; Ruby `Zlib.crc32` remains a
+separate facade or optimization concern.
 
 `haxe.crypto.Md5` is enabled directly. It proves the portable Haxe digest
 implementation can execute over RubyHx `Bytes`; Ruby `Digest` remains a
