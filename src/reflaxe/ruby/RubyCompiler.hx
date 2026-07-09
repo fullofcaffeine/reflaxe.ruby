@@ -856,12 +856,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			var args = [
 				for (arg in field.args) {
-					var argName = arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar);
-					arg.opt ? argName + " = nil" : argName;
+					methodArgSignature(arg);
 				}
 			];
 			return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
 		});
+	}
+
+	static function methodArgSignature(arg:ClassFuncArg):String {
+		var argName = arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar);
+		if (!arg.opt) {
+			return argName;
+		}
+		var defaultValue = arg.expr == null ? RubyNil : compileExpr(arg.expr);
+		return argName + " = " + RubyASTPrinter.printExpr(defaultValue);
 	}
 
 	static function compileRailsModelMethod(field:ClassFuncData):RubyStatement {

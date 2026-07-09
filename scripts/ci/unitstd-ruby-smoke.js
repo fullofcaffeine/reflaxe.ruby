@@ -66,7 +66,7 @@ for (const expectedShape of [
 for (const expectedShape of [
   "Regexp.new(pattern, flags)",
   "def self.expand_replacement(by, match)",
-  "def match_sub(s, pos, len = nil)",
+  "def match_sub(s, pos, len = -1)",
 ]) {
   if (!eRegRuby.includes(expectedShape)) {
     console.error(`Expected generated EReg Ruby shape missing: ${expectedShape}`);

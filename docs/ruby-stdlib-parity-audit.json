@@ -360,10 +360,10 @@
     {
       "module": "haxe.ds.BalancedTree",
       "source": "haxe/ds/BalancedTree.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback before adding a Ruby-owned tree implementation.",
-      "notes": "No Ruby override is indicated until comparator or ordering semantics fail."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream BalancedTree implementation executes as portable Haxe code on Ruby, covering ordered keys, ordered values, copy isolation, removal, key-value iteration, string-key ordering, and clear semantics without a Ruby-owned tree override. It also guards Ruby lowering for Haxe default argument values through the upstream tree node height default."
     },
     {
       "module": "haxe.ds.EnumValueMap",

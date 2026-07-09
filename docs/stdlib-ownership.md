@@ -132,11 +132,10 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `StringTools`, `haxe.DynamicAccess`, `haxe.crypto.Base64`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
-`haxe.ds.GenericStack`, `haxe.EnumFlags`, `haxe.io.BytesBuffer`,
-`haxe.io.Path`, and `haxe.Template` run directly; `Std` runs through an
-adapted fixture because
-upstream assertion syntax and duplicate local names need macro-lane
-accommodation.
+`haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.EnumFlags`,
+`haxe.io.BytesBuffer`, `haxe.io.Path`, and `haxe.Template` run directly; `Std`
+runs through an adapted fixture because upstream assertion syntax and duplicate
+local names need macro-lane accommodation.
 
 Ruby's broader upstream stdlib candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and the human summary in
@@ -197,6 +196,12 @@ already-covered MD5/SHA-1/SHA-256 implementations, while Ruby's native
 `haxe.ds.GenericStack` is enabled as a direct upstream fixture. It proves the
 portable Haxe linked stack implementation can fall through unchanged on Ruby,
 including null values, LIFO order, and removal behavior.
+
+`haxe.ds.BalancedTree` is enabled as a direct upstream fixture. It proves the
+portable ordered tree map implementation can fall through unchanged on Ruby,
+including integer and string key ordering, ordered values, copy isolation,
+removal, key-value iteration, and clear semantics. It also guards Haxe default
+argument lowering through the upstream tree node height default.
 
 `haxe.Template` is enabled as a direct upstream fixture. It proves the portable
 Haxe template parser/executor can fall through unchanged on Ruby, including

@@ -82,7 +82,13 @@ class UpstreamUnitStdMacro {
 			case ECall({expr: EConst(CIdent("eq"))}, [expected, actual]):
 				assertTrue({expr: EBinop(OpEq, actual, expected), pos: expression.pos}, expression, relativePath);
 
+			case ECall({expr: EConst(CIdent("eq"))}, [expected, actual, _]):
+				assertTrue({expr: EBinop(OpEq, actual, expected), pos: expression.pos}, expression, relativePath);
+
 			case ECall({expr: EConst(CIdent("neq"))}, [expected, actual]):
+				assertTrue({expr: EBinop(OpNotEq, actual, expected), pos: expression.pos}, expression, relativePath);
+
+			case ECall({expr: EConst(CIdent("neq"))}, [expected, actual, _]):
 				assertTrue({expr: EBinop(OpNotEq, actual, expected), pos: expression.pos}, expression, relativePath);
 
 			case ECall({expr: EConst(CIdent("feq"))}, [actual, expected]):
@@ -99,6 +105,21 @@ class UpstreamUnitStdMacro {
 
 			case EBlock(expressions):
 				{expr: EBlock([for (statement in expressions) transformStatement(statement, relativePath)]), pos: expression.pos};
+
+			case EVars(vars):
+				{
+					expr: EVars([
+						for (variable in vars)
+							{
+								name: variable.name,
+								type: variable.type,
+								expr: variable.expr == null ? null : transformInitializer(variable.expr, relativePath),
+								isFinal: variable.isFinal,
+								meta: variable.meta
+							}
+					]),
+					pos: expression.pos
+				};
 
 			case EIf(condition, thenExpression, elseExpression):
 				{
@@ -126,6 +147,23 @@ class UpstreamUnitStdMacro {
 					pos: expression.pos
 				};
 
+			default:
+				expression;
+		}
+	}
+
+	static function transformInitializer(expression:Expr, relativePath:String):Expr {
+		return switch expression.expr {
+			case EFunction(kind, func):
+				{
+					expr: EFunction(kind, {
+						args: func.args,
+						ret: func.ret,
+						expr: transformStatement(func.expr, relativePath),
+						params: func.params
+					}),
+					pos: expression.pos
+				};
 			default:
 				expression;
 		}
