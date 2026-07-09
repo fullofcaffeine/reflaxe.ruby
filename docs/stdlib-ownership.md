@@ -132,8 +132,9 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `StringTools`, `haxe.DynamicAccess`, `haxe.crypto.Base64`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
-`haxe.ds.GenericStack`, `haxe.io.BytesBuffer`, `haxe.io.Path`, and
-`haxe.Template` run directly; `Std` runs through an adapted fixture because
+`haxe.ds.GenericStack`, `haxe.EnumFlags`, `haxe.io.BytesBuffer`,
+`haxe.io.Path`, and `haxe.Template` run directly; `Std` runs through an
+adapted fixture because
 upstream assertion syntax and duplicate local names need macro-lane
 accommodation.
 
@@ -207,6 +208,10 @@ portable Haxe dynamic-access abstraction can fall through unchanged on Ruby for
 exists/get/set/bracket access, anonymous-object conversion, key iteration, value
 iteration, key-value iteration, and removal without expanding the public Dynamic
 surface beyond this contained std boundary.
+
+`haxe.EnumFlags` is enabled as a direct upstream fixture. It proves the
+portable Haxe enum-flag helper can fall through unchanged on Ruby over enum
+constructor indexes and integer bit masks, including the 31st-bit flag case.
 
 `haxe.crypto.Md5` is enabled as a direct upstream fixture. It proves the
 portable Haxe digest implementation can execute over RubyHx `Bytes`; a

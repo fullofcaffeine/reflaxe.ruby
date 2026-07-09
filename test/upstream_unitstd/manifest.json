@@ -23,6 +23,7 @@
     {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
     {"module": "StringTools", "status": "enabled", "source": "StringTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringTools.unit.hx"},
     {"module": "haxe.DynamicAccess", "status": "enabled", "source": "haxe/DynamicAccess.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/DynamicAccess.unit.hx"},
+    {"module": "haxe.EnumFlags", "status": "enabled", "source": "haxe/EnumFlags.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/EnumFlags.unit.hx"},
     {"module": "haxe.Template", "status": "enabled", "source": "haxe/Template.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/Template.unit.hx"},
     {"module": "haxe.crypto.Base64", "status": "enabled", "source": "haxe/crypto/Base64.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Base64.unit.hx"},
     {"module": "haxe.crypto.Crc32", "status": "enabled", "source": "haxe/crypto/Crc32.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Crc32.unit.hx"},

@@ -23,6 +23,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("Math.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/DynamicAccess.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/EnumFlags.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/Template.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Base64.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Crc32.unit.hx");
@@ -39,4 +40,50 @@ class Main {
 		unitstd_ruby.StdNumericParsing.run();
 		Sys.println("unitstd-ruby ok");
 	}
+}
+
+/**
+	Fixture helpers mirrored from upstream unitstd TestSpecification so copied
+	expression specs can resolve enum constructors exactly as the upstream lane
+	does.
+**/
+private enum EnumFlagTest {
+	EA;
+	EB;
+	EC;
+}
+
+private enum EnumFlagTest2 {
+	EF_00;
+	EF_01;
+	EF_02;
+	EF_03;
+	EF_04;
+	EF_05;
+	EF_06;
+	EF_07;
+	EF_08;
+	EF_09;
+	EF_10;
+	EF_11;
+	EF_12;
+	EF_13;
+	EF_14;
+	EF_15;
+	EF_16;
+	EF_17;
+	EF_18;
+	EF_19;
+	EF_20;
+	EF_21;
+	EF_22;
+	EF_23;
+	EF_24;
+	EF_25;
+	EF_26;
+	EF_27;
+	EF_28;
+	EF_29;
+	EF_30;
+	EF_31;
 }

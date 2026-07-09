@@ -224,10 +224,10 @@
     {
       "module": "haxe.EnumFlags",
       "source": "haxe/EnumFlags.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try the upstream fixture once enum integer representation is already covered by Type/enum smokes.",
-      "notes": "Likely pure Haxe over Int operations."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream EnumFlags implementation executes as portable Haxe code on Ruby over enum constructor indexes and integer bit masks, including the 31st-bit flag case."
     },
     {
       "module": "haxe.Http",
