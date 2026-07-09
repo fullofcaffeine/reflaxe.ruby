@@ -59,7 +59,7 @@ module Hxruby
             g = (g + 1)
             kind = Hxruby::Generators::Routes::ParityCore.hash_string(decl, "kind")
             if (!Hxruby::Generators::Routes::ParityCore.supported_declaration_kind(kind))
-              errors.push(("unknown Haxe-owned route manifest declaration kind " + ((kind == nil) ? "(missing)" : kind))).length()
+              errors.push(("unknown Haxe-owned route manifest declaration kind " + HXRuby.stringify(((kind == nil) ? "(missing)" : kind)))).length()
             else
               errors = (errors + Hxruby::Generators::Routes::ParityCore.validate_declarations(Hxruby::Generators::Routes::ParityCore.children_of(decl)))
             end
@@ -322,7 +322,7 @@ end)
         end
         def self.compare_route(expected, routes)
           if expected.opaque
-            return [(("opaque raw Haxe-owned route at " + expected.position) + " cannot be parity-checked; replace it with typed route declarations or keep Rails-owned routes")]
+            return [(("opaque raw Haxe-owned route at " + HXRuby.stringify(expected.position)) + " cannot be parity-checked; replace it with typed route declarations or keep Rails-owned routes")]
           end
           if Hxruby::Generators::Routes::ParityCore.any(routes, ->(route) { Hxruby::Generators::Routes::ParityCore.route_matches(expected, route) })
             return []
@@ -374,7 +374,7 @@ end)
           return (((((expected.name == nil) || (route.prefix == expected.name)) && (route.verb == expected.verb)) && (route.path == expected.path)) && ((expected.target == nil) || (route.target == expected.target)))
         end
         def self.wrong_verb(expected, routes)
-          return ((((("wrong verb for route " + expected.name) + ": expected ") + Hxruby::Generators::Routes::ParityCore.upper(expected.verb)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
+          return ((((("wrong verb for route " + HXRuby.stringify(expected.name)) + ": expected ") + Hxruby::Generators::Routes::ParityCore.upper(expected.verb)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
   g = []
   g1 = 0
 g2 = routes
@@ -387,7 +387,7 @@ end
 end).join(", "))
         end
         def self.wrong_path(expected, routes)
-          return ((((("wrong path for route " + expected.name) + ": expected ") + expected.path) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
+          return ((((("wrong path for route " + HXRuby.stringify(expected.name)) + ": expected ") + expected.path) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
   g = []
   g1 = 0
 g2 = routes
@@ -400,7 +400,7 @@ end
 end).join(", "))
         end
         def self.wrong_target(expected, routes)
-          return ((((((("wrong target for route " + expected.path) + " ") + Hxruby::Generators::Routes::ParityCore.upper(expected.verb)) + ": expected ") + expected.target) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
+          return ((((((("wrong target for route " + expected.path) + " ") + Hxruby::Generators::Routes::ParityCore.upper(expected.verb)) + ": expected ") + HXRuby.stringify(expected.target)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
   g = []
   g1 = 0
 g2 = routes

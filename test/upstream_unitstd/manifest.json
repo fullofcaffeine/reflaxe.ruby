@@ -22,6 +22,7 @@
     {"module": "String", "status": "enabled", "source": "String.unit.hx", "fixture": "test/upstream_unitstd/upstream/String.unit.hx"},
     {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
     {"module": "StringTools", "status": "enabled", "source": "StringTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringTools.unit.hx"},
+    {"module": "haxe.Template", "status": "enabled", "source": "haxe/Template.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/Template.unit.hx"},
     {"module": "haxe.crypto.Base64", "status": "enabled", "source": "haxe/crypto/Base64.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Base64.unit.hx"},
     {"module": "haxe.crypto.Crc32", "status": "enabled", "source": "haxe/crypto/Crc32.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Crc32.unit.hx"},
     {"module": "haxe.crypto.Hmac", "status": "enabled", "source": "haxe/crypto/Hmac.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Hmac.unit.hx"},

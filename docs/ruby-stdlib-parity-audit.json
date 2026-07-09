@@ -264,10 +264,10 @@
     {
       "module": "haxe.Template",
       "source": "haxe/Template.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback in a pure Ruby smoke before considering overrides.",
-      "notes": "This is Haxe template semantics and should stay separate from RailsHx HHX/ActionView templates."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream Haxe Template implementation executes as portable Haxe code on Ruby; this remains separate from RailsHx HHX and ActionView templates."
     },
     {
       "module": "haxe.Utf8",

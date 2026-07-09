@@ -132,9 +132,9 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `StringTools`, `haxe.crypto.Base64`, `haxe.crypto.Crc32`,
 `haxe.crypto.Hmac`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
 `haxe.crypto.Sha224`, `haxe.crypto.Sha256`, `haxe.ds.GenericStack`,
-`haxe.io.BytesBuffer`, and `haxe.io.Path` run directly; `Std` runs through an
-adapted fixture because upstream assertion syntax and duplicate local names
-need macro-lane accommodation.
+`haxe.io.BytesBuffer`, `haxe.io.Path`, and `haxe.Template` run directly; `Std`
+runs through an adapted fixture because upstream assertion syntax and duplicate
+local names need macro-lane accommodation.
 
 Ruby's broader upstream stdlib candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and the human summary in
@@ -195,6 +195,11 @@ already-covered MD5/SHA-1/SHA-256 implementations, while Ruby's native
 `haxe.ds.GenericStack` is enabled as a direct upstream fixture. It proves the
 portable Haxe linked stack implementation can fall through unchanged on Ruby,
 including null values, LIFO order, and removal behavior.
+
+`haxe.Template` is enabled as a direct upstream fixture. It proves the portable
+Haxe template parser/executor can fall through unchanged on Ruby, including
+context lookup, globals, nested macro callbacks, and string output. This is
+separate from RailsHx HHX and ActionView template authoring.
 
 `haxe.crypto.Md5` is enabled as a direct upstream fixture. It proves the
 portable Haxe digest implementation can execute over RubyHx `Bytes`; a

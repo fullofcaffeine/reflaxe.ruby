@@ -563,6 +563,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				for (field in fields) {
 					addUntypedInitializerRequires(moduleRequires, classType, null, field.expr);
 				}
+			case EConst(CRegexp(_, _)):
+				addUntypedPathRequire(moduleRequires, classType, expectedType, ["EReg"]);
 			case EBinop(_, left, right):
 				addUntypedInitializerRequires(moduleRequires, classType, null, left);
 				addUntypedInitializerRequires(moduleRequires, classType, null, right);
@@ -2716,6 +2718,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr("break");
 			case TContinue:
 				RubyRawExpr("next");
+			case TEnumParameter(enumExpr, field, index):
+				var paramName = enumParameterFieldName(field, index);
+				paramName == null ? RubyNil : RubyRawExpr(printInlineExpr(enumExpr) + "." + paramName);
 			case TEnumIndex(enumExpr):
 				RubyRawExpr(printInlineExpr(enumExpr) + ".__hx_index");
 			case TCall({expr: TField(_, FEnum(enumRef, field))}, params):
@@ -2751,6 +2756,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				&& isArrayReceiverFieldAccess(target, access)):
 				var iteratorExpr = hxrubyCall("key_value_iterator", [compileExpr(target)]);
 				RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr) + " }");
+			case TField(target, access) if (methodFieldValueName(access) != null):
+				RubyRawExpr(printInlineExpr(target) + ".method(:" + methodFieldValueName(access) + ")");
 			case TField(target, FAnon(fieldRef)):
 				hxrubyCall("reflect_field", [compileExpr(target), RubyString(fieldRef.get().name)]);
 			case TField(target, access):
@@ -2791,6 +2798,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case EConst(CInt(value, _)): RubyInt(value);
 			case EConst(CFloat(value, _)): RubyFloat(value);
 			case EConst(CString(value, _)): RubyString(value);
+			case EConst(CRegexp(pattern, options)):
+				RubyCall(RubyLocal("EReg"), "new", [RubyString(pattern), RubyString(options)]);
 			case EConst(CIdent("true")): RubyBool(true);
 			case EConst(CIdent("false")): RubyBool(false);
 			case EConst(CIdent("null")): RubyNil;
@@ -5733,6 +5742,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (field.kind) {
 			case FMethod(_): true;
 			case _: false;
+		}
+	}
+
+	static function methodFieldValueName(access:haxe.macro.Type.FieldAccess):Null<String> {
+		return switch (access) {
+			case FInstance(_, _, fieldRef) | FClosure(_, fieldRef):
+				var field = fieldRef.get();
+				isMethodField(field) ? rubyFieldName(field.name, field.meta) : null;
+			case _:
+				null;
 		}
 	}
 
@@ -13280,6 +13299,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return rubyNativeName(enumType.meta) ?? rubyConstantPath(enumType.pack, enumType.name);
 	}
 
+	static function enumParameterFieldName(field:haxe.macro.Type.EnumField, index:Int):Null<String> {
+		return switch (TypeTools.follow(field.type)) {
+			case TFun(args, _) if (index >= 0 && index < args.length):
+				RubyNaming.toLocalName(args[index].name);
+			case _:
+				null;
+		}
+	}
+
 	static function isRailsNativeTopLevelConstant(classType:ClassType):Bool {
 		return hasMeta(classType.meta, ":railsModel")
 			|| isRailsControllerType(classType)
@@ -13822,6 +13850,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (op) {
 			case OpDiv:
 				hxrubyCall("math_divide", [compileExpr(lhs), compileExpr(rhs)]);
+			case OpAdd if (isStringExpr(lhs) && !isStringExpr(rhs)):
+				RubyBinary("+", compileExpr(lhs), compileRubyStringifyParam(rhs));
+			case OpAdd if (!isStringExpr(lhs) && isStringExpr(rhs)):
+				RubyBinary("+", compileRubyStringifyParam(lhs), compileExpr(rhs));
 			case OpUShr:
 				RubyRawExpr("((" + printInlineExpr(lhs) + ".to_i & 0xffffffff) >> (" + printInlineExpr(rhs) + ".to_i & 31))");
 			case OpEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):

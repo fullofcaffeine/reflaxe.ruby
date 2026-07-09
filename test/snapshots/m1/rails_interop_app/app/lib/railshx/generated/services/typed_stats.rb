@@ -6,7 +6,7 @@ module Services
       "services.TypedStats"
     end
     def self.summary(items)
-      return (("Typed Haxe summarized " + items.length) + " Rails surfaces.")
+      return (("Typed Haxe summarized " + HXRuby.stringify(items.length)) + " Rails surfaces.")
     end
     def self.confidence_label()
       return "Ruby called a generated Haxe service with no adapter."

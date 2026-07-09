@@ -31,7 +31,7 @@ Current upstream runtime fixtures:
   `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Hmac`,
   `haxe.crypto.Md5`, `haxe.crypto.Sha1`, `haxe.crypto.Sha224`,
   `haxe.crypto.Sha256`, `haxe.ds.GenericStack`, `haxe.io.BytesBuffer`,
-  `haxe.io.Path`.
+  `haxe.io.Path`, `haxe.Template`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -69,6 +69,11 @@ facade or optimization concern.
 `haxe.ds.GenericStack` is enabled directly. It proves the portable Haxe linked
 stack implementation can fall through unchanged on Ruby, including null values,
 LIFO order, and removal behavior.
+
+`haxe.Template` is enabled directly. It proves the portable Haxe template
+parser/executor can fall through unchanged on Ruby, including context lookup,
+globals, nested macro callbacks, and string output. This is separate from
+RailsHx HHX and ActionView template authoring.
 
 `haxe.crypto.Md5` is enabled directly. It proves the portable Haxe digest
 implementation can execute over RubyHx `Bytes`; Ruby `Digest` remains a

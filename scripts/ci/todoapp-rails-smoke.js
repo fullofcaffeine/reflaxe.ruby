@@ -823,9 +823,9 @@ for (const expected of [
   /todo(?:__hx\d+)? = Todo\.where\(id: self\.param_id\(\), user_id: current_user(?:__hx\d+)?\.id\)\.first\(\)/,
   /todo(?:__hx\d+)?\.update\(is_completed: true\)/,
   /self\.flash\(\)\[:notice\] = "Todo completed"/,
-  /"Todo report for " \+ label(?:__hx\d+)?.*(?:HXRuby\.stringify\(count(?:__hx\d+)?\)|count(?:__hx\d+)?\.to_s\(\)).*" todos"/,
+  /"Todo report for " \+ HXRuby\.stringify\(label(?:__hx\d+)?\).*(?:HXRuby\.stringify\(count(?:__hx\d+)?\)|count(?:__hx\d+)?\.to_s\(\)).*" todos"/,
   /self\.render\(plain: .*status: :ok\)/,
-  /self\.send_data\(.*"RailsHx file route: " \+ label(?:__hx\d+)?.*"\\n".*filename: "todoapp-route\.txt", type: "text\/plain", disposition: "inline", status: :ok\)/,
+  /self\.send_data\(.*"RailsHx file route: " \+ HXRuby\.stringify\(label(?:__hx\d+)?\).*"\\n".*filename: "todoapp-route\.txt", type: "text\/plain", disposition: "inline", status: :ok\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`todoapp_rails controller output missing expected line: ${expected}`);

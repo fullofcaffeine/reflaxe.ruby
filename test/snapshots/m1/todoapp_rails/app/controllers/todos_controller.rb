@@ -43,12 +43,12 @@ class TodosController < ApplicationController
     year = self.params()[:year]
     label = ((year == nil) ? "all years" : year)
     count = Todo.where(user_id: current_user.id).count()
-    self.render(plain: (((("Todo report for " + label) + ": ") + HXRuby.stringify(count)) + " todos"), status: :ok)
+    self.render(plain: (((("Todo report for " + HXRuby.stringify(label)) + ": ") + HXRuby.stringify(count)) + " todos"), status: :ok)
   end
   def file()
     path = self.params()[:path]
     label = ((path == nil) ? "root" : path)
-    self.send_data((("RailsHx file route: " + label) + "\n"), filename: "todoapp-route.txt", type: "text/plain", disposition: "inline", status: :ok)
+    self.send_data((("RailsHx file route: " + HXRuby.stringify(label)) + "\n"), filename: "todoapp-route.txt", type: "text/plain", disposition: "inline", status: :ok)
   end
   def param_id()
     raw = self.params()[:id]

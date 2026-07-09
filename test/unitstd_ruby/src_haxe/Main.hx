@@ -22,6 +22,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("Map.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Math.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/Template.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Base64.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Crc32.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Hmac.unit.hx");
