@@ -28,8 +28,9 @@ Current upstream runtime fixtures:
 
 - Enabled: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
   `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
-  `haxe.crypto.Md5`, `haxe.crypto.Sha1`, `haxe.crypto.Sha224`,
-  `haxe.crypto.Sha256`, `haxe.io.BytesBuffer`, `haxe.io.Path`.
+  `haxe.crypto.Base64`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
+  `haxe.crypto.Sha224`, `haxe.crypto.Sha256`, `haxe.io.BytesBuffer`,
+  `haxe.io.Path`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -49,6 +50,11 @@ date-time, date-only, and UTC time-only shapes through generated Ruby.
 `haxe.io.Path` is enabled directly. It proves the portable Haxe path parser,
 formatter, joiner, and normalizer can fall through unchanged on Ruby while
 remaining separate from any Ruby-native `Pathname` facade.
+
+`haxe.crypto.Base64` is enabled directly. It proves the portable Haxe Base64
+implementation can execute over RubyHx `Bytes` for padded and unpadded standard
+and URL-safe encode/decode behavior. Ruby `Base64` remains a separate facade or
+optimization concern.
 
 `haxe.crypto.Md5` is enabled directly. It proves the portable Haxe digest
 implementation can execute over RubyHx `Bytes`; Ruby `Digest` remains a

@@ -5,6 +5,14 @@ class Counter
     "Counter"
   end
   class << self
+    attr_accessor :prefix
+  end
+  @prefix = "counter"
+  class << self
+    attr_accessor :label
+  end
+  @label = Counter.prefix
+  class << self
     attr_accessor :value
   end
   @value = 0

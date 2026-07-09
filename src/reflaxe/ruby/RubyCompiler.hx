@@ -352,6 +352,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			moduleRequires.addRequire("active_support/concern");
 		}
 		addHaxeHierarchyRequires(moduleRequires, classType);
+		addStaticVarInitializerRequires(moduleRequires, classType, varFields);
 		var hxrubyCallsBefore = hxrubyCallCount;
 		var classBody:Array<RubyStatement> = [];
 		classBody.push(typeNameMetadata(fullTypeName(classType.pack, classType.name)));
@@ -524,6 +525,74 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (!interfaceType.isExtern) {
 				moduleRequires.addRequireRelative(rubyRequireRelativePathFrom(classType.pack, interfaceType.pack, interfaceType.name));
 			}
+		}
+	}
+
+	static function addStaticVarInitializerRequires(moduleRequires:RequireRegistry, classType:ClassType, varFields:Array<ClassVarData>):Void {
+		for (field in varFields) {
+			if (field.isStatic) {
+				addUntypedInitializerRequires(moduleRequires, classType, field.field.type, field.getDefaultUntypedExpr());
+			}
+		}
+	}
+
+	static function addUntypedInitializerRequires(moduleRequires:RequireRegistry, classType:ClassType, expectedType:Null<haxe.macro.Type>,
+			expr:Null<haxe.macro.Expr>):Void {
+		if (expr == null) {
+			return;
+		}
+		switch (expr.expr) {
+			case ECall(callee, params):
+				var segments = untypedPathSegments(callee);
+				if (segments != null && segments.length > 1) {
+					addUntypedPathRequire(moduleRequires, classType, expectedType, segments.slice(0, segments.length - 1));
+				}
+				for (param in params) {
+					addUntypedInitializerRequires(moduleRequires, classType, null, param);
+				}
+			case EField(_, _):
+				var segments = untypedPathSegments(expr);
+				if (segments != null && segments.length > 1) {
+					addUntypedPathRequire(moduleRequires, classType, expectedType, segments.slice(0, segments.length - 1));
+				}
+			case EArrayDecl(values):
+				for (value in values) {
+					addUntypedInitializerRequires(moduleRequires, classType, null, value);
+				}
+			case EObjectDecl(fields):
+				for (field in fields) {
+					addUntypedInitializerRequires(moduleRequires, classType, null, field.expr);
+				}
+			case EBinop(_, left, right):
+				addUntypedInitializerRequires(moduleRequires, classType, null, left);
+				addUntypedInitializerRequires(moduleRequires, classType, null, right);
+			case EUnop(_, _, inner) | EParenthesis(inner) | EMeta(_, inner) | ECheckType(inner, _):
+				addUntypedInitializerRequires(moduleRequires, classType, expectedType, inner);
+			case _:
+		}
+	}
+
+	static function addUntypedPathRequire(moduleRequires:RequireRegistry, fromClassType:ClassType, expectedType:Null<haxe.macro.Type>,
+			segments:Array<String>):Void {
+		var type = resolveUntypedTypePath(segments, expectedType);
+		if (type != null) {
+			addRequireForType(moduleRequires, fromClassType, type);
+		}
+	}
+
+	static function addRequireForType(moduleRequires:RequireRegistry, fromClassType:ClassType, type:haxe.macro.Type):Void {
+		switch (TypeTools.follow(type)) {
+			case TInst(classRef, _):
+				var target = classRef.get();
+				if (!target.isExtern && !sameClassType(fromClassType, target) && coreRubyTypeName(target.pack, target.name) == null) {
+					moduleRequires.addRequireRelative(rubyRequireRelativePathFrom(fromClassType.pack, target.pack, target.name));
+				}
+			case TEnum(enumRef, _):
+				var target = enumRef.get();
+				moduleRequires.addRequireRelative(rubyRequireRelativePathFrom(fromClassType.pack, target.pack, target.name));
+			case TLazy(lazy):
+				addRequireForType(moduleRequires, fromClassType, lazy());
+			case _:
 		}
 	}
 
@@ -887,7 +956,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				return RubyRawStatement("attr_accessor :" + name);
 			}
 			var init = field.findDefaultExpr();
-			var initExpr = init == null ? compileUntypedConst(field.getDefaultUntypedExpr()) : compileExpr(init);
+			var initExpr = init == null ? compileUntypedDefaultExpr(field.classType, field.field.type, field.getDefaultUntypedExpr()) : compileExpr(init);
 			return RubyRawStatement("class << self\n  attr_accessor :" + name + "\nend\n@" + name + " = " +
 				reflaxe.ruby.ast.RubyASTPrinter.printExpr(initExpr));
 		});
@@ -2703,7 +2772,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return postFix ? RubyRawExpr("(" + target + ").tap { " + assignment + " }") : RubyRawExpr("(" + assignment + ")");
 	}
 
-	static function compileUntypedConst(expr:Null<haxe.macro.Expr>):RubyExpr {
+	// Haxe usually removes typed default expressions from static fields before
+	// Reflaxe sees them, leaving only untyped `@:value` metadata. Lower the
+	// conservative initializer subset needed by std fallbacks while keeping
+	// unsupported shapes explicit as nil instead of inventing semantics.
+	static function compileUntypedDefaultExpr(owner:ClassType, expectedType:Null<haxe.macro.Type>, expr:Null<haxe.macro.Expr>):RubyExpr {
 		if (expr == null) {
 			return RubyNil;
 		}
@@ -2714,8 +2787,224 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case EConst(CIdent("true")): RubyBool(true);
 			case EConst(CIdent("false")): RubyBool(false);
 			case EConst(CIdent("null")): RubyNil;
+			case EConst(CIdent(name)):
+				RubyRawExpr(untypedStaticPathValue(owner, expectedType, [name]));
+			case EField(_, _):
+				var segments = untypedPathSegments(expr);
+				segments == null ? RubyNil : RubyRawExpr(untypedStaticPathValue(owner, expectedType, segments));
+			case ECall(callee, params):
+				var segments = untypedPathSegments(callee);
+				if (segments == null || segments.length < 2) {
+					RubyNil;
+				} else {
+					var ownerSegments = segments.slice(0, segments.length - 1);
+					var methodName = segments[segments.length - 1];
+					var token = compileUntypedNamedTokenCall(owner, expectedType, ownerSegments, methodName, params);
+					if (token != null) {
+						token;
+					} else {
+						RubyCall(RubyRawExpr(untypedStaticPathValue(owner, expectedType, ownerSegments)),
+							untypedStaticFieldName(owner, expectedType, ownerSegments, methodName),
+							[for (param in params) compileUntypedDefaultExpr(owner, null, param)]);
+					}
+				}
+			case EArrayDecl(values):
+				RubyArray([for (value in values) compileUntypedDefaultExpr(owner, null, value)]);
+			case EObjectDecl(fields):
+				RubyHash([
+					for (field in fields)
+						{key: field.field, value: compileUntypedDefaultExpr(owner, null, field.expr)}
+				]);
+			case EParenthesis(inner) | EMeta(_, inner) | ECheckType(inner, _):
+				compileUntypedDefaultExpr(owner, expectedType, inner);
 			case _: RubyNil;
 		}
+	}
+
+	static function untypedStaticPathValue(owner:ClassType, expectedType:Null<haxe.macro.Type>, segments:Array<String>):String {
+		if (segments == null || segments.length == 0) {
+			return "nil";
+		}
+		var resolved = resolveUntypedTypePath(segments, expectedType);
+		if (resolved != null) {
+			return rubyTypeNameFromType(resolved) ?? "nil";
+		}
+		if (segments.length == 1) {
+			return rubyClassConstantPath(owner) + "." + untypedStaticFieldName(owner, expectedType, [], segments[0]);
+		}
+		var ownerSegments = segments.slice(0, segments.length - 1);
+		var ownerValue = untypedStaticPathValue(owner, expectedType, ownerSegments);
+		return ownerValue + "." + untypedStaticFieldName(owner, expectedType, ownerSegments, segments[segments.length - 1]);
+	}
+
+	static function untypedStaticFieldName(owner:ClassType, expectedType:Null<haxe.macro.Type>, ownerSegments:Array<String>, name:String):String {
+		if (ownerSegments == null || ownerSegments.length == 0) {
+			var field = findStaticClassField(owner, name);
+			if (field != null) {
+				return rubyFieldName(field.name, field.meta);
+			}
+		} else {
+			var ownerType = resolveUntypedTypePath(ownerSegments, expectedType);
+			if (ownerType != null) {
+				var field = findStaticField(ownerType, name);
+				if (field != null) {
+					return rubyFieldName(field.name, field.meta);
+				}
+			}
+		}
+		return RubyNaming.toMethodName(name);
+	}
+
+	static function compileUntypedNamedTokenCall(owner:ClassType, expectedType:Null<haxe.macro.Type>, ownerSegments:Array<String>, methodName:String,
+			params:Array<haxe.macro.Expr>):Null<RubyExpr> {
+		if (methodName != "named" || params.length != 1) {
+			return null;
+		}
+		var ownerType = resolveUntypedTypePath(ownerSegments, expectedType);
+		var ownerName = ownerType == null ? null : typeFullName(ownerType);
+		if (ownerName == null || !isUntypedNamedTokenOwner(ownerName)) {
+			return null;
+		}
+		return compileUntypedDefaultExpr(owner, null, params[0]);
+	}
+
+	static function isUntypedNamedTokenOwner(owner:String):Bool {
+		return isActionCableStreamOwner(owner)
+			|| isActionCableSubscriptionParamOwner(owner)
+			|| isActionCableConnectionIdentifierOwner(owner)
+			|| isActionCableConnectionParamOwner(owner)
+			|| isActionMailerParamOwner(owner)
+			|| owner == "rails.active_support.EventName"
+			|| owner == "rails.turbo.StreamTarget"
+			|| StringTools.endsWith(owner, ".StreamTarget_Impl_")
+			|| owner == "rails.turbo.StreamName"
+			|| StringTools.endsWith(owner, ".StreamName_Impl_");
+	}
+
+	static function findStaticField(type:haxe.macro.Type, name:String):Null<ClassField> {
+		return switch (TypeTools.follow(type)) {
+			case TInst(classRef, _):
+				var classType = classRef.get();
+				var found:Null<ClassField> = null;
+				for (field in classType.statics.get()) {
+					if (field.name == name) {
+						found = field;
+						break;
+					}
+				}
+				found;
+			case TLazy(lazy):
+				findStaticField(lazy(), name);
+			case _:
+				null;
+		}
+	}
+
+	static function findStaticClassField(classType:ClassType, name:String):Null<ClassField> {
+		var found:Null<ClassField> = null;
+		for (field in classType.statics.get()) {
+			if (field.name == name) {
+				found = field;
+				break;
+			}
+		}
+		return found;
+	}
+
+	static function untypedPathSegments(expr:haxe.macro.Expr):Null<Array<String>> {
+		return switch (expr.expr) {
+			case EConst(CIdent(name)) if (name != "true" && name != "false" && name != "null"):
+				[name];
+			case EField(target, field):
+				var base = untypedPathSegments(target);
+				if (base == null) {
+					null;
+				} else {
+					base.push(field);
+					base;
+				}
+			case EParenthesis(inner) | EMeta(_, inner) | ECheckType(inner, _):
+				untypedPathSegments(inner);
+			case _:
+				null;
+		}
+	}
+
+	static function resolveUntypedTypePath(segments:Array<String>, expectedType:Null<haxe.macro.Type> = null):Null<haxe.macro.Type> {
+		if (segments == null || segments.length == 0) {
+			return null;
+		}
+		if (segments.length == 1 && expectedType != null && typeShortName(expectedType) == segments[0]) {
+			return expectedType;
+		}
+		try {
+			return Context.getType(segments.join("."));
+		} catch (_:Dynamic) {
+			return null;
+		}
+	}
+
+	static function rubyTypeNameFromType(type:haxe.macro.Type):Null<String> {
+		return switch (TypeTools.follow(type)) {
+			case TInst(classRef, _):
+				var classType = classRef.get();
+				coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType);
+			case TEnum(enumRef, _):
+				var enumType = enumRef.get();
+				rubyNativeName(enumType.meta) ?? rubyConstantPath(enumType.pack, enumType.name);
+			case TType(typeRef, _):
+				var defType = typeRef.get();
+				rubyNativeName(defType.meta) ?? rubyConstantPath(defType.pack, defType.name);
+			case TAbstract(abstractRef, _):
+				var abstractType = abstractRef.get();
+				rubyNativeName(abstractType.meta) ?? rubyConstantPath(abstractType.pack, abstractType.name);
+			case TLazy(lazy):
+				rubyTypeNameFromType(lazy());
+			case _:
+				null;
+		}
+	}
+
+	static function typeShortName(type:haxe.macro.Type):Null<String> {
+		return switch (TypeTools.follow(type)) {
+			case TInst(classRef, _):
+				classRef.get().name;
+			case TEnum(enumRef, _):
+				enumRef.get().name;
+			case TType(typeRef, _):
+				typeRef.get().name;
+			case TAbstract(abstractRef, _):
+				abstractRef.get().name;
+			case TLazy(lazy):
+				typeShortName(lazy());
+			case _:
+				null;
+		}
+	}
+
+	static function typeFullName(type:haxe.macro.Type):Null<String> {
+		return switch (TypeTools.follow(type)) {
+			case TInst(classRef, _):
+				var classType = classRef.get();
+				fullTypeName(classType.pack, classType.name);
+			case TEnum(enumRef, _):
+				var enumType = enumRef.get();
+				fullTypeName(enumType.pack, enumType.name);
+			case TType(typeRef, _):
+				var defType = typeRef.get();
+				fullTypeName(defType.pack, defType.name);
+			case TAbstract(abstractRef, _):
+				var abstractType = abstractRef.get();
+				fullTypeName(abstractType.pack, abstractType.name);
+			case TLazy(lazy):
+				typeFullName(lazy());
+			case _:
+				null;
+		}
+	}
+
+	static function sameClassType(left:ClassType, right:ClassType):Bool {
+		return fullTypeName(left.pack, left.name) == fullTypeName(right.pack, right.name);
 	}
 
 	static function compileSpecialStatement(expr:TypedExpr):Null<RubyStatement> {

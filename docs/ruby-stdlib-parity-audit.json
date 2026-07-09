@@ -304,10 +304,10 @@
     {
       "module": "haxe.crypto.Base64",
       "source": "haxe/crypto/Base64.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback first; add a ruby.Base64 facade only for Ruby-native authoring or output shape.",
-      "notes": "Pure Haxe fallback may be sufficient for portable code."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream Base64 implementation executes as portable Haxe code over RubyHx Bytes; ruby.Base64 remains a separate native facade or optimization concern."
     },
     {
       "module": "haxe.crypto.Crc32",

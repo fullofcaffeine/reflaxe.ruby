@@ -7,7 +7,7 @@ module ApplicationCable
     class << self
       attr_accessor :auth_token
     end
-    @auth_token = nil
+    @auth_token = "token"
     def connect()
       if (request.params["token"] == "reject")
         self.reject_unauthorized_connection()
