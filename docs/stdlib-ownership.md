@@ -97,9 +97,10 @@ The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
 `StringTools`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
-`haxe.crypto.Sha256`, `haxe.io.BytesBuffer`, and `haxe.io.Path` run directly;
-`Std` runs through an adapted fixture because upstream assertion syntax and
-duplicate local names need macro-lane accommodation.
+`haxe.crypto.Sha224`, `haxe.crypto.Sha256`, `haxe.io.BytesBuffer`, and
+`haxe.io.Path` run directly; `Std` runs through an adapted fixture because
+upstream assertion syntax and duplicate local names need macro-lane
+accommodation.
 
 Ruby's broader upstream stdlib candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and the human summary in
@@ -150,6 +151,10 @@ Ruby-native `Digest` facade remains a separate interop or optimization layer.
 `haxe.crypto.Sha1` is enabled as a direct upstream fixture. It proves the
 portable Haxe SHA-1 implementation can execute over RubyHx `Bytes` and the Ruby
 compiler's Haxe-compatible 32-bit integer lowering.
+
+`haxe.crypto.Sha224` is enabled as a direct upstream fixture. It proves the
+portable Haxe SHA-224 implementation can execute over RubyHx `Bytes` and the
+Ruby compiler's Haxe-compatible 32-bit integer lowering.
 
 `haxe.crypto.Sha256` is enabled as a direct upstream fixture. It proves the
 portable Haxe SHA-256 implementation can execute over RubyHx `Bytes` and the
