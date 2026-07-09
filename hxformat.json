@@ -8,6 +8,7 @@
     "examples/.*/src_haxe/routes/Routes\\.hx",
     "examples/.*/views/.*\\.hx",
     "test/\\.generated",
+    "test/upstream_unitstd/upstream/haxe/Log\\.unit\\.hx",
     "vendor/reflaxe"
   ],
   "indentation": {

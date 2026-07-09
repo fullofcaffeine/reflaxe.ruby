@@ -383,8 +383,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 			if (isRubyConcern && field.isStatic) {
 				concernClassMethods.push(compileMethodAs(field, false));
+				if (isDynamicMethod(field)) {
+					concernClassMethods.push(compileDynamicMethodSetter(field, false));
+				}
 			} else {
 				classBody.push(compileMethod(field));
+				if (isDynamicMethod(field)) {
+					classBody.push(compileDynamicMethodSetter(field, field.isStatic));
+				}
 			}
 		}
 		if (concernClassMethods.length > 0) {
@@ -861,6 +867,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			];
 			return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
 		});
+	}
+
+	/**
+		Haxe `dynamic function` fields remain assignable after declaration. Ruby
+		methods are not fields, so expose receiver-local callback storage plus a
+		writer that installs a dispatch wrapper while retaining the default method.
+	**/
+	static function compileDynamicMethodSetter(field:ClassFuncData, emitStatic:Bool):RubyStatement {
+		var name = RubyNaming.toMethodName(field.field.name);
+		var storageName = "@__hx_dynamic_" + name;
+		var valueMethodName = (emitStatic ? "self." : "") + dynamicMethodValueName(name);
+		var methodName = (emitStatic ? "self." : "") + name + "=";
+		return
+			RubyRawStatement('def ${valueMethodName}()\n  return ${storageName} if instance_variable_defined?(:${storageName})\n  method(:${name})\nend\ndef ${methodName}(callable)\n  ${storageName} = callable\n  define_singleton_method(:${name}) do |*args|\n    callable.call(*args)\n  end\nend');
+	}
+
+	static function isDynamicMethod(field:ClassFuncData):Bool {
+		return switch (field.kind) {
+			case MethDynamic: true;
+			case _: false;
+		}
+	}
+
+	static function dynamicMethodValueName(methodName:String):String {
+		return "__hx_dynamic_" + methodName + "_value";
 	}
 
 	static function methodArgSignature(arg:ClassFuncArg):String {
@@ -2778,16 +2809,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
 				var field = fieldRef.get();
-				var token = actionControllerStaticToken(classType, field.name);
-				var constant = token ?? mathConstantValue(classType.pack, classType.name, field.name) ?? staticRuntimeMethodValue(classType, field.name);
-				constant == null ? RubyRawExpr((rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType))
-					+ "."
-					+ (isMethodField(field) ? 'method(:${rubyFieldName(field.name, field.meta)})' : rubyFieldName(field.name,
-						field.meta))) : RubyRawExpr(constant);
+				var owner = rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType);
+				if (isDynamicMethodClassField(field)) {
+					RubyCall(RubyRawExpr(owner), dynamicMethodValueName(rubyFieldName(field.name, field.meta)), []);
+				} else {
+					var token = actionControllerStaticToken(classType, field.name);
+					var constant = token ?? mathConstantValue(classType.pack, classType.name, field.name) ?? staticRuntimeMethodValue(classType, field.name);
+					constant == null ? RubyRawExpr(owner
+						+ "."
+						+ (isMethodField(field) ? 'method(:${rubyFieldName(field.name, field.meta)})' : rubyFieldName(field.name,
+							field.meta))) : RubyRawExpr(constant);
+				}
 			case TField(target, access) if (fieldAccessRawName(access) == "keyValueIterator"
 				&& isArrayReceiverFieldAccess(target, access)):
 				var iteratorExpr = hxrubyCall("key_value_iterator", [compileExpr(target)]);
 				RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr) + " }");
+			case TField(target, access) if (dynamicMethodFieldValueName(access) != null):
+				RubyCall(compileExpr(target), dynamicMethodFieldValueName(access), []);
 			case TField(target, access) if (methodFieldValueName(access) != null):
 				RubyRawExpr(printInlineExpr(target) + ".method(:" + methodFieldValueName(access) + ")");
 			case TField(target, access) if (isReflectiveFieldAccess(target, access)):
@@ -5776,6 +5814,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (field.kind) {
 			case FMethod(_): true;
 			case _: false;
+		}
+	}
+
+	static function isDynamicMethodClassField(field:ClassField):Bool {
+		return switch (field.kind) {
+			case FMethod(MethDynamic): true;
+			case _: false;
+		}
+	}
+
+	static function dynamicMethodFieldValueName(access:haxe.macro.Type.FieldAccess):Null<String> {
+		return switch (access) {
+			case FInstance(_, _, fieldRef) | FClosure(_, fieldRef):
+				var field = fieldRef.get();
+				isDynamicMethodClassField(field) ? dynamicMethodValueName(rubyFieldName(field.name, field.meta)) : null;
+			case _:
+				null;
 		}
 	}
 

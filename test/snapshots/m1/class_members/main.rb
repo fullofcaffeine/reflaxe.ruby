@@ -9,6 +9,19 @@ class Main
     Counter.value = 1
     puts(HXRuby.stringify(Counter.next_()))
     puts(HXRuby.stringify(Counter.label))
+    puts(HXRuby.stringify(Counter.decorate("static")))
+    original_decorate = Counter.__hx_dynamic_decorate_value()
+    Counter.decorate = ->(value) { ("custom:" + value) }
+    puts(HXRuby.stringify(Counter.decorate("static")))
+    Counter.decorate = nil
+    puts(HXRuby.stringify((Counter.__hx_dynamic_decorate_value() == nil)))
+    Counter.decorate = original_decorate
+    puts(HXRuby.stringify(Counter.decorate("restored")))
+    counter = Counter.new()
+    puts(HXRuby.stringify(counter.bump(2)))
+    counter.bump = ->(value__hx1) { (value__hx1 + 10) }
+    puts(HXRuby.stringify(counter.bump(2)))
+    puts(HXRuby.stringify(Counter.new().bump(2)))
   end
 end
 if __FILE__ == $PROGRAM_NAME

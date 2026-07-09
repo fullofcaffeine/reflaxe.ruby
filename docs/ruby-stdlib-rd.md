@@ -79,7 +79,7 @@ Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-`haxe.io.BytesBuffer`, `haxe.io.Path`, and `haxe.Template`. `Std` runs through
+`haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, and `haxe.Template`. `Std` runs through
 an adapted upstream fixture, and local focused fixtures cover adjacent semantic
 gaps such as numeric parsing.
 
@@ -244,8 +244,8 @@ For Ruby stdlib facades:
 
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
-1. Promote one upstream-fallback candidate such as `haxe.Log`,
-   `haxe.rtti.Rtti`, or `haxe.zip.Compress` through
+1. Promote one upstream-fallback candidate such as `haxe.rtti.Rtti`,
+   `haxe.zip.Compress`, or `haxe.zip.Uncompress` through
    `test/upstream_unitstd/manifest.json`.
 
 2. Add upstream parity coverage for an implemented Ruby-owned surface, starting

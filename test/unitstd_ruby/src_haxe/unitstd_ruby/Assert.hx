@@ -39,6 +39,15 @@ class Assert {
 		}
 	}
 
+	public static function raises(action:() -> Void, message:String):Void {
+		// `exc(...)` must observe native Ruby errors as well as Haxe throws. Keep
+		// this target escape local to the Ruby-only harness and return only Bool.
+		var raised:Bool = untyped __ruby__("(begin {0}.call; false; rescue StandardError; true; end)", action);
+		if (!raised) {
+			fail(message + " expected an exception");
+		}
+	}
+
 	public static function arraysSame<T>(expected:Array<T>, actual:Array<T>):Bool {
 		return untyped __ruby__("HXRuby.array_contents_match?({0}, {1})", expected, actual);
 	}

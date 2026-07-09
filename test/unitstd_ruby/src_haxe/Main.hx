@@ -24,6 +24,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("Std.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/DynamicAccess.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/EnumFlags.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/Log.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/Template.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Base64.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Crc32.unit.hx");

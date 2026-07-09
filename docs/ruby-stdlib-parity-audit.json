@@ -256,10 +256,10 @@
     {
       "module": "haxe.Log",
       "source": "haxe/Log.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback before adding Ruby logging behavior.",
-      "notes": "Likely compile-time and trace behavior rather than a Ruby stdlib facade."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream Log implementation executes through generated Ruby; compiler lowering preserves mutable static dynamic trace replacement, injected PosInfos, restoration, and null-call failure without a Ruby std override."
     },
     {
       "module": "haxe.Template",

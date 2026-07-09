@@ -133,7 +133,7 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.EnumFlags`,
-`haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.Path`, and
+`haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, and
 `haxe.Template` run directly; `Std` runs through an adapted fixture because
 upstream assertion syntax and duplicate local names need macro-lane
 accommodation.
@@ -208,6 +208,12 @@ argument lowering through the upstream tree node height default.
 type-system surface needs no Ruby-owned runtime override for this lane: accepted
 Int/String assignments compile and run, while invalid Bool/Float assignments are
 rejected at compile time through the unitstd `HelperMacros.typeError` shim.
+
+`haxe.Log` is enabled as a direct upstream fixture. It proves the portable Log
+implementation can fall through unchanged while Ruby compiler lowering keeps
+Haxe `static dynamic function` semantics: trace callbacks can be replaced and
+restored, receive compiler-injected source positions, and fail on invocation
+after being rebound to null.
 
 `haxe.Template` is enabled as a direct upstream fixture. It proves the portable
 Haxe template parser/executor can fall through unchanged on Ruby, including

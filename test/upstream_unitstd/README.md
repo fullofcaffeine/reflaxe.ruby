@@ -32,7 +32,7 @@ Current upstream runtime fixtures:
   `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
   `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
   `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-  `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Template`.
+  `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`.
 - Adapted: `Std`. The local copy preserves the upstream assertions that matter
   for this lane, while avoiding macro-expansion local-name collisions and
   ignoring upstream `unspec(...)` markers.
@@ -81,6 +81,13 @@ through the upstream tree node height default.
 needs no Ruby-owned runtime override for this lane: accepted Int/String
 assignments compile and run, while invalid Bool/Float assignments are rejected
 at compile time through the unitstd `HelperMacros.typeError` shim.
+
+`haxe.Log` is enabled directly. It proves upstream fallback over compiler-owned
+dynamic-method lowering: `trace` can be replaced and restored, receives the
+fixture's injected `haxe.PosInfos`, and raises when rebound to null without a
+Ruby-specific Log override. Its upstream whitespace is preserved verbatim and
+excluded from repo formatting because the spec intentionally asserts the source
+line number injected into `trace`.
 
 `haxe.Template` is enabled directly. It proves the portable Haxe template
 parser/executor can fall through unchanged on Ruby, including context lookup,

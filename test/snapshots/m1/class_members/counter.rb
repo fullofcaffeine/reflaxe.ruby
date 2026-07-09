@@ -16,8 +16,37 @@ class Counter
     attr_accessor :value
   end
   @value = 0
+  def initialize()
+    nil
+  end
+  def bump(value)
+    return (value + 1)
+  end
+  def __hx_dynamic_bump_value()
+    return @__hx_dynamic_bump if instance_variable_defined?(:@__hx_dynamic_bump)
+    method(:bump)
+  end
+  def bump=(callable)
+    @__hx_dynamic_bump = callable
+    define_singleton_method(:bump) do |*args|
+      callable.call(*args)
+    end
+  end
   def self.next_()
     Counter.value = (Counter.value + 1)
     return Counter.value
+  end
+  def self.decorate(value)
+    return ("base:" + value)
+  end
+  def self.__hx_dynamic_decorate_value()
+    return @__hx_dynamic_decorate if instance_variable_defined?(:@__hx_dynamic_decorate)
+    method(:decorate)
+  end
+  def self.decorate=(callable)
+    @__hx_dynamic_decorate = callable
+    define_singleton_method(:decorate) do |*args|
+      callable.call(*args)
+    end
   end
 end

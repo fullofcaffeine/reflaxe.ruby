@@ -20,7 +20,10 @@ class UpstreamUnitStdMacro {
 		}
 
 		var source = sys.io.File.getContent(fixturePath);
-		var parsed = Context.parseInlineString("{\n" + source + "\n}", Context.currentPos());
+		// Haxe strips the active `src` classpath prefix when it injects PosInfos.
+		// The extra leading segment preserves upstream's `src/unitstd/**` path.
+		var sourcePos = Context.makePosition({file: "src/src/unitstd/" + relativePath, min: 0, max: source.length});
+		var parsed = Context.parseInlineString("{" + source + "\n}", sourcePos);
 		return transform(parsed, relativePath);
 	}
 
@@ -96,6 +99,9 @@ class UpstreamUnitStdMacro {
 
 			case ECall({expr: EConst(CIdent("aeq"))}, [expected, actual]):
 				assertSameArray(expected, actual, expression, relativePath);
+
+			case ECall({expr: EConst(CIdent("exc"))}, [action]):
+				assertRaises(action, expression, relativePath);
 
 			case ECall({expr: EConst(CIdent("unspec"))}, [_]):
 				macro {};
@@ -187,6 +193,10 @@ class UpstreamUnitStdMacro {
 
 	static function assertNotSameArray(expected:Expr, actual:Expr, source:Expr, relativePath:String):Expr {
 		return macro unitstd_ruby.Assert.isFalse(unitstd_ruby.Assert.arraysSame($expected, $actual), $v{message(source, relativePath)});
+	}
+
+	static function assertRaises(action:Expr, source:Expr, relativePath:String):Expr {
+		return macro unitstd_ruby.Assert.raises($action, $v{message(source, relativePath)});
 	}
 
 	static function boolLiteralValue(expression:Expr):Null<Bool> {
