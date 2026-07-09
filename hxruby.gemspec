@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
     *Dir["lib/**/*.rb"],
     *Dir["runtime/hxruby/**/*.rb"],
     *Dir["scripts/rails/*.rb"],
+    *Dir["std/**/*.hx"],
     *Dir["vendor/genes/src/**/*.hx"],
     "vendor/genes/haxelib.json",
     "vendor/genes/readme.md",

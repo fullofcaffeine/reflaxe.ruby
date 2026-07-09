@@ -1,0 +1,10 @@
+# RailsHx Client Library Configuration
+#
+# Browser builds use this library for typed RailsHx/Hotwire client helpers
+# without loading the Ruby target compiler or Ruby-only Haxe std overrides.
+# The shared `std/` surface intentionally contains both browser-safe RailsHx
+# client APIs and shared typed tokens such as Turbo stream names/targets.
+
+-cp ${SCOPE_DIR}/std/
+
+-D railshx.client=0.1.0-beta.2

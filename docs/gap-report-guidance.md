@@ -39,13 +39,16 @@ npm run test:unitstd-ruby
 Each entry in `docs/stdlib-inventory.json` must include:
 
 - `id`: stable dotted identifier, for example `std.rails.params_macro`.
-- `owner`: one of `std`, `std/_std`, or `runtime/hxruby`.
+- `owner`: one of `std`, `std/ruby/_std`, or `runtime/hxruby`.
 - `status`: `implemented`, `missing`, `planned`, or `deferred`.
 - `path`: expected repo path.
 - `surface`: user-facing API or runtime surface.
 - `reason`: why the surface exists or remains missing.
 
-Use `std/` for additive Ruby/Rails APIs and `std/_std/` for upstream Haxe std overrides that need classpath precedence. Use `runtime/hxruby/` for Ruby files copied or required by generated output.
+Use `std/` for additive Ruby/Rails APIs and `std/ruby/_std/` for upstream Haxe
+std overrides that need classpath precedence in source checkouts. Reflaxe build
+packages those `_std` files as `src/**/*.cross.hx`. Use `runtime/hxruby/` for
+Ruby files copied or required by generated output.
 
 When changing a std/runtime surface that has a matching upstream Haxe
 `unitstd` fixture, update `test/upstream_unitstd/manifest.json` in the same

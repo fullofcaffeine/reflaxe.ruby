@@ -249,6 +249,7 @@ function run(command, args, options = {}) {
 function compileTodoClient() {
   const clientBuild = readFileSync(join(exampleDir, "build-client.hxml"), "utf8");
   for (const expected of [
+    "-lib railshx.client",
     "--macro genes.Generator.use()",
     "--macro reflaxe.js.Async.enable()",
   ]) {
@@ -256,6 +257,10 @@ function compileTodoClient() {
       console.error(`todoapp_rails client build is missing expected async/Genes setup: ${expected}`);
       process.exit(1);
     }
+  }
+  if (clientBuild.includes("-lib reflaxe.ruby")) {
+    console.error("todoapp_rails client build must use -lib railshx.client, not the Ruby target compiler library");
+    process.exit(1);
   }
   run("haxe", [join(exampleDir, "build-client.hxml")]);
   for (const file of [

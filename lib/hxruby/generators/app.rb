@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "optparse"
+require_relative "../version"
 require_relative "common"
 
 module HXRuby
@@ -51,6 +52,7 @@ module HXRuby
         write("build-client.hxml", render_client_build)
         write(".haxerc", render_haxerc)
         write("AGENTS.md", render_agents)
+        write("haxe_libraries/railshx.client.hxml", render_railshx_client_hxml)
         write("haxe_libraries/genes.hxml", render_genes_hxml)
         write("haxe_libraries/helder.set.hxml", render_helder_set_hxml)
         write(File.join(@source_dir, "#{@main_class}.hx"), render_main)
@@ -160,11 +162,11 @@ module HXRuby
       def render_client_build
         [
           "-cp #{@source_dir}",
-          "-cp ${HXRUBY_GEM_ROOT}/std",
+          "-lib railshx.client",
           "# HXRUBY_GEM_ROOT is set by the generated rake tasks so client code can",
-          "# consume typed RailsHx/Turbo/Async std helpers from the packaged gem.",
+          "# resolve the installed RailsHx client helpers and vendored Genes source.",
           "# Genes emits split ES modules that Rails can serve through importmap/Propshaft.",
-          "# The generated haxe_libraries/genes.hxml points at the packaged hxruby root.",
+          "# The generated haxe_libraries/*.hxml files point at the packaged hxruby root.",
           "-lib genes",
           "-D js-es=6",
           "--macro genes.Generator.use()",
@@ -233,6 +235,17 @@ module HXRuby
           "-cp ${HXRUBY_GEM_ROOT}/vendor/genes/src",
           "-lib helder.set",
           "-D genes=0.4.14",
+          "",
+        ].join("\n")
+      end
+
+      def render_railshx_client_hxml
+        [
+          "# RailsHx browser/client helpers are shipped by the hxruby gem.",
+          "# This keeps JavaScript builds away from the Ruby target compiler and",
+          "# Ruby-only std overrides while preserving shared typed RailsHx tokens.",
+          "-cp ${HXRUBY_GEM_ROOT}/std",
+          "-D railshx.client=#{HXRuby::VERSION}",
           "",
         ].join("\n")
       end

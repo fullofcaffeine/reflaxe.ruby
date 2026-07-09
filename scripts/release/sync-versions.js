@@ -24,13 +24,14 @@ function ensureSemver(version) {
   }
 }
 
-function updateHxmlLibraryVersion(path, version) {
+function updateHxmlLibraryVersion(path, defineName, version) {
   const original = readUtf8(path)
-  const pattern = /^-D\s+reflaxe\.ruby=[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?\s*$/gm
+  const escapedDefine = defineName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const pattern = new RegExp(`^-D\\s+${escapedDefine}=[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?\\s*$`, 'gm')
   if (!pattern.test(original)) {
-    throw new Error(`No reflaxe.ruby version define found to update in ${path}`)
+    throw new Error(`No ${defineName} version define found to update in ${path}`)
   }
-  const next = original.replace(pattern, `-D reflaxe.ruby=${version}`)
+  const next = original.replace(pattern, `-D ${defineName}=${version}`)
   if (next !== original) writeUtf8(path, next)
 }
 
@@ -80,7 +81,8 @@ function main() {
     json.releasenote = `v${version}: See CHANGELOG.md`
   })
 
-  updateHxmlLibraryVersion('haxe_libraries/reflaxe.ruby.hxml', version)
+  updateHxmlLibraryVersion('haxe_libraries/reflaxe.ruby.hxml', 'reflaxe.ruby', version)
+  updateHxmlLibraryVersion('haxe_libraries/railshx.client.hxml', 'railshx.client', version)
   updateRubyVersionConstant('lib/hxruby/version.rb', version)
   updateReadmeCurrentVersion('README.md', version)
 }

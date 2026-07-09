@@ -7,7 +7,7 @@
     "covered-ruby-override": "Ruby owns an override, compiler lowering, or runtime seam and the current test suite has direct evidence for this surface.",
     "covered-upstream-fallback": "The surface is covered by the Ruby lane while using upstream Haxe std source, possibly with lower-level Ruby-owned dependencies.",
     "upstream-fallback-candidate": "No Ruby override is indicated yet; promote only after a fixture or smoke proves upstream fallback works on Ruby.",
-    "ruby-override-needed": "The surface needs or already has Ruby-owned lowering, runtime support, or std/_std replacement before parity can be claimed.",
+    "ruby-override-needed": "The surface needs or already has Ruby-owned lowering, runtime support, or std/ruby/_std replacement before parity can be claimed.",
     "unsupported-target-specific": "The fixture is not a Ruby runtime parity surface or is outside the current Ruby target contract."
   },
   "candidates": [
@@ -24,7 +24,7 @@
       "source": "Array.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "enabled",
-      "owner": "std/Array.cross.hx",
+      "owner": "std/ruby/_std/Array.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
       "notes": "Ruby lowering and HXRuby helpers preserve Haxe array boundary and mutation contracts."
     },
@@ -33,7 +33,7 @@
       "source": "Date.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "enabled",
-      "owner": "std/Date.cross.hx",
+      "owner": "std/ruby/_std/Date.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
       "notes": "Ruby Time backs Haxe Date with tested local, UTC, timestamp, and parsing semantics."
     },
@@ -50,7 +50,7 @@
       "source": "EReg.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "enabled",
-      "owner": "std/EReg.cross.hx",
+      "owner": "std/ruby/_std/EReg.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
       "notes": "Ruby Regexp is wrapped to preserve Haxe stateful match accessors and replacement behavior."
     },
@@ -99,7 +99,7 @@
       "source": "Lambda.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "enabled",
-      "owner": "std/Lambda.cross.hx",
+      "owner": "std/ruby/_std/Lambda.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
       "notes": "The fixture locks in iterator bridging across native Ruby arrays and Haxe iterator-bearing values."
     },
@@ -116,7 +116,7 @@
       "source": "Map.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "enabled",
-      "owner": "std/_std/haxe/ds/*Map.cross.hx",
+      "owner": "std/ruby/_std/haxe/ds/*Map.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
       "notes": "The top-level fixture exercises StringMap, IntMap, and ObjectMap over Ruby Hash storage."
     },
@@ -125,7 +125,7 @@
       "source": "Math.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "enabled",
-      "owner": "std/Math.cross.hx",
+      "owner": "std/ruby/_std/Math.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
       "notes": "Ruby Math is used directly where behavior matches; Haxe-specific edge semantics stay in the override/runtime layer."
     },
@@ -134,7 +134,7 @@
       "source": "Reflect.unit.hx",
       "classification": "ruby-override-needed",
       "unitstdStatus": "not-tracked",
-      "owner": "std/Reflect.cross.hx",
+      "owner": "std/ruby/_std/Reflect.hx",
       "next": "Promote an adapted upstream Reflect fixture after current smoke coverage is audited.",
       "notes": "Reflect exists now, but parity should be proven with upstream field, method, and anonymous-object cases."
     },
@@ -151,7 +151,7 @@
       "source": "Std.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "adapted",
-      "owner": "std/Std.cross.hx",
+      "owner": "std/ruby/_std/Std.hx",
       "next": "Keep the adapted fixture until the macro-expanded lane can consume the upstream file directly.",
       "notes": "The adapted fixture preserves relevant assertions while avoiding Ruby lane assertion-macro collisions."
     },
@@ -176,7 +176,7 @@
       "source": "StringTools.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "enabled",
-      "owner": "std/StringTools.cross.hx",
+      "owner": "std/ruby/_std/StringTools.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
       "notes": "Ruby string helpers and HXRuby seams preserve Haxe StringTools semantics."
     },
@@ -185,7 +185,7 @@
       "source": "Type.unit.hx",
       "classification": "ruby-override-needed",
       "unitstdStatus": "not-tracked",
-      "owner": "std/Type.cross.hx",
+      "owner": "std/ruby/_std/Type.hx",
       "next": "Promote an adapted Type fixture after enum/class metadata smoke coverage is mapped.",
       "notes": "Type has a Ruby override, but upstream runtime parity is not yet accounted for in unitstd."
     },
@@ -249,7 +249,7 @@
       "module": "haxe.Json",
       "classification": "ruby-override-needed",
       "unitstdStatus": "no-upstream-spec",
-      "owner": "std/_std/haxe/Json.cross.hx",
+      "owner": "std/ruby/_std/haxe/Json.hx",
       "next": "Add JSON parser/writer parity fixtures from the broader Haxe test suite, not unitstd.",
       "notes": "No direct unitstd fixture exists, but RubyHx owns this surface through Ruby JSON interop plus Haxe semantics."
     },
@@ -386,7 +386,7 @@
       "source": "haxe/ds/IntMap.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "not-tracked",
-      "owner": "std/_std/haxe/ds/IntMap.cross.hx",
+      "owner": "std/ruby/_std/haxe/ds/IntMap.hx",
       "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
       "notes": "The top-level Map.unit.hx already covers IntMap through Ruby Hash storage."
     },
@@ -395,7 +395,7 @@
       "source": "haxe/ds/ObjectMap.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "not-tracked",
-      "owner": "std/_std/haxe/ds/ObjectMap.cross.hx",
+      "owner": "std/ruby/_std/haxe/ds/ObjectMap.hx",
       "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
       "notes": "ObjectMap uses Hash#compare_by_identity to preserve Haxe object-key identity."
     },
@@ -404,7 +404,7 @@
       "source": "haxe/ds/StringMap.unit.hx",
       "classification": "covered-ruby-override",
       "unitstdStatus": "not-tracked",
-      "owner": "std/_std/haxe/ds/StringMap.cross.hx",
+      "owner": "std/ruby/_std/haxe/ds/StringMap.hx",
       "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
       "notes": "The top-level Map.unit.hx already covers StringMap through Ruby Hash storage."
     },
@@ -444,7 +444,7 @@
       "module": "haxe.io.Bytes",
       "classification": "covered-ruby-override",
       "unitstdStatus": "no-upstream-spec",
-      "owner": "std/_std/haxe/io/Bytes.hx",
+      "owner": "std/ruby/_std/haxe/io/Bytes.hx",
       "next": "Keep covered through local runtime tests and adjacent upstream haxe.io fixtures.",
       "notes": "No direct unitstd fixture exists, but Bytes is the base for BytesBuffer and future haxe.io parity."
     },
@@ -461,7 +461,7 @@
       "source": "haxe/io/FPHelper.unit.hx",
       "classification": "ruby-override-needed",
       "unitstdStatus": "not-tracked",
-      "owner": "std/_std/haxe/io/FPHelper.hx",
+      "owner": "std/ruby/_std/haxe/io/FPHelper.hx",
       "next": "Add the upstream fixture after Float numeric edge behavior is audited.",
       "notes": "Binary float packing/unpacking needs explicit proof against Ruby pack/unpack behavior."
     },
@@ -581,7 +581,7 @@
       "module": "sys.FileSystem",
       "classification": "ruby-override-needed",
       "unitstdStatus": "no-upstream-spec",
-      "owner": "std/_std/sys/FileSystem.hx",
+      "owner": "std/ruby/_std/sys/FileSystem.hx",
       "next": "Add focused filesystem parity smoke coverage because unitstd has no direct fixture.",
       "notes": "RubyHx owns this as a Ruby File/Dir/FileUtils-backed Haxe sys surface."
     },
@@ -590,7 +590,7 @@
       "source": "sys/io/File.unit.hx",
       "classification": "ruby-override-needed",
       "unitstdStatus": "not-tracked",
-      "owner": "std/_std/sys/io/File.hx",
+      "owner": "std/ruby/_std/sys/io/File.hx",
       "next": "Promote the upstream fixture after exception and newline semantics are audited.",
       "notes": "RubyHx owns this as a Haxe sys.io facade over Ruby file IO."
     },

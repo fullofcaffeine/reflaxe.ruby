@@ -22,7 +22,8 @@
     "name": "Ruby",
     "abbv": "rb",
     "stdPaths": [
-      "std"
+      "std",
+      "std/ruby/_std"
     ]
   }
 }

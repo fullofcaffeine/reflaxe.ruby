@@ -69,6 +69,12 @@ try {
     "scripts/rails/test.rb",
     "scripts/rails/generate-routes.rb",
     "scripts/rails/scaffold.rb",
+    "std/reflaxe/js/Async.hx",
+    "std/rails/turbo/StreamName.hx",
+    "std/rails/turbo/StreamTarget.hx",
+    "std/rails/turbo/Turbo.hx",
+    "std/rails/turbo/TurboStreams.hx",
+    "std/rails/turbo/TurboVisitAction.hx",
   ]) {
     if (!existsSync(join(unpackedRoot, required))) {
       fail(`gem missing required entry: ${required}`);
@@ -95,6 +101,7 @@ try {
   run("ruby", ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
   smokeDoctorTask(unpackedRoot);
   smokeDoctorFailureTask(unpackedRoot);
+  smokeClientLibrary(unpackedRoot);
   smokeCheckTask(unpackedRoot);
   smokeCleanTask(unpackedRoot);
   smokeProductionTask(unpackedRoot);
@@ -201,6 +208,58 @@ function smokeDoctorFailureTask(unpackedRoot) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     fail("hxruby:doctor did not fail on duplicate migration timestamp/class diagnostics");
+  }
+}
+
+function smokeClientLibrary(unpackedRoot) {
+  const appRoot = join(tempRoot, "client-library-smoke-app");
+  const clientOut = join(appRoot, "client.js");
+  const unexpectedRubyOut = join(appRoot, "unexpected-ruby-out");
+  mkdirSync(join(appRoot, "src"), { recursive: true });
+  mkdirSync(join(appRoot, "haxe_libraries"), { recursive: true });
+  writeFileSync(join(appRoot, ".haxerc"), '{\n  "version": "4.3.7",\n  "resolveLibs": "scoped"\n}\n');
+  writeFileSync(
+    join(appRoot, "haxe_libraries", "railshx.client.hxml"),
+    [
+      `-cp ${join(unpackedRoot, "std")}`,
+      `-D railshx.client=${packageJson.version}`,
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(appRoot, "src", "ClientMain.hx"),
+    [
+      "import rails.turbo.Turbo;",
+      "import rails.turbo.TurboVisitAction;",
+      "import reflaxe.js.Async;",
+      "class ClientMain {",
+      "\tstatic function main():Void {",
+      "\t\tTurbo.onLoad(function(_) {});",
+      "\t\tTurbo.visit(\"/\", { action: TurboVisitAction.Replace });",
+      "\t\tAsync.delay(1);",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+
+  run("haxe", [
+    "-cp",
+    "src",
+    "-lib",
+    "railshx.client",
+    "-main",
+    "ClientMain",
+    "-js",
+    clientOut,
+    "--dce=full",
+  ], { cwd: appRoot });
+
+  if (!existsSync(clientOut)) {
+    fail("railshx.client gem smoke did not emit client.js");
+  }
+  if (existsSync(unexpectedRubyOut)) {
+    fail("railshx.client gem smoke unexpectedly produced Ruby output");
   }
 }
 

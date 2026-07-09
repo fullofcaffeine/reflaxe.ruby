@@ -239,7 +239,7 @@ The default RailsHx starter and the todoapp sample wire this through
 `build-client.hxml` with Genes:
 
 ```hxml
--cp ${HXRUBY_GEM_ROOT}/std
+-lib railshx.client
 -lib genes
 -D js-es=6
 --macro genes.Generator.use()
@@ -254,8 +254,9 @@ entry asset is still imported from `app/javascript/application.js` alongside
 `app/javascript/railshx/**`.
 
 RailsHx rake tasks set `HXRUBY_GEM_ROOT` before invoking Haxe so generated apps
-can resolve the typed RailsHx client std and vendored Genes source shipped with
-the `hxruby` package. After client compilation, `hxruby:compile:client` rewrites Genes' relative
+can resolve vendored Genes source and `railshx.client` typed browser helpers
+shipped with the `hxruby` package. After client compilation,
+`hxruby:compile:client` rewrites Genes' relative
 `./module.js` imports to bare `railshx/module` importmap specifiers; this keeps
 Rails asset digests from breaking nested module imports in development or
 production. Direct manual `haxe build-client.hxml` runs should either happen

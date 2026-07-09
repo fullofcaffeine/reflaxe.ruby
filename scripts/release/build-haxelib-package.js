@@ -1,40 +1,52 @@
 #!/usr/bin/env node
 
-const { mkdirSync, readFileSync, rmSync } = require("node:fs");
-const { dirname, join, resolve } = require("node:path");
+const {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} = require("node:fs");
+const { dirname, join, relative, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { tmpdir } = require("node:os");
 
 const root = resolve(__dirname, "..", "..");
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 const haxelibJson = JSON.parse(readFileSync(join(root, "haxelib.json"), "utf8"));
 const version = haxelibJson.version;
 const outPath = join(root, "dist", `reflaxe.ruby-${version}.zip`);
+const reflaxeRoot = join(root, "vendor", "reflaxe");
+const reflaxeRun = join(reflaxeRoot, "Run.hx");
 
-const includePrefixes = [
-  "src/",
-  "std/",
+const workPrefixes = ["src/", "std/"];
+const workFiles = new Set(["haxelib.json", "extraParams.hxml", "README.md", "LICENSE"]);
+const extraPrefixes = [
   "runtime/",
   "lib/",
   "vendor/reflaxe/",
   "vendor/genes/src/",
   "docs/",
   "examples/",
-  "haxe_libraries/",
 ];
-const includeFiles = new Set([
-  "haxelib.json",
+const extraFiles = new Set([
   "hxruby.gemspec",
-  "extraParams.hxml",
-  "README.md",
   "CHANGELOG.md",
-  "LICENSE",
   "vendor/genes/haxelib.json",
   "vendor/genes/readme.md",
 ]);
 
+function fail(message) {
+  console.error(`[haxelib-package] ERROR: ${message}`);
+  process.exit(1);
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
-    cwd: root,
+    cwd: options.cwd ?? root,
     encoding: "utf8",
     input: options.input,
     stdio: options.input == null ? ["ignore", "pipe", "pipe"] : ["pipe", "pipe", "pipe"],
@@ -47,20 +59,107 @@ function run(command, args, options = {}) {
   return result;
 }
 
-if (packageJson.version !== haxelibJson.version) {
-  console.error(`package.json version ${packageJson.version} != haxelib.json version ${haxelibJson.version}`);
-  process.exit(1);
+function currentFiles() {
+  const files = new Set();
+  for (const args of [["ls-files"], ["ls-files", "--others", "--exclude-standard"]]) {
+    for (const file of run("git", args).stdout.trim().split("\n").filter(Boolean)) {
+      if (existsSync(join(root, file))) {
+        files.add(file);
+      }
+    }
+  }
+  return [...files].sort();
 }
 
-const files = run("git", ["ls-files"]).stdout
-  .trim()
-  .split("\n")
-  .filter(Boolean)
-  .filter((path) => includeFiles.has(path) || includePrefixes.some((prefix) => path.startsWith(prefix)))
-  .sort();
+function matches(file, prefixes, files) {
+  return files.has(file) || prefixes.some((prefix) => file.startsWith(prefix));
+}
+
+function copyFileToRoot(file, destRoot) {
+  const from = join(root, file);
+  const to = join(destRoot, file);
+  mkdirSync(dirname(to), { recursive: true });
+  copyFileSync(from, to);
+}
+
+function copySelected(files, destRoot, prefixes, exactFiles) {
+  for (const file of files) {
+    if (matches(file, prefixes, exactFiles)) {
+      copyFileToRoot(file, destRoot);
+    }
+  }
+}
+
+function listFiles(dir) {
+  const out = [];
+  walk(dir, out);
+  return out.map((path) => relative(dir, path).split("\\").join("/")).sort();
+}
+
+function walk(dir, out) {
+  for (const entry of readdirSync(dir)) {
+    const path = join(dir, entry);
+    const stat = statSync(path);
+    if (stat.isDirectory()) {
+      walk(path, out);
+    } else {
+      out.push(path);
+    }
+  }
+}
+
+if (packageJson.version !== haxelibJson.version) {
+  fail(`package.json version ${packageJson.version} != haxelib.json version ${haxelibJson.version}`);
+}
+if (!existsSync(reflaxeRun)) {
+  fail("vendored Reflaxe build runner missing: vendor/reflaxe/Run.hx");
+}
+
+const files = currentFiles();
+for (const required of [
+  "haxelib.json",
+  "extraParams.hxml",
+  "README.md",
+  "LICENSE",
+  "src/reflaxe/ruby/RubyCompiler.hx",
+  "std/ruby/_std/Std.hx",
+  "std/ruby/StandardError.hx",
+  "runtime/hxruby/core.rb",
+  "vendor/reflaxe/Run.hx",
+  "vendor/reflaxe/src/reflaxe/ReflectCompiler.hx",
+  "vendor/genes/src/genes/Generator.hx",
+]) {
+  if (!files.includes(required)) {
+    fail(`required package source missing: ${required}`);
+  }
+}
 
 mkdirSync(dirname(outPath), { recursive: true });
 rmSync(outPath, { force: true });
-run("zip", ["-X", "-q", "-@", outPath], { input: `${files.join("\n")}\n` });
+
+const tempRoot = mkdtempSync(join(tmpdir(), "reflaxe-ruby-haxelib."));
+try {
+  const workDir = join(tempRoot, "work", "reflaxe.ruby");
+  const buildDir = join(workDir, "_Build");
+  mkdirSync(workDir, { recursive: true });
+
+  copySelected(files, workDir, workPrefixes, workFiles);
+  run("haxe", ["-cp", reflaxeRoot, "--run", "Run", "build", "_Build", "--deleteOldFolder", workDir], {
+    cwd: workDir,
+  });
+
+  copySelected(files, buildDir, extraPrefixes, extraFiles);
+
+  const entries = listFiles(buildDir);
+  if (entries.length === 0) {
+    fail("Reflaxe build produced an empty package directory");
+  }
+  run("zip", ["-X", "-q", "-@", outPath], {
+    cwd: buildDir,
+    input: `${entries.join("\n")}\n`,
+  });
+} finally {
+  rmSync(tempRoot, { force: true, recursive: true });
+}
 
 console.log(outPath);

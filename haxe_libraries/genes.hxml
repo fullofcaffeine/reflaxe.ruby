@@ -2,8 +2,8 @@
 #
 # RailsHx vendors the same small Genes generator used by PhoenixHx so generated
 # Rails apps can build readable ES module JavaScript without relying on a global
-# haxelib install. Client builds should use `-lib genes`; server Ruby builds
-# should stay on `-lib reflaxe.ruby`.
+# haxelib install. Client builds should pair this with `-lib railshx.client`;
+# server Ruby builds should stay on `-lib reflaxe.ruby`.
 
 -cp ${SCOPE_DIR}/vendor/genes/src
 

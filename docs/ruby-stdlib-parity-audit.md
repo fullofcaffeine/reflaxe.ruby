@@ -29,7 +29,7 @@ The guard checks that:
 | `covered-ruby-override` | 12 | Ruby owns the override, lowering, or runtime seam and current tests have direct evidence. |
 | `covered-upstream-fallback` | 11 | The Ruby lane covers the surface while using upstream Haxe std source, sometimes over lower-level Ruby-owned dependencies. |
 | `upstream-fallback-candidate` | 15 | No Ruby override is indicated yet. Add a fixture or smoke before promoting to covered. |
-| `ruby-override-needed` | 28 | Ruby-owned lowering, runtime support, or `std/_std` replacement is needed or already exists but lacks upstream parity accounting. |
+| `ruby-override-needed` | 28 | Ruby-owned lowering, runtime support, or `std/ruby/_std` replacement is needed or already exists but lacks upstream parity accounting. |
 | `unsupported-target-specific` | 6 | The fixture is not a Ruby runtime parity surface or is outside the current target contract. |
 
 Unitstd status today:

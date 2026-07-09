@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "ownership": {
     "std": "Additive Ruby target Haxe APIs, externs, facades, and cross-owned surfaces that do not replace upstream std modules.",
-    "std/_std": "Upstream Haxe std overrides that must take classpath precedence for Ruby builds.",
-    "runtime/hxruby": "Ruby runtime files copied or required by generated output."
+    "runtime/hxruby": "Ruby runtime files copied or required by generated output.",
+    "std/ruby/_std": "Ruby source-checkout replacements for upstream Haxe std modules. Reflaxe build packages these as src/**/*.cross.hx."
   },
   "entries": [
     {
@@ -32,57 +32,57 @@
     },
     {
       "id": "std.std",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/Std.cross.hx",
+      "path": "std/ruby/_std/Std.hx",
       "surface": "Std",
       "reason": "Basic conversions, stringification, and target helpers."
     },
     {
       "id": "std.sys",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/Sys.cross.hx",
+      "path": "std/ruby/_std/Sys.hx",
       "surface": "Sys",
       "reason": "print/println, args, environment, cwd, command, and process exit behavior."
     },
     {
       "id": "std.string_tools",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/StringTools.cross.hx",
+      "path": "std/ruby/_std/StringTools.hx",
       "surface": "StringTools",
       "reason": "Ruby-backed string operations needed by common Haxe code."
     },
     {
       "id": "std.array",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/Array.cross.hx",
+      "path": "std/ruby/_std/Array.hx",
       "surface": "Array",
       "reason": "Ruby array methods and Haxe Array API parity."
     },
     {
       "id": "std.lambda",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/Lambda.cross.hx",
+      "path": "std/ruby/_std/Lambda.hx",
       "surface": "Lambda",
       "reason": "Iterator and collection helpers for source-level Haxe code."
     },
     {
       "id": "std.date",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/Date.cross.hx",
+      "path": "std/ruby/_std/Date.hx",
       "surface": "Date",
       "reason": "Typed Date surface for Ruby time/date lowering."
     },
     {
       "id": "std.ereg",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/EReg.cross.hx",
+      "path": "std/ruby/_std/EReg.hx",
       "surface": "EReg",
       "reason": "Typed regular expression surface for Ruby Regexp lowering."
     },
@@ -1552,89 +1552,89 @@
     },
     {
       "id": "std.math",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/Math.cross.hx",
+      "path": "std/ruby/_std/Math.hx",
       "surface": "Math",
       "reason": "Map Haxe Math API to Ruby Math and numeric behavior."
     },
     {
       "id": "std.reflect",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/Reflect.cross.hx",
+      "path": "std/ruby/_std/Reflect.hx",
       "surface": "Reflect",
       "reason": "Dynamic field access and method calls for Ruby objects."
     },
     {
       "id": "std.type",
-      "owner": "std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/Type.cross.hx",
+      "path": "std/ruby/_std/Type.hx",
       "surface": "Type",
       "reason": "Runtime class and enum reflection for generated Ruby values."
     },
     {
       "id": "std.json",
-      "owner": "std/_std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/_std/haxe/Json.cross.hx",
+      "path": "std/ruby/_std/haxe/Json.hx",
       "surface": "haxe.Json",
       "reason": "Use Ruby JSON runtime while preserving Haxe API."
     },
     {
       "id": "std.ds.string_map",
-      "owner": "std/_std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/_std/haxe/ds/StringMap.cross.hx",
+      "path": "std/ruby/_std/haxe/ds/StringMap.hx",
       "surface": "haxe.ds.StringMap",
       "reason": "Ruby Hash-backed map with Haxe StringMap behavior."
     },
     {
       "id": "std.ds.int_map",
-      "owner": "std/_std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/_std/haxe/ds/IntMap.cross.hx",
+      "path": "std/ruby/_std/haxe/ds/IntMap.hx",
       "surface": "haxe.ds.IntMap",
       "reason": "Ruby Hash-backed map with integer key behavior."
     },
     {
       "id": "std.ds.object_map",
-      "owner": "std/_std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/_std/haxe/ds/ObjectMap.cross.hx",
+      "path": "std/ruby/_std/haxe/ds/ObjectMap.hx",
       "surface": "haxe.ds.ObjectMap",
       "reason": "Ruby Hash#compare_by_identity-backed map preserving Haxe object-key identity semantics."
     },
     {
       "id": "std.io.bytes",
-      "owner": "std/_std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/_std/haxe/io/Bytes.hx",
+      "path": "std/ruby/_std/haxe/io/Bytes.hx",
       "surface": "haxe.io.Bytes",
       "reason": "Byte storage and encoding behavior backed by Ruby strings or byte arrays."
     },
     {
       "id": "std.io.fp_helper",
-      "owner": "std/_std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/_std/haxe/io/FPHelper.hx",
+      "path": "std/ruby/_std/haxe/io/FPHelper.hx",
       "surface": "haxe.io.FPHelper",
       "reason": "Ruby Array#pack/String#unpack1 IEEE-754 bit reinterpretation for BytesBuffer."
     },
     {
       "id": "std.sys.filesystem",
-      "owner": "std/_std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/_std/sys/FileSystem.hx",
+      "path": "std/ruby/_std/sys/FileSystem.hx",
       "surface": "sys.FileSystem",
       "reason": "Filesystem primitives backed by Ruby File, Dir, and FileUtils."
     },
     {
       "id": "std.sys.file",
-      "owner": "std/_std",
+      "owner": "std/ruby/_std",
       "status": "implemented",
-      "path": "std/_std/sys/io/File.hx",
+      "path": "std/ruby/_std/sys/io/File.hx",
       "surface": "sys.io.File",
       "reason": "File read/write APIs backed by Ruby IO."
     }

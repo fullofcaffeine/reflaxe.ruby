@@ -140,6 +140,7 @@
             "haxelib.json",
             "hxruby.gemspec",
             "haxe_libraries/reflaxe.ruby.hxml",
+            "haxe_libraries/railshx.client.hxml",
             "lib/hxruby/version.rb",
             "README.md",
             "CHANGELOG.md"

@@ -15,16 +15,16 @@
         "planned": 0,
         "deferred": 0
       },
-      "std": {
-        "total": 193,
-        "implemented": 193,
+      "std/ruby/_std": {
+        "total": 18,
+        "implemented": 18,
         "missing": 0,
         "planned": 0,
         "deferred": 0
       },
-      "std/_std": {
-        "total": 8,
-        "implemented": 8,
+      "std": {
+        "total": 183,
+        "implemented": 183,
         "missing": 0,
         "planned": 0,
         "deferred": 0

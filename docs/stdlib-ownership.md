@@ -4,20 +4,30 @@ This repo keeps target stdlib work split by ownership and classpath behavior.
 
 ## Classpath Precedence
 
-`CompilerBootstrap` prepends these directories for Ruby builds when they exist:
+Ruby target builds see these directories in this order:
 
-1. `std/_std`
+1. `std/ruby/_std`
 2. `std`
 3. `vendor/reflaxe/src`
 
-That order is intentional. Overrides in `std/_std` must win over additive Ruby std surfaces in `std`, and both must be visible before Reflaxe compiler internals are typed.
+That order is intentional. Source-checkout overrides in `std/ruby/_std` must
+win over additive Ruby std surfaces in `std`, and both must be visible before
+Reflaxe compiler internals are typed. `haxe_libraries/reflaxe.ruby.hxml`
+declares the same source-mode layout directly, matching Reflaxe-generated
+compiler conventions and the sibling Rust/OCaml compilers.
+
+RailsHx browser/client builds use `-lib railshx.client` instead of
+`-lib reflaxe.ruby`. That client library includes the shared/browser-safe
+`std/` surface but does not include Ruby compiler macros or `std/ruby/_std`.
+Reflaxe package build still owns `_std` to `.cross.hx` flattening for released
+haxelib packages.
 
 ## Layering Contract
 
 RubyHx has two std-facing layers that intentionally compose:
 
-- `std/_std/**` and `.cross.hx` files provide Haxe std semantics for portable
-  Haxe code.
+- `std/ruby/_std/**` source files provide Haxe std semantics for portable Haxe
+  code. Reflaxe build packages them as `src/**/*.cross.hx`.
 - `std/ruby/**` provides typed Ruby-shaped facades for Ruby libraries and runtime
   values.
 
@@ -32,26 +42,49 @@ surface typed with generics, abstracts, externs, typedefs, or narrow unchecked
 wrappers; do not make Ruby-shaped APIs loose just because they are closer to the
 target runtime.
 
+## Shared RailsHx Types
+
+Shared RailsHx value types belong in `std/` as a single source of truth when
+both server-side Ruby code and browser-side JavaScript code need the same typed
+contract. Examples include `rails.turbo.StreamName`,
+`rails.turbo.StreamTarget`, and `rails.turbo.TurboStreamAction`: ActionView,
+Turbo Streams, compiler lowerings, and Haxe-authored browser code all benefit
+from one package path and one set of conversions.
+
+Do not duplicate shared tokens into separate server/client packages just to
+make the physical tree look stricter. Prefer library entrypoint separation:
+`reflaxe.ruby` sees `std` plus Ruby `_std` overrides and compiler macros, while
+`railshx.client` sees only `std`. If a module is genuinely server-only or
+browser-only, document that at the module/API level and keep tests compiling it
+through the appropriate hxml. Move files into separate classpath roots only when
+the existing package path can be preserved and the move removes real ambiguity
+without weakening compiler lowerings.
+
 ## `std/`
 
 Use `std/` for additive Ruby target surfaces:
 
 - Ruby-native externs and facades, for example `ruby/File.hx` or `ruby/JSON.hx`.
-- Haxe std surfaces that can be implemented without replacing upstream modules wholesale, for example `StringTools.cross.hx`.
-- Target-owned helper APIs under `reflaxe/ruby/**`.
-- Cross-target-style `.cross.hx` files when the implementation is intentionally target-specific but does not need upstream classpath replacement.
+- RailsHx shared/server/browser APIs such as `rails.*` and
+  `reflaxe.js.Async`, selected by the consuming hxml and compile target.
 
 Files in `std/` should not shadow upstream Haxe std modules unless the replacement is deliberate and documented in `docs/stdlib-inventory.json`.
 
-## `std/_std/`
+## `std/ruby/_std/`
 
-Use `std/_std/` only for upstream Haxe std overrides that must take precedence:
+Use `std/ruby/_std/` only for upstream Haxe std overrides that must take
+precedence in source checkouts:
 
+- root std modules such as `Std`, `Array`, `Date`, `Math`, `StringTools`, and
+  `Type` when Ruby owns target-specific semantics;
 - `haxe/ds/*` map implementations when Ruby runtime semantics differ from upstream assumptions.
 - `haxe/io/*` surfaces that require Ruby-backed bytes, streams, or file behavior.
 - `sys/*` and `sys/io/*` modules once Ruby filesystem/process support exists.
 
-Any new file in `std/_std/` must have an inventory entry with `"owner": "std/_std"` and a reason.
+Any new file in `std/ruby/_std/` must have an inventory entry with
+`"owner": "std/ruby/_std"` and a reason. Do not place README or other
+non-Haxe files in `_std`; Reflaxe build converts every file copied from an
+`_std` path to `.cross.hx`.
 
 ## `runtime/`
 
@@ -176,7 +209,8 @@ The repo now has committed stdlib and runtime surfaces for the Ruby/Rails MVP:
 - `runtime/hxruby/*` shared runtime helpers.
 - `std/ruby/*` Ruby interop helpers.
 - `std/rails/*` Rails model/controller/params surfaces.
-- `std/_std/haxe/ds/*` and `std/_std/haxe/io/*` target-owned std overrides.
+- `std/ruby/_std/*`, `std/ruby/_std/haxe/ds/*`, and
+  `std/ruby/_std/haxe/io/*` target-owned std overrides.
 
 Run:
 

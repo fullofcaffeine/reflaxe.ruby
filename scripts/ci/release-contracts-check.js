@@ -42,6 +42,7 @@ const hxrubyTasks = readFileSync("lib/hxruby/tasks.rb", "utf8");
 const hxrubyAdoptGenerator = readFileSync("lib/hxruby/generators/adopt.rb", "utf8");
 const railsAppGenerator = readFileSync("lib/hxruby/generators/app.rb", "utf8");
 const rubyHxml = readFileSync("haxe_libraries/reflaxe.ruby.hxml", "utf8");
+const clientHxml = readFileSync("haxe_libraries/railshx.client.hxml", "utf8");
 const devisehxReleaseLane = readFileSync("docs/railshx-devisehx-release-lane.md", "utf8");
 const gemLayersGuide = readFileSync("docs/railshx-gem-layers.md", "utf8");
 const devisehxDesign = readFileSync("docs/railshx-devisehx-design.md", "utf8");
@@ -58,6 +59,20 @@ if (haxelibJson.classPath !== "src") {
 }
 if (!rubyHxml.includes("-cp ${SCOPE_DIR}/std/")) {
   fail("haxe_libraries/reflaxe.ruby.hxml must include std/ classpath");
+}
+if (!rubyHxml.includes("-cp ${SCOPE_DIR}/std/ruby/_std/")) {
+  fail("haxe_libraries/reflaxe.ruby.hxml must include source-layout _std overrides");
+}
+if (!clientHxml.includes("-cp ${SCOPE_DIR}/std/")) {
+  fail("haxe_libraries/railshx.client.hxml must include std/ classpath");
+}
+for (const forbidden of ["std/ruby/_std", "CompilerBootstrap", "CompilerInit", "-lib reflaxe"]) {
+  if (clientHxml.includes(forbidden)) {
+    fail(`haxe_libraries/railshx.client.hxml must not include Ruby target wiring: ${forbidden}`);
+  }
+}
+if ((haxelibJson.reflaxe?.stdPaths ?? []).join("\n") !== "std\nstd/ruby/_std") {
+  fail('haxelib.json reflaxe.stdPaths must be ["std", "std/ruby/_std"]');
 }
 expectExcludes(readme, "pre-1.0", "README release status");
 expectIncludes(readme, `current \`${packageJson.version}\` baseline`, "README release status");
@@ -100,7 +115,7 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
       fail(`release asset does not exist: ${asset}`);
     }
   }
-  for (const requiredAsset of ["package.json", "haxelib.json", "hxruby.gemspec", "haxe_libraries/reflaxe.ruby.hxml", "lib/hxruby/version.rb", "README.md", "CHANGELOG.md"]) {
+  for (const requiredAsset of ["package.json", "haxelib.json", "hxruby.gemspec", "haxe_libraries/reflaxe.ruby.hxml", "haxe_libraries/railshx.client.hxml", "lib/hxruby/version.rb", "README.md", "CHANGELOG.md"]) {
     if (!assets.includes(requiredAsset)) {
       fail(`release git assets missing required file: ${requiredAsset}`);
     }
@@ -168,13 +183,19 @@ expectIncludes(packageJson.scripts["test:gem-package"] ?? "", "gem-package-check
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-package.js", "package.json scripts");
 expectIncludes(versionSyncCheck, "README current baseline", "version sync check");
-expectIncludes(haxelibPackageBuilder, `"zip", ["-X", "-q", "-@", outPath]`, "Haxelib package builder");
+expectIncludes(versionSyncCheck, "railshx.client", "version sync check");
+expectIncludes(haxelibPackageBuilder, `"--run", "Run", "build", "_Build"`, "Haxelib package builder");
+expectIncludes(haxelibPackageBuilder, `"vendor", "reflaxe"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"vendor/genes/src/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
-expectIncludes(haxelibPackageCheckText, "std/devisehx/Auth.hx", "Haxelib package check");
-expectIncludes(haxelibPackageCheckText, "std/devisehx/routes/DeviseRoutes.hx", "Haxelib package check");
-expectIncludes(haxelibPackageCheckText, "std/devisehx/test/IntegrationHelpers.hx", "Haxelib package check");
+expectExcludes(haxelibPackageBuilder, `"haxe_libraries/"`, "Haxelib package builder");
+expectIncludes(haxelibPackageCheckText, "src/Std.cross.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "src/devisehx/Auth.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "src/devisehx/routes/DeviseRoutes.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "src/devisehx/test/IntegrationHelpers.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "packaged haxelib.json must be sanitized", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "\"haxe_libraries/\"", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "haxelib\", [\"newrepo\"]", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "\"-lib\"", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "Hello from installed reflaxe.ruby", "Haxelib package check");
@@ -182,9 +203,12 @@ expectIncludes(haxelibPackageCheck, "TODO: lower", "Haxelib package check");
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");
+expectIncludes(gemPackageCheck, "std/rails/turbo/Turbo.hx", "Ruby gem package check");
+expectIncludes(gemPackageCheck, "railshx.client gem smoke", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "vendor/genes/src/genes/Generator.hx", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "hxruby:production", "Ruby gem package check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
+expectIncludes(hxrubyGemspec, 'std/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'vendor/genes/src/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.2"', "hxruby.gemspec");
 expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");
@@ -205,6 +229,8 @@ expectIncludes(hxrubyTasks, "clean_owned_outputs", "hxruby tasks");
 expectIncludes(hxrubyTasks, "task :production", "hxruby tasks");
 expectIncludes(hxrubyTasks, "assets:precompile", "hxruby tasks");
 expectIncludes(railsAppGenerator, "bin/railshx-prod", "RailsHx app generator");
+expectIncludes(railsAppGenerator, "render_railshx_client_hxml", "RailsHx app generator");
+expectIncludes(railsAppGenerator, "-lib railshx.client", "RailsHx app generator");
 expectIncludes(railsAppGenerator, "HomeController", "RailsHx app generator");
 expectIncludes(railsAppGenerator, "HomeIndexView", "RailsHx app generator");
 expectIncludes(railsAppGenerator, "@:railsRoutes", "RailsHx app generator");
@@ -224,6 +250,7 @@ expectIncludes(rootRakefile, "namespace :package", "root Rakefile package tasks"
 expectIncludes(readme, "rake package:haxelib:build", "README Haxelib package docs");
 expectIncludes(readme, "rake package:haxelib:test", "README Haxelib package docs");
 expectIncludes(readme, "-lib reflaxe.ruby", "README Haxelib package docs");
+expectIncludes(readme, "-lib railshx.client", "README RailsHx client package docs");
 expectIncludes(readme, "rake package:gem:build", "README Ruby gem package docs");
 expectIncludes(readme, "rake package:gem:test", "README Ruby gem package docs");
 expectIncludes(readme, "dist/reflaxe.ruby-*.zip", "README Haxelib package docs");

@@ -45,7 +45,7 @@ ast/ (target IR + printer; optional transformer)
 optional: macros/, preprocessor/, runtimegen/
 std/
 target-facing externs and helper APIs
-optionally std/_std/ for Haxe std overrides, injected only when targeting this backend
+optionally std/<target>/_std/ for Haxe std overrides, injected only when targeting this backend
 haxelib.json
 package.json (lix toolchain + semantic-release scripts)
 scripts/
@@ -63,7 +63,7 @@ CompilerBootstrap (macro-only)
 Purpose: ensure anything needed to type the compiler itself is available before Haxe starts typing target modules.
 Common responsibilities:
 add std/ always (or conditionally)
-add std/_std only when building for this target
+add std/<target>/_std only when building for this target
 add vendor/reflaxe/src if you vendor reflaxe
 do early “target gating” based on defines / platform
 
@@ -225,7 +225,8 @@ Ruby AST keeps precedence correct and formatting stable.
 Printer is deterministic and “boring”.
 6.2 Core modules (template-applied)
 src/reflaxe/ruby/CompilerBootstrap.hx
-inject classpaths (std/, optional std/_std, optional vendored reflaxe)
+supports source/package classpath fallback; `haxe_libraries/reflaxe.ruby.hxml`
+declares std/, std/ruby/_std, and vendored reflaxe for Ruby target builds
 src/reflaxe/ruby/CompilerInit.hx
 gates on Ruby target (CustomTarget("ruby") for Haxe 5, -D ruby_output fallback)
 registers compiler with:
@@ -321,17 +322,20 @@ Std.string
 Type/Reflect basics (as needed)
 EReg mapping to Ruby Regexp (with compatibility notes)
 8) Haxe stdlib strategy for Ruby
-8.1 std/ vs std/_std
+8.1 std/ vs std/ruby/_std
 
 Follow ocaml/rust pattern:
 
 std/ contains Ruby-facing externs and helper APIs always safe to have on classpath.
-std/_std contains overrides that should only apply when targeting Ruby.
+std/ruby/_std contains overrides that should only apply when targeting Ruby.
 
-Bootstrap injection
+Library split
 
-CompilerBootstrap always adds std/
-only adds std/_std when building Ruby output
+`reflaxe.ruby` is the Ruby target compiler library and includes source-layout
+`std/ruby/_std`.
+
+`railshx.client` is the browser/client helper library and includes only the
+shared/browser-safe `std/` surface.
 8.2 Parity scope (for 1.0)
 
 Minimum to support Rails apps and typical Haxe code:

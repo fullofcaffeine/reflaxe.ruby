@@ -194,7 +194,7 @@ bin/rails generate hxruby:install MyApp
 rake rails:app ARGS="--output path/to/rails-app --name MyApp"
 ```
 
-That writes `.haxerc`, `build.hxml`, `build-client.hxml`, `haxe_libraries/genes.hxml`, `haxe_libraries/helder.set.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, `bin/railshx-dev`, `bin/railshx-prod`, and `docs/railshx/gem_layers.md`. In an installed app, the same generator is exposed as:
+That writes `.haxerc`, `build.hxml`, `build-client.hxml`, `haxe_libraries/railshx.client.hxml`, `haxe_libraries/genes.hxml`, `haxe_libraries/helder.set.hxml`, `src_haxe/**`, `app/javascript/**`, `app/assets/stylesheets/application.css`, `config/importmap.rb`, `lib/tasks/hxruby.rake`, `Procfile.railshx.dev`, `bin/railshx-dev`, `bin/railshx-prod`, and `docs/railshx/gem_layers.md`. In an installed app, the same generator is exposed as:
 
 ```bash
 bundle exec rake hxruby:gen:app NAME=MyApp
@@ -258,7 +258,7 @@ haxe -D ruby_output=examples/todoapp_rails/tmp/compiler \
 
 Generated app-owned Rails Ruby lands where a hand-written Rails app would put it: controllers in `app/controllers/**`, models in `app/models/**`, templates in `app/views/**`, and migrations in `db/migrate/**`. RailsHx should not generate a generic `app/haxe_gen/**` tree for Rails-owned artifacts.
 
-The Haxe-authored client lane compiles through `examples/todoapp_rails/build-client.hxml`, which adds `-cp std` so `rails.turbo.Turbo`, `reflaxe.js.Async`, and typed event/action modules are available. The build uses Genes (`-lib genes`, `--macro genes.Generator.use()`, `--macro reflaxe.js.Async.enable()`, and `-D js-es=6`) so Rails receives readable ES module assets under `app/javascript/railshx/**` instead of one flattened JavaScript blob. Genes reads `@:async` metadata, while `reflaxe.js.Async.enable()` desugars `@:await expr` to the same typed helper as `await(expr)`, so Haxe-authored async code becomes normal ES `async`/`await`.
+The Haxe-authored client lane compiles through `examples/todoapp_rails/build-client.hxml`, which uses `-lib railshx.client` so `rails.turbo.Turbo`, `reflaxe.js.Async`, and typed event/action modules resolve without loading the Ruby target compiler or Ruby-only std overrides. The build uses Genes (`-lib genes`, `--macro genes.Generator.use()`, `--macro reflaxe.js.Async.enable()`, and `-D js-es=6`) so Rails receives readable ES module assets under `app/javascript/railshx/**` instead of one flattened JavaScript blob. Genes reads `@:async` metadata, while `reflaxe.js.Async.enable()` desugars `@:await expr` to the same typed helper as `await(expr)`, so Haxe-authored async code becomes normal ES `async`/`await`.
 
 ## Test
 

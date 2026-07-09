@@ -151,12 +151,14 @@ RailsHx build files, app-local Rake entrypoints, and a small typed app graph:
 - `build.hxml` and `build-client.hxml`: server and client compile contracts.
   The client build should use Genes so generated apps get readable ES module
   output for Rails importmap/Propshaft instead of one flattened JavaScript file.
-  It should also include `${HXRUBY_GEM_ROOT}/std` so generated apps can consume
-  typed Turbo and `reflaxe.js.Async` helpers through the app-local rake tasks.
-- `haxe_libraries/genes.hxml` and `haxe_libraries/helder.set.hxml`: app-local
-  dependency stubs for the Genes client lane. `hxruby` rake tasks set
-  `HXRUBY_GEM_ROOT`, so generated apps resolve the vendored Genes source from
-  the installed package or checkout.
+  It should also use `-lib railshx.client` so generated apps consume typed
+  Turbo and `reflaxe.js.Async` helpers from the browser-safe `hxruby` client
+  library instead of loading the Ruby target compiler package.
+- `haxe_libraries/railshx.client.hxml`, `haxe_libraries/genes.hxml`, and
+  `haxe_libraries/helder.set.hxml`: app-local dependency stubs for the client
+  lane. `hxruby` rake tasks set `HXRUBY_GEM_ROOT`, so generated apps resolve
+  RailsHx browser helpers and vendored Genes source from the installed package
+  or checkout.
 - `lib/tasks/hxruby.rake`: app-local task bridge that loads `hxruby/tasks`.
 - `bin/railshx-dev` and `bin/railshx-prod`: developer and production wrappers.
 - `Procfile.railshx.dev`: optional `foreman`/`overmind` process file.

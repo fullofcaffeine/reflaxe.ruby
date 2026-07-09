@@ -1,14 +1,21 @@
 # Reflaxe.Ruby Library Configuration
 #
-# Self-referential config so examples and tests can use `-lib reflaxe.ruby`
-# inside this repo without requiring `haxelib dev`.
+# Self-referential Ruby target config so examples and tests can use
+# `-lib reflaxe.ruby` inside this repo without requiring `haxelib dev`.
+#
+# Reflaxe package build uses haxelib.json `reflaxe.stdPaths` to turn
+# `std/ruby/_std/**/*.hx` into packaged `src/**/*.cross.hx`.
+#
+# Keep these source classpaths aligned with haxelib.json `reflaxe.stdPaths`.
+# Browser/client builds should use `-lib railshx.client`, not this Ruby target
+# compiler library.
 
 -cp ${SCOPE_DIR}/src/
 -cp ${SCOPE_DIR}/std/
+-cp ${SCOPE_DIR}/std/ruby/_std/
 
 -lib reflaxe
 
 -D reflaxe.ruby=0.1.0-beta.2
 --macro reflaxe.ruby.CompilerBootstrap.Start()
 --macro reflaxe.ruby.CompilerInit.Start()
-

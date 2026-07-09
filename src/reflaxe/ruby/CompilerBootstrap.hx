@@ -18,7 +18,7 @@ class CompilerBootstrap {
 		bootstrapped = true;
 
 		var root = findLibraryRoot();
-		var stagedStd = Path.normalize(Path.join([root, "std", "_std"]));
+		var stagedStd = Path.normalize(Path.join([root, "std", "ruby", "_std"]));
 		var standardLibrary = Path.normalize(Path.join([root, "std"]));
 		var vendoredReflaxe = Path.normalize(Path.join([root, "vendor", "reflaxe", "src"]));
 

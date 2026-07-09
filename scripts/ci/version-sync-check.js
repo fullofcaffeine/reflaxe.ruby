@@ -14,6 +14,7 @@ function readJson(path) {
 const packageJson = readJson('package.json')
 const haxelibJson = readJson('haxelib.json')
 const rubyHxml = fs.readFileSync('haxe_libraries/reflaxe.ruby.hxml', 'utf8')
+const clientHxml = fs.readFileSync('haxe_libraries/railshx.client.hxml', 'utf8')
 const hxrubyVersion = fs.readFileSync('lib/hxruby/version.rb', 'utf8')
 const readme = fs.readFileSync('README.md', 'utf8')
 
@@ -32,6 +33,13 @@ if (!hxmlVersion) {
   fail('missing -D reflaxe.ruby=<version> in haxe_libraries/reflaxe.ruby.hxml')
 } else if (hxmlVersion[1] !== expectedVersion) {
   fail(`haxe_libraries/reflaxe.ruby.hxml version ${hxmlVersion[1]} != package.json version ${expectedVersion}`)
+}
+
+const clientHxmlVersion = clientHxml.match(/^-D\s+railshx\.client=([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)\s*$/m)
+if (!clientHxmlVersion) {
+  fail('missing -D railshx.client=<version> in haxe_libraries/railshx.client.hxml')
+} else if (clientHxmlVersion[1] !== expectedVersion) {
+  fail(`haxe_libraries/railshx.client.hxml version ${clientHxmlVersion[1]} != package.json version ${expectedVersion}`)
 }
 
 const gemVersion = hxrubyVersion.match(/^\s*VERSION\s*=\s*"([^"]+)"\s*$/m)

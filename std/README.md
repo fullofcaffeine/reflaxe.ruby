@@ -3,8 +3,12 @@
 Target stdlib sources live here.
 
 - Additive Ruby facades and target-owned Haxe APIs belong directly under `std/`.
-- Upstream Haxe std replacements belong under `std/_std/`.
+- Upstream Haxe std replacements belong under `std/ruby/_std/`.
 - Runtime Ruby implementation files belong under `runtime/hxruby/`, not here.
+
+`std/ruby/_std/**/*.hx` is source-checkout input. Reflaxe package build turns
+those files into packaged `src/**/*.cross.hx` entries, so do not check in a
+generated `.cross.hx` mirror or documentation files inside `_std`.
 
 Rails/Ruby library facades should be typed contracts over the real target APIs,
 not wrapper runtimes. For receiver extensions such as ActiveSupport core
@@ -30,6 +34,7 @@ Rails template primitives that are Hotwire-native, such as HHX
 should lower to ordinary Rails/Turbo markup rather than introducing client
 runtime wrappers.
 
-See `docs/stdlib-ownership.md` and `docs/stdlib-inventory.json`.
+See `docs/stdlib-ownership.md`, `docs/haxelib-packaging.md`, and
+`docs/stdlib-inventory.json`.
 For typed Ruby stdlib facade authoring rules, see
 `docs/ruby-stdlib-facades.md`.

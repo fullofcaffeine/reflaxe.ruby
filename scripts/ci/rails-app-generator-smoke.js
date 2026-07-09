@@ -67,7 +67,7 @@ try {
     "root(to(HomeController, index));",
   ]);
   expectFile("build-client.hxml", [
-    "-cp ${HXRUBY_GEM_ROOT}/std",
+    "-lib railshx.client",
     "-lib genes",
     "--macro genes.Generator.use()",
     "-main client.Boot",
@@ -82,6 +82,10 @@ try {
     "${HXRUBY_GEM_ROOT}/vendor/genes/src",
     "-lib helder.set",
     "-D genes=0.4.14",
+  ]);
+  expectFile("haxe_libraries/railshx.client.hxml", [
+    "${HXRUBY_GEM_ROOT}/std",
+    "-D railshx.client=",
   ]);
   expectFile("haxe_libraries/helder.set.hxml", [
     "haxelib:/helder.set#0.3.1",
@@ -152,6 +156,7 @@ try {
     ["app_haxe/views/ApplicationLayoutView.hx", "haxe_source", "hxruby:install"],
     ["app_haxe/views/HomeIndexView.hx", "haxe_source", "hxruby:install"],
     [".haxerc", "haxe_config", "hxruby:install"],
+    ["haxe_libraries/railshx.client.hxml", "haxe_dependency", "hxruby:install"],
     ["haxe_libraries/genes.hxml", "haxe_dependency", "hxruby:install"],
     ["haxe_libraries/helder.set.hxml", "haxe_dependency", "hxruby:install"],
     ["docs/railshx/gem_layers.md", "docs", "hxruby:install"],
@@ -315,12 +320,16 @@ function compileGeneratedStarter() {
     "-cp",
     join(root, "std"),
     "-cp",
+    join(root, "std", "ruby", "_std"),
+    "-cp",
     join(root, "src"),
     "-cp",
     join(root, "vendor", "reflaxe", "src"),
   ], { cwd: tempRoot });
 
-  run("haxe", ["build-client.hxml", "-cp", join(root, "std")], {
+  run("haxe", [
+    "build-client.hxml",
+  ], {
     cwd: tempRoot,
     env: { ...process.env, HXRUBY_GEM_ROOT: root },
   });

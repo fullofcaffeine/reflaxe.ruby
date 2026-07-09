@@ -6,7 +6,7 @@ const { join, relative, resolve } = require("node:path");
 const root = resolve(__dirname, "..", "..");
 const inventoryPath = join(root, "docs", "stdlib-inventory.json");
 const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
-const allowedOwners = new Set(["std", "std/_std", "runtime/hxruby"]);
+const allowedOwners = new Set(["std", "std/ruby/_std", "runtime/hxruby"]);
 const allowedStatuses = new Set(["planned", "missing", "implemented", "deferred"]);
 
 failIf(inventory.schemaVersion !== 1, "schemaVersion must be 1");
@@ -38,7 +38,7 @@ for (const file of committedStdRuntimeFiles()) {
 }
 
 function ownerForPath(path) {
-  if (path.startsWith("std/_std/")) return "std/_std";
+  if (path.startsWith("std/ruby/_std/")) return "std/ruby/_std";
   if (path.startsWith("std/")) return "std";
   if (path.startsWith("runtime/hxruby/")) return "runtime/hxruby";
   return "";

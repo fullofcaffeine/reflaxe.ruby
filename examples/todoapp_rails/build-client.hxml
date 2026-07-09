@@ -1,7 +1,7 @@
 # Haxe->JavaScript client behavior for the RailsHx todoapp.
 # The Rails materializer compiles this into app/javascript/railshx/todo_client.js.
 -cp examples/todoapp_rails/src
--cp std
+-lib railshx.client
 
 # Genes emits readable ES module JavaScript for Rails importmap assets. This is
 # the RailsHx analogue of PhoenixHx's client lane: Haxe owns typed authoring,

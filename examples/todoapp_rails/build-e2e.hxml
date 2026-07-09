@@ -2,7 +2,7 @@
 # This is intentionally optional: TypeScript Playwright specs in src/e2e/*.ts
 # remain first-class, while Haxe specs can reuse typed RailsHx app contracts.
 -cp examples/todoapp_rails/src
--cp std
+-lib railshx.client
 
 -lib genes
 -D js-es=6
