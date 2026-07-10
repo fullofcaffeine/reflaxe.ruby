@@ -9,13 +9,9 @@ package haxe;
 **/
 class Json {
 	public static function parse(text:String):Dynamic {
-		// Ruby's parser error must cross the Haxe std boundary as a Haxe throw so
-		// ordinary `catch (error:Dynamic)` code can observe invalid JSON.
-		var parsed:Dynamic = untyped __ruby__("(begin [true, JSON.parse({0})]; rescue JSON::ParserError => error; [false, error]; end)", text);
-		if (!parsed[0]) {
-			throw parsed[1];
-		}
-		return parsed[1];
+		// JSON values are deliberately open at this std API boundary. Ruby parser
+		// failures cross Haxe try/catch through the compiler's StandardError rescue.
+		return untyped __ruby__("JSON.parse({0})", text);
 	}
 
 	public static function stringify(value:Dynamic, ?replacer:Dynamic, ?space:String):String {

@@ -430,7 +430,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (hasRubyNoEmit(enumType.meta)) {
 			return null;
 		}
-		if (isErasedSysStdPack(enumType.pack)) {
+		if (isErasedSysStdType(enumType.pack, enumType.name)) {
 			requireRegistry.collectMeta(enumType.meta);
 			return null;
 		}
@@ -470,7 +470,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (hasRubyNoEmit(abstractType.meta)) {
 			return null;
 		}
-		if (isErasedSysStdPack(abstractType.pack)) {
+		if (isErasedSysStdType(abstractType.pack, abstractType.name)) {
 			requireRegistry.collectMeta(abstractType.meta);
 			return null;
 		}
@@ -806,8 +806,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var i = pack.length - 1;
 		while (i >= 0) {
 			var constant = rubyConstantName(pack[i]);
-			wrapped = isPrivateImplementationPackPart(pack[i]) ? wrapInPrivateImplementationOwner(pack, i, constant,
-				wrapped) : RubyModuleDecl(constant, [wrapped]);
+			wrapped = i == 0
+				&& pack[i] == "sys" ? RubyClassDecl(constant,
+					[wrapped]) : isPrivateImplementationPackPart(pack[i]) ? wrapInPrivateImplementationOwner(pack, i, constant,
+					wrapped) : RubyModuleDecl(constant, [wrapped]);
 			i -= 1;
 		}
 		return wrapped;
@@ -1169,14 +1171,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function isErasedSysStdFacade(classType:ClassType):Bool {
-		// Haxe has both a top-level `Sys` class and a lowercase `sys.*` package.
-		// Ruby constants cannot represent both as `Sys`, so sys.* std facades
-		// must inline/direct-lower instead of emitting runtime namespace shells.
-		return isErasedSysStdPack(classType.pack);
+		return isErasedSysStdType(classType.pack, classType.name);
 	}
 
-	static function isErasedSysStdPack(pack:Array<String>):Bool {
-		return pack.length > 0 && pack[0] == "sys";
+	static function isErasedSysStdType(pack:Array<String>, name:String):Bool {
+		if (pack.length == 0 || pack[0] != "sys") {
+			return false;
+		}
+		// Stateless sys facades inline to Ruby File/Dir/process calls. Stateful IO
+		// handles must survive as objects; Ruby's top-level Sys class can legally
+		// own the nested Sys::Io carrier constants without a parallel runtime DSL.
+		return pack.join(".") != "sys.io" || ["FileInput", "FileOutput", "FileSeek"].indexOf(name) == -1;
 	}
 
 	static function isDeviseHxMetadataContract(varFields:Array<ClassVarData>):Bool {
@@ -5984,8 +5989,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		appendIndentedLines(lines, renderStatements(compileFunctionBody(tryExpr)), 1);
 		if (catches.length > 0) {
 			var first = catches[0];
-			lines.push("rescue HxException => __hx_ex");
-			lines.push("  " + localName(first.v) + " = __hx_ex.value");
+			// Haxe throws are wrapped so any value can cross Ruby's exception model,
+			// while direct Ruby APIs raise StandardError subclasses. Catch both at the
+			// language boundary and unwrap only the compiler-owned HxException carrier.
+			lines.push("rescue StandardError => __hx_ex");
+			lines.push("  " + localName(first.v) + " = __hx_ex.is_a?(HxException) ? __hx_ex.value : __hx_ex");
 			appendIndentedLines(lines, renderStatements(compileFunctionBody(first.expr)), 1);
 		}
 		lines.push("end");

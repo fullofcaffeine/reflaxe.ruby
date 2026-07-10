@@ -81,6 +81,14 @@ precedence in source checkouts:
 - `haxe/io/*` surfaces that require Ruby-backed bytes, streams, or file behavior.
 - `sys/*` and `sys/io/*` modules once Ruby filesystem/process support exists.
 
+The filesystem implementation keeps stateless `sys.FileSystem` and
+`sys.io.File` facades erased and inlined to ordinary Ruby `File`, `Dir`, and
+`FileUtils` calls. Stateful `FileInput`, `FileOutput`, and `FileSeek` values are
+emitted as the minimal nested `Sys::Io` carriers because Haxe code must retain
+their handle state across calls. Ruby permits reopening the existing `Sys`
+class to own those constants, so this does not require a parallel filesystem
+runtime or `HXRuby` wrappers.
+
 Any new file in `std/ruby/_std/` must have an inventory entry with
 `"owner": "std/ruby/_std"` and a reason. Do not place README or other
 non-Haxe files in `_std`; Reflaxe build converts every file copied from an
@@ -132,8 +140,17 @@ Ruby-specific reason, record that decision in the manifest with a short reason.
 regressions. Ruby's `JSON.parse`, `JSON.generate`, and `JSON.pretty_generate`
 remain the actual parser/generator; `HXRuby.json_prepare` only projects Haxe
 replacer, non-finite-number, enum, function, and generated-class semantics into
-native JSON-ready values. Invalid Ruby parser errors cross the Haxe std boundary
-as Haxe throws so ordinary Haxe `try/catch` works.
+native JSON-ready values. Invalid Ruby parser errors cross Haxe `try/catch`
+directly through the compiler's native `StandardError` rescue; no heterogeneous
+Dynamic result tuple or JSON-specific exception wrapper is needed.
+
+`sys.io.File` is enabled from the direct upstream unitstd fixture. The separate
+`npm run test:filesystem-parity` lane adapts authoritative broader-suite cases
+for `sys.FileSystem`, `File`, and `FileInput`, including path-segment behavior,
+directories, stat values, copy/rename/delete failures, binary streaming,
+seek/tell, and latched EOF. Native Ruby `StandardError` values cross Haxe
+`try/catch` through compiler lowering, while normal generated file operations
+remain direct Ruby calls.
 
 The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
@@ -142,9 +159,9 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.EnumFlags`,
-`haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, and
-`haxe.Template` run directly. `Reflect` and `Type` run through adapted fixtures
-because upstream section-local names need macro-lane accommodation; `Type` also
+`haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`,
+`haxe.Template`, and `sys.io.File` run directly. `Reflect` and `Type` run
+through adapted fixtures because upstream section-local names need macro-lane accommodation; `Type` also
 uses upstream-package helpers and explicit Dynamic parameter arrays. `Std`
 remains adapted for its assertion syntax, duplicate locals, and `unspec(...)`
 markers.

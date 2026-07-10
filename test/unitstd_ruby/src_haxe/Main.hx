@@ -49,6 +49,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("haxe/extern/EitherType.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/Path.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("sys/io/File.unit.hx");
 		unitstd_ruby.ERegSemantics.run();
 		unitstd_ruby.MapSemantics.run();
 		unitstd_ruby.StdNumericParsing.run();

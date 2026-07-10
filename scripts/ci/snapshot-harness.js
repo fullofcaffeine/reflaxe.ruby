@@ -21,6 +21,19 @@ const cases = [
   { name: "switch_cases", files: ["hxruby/core.rb", "hxruby/data_define.rb", "color.rb", "main.rb", "run.rb"] },
   { name: "exception_flow", files: ["hxruby/core.rb", "hxruby/hx_exception.rb", "main.rb", "run.rb"] },
   { name: "stdlib_mvp", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
+  {
+    name: "filesystem_parity",
+    sourceRoot: "test/filesystem_parity/src_haxe",
+    strictExamples: false,
+    files: [
+      "main.rb",
+      "main/filesystem_parity_assert.rb",
+      "run.rb",
+      "sys/io/file_input.rb",
+      "sys/io/file_output.rb",
+      "sys/io/file_seek.rb",
+    ],
+  },
   { name: "require_metadata", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
   { name: "native_mapping", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
   { name: "ruby_call_shapes", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
@@ -302,9 +315,10 @@ function compileCase(testCase, outputDir) {
     `ruby_output=${outputDir}`,
     "-D",
     "reflaxe_runtime",
-    "-D",
-    "reflaxe_ruby_strict_examples",
   ];
+  if (testCase.strictExamples !== false) {
+    args.push("-D", "reflaxe_ruby_strict_examples");
+  }
   for (const define of testCase.defines ?? []) {
     args.push("-D", define);
   }
@@ -315,7 +329,7 @@ function compileCase(testCase, outputDir) {
     "-cp",
     join(root, "src"),
     "-cp",
-    join(root, "examples", testCase.name),
+    join(root, testCase.sourceRoot ?? join("examples", testCase.name)),
     "-cp",
     reflaxeSrc,
     "--macro",

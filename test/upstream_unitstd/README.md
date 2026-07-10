@@ -32,14 +32,16 @@ Current upstream runtime fixtures:
   `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
   `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
   `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-  `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`.
+  `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`,
+  `sys.io.File`.
 - Adapted: `Reflect`, `Std`, and `Type`. `Reflect` and `Type` add lexical blocks
   around upstream sections whose locals collide when expanded into one method;
   `Type` also uses upstream-package helpers and explicit Dynamic parameter
   arrays. `Std` avoids similar macro-expansion collisions and ignores upstream
   `unspec(...)` markers; all retain the assertions owned by this lane.
 - No direct unitstd spec: `haxe.Json` is covered separately by the
-  provenance-backed `npm run test:json-parity` broader-suite lane.
+  provenance-backed `npm run test:json-parity` broader-suite lane;
+  `sys.FileSystem` is covered by `npm run test:filesystem-parity`.
 - `Map` is enabled directly. RubyHx backs `StringMap` and `IntMap` with normal
   Ruby `Hash`, and backs `ObjectMap` with `Hash#compare_by_identity` so object
   keys keep Haxe identity semantics while preserving Ruby insertion order.
@@ -59,6 +61,13 @@ lane adapts `TestJson`, Issue4592, and Issue11560 to cover scalar and structured
 round trips, Unicode escapes, invalid-input throws, non-finite numbers,
 replacer traversal, pretty printing, and generated-class fields while checking
 that Ruby's native JSON library remains the final parser and encoder.
+
+`sys.io.File` is enabled directly. It covers write, overwrite, append, update,
+seek, and create-on-update behavior through direct Ruby `File`/`IO` calls.
+`sys.FileSystem` has no direct unitstd fixture, so the provenance-backed broader
+filesystem lane covers its upstream path, directory, stat, rename, deletion,
+and native-error behavior alongside binary and EOF cases for the typed
+`FileInput`/`FileOutput` carriers.
 
 `haxe.io.Path` is enabled directly. It proves the portable Haxe path parser,
 formatter, joiner, and normalizer can fall through unchanged on Ruby while

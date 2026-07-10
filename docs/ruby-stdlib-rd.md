@@ -59,8 +59,6 @@ Current implemented domains:
 
 Implemented domains that still need broader upstream parity accounting:
 
-- `sys.FileSystem`
-- `sys.io.File`
 - `haxe.io.FPHelper`
 
 Upstream unitstd coverage is curated in `test/upstream_unitstd/manifest.json`
@@ -76,12 +74,16 @@ Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-`haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, and `haxe.Template` run
-directly. `Reflect`, `Std`, and `Type` run through adapted upstream fixtures,
-and local focused fixtures cover adjacent semantic gaps such as numeric parsing.
+`haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`, and
+`sys.io.File` run directly. `Reflect`, `Std`, and `Type` run through adapted
+upstream fixtures, and local focused fixtures cover adjacent semantic gaps such
+as numeric parsing.
 `haxe.Json` has no direct unitstd spec, so `npm run test:json-parity` adapts the
 authoritative broader-suite parser/writer cases and issue regressions while
 locking in native Ruby JSON output plus the compact Haxe semantic adapter.
+`sys.FileSystem` likewise has no direct unitstd spec; the provenance-backed
+`npm run test:filesystem-parity` lane covers directories, paths, stat, errors,
+binary streaming, seek/tell, and EOF behavior alongside `sys.io.File`.
 
 Broader upstream candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and
@@ -109,8 +111,6 @@ These are required for current examples, RailsHx, and shared Haxe domain code.
 These surfaces now have Ruby target implementations, but should get stronger
 upstream or focused parity evidence before broad Ruby library expansion.
 
-- `sys.FileSystem`
-- `sys.io.File`
 - `haxe.io.FPHelper`
 
 For each surface, prefer a typed Haxe facade that emits direct Ruby when safe and
@@ -245,17 +245,14 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
    `haxe.zip.Compress`, or `haxe.zip.Uncompress` through
    `test/upstream_unitstd/manifest.json`.
 
-2. Add focused filesystem parity coverage for `sys.FileSystem` and
-   `sys.io.File`, including exception and newline behavior.
-
-3. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
+2. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
    `haxe.io.FPHelper`.
 
-4. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
+3. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
    remains green: `haxe.ds.StringMap`, `haxe.ds.IntMap`,
    `haxe.ds.ObjectMap`, `haxe.ds.Vector`, and `haxe.ds.EnumValueMap`.
 
-5. Add Ruby stdlib facades separately under `std/ruby/**` for
+4. Add Ruby stdlib facades separately under `std/ruby/**` for
    `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 

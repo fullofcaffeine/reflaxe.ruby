@@ -579,20 +579,20 @@
     },
     {
       "module": "sys.FileSystem",
-      "classification": "ruby-override-needed",
+      "classification": "covered-ruby-override",
       "unitstdStatus": "no-upstream-spec",
       "owner": "std/ruby/_std/sys/FileSystem.hx",
-      "next": "Add focused filesystem parity smoke coverage because unitstd has no direct fixture.",
-      "notes": "RubyHx owns this as a Ruby File/Dir/FileUtils-backed Haxe sys surface."
+      "next": "Keep covered by npm run test:filesystem-parity.",
+      "notes": "RubyHx owns this direct File/Dir/FileUtils-backed surface; broader upstream filesystem cases cover path, directory, stat, error, rename, and deletion semantics."
     },
     {
       "module": "sys.io.File",
       "source": "sys/io/File.unit.hx",
-      "classification": "ruby-override-needed",
-      "unitstdStatus": "not-tracked",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
       "owner": "std/ruby/_std/sys/io/File.hx",
-      "next": "Promote the upstream fixture after exception and newline semantics are audited.",
-      "notes": "RubyHx owns this as a Haxe sys.io facade over Ruby file IO."
+      "next": "Keep covered by npm run test:unitstd-ruby and npm run test:filesystem-parity.",
+      "notes": "RubyHx owns direct Ruby file operations plus typed FileInput/FileOutput carriers; upstream unitstd and broader cases cover text, binary, streaming, seek, EOF, and error behavior."
     },
     {
       "module": "sys.net.Socket",

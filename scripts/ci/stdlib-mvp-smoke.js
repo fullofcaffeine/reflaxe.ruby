@@ -85,7 +85,7 @@ const jsonFailureProbe = run("ruby", ["-e", [
   `begin`,
   `  Haxe::Json.parse("{")`,
   `  puts "missing parser error"`,
-  `rescue HxException`,
+  `rescue JSON::ParserError`,
   `  puts "parser error"`,
   `end`,
   `puts Haxe::Json.stringify({"count" => 2}, ->(_key, value) { value.is_a?(Integer) ? value * 2 : value })`,
@@ -102,15 +102,17 @@ for (const erasedSysFile of ["sys/file_system.rb", "sys/io/file.rb"]) {
     process.exit(1);
   }
 }
-if (existsSync(join(outputDir, "sys"))) {
-  console.error("sys.* std facades should not emit a nested sys/ runtime namespace.");
-  process.exit(1);
+for (const carrierFile of ["sys/io/file_input.rb", "sys/io/file_output.rb", "sys/io/file_seek.rb"]) {
+  if (!existsSync(join(outputDir, carrierFile))) {
+    console.error(`Stateful sys.io carrier missing: ${carrierFile}`);
+    process.exit(1);
+  }
 }
 for (const expectedFileShape of [
   "::File.write(",
   "::File.read(",
   "::File.stat(",
-  "::File.expand_path(",
+  "::File.join(::Dir.pwd,",
   "::File.realpath(",
   "::FileUtils.mkdir_p(",
   "::FileUtils.copy_file(",

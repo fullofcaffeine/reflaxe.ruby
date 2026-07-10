@@ -1636,7 +1636,23 @@
       "status": "implemented",
       "path": "std/ruby/_std/sys/io/File.hx",
       "surface": "sys.io.File",
-      "reason": "File read/write APIs backed by Ruby IO."
+      "reason": "Direct Ruby text, binary, copy, and streaming file operations."
+    },
+    {
+      "id": "std.sys.file_input",
+      "owner": "std/ruby/_std",
+      "status": "implemented",
+      "path": "std/ruby/_std/sys/io/FileInput.hx",
+      "surface": "sys.io.FileInput",
+      "reason": "Typed Haxe Input carrier over a private native Ruby IO handle with seek, tell, EOF, and byte reads."
+    },
+    {
+      "id": "std.sys.file_output",
+      "owner": "std/ruby/_std",
+      "status": "implemented",
+      "path": "std/ruby/_std/sys/io/FileOutput.hx",
+      "surface": "sys.io.FileOutput",
+      "reason": "Typed Haxe Output carrier over a private native Ruby IO handle with seek, tell, flush, and binary writes."
     }
   ]
 }

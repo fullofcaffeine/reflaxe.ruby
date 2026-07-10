@@ -40,6 +40,9 @@ for (const file of [
   "hxruby/core.rb",
   "main.rb",
   "run.rb",
+  "sys/io/file_input.rb",
+  "sys/io/file_output.rb",
+  "sys/io/file_seek.rb",
   "unit/spec/c.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -60,6 +63,8 @@ if (actual !== "unitstd-ruby ok\n") {
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
 const exprDefRuby = readFileSync(join(outputDir, "haxe", "macro", "expr_def.rb"), "utf8");
+const fileOutputRuby = readFileSync(join(outputDir, "sys", "io", "file_output.rb"), "utf8");
+const fileSeekRuby = readFileSync(join(outputDir, "sys", "io", "file_seek.rb"), "utf8");
 const typeFixtureRuby = readFileSync(join(outputDir, "unit", "spec", "c.rb"), "utf8");
 for (const expectedShape of [
   "StringBuf.new()",
@@ -69,6 +74,33 @@ for (const expectedShape of [
 ]) {
   if (!mainRuby.includes(expectedShape)) {
     console.error(`Expected generated unitstd Ruby shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of [
+  "Sys::Io::FileOutput.new(::File.open(",
+  'fw.write_string("apple\\n")',
+  ".seek(7, Sys::Io::FileSeek.seek_begin())",
+]) {
+  if (!mainRuby.includes(expectedShape)) {
+    console.error(`Expected direct upstream sys.io.File shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of [
+  "class Sys",
+  "module Io",
+  "class FileOutput < Haxe::Io::Output",
+  "self.handle.write(bytes.get_data().slice(pos, len).pack('C*'))",
+]) {
+  if (!fileOutputRuby.includes(expectedShape)) {
+    console.error(`Expected sys.io.FileOutput carrier shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of ["module FileSeek", "def self.seek_begin()", 'SeekBegin.new("SeekBegin", 0)']) {
+  if (!fileSeekRuby.includes(expectedShape)) {
+    console.error(`Expected sys.io.FileSeek carrier shape missing: ${expectedShape}`);
     process.exit(1);
   }
 }

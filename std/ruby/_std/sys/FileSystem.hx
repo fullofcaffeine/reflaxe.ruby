@@ -11,7 +11,7 @@ class FileSystem {
 	}
 
 	public static inline function stat(path:String):FileStat {
-		var stat:Dynamic = untyped __ruby__("::File.stat({0})", path);
+		var stat:RubyFileStat = untyped __ruby__("::File.stat({0})", path);
 		return {
 			gid: untyped __ruby__("{0}.gid", stat),
 			uid: untyped __ruby__("{0}.uid", stat),
@@ -32,7 +32,9 @@ class FileSystem {
 	}
 
 	public static inline function absolutePath(relPath:String):String {
-		return untyped __ruby__("::File.expand_path({0})", relPath);
+		// Haxe absolutePath makes a path absolute without canonicalizing `./` or
+		// `..`; Ruby File.expand_path would erase those source path segments.
+		return haxe.io.Path.isAbsolute(relPath) ? relPath : untyped __ruby__("::File.join(::Dir.pwd, {0})", relPath);
 	}
 
 	public static inline function isDirectory(path:String):Bool {
@@ -55,8 +57,16 @@ class FileSystem {
 		return untyped __ruby__("(raise Errno::ENOENT, {0} unless ::File.directory?({0}); ::Dir.children({0}))", path);
 	}
 
-	static inline function rubyTimeToDate(value:Dynamic):Date {
+	static inline function rubyTimeToDate(value:RubyTime):Date {
 		return new Date(untyped __ruby__("{0}.year", value), untyped __ruby__("{0}.month - 1", value), untyped __ruby__("{0}.day", value),
 			untyped __ruby__("{0}.hour", value), untyped __ruby__("{0}.min", value), untyped __ruby__("{0}.sec", value));
 	}
 }
+
+/** Native Ruby stat carrier; access stays localized to the std facade above. */
+@:native("File::Stat")
+private extern class RubyFileStat {}
+
+/** Native Ruby time carrier used only while constructing a typed Haxe Date. */
+@:native("Time")
+private extern class RubyTime {}

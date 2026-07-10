@@ -53,7 +53,6 @@ const jsonRuby = readFileSync(join(outputDir, "haxe", "json.rb"), "utf8");
 for (const expectedShape of [
   'require "json"',
   "JSON.parse(text)",
-  "raise HxException.new(parsed[1])",
   "HXRuby.json_prepare(value, replacer)",
   "JSON.generate(prepared)",
   "JSON.pretty_generate(prepared, indent: space)",

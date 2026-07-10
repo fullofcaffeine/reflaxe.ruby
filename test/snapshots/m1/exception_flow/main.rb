@@ -12,8 +12,8 @@ class Main
     begin
       Main.fail()
       puts(HXRuby.stringify("unreachable"))
-    rescue HxException => __hx_ex
-      message = __hx_ex.value
+    rescue StandardError => __hx_ex
+      message = __hx_ex.is_a?(HxException) ? __hx_ex.value : __hx_ex
       puts(HXRuby.stringify(message))
     end
   end

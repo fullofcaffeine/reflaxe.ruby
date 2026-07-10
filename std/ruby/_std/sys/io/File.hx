@@ -22,19 +22,22 @@ class File {
 	}
 
 	public static inline function read(path:String, binary:Bool = true):FileInput {
-		throw "sys.io.File.read streaming handles are not supported on Ruby yet; use getContent/getBytes for now";
+		return @:privateAccess new FileInput(untyped __ruby__("::File.open({0}, {1})", path, binary ? "rb" : "r"));
 	}
 
 	public static inline function write(path:String, binary:Bool = true):FileOutput {
-		throw "sys.io.File.write streaming handles are not supported on Ruby yet; use saveContent/saveBytes for now";
+		return @:privateAccess new FileOutput(untyped __ruby__("::File.open({0}, {1})", path, binary ? "wb" : "w"));
 	}
 
 	public static inline function append(path:String, binary:Bool = true):FileOutput {
-		throw "sys.io.File.append streaming handles are not supported on Ruby yet";
+		return @:privateAccess new FileOutput(untyped __ruby__("::File.open({0}, {1})", path, binary ? "ab" : "a"));
 	}
 
 	public static inline function update(path:String, binary:Bool = true):FileOutput {
-		throw "sys.io.File.update streaming handles are not supported on Ruby yet";
+		if (!sys.FileSystem.exists(path)) {
+			untyped __ruby__("(::File.open({0}, 'wb').close; nil)", path);
+		}
+		return @:privateAccess new FileOutput(untyped __ruby__("::File.open({0}, {1})", path, binary ? "rb+" : "r+"));
 	}
 
 	public static inline function copy(srcPath:String, dstPath:String):Void {
