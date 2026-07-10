@@ -37,6 +37,9 @@ implementation direct and typed. For example, `haxe.ds.*Map` uses
 `Hash` operations without exposing a broad `Dynamic` hash to Haxe callers.
 Construction and canonical writes inline to `{}` and `hash[key] = value`, so a
 static upstream map literal does not depend on a later-generated adapter file.
+The Ruby-owned `haxe.zip` overrides similarly consume typed `ruby.ArrayPacking`
+and `ruby.Zlib` contracts so binary conversion and compression stay direct
+without exposing `Dynamic` or raw Ruby injection.
 
 Those RubyHx facades are also valid public authoring surfaces for developers who
 want a typed Ruby layer instead of a Haxe-stdlib-first abstraction. Keep that
@@ -81,6 +84,8 @@ precedence in source checkouts:
   `Type` when Ruby owns target-specific semantics;
 - `haxe/ds/*` map implementations when Ruby runtime semantics differ from upstream assumptions.
 - `haxe/io/*` surfaces that require Ruby-backed bytes, streams, or file behavior.
+- `haxe/zip/*` surfaces where Ruby's standard Zlib library owns compression and
+  one-shot decompression behavior.
 - `sys/*` and `sys/io/*` modules once Ruby filesystem/process support exists.
 
 The filesystem implementation keeps stateless `sys.FileSystem` and
@@ -161,6 +166,14 @@ static initializers such as `XmlType.Element = 0`, emits the root Haxe `Xml`
 class as absolute `::Xml` where the `haxe.xml` package would otherwise shadow
 it, and lets static XML parser maps initialize through direct Ruby Hash writes.
 
+`haxe.zip.Compress` and `haxe.zip.Uncompress` run adapted upstream fixtures
+whose assertions are unchanged; only the upstream target guards are extended
+to Ruby. RubyHx defines the conventional `ruby` target before typing, and the
+target-owned overrides emit `require "zlib"`, direct `Array#pack`, and
+`Zlib::Deflate/Inflate` calls through typed extern contracts. The upstream
+exact-byte and one-shot `execute` cases run alongside focused arbitrary-binary
+round trips and invalid-input coverage, without a runtime shim or `Dynamic`.
+
 The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
@@ -169,10 +182,11 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.EnumFlags`,
 `haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`,
-`haxe.Template`, `haxe.rtti.Rtti`, and `sys.io.File` run directly. `Reflect` and
-`Type` run through adapted fixtures because upstream section-local names need
-macro-lane accommodation; `Type` also uses upstream-package helpers and
-explicit Dynamic parameter arrays. `Std`
+`haxe.Template`, `haxe.rtti.Rtti`, and `sys.io.File` run directly. `Reflect`,
+`Type`, `haxe.zip.Compress`, and `haxe.zip.Uncompress` run through adapted
+fixtures. The ZIP adaptations only extend upstream target guards; `Reflect` and
+`Type` need macro-lane accommodation for section-local names, and `Type` also
+uses upstream-package helpers and explicit Dynamic parameter arrays. `Std`
 remains adapted for its assertion syntax, duplicate locals, and `unspec(...)`
 markers.
 

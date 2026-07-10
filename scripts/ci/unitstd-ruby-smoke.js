@@ -39,6 +39,8 @@ for (const file of [
   "haxe/macro/expr_def.rb",
   "haxe/rtti/rtti.rb",
   "haxe/xml/parser.rb",
+  "haxe/zip/compress.rb",
+  "haxe/zip/uncompress.rb",
   "hxruby/core.rb",
   "main.rb",
   "run.rb",
@@ -71,6 +73,8 @@ const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
 const exprDefRuby = readFileSync(join(outputDir, "haxe", "macro", "expr_def.rb"), "utf8");
 const rttiRuby = readFileSync(join(outputDir, "haxe", "rtti", "rtti.rb"), "utf8");
 const xmlParserRuby = readFileSync(join(outputDir, "haxe", "xml", "parser.rb"), "utf8");
+const zipCompressRuby = readFileSync(join(outputDir, "haxe", "zip", "compress.rb"), "utf8");
+const zipUncompressRuby = readFileSync(join(outputDir, "haxe", "zip", "uncompress.rb"), "utf8");
 const fileOutputRuby = readFileSync(join(outputDir, "sys", "io", "file_output.rb"), "utf8");
 const fileSeekRuby = readFileSync(join(outputDir, "sys", "io", "file_seek.rb"), "utf8");
 const rttiClassRuby = readFileSync(join(outputDir, "unit", "spec", "rtti_class1.rb"), "utf8");
@@ -128,6 +132,17 @@ for (const expectedShape of ["self.data = {}", "hash[key] = value"]) {
   if (!stringMapRuby.includes(expectedShape)) {
     console.error(`Expected direct Ruby Hash initialization shape missing: ${expectedShape}`);
     process.exit(1);
+  }
+}
+for (const [label, source, packing, operation] of [
+  ["Compress", zipCompressRuby, 'input = s.get_data().pack("C*")', "Zlib::Deflate.deflate(input, level)"],
+  ["Uncompress", zipUncompressRuby, 'input = src.get_data().pack("C*")', "Zlib::Inflate.inflate(input)"],
+]) {
+  for (const expectedShape of ['require "zlib"', packing, operation]) {
+    if (!source.includes(expectedShape)) {
+      console.error(`Expected direct Ruby Zlib ${label} shape missing: ${expectedShape}`);
+      process.exit(1);
+    }
   }
 }
 for (const expectedShape of [

@@ -20,9 +20,11 @@ class UpstreamUnitStdMacro {
 		}
 
 		var source = sys.io.File.getContent(fixturePath);
-		// Haxe strips the active `src` classpath prefix when it injects PosInfos.
-		// The extra leading segment preserves upstream's `src/unitstd/**` path.
-		var sourcePos = Context.makePosition({file: "src/src/unitstd/" + relativePath, min: 0, max: source.length});
+		// Anchor the synthetic upstream path beneath this lane's classpath so Haxe
+		// injects the authoritative `src/unitstd/**` PosInfos for relative and
+		// absolute CI classpaths alike.
+		var sourceFile = haxe.io.Path.join([Sys.getCwd(), "test/unitstd_ruby/src_haxe/src/unitstd", relativePath]);
+		var sourcePos = Context.makePosition({file: sourceFile, min: 0, max: source.length});
 		var parsed = Context.parseInlineString("{" + source + "\n}", sourcePos);
 		return transform(parsed, relativePath);
 	}

@@ -52,9 +52,11 @@ Current implemented domains:
   compatibility.
 - Haxe core std: `Std`, `Math`, `Type`, `Array`, `Lambda`, `Date`, `EReg`,
   `Reflect`, `StringTools`, `Sys`, `haxe.Json`, `haxe.ds.*`,
-  `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `sys.FileSystem`, and `sys.io.File`.
+  `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `haxe.zip.*`, `sys.FileSystem`, and
+  `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
-  `ruby.Prelude`, `ruby.StandardError`, `NativeHash`, and `NativeIterator`.
+  `ruby.Prelude`, `ruby.StandardError`, `ruby.ArrayPacking`, `ruby.Zlib`,
+  `NativeHash`, and `NativeIterator`.
 - RailsHx and DeviseHx typed facades, macros, and generated runtime support.
 
 Implemented domains that still need broader upstream parity accounting:
@@ -74,10 +76,11 @@ Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-`haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`, and
-`haxe.rtti.Rtti` and `sys.io.File` run directly. `Reflect`, `Std`, and `Type`
-run through adapted upstream fixtures, and local focused fixtures cover
-adjacent semantic gaps such as numeric parsing.
+`haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`,
+`haxe.rtti.Rtti`, and `sys.io.File` run directly. `Reflect`, `Std`, `Type`,
+`haxe.zip.Compress`, and `haxe.zip.Uncompress` run through adapted upstream
+fixtures, and local focused fixtures cover adjacent semantic gaps such as
+numeric parsing and arbitrary binary compression round trips.
 `haxe.Json` has no direct unitstd spec, so `npm run test:json-parity` adapts the
 authoritative broader-suite parser/writer cases and issue regressions while
 locking in native Ruby JSON output plus the compact Haxe semantic adapter.
@@ -202,6 +205,11 @@ semantics need an adapter.
   map literals initialize before later generated files load. Keep this direct
   Ruby backend unless another Haxe key-identity or iteration-order gap requires
   a documented helper.
+- `haxe.zip.Compress` and `haxe.zip.Uncompress` use Ruby's standard `zlib`
+  library because upstream Haxe provides no portable compressor and only a
+  one-shot portable inflater. Typed `ruby.ArrayPacking` and `ruby.Zlib` extern
+  contracts keep the boundary free of `Dynamic` and raw Ruby injection while
+  generated output remains direct `Array#pack` plus `Zlib::Deflate/Inflate`.
 
 ## Testing Policy
 
@@ -243,17 +251,14 @@ For Ruby stdlib facades:
 
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
-1. Promote the adjacent upstream `haxe.zip.Compress` and
-   `haxe.zip.Uncompress` fixtures before considering a Ruby Zlib optimization.
-
-2. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
+1. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
    `haxe.io.FPHelper`.
 
-3. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
+2. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
    remains green: `haxe.ds.StringMap`, `haxe.ds.IntMap`,
    `haxe.ds.ObjectMap`, `haxe.ds.Vector`, and `haxe.ds.EnumValueMap`.
 
-4. Add Ruby stdlib facades separately under `std/ruby/**` for
+3. Add Ruby stdlib facades separately under `std/ruby/**` for
    `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 

@@ -87,6 +87,22 @@
       "reason": "Typed regular expression surface for Ruby Regexp lowering."
     },
     {
+      "id": "std.haxe.zip.compress",
+      "owner": "std/ruby/_std",
+      "status": "implemented",
+      "path": "std/ruby/_std/haxe/zip/Compress.hx",
+      "surface": "haxe.zip.Compress",
+      "reason": "Haxe compression semantics over Ruby Zlib::Deflate with typed binary-array conversion and one-shot execute compatibility."
+    },
+    {
+      "id": "std.haxe.zip.uncompress",
+      "owner": "std/ruby/_std",
+      "status": "implemented",
+      "path": "std/ruby/_std/haxe/zip/Uncompress.hx",
+      "surface": "haxe.zip.Uncompress",
+      "reason": "Haxe decompression semantics over Ruby Zlib::Inflate with typed binary-array conversion and one-shot execute compatibility."
+    },
+    {
       "id": "std.reflaxe.js.async",
       "owner": "std",
       "status": "implemented",
@@ -125,6 +141,22 @@
       "path": "std/ruby/Json.hx",
       "surface": "ruby.Json",
       "reason": "Typed JSON.parse extern over Ruby's JSON constant, including require metadata, for Haxe-authored Ruby tooling that consumes JSON manifests without raw Ruby glue."
+    },
+    {
+      "id": "std.ruby.array_packing",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/ArrayPacking.hx",
+      "surface": "ruby.ArrayPacking",
+      "reason": "Typed Array<Int>#pack receiver contract for binary Ruby interop without Dynamic or raw Ruby injection."
+    },
+    {
+      "id": "std.ruby.zlib",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Zlib.hx",
+      "surface": "ruby.Zlib.Deflate / ruby.Zlib.Inflate",
+      "reason": "Typed one-shot externs for Ruby Zlib compression and decompression with automatic zlib require metadata."
     },
     {
       "id": "std.ruby.prelude",

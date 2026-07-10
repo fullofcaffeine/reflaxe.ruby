@@ -54,10 +54,13 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/Path.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/rtti/Rtti.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/zip/Compress.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/zip/Uncompress.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("sys/io/File.unit.hx");
 		unitstd_ruby.ERegSemantics.run();
 		unitstd_ruby.MapSemantics.run();
 		unitstd_ruby.StdNumericParsing.run();
+		unitstd_ruby.ZipSemantics.run();
 		Sys.println("unitstd-ruby ok");
 	}
 }

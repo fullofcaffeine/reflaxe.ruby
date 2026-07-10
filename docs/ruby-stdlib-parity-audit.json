@@ -564,18 +564,20 @@
     {
       "module": "haxe.zip.Compress",
       "source": "haxe/zip/Compress.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback before adding Ruby Zlib-backed lowering.",
-      "notes": "Ruby Zlib can be a later typed facade or optimization if needed."
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "adapted",
+      "owner": "std/ruby/_std/haxe/zip/Compress.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream target guards are extended to Ruby without changing assertions. RubyHx owns a one-shot Zlib::Deflate override with typed Array#pack and Zlib extern seams, exact level-9 bytes, execute accounting, arbitrary binary round trips, and no Dynamic values."
     },
     {
       "module": "haxe.zip.Uncompress",
       "source": "haxe/zip/Uncompress.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try upstream fallback before adding Ruby Zlib-backed lowering.",
-      "notes": "Ruby Zlib can be a later typed facade or optimization if needed."
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "adapted",
+      "owner": "std/ruby/_std/haxe/zip/Uncompress.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream target guards are extended to Ruby without changing assertions. RubyHx owns a one-shot Zlib::Inflate override with typed binary conversion, execute accounting, arbitrary binary round trips, invalid-input coverage, and no Dynamic values."
     },
     {
       "module": "sys.FileSystem",

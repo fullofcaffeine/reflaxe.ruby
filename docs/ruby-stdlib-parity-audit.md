@@ -26,9 +26,9 @@ The guard checks that:
 
 | Classification | Count | Meaning |
 | --- | ---: | --- |
-| `covered-ruby-override` | 17 | Ruby owns the override, lowering, or runtime seam and current tests have direct evidence. |
+| `covered-ruby-override` | 19 | Ruby owns the override, lowering, or runtime seam and current tests have direct evidence. |
 | `covered-upstream-fallback` | 22 | The Ruby lane covers the surface while using upstream Haxe std source, sometimes over lower-level Ruby-owned dependencies. |
-| `upstream-fallback-candidate` | 4 | No Ruby override is indicated yet. Add a fixture or smoke before promoting to covered. |
+| `upstream-fallback-candidate` | 2 | No Ruby override is indicated yet. Add a fixture or smoke before promoting to covered. |
 | `ruby-override-needed` | 23 | Ruby-owned lowering, runtime support, or `std/ruby/_std` replacement is needed or already exists but lacks upstream parity accounting. |
 | `unsupported-target-specific` | 6 | The fixture is not a Ruby runtime parity surface or is outside the current target contract. |
 
@@ -37,17 +37,18 @@ Unitstd status today:
 | Status | Count |
 | --- | ---: |
 | `enabled` | 30 |
-| `adapted` | 3 |
+| `adapted` | 5 |
 | `no-upstream-spec` | 3 |
-| `not-tracked` | 36 |
+| `not-tracked` | 34 |
 
 ## Reading The Buckets
 
 `covered-*` means the current repository has parity evidence for that surface.
 For example, `Array`, `Date`, `EReg`, `haxe.Json`, `Lambda`, `Map`, `Math`,
-`Reflect`, `Std`, `StringTools`, `Type`, `sys.FileSystem`, and `sys.io.File` are
-Ruby-owned or compiler-lowered surfaces with upstream or provenance-backed
-broader-suite coverage. `DateTools`,
+`Reflect`, `Std`, `StringTools`, `Type`, `haxe.zip.Compress`,
+`haxe.zip.Uncompress`, `sys.FileSystem`, and `sys.io.File` are Ruby-owned or
+compiler-lowered surfaces with upstream or provenance-backed broader-suite
+coverage. `DateTools`,
 `IntIterator`, `List`, `String`, `StringBuf`,
 `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Hmac`,
 `haxe.DynamicAccess`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
@@ -77,11 +78,9 @@ until a separate target contract exists.
 
 Prefer these small follow-up slices over broad stdlib rewrites:
 
-1. Promote the adjacent upstream `haxe.zip.Compress` and
-   `haxe.zip.Uncompress` fixtures before considering a Ruby Zlib optimization.
-2. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
+1. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
    `haxe.io.FPHelper`.
-3. Grow Ruby-native facades separately under `std/ruby/**`, starting with
+2. Grow Ruby-native facades separately under `std/ruby/**`, starting with
    `Pathname`, `Dir`, `FileUtils`, `Tempfile`, or `URI`. Those facades are not
    substitutes for Haxe std parity unless Haxe semantics explicitly consume
    them.

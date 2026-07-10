@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
-    "total": 206,
-    "implemented": 206,
+    "total": 210,
+    "implemented": 210,
     "missing": 0,
     "planned": 0,
     "deferred": 0,
@@ -16,15 +16,15 @@
         "deferred": 0
       },
       "std/ruby/_std": {
-        "total": 20,
-        "implemented": 20,
+        "total": 22,
+        "implemented": 22,
         "missing": 0,
         "planned": 0,
         "deferred": 0
       },
       "std": {
-        "total": 183,
-        "implemented": 183,
+        "total": 185,
+        "implemented": 185,
         "missing": 0,
         "planned": 0,
         "deferred": 0

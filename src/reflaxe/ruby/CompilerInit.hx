@@ -26,6 +26,9 @@ class CompilerInit {
 		initialized = true;
 
 		CompilerBootstrap.Start();
+		// Custom-target builds still need a stable target define so libraries and
+		// application code can use the conventional `#if ruby` branch.
+		MacroCompiler.define("ruby");
 		RailsInlineMarkup.enable();
 		MacroCompiler.addGlobalMetadata("", "@:build(reflaxe.ruby.macros.RubyExtensionMacro.build())", true, true, false);
 

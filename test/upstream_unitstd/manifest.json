@@ -43,6 +43,8 @@
     {"module": "haxe.io.BytesBuffer", "status": "enabled", "source": "haxe/io/BytesBuffer.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/BytesBuffer.unit.hx"},
     {"module": "haxe.io.Path", "status": "enabled", "source": "haxe/io/Path.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/Path.unit.hx"},
     {"module": "haxe.rtti.Rtti", "status": "enabled", "source": "haxe/rtti/Rtti.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/rtti/Rtti.unit.hx"},
+    {"module": "haxe.zip.Compress", "status": "adapted", "source": "haxe/zip/Compress.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/zip/Compress.unit.hx", "reason": "Adapted only to extend upstream's runtime and PHP one-shot target guards to Ruby; all compression bytes and execute assertions remain unchanged and run over the typed Ruby Zlib override."},
+    {"module": "haxe.zip.Uncompress", "status": "adapted", "source": "haxe/zip/Uncompress.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/zip/Uncompress.unit.hx", "reason": "Adapted only to extend upstream's runtime and PHP one-shot target guards to Ruby; all decompression and execute assertions remain unchanged and run over the typed Ruby Zlib override."},
     {"module": "sys.FileSystem", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; authoritative broader-suite filesystem behavior is covered by npm run test:filesystem-parity."},
     {"module": "sys.io.File", "status": "enabled", "source": "sys/io/File.unit.hx", "fixture": "test/upstream_unitstd/upstream/sys/io/File.unit.hx"}
   ]

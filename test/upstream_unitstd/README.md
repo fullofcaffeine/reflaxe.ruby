@@ -34,11 +34,14 @@ Current upstream runtime fixtures:
   `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
   `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`,
   `haxe.rtti.Rtti`, `sys.io.File`.
-- Adapted: `Reflect`, `Std`, and `Type`. `Reflect` and `Type` add lexical blocks
-  around upstream sections whose locals collide when expanded into one method;
-  `Type` also uses upstream-package helpers and explicit Dynamic parameter
-  arrays. `Std` avoids similar macro-expansion collisions and ignores upstream
-  `unspec(...)` markers; all retain the assertions owned by this lane.
+- Adapted: `Reflect`, `Std`, `Type`, `haxe.zip.Compress`, and
+  `haxe.zip.Uncompress`. The ZIP fixtures only extend upstream target guards to
+  Ruby; all exact-byte and one-shot `execute` assertions remain unchanged.
+  `Reflect` and `Type` add lexical blocks around upstream sections whose locals
+  collide when expanded into one method; `Type` also uses upstream-package
+  helpers and explicit Dynamic parameter arrays. `Std` avoids similar
+  macro-expansion collisions and ignores upstream `unspec(...)` markers; all
+  retain the assertions owned by this lane.
 - No direct unitstd spec: `haxe.Json` is covered separately by the
   provenance-backed `npm run test:json-parity` broader-suite lane;
   `sys.FileSystem` is covered by `npm run test:filesystem-parity`.
@@ -76,6 +79,14 @@ function types, inheritance, and overrides. Its focused Ruby shape assertions
 also lock in typed enum-abstract static initialization, absolute `::Xml`
 resolution across the root-class/`haxe.xml` package collision, and direct Hash
 construction/writes for XML parser static maps.
+
+`haxe.zip.Compress` and `haxe.zip.Uncompress` are adapted only to activate the
+upstream runtime and PHP one-shot assertions for Ruby. RubyHx owns compact Haxe
+std overrides backed by typed `ruby.ArrayPacking` and `ruby.Zlib` contracts, so
+generated code is ordinary `require "zlib"`, `Array#pack`, and
+`Zlib::Deflate/Inflate` rather than a wrapper runtime. Focused assertions add
+arbitrary binary-byte round trips and invalid compressed-input behavior, and
+the entire boundary remains free of `Dynamic` and raw Ruby injection.
 
 `haxe.io.Path` is enabled directly. It proves the portable Haxe path parser,
 formatter, joiner, and normalizer can fall through unchanged on Ruby while

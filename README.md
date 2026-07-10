@@ -61,6 +61,8 @@ For a guided public entrypoint, start with:
 
 ## Target Defines
 
+- `ruby`: injected automatically for RubyHx builds, enabling conventional
+  `#if ruby` target branches in application and library code.
 - `ruby_output=<dir>`: output directory used by Reflaxe.
 - `reflaxe_runtime`: emits/copies shared `hxruby` runtime helpers.
 - `reflaxe_ruby_profile=ruby_first|portable`: declares the Ruby profile contract; default is `ruby_first`. The legacy `idiomatic` value remains accepted.
