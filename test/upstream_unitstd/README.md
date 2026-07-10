@@ -38,6 +38,8 @@ Current upstream runtime fixtures:
   `Type` also uses upstream-package helpers and explicit Dynamic parameter
   arrays. `Std` avoids similar macro-expansion collisions and ignores upstream
   `unspec(...)` markers; all retain the assertions owned by this lane.
+- No direct unitstd spec: `haxe.Json` is covered separately by the
+  provenance-backed `npm run test:json-parity` broader-suite lane.
 - `Map` is enabled directly. RubyHx backs `StringMap` and `IntMap` with normal
   Ruby `Hash`, and backs `ObjectMap` with `Hash#compare_by_identity` so object
   keys keep Haxe identity semantics while preserving Ruby insertion order.
@@ -50,6 +52,13 @@ date-time, date-only, and UTC time-only shapes through generated Ruby.
 
 `DateTools` is enabled directly. It proves upstream fallback over the Ruby-owned
 `Date` surface for month-day, seconds, and delta helpers.
+
+`haxe.Json` is tracked as `no-upstream-spec` because its authoritative cases
+live in the broader Haxe unit suite instead of `unitstd`. The dedicated Ruby
+lane adapts `TestJson`, Issue4592, and Issue11560 to cover scalar and structured
+round trips, Unicode escapes, invalid-input throws, non-finite numbers,
+replacer traversal, pretty printing, and generated-class fields while checking
+that Ruby's native JSON library remains the final parser and encoder.
 
 `haxe.io.Path` is enabled directly. It proves the portable Haxe path parser,
 formatter, joiner, and normalizer can fall through unchanged on Ruby while

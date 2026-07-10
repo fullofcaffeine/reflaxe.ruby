@@ -31,6 +31,43 @@ class TestTypeFieldChild < TestTypeFieldBase
   end
 end
 
+class TestJsonFieldBase
+  attr_accessor :parent_value
+
+  def self.__hx_name
+    "TestJsonFieldBase"
+  end
+
+  def self.__hx_fields
+    { instance: %w[ignored parentValue], static: [] }
+  end
+
+  def initialize
+    @parent_value = 1
+  end
+
+  def ignored
+    "method"
+  end
+end
+
+class TestJsonFieldChild < TestJsonFieldBase
+  attr_accessor :child_value
+
+  def self.__hx_name
+    "TestJsonFieldChild"
+  end
+
+  def self.__hx_fields
+    { instance: %w[childValue], static: [] }
+  end
+
+  def initialize
+    super
+    @child_value = "ruby"
+  end
+end
+
 module TestInterfaceForTypeCheck; end
 
 class TestInterfaceImplementor
@@ -163,6 +200,25 @@ class HXRubyRuntimeTest < Minitest::Test
 
     haxe_like = Struct.new(:iterator).new(:kept)
     assert_equal :kept, HXRuby.iterator(haxe_like)
+  end
+
+  def test_json_prepare_preserves_haxe_generation_semantics
+    assert_nil HXRuby.json_prepare(Float::INFINITY)
+    assert_nil HXRuby.json_prepare(-Float::INFINITY)
+    assert_nil HXRuby.json_prepare(Float::NAN)
+
+    keys = []
+    replacer = lambda do |key, value|
+      keys << key.to_s
+      value.is_a?(Integer) ? value * 2 : value
+    end
+    prepared = HXRuby.json_prepare({ "count" => 2, "values" => [3] }, replacer)
+    assert_equal({ "count" => 4, "values" => [6] }, prepared)
+    assert_includes keys, ""
+    assert_includes keys, "count"
+    assert_includes keys, "0"
+
+    assert_equal({ "childValue" => "ruby", "parentValue" => 1 }, HXRuby.json_prepare(TestJsonFieldChild.new))
   end
 
   def test_data_define_compatibility_and_enum_metadata

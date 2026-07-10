@@ -85,6 +85,39 @@ module HXRuby
     end
   end
 
+  # Projects Haxe-only JSON values into data Ruby's native JSON generator can
+  # encode without taking final string generation away from the standard gem.
+  def json_prepare(value, replacer = nil, key = "")
+    value = replacer.call(key, value) unless replacer.nil?
+    return nil if value.is_a?(Float) && !value.finite?
+    return value if value.nil? || value == true || value == false || value.is_a?(String) || value.is_a?(Numeric)
+
+    if value.is_a?(Array)
+      return value.each_with_index.map { |entry, index| json_prepare(entry, replacer, index) }
+    end
+    if value.is_a?(Hash)
+      return value.each_with_object({}) do |(field, entry), prepared|
+        next if reflect_is_function(entry)
+
+        name = field.to_s
+        prepared[name] = json_prepare(entry, replacer, name)
+      end
+    end
+    return enum_index(value) if value.respond_to?(:__hx_tag)
+    return "<fun>" if reflect_is_function(value)
+
+    if value.class.respond_to?(:__hx_name)
+      return type_instance_fields(value.class).each_with_object({}) do |field, prepared|
+        entry = reflect_field(value, field)
+        next if reflect_is_function(entry)
+
+        prepared[field] = json_prepare(entry, replacer, field)
+      end
+    end
+
+    value
+  end
+
   def parse_int(value)
     return nil if value.nil?
 

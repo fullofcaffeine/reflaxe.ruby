@@ -59,7 +59,6 @@ Current implemented domains:
 
 Implemented domains that still need broader upstream parity accounting:
 
-- `haxe.Json`
 - `sys.FileSystem`
 - `sys.io.File`
 - `haxe.io.FPHelper`
@@ -80,6 +79,9 @@ Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
 `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, and `haxe.Template` run
 directly. `Reflect`, `Std`, and `Type` run through adapted upstream fixtures,
 and local focused fixtures cover adjacent semantic gaps such as numeric parsing.
+`haxe.Json` has no direct unitstd spec, so `npm run test:json-parity` adapts the
+authoritative broader-suite parser/writer cases and issue regressions while
+locking in native Ruby JSON output plus the compact Haxe semantic adapter.
 
 Broader upstream candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and
@@ -107,7 +109,6 @@ These are required for current examples, RailsHx, and shared Haxe domain code.
 These surfaces now have Ruby target implementations, but should get stronger
 upstream or focused parity evidence before broad Ruby library expansion.
 
-- `haxe.Json`
 - `sys.FileSystem`
 - `sys.io.File`
 - `haxe.io.FPHelper`
@@ -244,19 +245,17 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
    `haxe.zip.Compress`, or `haxe.zip.Uncompress` through
    `test/upstream_unitstd/manifest.json`.
 
-2. Add broader parity coverage for the Ruby-owned `haxe.Json` surface.
-
-3. Add focused filesystem parity coverage for `sys.FileSystem` and
+2. Add focused filesystem parity coverage for `sys.FileSystem` and
    `sys.io.File`, including exception and newline behavior.
 
-4. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
+3. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
    `haxe.io.FPHelper`.
 
-5. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
+4. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
    remains green: `haxe.ds.StringMap`, `haxe.ds.IntMap`,
    `haxe.ds.ObjectMap`, `haxe.ds.Vector`, and `haxe.ds.EnumValueMap`.
 
-6. Add Ruby stdlib facades separately under `std/ruby/**` for
+5. Add Ruby stdlib facades separately under `std/ruby/**` for
    `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 

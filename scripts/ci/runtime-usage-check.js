@@ -32,6 +32,7 @@ const allowedHelpers = new Set([
   "enum_tag",
   "is_of_type",
   "iterator",
+  "json_prepare",
   "key_value_iterator",
   "math_binary",
   "math_divide",

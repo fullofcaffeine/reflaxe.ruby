@@ -1580,7 +1580,7 @@
       "status": "implemented",
       "path": "std/ruby/_std/haxe/Json.hx",
       "surface": "haxe.Json",
-      "reason": "Use Ruby JSON runtime while preserving Haxe API."
+      "reason": "Use Ruby JSON parsing/generation with a focused adapter for Haxe throws, replacers, non-finite numbers, enums, functions, and generated-class fields."
     },
     {
       "id": "std.ds.string_map",

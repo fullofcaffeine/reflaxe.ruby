@@ -26,6 +26,7 @@
     {"module": "Type", "status": "adapted", "source": "Type.unit.hx", "fixture": "test/upstream_unitstd/upstream/Type.unit.hx", "reason": "Adapted with lexical section blocks, upstream-package fixture helpers, and explicitly typed Dynamic enum-parameter expectations so the assertions can expand into the combined Ruby lane without changing their semantics."},
     {"module": "haxe.DynamicAccess", "status": "enabled", "source": "haxe/DynamicAccess.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/DynamicAccess.unit.hx"},
     {"module": "haxe.EnumFlags", "status": "enabled", "source": "haxe/EnumFlags.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/EnumFlags.unit.hx"},
+    {"module": "haxe.Json", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; parser/writer behavior is covered from the broader Haxe test suite by npm run test:json-parity."},
     {"module": "haxe.Log", "status": "enabled", "source": "haxe/Log.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/Log.unit.hx"},
     {"module": "haxe.Template", "status": "enabled", "source": "haxe/Template.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/Template.unit.hx"},
     {"module": "haxe.crypto.Base64", "status": "enabled", "source": "haxe/crypto/Base64.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Base64.unit.hx"},

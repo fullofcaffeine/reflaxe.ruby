@@ -126,6 +126,15 @@ upstream fixture exposes a real target gap, prefer fixing the compiler/std/runti
 layer over editing the fixture. If a fixture must be adapted or skipped for a
 Ruby-specific reason, record that decision in the manifest with a short reason.
 
+`haxe.Json` has no direct upstream unitstd fixture. Its separate
+`npm run test:json-parity` lane adapts parser/writer cases from upstream
+`tests/unit/src/unit/TestJson.hx` plus the invalid-input and class-field issue
+regressions. Ruby's `JSON.parse`, `JSON.generate`, and `JSON.pretty_generate`
+remain the actual parser/generator; `HXRuby.json_prepare` only projects Haxe
+replacer, non-finite-number, enum, function, and generated-class semantics into
+native JSON-ready values. Invalid Ruby parser errors cross the Haxe std boundary
+as Haxe throws so ordinary Haxe `try/catch` works.
+
 The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,

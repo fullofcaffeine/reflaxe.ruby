@@ -247,11 +247,11 @@
     },
     {
       "module": "haxe.Json",
-      "classification": "ruby-override-needed",
+      "classification": "covered-ruby-override",
       "unitstdStatus": "no-upstream-spec",
       "owner": "std/ruby/_std/haxe/Json.hx",
-      "next": "Add JSON parser/writer parity fixtures from the broader Haxe test suite, not unitstd.",
-      "notes": "No direct unitstd fixture exists, but RubyHx owns this surface through Ruby JSON interop plus Haxe semantics."
+      "next": "Keep covered by npm run test:json-parity and the focused runtime adapter tests.",
+      "notes": "No direct unitstd fixture exists. The broader-suite lane adapts upstream TestJson and issue regressions for native parsing/generation, invalid-input throws, non-finite numbers, replacers, pretty output, and generated-class fields."
     },
     {
       "module": "haxe.Log",

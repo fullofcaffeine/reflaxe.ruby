@@ -58,8 +58,9 @@ const haxeJsonRuby = readFileSync(join(outputDir, "haxe", "json.rb"), "utf8");
 for (const expectedJsonShape of [
   'require "json"',
   "JSON.parse(text)",
-  "JSON.generate(value)",
-  "JSON.pretty_generate(value, indent: space)",
+  "HXRuby.json_prepare(value, replacer)",
+  "JSON.generate(prepared)",
+  "JSON.pretty_generate(prepared, indent: space)",
 ]) {
   if (!runRuby.includes(expectedJsonShape) && !haxeJsonRuby.includes(expectedJsonShape)) {
     console.error(`Expected haxe.Json Ruby shape missing: ${expectedJsonShape}`);
@@ -84,17 +85,12 @@ const jsonFailureProbe = run("ruby", ["-e", [
   `begin`,
   `  Haxe::Json.parse("{")`,
   `  puts "missing parser error"`,
-  `rescue JSON::ParserError`,
+  `rescue HxException`,
   `  puts "parser error"`,
   `end`,
-  `begin`,
-  `  Haxe::Json.stringify({"name" => "ruby"}, ->(_key, value) { value })`,
-  `  puts "missing replacer error"`,
-  `rescue HxException`,
-  `  puts "replacer error"`,
-  `end`,
+  `puts Haxe::Json.stringify({"count" => 2}, ->(_key, value) { value.is_a?(Integer) ? value * 2 : value })`,
 ].join("\n")]).stdout;
-if (jsonFailureProbe !== "parser error\nreplacer error\n") {
+if (jsonFailureProbe !== "parser error\n{\"count\":4}\n") {
   console.error("haxe.Json failure probe mismatch");
   console.error(`actual: ${JSON.stringify(jsonFailureProbe)}`);
   process.exit(1);
