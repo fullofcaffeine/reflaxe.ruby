@@ -23,6 +23,7 @@
     {"module": "String", "status": "enabled", "source": "String.unit.hx", "fixture": "test/upstream_unitstd/upstream/String.unit.hx"},
     {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
     {"module": "StringTools", "status": "enabled", "source": "StringTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringTools.unit.hx"},
+    {"module": "Type", "status": "adapted", "source": "Type.unit.hx", "fixture": "test/upstream_unitstd/upstream/Type.unit.hx", "reason": "Adapted with lexical section blocks, upstream-package fixture helpers, and explicitly typed Dynamic enum-parameter expectations so the assertions can expand into the combined Ruby lane without changing their semantics."},
     {"module": "haxe.DynamicAccess", "status": "enabled", "source": "haxe/DynamicAccess.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/DynamicAccess.unit.hx"},
     {"module": "haxe.EnumFlags", "status": "enabled", "source": "haxe/EnumFlags.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/EnumFlags.unit.hx"},
     {"module": "haxe.Log", "status": "enabled", "source": "haxe/Log.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/Log.unit.hx"},

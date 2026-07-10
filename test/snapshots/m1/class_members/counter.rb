@@ -4,6 +4,9 @@ class Counter
   def self.__hx_name()
     "Counter"
   end
+  def self.__hx_fields()
+    {instance: ["bump"], static: ["decorate", "label", "next", "prefix", "value"]}
+  end
   class << self
     attr_accessor :prefix
   end

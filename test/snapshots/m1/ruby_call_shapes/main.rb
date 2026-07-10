@@ -6,6 +6,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["main"]}
+  end
   def self.main()
     count = 2
     puts(HXRuby.stringify(NativeInterop.describe(name: "ruby", count: 2)))

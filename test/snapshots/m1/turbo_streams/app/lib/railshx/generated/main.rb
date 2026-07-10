@@ -5,6 +5,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["main"]}
+  end
   def self.main()
     append_locals = {"domId" => "todo_1", "title" => "Ship typed Turbo Streams", "completed" => false}
     replace_locals = {"domId" => "todo_1", "title" => "Ship typed Turbo Streams, but polished", "completed" => true}

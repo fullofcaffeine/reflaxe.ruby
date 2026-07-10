@@ -11,6 +11,9 @@ module Hxruby
         def self.__hx_name()
           "hxruby.generators.routes.ParityCore"
         end
+        def self.__hx_fields()
+          {instance: [], static: ["any", "appendPathPiece", "childrenOf", "compareDeviseMapping", "compareManifest", "compareManifestFile", "compareManifestJson", "compareRoute", "declarationPosition", "deviseDeclarations", "expectedRoute", "findVerbIndex", "flattenDecl", "flattenManifest", "formatExpected", "hashArray", "hashString", "hashValue", "isHttpVerb", "joinedPath", "main", "nonEmptyTokens", "normalizeRailsUri", "nullableName", "parseMountLine", "parseRouteLine", "parseRoutes", "quote", "routeMatches", "routeVerb", "supportedDeclarationKind", "trimSlashes", "unique", "upper", "validateDeclarations", "validateDeviseMappings", "validateManifest", "wrongPath", "wrongTarget", "wrongVerb"]}
+        end
         def self.main()
           nil
         end

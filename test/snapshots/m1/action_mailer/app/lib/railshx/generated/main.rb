@@ -4,6 +4,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["main"]}
+  end
   def self.main()
     mailer = UserMailer.new()
     mailer.welcome("reader@example.test", "Ada", "Typed RailsHx mailers are ready.")

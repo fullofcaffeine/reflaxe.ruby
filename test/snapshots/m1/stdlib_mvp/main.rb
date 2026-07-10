@@ -8,6 +8,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["main"]}
+  end
   def self.main()
     puts(HXRuby.stringify("null"))
     puts(HXRuby.stringify((HXRuby.parse_int("41") + 1)))

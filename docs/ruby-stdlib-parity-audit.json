@@ -183,11 +183,11 @@
     {
       "module": "Type",
       "source": "Type.unit.hx",
-      "classification": "ruby-override-needed",
-      "unitstdStatus": "not-tracked",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "adapted",
       "owner": "std/ruby/_std/Type.hx",
-      "next": "Promote an adapted Type fixture after enum/class metadata smoke coverage is mapped.",
-      "notes": "Type has a Ruby override, but upstream runtime parity is not yet accounted for in unitstd."
+      "next": "Keep covered by npm run test:unitstd-ruby plus focused runtime and generated metadata checks.",
+      "notes": "The adapted upstream fixture covers class/enum lookup and names, superclass resolution, dynamic instance and enum construction, exact and inherited Haxe field metadata, enum equality/parameters/indexes, allEnums, primitive and anonymous-object classification, and referenced haxe.macro enum emission over the Ruby Type override and HXRuby boundary."
     },
     {
       "module": "Unicode",

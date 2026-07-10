@@ -7,6 +7,9 @@ module Hxruby
         def self.__hx_name()
           "hxruby.generators.routes.RailsRoute"
         end
+        def self.__hx_fields()
+          {instance: ["path", "prefix", "target", "verb"], static: []}
+        end
         attr_accessor :prefix
         attr_accessor :verb
         attr_accessor :path

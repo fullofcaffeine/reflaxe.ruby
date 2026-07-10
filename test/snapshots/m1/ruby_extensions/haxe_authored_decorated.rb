@@ -4,6 +4,9 @@ module DecoratedFromHaxe
   def self.__hx_name()
     "HaxeAuthoredDecorated"
   end
+  def self.__hx_fields()
+    {instance: ["haxeBadge"], static: []}
+  end
   def haxe_badge(value)
     return ("haxe-module:" + value)
   end

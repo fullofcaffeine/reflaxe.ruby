@@ -33,10 +33,11 @@ Current upstream runtime fixtures:
   `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
   `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
   `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`.
-- Adapted: `Reflect` and `Std`. `Reflect` adds lexical blocks around upstream
-  sections whose locals collide when expanded into one method. `Std` avoids
-  similar macro-expansion collisions and ignores upstream `unspec(...)`
-  markers; both retain the assertions owned by this lane.
+- Adapted: `Reflect`, `Std`, and `Type`. `Reflect` and `Type` add lexical blocks
+  around upstream sections whose locals collide when expanded into one method;
+  `Type` also uses upstream-package helpers and explicit Dynamic parameter
+  arrays. `Std` avoids similar macro-expansion collisions and ignores upstream
+  `unspec(...)` markers; all retain the assertions owned by this lane.
 - `Map` is enabled directly. RubyHx backs `StringMap` and `IntMap` with normal
   Ruby `Hash`, and backs `ObjectMap` with `Hash#compare_by_identity` so object
   keys keep Haxe identity semantics while preserving Ruby insertion order.
@@ -95,6 +96,14 @@ property, method, compare, copy, delete, object, and enum-value assertions. It
 proves Haxe-owned camelCase names map to generated Ruby members without changing
 open anonymous-object/Hash keys, Strings retain Haxe object classification, and
 optional enum constructor payloads default to null in generated Ruby.
+
+`Type` is adapted with lexical section blocks, upstream-package helper types,
+and explicit `Array<Dynamic>` expectations for enum parameters. It retains the
+upstream class/enum lookup, naming, superclass, construction, field-list,
+equality, parameter, index, and `allEnums` assertions. It proves generated Haxe
+classes retain compact source-name metadata, inherited instance fields remain
+discoverable without leaking Ruby/Object methods, and target-referenced
+`haxe.macro` enums are emitted for runtime reflection.
 
 `haxe.Template` is enabled directly. It proves the portable Haxe template
 parser/executor can fall through unchanged on Ruby, including context lookup,

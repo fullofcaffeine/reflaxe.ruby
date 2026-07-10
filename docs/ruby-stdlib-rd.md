@@ -59,7 +59,6 @@ Current implemented domains:
 
 Implemented domains that still need broader upstream parity accounting:
 
-- `Type`
 - `haxe.Json`
 - `sys.FileSystem`
 - `sys.io.File`
@@ -79,8 +78,8 @@ Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
 `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, and `haxe.Template` run
-directly. `Reflect` and `Std` run through adapted upstream fixtures, and local
-focused fixtures cover adjacent semantic gaps such as numeric parsing.
+directly. `Reflect`, `Std`, and `Type` run through adapted upstream fixtures,
+and local focused fixtures cover adjacent semantic gaps such as numeric parsing.
 
 Broader upstream candidate accounting lives in
 `docs/ruby-stdlib-parity-audit.json` and
@@ -108,7 +107,6 @@ These are required for current examples, RailsHx, and shared Haxe domain code.
 These surfaces now have Ruby target implementations, but should get stronger
 upstream or focused parity evidence before broad Ruby library expansion.
 
-- `Type`
 - `haxe.Json`
 - `sys.FileSystem`
 - `sys.io.File`
@@ -246,8 +244,7 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
    `haxe.zip.Compress`, or `haxe.zip.Uncompress` through
    `test/upstream_unitstd/manifest.json`.
 
-2. Add upstream parity coverage for an implemented Ruby-owned surface, starting
-   with `Type` or `haxe.Json`.
+2. Add broader parity coverage for the Ruby-owned `haxe.Json` surface.
 
 3. Add focused filesystem parity coverage for `sys.FileSystem` and
    `sys.io.File`, including exception and newline behavior.

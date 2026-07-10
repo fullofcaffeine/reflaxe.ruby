@@ -4,6 +4,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["main"]}
+  end
   def self.main()
     SendWelcomeEmailJob.perform_later(42, "reader@example.test")
     SendWelcomeEmailJob.perform_now(7, "now@example.test")

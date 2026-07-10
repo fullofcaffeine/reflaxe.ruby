@@ -6,6 +6,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["main"]}
+  end
   def self.main()
     subscription = ActiveSupport::Notifications.subscribe("todo.shipped") { |event| puts(HXRuby.stringify(((event.payload[:list_id] + ":") + HXRuby.stringify(event.payload[:count])))) }
     label = ActiveSupport::Notifications.instrument("todo.shipped", {list_id: "open", count: 2}) { "instrumented" }

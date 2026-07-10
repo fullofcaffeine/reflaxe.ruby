@@ -4,6 +4,9 @@ class HaxeModulePost
   def self.__hx_name()
     "HaxeModulePost"
   end
+  def self.__hx_fields()
+    {instance: ["haxeBadge"], static: ["haxeClassBadge"]}
+  end
   include DecoratedFromHaxe
   extend ClassMethodsFromHaxe
   def initialize()

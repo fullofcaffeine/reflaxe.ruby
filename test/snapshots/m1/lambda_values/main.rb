@@ -5,6 +5,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["main"]}
+  end
   def self.main()
     add_one = ->(x) { (x + 1) }
     puts(HXRuby.stringify(add_one.call(2)))

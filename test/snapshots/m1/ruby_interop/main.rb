@@ -7,6 +7,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["main"]}
+  end
   def self.main()
     count = 3
     puts(HXRuby.stringify(JSON.generate({"name" => "ruby", "count" => 2})))

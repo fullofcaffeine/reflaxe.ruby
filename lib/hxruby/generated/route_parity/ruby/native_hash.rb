@@ -5,6 +5,9 @@ module Ruby
     def self.__hx_name()
       "ruby.NativeHash"
     end
+    def self.__hx_fields()
+      {instance: [], static: ["clear", "copyInto", "create", "createIdentity", "entries", "exists", "get", "keys", "remove", "set", "toString", "values"]}
+    end
     def self.create()
       return {}
     end

@@ -4,6 +4,9 @@ class HaxeOnlyLibrary
   def self.__hx_name()
     "HaxeOnlyLibrary"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["headline"]}
+  end
   def self.headline(value)
     return ("haxe:" + value)
   end

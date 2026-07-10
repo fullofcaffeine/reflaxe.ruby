@@ -7,6 +7,9 @@ module Hxruby
         def self.__hx_name()
           "hxruby.generators.routes.ManifestRoute"
         end
+        def self.__hx_fields()
+          {instance: ["name", "opaque", "path", "position", "target", "verb"], static: []}
+        end
         attr_accessor :name
         attr_accessor :verb
         attr_accessor :path

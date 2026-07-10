@@ -19,6 +19,18 @@ end
 
 class TestClassForTypeCheck; end
 
+class TestTypeFieldBase
+  def self.__hx_fields
+    { instance: %w[baseMethod baseValue], static: %w[baseStatic] }
+  end
+end
+
+class TestTypeFieldChild < TestTypeFieldBase
+  def self.__hx_fields
+    { instance: %w[childValue], static: [] }
+  end
+end
+
 module TestInterfaceForTypeCheck; end
 
 class TestInterfaceImplementor
@@ -181,6 +193,23 @@ class HXRubyRuntimeTest < Minitest::Test
     assert HXRuby.is_of_type(TestInterfaceImplementor.new, TestInterfaceForTypeCheck)
     assert HXRuby.is_of_type(TestEnumForTypeCheck::Happy.new("Happy", 0), TestEnumForTypeCheck)
     refute HXRuby.is_of_type(nil, Dynamic)
+  end
+
+  def test_type_get_class_distinguishes_haxe_instances_from_type_values
+    assert_equal String, HXRuby.type_get_class("ruby")
+    assert_equal Array, HXRuby.type_get_class([])
+    assert_equal TestClassForTypeCheck, HXRuby.type_get_class(TestClassForTypeCheck.new)
+    assert_nil HXRuby.type_get_class(Float_)
+    assert_nil HXRuby.type_get_class(Int)
+    assert_nil HXRuby.type_get_class(Bool)
+    assert_nil HXRuby.type_get_class({})
+    assert_nil HXRuby.type_get_class(TestClassForTypeCheck)
+  end
+
+  def test_type_field_metadata_preserves_haxe_names_and_inheritance
+    assert_equal %w[childValue baseMethod baseValue], HXRuby.type_instance_fields(TestTypeFieldChild)
+    assert_equal [], HXRuby.type_class_fields(TestTypeFieldChild)
+    assert_equal %w[baseStatic], HXRuby.type_class_fields(TestTypeFieldBase)
   end
 
   def test_reflect_hash_fields_and_copy

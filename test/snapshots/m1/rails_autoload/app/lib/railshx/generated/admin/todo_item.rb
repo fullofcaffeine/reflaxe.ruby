@@ -5,6 +5,9 @@ module Admin
     def self.__hx_name()
       "admin.TodoItem"
     end
+    def self.__hx_fields()
+      {instance: ["title"], static: []}
+    end
     attr_accessor :title
   end
 end

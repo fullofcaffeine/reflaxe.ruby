@@ -5,6 +5,9 @@ class Main
   def self.__hx_name()
     "Main"
   end
+  def self.__hx_fields()
+    {instance: [], static: ["fail", "main"]}
+  end
   def self.main()
     begin
       Main.fail()

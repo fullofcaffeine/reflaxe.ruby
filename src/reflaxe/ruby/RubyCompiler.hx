@@ -356,6 +356,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var hxrubyCallsBefore = hxrubyCallCount;
 		var classBody:Array<RubyStatement> = [];
 		classBody.push(typeNameMetadata(fullTypeName(classType.pack, classType.name)));
+		classBody.push(typeFieldsMetadata(haxeClassFieldNames(varFields, funcFields, false), haxeClassFieldNames(varFields, funcFields, true)));
 		if (isRubyConcern) {
 			classBody.push(RubyRawStatement("extend ActiveSupport::Concern"));
 		}
@@ -420,7 +421,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	public function compileEnumImpl(enumType:EnumType, options:Array<EnumOptionData>):Null<RubyFile> {
-		if (isMacroOnlyRuntimeType(enumType.pack)) {
+		// Haxe permits haxe.macro enums such as ExprDef in target runtime code, and
+		// Type reflection requires their constructors and metadata to exist there.
+		// Rails macro marker enums remain compiler-only and are still erased.
+		if (isMacroOnlyRuntimeType(enumType.pack) && !isHaxeMacroPack(enumType.pack)) {
 			return null;
 		}
 		if (hasRubyNoEmit(enumType.meta)) {
@@ -1039,6 +1043,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return RubyRawStatement("def self.__hx_name()\n  " + quoteRubyStringForCode(name) + "\nend");
 	}
 
+	static function typeFieldsMetadata(instanceNames:Array<String>, staticNames:Array<String>):RubyStatement {
+		var instanceFields = [for (name in instanceNames) quoteRubyStringForCode(name)].join(", ");
+		var staticFields = [for (name in staticNames) quoteRubyStringForCode(name)].join(", ");
+		return RubyRawStatement("def self.__hx_fields()\n  {instance: [" + instanceFields + "], static: [" + staticFields + "]}\nend");
+	}
+
+	static function haxeClassFieldNames(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>, isStatic:Bool):Array<String> {
+		var names:Array<String> = [];
+		for (field in varFields) {
+			if (field.isStatic == isStatic) {
+				addHaxeClassFieldName(names, field.field.getHaxeName());
+			}
+		}
+		for (field in funcFields) {
+			var name = field.field.getHaxeName();
+			if (field.isStatic == isStatic && name != "new" && name != "__init__" && field.property == null) {
+				addHaxeClassFieldName(names, name);
+			}
+		}
+		names.sort(Reflect.compare);
+		return names;
+	}
+
+	static function addHaxeClassFieldName(names:Array<String>, name:String):Void {
+		if (names.indexOf(name) == -1) {
+			names.push(name);
+		}
+	}
+
 	static function compileEnumBody(enumType:EnumType, options:Array<EnumOptionData>):Array<RubyStatement> {
 		var out:Array<RubyStatement> = [typeNameMetadata(fullTypeName(enumType.pack, enumType.name))];
 		var index = 0;
@@ -1070,7 +1103,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function isMacroOnlyRuntimeType(pack:Array<String>):Bool {
-		return pack.length >= 2 && ((pack[0] == "haxe" && pack[1] == "macro") || (pack[0] == "rails" && pack[1] == "macros"));
+		return isHaxeMacroPack(pack) || (pack.length >= 2 && pack[0] == "rails" && pack[1] == "macros");
+	}
+
+	static function isHaxeMacroPack(pack:Array<String>):Bool {
+		return pack.length >= 2 && pack[0] == "haxe" && pack[1] == "macro";
 	}
 
 	static function shouldSuppressRailsRubyType(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Bool {

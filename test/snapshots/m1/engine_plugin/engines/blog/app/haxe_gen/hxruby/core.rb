@@ -533,6 +533,8 @@ module HXRuby
     return nil if value.nil? || value.respond_to?(:__hx_tag)
     return String if value.is_a?(String)
     return Array if value.is_a?(Array)
+    return nil if value.is_a?(Hash) || value.is_a?(Numeric) || value == true || value == false
+    return nil if value.is_a?(Class) || value.is_a?(Module)
 
     value.class
   end
@@ -591,13 +593,29 @@ module HXRuby
   def type_instance_fields(_type)
     return [] unless _type.is_a?(Class)
 
+    if haxe_type_field_metadata?(_type)
+      fields = []
+      current = _type
+      while current.is_a?(Class) && haxe_type_field_metadata?(current)
+        fields.concat(current.__hx_fields[:instance])
+        current = current.superclass
+      end
+      return fields.uniq
+    end
+
     _type.public_instance_methods(false).map(&:to_s).reject { |name| name.end_with?("=") }.sort
   end
 
   def type_class_fields(_type)
     return [] unless _type.respond_to?(:singleton_methods)
 
+    return _type.__hx_fields[:static] if haxe_type_field_metadata?(_type)
+
     _type.singleton_methods(false).map(&:to_s).reject { |name| name.end_with?("=") || name.start_with?("__hx_") }.sort
+  end
+
+  def haxe_type_field_metadata?(type)
+    type.respond_to?(:singleton_methods) && type.singleton_methods(false).include?(:__hx_fields)
   end
 
   def type_enum_constructs(type)

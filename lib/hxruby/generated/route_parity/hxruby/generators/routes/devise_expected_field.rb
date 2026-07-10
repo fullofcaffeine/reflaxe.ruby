@@ -7,6 +7,9 @@ module Hxruby
         def self.__hx_name()
           "hxruby.generators.routes.DeviseExpectedField"
         end
+        def self.__hx_fields()
+          {instance: ["name", "value"], static: []}
+        end
         attr_accessor :name
         attr_accessor :value
         def initialize(name, value)

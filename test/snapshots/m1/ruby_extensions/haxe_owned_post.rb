@@ -4,6 +4,9 @@ class HaxeOwnedPost
   def self.__hx_name()
     "HaxeOwnedPost"
   end
+  def self.__hx_fields()
+    {instance: ["decorated", "displayTitle", "title"], static: ["buildLabel"]}
+  end
   include Decorated
   extend Decorated
   attr_accessor :title

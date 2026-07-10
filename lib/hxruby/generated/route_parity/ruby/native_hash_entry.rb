@@ -5,6 +5,9 @@ module Ruby
     def self.__hx_name()
       "ruby.NativeHashEntry"
     end
+    def self.__hx_fields()
+      {instance: ["key", "value"], static: []}
+    end
     attr_accessor :key
     attr_accessor :value
     def initialize(key, value)

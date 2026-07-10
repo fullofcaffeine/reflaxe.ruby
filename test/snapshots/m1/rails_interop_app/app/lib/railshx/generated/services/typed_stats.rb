@@ -5,6 +5,9 @@ module Services
     def self.__hx_name()
       "services.TypedStats"
     end
+    def self.__hx_fields()
+      {instance: [], static: ["confidenceLabel", "summary"]}
+    end
     def self.summary(items)
       return (("Typed Haxe summarized " + HXRuby.stringify(items.length)) + " Rails surfaces.")
     end

@@ -4,6 +4,9 @@ class HaxeRawBackedPost
   def self.__hx_name()
     "HaxeRawBackedPost"
   end
+  def self.__hx_fields()
+    {instance: ["rawDecorated", "rubyClassName", "title"], static: []}
+  end
   include RawDecorated
   attr_accessor :title
   def initialize(title)

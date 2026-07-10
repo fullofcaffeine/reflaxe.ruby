@@ -6,6 +6,9 @@ module BlogEngine
       def self.__hx_name()
         "blog_engine.services.EngineGreeting"
       end
+      def self.__hx_fields()
+        {instance: [], static: ["message"]}
+      end
       def self.message(name)
         return ("RailsHx engine says hello to " + name)
       end

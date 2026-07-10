@@ -34,7 +34,14 @@ if (!compileWithFirstAvailableReflaxe()) {
   process.exit(1);
 }
 
-for (const file of ["e_reg.rb", "hxruby/core.rb", "main.rb", "run.rb"]) {
+for (const file of [
+  "e_reg.rb",
+  "haxe/macro/expr_def.rb",
+  "hxruby/core.rb",
+  "main.rb",
+  "run.rb",
+  "unit/spec/c.rb",
+]) {
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     console.error(`Expected generated Ruby file missing: ${fullPath}`);
@@ -52,6 +59,8 @@ if (actual !== "unitstd-ruby ok\n") {
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
+const exprDefRuby = readFileSync(join(outputDir, "haxe", "macro", "expr_def.rb"), "utf8");
+const typeFixtureRuby = readFileSync(join(outputDir, "unit", "spec", "c.rb"), "utf8");
 for (const expectedShape of [
   "StringBuf.new()",
   ".chr(Encoding::UTF_8)",
@@ -76,6 +85,24 @@ for (const expectedShape of [
 if (mainRuby.includes("String.from_char_code")) {
   console.error("Generated unitstd Ruby should lower String.fromCharCode directly, not patch Ruby String.");
   process.exit(1);
+}
+for (const expectedShape of [
+  '"haxe.macro.ExprDef"',
+  '{name: "EBreak", index: 19, method: :e_break, arity: 0}',
+]) {
+  if (!exprDefRuby.includes(expectedShape)) {
+    console.error(`Expected generated haxe.macro.ExprDef shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of [
+  "def self.__hx_fields()",
+  '{instance: ["func", "prop", "v"], static: ["staticFunc", "staticProp", "staticVar"]}',
+]) {
+  if (!typeFixtureRuby.includes(expectedShape)) {
+    console.error(`Expected generated Type fixture metadata missing: ${expectedShape}`);
+    process.exit(1);
+  }
 }
 
 function compileWithFirstAvailableReflaxe() {
