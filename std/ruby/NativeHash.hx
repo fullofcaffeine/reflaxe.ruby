@@ -2,7 +2,8 @@ package ruby;
 
 @:rubyAllowRaw
 class NativeHash {
-	public static function create<K, V>():NativeHashData<K, V> {
+	/** Inline map construction so static Haxe map literals need no load-order wrapper. */
+	public static inline function create<K, V>():NativeHashData<K, V> {
 		return untyped __ruby__("{}");
 	}
 
@@ -10,7 +11,8 @@ class NativeHash {
 		return untyped __ruby__("{}.compare_by_identity");
 	}
 
-	public static function set<K, V>(hash:NativeHashData<K, V>, key:K, value:V):Void {
+	/** Inline the canonical write path to the ordinary Ruby `hash[key] = value`. */
+	public static inline function set<K, V>(hash:NativeHashData<K, V>, key:K, value:V):Void {
 		untyped __ruby__("{0}[{1}] = {2}", hash, key, value);
 	}
 

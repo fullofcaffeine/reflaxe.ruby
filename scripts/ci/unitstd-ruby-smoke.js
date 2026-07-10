@@ -37,13 +37,19 @@ if (!compileWithFirstAvailableReflaxe()) {
 for (const file of [
   "e_reg.rb",
   "haxe/macro/expr_def.rb",
+  "haxe/rtti/rtti.rb",
+  "haxe/xml/parser.rb",
   "hxruby/core.rb",
   "main.rb",
   "run.rb",
   "sys/io/file_input.rb",
   "sys/io/file_output.rb",
   "sys/io/file_seek.rb",
+  "unit/spec/rtti_class1.rb",
+  "unit/spec/rtti_class2.rb",
+  "unit/spec/rtti_class3.rb",
   "unit/spec/c.rb",
+  "xml.rb",
 ]) {
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
@@ -63,9 +69,14 @@ if (actual !== "unitstd-ruby ok\n") {
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
 const exprDefRuby = readFileSync(join(outputDir, "haxe", "macro", "expr_def.rb"), "utf8");
+const rttiRuby = readFileSync(join(outputDir, "haxe", "rtti", "rtti.rb"), "utf8");
+const xmlParserRuby = readFileSync(join(outputDir, "haxe", "xml", "parser.rb"), "utf8");
 const fileOutputRuby = readFileSync(join(outputDir, "sys", "io", "file_output.rb"), "utf8");
 const fileSeekRuby = readFileSync(join(outputDir, "sys", "io", "file_seek.rb"), "utf8");
+const rttiClassRuby = readFileSync(join(outputDir, "unit", "spec", "rtti_class1.rb"), "utf8");
+const stringMapRuby = readFileSync(join(outputDir, "haxe", "ds", "string_map.rb"), "utf8");
 const typeFixtureRuby = readFileSync(join(outputDir, "unit", "spec", "c.rb"), "utf8");
+const xmlRuby = readFileSync(join(outputDir, "xml.rb"), "utf8");
 for (const expectedShape of [
   "StringBuf.new()",
   ".chr(Encoding::UTF_8)",
@@ -74,6 +85,48 @@ for (const expectedShape of [
 ]) {
   if (!mainRuby.includes(expectedShape)) {
     console.error(`Expected generated unitstd Ruby shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of [
+  'rtti = HXRuby.reflect_field(c, "__rtti")',
+  "x = ::Xml.parse(rtti).first_element()",
+  "Haxe::Rtti::XmlParser.new().process_element(x)",
+]) {
+  if (!rttiRuby.includes(expectedShape)) {
+    console.error(`Expected upstream haxe.rtti.Rtti shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of [
+  '{instance: ["f"], static: ["__rtti", "v"]}',
+  '@rtti = "<class path=\\"unit.spec.RttiClass1\\"',
+  '<f public=\\"1\\" set=\\"method\\"',
+]) {
+  if (!rttiClassRuby.includes(expectedShape)) {
+    console.error(`Expected @:rtti class metadata shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of ["@element = 0", "@document = 6"]) {
+  if (!xmlRuby.includes(expectedShape)) {
+    console.error(`Expected typed Xml static initializer shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+if (xmlRuby.includes("XmlType.element")) {
+  console.error("Xml enum-abstract constants should lower to their retained typed values, not runtime XmlType calls.");
+  process.exit(1);
+}
+for (const expectedShape of ["h = Haxe::Ds::StringMap.new()", "doc = ::Xml.create_document()"]) {
+  if (!xmlParserRuby.includes(expectedShape)) {
+    console.error(`Expected absolute/core Xml parser shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of ["self.data = {}", "hash[key] = value"]) {
+  if (!stringMapRuby.includes(expectedShape)) {
+    console.error(`Expected direct Ruby Hash initialization shape missing: ${expectedShape}`);
     process.exit(1);
   }
 }

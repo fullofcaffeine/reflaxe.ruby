@@ -1002,7 +1002,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (!field.isStatic) {
 				return RubyRawStatement("attr_accessor :" + name);
 			}
-			var init = field.findDefaultExpr();
+			// Static fields can retain their typed initializer directly on the class
+			// field (notably enum-abstract constants such as XmlType.Element). Prefer
+			// that lossless expression before falling back to Reflaxe's recovered
+			// constructor assignment or the untyped `@:value` metadata.
+			var init = field.field.expr() ?? field.findDefaultExpr();
 			var initExpr = init == null ? compileUntypedDefaultExpr(field.classType, field.field.type, field.getDefaultUntypedExpr()) : compileExpr(init);
 			return RubyRawStatement("class << self\n  attr_accessor :" + name + "\nend\n@" + name + " = " +
 				reflaxe.ruby.ast.RubyASTPrinter.printExpr(initExpr));
@@ -2858,7 +2862,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
 				var field = fieldRef.get();
-				var owner = rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType);
+				var owner = coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType);
 				if (isDynamicMethodClassField(field)) {
 					RubyCall(RubyRawExpr(owner), dynamicMethodValueName(rubyFieldName(field.name, field.meta)), []);
 				} else {
@@ -13439,6 +13443,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (fullTypeName(pack, name)) {
 			case "String": "String";
 			case "Array": "Array";
+			// The root Haxe Xml class coexists with the `haxe.xml` package. Use an
+			// absolute constant so code inside Haxe::Xml or Haxe::Rtti cannot resolve
+			// `Xml` lexically to the package module.
+			case "Xml": "::Xml";
 			case _: null;
 		}
 	}

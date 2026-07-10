@@ -35,6 +35,8 @@ Haxe std overrides may consume the lower-level RubyHx facades when that keeps th
 implementation direct and typed. For example, `haxe.ds.*Map` uses
 `ruby.NativeHashData<K, V>` internally so map implementations emit ordinary Ruby
 `Hash` operations without exposing a broad `Dynamic` hash to Haxe callers.
+Construction and canonical writes inline to `{}` and `hash[key] = value`, so a
+static upstream map literal does not depend on a later-generated adapter file.
 
 Those RubyHx facades are also valid public authoring surfaces for developers who
 want a typed Ruby layer instead of a Haxe-stdlib-first abstraction. Keep that
@@ -152,6 +154,13 @@ seek/tell, and latched EOF. Native Ruby `StandardError` values cross Haxe
 `try/catch` through compiler lowering, while normal generated file operations
 remain direct Ruby calls.
 
+`haxe.rtti.Rtti` is enabled directly from upstream. It proves generated
+`@:rtti` XML for base and derived classes can flow through upstream `Rtti`,
+`CType`, and `XmlParser` without a Ruby override. The compiler preserves typed
+static initializers such as `XmlType.Element = 0`, emits the root Haxe `Xml`
+class as absolute `::Xml` where the `haxe.xml` package would otherwise shadow
+it, and lets static XML parser maps initialize through direct Ruby Hash writes.
+
 The current baseline intentionally enables a focused set of fixtures and tracks
 broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `EReg`, `IntIterator`, `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`,
@@ -160,9 +169,10 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.EnumFlags`,
 `haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`,
-`haxe.Template`, and `sys.io.File` run directly. `Reflect` and `Type` run
-through adapted fixtures because upstream section-local names need macro-lane accommodation; `Type` also
-uses upstream-package helpers and explicit Dynamic parameter arrays. `Std`
+`haxe.Template`, `haxe.rtti.Rtti`, and `sys.io.File` run directly. `Reflect` and
+`Type` run through adapted fixtures because upstream section-local names need
+macro-lane accommodation; `Type` also uses upstream-package helpers and
+explicit Dynamic parameter arrays. `Std`
 remains adapted for its assertion syntax, duplicate locals, and `unspec(...)`
 markers.
 

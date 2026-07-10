@@ -148,7 +148,7 @@
       "status": "implemented",
       "path": "std/ruby/NativeHash.hx",
       "surface": "ruby.NativeHash",
-      "reason": "Target-local Ruby Hash operations used by Haxe map overrides."
+      "reason": "Target-local Ruby Hash operations used by Haxe map overrides, with construction and canonical writes inlined to ordinary Ruby hash syntax for static map literals."
     },
     {
       "id": "std.ruby.native_hash_data",

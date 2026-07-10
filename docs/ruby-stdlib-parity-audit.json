@@ -556,10 +556,10 @@
     {
       "module": "haxe.rtti.Rtti",
       "source": "haxe/rtti/Rtti.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Try after Type and Reflect parity coverage is expanded.",
-      "notes": "May be mostly compile-time metadata, but generated runtime shape should be audited."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The upstream Rtti, CType, and XmlParser implementation executes unchanged over generated @:rtti XML, inherited class metadata, absolute root Xml lowering, and Ruby-backed StringMap storage."
     },
     {
       "module": "haxe.zip.Compress",

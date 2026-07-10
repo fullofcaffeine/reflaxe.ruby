@@ -7,6 +7,10 @@ import unit.spec.C.ClassWithCtorDefaultValues2;
 import unit.spec.C.ClassWithCtorDefaultValuesChild;
 import unit.spec.C.EmptyClass;
 import unit.spec.C.ReallyEmptyClass;
+import unit.spec.RttiFixtures.NonRttiClass;
+import unit.spec.RttiFixtures.RttiClass1;
+import unit.spec.RttiFixtures.RttiClass2;
+import unit.spec.RttiFixtures.RttiClass3;
 import unitstd_ruby.UpstreamUnitStdMacro;
 
 /**
@@ -49,6 +53,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("haxe/extern/EitherType.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/Path.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/rtti/Rtti.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("sys/io/File.unit.hx");
 		unitstd_ruby.ERegSemantics.run();
 		unitstd_ruby.MapSemantics.run();

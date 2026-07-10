@@ -33,7 +33,7 @@ Current upstream runtime fixtures:
   `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
   `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
   `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`,
-  `sys.io.File`.
+  `haxe.rtti.Rtti`, `sys.io.File`.
 - Adapted: `Reflect`, `Std`, and `Type`. `Reflect` and `Type` add lexical blocks
   around upstream sections whose locals collide when expanded into one method;
   `Type` also uses upstream-package helpers and explicit Dynamic parameter
@@ -68,6 +68,14 @@ seek, and create-on-update behavior through direct Ruby `File`/`IO` calls.
 filesystem lane covers its upstream path, directory, stat, rename, deletion,
 and native-error behavior alongside binary and EOF cases for the typed
 `FileInput`/`FileOutput` carriers.
+
+`haxe.rtti.Rtti` is enabled directly. The upstream fixture parses compiler-
+generated `@:rtti` XML through the unchanged upstream `Rtti`, `CType`, and
+`XmlParser` implementation, checking static and instance fields, rights,
+function types, inheritance, and overrides. Its focused Ruby shape assertions
+also lock in typed enum-abstract static initialization, absolute `::Xml`
+resolution across the root-class/`haxe.xml` package collision, and direct Hash
+construction/writes for XML parser static maps.
 
 `haxe.io.Path` is enabled directly. It proves the portable Haxe path parser,
 formatter, joiner, and normalizer can fall through unchanged on Ruby while

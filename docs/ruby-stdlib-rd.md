@@ -52,7 +52,7 @@ Current implemented domains:
   compatibility.
 - Haxe core std: `Std`, `Math`, `Type`, `Array`, `Lambda`, `Date`, `EReg`,
   `Reflect`, `StringTools`, `Sys`, `haxe.Json`, `haxe.ds.*`,
-  `haxe.io.Bytes`/`FPHelper`, `sys.FileSystem`, and `sys.io.File`.
+  `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `sys.FileSystem`, and `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
   `ruby.Prelude`, `ruby.StandardError`, `NativeHash`, and `NativeIterator`.
 - RailsHx and DeviseHx typed facades, macros, and generated runtime support.
@@ -75,9 +75,9 @@ Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
 `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`, and
-`sys.io.File` run directly. `Reflect`, `Std`, and `Type` run through adapted
-upstream fixtures, and local focused fixtures cover adjacent semantic gaps such
-as numeric parsing.
+`haxe.rtti.Rtti` and `sys.io.File` run directly. `Reflect`, `Std`, and `Type`
+run through adapted upstream fixtures, and local focused fixtures cover
+adjacent semantic gaps such as numeric parsing.
 `haxe.Json` has no direct unitstd spec, so `npm run test:json-parity` adapts the
 authoritative broader-suite parser/writer cases and issue regressions while
 locking in native Ruby JSON output plus the compact Haxe semantic adapter.
@@ -197,9 +197,11 @@ semantics need an adapter.
   Iterable/Iterator shape, and callback return semantics are proven.
 - `haxe.ds.*Map` currently uses typed `ruby.NativeHash`, not `HXRuby`.
   `StringMap` and `IntMap` use normal Ruby `Hash`; `ObjectMap` uses an identity
-  hash so same-shape object keys do not collapse. Keep this direct Ruby backend
-  unless another Haxe key-identity or iteration-order gap requires a documented
-  helper.
+  hash so same-shape object keys do not collapse. Native Hash construction and
+  writes inline to `{}` and `hash[key] = value`, which also lets upstream static
+  map literals initialize before later generated files load. Keep this direct
+  Ruby backend unless another Haxe key-identity or iteration-order gap requires
+  a documented helper.
 
 ## Testing Policy
 
@@ -241,9 +243,8 @@ For Ruby stdlib facades:
 
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
-1. Promote one upstream-fallback candidate such as `haxe.rtti.Rtti`,
-   `haxe.zip.Compress`, or `haxe.zip.Uncompress` through
-   `test/upstream_unitstd/manifest.json`.
+1. Promote the adjacent upstream `haxe.zip.Compress` and
+   `haxe.zip.Uncompress` fixtures before considering a Ruby Zlib optimization.
 
 2. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
    `haxe.io.FPHelper`.
