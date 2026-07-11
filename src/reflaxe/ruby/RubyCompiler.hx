@@ -2726,6 +2726,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					return RubyNoop;
 				}
 				return RubyAssign(RubyLocal(localName(v)), init == null ? RubyNil : compileExpr(init));
+			// Portable haxe.ds.Vector grows its Array-backed storage with an
+			// intentionally untyped `array.length = size`. Haxe permits that internal
+			// fallback operation, but Ruby exposes no Array#length= method. Reuse the
+			// existing Array.resize semantic helper so Vector keeps its initial null
+			// fill, zero-copy fromData representation, and ordinary Ruby Array storage
+			// without a target override, cast, or boxed compatibility object.
+			case TBinop(OpAssign, {expr: TField(target, access)}, rhs) if (fieldAccessRawName(access) == "length" && isArrayExpr(target)):
+				return RubyExprStatement(hxrubyCall("array_resize", [compileExpr(target), compileExpr(rhs)]));
 			case TBinop(OpAssign, {expr: TField(target, access)}, rhs) if (isReflectiveFieldAccess(target, access)):
 				return RubyExprStatement(hxrubyCall("reflect_set_field", [compileExpr(target), RubyString(fieldAccessRawName(access)), compileExpr(rhs)]));
 			case TBinop(OpAssign, lhs, rhs):
@@ -14039,9 +14047,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr("(" + RubyASTPrinter.printExpr(int32Clamp(compileExpr(lhs))) + " >> (" + printInlineExpr(rhs) + ".to_i & 31))");
 			case OpUShr:
 				RubyRawExpr("((" + printInlineExpr(lhs) + ".to_i & 0xffffffff) >> (" + printInlineExpr(rhs) + ".to_i & 31))");
-			case OpEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
+			case OpEq if (isArrayIdentityExpr(lhs) && isArrayIdentityExpr(rhs)):
 				RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]);
-			case OpNotEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
+			case OpNotEq if (isArrayIdentityExpr(lhs) && isArrayIdentityExpr(rhs)):
 				RubyUnary("!", RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]));
 			case _:
 				clampInt32Result(resultType, RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs)));
@@ -14116,6 +14124,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TInst(classRef, _):
 				var classType = classRef.get();
 				fullTypeName(classType.pack, classType.name) == "Array";
+			case _:
+				false;
+		}
+	}
+
+	/**
+		Recognize Haxe values whose Ruby Array storage still has identity equality.
+
+		Ruby `Array#==` is structural, while Haxe Array equality is referential.
+		`haxe.ds.Vector` preserves that same rule but remains an abstract in the
+		typed AST, so it must be recognized before its portable Array storage is
+		erased. This keeps `vector.copy() != vector` direct as Ruby `equal?` without
+		changing element equality or adding a Vector wrapper.
+	**/
+	static function isArrayIdentityExpr(expr:TypedExpr):Bool {
+		if (isArrayExpr(expr)) {
+			return true;
+		}
+		return switch (expr.t) {
+			case TAbstract(abstractRef, _):
+				var abstractType = abstractRef.get();
+				fullTypeName(abstractType.pack, abstractType.name) == "haxe.ds.Vector";
 			case _:
 				false;
 		}

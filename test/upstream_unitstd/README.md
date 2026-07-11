@@ -31,10 +31,11 @@ Current upstream runtime fixtures:
   `haxe.DynamicAccess`, `haxe.EnumFlags`, `haxe.Int32`, `haxe.crypto.Base64`,
   `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
   `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
-  `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-  `haxe.io.BytesBuffer`, `haxe.io.FPHelper`, `haxe.io.Path`, `haxe.Log`,
-  `haxe.Template`, `haxe.rtti.Rtti`, `sys.io.File`.
-- Adapted: `Reflect`, `Std`, `Type`, `haxe.zip.Compress`, and
+  `haxe.ds.BalancedTree`, `haxe.ds.EnumValueMap`, `haxe.ds.GenericStack`,
+  `haxe.ds.IntMap`, `haxe.ds.ObjectMap`, `haxe.ds.StringMap`,
+  `haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.FPHelper`,
+  `haxe.io.Path`, `haxe.Log`, `haxe.Template`, `haxe.rtti.Rtti`, `sys.io.File`.
+- Adapted: `Reflect`, `Std`, `Type`, `haxe.ds.Vector`, `haxe.zip.Compress`, and
   `haxe.zip.Uncompress`. The ZIP fixtures only extend upstream target guards to
   Ruby; all exact-byte and one-shot `execute` assertions remain unchanged.
   `Reflect` and `Type` add lexical blocks around upstream sections whose locals
@@ -48,6 +49,25 @@ Current upstream runtime fixtures:
 - `Map` is enabled directly. RubyHx backs `StringMap` and `IntMap` with normal
   Ruby `Hash`, and backs `ObjectMap` with `Hash#compare_by_identity` so object
   keys keep Haxe identity semantics while preserving Ruby insertion order.
+
+`haxe.ds.StringMap`, `haxe.ds.IntMap`, and `haxe.ds.ObjectMap` are also enabled
+through their dedicated upstream fixtures. They prove lookup, mutation,
+removal, clear, value/key/key-value iteration, and IMap unification. Generated
+normal and identity Hash construction plus writes remain direct `{}`,
+`{}.compare_by_identity`, and `hash[key] = value` Ruby syntax.
+
+`haxe.ds.EnumValueMap` is enabled directly over upstream `BalancedTree` and
+generated enum metadata. Its recursive enum/array parameter cases prove that
+value-equivalent constructors resolve to the same key without a Ruby override.
+
+`haxe.ds.Vector` is adapted only to exclude Ruby from the fixture's `static`
+neutral-value guards: Reflaxe types through a static host, while generated Ruby
+is dynamic and native arrays correctly start with `nil`. Every upstream length,
+access, data/copy, overlap-safe blit, fill, iteration, join, map, sort, and
+identity assertion is unchanged. The compiler maps the portable internal
+`array.length = size` operation to the existing resize semantic helper and maps
+Vector equality to Ruby `equal?`; values remain native arrays rather than boxed
+Vector objects.
 
 `Date` is enabled directly. The Ruby lane models Haxe `Date` as a small wrapper
 around Ruby `Time`: local constructors and component getters use local time,

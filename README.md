@@ -511,6 +511,10 @@ Semantic-release builds the gem during release preparation and attaches `dist/hx
 ## Gap Report
 
 The std/runtime gap report is generated from `docs/stdlib-inventory.json`.
+Upstream behavioral parity is tracked separately in
+`test/upstream_unitstd/manifest.json`; the Ruby lane includes dedicated
+StringMap, IntMap, ObjectMap, EnumValueMap, and Vector coverage while preserving
+native Ruby Hash/Array storage.
 
 ```bash
 npm run test:gap-report

@@ -50,7 +50,12 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Sha224.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/crypto/Sha256.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/ds/BalancedTree.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/ds/EnumValueMap.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/ds/GenericStack.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/ds/IntMap.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/ds/ObjectMap.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/ds/StringMap.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/ds/Vector.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/extern/EitherType.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/Int32.unit.hx");
@@ -125,4 +130,8 @@ private enum E {
 private enum EVMTest {
 	EVMA;
 	EVMB(?value:String);
+	EVMC(value:String, ?number:Int);
+	EVMD(value:EVMTest);
+	EVME(?value:EVMTest);
+	EVMF(values:Array<EVMTest>);
 }

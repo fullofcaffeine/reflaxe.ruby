@@ -7,7 +7,8 @@ class NativeHash {
 		return untyped __ruby__("{}");
 	}
 
-	public static function createIdentity<K, V>():NativeHashData<K, V> {
+	/** Inline identity-map construction so ObjectMap visibly owns Ruby key identity. */
+	public static inline function createIdentity<K, V>():NativeHashData<K, V> {
 		return untyped __ruby__("{}.compare_by_identity");
 	}
 

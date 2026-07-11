@@ -36,6 +36,12 @@ if (!compileWithFirstAvailableReflaxe()) {
 
 for (const file of [
   "e_reg.rb",
+  "haxe/ds/enum_value_map.rb",
+  "haxe/ds/int_map.rb",
+  "haxe/ds/object_map.rb",
+  "haxe/ds/string_map.rb",
+  "haxe/ds/vector.rb",
+  "haxe/ds/vector/vector_impl.rb",
   "haxe/macro/expr_def.rb",
   "haxe/io/fp_helper.rb",
   "haxe/rtti/rtti.rb",
@@ -71,6 +77,11 @@ if (actual !== "unitstd-ruby ok\n") {
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
+const enumValueMapRuby = readFileSync(join(outputDir, "haxe", "ds", "enum_value_map.rb"), "utf8");
+const intMapRuby = readFileSync(join(outputDir, "haxe", "ds", "int_map.rb"), "utf8");
+const objectMapRuby = readFileSync(join(outputDir, "haxe", "ds", "object_map.rb"), "utf8");
+const vectorRuby = readFileSync(join(outputDir, "haxe", "ds", "vector.rb"), "utf8");
+const vectorImplRuby = readFileSync(join(outputDir, "haxe", "ds", "vector", "vector_impl.rb"), "utf8");
 const exprDefRuby = readFileSync(join(outputDir, "haxe", "macro", "expr_def.rb"), "utf8");
 const fpHelperRuby = readFileSync(join(outputDir, "haxe", "io", "fp_helper.rb"), "utf8");
 const rttiRuby = readFileSync(join(outputDir, "haxe", "rtti", "rtti.rb"), "utf8");
@@ -152,11 +163,53 @@ for (const expectedShape of ["h = Haxe::Ds::StringMap.new()", "doc = ::Xml.creat
     process.exit(1);
   }
 }
-for (const expectedShape of ["self.data = {}", "hash[key] = value"]) {
-  if (!stringMapRuby.includes(expectedShape)) {
-    console.error(`Expected direct Ruby Hash initialization shape missing: ${expectedShape}`);
+for (const [label, source] of [
+  ["StringMap", stringMapRuby],
+  ["IntMap", intMapRuby],
+]) {
+  for (const expectedShape of ["self.data = {}", "hash[key] = value"]) {
+    if (!source.includes(expectedShape)) {
+      console.error(`Expected direct Ruby Hash ${label} shape missing: ${expectedShape}`);
+      process.exit(1);
+    }
+  }
+}
+for (const expectedShape of ["self.data = {}.compare_by_identity", "hash[key] = value"]) {
+  if (!objectMapRuby.includes(expectedShape)) {
+    console.error(`Expected identity-backed ObjectMap shape missing: ${expectedShape}`);
     process.exit(1);
   }
+}
+for (const expectedShape of [
+  "class EnumValueMap < Haxe::Ds::BalancedTree",
+  "d = (Type.enum_index(k1) - Type.enum_index(k2))",
+  "return self.compare_args(p1, p2)",
+]) {
+  if (!enumValueMapRuby.includes(expectedShape)) {
+    console.error(`Expected portable EnumValueMap shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of [
+  "# Haxe abstract haxe.ds.Vector has no Ruby runtime body.",
+  "if src.equal?(dest)",
+  "dest[(dest_pos +",
+  "src[(src_pos +",
+]) {
+  const source = expectedShape.startsWith("# Haxe abstract") ? vectorRuby : vectorImplRuby;
+  if (!source.includes(expectedShape)) {
+    console.error(`Expected native-array Vector shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+if (!/HXRuby\.array_resize\(this1[^,]*, 3\)/.test(mainRuby)
+  || !/Assert\.is_false\([^\n]+\.equal\?\([^\n]+\), "upstream unitstd haxe\/ds\/Vector\.unit\.hx/.test(mainRuby)) {
+  console.error("Expected Vector resize and identity-equality lowering is missing from the upstream lane.");
+  process.exit(1);
+}
+if (mainRuby.includes("VectorImpl.new(")) {
+  console.error("Vector values should remain native Ruby arrays, not boxed VectorImpl instances.");
+  process.exit(1);
 }
 for (const [label, source, packing, operation] of [
   ["Compress", zipCompressRuby, 'input = s.get_data().pack("C*")', "Zlib::Deflate.deflate(input, level)"],

@@ -196,12 +196,14 @@ broader high-leverage fixtures separately. `Array`, `Date`, `DateTools`,
 `StringBuf`, `StringTools`, `haxe.DynamicAccess`, `haxe.Int32`,
 `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
-`haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.EnumFlags`,
+`haxe.ds.BalancedTree`, `haxe.ds.EnumValueMap`, `haxe.ds.GenericStack`,
+`haxe.ds.IntMap`, `haxe.ds.ObjectMap`, `haxe.ds.StringMap`, `haxe.EnumFlags`,
 `haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.FPHelper`,
 `haxe.io.Path`, `haxe.Log`, `haxe.Template`, `haxe.rtti.Rtti`, and `sys.io.File`
-run directly. `Reflect`, `Type`, `haxe.zip.Compress`, and
-`haxe.zip.Uncompress` run through adapted fixtures. The ZIP adaptations only
-extend upstream target guards; `Reflect` and
+run directly. `Reflect`, `Type`, `haxe.ds.Vector`, `haxe.zip.Compress`, and
+`haxe.zip.Uncompress` run through adapted fixtures. The Vector adaptation only
+selects Ruby's dynamic neutral values; the ZIP adaptations only extend upstream
+target guards. `Reflect` and
 `Type` need macro-lane accommodation for section-local names, and `Type` also
 uses upstream-package helpers and explicit Dynamic parameter arrays. `Std`
 remains adapted for its assertion syntax, duplicate locals, and `unspec(...)`
@@ -336,7 +338,21 @@ non-global split/replace/map behavior, capture expansion with `$1`/`$$`, and
 
 `Map` is enabled as a direct upstream fixture. `StringMap` and `IntMap` use
 normal Ruby `Hash`; `ObjectMap` uses `Hash#compare_by_identity` to preserve Haxe
-object-key identity while retaining Ruby insertion-order iteration.
+object-key identity while retaining Ruby insertion-order iteration. Their
+dedicated direct fixtures additionally prove clear/removal, normal and key/value
+iteration, and IMap unification; generated normal/identity Hash construction and
+writes remain direct Ruby syntax.
+
+`haxe.ds.EnumValueMap` is enabled directly over upstream `BalancedTree`. Its
+fixture proves value equality for generated enum constructors and recursive
+enum/array parameters, so Ruby does not need a target override or hash-key
+canonicalizer. `haxe.ds.Vector` runs an adapted fixture whose only changes make
+neutral-value guards treat generated Ruby as dynamic despite Reflaxe's static
+typing host. Vector values remain native Ruby arrays; the compiler maps the
+portable internal Array-length assignment to the existing resize semantic helper
+and maps Vector equality to `equal?`. This preserves null fill, zero-copy data,
+copy identity, overlap-safe blit, iteration, fill, join, map, and sort without a
+boxed Vector value or new unchecked Haxe seam.
 
 ## Current Baseline
 

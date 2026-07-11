@@ -370,10 +370,10 @@
     {
       "module": "haxe.ds.EnumValueMap",
       "source": "haxe/ds/EnumValueMap.unit.hx",
-      "classification": "ruby-override-needed",
-      "unitstdStatus": "not-tracked",
-      "next": "Audit after Type/enum metadata parity is covered.",
-      "notes": "Enum keys depend on generated enum identity and hashing semantics."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby and generated-shape assertions.",
+      "notes": "The direct upstream fixture proves the portable BalancedTree comparator over generated enum indices and recursively compared enum/array parameters. Ruby needs no EnumValueMap override."
     },
     {
       "module": "haxe.ds.GenericStack",
@@ -387,36 +387,36 @@
       "module": "haxe.ds.IntMap",
       "source": "haxe/ds/IntMap.unit.hx",
       "classification": "covered-ruby-override",
-      "unitstdStatus": "not-tracked",
+      "unitstdStatus": "enabled",
       "owner": "std/ruby/_std/haxe/ds/IntMap.hx",
-      "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
-      "notes": "The top-level Map.unit.hx already covers IntMap through Ruby Hash storage."
+      "next": "Keep covered by npm run test:unitstd-ruby and generated-shape assertions.",
+      "notes": "The direct upstream fixture proves integer-key lookup, mutation, iteration, clear, key/value iteration, and IMap unification over ordinary Ruby Hash storage."
     },
     {
       "module": "haxe.ds.ObjectMap",
       "source": "haxe/ds/ObjectMap.unit.hx",
       "classification": "covered-ruby-override",
-      "unitstdStatus": "not-tracked",
+      "unitstdStatus": "enabled",
       "owner": "std/ruby/_std/haxe/ds/ObjectMap.hx",
-      "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
-      "notes": "ObjectMap uses Hash#compare_by_identity to preserve Haxe object-key identity."
+      "next": "Keep covered by npm run test:unitstd-ruby and generated-shape assertions.",
+      "notes": "The direct upstream fixture proves object-key lookup, removal, clear, and iteration while generated construction emits Hash#compare_by_identity to preserve Haxe key identity."
     },
     {
       "module": "haxe.ds.StringMap",
       "source": "haxe/ds/StringMap.unit.hx",
       "classification": "covered-ruby-override",
-      "unitstdStatus": "not-tracked",
+      "unitstdStatus": "enabled",
       "owner": "std/ruby/_std/haxe/ds/StringMap.hx",
-      "next": "Add the dedicated upstream fixture after the top-level Map fixture remains green.",
-      "notes": "The top-level Map.unit.hx already covers StringMap through Ruby Hash storage."
+      "next": "Keep covered by npm run test:unitstd-ruby and generated-shape assertions.",
+      "notes": "The direct upstream fixture proves string-key lookup, mutation, iteration, clear, key/value iteration, and IMap unification over ordinary Ruby Hash storage."
     },
     {
       "module": "haxe.ds.Vector",
       "source": "haxe/ds/Vector.unit.hx",
-      "classification": "ruby-override-needed",
-      "unitstdStatus": "not-tracked",
-      "next": "Audit vector length, null fill, and bounds behavior before enabling.",
-      "notes": "Ruby Array can back Vector, but Haxe fixed-length semantics need proof."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "adapted",
+      "next": "Keep covered by npm run test:unitstd-ruby and generated-shape assertions.",
+      "notes": "The adapted fixture changes only neutral-value target guards because Reflaxe's typing host defines static while generated Ruby is dynamic. All upstream assertions prove native Array-backed length/null fill, access, zero-copy data, copy identity, overlap-safe blit, iteration, join, map, fill, and sort. Compiler lowering maps the portable internal array.length assignment to the existing array-resize semantic helper and preserves Vector equality as Ruby identity equality."
     },
     {
       "module": "haxe.ds.WeakMap",

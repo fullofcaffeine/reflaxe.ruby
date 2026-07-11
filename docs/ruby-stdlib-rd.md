@@ -72,12 +72,14 @@ Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `Float`, `IntIterator`,
 `haxe.DynamicAccess`, `haxe.EnumFlags`, `haxe.Int32`, `haxe.crypto.Base64`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
-`haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-`haxe.io.BytesBuffer`, `haxe.io.FPHelper`, `haxe.io.Path`, `haxe.Log`,
-`haxe.Template`, `haxe.rtti.Rtti`, and `sys.io.File` run directly. `Reflect`,
-`Std`, `Type`, `haxe.zip.Compress`, and `haxe.zip.Uncompress` run through
-adapted upstream fixtures, and local focused fixtures cover adjacent semantic
-gaps such as numeric parsing and arbitrary binary compression round trips.
+`haxe.ds.BalancedTree`, `haxe.ds.EnumValueMap`, `haxe.ds.GenericStack`,
+`haxe.ds.IntMap`, `haxe.ds.ObjectMap`, `haxe.ds.StringMap`,
+`haxe.extern.EitherType`, `haxe.io.BytesBuffer`, `haxe.io.FPHelper`,
+`haxe.io.Path`, `haxe.Log`, `haxe.Template`, `haxe.rtti.Rtti`, and `sys.io.File`
+run directly. `Reflect`, `Std`, `Type`, `haxe.ds.Vector`,
+`haxe.zip.Compress`, and `haxe.zip.Uncompress` run through adapted upstream
+fixtures, and local focused fixtures cover adjacent semantic gaps such as
+numeric parsing and arbitrary binary compression round trips.
 `haxe.Json` has no direct unitstd spec, so `npm run test:json-parity` adapts the
 authoritative broader-suite parser/writer cases and issue regressions while
 locking in native Ruby JSON output plus the compact Haxe semantic adapter.
@@ -199,10 +201,24 @@ semantics need an adapter.
 - `haxe.ds.*Map` currently uses typed `ruby.NativeHash`, not `HXRuby`.
   `StringMap` and `IntMap` use normal Ruby `Hash`; `ObjectMap` uses an identity
   hash so same-shape object keys do not collapse. Native Hash construction and
-  writes inline to `{}` and `hash[key] = value`, which also lets upstream static
-  map literals initialize before later generated files load. Keep this direct
-  Ruby backend unless another Haxe key-identity or iteration-order gap requires
-  a documented helper.
+  writes inline to `{}`/`{}.compare_by_identity` and `hash[key] = value`, which
+  also lets upstream static map literals initialize before later generated files
+  load. Dedicated upstream fixtures now prove lookup, mutation, removal, clear,
+  ordinary/key-value iteration, and IMap unification. Keep this direct Ruby
+  backend unless another Haxe key-identity or iteration-order gap requires a
+  documented helper.
+- `haxe.ds.EnumValueMap` stays on the upstream `BalancedTree` implementation.
+  Generated enum indices plus recursive enum/array parameter comparison already
+  satisfy value-key semantics on Ruby, so a native Hash override would add key
+  canonicalization risk without improving the contract.
+- `haxe.ds.Vector` stays on the upstream Array-backed implementation and values
+  remain normal Ruby arrays. The portable constructor uses an internal untyped
+  `array.length = size`, which Ruby lacks; compiler lowering routes only that
+  typed Array-length assignment through the existing Haxe `Array.resize`
+  semantic helper. Vector equality uses Ruby `equal?`, preserving Haxe identity
+  instead of Ruby Array structural equality. The adapted fixture changes only
+  neutral-value target guards because Reflaxe's typing host defines `static`
+  while generated Ruby is dynamic; all behavioral assertions remain upstream.
 - `haxe.zip.Compress` and `haxe.zip.Uncompress` use Ruby's standard `zlib`
   library because upstream Haxe provides no portable compressor and only a
   one-shot portable inflater. Typed `ruby.ArrayPacking` and `ruby.Zlib` extern
@@ -265,11 +281,7 @@ For Ruby stdlib facades:
 
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
-1. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
-   remains green: `haxe.ds.StringMap`, `haxe.ds.IntMap`,
-   `haxe.ds.ObjectMap`, `haxe.ds.Vector`, and `haxe.ds.EnumValueMap`.
-
-2. Add Ruby stdlib facades separately under `std/ruby/**` for
+1. Add Ruby stdlib facades separately under `std/ruby/**` for
    `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 
