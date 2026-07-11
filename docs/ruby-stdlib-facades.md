@@ -9,12 +9,12 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 
 - Put Ruby-owned library surfaces under the `ruby` package:
   `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
-  `ruby.Pathname`, and future `ruby.CSV`, `ruby.URI`, or `ruby.Tempfile`
+  `ruby.Pathname`, `ruby.Tempfile`, and future `ruby.CSV` or `ruby.URI`
   facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
   for example `@:native("JSON") extern class Json`.
-- Preserve exact Ruby names through `@:native`, `@:rubyName`, or metadata when
+- Preserve exact Ruby names through Haxe's built-in `@:native` metadata when
   modeling an existing Ruby API. Do not introduce public lowercase Haxe class
   names just because the Ruby constant is lowercase or acronym-heavy.
 - Add `@:rubyRequire("...")` on externs that need a Ruby stdlib require, such as
@@ -236,6 +236,56 @@ Ruby, or a wrapper. Future additions should use distinct typed option records
 or methods where their semantics justify the extra surface. As with `ruby.Dir`,
 this is Ruby-shaped interop and does not replace Haxe `sys.FileSystem`.
 
+### Tempfile
+
+`ruby.Tempfile` is the canonical typed lifecycle facade for Ruby's
+standard-library `Tempfile`. Normal code should use `createDefault(...)`,
+`create(...)`, or `createIn(...)`: each accepts a typed `ruby.File -> T`
+callback, returns that callback's `T`, and uses `@:rubyBlockArg` to emit Ruby's
+recommended native block form:
+
+```haxe
+var size = ruby.Tempfile.create("report-", function(file) {
+	file.write("typed report");
+	file.flush();
+	return file.size();
+});
+```
+
+Generated Ruby remains recognizable and lets Ruby own the `ensure` cleanup:
+
+```ruby
+require "tempfile"
+
+size = Tempfile.create("report-") do |file|
+  file.write("typed report")
+  file.flush()
+  file.size()
+end
+```
+
+Ruby closes and removes the scoped file when the block exits, including when
+the callback raises. The callback receives a typed `ruby.File`, not `Dynamic`.
+Inline Haxe function expressions emit normal Ruby blocks; a callback stored in
+a typed Haxe function value is forwarded as `&callback`, preserving its arity.
+To support that boundary, `ruby.File.open(...)` now returns `ruby.File` and the
+nominal instance exposes bounded `path`, `write`, `readAll`, length-bounded
+`read`, `rewind`, `flush`, `close`, `isClosed`, and `size` operations. A
+length-bounded read returns `Null<String>` because Ruby returns `nil` at EOF;
+the all-content form remains a non-null `String`.
+
+The `new ruby.Tempfile(...)` constructor remains available for code that must
+retain a nominal temporary-file object outside a callback. That form is an
+explicit lifecycle responsibility: call `closeAndUnlink()` deterministically.
+Ruby's GC finalizer is a fallback, not a resource-management contract, and may
+leave files present for an unbounded interval. `path()` is therefore
+`Null<String>` because successful unlinking removes the path.
+
+Open-ended basename arrays, mode/options keyword bags, anonymous-file keyword
+forms, and general delegated IO are intentionally excluded. They should gain
+separate typed contracts where needed rather than widening this lifecycle seam
+through `Dynamic`, casts, raw Ruby, or a wrapper runtime.
+
 ## Adding A New Facade
 
 1. Check whether the API belongs in `std/ruby`, Haxe std, RailsHx, or a gem
@@ -259,6 +309,8 @@ Choose the smallest gate set that proves both authoring and emitted shape:
 - `npm run test:examples-compile` when a public example imports the facade.
 - Focused smoke tests such as `test:ruby-interop`, `test:ruby-call-shapes`, or a
   new facade-specific smoke when behavior executes at runtime.
+- `npm run test:compiler-metadata-docs` when adding or changing compiler
+  metadata; `docs/compiler-metadata.md` is the canonical target metadata index.
 - `UPDATE_SNAPSHOTS=1 npm run test:snapshots && npm run test:snapshots` when
   generated Ruby shape or requires change.
 - `npm run test:runtime-minitest` when `runtime/hxruby/**` changes.

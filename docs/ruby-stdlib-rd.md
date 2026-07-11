@@ -55,9 +55,10 @@ Current implemented domains:
   `haxe.Int32`, `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `haxe.zip.*`,
   `sys.FileSystem`, and `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
-  `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Prelude`,
-  `ruby.StandardError`, `ruby.ArrayPacking`, `ruby.BinaryFormat`,
-  `ruby.BinaryString`, `ruby.Zlib`, `NativeHash`, and `NativeIterator`.
+  `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`,
+  `ruby.Prelude`, `ruby.StandardError`, `ruby.ArrayPacking`,
+  `ruby.BinaryFormat`, `ruby.BinaryString`, `ruby.Zlib`, `NativeHash`, and
+  `NativeIterator`.
 - RailsHx and DeviseHx typed facades, macros, and generated runtime support.
 
 Upstream unitstd coverage is curated in `test/upstream_unitstd/manifest.json`
@@ -156,6 +157,15 @@ Documented native path-list returns stay `Array<String>`; unstable copy/move
 status values are hidden as `Void`. Recursive deletion uses
 `remove_entry_secure` instead of normalizing Ruby's TOCTTOU-prone `rm_r`/`rm_rf`
 shortcuts, and force/error-suppression behavior remains explicit.
+
+`ruby.Tempfile` completes the first resource-lifecycle facade in this tier.
+Its canonical `create*` methods use typed generic callbacks plus
+`@:rubyBlockArg` to emit Ruby's recommended `Tempfile.create { ... }` form, so
+Ruby closes and unlinks the file through its native `ensure`. The callback uses
+a strengthened nominal `ruby.File` instance contract; `File.open(...)` no
+longer returns `Dynamic`. Constructor-created `Tempfile` values remain
+available with nullable paths and an explicit `closeAndUnlink()` obligation,
+while GC-finalizer cleanup is documented as non-deterministic fallback only.
 
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
@@ -305,7 +315,7 @@ For Ruby stdlib facades:
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
 1. Add Ruby stdlib facades separately under `std/ruby/**` for
-   `ruby.Tempfile`, `ruby.URI`,
+   `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 
 ## Non-Goals

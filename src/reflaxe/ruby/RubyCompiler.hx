@@ -5577,8 +5577,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var receiver = reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(target));
 		var remaining = params.copy();
 		var block:Null<TypedExpr> = null;
-		if (useBlockArg && remaining.length > 0 && isFunctionExpr(remaining[remaining.length - 1])) {
-			block = remaining.pop();
+		var blockValue:Null<TypedExpr> = null;
+		if (useBlockArg && remaining.length > 0) {
+			var candidate = remaining[remaining.length - 1];
+			if (isFunctionExpr(candidate)) {
+				remaining.pop();
+				block = candidate;
+			} else if (isFunctionValue(candidate)) {
+				remaining.pop();
+				// A stored Haxe function is already a Ruby Proc/lambda value. Forward it
+				// with native `&proc` syntax so @:rubyBlockArg supports any callback
+				// arity without inventing a one-argument wrapper block. The type check is
+				// essential: an omitted optional block leaves the preceding positional or
+				// keyword-carrier argument last, and that value must not be consumed.
+				blockValue = candidate;
+			} else if (isNullLiteral(candidate)) {
+				// Ruby represents an absent optional block by omitting `&block` entirely.
+				remaining.pop();
+			}
 		}
 		var keywordSource:Null<TypedExpr> = null;
 		if (useKwargs && remaining.length > 0 && isObjectDeclExpr(remaining[remaining.length - 1])) {
@@ -5587,6 +5603,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var args = [for (param in remaining) simplifyRubyIdentityBegin(printInlineExpr(param))];
 		if (keywordSource != null) {
 			args = args.concat(renderKeywordArgs(keywordSource));
+		}
+		if (blockValue != null) {
+			args.push("&" + simplifyRubyIdentityBegin(printInlineExpr(blockValue)));
 		}
 		var code = receiver + "." + method + "(" + args.join(", ") + ")";
 		if (block != null) {
@@ -5871,6 +5890,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function isFunctionExpr(expr:TypedExpr):Bool {
 		return switch (expr.expr) {
 			case TFunction(_): true;
+			case _: false;
+		}
+	}
+
+	static function isFunctionValue(expr:TypedExpr):Bool {
+		return switch (TypeTools.follow(expr.t)) {
+			case TFun(_, _): true;
+			case _: false;
+		}
+	}
+
+	static function isNullLiteral(expr:TypedExpr):Bool {
+		return switch (expr.expr) {
+			case TConst(TNull): true;
 			case _: false;
 		}
 	}

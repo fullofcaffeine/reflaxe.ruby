@@ -77,7 +77,7 @@ until a separate target contract exists.
 Prefer these small follow-up slices over broad stdlib rewrites:
 
 1. Grow Ruby-native facades separately under `std/ruby/**`, starting with
-   `Tempfile` or `URI`. Those facades are not
+   `URI`. Those facades are not
    substitutes for Haxe std parity unless Haxe semantics explicitly consume
    them.
 

@@ -76,6 +76,16 @@ directories. Error suppression is opt-in and visible through
 `forceRemoveFile` or the `secureRemoveTree(..., true)` argument. This facade
 does not replace the separate Haxe-semantics `sys.FileSystem` override.
 
+`ruby.Tempfile` is a public Ruby-owned lifecycle facade. Its generic typed
+callbacks lower through `@:rubyBlockArg` to native `Tempfile.create` blocks so
+Ruby's `ensure` owns deterministic close/unlink behavior; no HXRuby resource
+wrapper is introduced. The callback boundary strengthens `ruby.File.open` and
+bounded instance IO from `Dynamic` to the nominal `ruby.File` type. Explicit
+constructor-created `ruby.Tempfile` values expose nullable paths and
+`closeAndUnlink()` because finalizer timing is not an acceptable lifecycle
+guarantee. Open option bags and delegated IO remain excluded rather than
+leaking an unsafe type boundary.
+
 ## Shared RailsHx Types
 
 Shared RailsHx value types belong in `std/` as a single source of truth when

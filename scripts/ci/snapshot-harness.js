@@ -45,6 +45,11 @@ const cases = [
     sourceRoot: "test/fileutils_facade/src_haxe",
     files: ["main.rb", "run.rb"],
   },
+  {
+    name: "tempfile_facade",
+    sourceRoot: "test/tempfile_facade/src_haxe",
+    files: ["main.rb", "run.rb"],
+  },
   { name: "native_mapping", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
   { name: "ruby_call_shapes", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
   { name: "ruby_interop", files: ["hxruby/core.rb", "main.rb", "run.rb"] },

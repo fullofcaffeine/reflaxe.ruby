@@ -78,6 +78,11 @@ See [Ruby Profiles](docs/profiles.md) for the profile contract: both profiles sh
 
 Interop is typed through metadata and small std surfaces:
 
+The authoritative placement, arguments, lowering, interaction, diagnostic, and
+safety contracts for all RubyHx/RailsHx compiler metadata live in
+[`docs/compiler-metadata.md`](docs/compiler-metadata.md). CI rejects newly
+recognized target metadata that is absent from that reference.
+
 - `@:native("RubyName")` maps Haxe symbols to Ruby constants or methods.
 - `@:rubyRequire("json")` emits `require "json"`.
 - `@:rubyRequireRelative("./support/foo")` emits `require_relative "./support/foo"`.
@@ -95,6 +100,9 @@ Interop is typed through metadata and small std surfaces:
 - `ruby.FileUtils` provides typed single-path copy, move, creation, removal,
   touch, comparison, and freshness operations. Recursive deletion defaults to
   Ruby's TOCTTOU-resistant `remove_entry_secure` operation.
+- `ruby.Tempfile.create*` provides typed resource-scoped callbacks that emit
+  native Ruby blocks and deterministically close and unlink temporary files;
+  explicit `ruby.Tempfile` values expose a documented `closeAndUnlink()` path.
 - `ruby.BinaryFormat`, `ruby.ArrayPacking`, and `ruby.BinaryString` provide a
   checked binary interop seam: nominal pack/unpack directives keep Int and Float
   results aligned while generated Ruby remains direct `pack`, `byteslice`, and

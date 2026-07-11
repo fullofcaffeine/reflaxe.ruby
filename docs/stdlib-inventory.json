@@ -132,7 +132,7 @@
       "status": "implemented",
       "path": "std/ruby/File.hx",
       "surface": "ruby.File",
-      "reason": "Typed extern for Ruby File APIs used by Haxe-authored Ruby tooling cores and Rails attachable examples while keeping generated Ruby direct and idiomatic."
+      "reason": "Typed extern for Ruby File APIs used by Haxe-authored Ruby tooling, Rails attachable examples, and resource-scoped stdlib callbacks, with a nominal bounded instance IO contract and direct idiomatic output."
     },
     {
       "id": "std.ruby.dir",
@@ -149,6 +149,14 @@
       "path": "std/ruby/FileUtils.hx",
       "surface": "ruby.FileUtils",
       "reason": "Precisely typed single-path facade over Ruby FileUtils copy, move, create, remove, touch, comparison, and freshness operations, with secure recursive deletion and explicit force behavior."
+    },
+    {
+      "id": "std.ruby.tempfile",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Tempfile.hx",
+      "surface": "ruby.Tempfile",
+      "reason": "Typed lifecycle facade over Ruby Tempfile with generic resource-scoped create blocks, nominal explicit values, nullable post-unlink paths, and deterministic close/unlink contracts."
     },
     {
       "id": "std.ruby.pathname",

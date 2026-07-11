@@ -596,7 +596,7 @@
       "unitstdStatus": "enabled",
       "owner": "std/ruby/_std/sys/io/File.hx",
       "next": "Keep covered by npm run test:unitstd-ruby and npm run test:filesystem-parity.",
-      "notes": "RubyHx owns direct Ruby file operations plus typed FileInput/FileOutput carriers; upstream unitstd and broader cases cover text, binary, streaming, seek, EOF, and error behavior."
+      "notes": "RubyHx owns direct Ruby file operations plus typed FileInput/FileOutput carriers; upstream unitstd and broader cases cover text, binary, streaming, seek, EOF, and error behavior. The separate ruby.File instance contract and ruby.Tempfile lifecycle facade provide bounded Ruby-shaped IO and deterministic scoped cleanup without replacing sys.io.File semantics."
     },
     {
       "module": "sys.net.Socket",
