@@ -8,8 +8,9 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 ## Naming And Ownership
 
 - Put Ruby-owned library surfaces under the `ruby` package:
-  `ruby.Dir`, `ruby.File`, `ruby.Json`, `ruby.Kernel`, `ruby.Pathname`, and future
-  `ruby.CSV`, `ruby.URI`, or `ruby.Tempfile` facades.
+  `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
+  `ruby.Pathname`, and future `ruby.CSV`, `ruby.URI`, or `ruby.Tempfile`
+  facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
   for example `@:native("JSON") extern class Json`.
@@ -177,6 +178,63 @@ bounded surface rather than represented with `Dynamic`, casts, raw Ruby, or a
 wrapper. Future additions should introduce distinct typed contracts for those
 shapes. `ruby.Dir` is Ruby-shaped interop and stays separate from Haxe-owned
 `sys.FileSystem` semantics.
+
+### FileUtils
+
+`ruby.FileUtils` is the canonical typed facade for Ruby's standard-library
+`FileUtils` module. Its first contract deliberately accepts one `String` path
+per source/destination slot and exposes Haxe-idiomatic names for copying,
+moving, directory creation, file and empty-directory removal, secure recursive
+removal, touching, content comparison, and freshness checks:
+
+```haxe
+var created = ruby.FileUtils.makeDirectories("tmp/build/assets");
+ruby.FileUtils.copyFile("README.md", "tmp/build/README.md");
+
+if (ruby.FileUtils.sameContents("README.md", "tmp/build/README.md")) {
+	ruby.Kernel.puts(created[0]);
+}
+
+ruby.FileUtils.secureRemoveTree("tmp/build");
+```
+
+The generated Ruby requires the real stdlib module and dispatches directly:
+
+```ruby
+require "fileutils"
+
+created = FileUtils.mkdir_p("tmp/build/assets")
+FileUtils.cp("README.md", "tmp/build/README.md")
+
+if FileUtils.compare_file("README.md", "tmp/build/README.md")
+  Kernel.puts(created[0])
+end
+
+FileUtils.remove_entry_secure("tmp/build")
+```
+
+Creation, touch, and non-recursive removal methods return `Array<String>`
+because Ruby normalizes a single path into a one-element path list. Copy and
+move operations intentionally return `Void`: their native return values are
+either `nil` or undocumented implementation status, so app code should depend
+on the filesystem result rather than an unstable value. `sameContents(...)`
+and `isUpToDate(...)` retain their native `Bool` contracts.
+
+Recursive deletion is security-sensitive. Ruby documents a local TOCTTOU risk
+for `rm_r`/`rm_rf` under attacker-writable parent directories, so the canonical
+facade omits those shortcuts and exposes
+`secureRemoveTree(path, ?ignoreErrors)` over
+`FileUtils.remove_entry_secure`. Passing `true` explicitly requests Ruby's
+force behavior and can suppress errors beyond a missing path.
+`forceRemoveFile(...)` similarly makes `rm_f` error suppression visible in the
+Haxe name. Use force only when intentionally accepting that loss of diagnostic
+information.
+
+Ruby's list-input, keyword, symlink, ownership, permission, install, and block
+forms remain excluded rather than represented through `Dynamic`, casts, raw
+Ruby, or a wrapper. Future additions should use distinct typed option records
+or methods where their semantics justify the extra surface. As with `ruby.Dir`,
+this is Ruby-shaped interop and does not replace Haxe `sys.FileSystem`.
 
 ## Adding A New Facade
 

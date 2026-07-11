@@ -66,6 +66,16 @@ it with `Dynamic`, casts, raw Ruby, or a wrapper. Haxe `sys.FileSystem` remains 
 separate Haxe-semantics surface even when its Ruby override uses the same native
 constant internally.
 
+`ruby.FileUtils` is a public Ruby-owned mutation facade with
+`@:rubyRequire("fileutils")` and direct module dispatch. Its single-path methods
+preserve documented `Array<String>`, `Bool`, and `Void` contracts without
+leaking list unions or keyword bags. Recursive deletion maps to
+`FileUtils.remove_entry_secure`, not the shorter `rm_r`/`rm_rf` operations Ruby
+documents as vulnerable to a local TOCTTOU race under attacker-writable parent
+directories. Error suppression is opt-in and visible through
+`forceRemoveFile` or the `secureRemoveTree(..., true)` argument. This facade
+does not replace the separate Haxe-semantics `sys.FileSystem` override.
+
 ## Shared RailsHx Types
 
 Shared RailsHx value types belong in `std/` as a single source of truth when

@@ -55,9 +55,9 @@ Current implemented domains:
   `haxe.Int32`, `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `haxe.zip.*`,
   `sys.FileSystem`, and `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
-  `ruby.Pathname`, `ruby.Dir`, `ruby.Prelude`, `ruby.StandardError`,
-  `ruby.ArrayPacking`, `ruby.BinaryFormat`, `ruby.BinaryString`, `ruby.Zlib`,
-  `NativeHash`, and `NativeIterator`.
+  `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Prelude`,
+  `ruby.StandardError`, `ruby.ArrayPacking`, `ruby.BinaryFormat`,
+  `ruby.BinaryString`, `ruby.Zlib`, `NativeHash`, and `NativeIterator`.
 - RailsHx and DeviseHx typed facades, macros, and generated runtime support.
 
 Upstream unitstd coverage is curated in `test/upstream_unitstd/manifest.json`
@@ -148,6 +148,14 @@ children, one-pattern globbing, and directory predicates. It needs no require
 or runtime adapter. The process-wide effect of `changeCurrent(...)` is explicit
 in the API and documentation, while Ruby's block, keyword, encoding, and
 multi-pattern forms remain excluded until they have distinct typed contracts.
+
+`ruby.FileUtils` completes the first mutation-focused facade in this tier. It
+requires `fileutils` and maps typed single-path copy, move, create, remove,
+touch, comparison, and freshness operations to direct `FileUtils.*` calls.
+Documented native path-list returns stay `Array<String>`; unstable copy/move
+status values are hidden as `Void`. Recursive deletion uses
+`remove_entry_secure` instead of normalizing Ruby's TOCTTOU-prone `rm_r`/`rm_rf`
+shortcuts, and force/error-suppression behavior remains explicit.
 
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
@@ -297,7 +305,7 @@ For Ruby stdlib facades:
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
 1. Add Ruby stdlib facades separately under `std/ruby/**` for
-   `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
+   `ruby.Tempfile`, `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 
 ## Non-Goals

@@ -92,6 +92,9 @@ Interop is typed through metadata and small std surfaces:
 - `ruby.Dir` provides typed directory queries, globbing, and explicit
   process-working-directory changes while emitting direct core `Dir.*` calls
   without a require or wrapper.
+- `ruby.FileUtils` provides typed single-path copy, move, creation, removal,
+  touch, comparison, and freshness operations. Recursive deletion defaults to
+  Ruby's TOCTTOU-resistant `remove_entry_secure` operation.
 - `ruby.BinaryFormat`, `ruby.ArrayPacking`, and `ruby.BinaryString` provide a
   checked binary interop seam: nominal pack/unpack directives keep Int and Float
   results aligned while generated Ruby remains direct `pack`, `byteslice`, and

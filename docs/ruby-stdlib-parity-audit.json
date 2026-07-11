@@ -587,7 +587,7 @@
       "unitstdStatus": "no-upstream-spec",
       "owner": "std/ruby/_std/sys/FileSystem.hx",
       "next": "Keep covered by npm run test:filesystem-parity.",
-      "notes": "RubyHx owns this direct File/Dir/FileUtils-backed Haxe-semantics surface; broader upstream filesystem cases cover path, directory, stat, error, rename, and deletion semantics. The separate typed ruby.Dir facade exposes bounded Ruby-shaped directory interop without replacing sys.FileSystem."
+      "notes": "RubyHx owns this direct File/Dir/FileUtils-backed Haxe-semantics surface; broader upstream filesystem cases cover path, directory, stat, error, rename, and deletion semantics. The separate typed ruby.Dir and ruby.FileUtils facades expose bounded Ruby-shaped directory and mutation interop without replacing sys.FileSystem; ruby.FileUtils uses remove_entry_secure for canonical recursive deletion."
     },
     {
       "module": "sys.io.File",
