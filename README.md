@@ -89,6 +89,9 @@ Interop is typed through metadata and small std surfaces:
 - `ruby.Symbol.of("ready")` lowers to `:ready`.
 - `ruby.Pathname` provides typed, chainable Ruby path operations and emits
   `require "pathname"`, `Pathname.new(...)`, and direct receiver calls.
+- `ruby.Dir` provides typed directory queries, globbing, and explicit
+  process-working-directory changes while emitting direct core `Dir.*` calls
+  without a require or wrapper.
 - `ruby.BinaryFormat`, `ruby.ArrayPacking`, and `ruby.BinaryString` provide a
   checked binary interop seam: nominal pack/unpack directives keep Int and Float
   results aligned while generated Ruby remains direct `pack`, `byteslice`, and

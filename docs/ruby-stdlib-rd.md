@@ -55,9 +55,9 @@ Current implemented domains:
   `haxe.Int32`, `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `haxe.zip.*`,
   `sys.FileSystem`, and `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
-  `ruby.Pathname`, `ruby.Prelude`, `ruby.StandardError`, `ruby.ArrayPacking`,
-  `ruby.BinaryFormat`, `ruby.BinaryString`, `ruby.Zlib`, `NativeHash`, and
-  `NativeIterator`.
+  `ruby.Pathname`, `ruby.Dir`, `ruby.Prelude`, `ruby.StandardError`,
+  `ruby.ArrayPacking`, `ruby.BinaryFormat`, `ruby.BinaryString`, `ruby.Zlib`,
+  `NativeHash`, and `NativeIterator`.
 - RailsHx and DeviseHx typed facades, macros, and generated runtime support.
 
 Upstream unitstd coverage is curated in `test/upstream_unitstd/manifest.json`
@@ -141,6 +141,13 @@ predicates, child enumeration, and bounded reads. Generated output requires
 `pathname` and calls the native constant/receivers directly. Variadic Ruby
 forwarders are intentionally excluded: chaining `join(...)`/`joinPath(...)`
 keeps every argument typed without `Dynamic`, casts, raw Ruby, or a wrapper.
+
+`ruby.Dir` is the next completed facade. It maps Haxe-idiomatic names to direct
+core `Dir.*` calls for working-directory lookup/change, home lookup, entries,
+children, one-pattern globbing, and directory predicates. It needs no require
+or runtime adapter. The process-wide effect of `changeCurrent(...)` is explicit
+in the API and documentation, while Ruby's block, keyword, encoding, and
+multi-pattern forms remain excluded until they have distinct typed contracts.
 
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
@@ -290,7 +297,7 @@ For Ruby stdlib facades:
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
 1. Add Ruby stdlib facades separately under `std/ruby/**` for
-   `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
+   `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 
 ## Non-Goals

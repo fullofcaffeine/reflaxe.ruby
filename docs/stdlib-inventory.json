@@ -135,6 +135,14 @@
       "reason": "Typed extern for Ruby File APIs used by Haxe-authored Ruby tooling cores and Rails attachable examples while keeping generated Ruby direct and idiomatic."
     },
     {
+      "id": "std.ruby.dir",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Dir.hx",
+      "surface": "ruby.Dir",
+      "reason": "Precisely typed facade for Ruby's core Dir class covering current-directory lookup/change, home lookup, entries, children, one-pattern globbing, and directory predicates with direct native calls."
+    },
+    {
       "id": "std.ruby.pathname",
       "owner": "std",
       "status": "implemented",

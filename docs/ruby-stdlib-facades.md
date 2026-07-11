@@ -8,7 +8,7 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 ## Naming And Ownership
 
 - Put Ruby-owned library surfaces under the `ruby` package:
-  `ruby.File`, `ruby.Json`, `ruby.Kernel`, `ruby.Pathname`, and future
+  `ruby.Dir`, `ruby.File`, `ruby.Json`, `ruby.Kernel`, `ruby.Pathname`, and future
   `ruby.CSV`, `ruby.URI`, or `ruby.Tempfile` facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
@@ -133,6 +133,50 @@ completion and diagnostics precise and avoids introducing `Dynamic`, casts, raw
 Ruby, splat lowering, or a wrapper solely to mirror an open Ruby argument list.
 `ruby.Pathname` is Ruby-shaped interop; it does not replace portable
 `haxe.io.Path`, whose parsing/normalization contract remains Haxe-owned.
+
+### Dir
+
+`ruby.Dir` is the canonical typed facade for Ruby's core `Dir` class. It covers
+current-directory lookup and explicit changes, home-directory lookup, entries,
+children, one-pattern globbing, and directory existence/emptiness predicates:
+
+```haxe
+var original = ruby.Dir.current();
+var sources = ruby.Dir.glob("std/ruby/*.hx");
+
+if (ruby.Dir.exists("std")) {
+	ruby.Kernel.puts(sources.length);
+}
+
+ruby.Dir.changeCurrent("std");
+ruby.Dir.changeCurrent(original);
+```
+
+The generated Ruby calls the core constant directly and adds no require:
+
+```ruby
+original = Dir.pwd()
+sources = Dir.glob("std/ruby/*.hx")
+
+if Dir.exist?("std")
+  Kernel.puts(sources.length)
+end
+
+Dir.chdir("std")
+Dir.chdir(original)
+```
+
+`changeCurrent(...)` is intentionally named as a process operation: Ruby
+`Dir.chdir` changes process-wide state when it is called without a block. The
+facade returns Ruby's integer status and does not pretend to provide scoped
+restoration; callers must save `current()` and restore it explicitly.
+
+Ruby also accepts block-returning `chdir`, encoding and keyword options,
+multiple glob patterns, and other open forms. They are excluded from this
+bounded surface rather than represented with `Dynamic`, casts, raw Ruby, or a
+wrapper. Future additions should introduce distinct typed contracts for those
+shapes. `ruby.Dir` is Ruby-shaped interop and stays separate from Haxe-owned
+`sys.FileSystem` semantics.
 
 ## Adding A New Facade
 

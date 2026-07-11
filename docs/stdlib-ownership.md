@@ -57,6 +57,15 @@ retains ordinary `Pathname.new`, receiver calls, and stdlib ownership. The
 surface omits open variadic forwarding in favor of typed chained joins; no
 compiler lowering, wrapper runtime, `Dynamic`, cast, or raw Ruby seam is needed.
 
+`ruby.Dir` is likewise a public Ruby-owned facade, but it maps Ruby's core
+`Dir` constant and therefore needs no `@:rubyRequire`. Its bounded static API
+emits direct `Dir.pwd`, `Dir.chdir`, `Dir.home`, entry/child/glob, and predicate
+calls. `changeCurrent` documents its process-wide side effect; block, keyword,
+encoding, and multi-pattern variants stay out of the facade rather than widening
+it with `Dynamic`, casts, raw Ruby, or a wrapper. Haxe `sys.FileSystem` remains a
+separate Haxe-semantics surface even when its Ruby override uses the same native
+constant internally.
+
 ## Shared RailsHx Types
 
 Shared RailsHx value types belong in `std/` as a single source of truth when
