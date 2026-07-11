@@ -8,7 +8,7 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 ## Naming And Ownership
 
 - Put Ruby-owned library surfaces under the `ruby` package:
-  `ruby.File`, `ruby.Json`, `ruby.Kernel`, and future `ruby.Pathname`,
+  `ruby.File`, `ruby.Json`, `ruby.Kernel`, `ruby.Pathname`, and future
   `ruby.CSV`, `ruby.URI`, or `ruby.Tempfile` facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
@@ -99,6 +99,40 @@ puts("typed output");
 `ruby.Prelude.puts` intentionally delegates to `Sys.println`, so it keeps
 RubyHx/Haxe stringification semantics. Use `ruby.Kernel.puts` when the goal is
 exact Ruby Kernel interop.
+
+### Pathname
+
+`ruby.Pathname` is the canonical typed facade for Ruby's stdlib-owned Pathname
+value. It exposes Haxe-idiomatic names for construction, path composition and
+decomposition, cleaning/expansion, relative-path calculation, parent/children,
+read-only filesystem predicates, and bounded reads:
+
+```haxe
+var base = new ruby.Pathname("/srv/app");
+var entry = base.join("lib").join("entry.rb");
+
+ruby.Kernel.puts(entry.relativeTo(base).toPath()); // lib/entry.rb
+ruby.Kernel.puts(entry.baseName().toPath());       // entry.rb
+ruby.Kernel.puts(entry.extension());               // .rb
+```
+
+The generated Ruby stays target-native:
+
+```ruby
+require "pathname"
+
+base = Pathname.new("/srv/app")
+entry = base.join("lib").join("entry.rb")
+Kernel.puts(entry.relative_path_from(base).to_path)
+```
+
+Ruby's constructor and variadic methods can accept arbitrary `to_path` objects,
+but the canonical Haxe surface deliberately accepts `String` or `Pathname`
+where modeled. Multiple segments use chained `join(...)` calls. This keeps
+completion and diagnostics precise and avoids introducing `Dynamic`, casts, raw
+Ruby, splat lowering, or a wrapper solely to mirror an open Ruby argument list.
+`ruby.Pathname` is Ruby-shaped interop; it does not replace portable
+`haxe.io.Path`, whose parsing/normalization contract remains Haxe-owned.
 
 ## Adding A New Facade
 

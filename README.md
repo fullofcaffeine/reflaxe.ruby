@@ -87,6 +87,8 @@ Interop is typed through metadata and small std surfaces:
 - `@:rubyPatch(ReceiverType)` plus Haxe `using` models monkey-patched receiver APIs, including ActiveSupport-style extensions, as typed Haxe calls that lower to direct Ruby receiver dispatch.
 - `@:rubyModule("Name")` and `@:rubyConcern("Name")` let Haxe author Ruby modules and ActiveSupport::Concern-style modules directly.
 - `ruby.Symbol.of("ready")` lowers to `:ready`.
+- `ruby.Pathname` provides typed, chainable Ruby path operations and emits
+  `require "pathname"`, `Pathname.new(...)`, and direct receiver calls.
 - `ruby.BinaryFormat`, `ruby.ArrayPacking`, and `ruby.BinaryString` provide a
   checked binary interop seam: nominal pack/unpack directives keep Int and Float
   results aligned while generated Ruby remains direct `pack`, `byteslice`, and

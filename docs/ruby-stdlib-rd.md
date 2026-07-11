@@ -55,7 +55,7 @@ Current implemented domains:
   `haxe.Int32`, `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `haxe.zip.*`,
   `sys.FileSystem`, and `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
-  `ruby.Prelude`, `ruby.StandardError`, `ruby.ArrayPacking`,
+  `ruby.Pathname`, `ruby.Prelude`, `ruby.StandardError`, `ruby.ArrayPacking`,
   `ruby.BinaryFormat`, `ruby.BinaryString`, `ruby.Zlib`, `NativeHash`, and
   `NativeIterator`.
 - RailsHx and DeviseHx typed facades, macros, and generated runtime support.
@@ -126,13 +126,21 @@ or small facades rather than raw `Dynamic`/`__ruby__`.
 
 Suggested first domains:
 
-- `File`, `Pathname`, `Dir`, `Tempfile`, and `FileUtils`
+- `File`, `Dir`, `Tempfile`, and `FileUtils`
 - `JSON`
 - `Time`, `Date`, and `DateTime`
 - `URI`, `CGI`, `ERB::Util`
 - `CSV`
 - `Open3`/process helpers
 - `Set`
+
+`ruby.Pathname` is the first completed public facade in this tier. It maps
+Haxe-idiomatic names to typed `Pathname` construction, composition,
+decomposition, normalization, relative-path calculation, read-only filesystem
+predicates, child enumeration, and bounded reads. Generated output requires
+`pathname` and calls the native constant/receivers directly. Variadic Ruby
+forwarders are intentionally excluded: chaining `join(...)`/`joinPath(...)`
+keeps every argument typed without `Dynamic`, casts, raw Ruby, or a wrapper.
 
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
@@ -282,7 +290,7 @@ For Ruby stdlib facades:
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
 1. Add Ruby stdlib facades separately under `std/ruby/**` for
-   `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
+   `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 
 ## Non-Goals

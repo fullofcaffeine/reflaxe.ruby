@@ -50,6 +50,13 @@ surface typed with generics, abstracts, externs, typedefs, or narrow unchecked
 wrappers; do not make Ruby-shaped APIs loose just because they are closer to the
 target runtime.
 
+`ruby.Pathname` is a public Ruby-owned facade rather than a Haxe std override.
+It uses `@:native("Pathname")` plus `@:rubyRequire("pathname")` so Haxe authors
+get nominal, chainable path values and Haxe-idiomatic method names while Ruby
+retains ordinary `Pathname.new`, receiver calls, and stdlib ownership. The
+surface omits open variadic forwarding in favor of typed chained joins; no
+compiler lowering, wrapper runtime, `Dynamic`, cast, or raw Ruby seam is needed.
+
 ## Shared RailsHx Types
 
 Shared RailsHx value types belong in `std/` as a single source of truth when

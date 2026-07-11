@@ -75,6 +75,7 @@ for (const required of [
   "src/reflaxe/ruby/macros/RailsInlineMarkup.hx",
   "src/reflaxe/ruby/macros/RubyExtensionMacro.hx",
   "src/Std.cross.hx",
+  "src/ruby/Pathname.hx",
   "src/ruby/StandardError.hx",
   "src/ruby/NativeHashData.hx",
   "src/ruby/NativeHashEntry.hx",
