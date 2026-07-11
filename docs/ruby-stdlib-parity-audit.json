@@ -65,10 +65,11 @@
     {
       "module": "Float",
       "source": "Float.unit.hx",
-      "classification": "ruby-override-needed",
-      "unitstdStatus": "not-tracked",
-      "next": "Audit alongside Math and Std numeric semantics before enabling the fixture.",
-      "notes": "Ruby Float mostly aligns, but NaN, infinities, parsing, and stringification are compiler/runtime semantic seams."
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "src/reflaxe/ruby/RubyCompiler.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby.",
+      "notes": "The direct upstream fixture proves Ruby Float comparisons match Haxe for NaN, finite values, and both infinities. Focused FPHelper checks add signed-zero and special-value bit round trips without a Float wrapper."
     },
     {
       "module": "Https",
@@ -240,10 +241,11 @@
     {
       "module": "haxe.Int32",
       "source": "haxe/Int32.unit.hx",
-      "classification": "ruby-override-needed",
-      "unitstdStatus": "not-tracked",
-      "next": "Audit fixed-width integer behavior before enabling.",
-      "notes": "Ruby Integer is arbitrary precision, so Haxe Int32 overflow behavior may need explicit masking."
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
+      "owner": "src/reflaxe/ruby/RubyCompiler.hx",
+      "next": "Keep covered by npm run test:unitstd-ruby and generated-shape assertions.",
+      "notes": "The direct upstream fixture proves compiler-local signed two's-complement wrapping for arithmetic and increments, five-bit shift counts, bitwise assignment, negation overflow, and unsigned comparison while generated values remain ordinary Ruby Integers rather than boxed runtime objects."
     },
     {
       "module": "haxe.Json",
@@ -459,11 +461,11 @@
     {
       "module": "haxe.io.FPHelper",
       "source": "haxe/io/FPHelper.unit.hx",
-      "classification": "ruby-override-needed",
-      "unitstdStatus": "not-tracked",
+      "classification": "covered-ruby-override",
+      "unitstdStatus": "enabled",
       "owner": "std/ruby/_std/haxe/io/FPHelper.hx",
-      "next": "Add the upstream fixture after Float numeric edge behavior is audited.",
-      "notes": "Binary float packing/unpacking needs explicit proof against Ruby pack/unpack behavior."
+      "next": "Keep covered by npm run test:unitstd-ruby and generated-shape assertions.",
+      "notes": "The direct upstream fixture proves Float32 rounding through Ruby pack/unpack. Focused checks cover Float32/Float64 signed zero, infinities, NaN, and exact Int64 bit round trips through typed BinaryFormat, ArrayPacking, and BinaryString contracts with no Dynamic or raw Ruby injection."
     },
     {
       "module": "haxe.io.Float32Array",

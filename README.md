@@ -87,6 +87,10 @@ Interop is typed through metadata and small std surfaces:
 - `@:rubyPatch(ReceiverType)` plus Haxe `using` models monkey-patched receiver APIs, including ActiveSupport-style extensions, as typed Haxe calls that lower to direct Ruby receiver dispatch.
 - `@:rubyModule("Name")` and `@:rubyConcern("Name")` let Haxe author Ruby modules and ActiveSupport::Concern-style modules directly.
 - `ruby.Symbol.of("ready")` lowers to `:ready`.
+- `ruby.BinaryFormat`, `ruby.ArrayPacking`, and `ruby.BinaryString` provide a
+  checked binary interop seam: nominal pack/unpack directives keep Int and Float
+  results aligned while generated Ruby remains direct `pack`, `byteslice`, and
+  `unpack1` calls without `Dynamic` or raw injection.
 
 Rails/ActiveSupport facades are typed std contracts over real Rails APIs:
 

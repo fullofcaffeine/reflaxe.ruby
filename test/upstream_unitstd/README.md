@@ -26,14 +26,14 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
-  `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
-  `haxe.DynamicAccess`, `haxe.EnumFlags`, `haxe.crypto.Base64`,
+- Enabled: `Array`, `Date`, `DateTools`, `EReg`, `Float`, `IntIterator`,
+  `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
+  `haxe.DynamicAccess`, `haxe.EnumFlags`, `haxe.Int32`, `haxe.crypto.Base64`,
   `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
   `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
   `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-  `haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`,
-  `haxe.rtti.Rtti`, `sys.io.File`.
+  `haxe.io.BytesBuffer`, `haxe.io.FPHelper`, `haxe.io.Path`, `haxe.Log`,
+  `haxe.Template`, `haxe.rtti.Rtti`, `sys.io.File`.
 - Adapted: `Reflect`, `Std`, `Type`, `haxe.zip.Compress`, and
   `haxe.zip.Uncompress`. The ZIP fixtures only extend upstream target guards to
   Ruby; all exact-byte and one-shot `execute` assertions remain unchanged.
@@ -87,6 +87,17 @@ generated code is ordinary `require "zlib"`, `Array#pack`, and
 `Zlib::Deflate/Inflate` rather than a wrapper runtime. Focused assertions add
 arbitrary binary-byte round trips and invalid compressed-input behavior, and
 the entire boundary remains free of `Dynamic` and raw Ruby injection.
+
+`Float`, `haxe.Int32`, and `haxe.io.FPHelper` are enabled directly. Float uses
+Ruby's native IEEE-754 behavior; focused bit assertions are still necessary to
+distinguish negative zero and prove infinity/NaN round trips. Int32 cannot rely
+on native Ruby Integer overflow because Ruby integers are arbitrary precision,
+so the compiler normalizes only typed Int32 results into the signed 32-bit range
+and masks shift counts to five bits. The output remains ordinary Ruby Integer
+arithmetic instead of a boxed compatibility runtime. FPHelper uses typed
+`ruby.BinaryFormat`, `ruby.ArrayPacking`, and `ruby.BinaryString` contracts to
+emit direct `pack`, `byteslice`, and `unpack1` bit reinterpretation without
+`Dynamic`, casts, or raw Ruby injection.
 
 `haxe.io.Path` is enabled directly. It proves the portable Haxe path parser,
 formatter, joiner, and normalizer can fall through unchanged on Ruby while

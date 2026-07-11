@@ -26,6 +26,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("Date.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("DateTools.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("EReg.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("Float.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("StringBuf.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("IntIterator.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("String.unit.hx");
@@ -52,6 +53,8 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("haxe/ds/GenericStack.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/extern/EitherType.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/BytesBuffer.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/Int32.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("haxe/io/FPHelper.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/io/Path.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/rtti/Rtti.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("haxe/zip/Compress.unit.hx");
@@ -59,6 +62,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("sys/io/File.unit.hx");
 		unitstd_ruby.ERegSemantics.run();
 		unitstd_ruby.MapSemantics.run();
+		unitstd_ruby.NumericBinarySemantics.run();
 		unitstd_ruby.StdNumericParsing.run();
 		unitstd_ruby.ZipSemantics.run();
 		Sys.println("unitstd-ruby ok");

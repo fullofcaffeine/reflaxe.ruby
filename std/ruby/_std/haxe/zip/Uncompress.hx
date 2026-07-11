@@ -24,7 +24,7 @@ class Uncompress {
 	public function close():Void {}
 
 	public static function run(src:haxe.io.Bytes, ?bufsize:Int):haxe.io.Bytes {
-		var input = ruby.ArrayPacking.packBytes(src.getData(), "C*");
+		var input = ruby.ArrayPacking.packBytes(src.getData(), ruby.BinaryFormat.BytesUnsigned);
 		return haxe.io.Bytes.ofString(ruby.Zlib.Inflate.inflate(input));
 	}
 }

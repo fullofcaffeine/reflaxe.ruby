@@ -30,7 +30,7 @@ class Compress {
 	public function close():Void {}
 
 	public static function run(s:haxe.io.Bytes, level:Int):haxe.io.Bytes {
-		var input = ruby.ArrayPacking.packBytes(s.getData(), "C*");
+		var input = ruby.ArrayPacking.packBytes(s.getData(), ruby.BinaryFormat.BytesUnsigned);
 		return haxe.io.Bytes.ofString(ruby.Zlib.Deflate.deflate(input, level));
 	}
 }

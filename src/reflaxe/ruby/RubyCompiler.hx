@@ -2736,15 +2736,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						RubyExprStatement(hxrubyCall("reflect_set_field", [
 							compileExpr(target),
 							RubyString(fieldAccessRawName(access)),
-							compileBinaryOp(op, lhs, rhs)
+							compileBinaryOp(op, lhs, rhs, lhs.t)
 						]));
 					case _:
-						RubyAssign(compileAssignable(lhs), compileBinaryOp(op, lhs, rhs));
+						RubyAssign(compileAssignable(lhs), compileBinaryOp(op, lhs, rhs, lhs.t));
 				}
 			case TUnop(OpIncrement, _, inner):
-				return RubyAssign(compileAssignable(inner), RubyBinary("+", compileExpr(inner), RubyInt("1")));
+				return RubyAssign(compileAssignable(inner), clampInt32Result(inner.t, RubyBinary("+", compileExpr(inner), RubyInt("1"))));
 			case TUnop(OpDecrement, _, inner):
-				return RubyAssign(compileAssignable(inner), RubyBinary("-", compileExpr(inner), RubyInt("1")));
+				return RubyAssign(compileAssignable(inner), clampInt32Result(inner.t, RubyBinary("-", compileExpr(inner), RubyInt("1"))));
 			case TIf(cond, eThen, eElse):
 				return RubyIfStmt(compileExpr(cond), compileFunctionBody(eThen), eElse == null ? null : compileFunctionBody(eElse));
 			case TWhile(cond, body, _):
@@ -2798,19 +2798,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						hxrubyCall("reflect_set_field", [
 							compileExpr(target),
 							RubyString(fieldAccessRawName(access)),
-							compileBinaryOp(op, lhs, rhs)
+							compileBinaryOp(op, lhs, rhs, lhs.t)
 						]);
 					case _:
-						compileBinaryOp(OpAssignOp(op), lhs, rhs);
+						compileBinaryOp(OpAssignOp(op), lhs, rhs, lhs.t);
 				}
 			case TBinop(op, lhs, rhs) if (isStringComparison(op, lhs, rhs)):
 				RubyBinary(binopToRuby(op), hxrubyCall("string_compare", [compileExpr(lhs), compileExpr(rhs)]), RubyInt("0"));
-			case TBinop(op, lhs, rhs): compileBinaryOp(op, lhs, rhs);
+			case TBinop(op, lhs, rhs): compileBinaryOp(op, lhs, rhs, expr.t);
 			case TUnop(OpIncrement, postFix, inner):
 				compileIncrementExpr(inner, 1, postFix);
 			case TUnop(OpDecrement, postFix, inner):
 				compileIncrementExpr(inner, -1, postFix);
 			case TUnop(op, _, inner): RubyUnary(unopToRuby(op), compileExpr(inner));
+			case TCast(inner, _) if (isInt32Type(expr.t)):
+				var value = compileExpr(inner);
+				isNormalizedInt32Expr(inner) ? value : int32Clamp(value);
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): compileExpr(inner);
 			case TFunction(fn):
 				RubyLambda([for (arg in fn.args) localName(arg.v)], compileRubyBlockBody(fn.expr));
@@ -2907,7 +2910,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var target = reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileAssignable(inner));
 		var op = delta > 0 ? "+" : "-";
 		var amount = Std.string(delta > 0 ? delta : -delta);
-		var assignment = target + " = " + target + " " + op + " " + amount;
+		var updated = RubyRawExpr(target + " " + op + " " + amount);
+		var assignment = target + " = " + RubyASTPrinter.printExpr(clampInt32Result(inner.t, updated));
 		return postFix ? RubyRawExpr("(" + target + ").tap { " + assignment + " }") : RubyRawExpr("(" + assignment + ")");
 	}
 
@@ -14018,7 +14022,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return name == "gthis" || name == "_gthis";
 	}
 
-	static function compileBinaryOp(op:haxe.macro.Expr.Binop, lhs:TypedExpr, rhs:TypedExpr):RubyExpr {
+	static function compileBinaryOp(op:haxe.macro.Expr.Binop, lhs:TypedExpr, rhs:TypedExpr, ?resultType:haxe.macro.Type):RubyExpr {
 		return switch (op) {
 			case OpDiv:
 				hxrubyCall("math_divide", [compileExpr(lhs), compileExpr(rhs)]);
@@ -14026,6 +14030,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyBinary("+", compileExpr(lhs), compileRubyStringifyParam(rhs));
 			case OpAdd if (!isStringExpr(lhs) && isStringExpr(rhs)):
 				RubyBinary("+", compileRubyStringifyParam(lhs), compileExpr(rhs));
+			// Haxe Int shifts use the low five count bits and a signed 32-bit left
+			// operand. Ruby accepts arbitrary counts and grows Integer precision, so
+			// direct `<<`/`>>` would silently diverge for counts such as 32 or 33.
+			case OpShl:
+				int32Clamp(RubyRawExpr("(" + printInlineExpr(lhs) + ".to_i << (" + printInlineExpr(rhs) + ".to_i & 31))"));
+			case OpShr:
+				RubyRawExpr("(" + RubyASTPrinter.printExpr(int32Clamp(compileExpr(lhs))) + " >> (" + printInlineExpr(rhs) + ".to_i & 31))");
 			case OpUShr:
 				RubyRawExpr("((" + printInlineExpr(lhs) + ".to_i & 0xffffffff) >> (" + printInlineExpr(rhs) + ".to_i & 31))");
 			case OpEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
@@ -14033,8 +14044,71 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case OpNotEq if (isArrayExpr(lhs) && isArrayExpr(rhs)):
 				RubyUnary("!", RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]));
 			case _:
-				RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs));
+				clampInt32Result(resultType, RubyBinary(binopToRuby(op), compileExpr(lhs), compileExpr(rhs)));
 		}
+	}
+
+	static function isInt32Type(type:Null<haxe.macro.Type>):Bool {
+		return type != null && TypeTools.toString(type) == "haxe.Int32";
+	}
+
+	/**
+		Report whether a typed producer has already enforced the `haxe.Int32` range.
+
+		Int32 casts are result boundaries in Haxe, but blindly wrapping every nested
+		boundary would emit repeated centered-modulo expressions around increments,
+		assignments, and compiler-generated result blocks. Those producers already
+		normalize from their Int32 type contract, so walking through transparent AST
+		wrappers keeps the generated Ruby readable without weakening the range check.
+	**/
+	static function isNormalizedInt32Expr(expr:TypedExpr):Bool {
+		if (isInt32Type(expr.t)) {
+			return true;
+		}
+		return switch (expr.expr) {
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _):
+				isNormalizedInt32Expr(inner);
+			case TUnop((OpIncrement | OpDecrement), _, inner):
+				isInt32Type(inner.t);
+			case TBinop(OpAssign, lhs, _):
+				isInt32Type(lhs.t);
+			case TBlock(expressions) if (expressions.length > 0):
+				var last = expressions[expressions.length - 1];
+				switch (last.expr) {
+					case TLocal(returned):
+						var normalized = false;
+						for (candidate in expressions) {
+							switch (candidate.expr) {
+								case TVar(variable, init) if (variable.id == returned.id && init != null):
+									normalized = isNormalizedInt32Expr(init);
+								case _:
+							}
+						}
+						normalized;
+					case _:
+						isNormalizedInt32Expr(last);
+				}
+			case _:
+				false;
+		}
+	}
+
+	static function clampInt32Result(type:Null<haxe.macro.Type>, value:RubyExpr):RubyExpr {
+		return isInt32Type(type) ? int32Clamp(value) : value;
+	}
+
+	/**
+		Normalize a Ruby Integer to Haxe's signed two's-complement Int32 range.
+
+		Ruby Integer arithmetic is arbitrary precision, while `haxe.Int32` promises
+		wraparound after arithmetic, shifts, increments, and decrements. Centered
+		modulo maps the value into `[-2^31, 2^31 - 1]` with one evaluation and no
+		boxed runtime value. Keeping this in lowering also lets ordinary Haxe `Int`
+		remain a direct Ruby Integer when no fixed-width contract is present.
+	**/
+	static function int32Clamp(value:RubyExpr):RubyExpr {
+		var rendered = RubyASTPrinter.printExpr(value);
+		return RubyRawExpr("((((" + rendered + ") + 0x80000000) % 0x100000000) - 0x80000000)");
 	}
 
 	static function isArrayExpr(expr:TypedExpr):Bool {

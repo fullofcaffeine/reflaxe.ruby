@@ -52,16 +52,13 @@ Current implemented domains:
   compatibility.
 - Haxe core std: `Std`, `Math`, `Type`, `Array`, `Lambda`, `Date`, `EReg`,
   `Reflect`, `StringTools`, `Sys`, `haxe.Json`, `haxe.ds.*`,
-  `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `haxe.zip.*`, `sys.FileSystem`, and
-  `sys.io.File`.
+  `haxe.Int32`, `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `haxe.zip.*`,
+  `sys.FileSystem`, and `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
-  `ruby.Prelude`, `ruby.StandardError`, `ruby.ArrayPacking`, `ruby.Zlib`,
-  `NativeHash`, and `NativeIterator`.
+  `ruby.Prelude`, `ruby.StandardError`, `ruby.ArrayPacking`,
+  `ruby.BinaryFormat`, `ruby.BinaryString`, `ruby.Zlib`, `NativeHash`, and
+  `NativeIterator`.
 - RailsHx and DeviseHx typed facades, macros, and generated runtime support.
-
-Implemented domains that still need broader upstream parity accounting:
-
-- `haxe.io.FPHelper`
 
 Upstream unitstd coverage is curated in `test/upstream_unitstd/manifest.json`
 and run with:
@@ -70,17 +67,17 @@ and run with:
 npm run test:unitstd-ruby
 ```
 
-Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `IntIterator`, `Lambda`,
-`List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
-`haxe.DynamicAccess`, `haxe.EnumFlags`, `haxe.crypto.Base64`,
+Enabled today: `Array`, `Date`, `DateTools`, `EReg`, `Float`, `IntIterator`,
+`Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
+`haxe.DynamicAccess`, `haxe.EnumFlags`, `haxe.Int32`, `haxe.crypto.Base64`,
 `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
 `haxe.crypto.Sha1`, `haxe.crypto.Sha224`, `haxe.crypto.Sha256`,
 `haxe.ds.BalancedTree`, `haxe.ds.GenericStack`, `haxe.extern.EitherType`,
-`haxe.io.BytesBuffer`, `haxe.io.Path`, `haxe.Log`, `haxe.Template`,
-`haxe.rtti.Rtti`, and `sys.io.File` run directly. `Reflect`, `Std`, `Type`,
-`haxe.zip.Compress`, and `haxe.zip.Uncompress` run through adapted upstream
-fixtures, and local focused fixtures cover adjacent semantic gaps such as
-numeric parsing and arbitrary binary compression round trips.
+`haxe.io.BytesBuffer`, `haxe.io.FPHelper`, `haxe.io.Path`, `haxe.Log`,
+`haxe.Template`, `haxe.rtti.Rtti`, and `sys.io.File` run directly. `Reflect`,
+`Std`, `Type`, `haxe.zip.Compress`, and `haxe.zip.Uncompress` run through
+adapted upstream fixtures, and local focused fixtures cover adjacent semantic
+gaps such as numeric parsing and arbitrary binary compression round trips.
 `haxe.Json` has no direct unitstd spec, so `npm run test:json-parity` adapts the
 authoritative broader-suite parser/writer cases and issue regressions while
 locking in native Ruby JSON output plus the compact Haxe semantic adapter.
@@ -114,7 +111,8 @@ These are required for current examples, RailsHx, and shared Haxe domain code.
 These surfaces now have Ruby target implementations, but should get stronger
 upstream or focused parity evidence before broad Ruby library expansion.
 
-- `haxe.io.FPHelper`
+No current surface remains in this tier. Add one here when an implementation is
+present but its upstream or focused semantic evidence is not yet sufficient.
 
 For each surface, prefer a typed Haxe facade that emits direct Ruby when safe and
 uses `HXRuby` only for stable Haxe semantics.
@@ -210,6 +208,22 @@ semantics need an adapter.
   one-shot portable inflater. Typed `ruby.ArrayPacking` and `ruby.Zlib` extern
   contracts keep the boundary free of `Dynamic` and raw Ruby injection while
   generated output remains direct `Array#pack` plus `Zlib::Deflate/Inflate`.
+- `Float` uses Ruby's native IEEE-754 behavior directly, but focused bit tests
+  remain important because ordinary equality cannot distinguish positive and
+  negative zero and NaN cannot equal itself. `haxe.io.FPHelper` therefore uses
+  typed `ruby.BinaryFormat`, `ruby.ArrayPacking`, and `ruby.BinaryString`
+  contracts to reinterpret exact bits with normal Ruby `pack`, `byteslice`, and
+  `unpack1` calls. The nominal format directives keep each operation's result
+  type aligned without `Dynamic`, casts, raw Ruby injection, or a wrapper
+  runtime.
+- `haxe.Int32` needs compiler lowering even though its generated representation
+  remains an ordinary Ruby `Integer`. Ruby integers grow to arbitrary precision;
+  Haxe Int32 arithmetic instead wraps into the signed two's-complement range.
+  RubyHx applies centered modulo only at typed Int32 result boundaries and masks
+  shift counts to their low five bits. This preserves Haxe overflow and shift
+  behavior without boxing every value or changing normal Haxe `Int` arithmetic,
+  while avoiding repeated clamps around producers that are already typed and
+  normalized as Int32.
 
 ## Testing Policy
 
@@ -251,14 +265,11 @@ For Ruby stdlib facades:
 
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
-1. Audit numeric binary surfaces together: `Float`, `haxe.Int32`, and
-   `haxe.io.FPHelper`.
-
-2. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
+1. Expand dedicated map/collection fixtures after top-level `Map.unit.hx`
    remains green: `haxe.ds.StringMap`, `haxe.ds.IntMap`,
    `haxe.ds.ObjectMap`, `haxe.ds.Vector`, and `haxe.ds.EnumValueMap`.
 
-3. Add Ruby stdlib facades separately under `std/ruby/**` for
+2. Add Ruby stdlib facades separately under `std/ruby/**` for
    `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
    and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 

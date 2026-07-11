@@ -37,6 +37,7 @@ if (!compileWithFirstAvailableReflaxe()) {
 for (const file of [
   "e_reg.rb",
   "haxe/macro/expr_def.rb",
+  "haxe/io/fp_helper.rb",
   "haxe/rtti/rtti.rb",
   "haxe/xml/parser.rb",
   "haxe/zip/compress.rb",
@@ -71,6 +72,7 @@ if (actual !== "unitstd-ruby ok\n") {
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
 const exprDefRuby = readFileSync(join(outputDir, "haxe", "macro", "expr_def.rb"), "utf8");
+const fpHelperRuby = readFileSync(join(outputDir, "haxe", "io", "fp_helper.rb"), "utf8");
 const rttiRuby = readFileSync(join(outputDir, "haxe", "rtti", "rtti.rb"), "utf8");
 const xmlParserRuby = readFileSync(join(outputDir, "haxe", "xml", "parser.rb"), "utf8");
 const zipCompressRuby = readFileSync(join(outputDir, "haxe", "zip", "compress.rb"), "utf8");
@@ -89,6 +91,28 @@ for (const expectedShape of [
 ]) {
   if (!mainRuby.includes(expectedShape)) {
     console.error(`Expected generated unitstd Ruby shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+for (const expectedShape of ["0x100000000", "<< (32.to_i & 31)", ">> (1.to_i & 31)"]) {
+  if (!mainRuby.includes(expectedShape)) {
+    console.error(`Expected direct Int32 wrap/shift lowering missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+if (mainRuby.includes("Haxe::Int32::Int32Impl.")) {
+  console.error("Int32 parity should remain direct Ruby Integer arithmetic, not a boxed generated wrapper.");
+  process.exit(1);
+}
+for (const expectedShape of [
+  '[value].pack("e")',
+  'packed.unpack1("l<")',
+  'packed.byteslice(4, 4).unpack1("l<")',
+  '[low, high].pack("l<l<")',
+  'packed.unpack1("E")',
+]) {
+  if (!fpHelperRuby.includes(expectedShape)) {
+    console.error(`Expected typed direct FPHelper binary shape missing: ${expectedShape}`);
     process.exit(1);
   }
 }

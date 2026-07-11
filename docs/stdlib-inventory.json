@@ -148,7 +148,23 @@
       "status": "implemented",
       "path": "std/ruby/ArrayPacking.hx",
       "surface": "ruby.ArrayPacking",
-      "reason": "Typed Array<Int>#pack receiver contract for binary Ruby interop without Dynamic or raw Ruby injection."
+      "reason": "Typed Array<Int>/Array<Float>#pack receiver contracts constrained by ruby.BinaryFormat for binary interop without Dynamic or raw Ruby injection."
+    },
+    {
+      "id": "std.ruby.binary_format",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/BinaryFormat.hx",
+      "surface": "ruby.BinaryFormat",
+      "reason": "Nominal checked subset of Ruby pack/unpack directives used by Bytes, FPHelper, and Zlib boundaries."
+    },
+    {
+      "id": "std.ruby.binary_string",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/BinaryString.hx",
+      "surface": "ruby.BinaryString",
+      "reason": "Typed String#byteslice and result-specific String#unpack1 receiver contracts for binary interop without Dynamic or raw Ruby injection."
     },
     {
       "id": "std.ruby.zlib",
@@ -1652,7 +1668,7 @@
       "status": "implemented",
       "path": "std/ruby/_std/haxe/io/FPHelper.hx",
       "surface": "haxe.io.FPHelper",
-      "reason": "Ruby Array#pack/String#unpack1 IEEE-754 bit reinterpretation for BytesBuffer."
+      "reason": "IEEE-754 bit reinterpretation for BytesBuffer through typed BinaryFormat, ArrayPacking, and BinaryString contracts over direct Ruby pack/unpack operations."
     },
     {
       "id": "std.sys.filesystem",
