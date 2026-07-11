@@ -5,9 +5,9 @@ require "turbo-rails"
 class ChatMessagesController < ApplicationController
   before_action :authenticate_user!
   def index()
-    self.respond_to() do |format|
-      format.turbo_stream() { self.render(turbo_stream: turbo_stream.replace("railshx-chat-panel", partial: "todos/chat_panel", locals: {messages: ChatMessage.latest().to_a(), current_user: current_user(), users: User.order(name: :asc).to_a()})) }
-      format.html() { self.redirect_to(self.todos_path(), status: :see_other) }
+    self.respond_to do |format|
+      format.turbo_stream { self.render(turbo_stream: turbo_stream.replace("railshx-chat-panel", partial: "todos/chat_panel", locals: {messages: ChatMessage.latest().to_a(), current_user: current_user(), users: User.order(name: :asc).to_a()})) }
+      format.html { self.redirect_to(self.todos_path(), status: :see_other) }
     end
   end
   def create()
@@ -16,9 +16,9 @@ class ChatMessagesController < ApplicationController
     attrs = attrs.merge(user_id: current_user.id)
     message = ChatMessage.create(attrs)
     Turbo::StreamsChannel.broadcast_prepend_to("todoapp:chat", target: "railshx-chat-list", partial: "todos/chat_message", locals: {message: message})
-    self.respond_to() do |format|
-      format.turbo_stream() { self.head(:no_content) }
-      format.html() { self.redirect_to(self.todos_path(), status: :see_other) }
+    self.respond_to do |format|
+      format.turbo_stream { self.head(:no_content) }
+      format.html { self.redirect_to(self.todos_path(), status: :see_other) }
     end
   end
 end

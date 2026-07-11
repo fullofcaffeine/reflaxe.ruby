@@ -17,9 +17,9 @@ class TodosController < ApplicationController
     attrs = self.params().require("todo").permit([:title, :notes])
     attrs = attrs.merge(user_id: current_user.id)
     todo = Todo.create(attrs)
-    self.respond_to() do |format|
-      format.turbo_stream() { self.render(turbo_stream: turbo_stream.replace("railshx-todo-list", partial: "todos/list", locals: {todos: Todo.where(is_completed: false, user_id: current_user.id).includes(:user).order(title: :asc).limit(10).to_a()})) }
-      format.html() { self.redirect_to(self.todos_path(), status: :see_other) }
+    self.respond_to do |format|
+      format.turbo_stream { self.render(turbo_stream: turbo_stream.replace("railshx-todo-list", partial: "todos/list", locals: {todos: Todo.where(is_completed: false, user_id: current_user.id).includes(:user).order(title: :asc).limit(10).to_a()})) }
+      format.html { self.redirect_to(self.todos_path(), status: :see_other) }
     end
   end
   def completed()

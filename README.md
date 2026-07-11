@@ -82,6 +82,9 @@ The authoritative placement, arguments, lowering, interaction, diagnostic, and
 safety contracts for all RubyHx/RailsHx compiler metadata live in
 [`docs/compiler-metadata.md`](docs/compiler-metadata.md). CI rejects newly
 recognized target metadata that is absent from that reference.
+The symmetric call/definition rules for blocks, keywords, rest arguments,
+method values, and forwarding are specified in the
+[`Ruby Callable And Method ABI`](docs/ruby-callable-abi.md).
 
 - `@:native("RubyName")` maps Haxe symbols to Ruby constants or methods.
 - `@:rubyRequire("json")` emits `require "json"`.

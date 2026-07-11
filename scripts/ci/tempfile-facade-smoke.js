@@ -78,7 +78,7 @@ for (const expected of [
   /file\.flush\(\)/,
   /file\.rewind\(\)/,
   /file\.read\(\)/,
-  /Tempfile\.create\(\) do \|file(?:__hx\d+)?\|/,
+  /Tempfile\.create do \|file(?:__hx\d+)?\|/,
   /Tempfile\.create\("hxruby-named-", &named_callback(?:__hx\d+)?\)/,
   /Tempfile\.create\("hxruby-in-", runtime_directory(?:__hx\d+)?\)/,
   /Tempfile\.new\("hxruby-explicit-", runtime_directory(?:__hx\d+)?\)/,

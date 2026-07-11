@@ -36,6 +36,18 @@ class User extends rails.active_record.Base<User> implements DeviseResource<User
 	@:railsColumn({index: true, defaultValue: "member"})
 	public var role:String;
 
+	// Devise owns these transient runtime accessors rather than database columns.
+	// The generic external-attribute contract adds them to typed create/update
+	// carriers without emitting an accessor, schema field, or migration. Haxe
+	// completion therefore includes both values while generated Ruby still calls
+	// ordinary Devise-backed `password`/`password_confirmation` writers.
+	@:railsExternalAttribute
+	public var password:String;
+
+	@:native("password_confirmation")
+	@:railsExternalAttribute
+	public var passwordConfirmation:String;
+
 	@:hasMany({dependent: "destroy", inverseOf: "user"})
 	public var todos:rails.ActiveRecord.HasMany<Todo>;
 

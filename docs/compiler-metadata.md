@@ -25,8 +25,8 @@ npm run test:compiler-metadata-docs
 | --- | --- | --- | --- |
 | `@:rubyRequire("feature")` | Any used type; exactly one non-empty string literal; repeatable. | Registers a deduplicated, sorted `require "feature"` in the generated module/run prelude when the annotated type is used. | Models Ruby/std/gem load ownership explicitly. Missing or non-string arguments are compile errors. It does not install the library. |
 | `@:rubyRequireRelative("path")` | Any used type; exactly one non-empty string literal; repeatable. | Registers a deduplicated, sorted `require_relative "path"`. | Use only for a checked packaged/local companion artifact. The path is emitted as declared; this is not a filesystem-existence macro. |
-| `@:rubyKwargs` | A method whose final Haxe argument is a typed anonymous object/typedef. | Removes the final positional object wrapper and emits its fields as Ruby keyword arguments. Haxe field names follow Ruby naming/native mapping. | The object type is the keyword schema: required/optional fields and value types remain Haxe-checked. Do not replace it with `Dynamic`. |
-| `@:rubyBlockArg` | A method whose final Haxe argument is a typed function. The metadata belongs on the called method declaration, not on the function value. | Removes the trailing function from positional arguments. An inline Haxe function emits a native `{ ... }`/`do ... end` block; a stored callback emits Ruby `&callback` proc forwarding. Callback parameters, captures, arity, and generic return types remain Haxe-checked. | The Ruby method owns block lifecycle/`ensure` semantics. A missing or incorrectly typed callback fails in Haxe. This metadata does not manufacture cleanup; it preserves cleanup already provided by the Ruby API. |
+| `@:rubyKwargs` | A non-dynamic method; no metadata arguments. Its typed anonymous-object/typedef carrier is final, or immediately precedes a `@:rubyBlockArg` callback. | Removes the positional carrier and emits schema fields as Ruby keyword arguments. Haxe field names follow Ruby naming/native mapping. | Invalid placement/carrier types fail at the declaration. Required/optional fields and value types remain Haxe-checked. Do not replace the carrier with `Dynamic`. |
+| `@:rubyBlockArg` | A non-dynamic method; no metadata arguments. The final Haxe parameter is a precise function type. The marker belongs on the called method, not the callback value. | Removes the function from positional arguments. An inline Haxe function emits a native block; a stored callback emits Ruby `&callback`. Definition-side `yield` versus `&block` is compiler policy described in the callable ABI. | Invalid placement or a non-function final parameter fails at the declaration. Ruby-owned APIs retain their own lifecycle/`ensure`; this marker preserves that behavior but does not manufacture cleanup. |
 
 When `@:rubyKwargs` and `@:rubyBlockArg` appear together, declare positional
 arguments first, then the typed keyword object, then the typed callback. The
@@ -57,6 +57,11 @@ NativeApi.subscribe("events", {once: true}, handler);
 handler = ->(value) { value.length }
 NativeApi.subscribe("events", once: true, &handler)
 ```
+
+See [Ruby callable and method ABI](ruby-callable-abi.md) for optional blocks,
+callback-local return semantics, definition-side `yield`/capture policy,
+method-value and inheritance rules, rest/splat boundaries, diagnostics, and the
+required verification matrix.
 
 ## Ruby Extension And Module Metadata
 
@@ -95,6 +100,7 @@ than Haxe runtime shells.
 | `@:railsModel` / `@:railsModel("table_name")` | ActiveRecord model class; optional literal table name. | Emits the model, registers schema/field refs, and supplies checked model metadata to queries, params, routes, migrations, tests, and attachments. |
 | `@:railsTimestamps` | Model class; no arguments. | Adds typed/generated `created_at` and `updated_at` ownership to the model registry. |
 | `@:railsColumn` / `@:railsColumn({...})` | Model field. Options are a checked literal object (`primaryKey`, `index`, `dbType`, `precision`, `scale`, `defaultValue`). | Registers a typed database column and generated field ref; invalid option names/types/defaults fail compilation. |
+| `@:railsExternalAttribute` | Precisely typed instance field on a `@:railsModel`; no arguments. Use field-level `@:native` when the Ruby writer name differs. | Adds a gem/framework-owned virtual attribute to typed create/build/update carriers without emitting a column, accessor, schema entry, or migration. It cannot also be a column/association and cannot use `Dynamic`; the declared runtime owner must actually provide the Ruby reader/writer. |
 | `@:railsEnum({...})` | A `@:railsColumn` model field; non-empty same-kind String or Int literal values. | Emits ActiveRecord enum metadata and validates the Haxe field/value kind. |
 | `@:railsCallback("after_commit")` | Model method; one supported Rails callback name literal. | Emits the corresponding model callback registration with a typed method reference. Unknown callback names fail compilation. |
 | `@:railsScope` | Static model method with a Relation-compatible body. | Emits an ActiveRecord `scope`; an optional compiler-derived name follows Ruby naming. Arguments remain typed. |

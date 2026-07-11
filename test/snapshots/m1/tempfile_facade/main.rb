@@ -20,7 +20,7 @@ class Main
       file.path()
     end
     puts(HXRuby.stringify((!File.exist?(scoped_path))))
-    default_size = Tempfile.create() do |file__hx1|
+    default_size = Tempfile.create do |file__hx1|
       file__hx1.write("default")
       file__hx1.size()
     end

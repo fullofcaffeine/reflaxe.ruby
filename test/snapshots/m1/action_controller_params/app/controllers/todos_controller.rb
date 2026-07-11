@@ -49,9 +49,9 @@ class TodosController < ApplicationController
     remembered = self.session()[:last_todo_title]
     self.cookies()[:todo_filter] = "open"
     self.cookies().delete(:stale_filter)
-    self.respond_to() do |format|
-      format.html() { self.redirect_to(action: "index") }
-      format.json() { self.render(json: attrs, status: :created) }
+    self.respond_to do |format|
+      format.html { self.redirect_to(action: "index") }
+      format.json { self.render(json: attrs, status: :created) }
     end
     self.send_file("/tmp/todos.csv", filename: "todos.csv", type: "text/csv", disposition: "attachment", status: :ok)
     self.send_data("title,is_completed\nShip,true\n", filename: "todos.csv", type: "text/csv", disposition: "inline", status: :ok)

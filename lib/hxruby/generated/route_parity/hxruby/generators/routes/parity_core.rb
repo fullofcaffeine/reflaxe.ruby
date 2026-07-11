@@ -71,11 +71,11 @@ module Hxruby
         end
         def self.supported_declaration_kind(kind)
           return ((kind == nil) ? false : case kind
-when "collection", "constraints", "controller", "defaults", "deviseFor", "match", "member", "mount", "namespace", "rawRuby", "resource", "resources", "root", "scope", "verb"
-  true
-else
-  false
-end)
+          when "collection", "constraints", "controller", "defaults", "deviseFor", "match", "member", "mount", "namespace", "rawRuby", "resource", "resources", "root", "scope", "verb"
+            true
+          else
+            false
+          end)
         end
         def self.validate_devise_mappings(manifest, devise_facts_json = nil)
           declarations = Hxruby::Generators::Routes::ParityCore.devise_declarations(Hxruby::Generators::Routes::ParityCore.hash_array(manifest, "declarations"))
@@ -233,11 +233,11 @@ end)
         end
         def self.is_http_verb(value)
           return case value
-when "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"
-  true
-else
-  false
-end
+          when "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"
+            true
+          else
+            false
+          end
         end
         def self.normalize_rails_uri(uri)
           return (->(string, needle, by) { needle.empty? ? (by.empty? ? string : string.each_char.to_a.join(by)) : string.gsub(needle) { by } }).call(uri.to_s, "(.:format)".to_s, "".to_s)
@@ -255,38 +255,38 @@ end
         def self.flatten_decl(decl, prefix)
           kind = Hxruby::Generators::Routes::ParityCore.hash_string(decl, "kind")
           return ((kind == nil) ? [] : case kind
-when "constraints", "controller", "defaults"
-  Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.children_of(decl), prefix)
-when "deviseFor"
-  []
-when "match"
-  this = Hxruby::Generators::Routes::ParityCore.hash_array(decl, "verbs")
-  g = []
-  g1 = 0
-  g2 = this
-  while (g1 < g2.length)
-    v = g2[g1]
-    g1 = (g1 + 1)
-    g.push(Hxruby::Generators::Routes::ParityCore.expected_route(decl, Hxruby::Generators::Routes::ParityCore.nullable_name(decl), v, Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")), Hxruby::Generators::Routes::ParityCore.hash_string(decl, "target"))).length()
-  end
-  g
-when "collection", "member", "resource", "resources"
-  []
-when "mount"
-  [Hxruby::Generators::Routes::ParityCore.expected_route(decl, Hxruby::Generators::Routes::ParityCore.nullable_name(decl), nil, Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")), nil)]
-when "namespace"
-  Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.children_of(decl), Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "name")))
-when "rawRuby"
-  [Hxruby::Generators::Routes::ManifestRoute.new(nil, nil, "", nil, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "position"), true)]
-when "root"
-  [Hxruby::Generators::Routes::ParityCore.expected_route(decl, "root", "get", "/", Hxruby::Generators::Routes::ParityCore.hash_string(decl, "target"))]
-when "scope"
-  Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.children_of(decl), Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")))
-when "verb"
-  [Hxruby::Generators::Routes::ParityCore.expected_route(decl, Hxruby::Generators::Routes::ParityCore.nullable_name(decl), Hxruby::Generators::Routes::ParityCore.hash_string(decl, "verb"), Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")), Hxruby::Generators::Routes::ParityCore.hash_string(decl, "target"))]
-else
-  []
-end)
+          when "constraints", "controller", "defaults"
+            Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.children_of(decl), prefix)
+          when "deviseFor"
+            []
+          when "match"
+            this = Hxruby::Generators::Routes::ParityCore.hash_array(decl, "verbs")
+            g = []
+            g1 = 0
+            g2 = this
+            while (g1 < g2.length)
+              v = g2[g1]
+              g1 = (g1 + 1)
+              g.push(Hxruby::Generators::Routes::ParityCore.expected_route(decl, Hxruby::Generators::Routes::ParityCore.nullable_name(decl), v, Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")), Hxruby::Generators::Routes::ParityCore.hash_string(decl, "target"))).length()
+            end
+            g
+          when "collection", "member", "resource", "resources"
+            []
+          when "mount"
+            [Hxruby::Generators::Routes::ParityCore.expected_route(decl, Hxruby::Generators::Routes::ParityCore.nullable_name(decl), nil, Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")), nil)]
+          when "namespace"
+            Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.children_of(decl), Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "name")))
+          when "rawRuby"
+            [Hxruby::Generators::Routes::ManifestRoute.new(nil, nil, "", nil, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "position"), true)]
+          when "root"
+            [Hxruby::Generators::Routes::ParityCore.expected_route(decl, "root", "get", "/", Hxruby::Generators::Routes::ParityCore.hash_string(decl, "target"))]
+          when "scope"
+            Hxruby::Generators::Routes::ParityCore.flatten_manifest(Hxruby::Generators::Routes::ParityCore.children_of(decl), Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")))
+          when "verb"
+            [Hxruby::Generators::Routes::ParityCore.expected_route(decl, Hxruby::Generators::Routes::ParityCore.nullable_name(decl), Hxruby::Generators::Routes::ParityCore.hash_string(decl, "verb"), Hxruby::Generators::Routes::ParityCore.joined_path(prefix, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "path")), Hxruby::Generators::Routes::ParityCore.hash_string(decl, "target"))]
+          else
+            []
+          end)
         end
         def self.expected_route(decl, name, verb, path, target)
           return Hxruby::Generators::Routes::ManifestRoute.new(name, verb, path, target, Hxruby::Generators::Routes::ParityCore.hash_string(decl, "position"), false)
@@ -378,78 +378,78 @@ end)
         end
         def self.wrong_verb(expected, routes)
           return ((((("wrong verb for route " + HXRuby.stringify(expected.name)) + ": expected ") + Hxruby::Generators::Routes::ParityCore.upper(expected.verb)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
-  g = []
-  g1 = 0
-g2 = routes
-while (g1 < g2.length)
-  v = g2[g1]
-  g1 = (g1 + 1)
-  g.push(Hxruby::Generators::Routes::ParityCore.upper(v.verb)).length()
-end
-  g
-end).join(", "))
+            g = []
+            g1 = 0
+          g2 = routes
+          while (g1 < g2.length)
+            v = g2[g1]
+            g1 = (g1 + 1)
+            g.push(Hxruby::Generators::Routes::ParityCore.upper(v.verb)).length()
+          end
+            g
+          end).join(", "))
         end
         def self.wrong_path(expected, routes)
           return ((((("wrong path for route " + HXRuby.stringify(expected.name)) + ": expected ") + expected.path) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
-  g = []
-  g1 = 0
-g2 = routes
-while (g1 < g2.length)
-  v = g2[g1]
-  g1 = (g1 + 1)
-  g.push(v.path).length()
-end
-  g
-end).join(", "))
+            g = []
+            g1 = 0
+          g2 = routes
+          while (g1 < g2.length)
+            v = g2[g1]
+            g1 = (g1 + 1)
+            g.push(v.path).length()
+          end
+            g
+          end).join(", "))
         end
         def self.wrong_target(expected, routes)
           return ((((((("wrong target for route " + expected.path) + " ") + Hxruby::Generators::Routes::ParityCore.upper(expected.verb)) + ": expected ") + HXRuby.stringify(expected.target)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
-  g = []
-  g1 = 0
-g2 = routes
-while (g1 < g2.length)
-  v = g2[g1]
-  g1 = (g1 + 1)
-  g.push(((v.target == nil) ? "" : v.target)).length()
-end
-  g
-end).join(", "))
+            g = []
+            g1 = 0
+          g2 = routes
+          while (g1 < g2.length)
+            v = g2[g1]
+            g1 = (g1 + 1)
+            g.push(((v.target == nil) ? "" : v.target)).length()
+          end
+            g
+          end).join(", "))
         end
         def self.format_expected(expected)
           return begin
-  this = [expected.name, Hxruby::Generators::Routes::ParityCore.upper(expected.verb), expected.path, expected.target]
-  g = []
-g1 = 0
-g2 = this
-while (g1 < g2.length)
-  v = g2[g1]
-  g1 = (g1 + 1)
-  if ((v != nil) && (v != ""))
-    g.push(v).length()
-  end
-end
-g
-end.join(" ")
+            this = [expected.name, Hxruby::Generators::Routes::ParityCore.upper(expected.verb), expected.path, expected.target]
+            g = []
+          g1 = 0
+          g2 = this
+          while (g1 < g2.length)
+            v = g2[g1]
+            g1 = (g1 + 1)
+            if ((v != nil) && (v != ""))
+              g.push(v).length()
+            end
+          end
+          g
+          end.join(" ")
         end
         def self.upper(value)
           return ((value == nil) ? "" : case value
-when "delete"
-  "DELETE"
-when "get"
-  "GET"
-when "head"
-  "HEAD"
-when "options"
-  "OPTIONS"
-when "patch"
-  "PATCH"
-when "post"
-  "POST"
-when "put"
-  "PUT"
-else
-  value
-end)
+          when "delete"
+            "DELETE"
+          when "get"
+            "GET"
+          when "head"
+            "HEAD"
+          when "options"
+            "OPTIONS"
+          when "patch"
+            "PATCH"
+          when "post"
+            "POST"
+          when "put"
+            "PUT"
+          else
+            value
+          end)
         end
         def self.quote(value)
           return (("\"" + value) + "\"")

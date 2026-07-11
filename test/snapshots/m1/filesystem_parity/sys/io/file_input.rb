@@ -58,13 +58,13 @@ class Sys
       end
       def self.seek_whence(pos)
         return case pos.__hx_index
-when 0
-  0
-when 1
-  1
-when 2
-  2
-end
+        when 0
+          0
+        when 1
+          1
+        when 2
+          2
+        end
       end
     end
   end

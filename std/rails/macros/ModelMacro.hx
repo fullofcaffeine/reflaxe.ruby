@@ -16,6 +16,11 @@ class ModelMacro {
 		var selfType:ComplexType = TPath({pack: cls.pack, name: cls.name});
 		var nullableSelf:ComplexType = TPath({pack: [], name: "Null", params: [TPType(selfType)]});
 		var criteriaType = criteriaComplexType(fields);
+		// Create/build/update accept model attributes, not arbitrary Dynamic hashes.
+		// Reuse the schema-derived optional column shape without association-only
+		// query fields so @:rubyKwargs remains a truthful, toolable ABI contract.
+		var attributesType = criteriaComplexTypeForFields(fields, false, true);
+		var hasTypedAttributes = hasTypedModelAttributes(fields);
 
 		validateModelMetadata(fields);
 		addModelFieldRefs(fields, selfType, cls.name, pos);
@@ -45,7 +50,7 @@ class ModelMacro {
 		}
 		addNullableFieldPredicateStub(fields, "whereNull", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addNullableFieldPredicateStub(fields, "whereNotNull", selfType, relationComplexType(selfType, criteriaType, pos), pos);
-		addStub(fields, "rewhere", criteriaType, relationComplexType(selfType, criteriaType, pos), pos);
+		addStub(fields, "rewhere", criteriaType, relationComplexType(selfType, criteriaType, pos), pos, true);
 		addPlainStub(fields, "order", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "reorder", orderComplexType(selfType), relationComplexType(selfType, criteriaType, pos), "order", pos);
 		addPlainStub(fields, "orderSql", sqlComplexType(selfType, "SqlOrder"), relationComplexType(selfType, criteriaType, pos), "fragment", pos);
@@ -65,13 +70,15 @@ class ModelMacro {
 		addNoArgNativeStub(fields, "readOnly", "readonly", relationComplexType(selfType, criteriaType, pos), pos);
 		addFieldRelationStub(fields, "select", selfType, relationComplexType(selfType, criteriaType, pos), pos);
 		addStub(fields, "find", primaryKeyComplexType(fields), selfType, pos);
-		addStub(fields, "findBy", criteriaType, nullableSelf, pos);
+		addStub(fields, "findBy", criteriaType, nullableSelf, pos, true);
 		addOptionalStub(fields, "exists", criteriaType, macro :Bool, "criteria", "exists?", pos);
 		addNoArgStub(fields, "count", macro :Int, pos);
-		addStub(fields, "create", macro :Dynamic, selfType, pos);
-		addStub(fields, "createBang", macro :Dynamic, selfType, pos);
-		addStub(fields, "build", macro :Dynamic, selfType, pos);
-		addInstanceStub(fields, "update", macro :Dynamic, macro :Bool, "attrs", pos);
+		if (hasTypedAttributes) {
+			addStub(fields, "create", attributesType, selfType, pos, true);
+			addStub(fields, "createBang", attributesType, selfType, pos, true);
+			addStub(fields, "build", attributesType, selfType, pos, true);
+			addInstanceStub(fields, "update", attributesType, macro :Bool, "attrs", pos, true);
+		}
 		addNoArgInstanceStub(fields, "destroy", macro :Bool, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
 		addNoArgStub(fields, "last", nullableSelf, pos);
@@ -273,6 +280,19 @@ class ModelMacro {
 							throw "@:railsColumn can only be used on model fields.";
 						}
 						validateColumnOptions(field, meta);
+					case ":railsExternalAttribute":
+						if (!isVarField(field) || !hasAccess(field, APublic) || hasAccess(field, AStatic)) {
+							throw "@:railsExternalAttribute can only be used on a public instance model field.";
+						}
+						if (meta.params != null && meta.params.length != 0) {
+							throw "@:railsExternalAttribute does not accept arguments; use @:native for a different Ruby attribute name.";
+						}
+						if (isRailsColumn(field) || isRailsAssociation(field)) {
+							throw "@:railsExternalAttribute cannot also be a Rails column or association.";
+						}
+						if (!fieldHasPreciseType(field)) {
+							throw "@:railsExternalAttribute requires a precise field type.";
+						}
 					case ":belongsTo" | ":hasMany" | ":hasOne":
 						if (!isVarField(field)) {
 							throw meta.name + " can only be used on model fields.";
@@ -939,10 +959,10 @@ class ModelMacro {
 		return criteriaComplexTypeForFields(fields, true);
 	}
 
-	static function criteriaComplexTypeForFields(fields:Array<Field>, includeAssociations:Bool):ComplexType {
+	static function criteriaComplexTypeForFields(fields:Array<Field>, includeAssociations:Bool, includeExternalAttributes:Bool = false):ComplexType {
 		var criteriaFields:Array<Field> = [];
 		for (field in fields) {
-			if (isRailsColumn(field)) {
+			if (isRailsColumn(field) || (includeExternalAttributes && isRailsExternalAttribute(field))) {
 				criteriaFields.push({
 					name: field.name,
 					access: [],
@@ -964,6 +984,36 @@ class ModelMacro {
 			}
 		}
 		return criteriaFields.length == 0 ? macro :Dynamic : TAnonymous(criteriaFields);
+	}
+
+	static function isRailsExternalAttribute(field:Field):Bool {
+		if (field.meta == null) {
+			return false;
+		}
+		for (meta in field.meta) {
+			if (meta.name == ":railsExternalAttribute") {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static function hasTypedModelAttributes(fields:Array<Field>):Bool {
+		for (field in fields) {
+			if (isRailsColumn(field) || isRailsExternalAttribute(field)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static function fieldHasPreciseType(field:Field):Bool {
+		return switch (field.kind) {
+			case FVar(null, _): false;
+			case FVar(TPath({pack: [], name: "Dynamic"}), _): false;
+			case FVar(_, _): true;
+			case _: false;
+		}
 	}
 
 	static function associationTargetCriteriaType(field:Field):Null<ComplexType> {
@@ -1246,11 +1296,18 @@ class ModelMacro {
 		}
 	}
 
-	static function addStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, pos:Position):Void {
+	static function addStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, pos:Position, useKwargs:Bool = false):Void {
 		for (field in fields) {
 			if (field.name == name) {
 				return;
 			}
+		}
+		var metadata:Metadata = [
+			{name: ":native", params: [macro $v{name}], pos: pos},
+			{name: ":rubyExternStub", params: [], pos: pos}
+		];
+		if (useKwargs) {
+			metadata.insert(1, {name: ":rubyKwargs", params: [], pos: pos});
 		}
 		fields.push({
 			name: name,
@@ -1260,11 +1317,7 @@ class ModelMacro {
 				ret: ret,
 				expr: macro return cast null
 			}),
-			meta: [
-				{name: ":native", params: [macro $v{name}], pos: pos},
-				{name: ":rubyKwargs", params: [], pos: pos},
-				{name: ":rubyExternStub", params: [], pos: pos}
-			],
+			meta: metadata,
 			pos: pos
 		});
 	}
@@ -1372,11 +1425,19 @@ class ModelMacro {
 	// Haxe-visible stubs so app code gets completion/type-checking. The
 	// `@:rubyExternStub` metadata makes the Ruby compiler skip emitting these
 	// placeholder bodies; calls still lower to ordinary receiver dispatch.
-	static function addInstanceStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, pos:Position):Void {
+	static function addInstanceStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, pos:Position,
+			useKwargs:Bool = false):Void {
 		for (field in fields) {
 			if (field.name == name) {
 				return;
 			}
+		}
+		var metadata:Metadata = [
+			{name: ":native", params: [macro $v{name}], pos: pos},
+			{name: ":rubyExternStub", params: [], pos: pos}
+		];
+		if (useKwargs) {
+			metadata.insert(1, {name: ":rubyKwargs", params: [], pos: pos});
 		}
 		fields.push({
 			name: name,
@@ -1386,11 +1447,7 @@ class ModelMacro {
 				ret: ret,
 				expr: macro return cast null
 			}),
-			meta: [
-				{name: ":native", params: [macro $v{name}], pos: pos},
-				{name: ":rubyKwargs", params: [], pos: pos},
-				{name: ":rubyExternStub", params: [], pos: pos}
-			],
+			meta: metadata,
 			pos: pos
 		});
 	}

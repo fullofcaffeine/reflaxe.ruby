@@ -12,8 +12,8 @@ class UserMailer < ActionMailer::Base
     locals_message = message
     locals_product_name = "RailsHx"
     self.mail(to: email, from: "team@example.test", cc: ["ops@example.test"], reply_to: "reply@example.test", subject: "Welcome to typed RailsHx mail", layout: false) do |format|
-      format.html() { self.render(template: "mailers/user_mailer/welcome", locals: {message: locals_message, name: locals_name, product_name: locals_product_name}) }
-      format.text() { self.render(template: "mailers/user_mailer/welcome.text", locals: {message: locals_message, name: locals_name, product_name: locals_product_name}) }
+      format.html { self.render(template: "mailers/user_mailer/welcome", locals: {message: locals_message, name: locals_name, product_name: locals_product_name}) }
+      format.text { self.render(template: "mailers/user_mailer/welcome.text", locals: {message: locals_message, name: locals_name, product_name: locals_product_name}) }
     end
   end
   def welcome_from_params()
@@ -29,8 +29,8 @@ class UserMailer < ActionMailer::Base
     locals_message = message
     locals_product_name = "RailsHx"
     return self.mail(to: email, from: "team@example.test", cc: ["ops@example.test"], reply_to: "reply@example.test", subject: "Welcome to typed RailsHx parameterized mail", layout: false) do |format|
-    format.html() { self.render(template: "mailers/user_mailer/welcome", locals: {message: locals_message, name: locals_name, product_name: locals_product_name}) }
-    format.text() { self.render(template: "mailers/user_mailer/welcome.text", locals: {message: locals_message, name: locals_name, product_name: locals_product_name}) }
-  end
+      format.html { self.render(template: "mailers/user_mailer/welcome", locals: {message: locals_message, name: locals_name, product_name: locals_product_name}) }
+      format.text { self.render(template: "mailers/user_mailer/welcome.text", locals: {message: locals_message, name: locals_name, product_name: locals_product_name}) }
+    end
   end
 end

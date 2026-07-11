@@ -1,7 +1,10 @@
 package reflaxe.ruby.ast;
 
 import reflaxe.ruby.ast.RubyAST.RubyFile;
+import reflaxe.ruby.ast.RubyAST.RubyBlock;
+import reflaxe.ruby.ast.RubyAST.RubyCallArgument;
 import reflaxe.ruby.ast.RubyAST.RubyExpr;
+import reflaxe.ruby.ast.RubyAST.RubyMethodParameter;
 import reflaxe.ruby.ast.RubyAST.RubyStatement;
 
 class RubyASTPrinter {
@@ -40,7 +43,8 @@ class RubyASTPrinter {
 				writeBody(lines, body, indentLevel + 1);
 				lines.push(indent + "end");
 			case RubyMethodDecl(name, args, body):
-				lines.push(indent + "def " + name + "(" + (args == null ? "" : args.join(", ")) + ")");
+				var printedArgs = args == null ? "" : [for (arg in args) printMethodParameter(arg)].join(", ");
+				lines.push(indent + "def " + name + "(" + printedArgs + ")");
 				writeBody(lines, body, indentLevel + 1);
 				lines.push(indent + "end");
 			case RubyExprStatement(expr):
@@ -58,7 +62,18 @@ class RubyASTPrinter {
 					}
 				}
 			case RubyReturn(value):
-				lines.push(indent + (value == null ? "return" : "return " + printExpr(value)));
+				if (value == null) {
+					lines.push(indent + "return");
+				} else {
+					// Expressions such as a call with a `do ... end` block span lines.
+					// Prefix every rendered line with the enclosing statement indent so
+					// returned blocks remain nested like handwritten Ruby.
+					var valueLines = splitCodeLines(printExpr(value));
+					lines.push(indent + "return " + valueLines[0]);
+					for (line in valueLines.slice(1)) {
+						lines.push(indent + line);
+					}
+				}
 			case RubyIfStmt(cond, thenBody, elseBody):
 				lines.push(indent + "if " + printExpr(cond));
 				writeBody(lines, thenBody, indentLevel + 1);
@@ -98,8 +113,61 @@ class RubyASTPrinter {
 				+ "("
 				+ printedArgs
 				+ ")";
+			case RubyCallableCall(receiver, name, args, block):
+				printCallableCall(receiver, name, args, block);
+			case RubyYield(args):
+				"yield(" + (args == null ? "" : [for (arg in args) printExpr(arg)].join(", ")) + ")";
 			case RubyRawExpr(code): code;
 		}
+	}
+
+	static function printMethodParameter(parameter:RubyMethodParameter):String {
+		return switch (parameter) {
+			case RubyRequiredParameter(name): name;
+			case RubyOptionalParameter(name, defaultValue): name + " = " + printExpr(defaultValue);
+			case RubyRestParameter(name): "*" + name;
+			case RubyRequiredKeywordParameter(name): name + ":";
+			case RubyOptionalKeywordParameter(name, defaultValue): name + ": " + printExpr(defaultValue);
+			case RubyKeywordRestParameter(name): "**" + name;
+			case RubyBlockParameter(name): "&" + name;
+		}
+	}
+
+	static function printCallArgument(argument:RubyCallArgument):String {
+		return switch (argument) {
+			case RubyPositionalArgument(value): printExpr(value);
+			case RubySplatArgument(value): "*" + printExpr(value);
+			case RubyKeywordArgument(name, value): name + ": " + printExpr(value);
+			case RubyKeywordSplatArgument(value): "**" + printExpr(value);
+			case RubyBlockPassArgument(value): "&" + printExpr(value);
+		}
+	}
+
+	static function printCallableCall(receiver:Null<RubyExpr>, name:String, args:Array<RubyCallArgument>, block:Null<RubyBlock>):String {
+		var printedArgs = args == null ? "" : [for (arg in args) printCallArgument(arg)].join(", ");
+		var callable = receiver == null ? name : printExpr(receiver) + "." + name;
+		// Rubyists conventionally omit empty parentheses when a native block is
+		// attached (`items.each { ... }`). Keep parentheses for ordinary calls and
+		// calls with arguments, where they make precedence explicit.
+		var call = block != null && printedArgs == "" ? callable : callable + "(" + printedArgs + ")";
+		if (block == null) {
+			return call;
+		}
+		var blockArgs = block.args == null || block.args.length == 0 ? "" : " |" + block.args.join(", ") + "|";
+		if (block.body != null && block.body.length == 1) {
+			switch (block.body[0]) {
+				case RubyExprStatement(value):
+					var printedBody = printExpr(value);
+					if (printedBody.indexOf("\n") == -1) {
+						return call + " {" + blockArgs + " " + printedBody + " }";
+					}
+				case _:
+			}
+		}
+		var lines = [call + " do" + blockArgs];
+		writeBody(lines, block.body, 1);
+		lines.push("end");
+		return lines.join("\n");
 	}
 
 	static function writeBody(lines:Array<String>, body:Array<RubyStatement>, indentLevel:Int):Void {

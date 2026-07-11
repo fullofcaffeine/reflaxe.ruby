@@ -74,6 +74,43 @@ Generated Ruby stays ordinary ActiveRecord:
 Models::Todo.where(title: "ship", completed: false, external_id: "ship-1")
 ```
 
+## Typed Writes And External Attributes
+
+`create`, `createBang`, `build`, and instance `update` use a schema-derived
+optional attribute carrier rather than `Dynamic`. Known model columns are
+completed and type-checked in Haxe, then emitted as ordinary Rails keyword
+attributes with Ruby column names:
+
+```haxe
+var todo = Todo.create({title: "ship", completed: false});
+todo.update({completed: true});
+```
+
+```ruby
+todo = Todo.create(title: "ship", completed: false)
+todo.update(completed: true)
+```
+
+Some gems or framework modules install writable virtual attributes that are not
+database columns. Declare those as precisely typed `@:railsExternalAttribute`
+fields. They participate in create/build/update completion but do not emit an
+accessor, schema fact, query field ref, or migration; the named Ruby/gem owner
+must provide the runtime reader/writer. Field-level `@:native` maps a different
+Ruby spelling:
+
+```haxe
+@:railsExternalAttribute
+public var password:String;
+
+@:native("password_confirmation")
+@:railsExternalAttribute
+public var passwordConfirmation:String;
+```
+
+This is an explicit interop boundary, not permission to add arbitrary keys. A
+missing runtime owner remains a Ruby integration error, while a missing, extra,
+or incorrectly typed Haxe attribute is rejected during compilation.
+
 Invalid fields fail during Haxe compilation:
 
 ```haxe

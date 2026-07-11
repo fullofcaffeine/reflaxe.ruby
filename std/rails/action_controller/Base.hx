@@ -42,7 +42,9 @@ class Base {
 	public function render(options:RenderOptions):Void {}
 
 	@:native("redirect_to")
-	@:rubyKwargs
+	// This overload is positional-only. Keyword-bearing redirect forms use the
+	// distinct typed methods below, so @:rubyKwargs never has to guess whether a
+	// String argument is a keyword carrier.
 	public function redirectTo(location:String):Void {}
 
 	// Rails/Turbo form submissions should usually redirect with an explicit

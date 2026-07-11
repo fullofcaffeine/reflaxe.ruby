@@ -26,10 +26,14 @@ import reflaxe.output.OutputPath;
 import reflaxe.output.StringOrBytes;
 import reflaxe.ruby.ast.RubyAST.RubyExpr;
 import reflaxe.ruby.ast.RubyAST.RubyFile;
+import reflaxe.ruby.ast.RubyAST.RubyBlock;
+import reflaxe.ruby.ast.RubyAST.RubyCallArgument;
+import reflaxe.ruby.ast.RubyAST.RubyMethodParameter;
 import reflaxe.ruby.ast.RubyAST.RubyStatement;
 import reflaxe.ruby.ast.RubyASTPrinter;
 import reflaxe.ruby.compiler.RubyBuildContext;
 import reflaxe.ruby.compiler.RubyBuildContextResolver;
+import reflaxe.ruby.compiler.RubyCallableShape;
 import reflaxe.ruby.naming.RubyNaming;
 import reflaxe.ruby.rails.RailsRouteDecl;
 import reflaxe.ruby.rails.RailsRouteTarget;
@@ -858,6 +862,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileMethodAs(field:ClassFuncData, emitStatic:Bool):RubyStatement {
+		// Validate the declaration even before definition-side block/keyword
+		// lowering consumes the contract. This keeps malformed ABI metadata from
+		// silently producing a positional Ruby signature.
+		RubyCallableShape.resolve(field.field, field.field.pos);
 		return withLocalNameScope([for (arg in field.args) if (arg.tvar != null) arg.tvar], () -> {
 			var name = RubyNaming.toMethodName(field.field.name);
 			if (!emitStatic && field.field.name == "new") {
@@ -866,9 +874,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (emitStatic) {
 				name = "self." + name;
 			}
-			var args = [
+			var args:Array<RubyMethodParameter> = [
 				for (arg in field.args) {
-					methodArgSignature(arg);
+					methodArgParameter(arg);
 				}
 			];
 			return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
@@ -900,13 +908,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return "__hx_dynamic_" + methodName + "_value";
 	}
 
-	static function methodArgSignature(arg:ClassFuncArg):String {
+	static function methodArgParameter(arg:ClassFuncArg):RubyMethodParameter {
 		var argName = arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar);
 		if (!arg.opt) {
-			return argName;
+			return RubyRequiredParameter(argName);
 		}
 		var defaultValue = arg.expr == null ? RubyNil : compileExpr(arg.expr);
-		return argName + " = " + RubyASTPrinter.printExpr(defaultValue);
+		return RubyOptionalParameter(argName, defaultValue);
 	}
 
 	static function compileRailsModelMethod(field:ClassFuncData):RubyStatement {
@@ -5540,8 +5548,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyInteropCall(target:TypedExpr, access:haxe.macro.Type.FieldAccess, params:Array<TypedExpr>):RubyExpr {
-		return compileRubyReceiverCall(target, fieldAccessName(access), params, hasFieldAccessMeta(access, ":rubyKwargs"),
-			hasFieldAccessMeta(access, ":rubyBlockArg"));
+		var field = fieldAccessClassField(access);
+		if (field == null) {
+			Context.error("Ruby callable metadata requires a statically resolved method declaration.", target.pos);
+			return RubyNil;
+		}
+		var contract = RubyCallableShape.resolve(field, field.pos, [for (param in params) param.t]);
+		return compileRubyReceiverCall(target, fieldAccessName(access), params, contract.hasKwargs, contract.hasBlockArg);
 	}
 
 	static function compileRubyPatchCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -5555,8 +5568,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		var receiver = params[0];
 		var remaining = params.slice(1);
-		return compileRubyReceiverCall(receiver, rubyFieldName(info.field.name, info.field.meta), remaining, hasMeta(info.field.meta, ":rubyKwargs"),
-			hasMeta(info.field.meta, ":rubyBlockArg"));
+		var contract = RubyCallableShape.resolve(info.field, info.field.pos);
+		return compileRubyReceiverCall(receiver, rubyFieldName(info.field.name, info.field.meta), remaining, contract.hasKwargs, contract.hasBlockArg);
 	}
 
 	static function rubyPatchCallInfo(callee:TypedExpr):Null<{className:String, field:ClassField}> {
@@ -5574,7 +5587,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyReceiverCall(target:TypedExpr, method:String, params:Array<TypedExpr>, useKwargs:Bool, useBlockArg:Bool):RubyExpr {
-		var receiver = reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(target));
+		var receiver = RubyRawExpr(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(target)));
 		var remaining = params.copy();
 		var block:Null<TypedExpr> = null;
 		var blockValue:Null<TypedExpr> = null;
@@ -5600,18 +5613,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (useKwargs && remaining.length > 0 && isObjectDeclExpr(remaining[remaining.length - 1])) {
 			keywordSource = remaining.pop();
 		}
-		var args = [for (param in remaining) simplifyRubyIdentityBegin(printInlineExpr(param))];
+		var args:Array<RubyCallArgument> = [
+			for (param in remaining)
+				RubyPositionalArgument(RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(param))))
+		];
 		if (keywordSource != null) {
-			args = args.concat(renderKeywordArgs(keywordSource));
+			args = args.concat(compileRubyKeywordArgs(keywordSource));
 		}
 		if (blockValue != null) {
-			args.push("&" + simplifyRubyIdentityBegin(printInlineExpr(blockValue)));
+			args.push(RubyBlockPassArgument(RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(blockValue)))));
 		}
-		var code = receiver + "." + method + "(" + args.join(", ") + ")";
-		if (block != null) {
-			code += " " + renderRubyBlock(block);
-		}
-		return RubyRawExpr(code);
+		return RubyCallableCall(receiver, method, args, block == null ? null : compileRubyBlockNode(block));
 	}
 
 	static function compileRubySymbol(params:Array<TypedExpr>):RubyExpr {
@@ -5703,6 +5715,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				];
 			case _:
 				[printInlineExpr(expr)];
+		}
+	}
+
+	static function compileRubyKeywordArgs(expr:TypedExpr):Array<RubyCallArgument> {
+		return switch (expr.expr) {
+			case TObjectDecl(fields):
+				[
+					for (field in fields)
+						RubyKeywordArgument(RubyNaming.toMethodName(field.name), RubyRawExpr(printKeywordArgValue(field.name, field.expr)))
+				];
+			case _:
+				[RubyKeywordSplatArgument(RubyRawExpr(printInlineExpr(expr)))];
 		}
 	}
 
@@ -5840,6 +5864,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 			case _:
 				"{ |value| " + printInlineExpr(expr) + ".call(value) }";
+		}
+	}
+
+	static function compileRubyBlockNode(expr:TypedExpr):RubyBlock {
+		return switch (expr.expr) {
+			case TFunction(fn):
+				{
+					args: [for (arg in fn.args) localName(arg.v)],
+					body: compileRubyBlockBody(fn.expr)
+				};
+			case _:
+				// Call-site classification only routes inline TFunction expressions here.
+				// Keep this diagnostic local so a future caller cannot silently turn an
+				// arbitrary value into a one-argument wrapper with the wrong arity.
+				Context.error("A structured native Ruby block requires an inline typed Haxe function.", expr.pos);
+				{args: [], body: [RubyNilStatement()]};
 		}
 	}
 
@@ -13375,10 +13415,24 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function fieldAccessName(access:haxe.macro.Type.FieldAccess):String {
 		return switch (access) {
-			case FInstance(_, _, field) | FStatic(_, field): rubyFieldName(field.get().name, field.get().meta);
-			case FAnon(fieldRef) | FClosure(_, fieldRef): rubyFieldName(fieldRef.get().name, fieldRef.get().meta);
+			case FInstance(_, _, field) | FStatic(_, field):
+				var resolved = field.get();
+				RubyCallableShape.validateNativeFieldName(resolved, resolved.pos);
+				rubyFieldName(resolved.name, resolved.meta);
+			case FAnon(fieldRef) | FClosure(_, fieldRef):
+				var resolved = fieldRef.get();
+				RubyCallableShape.validateNativeFieldName(resolved, resolved.pos);
+				rubyFieldName(resolved.name, resolved.meta);
 			case FDynamic(name): RubyNaming.toMethodName(name);
 			case FEnum(_, field): rubyFieldName(field.name, field.meta);
+		}
+	}
+
+	static function fieldAccessClassField(access:haxe.macro.Type.FieldAccess):Null<ClassField> {
+		return switch (access) {
+			case FInstance(_, _, field) | FStatic(_, field): field.get();
+			case FAnon(fieldRef) | FClosure(_, fieldRef): fieldRef.get();
+			case FDynamic(_) | FEnum(_, _): null;
 		}
 	}
 

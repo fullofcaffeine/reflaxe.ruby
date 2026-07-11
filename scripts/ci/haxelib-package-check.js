@@ -69,6 +69,7 @@ for (const required of [
   "hxruby.gemspec",
   "extraParams.hxml",
   "docs/compiler-metadata.md",
+  "docs/ruby-callable-abi.md",
   "lib/hxruby.rb",
   "lib/hxruby/version.rb",
   "src/reflaxe/ruby/RubyCompiler.hx",

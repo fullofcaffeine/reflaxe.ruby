@@ -815,9 +815,9 @@ for (const expected of [
   /attrs(?:__hx\d+)? = self\.params\(\)\.require\("todo"\)\.permit\(\[:title, :notes\]\)/,
   /attrs(?:__hx\d+)? = attrs(?:__hx\d+)?\.merge\(user_id: current_user(?:__hx\d+)?\.id\)/,
   /todo(?:__hx\d+)? = Todo\.create\(attrs(?:__hx\d+)?\)/,
-  /self\.respond_to\(\) do \|format(?:__hx\d+)?\|/,
-  /format(?:__hx\d+)?\.turbo_stream\(\) \{ self\.render\(turbo_stream: turbo_stream\.replace\("railshx-todo-list", partial: "todos\/list", locals: \{todos: Todo\.where\(is_completed: false, user_id: current_user(?:__hx\d+)?\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)\}\)\) \}/,
-  /format(?:__hx\d+)?\.html\(\) \{ self\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
+  /self\.respond_to do \|format(?:__hx\d+)?\|/,
+  /format(?:__hx\d+)?\.turbo_stream \{ self\.render\(turbo_stream: turbo_stream\.replace\("railshx-todo-list", partial: "todos\/list", locals: \{todos: Todo\.where\(is_completed: false, user_id: current_user(?:__hx\d+)?\.id\)\.includes\(:user\)\.order\(title: :asc\)\.limit\(10\)\.to_a\(\)\}\)\) \}/,
+  /format(?:__hx\d+)?\.html \{ self\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
   /titles(?:__hx\d+)? = Todo\.where\(is_completed: true, user_id: current_user(?:__hx\d+)?\.id\)\.order\(title: :asc\)\.pluck\(:title\)/,
   /self\.render\(plain: \("Completed todos: " \+ titles(?:__hx\d+)?\.join\(", "\)\), status: :ok\)/,
   /todo(?:__hx\d+)? = Todo\.where\(id: self\.param_id\(\), user_id: current_user(?:__hx\d+)?\.id\)\.first\(\)/,
@@ -847,8 +847,8 @@ for (const expected of [
   /attrs(?:__hx\d+)? = attrs(?:__hx\d+)?\.merge\(user_id: current_user(?:__hx\d+)?\.id\)/,
   /message(?:__hx\d+)? = ChatMessage\.create\(attrs(?:__hx\d+)?\)/,
   /Turbo::StreamsChannel\.broadcast_prepend_to\("todoapp:chat", target: "railshx-chat-list", partial: "todos\/chat_message", locals: \{message: message(?:__hx\d+)?\}\)/,
-  /format(?:__hx\d+)?\.turbo_stream\(\) \{ self\.head\(:no_content\) \}/,
-  /format(?:__hx\d+)?\.html\(\) \{ self\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
+  /format(?:__hx\d+)?\.turbo_stream \{ self\.head\(:no_content\) \}/,
+  /format(?:__hx\d+)?\.html \{ self\.redirect_to\(self\.todos_path\(\), status: :see_other\) \}/,
 ]) {
   if (!expected.test(chatMessagesControllerRuby)) {
     console.error(`todoapp_rails chat messages controller output missing expected line: ${expected}`);
