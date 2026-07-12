@@ -15,6 +15,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Ruby Callable And Method ABI](ruby-callable-abi.md): typed blocks, keyword/rest arguments, method values, forwarding, definitions, and diagnostics.
 - [Ruby Compiler Correctness](compiler-correctness.md): exhaustive typed-expression ownership and fail-closed diagnostics.
 - [Release Version Policy](release-version-policy.md): conventional major-zero releases, tag-derived lineage, and independent stable-major approvals.
+- [Reproducible Release Artifacts](release-artifacts.md): tested-commit staging, canonical ZIP/gem bytes, full content manifests, SHA-256 sidecars, and consumer gates.
 - [Ruby Profiles](profiles.md): `ruby_first` vs `portable`.
 - [Ruby Extension Interop](ruby-extension-interop.md): typed `include`, `extend`, monkey patches, externs, and metaprogramming-heavy library adoption.
 - [Std Ownership](stdlib-ownership.md): how Ruby/Haxe std coverage is tracked.

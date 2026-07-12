@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-const { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } = require("node:fs");
 const { delimiter, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
+const { sha256File, verifyArtifactManifest } = require("../release/artifact-utils");
 
 const root = resolve(__dirname, "..", "..");
 const stagedVersion = "0.2.3";
@@ -11,6 +12,7 @@ const stagedTag = `v${stagedVersion}`;
 const sourceSha = run("git", ["rev-parse", "HEAD"]).stdout.trim();
 const gemName = "hxruby-release.gem";
 const gemPath = join(root, "dist", gemName);
+const sidecarPath = `${gemPath}.sha256.json`;
 
 function fail(message) {
   console.error(`[gem-package] ERROR: ${message}`);
@@ -42,15 +44,30 @@ const trackedDiffBefore = `${run("git", ["diff", "--binary"]).stdout}${run("git"
 
 run("node", ["scripts/release/build-gem-package.js", stagedVersion, stagedTag, sourceSha]);
 
+const sidecar = JSON.parse(readFileSync(sidecarPath, "utf8"));
+if (
+  sidecar.localFilename !== gemName ||
+  sidecar.hostedFilename !== `hxruby-${stagedVersion}.gem` ||
+  sidecar.bytes !== statSync(gemPath).size ||
+  sidecar.sha256 !== sha256File(gemPath) ||
+  sidecar.version !== stagedVersion ||
+  sidecar.gitTag !== stagedTag ||
+  sidecar.sourceSha !== sourceSha
+) {
+  fail("gem artifact SHA-256 sidecar does not match the exact built gem and release identity");
+}
+
 const tempRoot = mkdtempSync(join(tmpdir(), "hxruby-gem."));
 try {
   run("gem", ["unpack", gemPath, "--target", tempRoot]);
   // RubyGems names the unpack directory from the fixed local artifact path;
   // the gem specification and installed identity still carry stagedVersion.
   const unpackedRoot = join(tempRoot, "hxruby-release");
+  verifyArtifactManifest(unpackedRoot, "hxruby-gem");
 
   for (const required of [
     "haxelib.json",
+    "artifact-manifest.json",
     "release-provenance.json",
     "hxruby.gemspec",
     "lib/hxruby.rb",

@@ -38,6 +38,11 @@ const versionSyncCheck = readFileSync("scripts/ci/version-sync-check.js", "utf8"
 const releaseVersionPolicy = readFileSync("scripts/release/analyze-commits.mjs", "utf8");
 const releaseVersionPolicyCheck = readFileSync("scripts/ci/release-version-policy-check.mjs", "utf8");
 const releaseVersionPolicyDocs = readFileSync("docs/release-version-policy.md", "utf8");
+const releaseArtifactDocs = readFileSync("docs/release-artifacts.md", "utf8");
+const artifactUtils = readFileSync("scripts/release/artifact-utils.js", "utf8");
+const deterministicZip = readFileSync("scripts/release/deterministic-zip.js", "utf8");
+const artifactReproducibilityCheck = readFileSync("scripts/ci/release-artifact-reproducibility-check.js", "utf8");
+const releaseArtifactPrepare = readFileSync("scripts/release/prepare-release-artifacts.js", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const haxelibPackageCheckText = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
@@ -126,6 +131,12 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   if (!githubAssets.some((asset) => asset?.path === "dist/hxruby-release.gem" && asset?.name === "hxruby-${nextRelease.version}.gem")) {
     fail("@semantic-release/github assets must include the hxruby gem");
   }
+  if (!githubAssets.some((asset) => asset?.path === "dist/reflaxe.ruby-release.zip.sha256.json" && asset?.name === "reflaxe.ruby-${nextRelease.version}.zip.sha256.json")) {
+    fail("@semantic-release/github assets must include exact Haxelib SHA-256 metadata");
+  }
+  if (!githubAssets.some((asset) => asset?.path === "dist/hxruby-release.gem.sha256.json" && asset?.name === "hxruby-${nextRelease.version}.gem.sha256.json")) {
+    fail("@semantic-release/github assets must include exact gem SHA-256 metadata");
+  }
   if (!githubAssets.some((asset) => asset?.label?.includes("${nextRelease.version}"))) {
     fail("@semantic-release/github asset label must include the release version");
   }
@@ -133,6 +144,9 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
 
 if (packageJson.devDependencies?.semver !== "7.8.4") {
   fail("the release policy must directly pin the standards-tested semver library at 7.8.4");
+}
+if (packageJson.devDependencies?.fflate !== "0.8.3") {
+  fail("deterministic ZIP creation must directly pin fflate at the haxe.rust-aligned 0.8.3 version");
 }
 expectIncludes(releaseVersionPolicy, 'from "@semantic-release/commit-analyzer"', "release version policy");
 expectIncludes(releaseVersionPolicy, 'from "semver"', "release version policy");
@@ -143,6 +157,24 @@ expectIncludes(releaseVersionPolicyCheck, 'from "semantic-release"', "release ve
 expectIncludes(releaseVersionPolicyCheck, '"99.99.99"', "release version policy package-independence fixture");
 expectIncludes(releaseVersionPolicyDocs, "normal `0.x` releases from `main`", "release version policy docs");
 expectIncludes(releaseVersionPolicyDocs, "v0.1.0-beta.2", "release version policy transition docs");
+expectIncludes(releaseArtifactDocs, "follows the established", "release artifact design rationale");
+expectIncludes(releaseArtifactDocs, "artifact-manifest.json", "release artifact content contract docs");
+expectIncludes(releaseArtifactDocs, "SHA-256", "release artifact sidecar docs");
+expectIncludes(deterministicZip, 'require("fflate")', "deterministic ZIP builder");
+expectIncludes(deterministicZip, "FIXED_MTIME", "deterministic ZIP builder");
+expectIncludes(deterministicZip, "validateEntryNames", "deterministic ZIP structural validation");
+expectExcludes(haxelibPackageBuilder, 'spawnSync("zip"', "Haxelib package builder");
+expectIncludes(haxelibPackageBuilder, "createDeterministicZip", "Haxelib package builder");
+expectIncludes(haxelibPackageBuilder, "extractGitSource", "Haxelib tested-commit input");
+expectIncludes(gemPackageBuilder, "extractGitSource", "gem tested-commit input");
+expectIncludes(artifactUtils, "artifact-manifest.json", "artifact full content contract");
+expectIncludes(artifactUtils, "sha256", "artifact SHA-256 contract");
+expectIncludes(artifactReproducibilityCheck, "DIRTY_WORKTREE_MARKER", "dirty checkout exclusion gate");
+expectIncludes(artifactReproducibilityCheck, "UNTRACKED_WORKTREE_MARKER", "untracked checkout exclusion gate");
+expectIncludes(artifactReproducibilityCheck, "Pacific/Honolulu", "artifact environment-variation gate");
+expectIncludes(artifactReproducibilityCheck, "unsafe executable mode", "artifact mode rejection gate");
+expectIncludes(releaseArtifactPrepare, '"hxruby-release.gem.sha256.json"', "fixed release outputs");
+expectIncludes(releaseArtifactPrepare, '"reflaxe.ruby-release.zip.sha256.json"', "fixed release outputs");
 expectIncludes(versionSyncCheck, "DEVELOPMENT_VERSION", "version sentinel check");
 expectExcludes(readme, "dist/reflaxe.ruby-*.zip", "README stale Haxelib glob");
 expectExcludes(readme, "dist/hxruby-*.gem", "README stale gem glob");
@@ -199,6 +231,8 @@ expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:rails-inte
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:rails-interop", "package.json scripts");
 expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:gem-package"] ?? "", "gem-package-check.js", "package.json scripts");
+expectIncludes(packageJson.scripts["test:release-artifacts"] ?? "", "release-artifact-reproducibility-check.js", "package.json scripts");
+expectIncludes(packageJson.scripts["ci:release-contracts"] ?? "", "test:release-artifacts", "npm test release artifact wiring");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-package.js", "package.json scripts");
 expectIncludes(versionSyncCheck, "README must document the development sentinel", "version sync check");
@@ -219,6 +253,8 @@ expectIncludes(haxelibPackageCheck, "haxelib\", [\"newrepo\"]", "Haxelib package
 expectIncludes(haxelibPackageCheck, "\"-lib\"", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "Hello from installed reflaxe.ruby", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "TODO: lower", "Haxelib package check");
+expectIncludes(haxelibPackageCheck, "verifyArtifactManifest", "Haxelib exact content check");
+expectIncludes(haxelibPackageCheck, "sidecar.sha256", "Haxelib exact byte check");
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");
@@ -226,6 +262,8 @@ expectIncludes(gemPackageCheck, "std/rails/turbo/Turbo.hx", "Ruby gem package ch
 expectIncludes(gemPackageCheck, "railshx.client gem smoke", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "vendor/genes/src/genes/Generator.hx", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "hxruby:production", "Ruby gem package check");
+expectIncludes(gemPackageCheck, "verifyArtifactManifest", "gem exact content check");
+expectIncludes(gemPackageCheck, "sidecar.sha256", "gem exact byte check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'std/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'vendor/genes/src/**/*.hx', "hxruby.gemspec");

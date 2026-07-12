@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
 const { spawnSync } = require("node:child_process");
-const { resolve } = require("node:path");
+const { mkdirSync, readFileSync, readdirSync, rmSync, statSync } = require("node:fs");
+const { join, resolve } = require("node:path");
 const { identityFromArgs } = require("./release-identity");
+const { sha256File } = require("./artifact-utils");
 
 const root = resolve(__dirname, "..", "..");
 const identity = identityFromArgs(process.argv.slice(2));
@@ -25,10 +27,46 @@ const before = trackedDiff();
 if (before.length > 0) {
   throw new Error("Release preparation requires a checkout with no tracked diff");
 }
+const head = run("git", ["rev-parse", "HEAD"]).trim();
+if (identity.sourceSha !== head) throw new Error(`Release source SHA ${identity.sourceSha} must equal checked-out HEAD ${head}`);
+
+const dist = join(root, "dist");
+rmSync(dist, { force: true, recursive: true });
+mkdirSync(dist, { recursive: true });
 
 const args = [identity.version, identity.gitTag, identity.sourceSha];
 run("node", ["scripts/release/build-haxelib-package.js", ...args]);
 run("node", ["scripts/release/build-gem-package.js", ...args]);
+
+const expectedOutputs = [
+  "hxruby-release.gem",
+  "hxruby-release.gem.sha256.json",
+  "reflaxe.ruby-release.zip",
+  "reflaxe.ruby-release.zip.sha256.json",
+];
+const actualOutputs = readdirSync(dist).sort();
+if (JSON.stringify(actualOutputs) !== JSON.stringify(expectedOutputs)) {
+  throw new Error(`Release preparation output mismatch: ${JSON.stringify(actualOutputs)}`);
+}
+for (const sidecarName of expectedOutputs.filter((name) => name.endsWith(".sha256.json"))) {
+  const sidecar = JSON.parse(readFileSync(join(dist, sidecarName), "utf8"));
+  const artifactName = sidecarName.slice(0, -".sha256.json".length);
+  const artifactPath = join(dist, artifactName);
+  const expectedHostedName = artifactName === "reflaxe.ruby-release.zip"
+    ? `reflaxe.ruby-${identity.version}.zip`
+    : `hxruby-${identity.version}.gem`;
+  if (sidecar.version !== identity.version || sidecar.gitTag !== identity.gitTag || sidecar.sourceSha !== identity.sourceSha) {
+    throw new Error(`Release sidecar identity mismatch: ${sidecarName}`);
+  }
+  if (
+    sidecar.localFilename !== artifactName ||
+    sidecar.hostedFilename !== expectedHostedName ||
+    sidecar.bytes !== statSync(artifactPath).size ||
+    sidecar.sha256 !== sha256File(artifactPath)
+  ) {
+    throw new Error(`Release sidecar artifact mismatch: ${sidecarName}`);
+  }
+}
 
 if (trackedDiff() !== before) {
   throw new Error("Release preparation changed tracked checkout files");

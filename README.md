@@ -26,6 +26,9 @@ from Git-tag lineage and injects the version, matching tag, and tested source
 SHA only into temporary Haxelib and gem staging trees. `CHANGELOG.md` is frozen
 public history unless an ordinary reviewed commit updates it; publication never
 creates a release commit or rewrites README/package metadata.
+The exact ZIP and gem are reproducibly built from that Git commit, carry full
+content manifests, and are uploaded with SHA-256 identity sidecars. See
+[Reproducible Release Artifacts](docs/release-artifacts.md).
 
 There are two first-class layers:
 
@@ -461,7 +464,7 @@ with:
 rake package:haxelib:test
 ```
 
-Semantic-release runs the same package builder during release preparation and uploads only the fixed local path `dist/reflaxe.ruby-release.zip`, naming the hosted asset with the selected version. The archive contains `release-provenance.json` with that version, its matching tag, and the tested source SHA.
+Semantic-release runs the same package builder during release preparation and uploads only the fixed local path `dist/reflaxe.ruby-release.zip`, naming the hosted asset with the selected version. The archive contains `release-provenance.json` with that version, its matching tag, and the tested source SHA, plus `artifact-manifest.json` with the exact path, bytes, SHA-256, and normalized mode of every packaged file. The adjacent `dist/reflaxe.ruby-release.zip.sha256.json` binds the exact upload bytes and hosted filename to the same identity. See [Reproducible Release Artifacts](docs/release-artifacts.md).
 
 Packaging follows Reflaxe build conventions: source std overrides live in
 `std/ruby/_std/**/*.hx`, while the release zip contains generated
@@ -559,7 +562,7 @@ dependency to the `hxruby` gem. See
 [DeviseHx Release Lane](docs/railshx-devisehx-release-lane.md) for the split
 criteria before publishing a standalone `devisehx` or `hxruby-devise` package.
 
-Semantic-release builds the gem during release preparation and uploads only the fixed local path `dist/hxruby-release.gem`, naming the hosted asset with the selected version. The gem specification, `HXRuby::VERSION`, staged `haxelib.json`, and `release-provenance.json` all expose the same release identity.
+Semantic-release builds the gem during release preparation and uploads only the fixed local path `dist/hxruby-release.gem`, naming the hosted asset with the selected version. The gem specification, `HXRuby::VERSION`, staged `haxelib.json`, and `release-provenance.json` all expose the same release identity. Its full `artifact-manifest.json` and adjacent `dist/hxruby-release.gem.sha256.json` make the packaged content and exact upload bytes independently checkable.
 
 ## Gap Report
 

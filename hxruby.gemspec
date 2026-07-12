@@ -18,6 +18,7 @@ Gem::Specification.new do |spec|
     "README.md",
     "hxruby.gemspec",
     *Dir["release-provenance.json"],
+    *Dir["artifact-manifest.json"],
     *Dir["lib/**/*.rb"],
     *Dir["runtime/hxruby/**/*.rb"],
     *Dir["scripts/rails/*.rb"],

@@ -14,8 +14,9 @@
     "hooks:install": "bash scripts/hooks/install.sh",
     "public:precommit": "npm run format:haxe:check && npm run security:gitleaks",
     "ci:version-sync": "node scripts/ci/version-sync-check.js",
-    "ci:release-contracts": "node scripts/ci/release-contracts-check.js",
+    "ci:release-contracts": "node scripts/ci/release-contracts-check.js && npm run test:release-artifacts",
     "test:release-version-policy": "node scripts/ci/release-version-policy-check.mjs",
+    "test:release-artifacts": "node scripts/ci/release-artifact-reproducibility-check.js",
     "test:examples-compile": "node scripts/ci/examples-compile-smoke.js",
     "test:haxe-build-context": "haxe test/build_context_compile.hxml",
     "test:profile-resolver": "node scripts/ci/profile-resolver-check.js",
@@ -123,6 +124,7 @@
     "@semantic-release/exec": "^6.0.3",
     "@semantic-release/github": "^11.0.3",
     "@semantic-release/release-notes-generator": "^14.0.3",
+    "fflate": "0.8.3",
     "lix": "^15.12.4",
     "semantic-release": "^24.2.5",
     "semver": "7.8.4"
@@ -165,6 +167,16 @@
               "path": "dist/hxruby-release.gem",
               "name": "hxruby-${nextRelease.version}.gem",
               "label": "hxruby ${nextRelease.version} Ruby gem"
+            },
+            {
+              "path": "dist/reflaxe.ruby-release.zip.sha256.json",
+              "name": "reflaxe.ruby-${nextRelease.version}.zip.sha256.json",
+              "label": "reflaxe.ruby ${nextRelease.version} SHA-256 metadata"
+            },
+            {
+              "path": "dist/hxruby-release.gem.sha256.json",
+              "name": "hxruby-${nextRelease.version}.gem.sha256.json",
+              "label": "hxruby ${nextRelease.version} SHA-256 metadata"
             }
           ]
         }

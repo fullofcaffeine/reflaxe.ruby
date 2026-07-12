@@ -5,12 +5,9 @@ const {
   existsSync,
   mkdirSync,
   mkdtempSync,
-  readFileSync,
-  readdirSync,
   rmSync,
-  statSync,
 } = require("node:fs");
-const { dirname, join, relative, resolve } = require("node:path");
+const { dirname, join, resolve } = require("node:path");
 const { execFileSync, spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
 const {
@@ -20,6 +17,14 @@ const {
   stageProvenance,
   stageRubyVersion,
 } = require("./release-identity");
+const {
+  extractGitSource,
+  verifyArtifactManifest,
+  walkFiles,
+  writeArtifactManifest,
+  writeArtifactSidecar,
+} = require("./artifact-utils");
+const { createDeterministicZip } = require("./deterministic-zip");
 
 const root = resolve(__dirname, "..", "..");
 const identityArgs = process.argv.slice(2);
@@ -27,8 +32,6 @@ const identity = identityArgs.length === 0
   ? developmentIdentity(execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim())
   : identityFromArgs(identityArgs);
 const outPath = join(root, "dist", "reflaxe.ruby-release.zip");
-const reflaxeRoot = join(root, "vendor", "reflaxe");
-const reflaxeRun = join(reflaxeRoot, "Run.hx");
 
 const workPrefixes = ["src/", "std/"];
 const workFiles = new Set(["haxelib.json", "extraParams.hxml", "README.md", "LICENSE"]);
@@ -67,61 +70,26 @@ function run(command, args, options = {}) {
   return result;
 }
 
-function currentFiles() {
-  const files = new Set();
-  for (const args of [["ls-files"], ["ls-files", "--others", "--exclude-standard"]]) {
-    for (const file of run("git", args).stdout.trim().split("\n").filter(Boolean)) {
-      if (existsSync(join(root, file))) {
-        files.add(file);
-      }
-    }
-  }
-  return [...files].sort();
-}
-
 function matches(file, prefixes, files) {
   return files.has(file) || prefixes.some((prefix) => file.startsWith(prefix));
 }
 
-function copyFileToRoot(file, destRoot) {
-  const from = join(root, file);
+function copyFileToRoot(file, sourceRoot, destRoot) {
+  const from = join(sourceRoot, file);
   const to = join(destRoot, file);
   mkdirSync(dirname(to), { recursive: true });
   copyFileSync(from, to);
 }
 
-function copySelected(files, destRoot, prefixes, exactFiles) {
+function copySelected(files, sourceRoot, destRoot, prefixes, exactFiles) {
   for (const file of files) {
     if (matches(file, prefixes, exactFiles)) {
-      copyFileToRoot(file, destRoot);
+      copyFileToRoot(file, sourceRoot, destRoot);
     }
   }
 }
 
-function listFiles(dir) {
-  const out = [];
-  walk(dir, out);
-  return out.map((path) => relative(dir, path).split("\\").join("/")).sort();
-}
-
-function walk(dir, out) {
-  for (const entry of readdirSync(dir)) {
-    const path = join(dir, entry);
-    const stat = statSync(path);
-    if (stat.isDirectory()) {
-      walk(path, out);
-    } else {
-      out.push(path);
-    }
-  }
-}
-
-if (!existsSync(reflaxeRun)) {
-  fail("vendored Reflaxe build runner missing: vendor/reflaxe/Run.hx");
-}
-
-const files = currentFiles();
-for (const required of [
+const requiredFiles = [
   "haxelib.json",
   "extraParams.hxml",
   "README.md",
@@ -133,40 +101,44 @@ for (const required of [
   "vendor/reflaxe/Run.hx",
   "vendor/reflaxe/src/reflaxe/ReflectCompiler.hx",
   "vendor/genes/src/genes/Generator.hx",
-]) {
-  if (!files.includes(required)) {
-    fail(`required package source missing: ${required}`);
-  }
-}
+];
 
 mkdirSync(dirname(outPath), { recursive: true });
 rmSync(outPath, { force: true });
 
 const tempRoot = mkdtempSync(join(tmpdir(), "reflaxe-ruby-haxelib."));
 try {
+  const sourceRoot = join(tempRoot, "source");
+  extractGitSource(root, identity.sourceSha, sourceRoot);
+  const files = walkFiles(sourceRoot);
+  for (const required of requiredFiles) {
+    if (!files.includes(required)) fail(`required package source missing from ${identity.sourceSha}: ${required}`);
+  }
+  const reflaxeRoot = join(sourceRoot, "vendor", "reflaxe");
+  if (!existsSync(join(reflaxeRoot, "Run.hx"))) fail("vendored Reflaxe build runner missing");
   const workDir = join(tempRoot, "work", "reflaxe.ruby");
   const buildDir = join(workDir, "_Build");
   mkdirSync(workDir, { recursive: true });
 
-  copySelected(files, workDir, workPrefixes, workFiles);
+  copySelected(files, sourceRoot, workDir, workPrefixes, workFiles);
   stageHaxelibMetadata(workDir, identity);
   run("haxe", ["-cp", reflaxeRoot, "--run", "Run", "build", "_Build", "--deleteOldFolder", workDir], {
     cwd: workDir,
   });
 
-  copySelected(files, buildDir, extraPrefixes, extraFiles);
+  copySelected(files, sourceRoot, buildDir, extraPrefixes, extraFiles);
   stageHaxelibMetadata(buildDir, identity);
   stageRubyVersion(buildDir, identity);
   stageProvenance(buildDir, identity);
 
-  const entries = listFiles(buildDir);
+  writeArtifactManifest(buildDir, "reflaxe.ruby-haxelib");
+  verifyArtifactManifest(buildDir, "reflaxe.ruby-haxelib");
+  const entries = walkFiles(buildDir);
   if (entries.length === 0) {
     fail("Reflaxe build produced an empty package directory");
   }
-  run("zip", ["-X", "-q", "-@", outPath], {
-    cwd: buildDir,
-    input: `${entries.join("\n")}\n`,
-  });
+  createDeterministicZip(buildDir, outPath);
+  writeArtifactSidecar(outPath, `reflaxe.ruby-${identity.version}.zip`, identity);
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });
 }

@@ -4,6 +4,7 @@ const { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, wri
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
+const { sha256File, verifyArtifactManifest } = require("../release/artifact-utils");
 
 const root = resolve(__dirname, "..", "..");
 const stagedVersion = "0.2.3";
@@ -11,6 +12,7 @@ const stagedTag = `v${stagedVersion}`;
 const sourceSha = run("git", ["rev-parse", "HEAD"]).stdout.trim();
 const archiveName = "reflaxe.ruby-release.zip";
 const archivePath = join(root, "dist", archiveName);
+const sidecarPath = `${archivePath}.sha256.json`;
 
 function fail(message) {
   console.error(`[haxelib-package] ERROR: ${message}`);
@@ -58,6 +60,19 @@ function rubyFilesUnder(dir) {
 
 run("node", ["scripts/release/build-haxelib-package.js", stagedVersion, stagedTag, sourceSha]);
 
+const sidecar = JSON.parse(readFileSync(sidecarPath, "utf8"));
+if (
+  sidecar.localFilename !== archiveName ||
+  sidecar.hostedFilename !== `reflaxe.ruby-${stagedVersion}.zip` ||
+  sidecar.bytes !== statSync(archivePath).size ||
+  sidecar.sha256 !== sha256File(archivePath) ||
+  sidecar.version !== stagedVersion ||
+  sidecar.gitTag !== stagedTag ||
+  sidecar.sourceSha !== sourceSha
+) {
+  fail("Haxelib artifact SHA-256 sidecar does not match the exact built ZIP and release identity");
+}
+
 const entries = run("unzip", ["-Z1", archivePath]).stdout.trim().split("\n").filter(Boolean);
 const entrySet = new Set(entries);
 const packagedHaxelib = JSON.parse(run("unzip", ["-p", archivePath, "haxelib.json"]).stdout);
@@ -77,6 +92,7 @@ if (packagedHaxelib.classPath !== "src") {
 
 for (const required of [
   "haxelib.json",
+  "artifact-manifest.json",
   "release-provenance.json",
   "hxruby.gemspec",
   "extraParams.hxml",
@@ -227,6 +243,7 @@ for (const forbiddenEntry of ["src/ruby/_std/Std.hx", "src/ruby/_std/README.cros
 const tempRoot = mkdtempSync(join(tmpdir(), "reflaxe-ruby-package."));
 try {
   run("unzip", ["-q", archivePath, "-d", tempRoot]);
+  verifyArtifactManifest(tempRoot, "reflaxe.ruby-haxelib");
   const outputDir = join(tempRoot, "out");
   run("haxe", [
     "-D",
