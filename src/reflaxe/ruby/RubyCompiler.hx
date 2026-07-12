@@ -33,6 +33,7 @@ import reflaxe.ruby.ast.RubyAST.RubyStatement;
 import reflaxe.ruby.ast.RubyASTPrinter;
 import reflaxe.ruby.compiler.RubyBuildContext;
 import reflaxe.ruby.compiler.RubyBuildContextResolver;
+import reflaxe.ruby.compiler.RubyBlockSemantics;
 import reflaxe.ruby.compiler.RubyCallableShape;
 import reflaxe.ruby.naming.RubyNaming;
 import reflaxe.ruby.rails.RailsRouteDecl;
@@ -189,6 +190,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static var needsHxException:Bool = false;
 	static var hxrubyCallCount:Int = 0;
 	static var localNameScope:Null<LocalNameScope> = null;
+	static var directYieldBlockVariableId:Null<Int> = null;
 	static var currentRailsTestAdapter:RailsTestAdapter = RailsMinitest;
 
 	public function new() {
@@ -222,6 +224,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		needsHxException = false;
 		hxrubyCallCount = 0;
 		localNameScope = null;
+		directYieldBlockVariableId = null;
 		currentRailsTestAdapter = RailsMinitest;
 	}
 
@@ -862,10 +865,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileMethodAs(field:ClassFuncData, emitStatic:Bool):RubyStatement {
-		// Validate the declaration even before definition-side block/keyword
-		// lowering consumes the contract. This keeps malformed ABI metadata from
-		// silently producing a positional Ruby signature.
-		RubyCallableShape.resolve(field.field, field.field.pos);
+		var contract = RubyCallableShape.resolve(field.field, field.field.pos);
 		return withLocalNameScope([for (arg in field.args) if (arg.tvar != null) arg.tvar], () -> {
 			var name = RubyNaming.toMethodName(field.field.name);
 			if (!emitStatic && field.field.name == "new") {
@@ -874,12 +874,38 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (emitStatic) {
 				name = "self." + name;
 			}
-			var args:Array<RubyMethodParameter> = [
-				for (arg in field.args) {
-					methodArgParameter(arg);
+			var directYieldVariable:Null<TVar> = null;
+			if (contract.hasBlockArg) {
+				var blockArg = field.args[contract.blockIndex];
+				if (!contract.blockOptional && blockArg.tvar != null && !RubyBlockSemantics.parameterEscapes(field.expr, blockArg.tvar)) {
+					directYieldVariable = blockArg.tvar;
 				}
-			];
-			return RubyMethodDecl(name, args, compileFunctionBody(field.expr));
+			}
+			var args:Array<RubyMethodParameter> = [];
+			var capturedBlockName:Null<String> = null;
+			for (index => arg in field.args) {
+				if (contract.hasBlockArg && index == contract.blockIndex) {
+					if (directYieldVariable == null) {
+						capturedBlockName = methodArgName(arg);
+						args.push(RubyBlockParameter(capturedBlockName));
+					}
+					continue;
+				}
+				args.push(methodArgParameter(arg));
+			}
+			// The active variable ID lets ordinary Haxe `block(value)` expressions
+			// lower to `yield(value)` without exposing yield as a second authoring
+			// API. Captured/optional blocks keep their local and compile to `.call`.
+			var body = withDirectYieldBlock(directYieldVariable, () -> compileFunctionBody(field.expr));
+			if (capturedBlockName != null && !contract.blockOptional) {
+				// Ruby permits an omitted `&block`, but the Haxe parameter is required.
+				// Fail at the public Ruby boundary before nil can be stored/returned or
+				// forwarded somewhere that obscures the declaration responsible.
+				body.insert(0, RubyIfStmt(RubyBinary("==", RubyLocal(capturedBlockName), RubyNil), [
+					RubyExprStatement(RubyCall(null, "raise", [RubyLocal("ArgumentError"), RubyString("required block missing for " + name)]))
+				], null));
+			}
+			return RubyMethodDecl(name, args, body);
 		});
 	}
 
@@ -909,12 +935,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function methodArgParameter(arg:ClassFuncArg):RubyMethodParameter {
-		var argName = arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar);
+		var argName = methodArgName(arg);
 		if (!arg.opt) {
 			return RubyRequiredParameter(argName);
 		}
 		var defaultValue = arg.expr == null ? RubyNil : compileExpr(arg.expr);
 		return RubyOptionalParameter(argName, defaultValue);
+	}
+
+	static function methodArgName(arg:ClassFuncArg):String {
+		return arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar);
 	}
 
 	static function compileRailsModelMethod(field:ClassFuncData):RubyStatement {
@@ -2790,6 +2820,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (expr == null) {
 			return RubyNil;
 		}
+		// A direct-only owned block parameter is represented by Ruby's implicit
+		// block. Match it before generic/special call lowering so no Proc wrapper
+		// or synthetic local leaks into the generated method.
+		switch (expr.expr) {
+			case TCall(callee, params) if (directYieldBlockVariableId != null
+				&& RubyBlockSemantics.isDirectParameterCall(callee, directYieldBlockVariableId)):
+				return RubyYield([for (param in params) compileExpr(param)]);
+			case _:
+		}
 		var special = compileSpecialExpr(expr);
 		if (special != null) {
 			return special;
@@ -2835,8 +2874,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyLambda([for (arg in fn.args) localName(arg.v)], compileRubyBlockBody(fn.expr));
 			case TNew(classRef, _, params):
 				var classType = classRef.get();
-				RubyCall(RubyLocal(coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType)),
-					"new", [for (param in params) compileExpr(param)]);
+				var receiver = RubyLocal(coreRubyTypeName(classType.pack,
+					classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType));
+				var constructor = classType.constructor == null ? null : classType.constructor.get();
+				// Haxe represents construction as TNew rather than a normal field call,
+				// so constructor metadata must enter the callable-ABI path explicitly.
+				// This turns `new Type(value, callback)` into the handwritten Ruby
+				// shape `Type.new(value) { ... }` without a wrapper constructor.
+				if (constructor != null && RubyCallableShape.hasCallableMetadata(constructor)) {
+					var contract = RubyCallableShape.resolve(constructor, constructor.pos, [for (param in params) param.t]);
+					compileRubyCallableCall(receiver, "new", params, contract.hasKwargs, contract.hasBlockArg);
+				} else {
+					RubyCall(receiver, "new", [for (param in params) compileExpr(param)]);
+				}
 			case TBlock(exprs):
 				RubyRawExpr("begin\n" + [for (stmt in compileStatementList(exprs)) "  " + statementToInlineRuby(stmt)].join("\n") + "\nend");
 			case TIf(cond, eThen, eElse):
@@ -5588,18 +5638,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileRubyReceiverCall(target:TypedExpr, method:String, params:Array<TypedExpr>, useKwargs:Bool, useBlockArg:Bool):RubyExpr {
 		var receiver = RubyRawExpr(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(target)));
+		return compileRubyCallableCall(receiver, method, params, useKwargs, useBlockArg);
+	}
+
+	/** Builds the structured keyword/block portion shared by methods and constructors. **/
+	static function compileRubyCallableCall(receiver:RubyExpr, method:String, params:Array<TypedExpr>, useKwargs:Bool, useBlockArg:Bool):RubyExpr {
 		var remaining = params.copy();
 		var block:Null<TypedExpr> = null;
 		var blockValue:Null<TypedExpr> = null;
 		if (useBlockArg && remaining.length > 0) {
 			var candidate = remaining[remaining.length - 1];
-			if (isFunctionExpr(candidate)) {
+			if (isFunctionExpr(candidate) && !RubyBlockSemantics.inlineFunctionNeedsLambda(candidate)) {
 				remaining.pop();
 				block = candidate;
 			} else if (isFunctionValue(candidate)) {
 				remaining.pop();
-				// A stored Haxe function is already a Ruby Proc/lambda value. Forward it
-				// with native `&proc` syntax so @:rubyBlockArg supports any callback
+				// Stored Haxe functions are already Ruby lambdas. Inline callbacks with
+				// non-tail Haxe returns deliberately join that strict-lambda path because
+				// Ruby `return` inside a normal block would escape the enclosing method.
+				// Forward either value with native `&proc` syntax so @:rubyBlockArg supports any callback
 				// arity without inventing a one-argument wrapper block. The type check is
 				// essential: an omitted optional block leaves the preceding positional or
 				// keyword-carrier argument last, and that value must not be consumed.
@@ -5621,7 +5678,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args = args.concat(compileRubyKeywordArgs(keywordSource));
 		}
 		if (blockValue != null) {
-			args.push(RubyBlockPassArgument(RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(blockValue)))));
+			// Keep both stored callbacks and strict inline lambdas as structured
+			// expressions; the call-argument node alone owns Ruby's `&` marker.
+			args.push(RubyBlockPassArgument(compileExpr(blockValue)));
 		}
 		return RubyCallableCall(receiver, method, args, block == null ? null : compileRubyBlockNode(block));
 	}
@@ -14070,6 +14129,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			localNameScope = previous;
 			throw e;
 		}
+	}
+
+	/** Scopes the one owned callback whose direct calls compile as `yield`. **/
+	static function withDirectYieldBlock<T>(variable:Null<TVar>, build:Void->T):T {
+		var previous = directYieldBlockVariableId;
+		directYieldBlockVariableId = variable == null ? null : variable.id;
+		var result = build();
+		directYieldBlockVariableId = previous;
+		return result;
 	}
 
 	static function newLocalNameScope():LocalNameScope {

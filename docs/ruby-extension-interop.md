@@ -247,6 +247,28 @@ This emits a Ruby module with `extend ActiveSupport::Concern`; static Haxe metho
 
 `npm run test:rails-concerns` is the Rails-backed coverage lane for this contract. It always compiles a Haxe-authored concern and verifies the emitted Ruby shape; when local Rails/ActiveSupport gems are available, it also includes the generated module into an `ActiveModel`-style model and an `ActionController::Base` controller and checks both instance methods and `class_methods` behavior. Set `REQUIRE_RAILS=1` to make missing Rails gems fail instead of skip.
 
+Haxe-owned modules and concerns can expose normal Ruby block methods with the
+same typed callback contract as classes:
+
+```haxe
+@:rubyModule("Traversable")
+class TraversableModule {
+	@:rubyBlockArg
+	public function visit<T>(value:Int, block:Int->T):T {
+		return block(value);
+	}
+}
+```
+
+The generated module contains `def visit(value)` and `yield(value)`. If the
+callback is optional, returned, stored, forwarded, passed positionally, or used
+inside a nested function, the compiler instead emits `&block` and normal
+`block.call(...)`/`&block` forwarding. Ruby callers always use ordinary block
+syntax; Haxe callers always pass the same precise function type. This policy
+also applies to `@:rubyConcern` methods and typed `@:rubyPatch` call contracts.
+See [Ruby Callable And Method ABI](ruby-callable-abi.md) for return semantics,
+constructors, diagnostics, and the full test matrix.
+
 ## Haxe Plus Ruby Escape Hatch
 
 Use raw Ruby only for small metaprogramming islands that cannot yet be represented through typed std/compiler APIs:

@@ -30,6 +30,20 @@ Run `rake test:rails:runtime` from the pinned Ruby to install generated app bund
 
 See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby_profile=idiomatic` and `-D ruby_idiomatic` remain compatibility aliases for `ruby_first`. Profiles are semantic guardrails in one compiler pipeline, not separate backends. `metal` is intentionally not a public Ruby profile; performance policy should use explicit optimizer/runtime defines instead.
 
+## Ruby Callable ABI
+
+| Feature | Haxe surface | Status |
+| --- | --- | --- |
+| Typed native Ruby block calls | `@:rubyBlockArg` plus a final precise function parameter | Implemented for inline, stored, nullable, zero-/multi-argument, generic, patch, module/concern, and constructor call shapes |
+| Haxe-owned Ruby block methods | The same `@:rubyBlockArg` declaration on static, instance, constructor, module, or concern methods | Implemented with direct `yield` versus captured `&block` chosen by conservative escape analysis |
+| Callback-local return safety | Ordinary Haxe `return` inside an inline callback | Implemented: non-tail returns use a strict lambda passed with `&`; tail-safe callbacks remain native blocks |
+| Ruby-origin calls into Haxe-owned block methods | Normal Ruby `{ ... }` / `do ... end` syntax | Executable coverage, including optional/captured/forwarded blocks and required captured-block diagnostics |
+| Keyword/rest definition symmetry | `@:rubyKwargs`, `haxe.Rest<T>`, Haxe spread | Ordered follow-up under the callable-ABI epic |
+| Method values, override/interface inheritance, and `super` forwarding | Ordinary Haxe method values/inheritance | Ordered follow-up under the callable-ABI epic |
+
+See [Ruby Callable And Method ABI](ruby-callable-abi.md) for the authoring,
+lowering, diagnostics, and verification contract.
+
 ## Rails Mode
 
 RailsHx satisfies the production-readiness gate for the documented `0.x` beta

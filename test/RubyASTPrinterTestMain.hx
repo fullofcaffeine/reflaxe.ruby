@@ -19,6 +19,7 @@ class RubyASTPrinterTestMain {
 		];
 		var method = RubyMethodDecl("visit", parameters, [RubyExprStatement(RubyYield([RubyLocal("value")]))]);
 		eq("structured method", printStatement(method), "def visit(value, limit = 2, *items, name:, active: true, **options, &block)\n  yield(value)\nend\n");
+		eq("zero-argument yield", RubyASTPrinter.printExpr(RubyYield([])), "yield");
 
 		var callArgs:Array<RubyCallArgument> = [
 			RubyPositionalArgument(RubyInt("1")),

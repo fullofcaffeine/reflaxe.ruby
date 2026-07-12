@@ -83,8 +83,9 @@ NativeApi.visit(1, &callback)
 
 The compiler evaluates receivers, keyword carriers, and callback expressions
 once and in Haxe order. An omitted or literal-null optional callback emits no
-Ruby block. A non-null nullable callback is forwarded with `&callback`, which
-lets Ruby treat `nil` as no block without a wrapper.
+Ruby block. A nullable callback value is forwarded with `&callback`; Ruby treats
+`&nil` as no block, so the expression stays single-evaluation and needs no
+wrapper or untyped presence probe.
 
 Inline callback bodies with only an optional final Haxe `return` can use a
 normal Ruby block because the final value is the block result. Any non-tail
@@ -104,18 +105,68 @@ lowering follows this compiler policy:
 - Assignment, return, storage, positional passing, forwarding, or capture by a
   nested function counts as escape and therefore emits `&block` plus
   `block.call(...)`.
-- Forwarding to another block method or `super` uses `&block`.
+- Forwarding to another block method uses `&block`.
+- A required captured block gets an entry diagnostic (`ArgumentError`) when a
+  Ruby caller omits it, before nil can be stored, returned, or forwarded.
+
+If a Ruby caller reaches a direct `yield` without a block, Ruby raises its
+normal `LocalJumpError`. Captured required blocks use the explicit
+`ArgumentError` guard because otherwise `&block` would silently bind `nil` and
+could escape before the missing-block mistake became visible.
 
 Authors do not choose between `yield` and `&block`. Both are generated forms of
 the same typed Haxe parameter. The compiler may refine its analysis without
 changing source APIs, provided observable behavior remains the same.
+
+For example, direct use stays as small as handwritten Ruby:
+
+```haxe
+@:rubyBlockArg
+static function visit<T>(value:Int, block:Int->T):T {
+	return block(value);
+}
+```
+
+```ruby
+def self.visit(value)
+  return yield(value)
+end
+```
+
+Optional or first-class use captures the block:
+
+```haxe
+@:rubyBlockArg
+static function keep(block:Int->String):Int->String {
+	return block;
+}
+```
+
+```ruby
+def self.keep(&block)
+  if (block == nil)
+    raise(ArgumentError, "required block missing for self.keep")
+  end
+  return block
+end
+```
+
+The same definition policy applies to static and instance methods,
+constructors, `@:rubyModule` methods, and `@:rubyConcern` methods. A typed
+`@:rubyPatch` contract keeps an existing receiver method call direct and passes
+its callback as a normal Ruby block. Ruby-origin callers use `{ ... }` or
+`do ... end`; no Haxe runtime wrapper is part of the method ABI.
+
+Exceptions thrown by a callback still propagate through the Ruby call and
+through the existing Haxe exception boundary. The yield/capture choice changes
+representation only; it does not swallow exceptions or invent cleanup.
 
 Keyword definitions similarly remove the carrier from positional parameters.
 Required carrier fields become required Ruby keywords. Optional fields preserve
 absence, unknown keys are rejected, and the carrier is materialized only when
 the Haxe body uses it as a whole instead of reading known fields.
 
-## Method Values, Inheritance, And Modules
+## Method Values And Inheritance
 
 Direct annotated calls remain wrapper-free. When an annotated method becomes a
 first-class Haxe function value, the compiler emits an adapter whose Haxe-facing
@@ -127,9 +178,10 @@ through a base class, interface, concrete class, included module, concern, or
 patch must agree. A conflicting override is a compile error instead of a
 static-type-dependent Ruby call shape.
 
-The same rules apply to constructors and `super`. Ruby callers invoke generated
-Haxe-owned methods with normal `do ... end` or `{ ... }` blocks; no Haxe runtime
-wrapper is part of the public Ruby API.
+Constructors already use the same native-block call and definition rules.
+Method-value adapters, inherited ABI resolution, conflicting override checks,
+and `super(..., &block)` forwarding are the next ordered callable-ABI slice;
+until that lands they must not be inferred from the caller's static type.
 
 ## Rest And Splat
 
@@ -193,8 +245,10 @@ Every callable-ABI change must cover the applicable parts of this matrix:
 - All examples, todoapp QA, Playwright browser E2E, packages, and the supported
   Ruby 3.2/3.3/4.0 CI matrix.
 
-Current implementation status is intentionally explicit: extern inline/stored
-block calls are implemented; structured AST nodes and declaration validation
-form the shared foundation; symmetric Haxe-owned definitions, full keyword/rest
-lowering, method-value adapters, and inheritance checks land in the ordered
-follow-up slices tracked under the callable-ABI epic.
+Current implementation status is intentionally explicit: extern and Haxe-owned
+block calls/definitions are symmetric, including constructor, module, concern,
+patch-call, optional/captured/forwarded, Ruby-origin, and callback-return
+coverage. Structured AST nodes and declaration validation own the foundation.
+Full keyword/rest definitions, method-value adapters, inherited ABI resolution,
+override checks, and `super` forwarding remain ordered follow-up slices under
+the callable-ABI epic.

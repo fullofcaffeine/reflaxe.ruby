@@ -115,8 +115,7 @@ class RubyASTPrinter {
 				+ ")";
 			case RubyCallableCall(receiver, name, args, block):
 				printCallableCall(receiver, name, args, block);
-			case RubyYield(args):
-				"yield(" + (args == null ? "" : [for (arg in args) printExpr(arg)].join(", ")) + ")";
+			case RubyYield(args): args == null || args.length == 0 ? "yield" : "yield(" + [for (arg in args) printExpr(arg)].join(", ") + ")";
 			case RubyRawExpr(code): code;
 		}
 	}
