@@ -4,6 +4,7 @@ package reflaxe.ruby.compiler;
 import haxe.macro.Type.TVar;
 import haxe.macro.Type.TypedExpr;
 import haxe.macro.TypedExprTools;
+import reflaxe.ruby.compiler.RubyCallableHierarchy;
 
 /**
 	Owns the use analysis for a Haxe keyword-carrier parameter.
@@ -38,6 +39,17 @@ class RubyKeywordSemantics {
 					&& isLiteralString(key)):
 					// Presence is representable directly: required keywords are always
 					// present and optional keywords use Hash#key? on the captured bucket.
+				case TCall(callee, args) if (keywordForwardingIndex(callee, args, parameter.id) >= 0):
+					// Forwarding to another typed keyword method can reuse the current
+					// required locals/optional bucket. Do not rebuild a Haxe hash merely to
+					// project the same schema back into Ruby keywords.
+					var forwardedIndex = keywordForwardingIndex(callee, args, parameter.id);
+					scan(callee);
+					for (index => arg in args) {
+						if (index != forwardedIndex) {
+							scan(arg);
+						}
+					}
 				case TField(target, _) if (isParameterLocal(target, parameter.id)):
 					// A known typed field read can bind straight to its keyword value.
 				case TLocal(variable) if (variable.id == parameter.id):
@@ -65,6 +77,22 @@ class RubyKeywordSemantics {
 					.name == "hasField";
 			case _: false;
 		}
+	}
+
+	static function keywordForwardingIndex(callee:TypedExpr, args:Array<TypedExpr>, parameterId:Int):Int {
+		var access = switch (callee.expr) {
+			case TField(_, fieldAccess): fieldAccess;
+			case _: null;
+		}
+		if (access == null) {
+			return -1;
+		}
+		var effective = RubyCallableHierarchy.resolveAccess(access, callee.pos, [for (arg in args) arg.t]);
+		if (effective == null || !effective.contract.hasKwargs) {
+			return -1;
+		}
+		var index = effective.contract.kwargsIndex;
+		return index >= 0 && index < args.length && isParameterLocal(args[index], parameterId) ? index : -1;
 	}
 
 	static function isParameterField(expr:TypedExpr, parameterId:Int):Bool {

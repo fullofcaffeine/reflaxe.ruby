@@ -15,11 +15,23 @@ class Main
     puts(HXRuby.stringify(NativeInterop.describe_optional(name: "inline", count: 3)))
     stored = {"name" => "stored", "count" => 4, "label" => nil}
     puts(HXRuby.stringify(NativeInterop.describe_optional(count: stored["count"], name: stored["name"], **(stored.key?("label") ? {label_text: stored["label"]} : {}))))
+    describe_value = ->(*haxe_args) do
+      # Adapt this Haxe function value's positional carriers to Ruby keywords and block syntax.
+      keyword_options = haxe_args.delete_at(0)
+      NativeInterop.describe_optional(count: keyword_options["count"], name: keyword_options["name"], **(keyword_options.key?("label") ? {label_text: keyword_options["label"]} : {}))
+    end
+    puts(HXRuby.stringify(describe_value.call({"name" => "captured", "count" => 5})))
     puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count)))
     NativeInterop.each([1, 2]) { |value| puts(HXRuby.stringify(value)) }
-    NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count) do |value__hx1|
+    each_value = ->(*haxe_args__hx1) do
+      # Adapt this Haxe function value's positional carriers to Ruby keywords and block syntax.
+      callable_block = haxe_args__hx1.pop()
+      NativeInterop.each(*haxe_args__hx1, &callable_block)
+    end
+    each_value.call([6], ->(value__hx1) { puts(HXRuby.stringify(value__hx1)) })
+    NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count) do |value__hx2|
       Kernel.print("item=")
-      puts(HXRuby.stringify(value__hx1))
+      puts(HXRuby.stringify(value__hx2))
     end
     puts(HXRuby.stringify(NativeInterop.accept_symbol(:ready)))
     Kernel.puts("kernel")

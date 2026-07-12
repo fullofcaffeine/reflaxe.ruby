@@ -40,7 +40,7 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 | Ruby-origin calls into Haxe-owned block methods | Normal Ruby `{ ... }` / `do ... end` syntax | Executable coverage, including optional/captured/forwarded blocks and required captured-block diagnostics |
 | Typed Ruby keyword calls and Haxe-owned definitions | `@:rubyKwargs` plus a required anonymous-object/typedef carrier with required/`@:optional` fields | Implemented for inline, stored, arbitrary single-evaluation, structurally narrowed, native-named, static, instance, constructor, combined-block, and Ruby-origin shapes; optional presence and unknown-key rejection are preserved |
 | Ruby rest parameters and splat calls | Final `haxe.Rest<T>` and Haxe `...values` | Implemented for static, instance, constructor, forwarding, inline/stored spread, and Ruby-origin calls; unsupported rest-plus-keyword/block declarations fail closed |
-| Method values, override/interface inheritance, and `super` forwarding | Ordinary Haxe method values/inheritance | Ordered follow-up under the callable-ABI epic |
+| Method values, override/interface inheritance, and `super` forwarding | Ordinary Haxe method values/inheritance | Implemented for static/instance/effectful-receiver captures, optional/combined block+keyword adapters, Rest/splat method values, unannotated overrides, base/interface static types, recursion, modules/concerns, native `super`, and fail-closed conflicts |
 
 See [Ruby Callable And Method ABI](ruby-callable-abi.md) for the authoring,
 lowering, diagnostics, and verification contract.

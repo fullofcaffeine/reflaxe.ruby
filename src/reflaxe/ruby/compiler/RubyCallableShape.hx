@@ -59,6 +59,30 @@ class RubyCallableShape {
 		return hasMeta(field, ":rubyKwargs") || hasMeta(field, ":rubyBlockArg");
 	}
 
+	/**
+		Returns the validated Ruby method spelling for one declaration.
+
+		Hierarchy resolution uses this alongside the keyword/block shape. A native
+		name is part of the callable ABI: inheriting block behavior but silently
+		changing `visit!` back to `visit` would make base-typed and child-typed calls
+		dispatch to different Ruby methods.
+	**/
+	public static function rubyMethodName(field:ClassField, ?diagnosticPos:Position):String {
+		var pos = diagnosticPos == null ? field.pos : diagnosticPos;
+		validateNativeFieldName(field, pos);
+		if (field.meta == null || field.meta.extract == null) {
+			return RubyNaming.toMethodName(field.name);
+		}
+		var entries = field.meta.extract(":native");
+		if (entries.length == 0) {
+			return RubyNaming.toMethodName(field.name);
+		}
+		return switch (entries[0].params[0].expr) {
+			case EConst(CString(value, _)): value;
+			case _: RubyNaming.toMethodName(field.name);
+		}
+	}
+
 	/** True when a call needs structured keyword, block, or rest lowering. **/
 	public static function hasRubyCallableShape(field:ClassField):Bool {
 		if (hasCallableMetadata(field)) {

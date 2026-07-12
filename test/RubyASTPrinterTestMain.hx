@@ -30,6 +30,14 @@ class RubyASTPrinterTestMain {
 		];
 		eq("structured call", RubyASTPrinter.printExpr(RubyCallableCall(RubyLocal("target"), "visit", callArgs)),
 			'target.visit(1, *items, name: "ruby", **options, &callback)');
+		eq("callable adapter lambda", RubyASTPrinter.printExpr(RubyCallableLambda([RubyRestParameter("haxe_args")], [
+			RubyComment("Adapt positional carriers."),
+			RubyExprStatement(RubyCallableCall(RubyLocal("target"), "visit", [
+				RubySplatArgument(RubyLocal("haxe_args")),
+				RubyBlockPassArgument(RubyLocal("block"))
+			]))
+		])),
+			"->(*haxe_args) do\n  # Adapt positional carriers.\n  target.visit(*haxe_args, &block)\nend");
 
 		var projected = RubyBegin([
 			RubyComment("Evaluate the typed keyword carrier once."),

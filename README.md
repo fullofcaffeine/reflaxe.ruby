@@ -96,6 +96,9 @@ method values, and forwarding are specified in the
 - `@:rubyBlockArg` maps one final typed callback symmetrically: call sites emit
   native blocks/`&callback`, while Haxe-owned definitions choose direct `yield`
   or captured `&block` from usage without exposing that Ruby detail to authors.
+- Keyword/block metadata is inherited through overrides and interfaces.
+  Direct calls remain wrapper-free; a genuine Haxe method-value capture emits
+  one documented adapter and evaluates an effectful receiver exactly once.
 - A final Haxe `haxe.Rest<T>` parameter emits Ruby `*args`; Haxe `...values`
   calls emit native Ruby splats without Ruby-specific rest metadata.
 - `@:rubyMixin`, `@:rubyInclude`, `@:rubyPrepend`, and `@:rubyExtend` model Ruby module extension APIs as typed Haxe contracts while emitting normal Ruby `include`/`prepend`/`extend`.

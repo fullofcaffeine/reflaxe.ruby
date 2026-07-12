@@ -186,6 +186,105 @@ class Main {
 `,
 	},
 	{
+		name: "annotated_override_of_positional_base",
+		expected: "Ruby callable ABI conflict",
+		source: `
+class BaseApi {
+  public function new() {}
+  public function visit(value:Int, block:Int->String):String return block(value);
+}
+class ChildApi extends BaseApi {
+  public function new() super();
+  @:rubyBlockArg
+  override public function visit(value:Int, block:Int->String):String return block(value);
+}
+class Main {
+  static function main():Void new ChildApi().visit(1, value -> Std.string(value));
+}
+`,
+	},
+	{
+		name: "conflicting_interface_abis",
+		expected: "Ruby callable ABI conflict",
+		source: `
+interface BlockApi {
+  @:rubyBlockArg public function visit(value:Int, block:Int->String):String;
+}
+interface PositionalApi {
+  public function visit(value:Int, block:Int->String):String;
+}
+class Worker implements BlockApi implements PositionalApi {
+  public function new() {}
+  public function visit(value:Int, block:Int->String):String return block(value);
+}
+class Main {
+  static function main():Void new Worker().visit(1, value -> Std.string(value));
+}
+`,
+	},
+	{
+		name: "conflicting_interface_keyword_names",
+		expected: "Ruby callable ABI conflict",
+		source: `
+typedef FirstOptions = {
+  @:native("first_value") var value:String;
+}
+typedef SecondOptions = {
+  @:native("second_value") var value:String;
+}
+interface FirstApi {
+  @:rubyKwargs public function configure(options:FirstOptions):String;
+}
+interface SecondApi {
+  @:rubyKwargs public function configure(options:SecondOptions):String;
+}
+class Worker implements FirstApi implements SecondApi {
+  public function new() {}
+  public function configure(options:FirstOptions):String return options.value;
+}
+class Main {
+  static function main():Void new Worker().configure({value: "typed"});
+}
+`,
+	},
+	{
+		name: "conflicting_native_override",
+		expected: "Field visit has different @:native value than in superclass",
+		source: `
+class BaseApi {
+  public function new() {}
+  @:native("visit!") @:rubyBlockArg
+  public function visit(value:Int, block:Int->String):String return block(value);
+}
+class ChildApi extends BaseApi {
+  public function new() super();
+  @:native("visit?") @:rubyBlockArg
+  override public function visit(value:Int, block:Int->String):String return block(value);
+}
+class Main {
+  static function main():Void new ChildApi().visit(1, value -> Std.string(value));
+}
+`,
+	},
+	{
+		name: "cross_method_super_dispatch",
+		expected: "can lower `super.method(...)` only when it forwards the currently executing method",
+		source: `
+class BaseApi {
+  public function new() {}
+  public function visit(value:Int):Int return value;
+  public function transform(value:Int):Int return value + 1;
+}
+class ChildApi extends BaseApi {
+  public function new() super();
+  override public function visit(value:Int):Int return super.transform(value);
+}
+class Main {
+  static function main():Void new ChildApi().visit(1);
+}
+`,
+	},
+	{
 		name: "dynamic_block_method",
     expected: "cannot be used on a Haxe dynamic method",
     source: `

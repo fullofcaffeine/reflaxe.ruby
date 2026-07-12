@@ -120,6 +120,7 @@ class RubyASTPrinter {
 				+ ")";
 			case RubyBegin(body): printBegin(body);
 			case RubyLambda(args, body): printLambda(args, body);
+			case RubyCallableLambda(args, body): printCallableLambda(args, body);
 			case RubyCall(receiver, name, args):
 				var printedArgs = args == null ? "" : [for (arg in args) printExpr(arg)].join(", ");
 				if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1) {
@@ -207,6 +208,21 @@ class RubyASTPrinter {
 
 	static function printLambda(args:Array<String>, body:Array<RubyStatement>):String {
 		var printedArgs = args == null ? "" : args.join(", ");
+		if (body != null && body.length == 1) {
+			switch (body[0]) {
+				case RubyExprStatement(expr):
+					return "->(" + printedArgs + ") { " + printExpr(expr) + " }";
+				case _:
+			}
+		}
+		var lines = ["->(" + printedArgs + ") do"];
+		writeBody(lines, body, 1);
+		lines.push("end");
+		return lines.join("\n");
+	}
+
+	static function printCallableLambda(args:Array<RubyMethodParameter>, body:Array<RubyStatement>):String {
+		var printedArgs = args == null ? "" : [for (arg in args) printMethodParameter(arg)].join(", ");
 		if (body != null && body.length == 1) {
 			switch (body[0]) {
 				case RubyExprStatement(expr):

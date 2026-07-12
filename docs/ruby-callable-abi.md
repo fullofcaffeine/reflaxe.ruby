@@ -270,19 +270,51 @@ rule described above.
 ## Method Values And Inheritance
 
 Direct annotated calls remain wrapper-free. When an annotated method becomes a
-first-class Haxe function value, the compiler emits an adapter whose Haxe-facing
-last positional callback is forwarded as a Ruby block. Instance receivers are
-evaluated once when the adapter is created.
+first-class Haxe function value, its type is still an ordinary Haxe function:
+keyword carriers and callbacks arrive positionally through `Proc#call`. The
+compiler therefore emits an adapter only at genuine method-value capture. The
+adapter accepts `*haxe_args`, removes the validated keyword/block carriers,
+projects keywords through the declared schema, and invokes the original method
+with `**`/`&`. Keeping the remaining arguments as a splat preserves omission of
+ordinary optional positional arguments instead of replacing an omitted default
+with an explicit `nil`.
+
+```haxe
+var visit = worker.visit;
+visit("events", {once: true}, value -> value.length);
+```
+
+```ruby
+visit = ->(*haxe_args) do
+  # Adapt this Haxe function value's positional carriers to Ruby keywords and block syntax.
+  callable_block = haxe_args.pop
+  keyword_options = haxe_args.delete_at(1)
+  worker.visit(*haxe_args, once: keyword_options["once"], &callable_block)
+end
+visit.call("events", {"once" => true}, ->(value) { value.length })
+```
+
+This adapter is not a general wrapper runtime and is not emitted for direct
+calls. A local/`this` receiver is closed over directly. A call, constructor, or
+other effectful receiver is first assigned to a collision-safe
+`callable_receiver` local inside `begin`, with a generated comment explaining
+why; later invocations reuse that single captured value. Ordinary/rest-only
+method values remain native Ruby `Method` objects, and Haxe Rest calls through
+them still lower written values/spreads to positional arguments/`*values`.
 
 Callable ABI metadata is inherited as part of the method contract. Calls made
 through a base class, interface, concrete class, included module, concern, or
-patch must agree. A conflicting override is a compile error instead of a
-static-type-dependent Ruby call shape.
+patch must agree. An unannotated override inherits the one effective contract,
+including a native Ruby method name. Definitions use that inherited contract to
+choose keywords and `yield`/`&block`; calls through every static type use the
+same shape. Multiple interfaces, or an explicit override that changes a
+previously public positional/keyword/block/rest/native-name contract, fail at
+compile time instead of producing static-type-dependent Ruby dispatch.
 
-Constructors already use the same native-block call and definition rules.
-Method-value adapters, inherited ABI resolution, conflicting override checks,
-and `super(..., &block)` forwarding are the next ordered callable-ABI slice;
-until that lands they must not be inferred from the caller's static type.
+Recursive calls and same-method Haxe `super.method(...)` forwarding consult the
+same effective declaration. Ruby output uses native `super(...)` with projected
+keywords and/or `&block`; it does not call a method on the return value of
+`super`. Constructors continue to use their existing native keyword/block rules.
 
 ## Rest And Splat
 
@@ -331,6 +363,7 @@ The Ruby AST distinguishes:
   and captured-block method parameters.
 - Positional, splat, keyword, keyword-splat, and block-pass call arguments.
 - A native block attached to a call versus a first-class strict lambda.
+- A structured callable-adapter lambda with typed rest parameters.
 - `yield` as a dedicated expression.
 - Symbols, symbol-key hashes, indexed access, conditional expressions, and
   statement-bearing `begin` expressions used by typed keyword projection.
@@ -356,7 +389,7 @@ The compiler rejects:
 - Callable metadata on Haxe `dynamic function` fields, whose rebinding would
   discard the declared ABI.
 - Invalid field-level `@:native` Ruby method names.
-- Eventually, incompatible override/interface shapes before code generation.
+- Incompatible override/interface callable shapes or native method names.
 
 Diagnostics point at the declaration because that is the source of the invalid
 ABI promise. Haxe's own type checker continues to own missing required
@@ -379,10 +412,18 @@ Every callable-ABI change must cover the applicable parts of this matrix:
   Ruby 3.2/3.3/4.0 CI matrix.
 
 The focused executable gates are `npm run test:ruby-owned-blocks`,
-`npm run test:ruby-keyword-rest`, and
-`npm run test:ruby-callable-diagnostics`. Exact generated Ruby is also owned by
-`npm run test:snapshots`; these focused gates do not replace the full
-repository, todoapp, production, or Playwright checks.
+`npm run test:ruby-keyword-rest`,
+`npm run test:ruby-callable-inheritance`, and
+`npm run test:ruby-callable-diagnostics`.
+
+Focused smoke tests and snapshots own different failure modes. Smoke tests
+compile fixtures, run `ruby -c`, execute Haxe-origin and Ruby-origin behavior,
+compare stdout, and—especially for the diagnostics gate—prove intentionally
+invalid programs fail with a useful message. Snapshots own the complete exact
+Ruby text for valid programs. A snapshot cannot prove that invalid input emits
+no output, while a pattern/runtime smoke test should not approve unrelated
+whole-file changes. Both are required, and neither replaces the full repository,
+todoapp, production, or Playwright checks.
 
 Current implementation status is intentionally explicit: extern and Haxe-owned
 block calls/definitions are symmetric, including constructor, module, concern,
@@ -391,7 +432,7 @@ coverage. Keyword calls/definitions are symmetric for required/optional/native
 fields, stored and effectful carriers, structural narrowing, constructor,
 instance, keyword-plus-block, and Ruby-origin shapes. Native method names and
 Rest/splat definitions, calls, constructors, and forwarding are executable and
-snapshotted. Structured AST nodes and declaration validation own the
-foundation. Method-value adapters, inherited ABI resolution, override checks,
-and `super` block forwarding remain the next ordered slices under the
-callable-ABI epic.
+snapshotted. Static/instance/effectful receiver method values, inherited and
+interface ABI resolution, unannotated overrides, recursion, module/concern
+captures, native `super` forwarding, and conflict diagnostics are executable and
+snapshotted. Structured AST nodes and declaration validation own the foundation.

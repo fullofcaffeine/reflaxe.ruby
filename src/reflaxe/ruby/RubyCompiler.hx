@@ -37,6 +37,7 @@ import reflaxe.ruby.compiler.RubyBlockSemantics;
 import reflaxe.ruby.compiler.RubyCallableShape;
 import reflaxe.ruby.compiler.RubyCallableShape.RubyCallableContract;
 import reflaxe.ruby.compiler.RubyCallableShape.RubyKeywordFieldContract;
+import reflaxe.ruby.compiler.RubyCallableHierarchy;
 import reflaxe.ruby.compiler.RubyKeywordSemantics;
 import reflaxe.ruby.naming.RubyNaming;
 import reflaxe.ruby.rails.RailsRouteDecl;
@@ -210,6 +211,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static var localNameScope:Null<LocalNameScope> = null;
 	static var directYieldBlockVariableId:Null<Int> = null;
 	static var activeRubyKeywordCarrier:Null<ActiveRubyKeywordCarrier> = null;
+	static var activeRubyMethodName:Null<String> = null;
 	static var currentRailsTestAdapter:RailsTestAdapter = RailsMinitest;
 
 	public function new() {
@@ -245,6 +247,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		localNameScope = null;
 		directYieldBlockVariableId = null;
 		activeRubyKeywordCarrier = null;
+		activeRubyMethodName = null;
 		currentRailsTestAdapter = RailsMinitest;
 	}
 
@@ -410,12 +413,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				continue;
 			}
 			if (isRubyConcern && field.isStatic) {
-				concernClassMethods.push(compileMethodAs(field, false));
+				concernClassMethods.push(compileMethodAs(field, false, classType));
 				if (isDynamicMethod(field)) {
 					concernClassMethods.push(compileDynamicMethodSetter(field, false));
 				}
 			} else {
-				classBody.push(compileMethod(field));
+				classBody.push(compileMethod(field, classType));
 				if (isDynamicMethod(field)) {
 					classBody.push(compileDynamicMethodSetter(field, field.isStatic));
 				}
@@ -880,12 +883,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return RubyNaming.toConstantName(raw);
 	}
 
-	static function compileMethod(field:ClassFuncData):RubyStatement {
-		return compileMethodAs(field, field.isStatic);
+	static function compileMethod(field:ClassFuncData, ?owner:ClassType):RubyStatement {
+		return compileMethodAs(field, field.isStatic, owner);
 	}
 
-	static function compileMethodAs(field:ClassFuncData, emitStatic:Bool):RubyStatement {
-		var contract = RubyCallableShape.resolve(field.field, field.field.pos);
+	static function compileMethodAs(field:ClassFuncData, emitStatic:Bool, ?owner:ClassType):RubyStatement {
+		var effective = owner == null
+			|| field.isStatic ? null : RubyCallableHierarchy.resolveDefinition(owner, field.field, field.field.pos);
+		var contract = effective == null ? RubyCallableShape.resolve(field.field, field.field.pos) : effective.contract;
 		var directYieldVariable:Null<TVar> = null;
 		if (contract.hasBlockArg) {
 			var blockArg = field.args[contract.blockIndex];
@@ -924,7 +929,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				localName(arg.tvar);
 			}
 
-			var name = rubyFieldName(field.field.name, field.field.meta);
+			var name = effective == null ? rubyFieldName(field.field.name, field.field.meta) : effective.rubyName;
 			if (!emitStatic && field.field.name == "new") {
 				name = "initialize";
 			}
@@ -969,7 +974,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			// The active variable ID lets ordinary Haxe `block(value)` expressions
 			// lower to `yield(value)` without exposing yield as a second authoring
 			// API. Captured/optional blocks keep their local and compile to `.call`.
-			var body = withActiveRubyKeywordCarrier(keywordBinding, () -> withDirectYieldBlock(directYieldVariable, () -> compileFunctionBody(field.expr)));
+			var body = withActiveRubyMethodName(field.field.name,
+				() -> withActiveRubyKeywordCarrier(keywordBinding, () -> withDirectYieldBlock(directYieldVariable, () -> compileFunctionBody(field.expr))));
 			var entry:Array<RubyStatement> = [];
 			if (keywordBinding != null) {
 				entry = compileOwnedKeywordEntry(name, keywordBinding, optionalKeywordFields);
@@ -1075,11 +1081,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return entry;
 	}
 
-	static function compileRailsModelMethod(field:ClassFuncData):RubyStatement {
+	static function compileRailsModelMethod(field:ClassFuncData, classType:ClassType):RubyStatement {
 		if (!field.isStatic && field.field.name == "new") {
 			return RubyRawStatement("def initialize(*args, **kwargs)\n  args = args + [kwargs] unless kwargs.empty?\n  super(*args)\nend");
 		}
-		return compileMethod(field);
+		return compileMethod(field, classType);
 	}
 
 	static function compileRailsTestMethod(field:ClassFuncData, adapter:RailsTestAdapter):RubyStatement {
@@ -1552,7 +1558,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (field.field.name == "new" || field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
-			body = body.concat(renderStatements([compileMethod(field)]));
+			body = body.concat(renderStatements([compileMethod(field, classType)]));
 		}
 		if (body.length == 0) {
 			body.push("# Rails controller generated by reflaxe.ruby");
@@ -1594,7 +1600,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (field.field.name == "new" || field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
-			body = body.concat(renderStatements([compileMethod(field)]));
+			body = body.concat(renderStatements([compileMethod(field, classType)]));
 		}
 		if (body.length == 0) {
 			body.push("# Rails mailer generated by reflaxe.ruby");
@@ -1636,7 +1642,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (field.field.name == "new" || field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
-			body = body.concat(renderStatements([compileMethod(field)]));
+			body = body.concat(renderStatements([compileMethod(field, classType)]));
 		}
 		if (body.length == 0) {
 			body.push("# Rails job generated by reflaxe.ruby");
@@ -1673,7 +1679,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (field.field.name == "new" || field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
-			body = body.concat(renderStatements([compileMethod(field)]));
+			body = body.concat(renderStatements([compileMethod(field, classType)]));
 		}
 		if (body.length == 0) {
 			body.push("# Rails ActionCable channel generated by reflaxe.ruby");
@@ -1716,7 +1722,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (field.field.name == "new" || field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
-			body = body.concat(renderStatements([compileMethod(field)]));
+			body = body.concat(renderStatements([compileMethod(field, classType)]));
 		}
 		if (body.length == 0) {
 			body.push("# Rails ActionCable connection generated by reflaxe.ruby");
@@ -2594,7 +2600,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			if (hasMeta(field.field.meta, ":railsScope") || hasMeta(field.field.meta, ":railsDefaultScope")) {
 				continue;
 			}
-			body = body.concat(renderStatements([compileRailsModelMethod(field)]));
+			body = body.concat(renderStatements([compileRailsModelMethod(field, classType)]));
 		}
 		if (body.length == 0) {
 			body.push("# Rails model generated by reflaxe.ruby");
@@ -3049,7 +3055,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				// Ruby lowering. Route those through the compact runtime bridge so
 				// native Ruby arrays and Haxe iterator-bearing objects both work.
 				hxrubyCall("iterator", [compileExpr(target)]);
-			case TCall({expr: TField(target, access)}, params) if (isRubyInteropCall(access)):
+			case TCall({expr: TField(target, access)}, params) if (isSuperExpr(target)):
+				compileRubySuperMethodCall(access, params, expr.pos);
+			case TCall({expr: TField(target, access)}, params) if (isRubyInteropCall(access, expr.pos)):
 				compileRubyInteropCall(target, access, params);
 			case TCall({expr: TField(target, access)}, params):
 				var special = compileSpecialCall({expr: TField(target, access), t: expr.t, pos: expr.pos}, params);
@@ -3057,15 +3065,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall({expr: TConst(TSuper)}, params):
 				RubyCall(null, "super", [for (param in params) compileExpr(param)]);
 			case TCall(callee, params):
-				RubyCall(compileExpr(callee), "call", [for (param in params) compileExpr(param)]);
+				compileFunctionValueCall(callee, params);
 			case TField(_, FEnum(enumRef, field)):
 				RubyCall(RubyRawExpr(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name), []);
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
 				var field = fieldRef.get();
 				var owner = coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType);
+				var methodValueContract = isMethodField(field) ? RubyCallableShape.resolve(field, expr.pos, functionArgumentTypes(expr.t)) : null;
 				if (isDynamicMethodClassField(field)) {
 					RubyCall(RubyRawExpr(owner), dynamicMethodValueName(rubyFieldName(field.name, field.meta)), []);
+				} else if (methodValueContract != null && methodValueNeedsCallableAdapter(methodValueContract)) {
+					compileRubyMethodValueAdapter(RubyRawExpr(owner), methodValueContract, RubyCallableShape.rubyMethodName(field, expr.pos), null);
 				} else {
 					var token = actionControllerStaticToken(classType, field.name);
 					var constant = token ?? mathConstantValue(classType.pack, classType.name, field.name) ?? staticRuntimeMethodValue(classType, field.name);
@@ -3081,7 +3092,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, access) if (dynamicMethodFieldValueName(access) != null):
 				RubyCall(compileExpr(target), dynamicMethodFieldValueName(access), []);
 			case TField(target, access) if (methodFieldValueName(access) != null):
-				RubyRawExpr(printInlineExpr(target) + ".method(:" + methodFieldValueName(access) + ")");
+				compileRubyInstanceMethodValue(target, access, expr.t, expr.pos);
 			case TField(target, access) if (isReflectiveFieldAccess(target, access)):
 				hxrubyCall("reflect_field", [compileExpr(target), RubyString(fieldAccessRawName(access))]);
 			case TField(target, FAnon(fieldRef)):
@@ -5821,13 +5832,38 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyInteropCall(target:TypedExpr, access:haxe.macro.Type.FieldAccess, params:Array<TypedExpr>):RubyExpr {
-		var field = fieldAccessClassField(access);
-		if (field == null) {
+		var declared = fieldAccessClassField(access);
+		if (declared != null && RubyCallableShape.hasRubyCallableShape(declared)) {
+			// Keep the exact field selected by Haxe overload resolution. Generated
+			// overload families may share metadata while only one typed branch owns
+			// kwargs; replacing this field with a hierarchy lookup loses that choice.
+			var contract = RubyCallableShape.resolve(declared, declared.pos, [for (param in params) param.t]);
+			return compileRubyReceiverCall(target, RubyCallableShape.rubyMethodName(declared, declared.pos), params, contract);
+		}
+		var effective = RubyCallableHierarchy.resolveAccess(access, target.pos, [for (param in params) param.t]);
+		if (effective == null) {
 			Context.error("Ruby callable metadata requires a statically resolved method declaration.", target.pos);
 			return RubyNil;
 		}
-		var contract = RubyCallableShape.resolve(field, field.pos, [for (param in params) param.t]);
-		return compileRubyReceiverCall(target, fieldAccessName(access), params, contract);
+		return compileRubyReceiverCall(target, effective.rubyName, params, effective.contract);
+	}
+
+	/** Lowers `super.method(...)` to Ruby's same-method `super(...)` form. **/
+	static function compileRubySuperMethodCall(access:haxe.macro.Type.FieldAccess, params:Array<TypedExpr>, pos:haxe.macro.Expr.Position):RubyExpr {
+		var calledName = fieldAccessRawName(access);
+		if (activeRubyMethodName == null || calledName != activeRubyMethodName) {
+			Context.error("RubyHx can lower `super.method(...)` only when it forwards the currently executing method. `super."
+				+ calledName
+				+ "(...)` cannot be represented as Ruby `super(...)` from `"
+				+ (activeRubyMethodName == null ? "this expression" : activeRubyMethodName)
+				+ "`; expose a typed helper on the superclass for cross-method dispatch.",
+				pos);
+		}
+		var effective = RubyCallableHierarchy.resolveAccess(access, pos, [for (param in params) param.t]);
+		if (effective != null && hasStructuredRubyCallableShape(effective.contract)) {
+			return compileRubyCallableCall(null, "super", params, effective.contract);
+		}
+		return RubyCall(null, "super", [for (param in params) compileExpr(param)]);
 	}
 
 	static function compileRubyPatchCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -5865,7 +5901,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	/** Builds the structured keyword/block/rest portion shared by methods and constructors. **/
-	static function compileRubyCallableCall(receiver:RubyExpr, method:String, params:Array<TypedExpr>, contract:RubyCallableContract):RubyExpr {
+	static function compileRubyCallableCall(receiver:Null<RubyExpr>, method:String, params:Array<TypedExpr>, contract:RubyCallableContract):RubyExpr {
 		var remaining = params.copy();
 		var block:Null<TypedExpr> = null;
 		var blockValue:Null<TypedExpr> = null;
@@ -5940,6 +5976,118 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			args.push(RubyBlockPassArgument(compileExpr(blockValue)));
 		}
 		return RubyCallableCall(receiver, method, args, block == null ? null : compileRubyBlockNode(block));
+	}
+
+	/**
+		Adapts a captured Haxe method value back into its native Ruby call ABI.
+
+		A direct Haxe call already knows that its final positional values represent a
+		keyword carrier and/or block. Once the method is stored as a plain Haxe
+		function, calls use `Proc#call` and those values are positional again. The
+		lambda below is therefore required only at capture: it preserves optional
+		positional omission with `*haxe_args`, removes the typed carriers by their
+		validated indices, then invokes the original method with Ruby keywords/`&`.
+	**/
+	static function compileRubyMethodValueAdapter(receiver:RubyExpr, contract:RubyCallableContract, rubyName:String, captureTarget:Null<TypedExpr>):RubyExpr {
+		var haxeArgsName = allocateSyntheticLocalName("haxe_args");
+		var haxeArgs = RubyLocal(haxeArgsName);
+		var body:Array<RubyStatement> = [
+			RubyComment("Adapt this Haxe function value's positional carriers to Ruby keywords and block syntax.")
+		];
+		var blockValue:Null<RubyExpr> = null;
+		if (contract.hasBlockArg) {
+			var blockName = allocateSyntheticLocalName("callable_block");
+			var pop = RubyCall(haxeArgs, "pop", []);
+			var value = contract.blockOptional ? RubyConditional(RubyBinary(">", RubyCall(haxeArgs, "length", []), RubyInt(Std.string(contract.blockIndex))),
+				pop, RubyNil) : pop;
+			body.push(RubyAssign(RubyLocal(blockName), value));
+			blockValue = RubyLocal(blockName);
+		}
+		var keywordValue:Null<RubyExpr> = null;
+		if (contract.hasKwargs) {
+			var keywordName = allocateSyntheticLocalName("keyword_options");
+			body.push(RubyAssign(RubyLocal(keywordName), RubyCall(haxeArgs, "delete_at", [RubyInt(Std.string(contract.kwargsIndex))])));
+			keywordValue = RubyLocal(keywordName);
+		}
+		var positionalCount = contract.hasKwargs ? contract.kwargsIndex : contract.hasBlockArg ? contract.blockIndex : 0;
+		var callArgs:Array<RubyCallArgument> = positionalCount == 0 ? [] : [RubySplatArgument(haxeArgs)];
+		if (keywordValue != null) {
+			callArgs = callArgs.concat(compileRubyKeywordArgsFromValue(keywordValue, contract.keywordFields));
+		}
+		if (blockValue != null) {
+			callArgs.push(RubyBlockPassArgument(blockValue));
+		}
+		body.push(RubyExprStatement(RubyCallableCall(receiver, rubyName, callArgs)));
+		var adapter = RubyCallableLambda([RubyRestParameter(haxeArgsName)], body);
+		if (captureTarget == null || isStableMethodValueReceiver(captureTarget)) {
+			return adapter;
+		}
+		var receiverName = allocateSyntheticLocalName("callable_receiver");
+		var capturedReceiver = RubyLocal(receiverName);
+		// Rebuild the adapter with the captured receiver. Ruby locals are lexical,
+		// so later calls reuse the one value evaluated at method-value creation.
+		body[body.length - 1] = RubyExprStatement(RubyCallableCall(capturedReceiver, rubyName, callArgs));
+		return RubyBegin([
+			RubyComment("Evaluate the method-value receiver once at capture, matching Haxe expression semantics."),
+			RubyAssign(capturedReceiver, receiver),
+			RubyExprStatement(RubyCallableLambda([RubyRestParameter(haxeArgsName)], body))
+		]);
+	}
+
+	static function compileRubyInstanceMethodValue(target:TypedExpr, access:haxe.macro.Type.FieldAccess, functionType:haxe.macro.Type,
+			pos:haxe.macro.Expr.Position):RubyExpr {
+		var effective = RubyCallableHierarchy.resolveAccess(access, pos, functionArgumentTypes(functionType));
+		if (effective == null || !methodValueNeedsCallableAdapter(effective.contract)) {
+			var rubyName = effective == null ? methodFieldValueName(access) : effective.rubyName;
+			return RubyRawExpr(printInlineExpr(target) + ".method(:" + rubyName + ")");
+		}
+		var receiver = compileExpr(target);
+		return compileRubyMethodValueAdapter(receiver, effective.contract, effective.rubyName, target);
+	}
+
+	static function functionArgumentTypes(type:haxe.macro.Type):Null<Array<haxe.macro.Type>> {
+		return switch (TypeTools.follow(type)) {
+			case TFun(args, _): [for (arg in args) arg.t];
+			case _: null;
+		}
+	}
+
+	static function compileRubyKeywordArgsFromValue(source:RubyExpr, fields:Array<RubyKeywordFieldContract>):Array<RubyCallArgument> {
+		var args:Array<RubyCallArgument> = [
+			for (field in fields)
+				if (!field.optional) RubyKeywordArgument(field.rubyName, RubyIndex(source, RubyString(field.haxeName)))
+		];
+		for (field in fields) {
+			if (!field.optional) {
+				continue;
+			}
+			var value = RubyIndex(source, RubyString(field.haxeName));
+			args.push(RubyKeywordSplatArgument(RubyConditional(RubyCall(source, "key?", [RubyString(field.haxeName)]),
+				RubySymbolHash([{key: field.rubyName, value: value}]), RubySymbolHash([]))));
+		}
+		return args;
+	}
+
+	static function methodValueNeedsCallableAdapter(contract:RubyCallableContract):Bool {
+		return contract.hasKwargs || contract.hasBlockArg;
+	}
+
+	static function hasStructuredRubyCallableShape(contract:RubyCallableContract):Bool {
+		return contract.hasKwargs || contract.hasBlockArg || contract.hasRest;
+	}
+
+	static function isStableMethodValueReceiver(expr:TypedExpr):Bool {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TLocal(_) | TConst(TThis): true;
+			case _: false;
+		}
+	}
+
+	static function isSuperExpr(expr:TypedExpr):Bool {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TSuper): true;
+			case _: false;
+		}
 	}
 
 	static function compileRubySymbol(params:Array<TypedExpr>):RubyExpr {
@@ -6046,6 +6194,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	**/
 	static function compileRubyKeywordArgs(expr:TypedExpr, schema:Array<RubyKeywordFieldContract>):Array<RubyCallArgument> {
 		var source = unwrapRubyCarrier(expr);
+		var activeForwarding = compileActiveRubyKeywordForwardingArgs(source);
+		if (activeForwarding != null) {
+			return activeForwarding;
+		}
 		return switch (source.expr) {
 			case TObjectDecl(fields):
 				var args:Array<RubyCallArgument> = [];
@@ -6101,6 +6253,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				body.push(RubyExprStatement(RubyLocal(projectedName)));
 				[RubyKeywordSplatArgument(RubyBegin(body))];
 		}
+	}
+
+	/** Reuses definition-side keyword bindings when one typed method forwards. **/
+	static function compileActiveRubyKeywordForwardingArgs(source:TypedExpr):Null<Array<RubyCallArgument>> {
+		var binding = activeRubyKeywordCarrier;
+		if (binding == null || !RubyKeywordSemantics.isParameterLocal(source, binding.variableId)) {
+			return null;
+		}
+		var args:Array<RubyCallArgument> = [
+			for (field in binding.fields)
+				if (!field.optional) RubyKeywordArgument(field.rubyName, RubyLocal(field.rubyName))
+		];
+		for (field in binding.fields) {
+			if (!field.optional) {
+				continue;
+			}
+			if (binding.optionalBucketName == null) {
+				Context.error("Internal Ruby keyword lowering error: forwarded optional field has no presence bucket.", source.pos);
+				continue;
+			}
+			var bucket = RubyLocal(binding.optionalBucketName);
+			args.push(RubyKeywordSplatArgument(RubyConditional(RubyCall(bucket, "key?", [RubySymbol(field.rubyName)]),
+				RubySymbolHash([{key: field.rubyName, value: RubyIndex(bucket, RubySymbol(field.rubyName))}]), RubySymbolHash([]))));
+		}
+		return args;
 	}
 
 	static function unwrapRubyCarrier(expr:TypedExpr):TypedExpr {
@@ -6307,9 +6484,51 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return line.indexOf("\n") == -1 && !StringTools.startsWith(StringTools.trim(line), "return");
 	}
 
-	static function isRubyInteropCall(access:haxe.macro.Type.FieldAccess):Bool {
-		var field = fieldAccessClassField(access);
-		return field != null && RubyCallableShape.hasRubyCallableShape(field);
+	static function isRubyInteropCall(access:haxe.macro.Type.FieldAccess, pos:haxe.macro.Expr.Position):Bool {
+		var declared = fieldAccessClassField(access);
+		if (declared != null && RubyCallableShape.hasRubyCallableShape(declared)) {
+			// Generated overload families need the real call argument types before
+			// `@:rubyKwargs` can choose their anonymous carrier vs nominal positional
+			// branch. Detection must not prematurely validate the selected overload.
+			return true;
+		}
+		var effective = RubyCallableHierarchy.resolveAccess(access, pos);
+		return effective != null && hasStructuredRubyCallableShape(effective.contract);
+	}
+
+	/** Preserves Haxe Rest when a method has already become a function value. **/
+	static function compileFunctionValueCall(callee:TypedExpr, params:Array<TypedExpr>):RubyExpr {
+		var functionArgs = switch (TypeTools.follow(callee.t)) {
+			case TFun(args, _): args;
+			case _: null;
+		}
+		if (functionArgs == null || functionArgs.length == 0 || !RubyCallableShape.isRestType(functionArgs[functionArgs.length - 1].t)) {
+			return RubyCall(compileExpr(callee), "call", [for (param in params) compileExpr(param)]);
+		}
+		var restIndex = functionArgs.length - 1;
+		var args:Array<RubyCallArgument> = [];
+		for (index in 0...restIndex) {
+			if (index < params.length) {
+				args.push(RubyPositionalArgument(compileExpr(params[index])));
+			}
+		}
+		var restParams = params.slice(restIndex);
+		if (restParams.length == 1 && RubyCallableShape.isRestType(restParams[0].t)) {
+			var restSource = unwrapRubyRestCarrier(restParams[0]);
+			switch (restSource.expr) {
+				case TArrayDecl(values):
+					for (value in values) {
+						args.push(RubyPositionalArgument(compileExpr(value)));
+					}
+				case _:
+					args.push(RubySplatArgument(compileExpr(restSource)));
+			}
+		} else {
+			for (param in restParams) {
+				args.push(RubyPositionalArgument(compileExpr(param)));
+			}
+		}
+		return RubyCallableCall(compileExpr(callee), "call", args);
 	}
 
 	static function isFunctionExpr(expr:TypedExpr):Bool {
@@ -10845,7 +11064,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				continue;
 			}
 			validateRailsMailerPreviewMethod(field);
-			body = body.concat(renderStatements([compileMethodAs(field, false)]));
+			body = body.concat(renderStatements([compileMethodAs(field, false, classType)]));
 		}
 		if (body.length == 0) {
 			Context.error("@:railsMailerPreview classes must define at least one instance preview method.", classType.pos);
@@ -14481,6 +14700,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			activeRubyKeywordCarrier = previous;
 			throw error;
 		}
+	}
+
+	/** Scopes the Haxe method identity used to validate native Ruby `super`. **/
+	static function withActiveRubyMethodName<T>(name:String, build:Void->T):T {
+		var previous = activeRubyMethodName;
+		activeRubyMethodName = name;
+		// Context.error aborts compilation, so successful restoration is sufficient;
+		// unlike macro exception seams this helper needs no broad catch.
+		var result = build();
+		activeRubyMethodName = previous;
+		return result;
 	}
 
 	static function newLocalNameScope():LocalNameScope {

@@ -37,6 +37,7 @@ enum RubyExpr {
 	RubyConditional(cond:RubyExpr, thenExpr:RubyExpr, elseExpr:RubyExpr);
 	RubyBegin(body:Array<RubyStatement>);
 	RubyLambda(args:Array<String>, body:Array<RubyStatement>);
+	RubyCallableLambda(args:Array<RubyMethodParameter>, body:Array<RubyStatement>);
 	RubyCall(?receiver:RubyExpr, name:String, args:Array<RubyExpr>);
 	RubyCallableCall(?receiver:RubyExpr, name:String, args:Array<RubyCallArgument>, ?block:RubyBlock);
 	RubyYield(args:Array<RubyExpr>);

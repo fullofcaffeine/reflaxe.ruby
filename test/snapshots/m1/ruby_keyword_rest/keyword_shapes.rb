@@ -21,15 +21,7 @@ class KeywordShapes
     if (!unknown_keywords.empty?())
       raise(ArgumentError, ("unknown keyword(s) for describe_instance: " + unknown_keywords.inspect()))
     end
-    # Rebuild the typed Haxe keyword carrier because this method uses it as a value.
-    options = {"requiredLabel" => required_label, "retries" => retry_count}
-    if optional_keywords.key?(:active)
-      options["active"] = optional_keywords[:active]
-    end
-    if optional_keywords.key?(:note_text)
-      options["note"] = optional_keywords[:note_text]
-    end
-    return KeywordShapes.describe("instance", required_label: options["requiredLabel"], retry_count: options["retries"], **(options.key?("active") ? {active: options["active"]} : {}), **(options.key?("note") ? {note_text: options["note"]} : {}))
+    return KeywordShapes.describe("instance", required_label: required_label, retry_count: retry_count, **(optional_keywords.key?(:active) ? {active: optional_keywords[:active]} : {}), **(optional_keywords.key?(:note_text) ? {note_text: optional_keywords[:note_text]} : {}))
   end
   def self.describe(prefix, required_label:, retry_count:, **optional_keywords)
     # Preserve optional keyword presence separately from explicit nil and reject undeclared keys.

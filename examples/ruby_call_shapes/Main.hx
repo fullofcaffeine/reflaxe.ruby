@@ -1,15 +1,18 @@
 // Ruby call-shape interop smoke.
 //
 // Demonstrates: Ruby keyword arguments, block arguments, Ruby symbols, native
-// method names, and direct Kernel extern calls from typed Haxe.
+// method names, first-class method values, and direct Kernel extern calls from
+// typed Haxe.
 // Type safety: inline and stored kwargs are checked by Haxe structural typing;
 // `@:optional` plus field-level `@:native` preserves optional Ruby labels;
 // block functions have typed parameters; and `Symbol.of(...)` avoids raw
 // symbol strings at call sites.
 // IntelliSense: editors should complete typed extern methods, required/optional
-// kwargs, block function signatures, and `Kernel` helpers.
+// kwargs, block function signatures, captured method-value signatures, and
+// `Kernel` helpers.
 // Ruby output: idiomatic Ruby calls such as `foo(name: ..., count: ...)`,
-// block syntax, and `:symbol` literals.
+// block syntax, and `:symbol` literals. Captured methods alone receive a small
+// documented lambda that restores Ruby keywords/blocks at invocation.
 import ruby.Kernel;
 import ruby.Symbol;
 
@@ -54,10 +57,14 @@ class Main {
 		Sys.println(NativeInterop.describeOptional({name: "inline", count: 3}));
 		var stored:OptionalDescribeOptions = {name: "stored", count: 4, label: null};
 		Sys.println(NativeInterop.describeOptional(stored));
+		var describeValue = NativeInterop.describeOptional;
+		Sys.println(describeValue({name: "captured", count: 5}));
 		Sys.println(NativeInterop.describeDetails({name: "ruby", tags: [Symbol.of("fast"), Symbol.of("typed")], count: count}));
 		NativeInterop.each([1, 2], function(value) {
 			Sys.println(value);
 		});
+		var eachValue = NativeInterop.each;
+		eachValue([6], value -> Sys.println(value));
 		NativeInterop.withOptions([3, 4], {prefix: "item", tags: [Symbol.of("safe")], count: count}, function(value) {
 			Kernel.print("item=");
 			Sys.println(value);

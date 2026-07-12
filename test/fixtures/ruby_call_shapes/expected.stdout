@@ -1,9 +1,11 @@
 ruby:2
 inline:3:missing
 stored:4:nil
+captured:5:missing
 ruby:2:fast|typed
 1
 2
+6
 item=3
 item=4
 ready
