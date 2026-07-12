@@ -213,7 +213,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
       - name: Check version and release metadata
         run: |
           node scripts/ci/version-sync-check.js
+          npm run test:release-version-policy
           node scripts/ci/release-contracts-check.js

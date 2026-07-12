@@ -6,14 +6,19 @@ authoring layer for ActiveRecord, ActionController, ActionView/HHX, routing,
 Turbo, ActionCable, generators, migrations, tests, and installed-gem companion
 contracts such as DeviseHx.
 
-The current `0.1.0-beta.2` baseline supports executable Ruby smoke
-fixtures, shared `hxruby` runtime files and gem packaging, Ruby interop
+The current `0.1.0-beta.2` baseline supports executable Ruby smoke fixtures,
+shared `hxruby` runtime files and gem packaging, Ruby interop
 metadata, typed extension/mixin contracts, and a RailsHx dogfood app with typed
 models, relations, migrations, controllers, params, HHX templates, Haxe-owned
 routes, Devise-backed sessions, Turbo Streams, Haxe-authored browser code,
 Rails tests, Playwright, and production smoke coverage.
 
-The project intentionally uses `0.x` beta versioning until the compiler and RailsHx framework layer are production-ready.
+That baseline is the historical prerelease tag. Normal releases from `main`
+use conventional `0.x` SemVer: fix commits advance patch, features and
+major-zero breaking changes advance minor, and `1.0.0` plus each later stable
+major require independent policy approval. Major zero already communicates
+initial development, so the normal channel does not add a `-beta` suffix. See
+[Release Version Policy](docs/release-version-policy.md).
 
 There are two first-class layers:
 
@@ -327,8 +332,8 @@ rake todoapp:production
 
 That command compiles Haxe/HHX, compiles Haxe-authored JS, materializes the generated Rails app, runs Rails migrations/tests, runs `zeitwerk:check`, precompiles production assets, creates `test/.generated/rails_integration_release.tgz`, and verifies the release artifact includes generated RailsHx files.
 
-RailsHx satisfies the production-readiness gate for the documented `0.x` beta
-contract, while remaining a beta API rather than a stable `1.x` compatibility
+RailsHx satisfies the production-readiness gate for the documented major-zero
+initial-development contract without making a stable `1.x` compatibility
 promise. The readiness contract and required gates are documented in
 [docs/railshx-production-readiness.md](docs/railshx-production-readiness.md).
 

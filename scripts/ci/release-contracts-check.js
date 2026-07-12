@@ -28,12 +28,16 @@ const haxelibJson = readJson("haxelib.json");
 const haxerc = readJson(".haxerc");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const releaseWorkflow = readFileSync(".github/workflows/release.yml", "utf8");
+const agentsGuide = readFileSync("AGENTS.md", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const changelog = readFileSync("CHANGELOG.md", "utf8");
 const rootRakefile = readFileSync("Rakefile", "utf8");
 const haxelibPackageBuilder = readFileSync("scripts/release/build-haxelib-package.js", "utf8");
 const haxelibPackageCheck = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
 const versionSyncCheck = readFileSync("scripts/ci/version-sync-check.js", "utf8");
+const releaseVersionPolicy = readFileSync("scripts/release/analyze-commits.mjs", "utf8");
+const releaseVersionPolicyCheck = readFileSync("scripts/ci/release-version-policy-check.mjs", "utf8");
+const releaseVersionPolicyDocs = readFileSync("docs/release-version-policy.md", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const haxelibPackageCheckText = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
@@ -82,7 +86,7 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   fail("package.json release.plugins must be configured");
 } else {
   for (const plugin of [
-    "@semantic-release/commit-analyzer",
+    "./scripts/release/analyze-commits.mjs",
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     "@semantic-release/exec",
@@ -92,6 +96,19 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
     if (!releaseConfig.plugins.some((entry) => Array.isArray(entry) ? entry[0] === plugin : entry === plugin)) {
       fail(`semantic-release plugin missing: ${plugin}`);
     }
+  }
+
+  if ((releaseConfig.branches ?? []).join("\n") !== "main") {
+    fail("semantic-release must use normal releases from main only");
+  }
+  if (releaseConfig.tagFormat !== "v${version}") {
+    fail("semantic-release tagFormat must be canonical v${version}");
+  }
+  const policyPlugin = releaseConfig.plugins.find(
+    (entry) => Array.isArray(entry) && entry[0] === "./scripts/release/analyze-commits.mjs"
+  );
+  if (!policyPlugin || JSON.stringify(policyPlugin[1]?.approvedStableMajors) !== "[]") {
+    fail("release policy must keep stable majors unapproved until an explicit reviewed policy change");
   }
 
   const execPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/exec");
@@ -134,6 +151,22 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   }
 }
 
+if (packageJson.devDependencies?.semver !== "7.8.4") {
+  fail("the release policy must directly pin the standards-tested semver library at 7.8.4");
+}
+expectIncludes(releaseVersionPolicy, 'from "@semantic-release/commit-analyzer"', "release version policy");
+expectIncludes(releaseVersionPolicy, 'from "semver"', "release version policy");
+expectIncludes(releaseVersionPolicy, "validateTagLineage", "release version policy");
+expectIncludes(releaseVersionPolicy, "approvedStableMajors", "release version policy");
+expectExcludes(releaseVersionPolicy, 'readFileSync("package.json"', "release version policy");
+expectIncludes(releaseVersionPolicyCheck, 'from "semantic-release"', "release version policy check");
+expectIncludes(releaseVersionPolicyCheck, '"99.99.99"', "release version policy package-independence fixture");
+expectIncludes(releaseVersionPolicyDocs, "normal `0.x` releases from `main`", "release version policy docs");
+expectIncludes(releaseVersionPolicyDocs, "v0.1.0-beta.2", "release version policy transition docs");
+expectIncludes(agentsGuide, "normal `0.x` releases from `main`", "AGENTS release policy");
+expectIncludes(agentsGuide, "approvedStableMajors", "AGENTS stable-major policy");
+expectExcludes(agentsGuide, "until the package is ready for stable `1.x`", "AGENTS obsolete beta policy");
+
 expectIncludes(ciWorkflow, `HAXE_VERSION: "${haxerc.version}"`, "CI workflow");
 expectIncludes(ciWorkflow, "ruby-version:", "CI workflow");
 for (const rubyVersion of ['"3.2"', '"3.3"', '"4.0"']) {
@@ -141,6 +174,7 @@ for (const rubyVersion of ['"3.2"', '"3.3"', '"4.0"']) {
 }
 expectIncludes(ciWorkflow, "npx lix download haxe", "CI Haxe setup");
 expectIncludes(ciWorkflow, "npm test", "CI test step");
+expectIncludes(ciWorkflow, "npm run test:release-version-policy", "CI release policy step");
 expectIncludes(ciWorkflow, "RailsHx browser sentinel", "CI workflow");
 expectIncludes(ciWorkflow, "npx playwright install --with-deps chromium", "CI workflow");
 expectIncludes(ciWorkflow, "npm run test:todoapp-playwright", "CI workflow");
