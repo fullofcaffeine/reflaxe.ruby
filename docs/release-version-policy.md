@@ -10,10 +10,10 @@ This document owns version selection and the boundary into artifact staging.
 Tracked version surfaces use the non-release `0.0.0` development sentinel.
 Release preparation injects the selected version, matching tag, and tested
 source SHA only into temporary Haxelib and gem trees and leaves the checkout
-byte-identical. Same-commit publication, hosted digests, and repair are
-separate release-protocol slices.
-Until those slices replace the predecessor workflow, publication remains
-manually guarded even though version analysis is automated and tested.
+byte-identical. Normal publication is the final privileged job of the same
+successful main-push workflow and checks out that run's exact SHA. Hosted
+digest verification and existing-tag-only repair remain separate
+release-protocol work. See `release-publication-workflow.md`.
 
 ## Conventional Commit mapping
 

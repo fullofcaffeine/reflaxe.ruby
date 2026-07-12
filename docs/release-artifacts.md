@@ -20,9 +20,9 @@ cannot enter a release. Release-only identity is written in temporary staging:
 - tracked `0.0.0` development metadata remains byte-identical.
 
 Release preparation additionally requires the supplied SHA to equal checked-out
-`HEAD` and refuses any tracked diff. This is a staging invariant; publication
-authorization and exact workflow pins are owned by the next release-protocol
-slice.
+`HEAD` and refuses any tracked diff. Normal publication enforces this inside
+the final job of the same successful main-push workflow; see
+`release-publication-workflow.md`.
 
 ## Fixed outputs
 
@@ -52,8 +52,8 @@ The gem is built from its isolated Git-derived staging directory with sorted
 gemspec files, normalized modes, the source commit timestamp in
 `SOURCE_DATE_EPOCH`, `TZ=UTC`, the C locale, and umask `022`. This removes
 ambient timestamp, locale, timezone, staging-directory, and umask variation.
-The release workflow’s exact Ruby/RubyGems toolchain pin is a separate
-publication contract.
+The release workflow pins Ruby `3.3.11` and RubyGems `3.5.22` alongside the
+exact Node/npm/Haxe release toolchain.
 
 Each artifact contains `artifact-manifest.json`. The manifest is the full
 content contract, not an advisory inventory: every other regular file appears

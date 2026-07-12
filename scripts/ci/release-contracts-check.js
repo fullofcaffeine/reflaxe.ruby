@@ -27,7 +27,6 @@ const packageJson = readJson("package.json");
 const haxelibJson = readJson("haxelib.json");
 const haxerc = readJson(".haxerc");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
-const releaseWorkflow = readFileSync(".github/workflows/release.yml", "utf8");
 const agentsGuide = readFileSync("AGENTS.md", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const changelog = readFileSync("CHANGELOG.md", "utf8");
@@ -39,6 +38,7 @@ const releaseVersionPolicy = readFileSync("scripts/release/analyze-commits.mjs",
 const releaseVersionPolicyCheck = readFileSync("scripts/ci/release-version-policy-check.mjs", "utf8");
 const releaseVersionPolicyDocs = readFileSync("docs/release-version-policy.md", "utf8");
 const releaseArtifactDocs = readFileSync("docs/release-artifacts.md", "utf8");
+const releaseWorkflowDocs = readFileSync("docs/release-publication-workflow.md", "utf8");
 const artifactUtils = readFileSync("scripts/release/artifact-utils.js", "utf8");
 const deterministicZip = readFileSync("scripts/release/deterministic-zip.js", "utf8");
 const artifactReproducibilityCheck = readFileSync("scripts/ci/release-artifact-reproducibility-check.js", "utf8");
@@ -140,6 +140,9 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   if (!githubAssets.some((asset) => asset?.label?.includes("${nextRelease.version}"))) {
     fail("@semantic-release/github asset label must include the release version");
   }
+  if (githubPlugin?.[1]?.successCommentCondition !== false || githubPlugin?.[1]?.failCommentCondition !== false || githubPlugin?.[1]?.releasedLabels !== false) {
+    fail("@semantic-release/github must not require issue or pull-request write permissions");
+  }
 }
 
 if (packageJson.devDependencies?.semver !== "7.8.4") {
@@ -160,6 +163,10 @@ expectIncludes(releaseVersionPolicyDocs, "v0.1.0-beta.2", "release version polic
 expectIncludes(releaseArtifactDocs, "follows the established", "release artifact design rationale");
 expectIncludes(releaseArtifactDocs, "artifact-manifest.json", "release artifact content contract docs");
 expectIncludes(releaseArtifactDocs, "SHA-256", "release artifact sidecar docs");
+expectIncludes(releaseWorkflowDocs, "final job", "tested-commit publication docs");
+expectIncludes(releaseWorkflowDocs, "contents: write", "publication permission docs");
+expectIncludes(releaseWorkflowDocs, "22.14.0", "publication toolchain docs");
+expectIncludes(releaseWorkflowDocs, "failed, cancelled, skipped", "publication trigger matrix docs");
 expectIncludes(deterministicZip, 'require("fflate")', "deterministic ZIP builder");
 expectIncludes(deterministicZip, "FIXED_MTIME", "deterministic ZIP builder");
 expectIncludes(deterministicZip, "validateEntryNames", "deterministic ZIP structural validation");
@@ -193,7 +200,7 @@ expectIncludes(ciWorkflow, "npx lix download haxe", "CI Haxe setup");
 expectIncludes(ciWorkflow, "npm test", "CI test step");
 expectIncludes(ciWorkflow, "npm run test:release-version-policy", "CI release policy step");
 expectIncludes(ciWorkflow, "RailsHx browser sentinel", "CI workflow");
-expectIncludes(ciWorkflow, "npx playwright install --with-deps chromium", "CI workflow");
+expectIncludes(ciWorkflow, "./node_modules/.bin/playwright install --with-deps chromium", "CI workflow");
 expectIncludes(ciWorkflow, "npm run test:todoapp-playwright", "CI workflow");
 expectIncludes(ciWorkflow, "RailsHx runtime integration", "CI workflow");
 expectIncludes(ciWorkflow, "RailsHx runtime integration / Ruby ${{ matrix.ruby_version }}", "CI workflow");
@@ -201,8 +208,8 @@ expectIncludes(ciWorkflow, "npm run test:rails-runtime", "CI workflow");
 expectIncludes(ciWorkflow, "ruby-version: ${{ matrix.ruby_version }}", "CI workflow");
 expectIncludes(ciWorkflow, "RailsHx production dogfood", "CI workflow");
 expectIncludes(ciWorkflow, "npm run test:todoapp-production", "CI workflow");
-expectIncludes(ciWorkflow, "actions/checkout@v6", "CI workflow");
-expectIncludes(ciWorkflow, "actions/setup-node@v6", "CI workflow");
+expectIncludes(ciWorkflow, "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10", "CI workflow");
+expectIncludes(ciWorkflow, "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e", "CI workflow");
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 expectIncludes(packageJson.scripts.test, "test:examples-compile", "npm test");
 expectIncludes(packageJson.scripts["test:examples-compile"] ?? "", "examples-compile-smoke.js", "package.json scripts");
@@ -232,6 +239,8 @@ expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "test:rails-inte
 expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:gem-package"] ?? "", "gem-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:release-artifacts"] ?? "", "release-artifact-reproducibility-check.js", "package.json scripts");
+expectIncludes(packageJson.scripts["test:release-workflow"] ?? "", "release-workflow-check.js", "package.json scripts");
+expectIncludes(packageJson.scripts["ci:release-contracts"] ?? "", "test:release-workflow", "npm test release workflow wiring");
 expectIncludes(packageJson.scripts["ci:release-contracts"] ?? "", "test:release-artifacts", "npm test release artifact wiring");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-package.js", "package.json scripts");
@@ -317,13 +326,13 @@ expectIncludes(readme, "DeviseHx Release Lane", "README DeviseHx release docs");
 expectIncludes(readme, "std/devisehx/**", "README DeviseHx release docs");
 expectIncludes(readme, "bin/rails generate hxruby:adopt --gem devise", "README DeviseHx release docs");
 expectIncludes(changelog, "incubated DeviseHx release lane", "CHANGELOG DeviseHx release docs");
-expectIncludes(releaseWorkflow, "npx semantic-release", "Release workflow");
-expectIncludes(releaseWorkflow, "fetch-depth: 0", "Release workflow");
-expectIncludes(releaseWorkflow, "actions/checkout@v6", "Release workflow");
-expectIncludes(releaseWorkflow, "actions/setup-node@v6", "Release workflow");
-expectIncludes(releaseWorkflow, "ruby/setup-ruby@v1", "Release workflow");
-expectIncludes(releaseWorkflow, 'RUBY_VERSION: "3.3"', "Release workflow");
-expectExcludes(releaseWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "Release workflow");
+expectIncludes(ciWorkflow, "Release exact CI-tested commit", "CI release job");
+expectIncludes(ciWorkflow, "./node_modules/.bin/semantic-release", "CI release job");
+expectIncludes(ciWorkflow, "fetch-depth: 0", "CI release job");
+expectIncludes(ciWorkflow, "ref: ${{ github.sha }}", "CI release job");
+expectIncludes(ciWorkflow, 'ruby-version: "3.3.11"', "CI release job");
+expectIncludes(ciWorkflow, 'rubygems: "3.5.22"', "CI release job");
+expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 
 expectIncludes(devisehxReleaseLane, "std/devisehx/**", "DeviseHx release lane docs");
 expectIncludes(devisehxReleaseLane, "bin/rails generate hxruby:adopt --gem devise", "DeviseHx release lane docs");
