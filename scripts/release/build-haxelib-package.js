@@ -11,14 +11,22 @@ const {
   statSync,
 } = require("node:fs");
 const { dirname, join, relative, resolve } = require("node:path");
-const { spawnSync } = require("node:child_process");
+const { execFileSync, spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
+const {
+  developmentIdentity,
+  identityFromArgs,
+  stageHaxelibMetadata,
+  stageProvenance,
+  stageRubyVersion,
+} = require("./release-identity");
 
 const root = resolve(__dirname, "..", "..");
-const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-const haxelibJson = JSON.parse(readFileSync(join(root, "haxelib.json"), "utf8"));
-const version = haxelibJson.version;
-const outPath = join(root, "dist", `reflaxe.ruby-${version}.zip`);
+const identityArgs = process.argv.slice(2);
+const identity = identityArgs.length === 0
+  ? developmentIdentity(execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim())
+  : identityFromArgs(identityArgs);
+const outPath = join(root, "dist", "reflaxe.ruby-release.zip");
 const reflaxeRoot = join(root, "vendor", "reflaxe");
 const reflaxeRun = join(reflaxeRoot, "Run.hx");
 
@@ -108,9 +116,6 @@ function walk(dir, out) {
   }
 }
 
-if (packageJson.version !== haxelibJson.version) {
-  fail(`package.json version ${packageJson.version} != haxelib.json version ${haxelibJson.version}`);
-}
 if (!existsSync(reflaxeRun)) {
   fail("vendored Reflaxe build runner missing: vendor/reflaxe/Run.hx");
 }
@@ -144,11 +149,15 @@ try {
   mkdirSync(workDir, { recursive: true });
 
   copySelected(files, workDir, workPrefixes, workFiles);
+  stageHaxelibMetadata(workDir, identity);
   run("haxe", ["-cp", reflaxeRoot, "--run", "Run", "build", "_Build", "--deleteOldFolder", workDir], {
     cwd: workDir,
   });
 
   copySelected(files, buildDir, extraPrefixes, extraFiles);
+  stageHaxelibMetadata(buildDir, identity);
+  stageRubyVersion(buildDir, identity);
+  stageProvenance(buildDir, identity);
 
   const entries = listFiles(buildDir);
   if (entries.length === 0) {

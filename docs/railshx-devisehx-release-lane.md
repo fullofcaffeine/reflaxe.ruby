@@ -16,7 +16,7 @@ true before splitting DeviseHx into a standalone `devisehx` haxelib or
 
 Today DeviseHx ships as part of the main packages:
 
-- Haxe API: `std/devisehx/**` is included in `dist/reflaxe.ruby-*.zip`.
+- Haxe API: `std/devisehx/**` is included in the fixed local artifact `dist/reflaxe.ruby-release.zip`; the hosted asset receives its versioned name from the selected tag identity.
 - Ruby generator bridge: `hxruby` exposes `hxruby:adopt` and
   `bin/rails generate hxruby:adopt --gem devise`.
 - Runtime dependency ownership: Rails apps keep `gem "devise"` in their own

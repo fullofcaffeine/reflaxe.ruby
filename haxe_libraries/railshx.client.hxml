@@ -7,4 +7,4 @@
 
 -cp ${SCOPE_DIR}/std/
 
--D railshx.client=0.1.0-beta.2
+-D railshx.client=0.0.0

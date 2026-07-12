@@ -1,5 +1,9 @@
 ## Unreleased
 
+This file is reviewed source history. Release automation does not rewrite or
+commit it; canonical GitHub release notes are generated from the tested commit
+set and immutable tag lineage.
+
 ### Documentation
 
 * document the incubated DeviseHx release lane, package split criteria, and CI/security gates

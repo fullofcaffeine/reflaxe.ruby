@@ -6,8 +6,10 @@ const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
 
 const root = resolve(__dirname, "..", "..");
-const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-const archiveName = `reflaxe.ruby-${packageJson.version}.zip`;
+const stagedVersion = "0.2.3";
+const stagedTag = `v${stagedVersion}`;
+const sourceSha = run("git", ["rev-parse", "HEAD"]).stdout.trim();
+const archiveName = "reflaxe.ruby-release.zip";
 const archivePath = join(root, "dist", archiveName);
 
 function fail(message) {
@@ -28,6 +30,8 @@ function run(command, args, options = {}) {
   }
   return result;
 }
+
+const trackedDiffBefore = `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;
 
 function assertNoTodoLowerRubyFiles(dir) {
   for (const path of rubyFilesUnder(dir)) {
@@ -52,11 +56,18 @@ function rubyFilesUnder(dir) {
   return out;
 }
 
-run("node", ["scripts/release/build-haxelib-package.js"]);
+run("node", ["scripts/release/build-haxelib-package.js", stagedVersion, stagedTag, sourceSha]);
 
 const entries = run("unzip", ["-Z1", archivePath]).stdout.trim().split("\n").filter(Boolean);
 const entrySet = new Set(entries);
 const packagedHaxelib = JSON.parse(run("unzip", ["-p", archivePath, "haxelib.json"]).stdout);
+const packagedProvenance = JSON.parse(run("unzip", ["-p", archivePath, "release-provenance.json"]).stdout);
+if (packagedHaxelib.version !== stagedVersion || packagedProvenance.version !== stagedVersion || packagedProvenance.gitTag !== stagedTag || packagedProvenance.sourceSha !== sourceSha) {
+  fail("packaged release identity does not match staged version/tag/source SHA");
+}
+if (!run("unzip", ["-p", archivePath, "lib/hxruby/version.rb"]).stdout.includes(`VERSION = "${stagedVersion}"`)) {
+  fail("packaged HXRuby::VERSION does not match staged version");
+}
 if (Object.prototype.hasOwnProperty.call(packagedHaxelib, "reflaxe")) {
   fail("packaged haxelib.json must be sanitized by Reflaxe build and omit the reflaxe metadata field");
 }
@@ -66,6 +77,7 @@ if (packagedHaxelib.classPath !== "src") {
 
 for (const required of [
   "haxelib.json",
+  "release-provenance.json",
   "hxruby.gemspec",
   "extraParams.hxml",
   "docs/compiler-metadata.md",
@@ -267,5 +279,8 @@ try {
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });
 }
+
+const trackedDiffAfter = `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;
+if (trackedDiffAfter !== trackedDiffBefore) fail("Haxelib staging changed tracked checkout files");
 
 console.log(`[haxelib-package] OK: ${archiveName} (${entries.length} files)`);

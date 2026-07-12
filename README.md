@@ -6,7 +6,7 @@ authoring layer for ActiveRecord, ActionController, ActionView/HHX, routing,
 Turbo, ActionCable, generators, migrations, tests, and installed-gem companion
 contracts such as DeviseHx.
 
-The current `0.1.0-beta.2` baseline supports executable Ruby smoke fixtures,
+The latest public baseline tag, `v0.1.0-beta.2`, supports executable Ruby smoke fixtures,
 shared `hxruby` runtime files and gem packaging, Ruby interop
 metadata, typed extension/mixin contracts, and a RailsHx dogfood app with typed
 models, relations, migrations, controllers, params, HHX templates, Haxe-owned
@@ -19,6 +19,13 @@ major-zero breaking changes advance minor, and `1.0.0` plus each later stable
 major require independent policy approval. Major zero already communicates
 initial development, so the normal channel does not add a `-beta` suffix. See
 [Release Version Policy](docs/release-version-policy.md).
+
+Tracked version files intentionally use the `0.0.0` development sentinel; it
+is never a public release version. Release preparation derives the real version
+from Git-tag lineage and injects the version, matching tag, and tested source
+SHA only into temporary Haxelib and gem staging trees. `CHANGELOG.md` is frozen
+public history unless an ordinary reviewed commit updates it; publication never
+creates a release commit or rewrites README/package metadata.
 
 There are two first-class layers:
 
@@ -454,7 +461,7 @@ with:
 rake package:haxelib:test
 ```
 
-Semantic-release runs the same package builder during release preparation and attaches `dist/reflaxe.ruby-*.zip` to the GitHub release.
+Semantic-release runs the same package builder during release preparation and uploads only the fixed local path `dist/reflaxe.ruby-release.zip`, naming the hosted asset with the selected version. The archive contains `release-provenance.json` with that version, its matching tag, and the tested source SHA.
 
 Packaging follows Reflaxe build conventions: source std overrides live in
 `std/ruby/_std/**/*.hx`, while the release zip contains generated
@@ -552,7 +559,7 @@ dependency to the `hxruby` gem. See
 [DeviseHx Release Lane](docs/railshx-devisehx-release-lane.md) for the split
 criteria before publishing a standalone `devisehx` or `hxruby-devise` package.
 
-Semantic-release builds the gem during release preparation and attaches `dist/hxruby-*.gem` to the GitHub release.
+Semantic-release builds the gem during release preparation and uploads only the fixed local path `dist/hxruby-release.gem`, naming the hosted asset with the selected version. The gem specification, `HXRuby::VERSION`, staged `haxelib.json`, and `release-provenance.json` all expose the same release identity.
 
 ## Gap Report
 

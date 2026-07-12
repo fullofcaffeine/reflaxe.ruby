@@ -1,60 +1,44 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
+const fs = require("node:fs");
+const { DEVELOPMENT_VERSION, HAXELIB_RELEASE_NOTE } = require("../release/release-identity");
 
 function fail(message) {
-  console.error(`[version-sync] ERROR: ${message}`)
-  process.exitCode = 1
+  console.error(`[version-sync] ERROR: ${message}`);
+  process.exitCode = 1;
 }
 
 function readJson(path) {
-  return JSON.parse(fs.readFileSync(path, 'utf8'))
+  return JSON.parse(fs.readFileSync(path, "utf8"));
 }
 
-const packageJson = readJson('package.json')
-const haxelibJson = readJson('haxelib.json')
-const rubyHxml = fs.readFileSync('haxe_libraries/reflaxe.ruby.hxml', 'utf8')
-const clientHxml = fs.readFileSync('haxe_libraries/railshx.client.hxml', 'utf8')
-const hxrubyVersion = fs.readFileSync('lib/hxruby/version.rb', 'utf8')
-const readme = fs.readFileSync('README.md', 'utf8')
+const packageJson = readJson("package.json");
+const packageLock = readJson("package-lock.json");
+const haxelibJson = readJson("haxelib.json");
+const rubyHxml = fs.readFileSync("haxe_libraries/reflaxe.ruby.hxml", "utf8");
+const clientHxml = fs.readFileSync("haxe_libraries/railshx.client.hxml", "utf8");
+const hxrubyVersion = fs.readFileSync("lib/hxruby/version.rb", "utf8");
+const readme = fs.readFileSync("README.md", "utf8");
 
-const expectedVersion = packageJson.version
-
-if (haxelibJson.version !== expectedVersion) {
-  fail(`haxelib.json version ${haxelibJson.version} != package.json version ${expectedVersion}`)
+for (const [surface, actual] of [
+  ["package.json", packageJson.version],
+  ["package-lock.json", packageLock.version],
+  ["package-lock.json root package", packageLock.packages?.[""]?.version],
+  ["haxelib.json", haxelibJson.version],
+]) {
+  if (actual !== DEVELOPMENT_VERSION) fail(`${surface} must use development sentinel ${DEVELOPMENT_VERSION}, got ${actual}`);
 }
+if (haxelibJson.releasenote !== HAXELIB_RELEASE_NOTE) fail("haxelib.json development release note drifted");
 
-if (haxelibJson.releasenote !== `v${expectedVersion}: See CHANGELOG.md` && expectedVersion !== '0.1.0') {
-  fail(`haxelib.json releasenote does not match version ${expectedVersion}`)
+for (const [surface, text, define] of [
+  ["haxe_libraries/reflaxe.ruby.hxml", rubyHxml, "reflaxe.ruby"],
+  ["haxe_libraries/railshx.client.hxml", clientHxml, "railshx.client"],
+]) {
+  if (!text.includes(`-D ${define}=${DEVELOPMENT_VERSION}`)) fail(`${surface} must use development sentinel`);
 }
+if (!hxrubyVersion.includes(`VERSION = "${DEVELOPMENT_VERSION}"`)) fail("lib/hxruby/version.rb must use development sentinel");
+if (!readme.includes("Tracked version files intentionally use the `0.0.0` development sentinel")) fail("README must document the development sentinel");
+if (!readme.includes("`v0.1.0-beta.2`")) fail("README must preserve the latest public baseline tag");
 
-const hxmlVersion = rubyHxml.match(/^-D\s+reflaxe\.ruby=([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)\s*$/m)
-if (!hxmlVersion) {
-  fail('missing -D reflaxe.ruby=<version> in haxe_libraries/reflaxe.ruby.hxml')
-} else if (hxmlVersion[1] !== expectedVersion) {
-  fail(`haxe_libraries/reflaxe.ruby.hxml version ${hxmlVersion[1]} != package.json version ${expectedVersion}`)
-}
-
-const clientHxmlVersion = clientHxml.match(/^-D\s+railshx\.client=([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?)\s*$/m)
-if (!clientHxmlVersion) {
-  fail('missing -D railshx.client=<version> in haxe_libraries/railshx.client.hxml')
-} else if (clientHxmlVersion[1] !== expectedVersion) {
-  fail(`haxe_libraries/railshx.client.hxml version ${clientHxmlVersion[1]} != package.json version ${expectedVersion}`)
-}
-
-const gemVersion = hxrubyVersion.match(/^\s*VERSION\s*=\s*"([^"]+)"\s*$/m)
-if (!gemVersion) {
-  fail('missing HXRuby::VERSION in lib/hxruby/version.rb')
-} else if (gemVersion[1] !== expectedVersion) {
-  fail(`lib/hxruby/version.rb version ${gemVersion[1]} != package.json version ${expectedVersion}`)
-}
-
-if (!readme.includes(`The current \`${expectedVersion}\` baseline supports`)) {
-  fail(`README current baseline does not match package.json version ${expectedVersion}`)
-}
-
-if (process.exitCode) {
-  process.exit(process.exitCode)
-}
-
-console.log(`[version-sync] OK: ${expectedVersion}`)
+if (process.exitCode) process.exit(process.exitCode);
+console.log(`[version-sync] OK: tracked development sentinel ${DEVELOPMENT_VERSION}`);

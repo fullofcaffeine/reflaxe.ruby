@@ -1,18 +1,27 @@
 #!/usr/bin/env node
 
-const { mkdirSync, readFileSync, rmSync } = require("node:fs");
+const { copyFileSync, mkdirSync, mkdtempSync, rmSync } = require("node:fs");
 const { dirname, join, resolve } = require("node:path");
-const { spawnSync } = require("node:child_process");
+const { execFileSync, spawnSync } = require("node:child_process");
+const { tmpdir } = require("node:os");
+const {
+  developmentIdentity,
+  identityFromArgs,
+  stageHaxelibMetadata,
+  stageProvenance,
+  stageRubyVersion,
+} = require("./release-identity");
 
 const root = resolve(__dirname, "..", "..");
-const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-const haxelibJson = JSON.parse(readFileSync(join(root, "haxelib.json"), "utf8"));
-const version = haxelibJson.version;
-const outPath = join(root, "dist", `hxruby-${version}.gem`);
+const identityArgs = process.argv.slice(2);
+const identity = identityArgs.length === 0
+  ? developmentIdentity(execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim())
+  : identityFromArgs(identityArgs);
+const outPath = join(root, "dist", "hxruby-release.gem");
 
-function run(command, args) {
+function run(command, args, cwd = root) {
   const result = spawnSync(command, args, {
-    cwd: root,
+    cwd,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -24,13 +33,24 @@ function run(command, args) {
   return result;
 }
 
-if (packageJson.version !== haxelibJson.version) {
-  console.error(`package.json version ${packageJson.version} != haxelib.json version ${haxelibJson.version}`);
-  process.exit(1);
-}
-
 mkdirSync(dirname(outPath), { recursive: true });
 rmSync(outPath, { force: true });
-run("gem", ["build", "hxruby.gemspec", "--output", outPath]);
+
+const tempRoot = mkdtempSync(join(tmpdir(), "hxruby-gem-stage."));
+try {
+  const fileList = run("ruby", ["-e", 'require "rubygems"; Gem::Specification.load("hxruby.gemspec").files.each { |file| puts file }'])
+    .stdout.trim().split("\n").filter(Boolean);
+  for (const file of fileList) {
+    const destination = join(tempRoot, file);
+    mkdirSync(dirname(destination), { recursive: true });
+    copyFileSync(join(root, file), destination);
+  }
+  stageHaxelibMetadata(tempRoot, identity);
+  stageRubyVersion(tempRoot, identity);
+  stageProvenance(tempRoot, identity);
+  run("gem", ["build", "hxruby.gemspec", "--output", outPath], tempRoot);
+} finally {
+  rmSync(tempRoot, { force: true, recursive: true });
+}
 
 console.log(outPath);

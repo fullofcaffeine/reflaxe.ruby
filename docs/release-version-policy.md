@@ -6,8 +6,12 @@ automatic `-beta` suffix. The existing `v0.1.0-beta.2` tag remains immutable
 history and is a valid tag-derived baseline; the next qualifying main release
 promotes that lineage to an ordinary `0.x` version.
 
-This document owns version selection only. Artifact staging, same-commit
-publication, hosted digests, and repair are separate release-protocol slices.
+This document owns version selection and the boundary into artifact staging.
+Tracked version surfaces use the non-release `0.0.0` development sentinel.
+Release preparation injects the selected version, matching tag, and tested
+source SHA only into temporary Haxelib and gem trees and leaves the checkout
+byte-identical. Same-commit publication, hosted digests, and repair are
+separate release-protocol slices.
 Until those slices replace the predecessor workflow, publication remains
 manually guarded even though version analysis is automated and tested.
 

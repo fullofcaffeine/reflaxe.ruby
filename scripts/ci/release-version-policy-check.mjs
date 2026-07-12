@@ -6,7 +6,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Writable } from "node:stream";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import semanticRelease from "semantic-release";
 import semver from "semver";
 import {
@@ -89,8 +89,11 @@ async function proveSemanticReleaseIntegration() {
 			{
 				branches: ["main"],
 				tagFormat: "v${version}",
-				repositoryUrl: cwd,
-				plugins: [[policyPlugin, { approvedStableMajors: [] }]],
+				repositoryUrl: pathToFileURL(cwd).href,
+				plugins: [
+					[policyPlugin, { approvedStableMajors: [] }],
+					"@semantic-release/release-notes-generator",
+				],
 				dryRun: true,
 				ci: false,
 			},
@@ -99,6 +102,8 @@ async function proveSemanticReleaseIntegration() {
 
 		assert.equal(result?.nextRelease?.type, "patch", "semantic-release integration: release type");
 		assert.equal(result?.nextRelease?.version, "0.2.4", "semantic-release integration: tag-derived version");
+		assert.match(result?.nextRelease?.notes ?? "", /compare\/v0\.2\.3\.\.\.v0\.2\.4/, "semantic-release integration: compare link");
+		assert.match(result?.nextRelease?.notes ?? "", /commit\//, "semantic-release integration: commit link");
 	} finally {
 		rmSync(cwd, { recursive: true, force: true });
 	}

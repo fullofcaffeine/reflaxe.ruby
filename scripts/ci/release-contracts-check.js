@@ -79,7 +79,7 @@ if ((haxelibJson.reflaxe?.stdPaths ?? []).join("\n") !== "std\nstd/ruby/_std") {
   fail('haxelib.json reflaxe.stdPaths must be ["std", "std/ruby/_std"]');
 }
 expectExcludes(readme, "pre-1.0", "README release status");
-expectIncludes(readme, `current \`${packageJson.version}\` baseline`, "README release status");
+expectIncludes(readme, "Tracked version files intentionally use the `0.0.0` development sentinel", "README release status");
 
 const releaseConfig = packageJson.release;
 if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
@@ -88,9 +88,7 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   for (const plugin of [
     "./scripts/release/analyze-commits.mjs",
     "@semantic-release/release-notes-generator",
-    "@semantic-release/changelog",
     "@semantic-release/exec",
-    "@semantic-release/git",
     "@semantic-release/github",
   ]) {
     if (!releaseConfig.plugins.some((entry) => Array.isArray(entry) ? entry[0] === plugin : entry === plugin)) {
@@ -113,37 +111,19 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
 
   const execPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/exec");
   const prepareCmd = execPlugin?.[1]?.prepareCmd ?? "";
-  expectIncludes(prepareCmd, "sync-versions.js ${nextRelease.version}", "@semantic-release/exec prepareCmd");
-  expectIncludes(prepareCmd, "build-haxelib-package.js", "@semantic-release/exec prepareCmd");
-  expectIncludes(prepareCmd, "build-gem-package.js", "@semantic-release/exec prepareCmd");
-  expectIncludes(readFileSync("scripts/release/sync-versions.js", "utf8"), "updateReadmeCurrentVersion", "sync-versions script");
-
-  const gitPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/git");
-  const assets = gitPlugin?.[1]?.assets ?? [];
-  const releaseMessage = gitPlugin?.[1]?.message ?? "";
-  if (releaseMessage.includes("\\n")) {
-    fail("@semantic-release/git message must use newline escapes, not literal backslash-n text");
-  }
-  if (!releaseMessage.includes("\n\n")) {
-    fail("@semantic-release/git message must separate subject and notes with a blank line");
-  }
-  for (const asset of assets) {
-    if (!existsSync(asset)) {
-      fail(`release asset does not exist: ${asset}`);
-    }
-  }
-  for (const requiredAsset of ["package.json", "haxelib.json", "hxruby.gemspec", "haxe_libraries/reflaxe.ruby.hxml", "haxe_libraries/railshx.client.hxml", "lib/hxruby/version.rb", "README.md", "CHANGELOG.md"]) {
-    if (!assets.includes(requiredAsset)) {
-      fail(`release git assets missing required file: ${requiredAsset}`);
-    }
+  expectIncludes(prepareCmd, "prepare-release-artifacts.js ${nextRelease.version} ${nextRelease.gitTag} ${nextRelease.gitHead}", "@semantic-release/exec prepareCmd");
+  if (releaseConfig.plugins.some((entry) => ["@semantic-release/git", "@semantic-release/changelog"].includes(Array.isArray(entry) ? entry[0] : entry))) {
+    fail("release configuration must not create release commits or mutate CHANGELOG.md");
   }
 
   const githubPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/github");
   const githubAssets = githubPlugin?.[1]?.assets ?? [];
-  if (!githubAssets.some((asset) => asset?.path === "dist/reflaxe.ruby-*.zip")) {
+  expectIncludes(githubPlugin?.[1]?.releaseBodyTemplate ?? "", "## v${nextRelease.version}", "GitHub release body heading");
+  expectIncludes(githubPlugin?.[1]?.releaseBodyTemplate ?? "", "${nextRelease.notes}", "GitHub generated release notes");
+  if (!githubAssets.some((asset) => asset?.path === "dist/reflaxe.ruby-release.zip" && asset?.name === "reflaxe.ruby-${nextRelease.version}.zip")) {
     fail("@semantic-release/github assets must include the Haxelib package zip");
   }
-  if (!githubAssets.some((asset) => asset?.path === "dist/hxruby-*.gem")) {
+  if (!githubAssets.some((asset) => asset?.path === "dist/hxruby-release.gem" && asset?.name === "hxruby-${nextRelease.version}.gem")) {
     fail("@semantic-release/github assets must include the hxruby gem");
   }
   if (!githubAssets.some((asset) => asset?.label?.includes("${nextRelease.version}"))) {
@@ -163,8 +143,13 @@ expectIncludes(releaseVersionPolicyCheck, 'from "semantic-release"', "release ve
 expectIncludes(releaseVersionPolicyCheck, '"99.99.99"', "release version policy package-independence fixture");
 expectIncludes(releaseVersionPolicyDocs, "normal `0.x` releases from `main`", "release version policy docs");
 expectIncludes(releaseVersionPolicyDocs, "v0.1.0-beta.2", "release version policy transition docs");
+expectIncludes(versionSyncCheck, "DEVELOPMENT_VERSION", "version sentinel check");
+expectExcludes(readme, "dist/reflaxe.ruby-*.zip", "README stale Haxelib glob");
+expectExcludes(readme, "dist/hxruby-*.gem", "README stale gem glob");
 expectIncludes(agentsGuide, "normal `0.x` releases from `main`", "AGENTS release policy");
 expectIncludes(agentsGuide, "approvedStableMajors", "AGENTS stable-major policy");
+expectIncludes(agentsGuide, "`0.0.0` development sentinel", "AGENTS staging policy");
+expectIncludes(agentsGuide, "upload only fixed exact local artifact paths rather than globs", "AGENTS artifact path policy");
 expectExcludes(agentsGuide, "until the package is ready for stable `1.x`", "AGENTS obsolete beta policy");
 
 expectIncludes(ciWorkflow, `HAXE_VERSION: "${haxerc.version}"`, "CI workflow");
@@ -216,7 +201,7 @@ expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-packa
 expectIncludes(packageJson.scripts["test:gem-package"] ?? "", "gem-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-package.js", "package.json scripts");
-expectIncludes(versionSyncCheck, "README current baseline", "version sync check");
+expectIncludes(versionSyncCheck, "README must document the development sentinel", "version sync check");
 expectIncludes(versionSyncCheck, "railshx.client", "version sync check");
 expectIncludes(haxelibPackageBuilder, `"--run", "Run", "build", "_Build"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"vendor", "reflaxe"`, "Haxelib package builder");
@@ -287,8 +272,8 @@ expectIncludes(readme, "-lib reflaxe.ruby", "README Haxelib package docs");
 expectIncludes(readme, "-lib railshx.client", "README RailsHx client package docs");
 expectIncludes(readme, "rake package:gem:build", "README Ruby gem package docs");
 expectIncludes(readme, "rake package:gem:test", "README Ruby gem package docs");
-expectIncludes(readme, "dist/reflaxe.ruby-*.zip", "README Haxelib package docs");
-expectIncludes(readme, "dist/hxruby-*.gem", "README Ruby gem package docs");
+expectIncludes(readme, "dist/reflaxe.ruby-release.zip", "README Haxelib package docs");
+expectIncludes(readme, "dist/hxruby-release.gem", "README Ruby gem package docs");
 expectIncludes(readme, 'Plain `require "hxruby"` has no gem runtime dependencies.', "README Ruby gem package docs");
 expectIncludes(readme, "DeviseHx Release Lane", "README DeviseHx release docs");
 expectIncludes(readme, "std/devisehx/**", "README DeviseHx release docs");

@@ -1,7 +1,7 @@
 {
   "name": "reflaxe-ruby",
   "private": true,
-  "version": "0.1.0-beta.2",
+  "version": "0.0.0",
   "license": "GPL-3.0-only",
   "description": "Reflaxe-based Ruby target for Haxe.",
   "scripts": {
@@ -112,7 +112,6 @@
     "test:gap-report": "node scripts/ci/gap-report-check.js",
     "test:haxelib-package": "node scripts/ci/haxelib-package-check.js",
     "test:gem-package": "node scripts/ci/gem-package-check.js",
-    "release:sync-versions": "node scripts/release/sync-versions.js",
     "release:haxelib-package": "node scripts/release/build-haxelib-package.js",
     "release:gem-package": "node scripts/release/build-gem-package.js",
     "release": "semantic-release",
@@ -120,10 +119,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
-    "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^11.0.3",
     "@semantic-release/release-notes-generator": "^14.0.3",
     "lix": "^15.12.4",
@@ -147,39 +144,26 @@
         }
       ],
       "@semantic-release/release-notes-generator",
-      "@semantic-release/changelog",
       [
         "@semantic-release/exec",
         {
-          "prepareCmd": "node scripts/release/sync-versions.js ${nextRelease.version} && node scripts/release/build-haxelib-package.js && node scripts/release/build-gem-package.js"
-        }
-      ],
-      [
-        "@semantic-release/git",
-        {
-          "assets": [
-            "package.json",
-            "haxelib.json",
-            "hxruby.gemspec",
-            "haxe_libraries/reflaxe.ruby.hxml",
-            "haxe_libraries/railshx.client.hxml",
-            "lib/hxruby/version.rb",
-            "README.md",
-            "CHANGELOG.md"
-          ],
-          "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
+          "prepareCmd": "node scripts/release/prepare-release-artifacts.js ${nextRelease.version} ${nextRelease.gitTag} ${nextRelease.gitHead}"
         }
       ],
       [
         "@semantic-release/github",
         {
+          "releaseNameTemplate": "v${nextRelease.version}",
+          "releaseBodyTemplate": "## v${nextRelease.version}\n\n${nextRelease.notes}",
           "assets": [
             {
-              "path": "dist/reflaxe.ruby-*.zip",
+              "path": "dist/reflaxe.ruby-release.zip",
+              "name": "reflaxe.ruby-${nextRelease.version}.zip",
               "label": "reflaxe.ruby ${nextRelease.version} haxelib package"
             },
             {
-              "path": "dist/hxruby-*.gem",
+              "path": "dist/hxruby-release.gem",
+              "name": "hxruby-${nextRelease.version}.gem",
               "label": "hxruby ${nextRelease.version} Ruby gem"
             }
           ]

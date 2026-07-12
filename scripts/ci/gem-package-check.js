@@ -6,8 +6,10 @@ const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
 
 const root = resolve(__dirname, "..", "..");
-const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-const gemName = `hxruby-${packageJson.version}.gem`;
+const stagedVersion = "0.2.3";
+const stagedTag = `v${stagedVersion}`;
+const sourceSha = run("git", ["rev-parse", "HEAD"]).stdout.trim();
+const gemName = "hxruby-release.gem";
 const gemPath = join(root, "dist", gemName);
 
 function fail(message) {
@@ -36,15 +38,20 @@ function rubySupportsGemInstallCheck() {
   return major > 3 || (major === 3 && minor >= 2);
 }
 
-run("node", ["scripts/release/build-gem-package.js"]);
+const trackedDiffBefore = `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;
+
+run("node", ["scripts/release/build-gem-package.js", stagedVersion, stagedTag, sourceSha]);
 
 const tempRoot = mkdtempSync(join(tmpdir(), "hxruby-gem."));
 try {
   run("gem", ["unpack", gemPath, "--target", tempRoot]);
-  const unpackedRoot = join(tempRoot, `hxruby-${packageJson.version}`);
+  // RubyGems names the unpack directory from the fixed local artifact path;
+  // the gem specification and installed identity still carry stagedVersion.
+  const unpackedRoot = join(tempRoot, "hxruby-release");
 
   for (const required of [
     "haxelib.json",
+    "release-provenance.json",
     "hxruby.gemspec",
     "lib/hxruby.rb",
     "lib/hxruby/tasks.rb",
@@ -80,10 +87,14 @@ try {
       fail(`gem missing required entry: ${required}`);
     }
   }
+  const provenance = JSON.parse(readFileSync(join(unpackedRoot, "release-provenance.json"), "utf8"));
+  if (provenance.version !== stagedVersion || provenance.gitTag !== stagedTag || provenance.sourceSha !== sourceSha) {
+    fail("gem release identity does not match staged version/tag/source SHA");
+  }
 
   const runtimeCheck = [
     "require 'hxruby'",
-    `abort 'version mismatch' unless HXRuby::VERSION == ${JSON.stringify(packageJson.version)}`,
+    `abort 'version mismatch' unless HXRuby::VERSION == ${JSON.stringify(stagedVersion)}`,
     "abort 'stringify mismatch' unless HXRuby.stringify([1, 2]) == '[1,2]'",
     "raise HxException.new({ 'message' => 'boom' }) rescue (ex = $!)",
     "abort 'exception mismatch' unless ex.message == '{\"message\"=>\"boom\"}'",
@@ -113,9 +124,9 @@ try {
 
     const installCheck = [
       "require 'rubygems'",
-      `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
+      `gem 'hxruby', ${JSON.stringify(stagedVersion)}`,
       "require 'hxruby'",
-      `abort 'installed version mismatch' unless HXRuby::VERSION == ${JSON.stringify(packageJson.version)}`,
+      `abort 'installed version mismatch' unless HXRuby::VERSION == ${JSON.stringify(stagedVersion)}`,
       "abort 'installed stringify mismatch' unless HXRuby.stringify({ 'a' => 1 }) == '{\"a\"=>1}'",
     ].join("; ");
     const installEnv = {
@@ -135,7 +146,7 @@ try {
     };
     const installedTasksCheck = [
       "require 'rubygems'",
-      `gem 'hxruby', ${JSON.stringify(packageJson.version)}`,
+      `gem 'hxruby', ${JSON.stringify(stagedVersion)}`,
       "require 'hxruby/tasks'",
       "expected = %w[hxruby:compile hxruby:compile:client hxruby:db:migrate hxruby:db:prepare hxruby:db:rollback hxruby:rails hxruby:start hxruby:start:watch hxruby:test hxruby:routes hxruby:doctor hxruby:check hxruby:clean hxruby:production hxruby:watch hxruby:watch:client hxruby:gen:adopt hxruby:gen:app hxruby:gen:controller hxruby:gen:mailer hxruby:gen:template hxruby:gen:test hxruby:gen:model hxruby:gen:routes]",
       "names = Rake::Task.tasks.map(&:name)",
@@ -151,6 +162,9 @@ try {
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });
 }
+
+const trackedDiffAfter = `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;
+if (trackedDiffAfter !== trackedDiffBefore) fail("gem staging changed tracked checkout files");
 
 console.log(`[gem-package] OK: ${gemName}`);
 
@@ -222,7 +236,7 @@ function smokeClientLibrary(unpackedRoot) {
     join(appRoot, "haxe_libraries", "railshx.client.hxml"),
     [
       `-cp ${join(unpackedRoot, "std")}`,
-      `-D railshx.client=${packageJson.version}`,
+      `-D railshx.client=${stagedVersion}`,
       "",
     ].join("\n"),
   );

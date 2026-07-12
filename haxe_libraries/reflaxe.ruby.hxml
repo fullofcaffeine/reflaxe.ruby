@@ -16,6 +16,6 @@
 
 -lib reflaxe
 
--D reflaxe.ruby=0.1.0-beta.2
+-D reflaxe.ruby=0.0.0
 --macro reflaxe.ruby.CompilerBootstrap.Start()
 --macro reflaxe.ruby.CompilerInit.Start()
