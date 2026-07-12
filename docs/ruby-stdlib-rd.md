@@ -224,9 +224,13 @@ semantics need an adapter.
   `resize`, and `sort` stay on `HXRuby` helpers because they encode Haxe
   boundary normalization, return values, mutation contracts, or comparator
   calling shape.
-- `Array.map` and `Array.filter` stay on helpers until the Ruby AST has a
-  first-class block-call expression; the helper is currently the semantic bridge
-  between Haxe function values and Ruby blocks.
+- `Array.map` and `Array.filter` no longer use runtime helpers. Statically typed
+  calls may be normalized to direct loops by the Haxe frontend; calls that
+  reach the Ruby backend emit native `map`/`select`. Tail-safe inline callbacks
+  become Ruby blocks, while stored callbacks and inline callbacks with non-tail
+  Haxe `return` use strict lambdas passed with `&`. The provenance-locked
+  upstream Dynamic Array fixture owns the direct backend path without making
+  `Dynamic` part of new app-facing code.
 - `Lambda` methods are plain Haxe loops today. Their generated Ruby should
   benefit from safe Array direct lowerings, but the public `Lambda` API should
   not be rewritten into Ruby `Enumerable` shortcuts until nullability,

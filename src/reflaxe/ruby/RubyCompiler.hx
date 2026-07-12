@@ -4223,9 +4223,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case "copy":
 						RubyCall(receiver, "dup", []);
 					case "map":
-						hxrubyCall("array_map", [receiver, compileParam(params, 0)]);
+						compileNativeArrayTransform(receiver, "map", params[0]);
 					case "filter":
-						hxrubyCall("array_filter", [receiver, compileParam(params, 0)]);
+						compileNativeArrayTransform(receiver, "select", params[0]);
 					case "resize":
 						hxrubyCall("array_resize", [receiver, compileParam(params, 0)]);
 					case "keyValueIterator":
@@ -4236,6 +4236,23 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case _:
 				null;
 		}
+	}
+
+	/**
+		Lowers behavior-preserving Haxe Array transforms to native Ruby blocks.
+
+		Ruby `Array#map` and `Array#select` have the same new-array, element-order,
+		and one-callback-per-element contract used by Haxe `map` and `filter`.
+		Tail-safe inline functions therefore become ordinary Ruby blocks. Stored
+		functions and inline callbacks with a non-tail Haxe `return` remain strict
+		Ruby lambdas passed with `&`; otherwise Ruby's block-local `return` rules
+		could incorrectly exit the enclosing generated method.
+	**/
+	static function compileNativeArrayTransform(receiver:RubyExpr, method:String, callback:TypedExpr):RubyExpr {
+		if (isFunctionExpr(callback) && !RubyBlockSemantics.inlineFunctionNeedsLambda(callback)) {
+			return RubyCallableCall(receiver, method, [], compileRubyBlockNode(callback));
+		}
+		return RubyCallableCall(receiver, method, [RubyBlockPassArgument(compileExpr(callback))]);
 	}
 
 	static function compileStringCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {

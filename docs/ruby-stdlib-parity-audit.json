@@ -26,7 +26,7 @@
       "unitstdStatus": "enabled",
       "owner": "std/ruby/_std/Array.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
-      "notes": "Ruby lowering and HXRuby helpers preserve Haxe array boundary and mutation contracts."
+      "notes": "Ruby lowering preserves Haxe array contracts. Statically typed map/filter may normalize to direct loops; calls reaching the backend emit native Ruby map/select blocks, while boundary, mutation, comparator, and portable stringification gaps retain focused HXRuby helpers."
     },
     {
       "module": "Date",

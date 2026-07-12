@@ -76,6 +76,7 @@ if (actual !== "unitstd-ruby ok\n") {
 }
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
+const coreRuby = readFileSync(join(outputDir, "hxruby", "core.rb"), "utf8");
 const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
 const enumValueMapRuby = readFileSync(join(outputDir, "haxe", "ds", "enum_value_map.rb"), "utf8");
 const intMapRuby = readFileSync(join(outputDir, "haxe", "ds", "int_map.rb"), "utf8");
@@ -102,6 +103,16 @@ for (const expectedShape of [
 ]) {
   if (!mainRuby.includes(expectedShape)) {
     console.error(`Expected generated unitstd Ruby shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+if (!/\.select \{ \|x\| \(\(x & 1\) == 0\) \}\.map \{ \|x(?:__hx\d+)?\| \(x(?:__hx\d+)? \* 10\) \}/.test(mainRuby)) {
+  console.error("Expected provenance-locked Dynamic Array map/filter fixture to use native Ruby select/map blocks.");
+  process.exit(1);
+}
+for (const source of [mainRuby, coreRuby]) {
+  if (source.includes("array_map") || source.includes("array_filter")) {
+    console.error("Obsolete Array map/filter runtime helpers must not remain in generated output.");
     process.exit(1);
   }
 }

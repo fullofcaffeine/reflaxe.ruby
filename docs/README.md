@@ -62,6 +62,8 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 ## Examples
 
 - `examples/hello_world`: smallest pure Ruby compile/run path.
+- `examples/ruby_callable_abi`: canonical pure RubyHx callable ABI example,
+  including a handwritten Ruby consumer and runtime-free generated calls.
 - `examples/ruby_interop` and `examples/ruby_extensions`: consuming and authoring Ruby APIs from Haxe.
 - `examples/active_support_facades`: typed facades over Ruby/Rails extension-style APIs.
 - `examples/rails_routes_dsl`: focused Haxe-owned Rails route DSL fixture with

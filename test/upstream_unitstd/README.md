@@ -222,7 +222,11 @@ map/filter, and key/value iteration.
 `Array` is enabled directly in the portable unitstd lane. It locks in Haxe array
 mutation, slicing/splicing, sorting with method references, dynamic array calls,
 anonymous-object field reads in array callbacks, sparse resize contents, and
-key/value iteration while keeping normal generated `Array ==` as identity.
+key/value iteration while keeping normal generated `Array ==` as identity. Its
+provenance-locked Dynamic map/filter chain also owns the backend path that now
+emits native Ruby `select`/`map` blocks; CI rejects the removed
+`array_filter`/`array_map` semantic helpers without adding a new Dynamic seam to
+RubyHx application code.
 
 `Map` is enabled directly in the portable unitstd lane. It exercises
 `StringMap`, `IntMap`, hash-code object keys, plain object identity keys, map

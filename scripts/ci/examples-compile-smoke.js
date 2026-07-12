@@ -60,6 +60,7 @@ const coverageContracts = new Map([
   ["rails_test_adapters", { kind: "snapshot", script: "test:snapshots" }],
   ["rails_routes_dsl", { kind: "snapshot+smoke", script: "test:routes-dsl" }],
   ["require_metadata", { kind: "snapshot+smoke", script: "test:require-registry" }],
+  ["ruby_callable_abi", { kind: "snapshot+smoke+runtime+ruby-origin", script: "test:ruby-callable-abi-example" }],
   ["ruby_call_shapes", { kind: "snapshot+smoke", script: "test:ruby-call-shapes" }],
   ["ruby_extensions", { kind: "snapshot+smoke", script: "test:ruby-extensions" }],
   ["ruby_interop", { kind: "snapshot+smoke", script: "test:ruby-interop" }],

@@ -146,7 +146,9 @@ Use `runtime/hxruby/` for Ruby files copied or required by generated output:
 
 - Shared runtime classes such as `HxException`.
 - Data/enum compatibility helpers.
-- Future array/string/hash dynamic helpers that should not be duplicated per generated file.
+- Array/string/hash semantic adapters only when direct Ruby cannot preserve the
+  Haxe contract; native Array `map`/`select` now cover map/filter without
+  `array_map`/`array_filter` helpers.
 
 Compiler-generated one-off shims are allowed during bring-up, but stable runtime behavior should move into `runtime/hxruby/` and be tracked in the inventory.
 Keep these helpers namespaced under `HXRuby` unless there is a documented reason
@@ -154,6 +156,15 @@ to patch a Ruby core class. For example, Haxe `String.substr` needs UTF-16-style
 code-unit overlap semantics for some upstream stdlib cases, so the compiler
 routes it through `HXRuby.string_substr(...)` instead of adding methods to
 Ruby's `String`.
+
+Array callbacks follow the same ownership rule. Statically typed Haxe
+`Array.map`/`filter` may normalize to direct loops before the Ruby backend. If
+the call reaches this backend, `map` emits Ruby `map` and `filter` emits Ruby
+`select`. Tail-safe inline callbacks use native blocks; stored callbacks and
+callbacks with non-tail Haxe `return` stay strict lambdas passed with `&` so
+Ruby cannot return from the enclosing method. `scripts/ci/runtime-usage-check.js`
+marks `array_map` and `array_filter` as removed helpers, and upstream Array
+parity proves behavior and generated shape.
 
 ## Upstream `unitstd` Runtime Parity
 

@@ -15,12 +15,10 @@ const reflaxeCandidates = [
 ];
 
 const allowedHelpers = new Set([
-  "array_filter",
   "array_index_of",
   "array_insert",
   "array_join",
   "array_last_index_of",
-  "array_map",
   "array_remove",
   "array_resize",
   "array_slice",
@@ -102,6 +100,8 @@ const removedHelpers = new Set([
   "active_record_projection",
   "array_contains",
   "array_copy",
+  "array_filter",
+  "array_map",
   "array_push",
   "array_reverse",
   "hex",

@@ -102,6 +102,11 @@ const cases = [
       "worker_factory.rb",
     ],
   },
+  {
+    name: "ruby_callable_abi",
+    dceFull: true,
+    files: ["callable_api.rb", "main.rb", "run.rb"],
+  },
   { name: "native_mapping", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
   { name: "ruby_call_shapes", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
   { name: "ruby_interop", files: ["hxruby/core.rb", "main.rb", "run.rb"] },
@@ -406,6 +411,9 @@ function compileCase(testCase, outputDir) {
   );
   for (const includePackage of testCase.includePackages ?? []) {
     args.push("--macro", `include("${includePackage}")`);
+  }
+  if (testCase.dceFull) {
+    args.push("--macro", 'haxe.macro.Compiler.keep("Main")', "--dce", "full");
   }
   args.push("-main", "Main");
   run("haxe", args);

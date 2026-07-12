@@ -316,6 +316,37 @@ same effective declaration. Ruby output uses native `super(...)` with projected
 keywords and/or `&block`; it does not call a method on the return value of
 `super`. Constructors continue to use their existing native keyword/block rules.
 
+## Behavior-Preserving Std Calls
+
+The same callable representation now removes the old `array_map` and
+`array_filter` runtime bridges. Haxe's frontend may normalize statically typed
+`Array.map`/`filter` calls into direct loops before the Ruby compiler sees them.
+When an Array call reaches this backend, RubyHx emits `Array#map` or
+`Array#select` directly:
+
+```ruby
+values.select { |value| value.ready? }.map(&stored_mapper)
+```
+
+Ruby and Haxe agree on new-array allocation, element order, and one callback
+invocation per element for these operations. Haxe also requires the filter
+callback to return `Bool`. Tail-safe inline callbacks can therefore use normal
+Ruby blocks. A stored callback, or an inline callback containing a non-tail
+Haxe `return`, remains a strict lambda passed with `&` so Ruby's block return
+semantics cannot escape the enclosing generated method. Other Array operations
+remain on semantic helpers where boundary normalization, mutation return
+values, stringification, or comparator shape still differs.
+
+The canonical authoring example is
+[`examples/ruby_callable_abi`](../examples/ruby_callable_abi). It emits a
+Haxe-owned library with direct, captured, forwarded, optional, and
+keyword-plus-block methods, exercises a precisely typed Ruby stdlib extern,
+and is invoked both from Haxe and from committed handwritten Ruby. Its focused
+gate proves Ruby syntax, app-facing snapshots, both caller directions, and the
+absence of `hxruby/core.rb`/`HXRuby.*` semantic helper calls. The small
+`hxruby/data_define.rb` compatibility file may still be retained by the global
+Haxe enum support graph; it is unrelated to this ABI.
+
 ## Rest And Splat
 
 Haxe's native final `haxe.Rest<T>` parameter is the canonical authoring surface
@@ -413,7 +444,8 @@ Every callable-ABI change must cover the applicable parts of this matrix:
 
 The focused executable gates are `npm run test:ruby-owned-blocks`,
 `npm run test:ruby-keyword-rest`,
-`npm run test:ruby-callable-inheritance`, and
+`npm run test:ruby-callable-inheritance`,
+`npm run test:ruby-callable-abi-example`, and
 `npm run test:ruby-callable-diagnostics`.
 
 Focused smoke tests and snapshots own different failure modes. Smoke tests
@@ -435,4 +467,7 @@ Rest/splat definitions, calls, constructors, and forwarding are executable and
 snapshotted. Static/instance/effectful receiver method values, inherited and
 interface ABI resolution, unannotated overrides, recursion, module/concern
 captures, native `super` forwarding, and conflict diagnostics are executable and
-snapshotted. Structured AST nodes and declaration validation own the foundation.
+snapshotted. The pure RubyHx callable example and handwritten Ruby consumer are
+executable and snapshotted, and Array map/filter calls reaching the backend use
+native Ruby blocks without semantic runtime helpers. Structured AST nodes and
+declaration validation own the foundation.

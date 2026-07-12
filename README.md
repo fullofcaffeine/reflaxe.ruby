@@ -54,7 +54,11 @@ ruby out/ruby/run.rb
 
 For a guided public entrypoint, start with:
 
-- Pure Ruby: [examples/hello_world](examples/hello_world), [Ruby Extension Interop](docs/ruby-extension-interop.md), and [examples/ruby_extensions](examples/ruby_extensions).
+- Pure Ruby: [examples/hello_world](examples/hello_world),
+  [examples/ruby_callable_abi](examples/ruby_callable_abi) for typed blocks,
+  keywords, forwarding, externs, and Ruby callers, [Ruby Extension
+  Interop](docs/ruby-extension-interop.md), and
+  [examples/ruby_extensions](examples/ruby_extensions).
 - RailsHx: [examples/todoapp_rails](examples/todoapp_rails) for a full app, [examples/rails_routes_dsl](examples/rails_routes_dsl) for focused Haxe-owned route snapshots, and [examples/rails_interop_app](examples/rails_interop_app) for gradual adoption from existing Ruby/ERB.
 - DeviseHx: [docs/railshx-devisehx-design.md](docs/railshx-devisehx-design.md) for the companion-layer design and [examples/todoapp_rails](examples/todoapp_rails) for the current app-local auth contract in a real Rails flow.
 - Documentation map: [docs/README.md](docs/README.md).
@@ -101,6 +105,10 @@ method values, and forwarding are specified in the
   one documented adapter and evaluates an effectful receiver exactly once.
 - A final Haxe `haxe.Rest<T>` parameter emits Ruby `*args`; Haxe `...values`
   calls emit native Ruby splats without Ruby-specific rest metadata.
+- Behavior-preserving Array calls that reach the backend use native Ruby
+  `map`/`select` blocks. Stored callbacks and callbacks with non-tail Haxe
+  returns remain strict lambdas passed with `&`; no `array_map` or
+  `array_filter` runtime helper is emitted.
 - `@:rubyMixin`, `@:rubyInclude`, `@:rubyPrepend`, and `@:rubyExtend` model Ruby module extension APIs as typed Haxe contracts while emitting normal Ruby `include`/`prepend`/`extend`.
 - `@:rubyPatch(ReceiverType)` plus Haxe `using` models monkey-patched receiver APIs, including ActiveSupport-style extensions, as typed Haxe calls that lower to direct Ruby receiver dispatch.
 - `@:rubyModule("Name")` and `@:rubyConcern("Name")` let Haxe author Ruby modules and ActiveSupport::Concern-style modules directly.

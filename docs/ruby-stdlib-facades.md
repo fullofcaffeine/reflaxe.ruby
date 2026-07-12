@@ -58,6 +58,11 @@ methods: `Array.concat` can become `left + right`, `Array.contains` can become
 `include?`, and `Array.copy` can become `dup` because those Ruby calls preserve
 the required behavior.
 
+`Kernel.puts` and `Kernel.print` use method-level generics instead of
+`Dynamic`: each call preserves the caller's precise Haxe value type while the
+extern still maps directly to Ruby's open-value Kernel API. The generic does
+not grant field access or leak an unchecked value into application code.
+
 Use an `HXRuby` helper only when Ruby would drift from the documented Haxe
 semantics. Examples include numeric-prefix parsing for `Std.parseInt`,
 Haxe-specific stringification for `Std.string`, portable `Array.join`, string

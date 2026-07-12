@@ -428,14 +428,6 @@ module HXRuby
     -1
   end
 
-  def array_map(array, mapper)
-    array.map { |entry| mapper.call(entry) }
-  end
-
-  def array_filter(array, predicate)
-    array.select { |entry| predicate.call(entry) }
-  end
-
   def array_resize(array, size)
     target = size.to_i
     if target < array.length
