@@ -3101,9 +3101,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case TTypeExpr(moduleType):
 				RubyLocal(moduleTypeName(moduleType));
-			case _:
-				RubyRawExpr("nil # TODO: unsupported expression " + Std.string(expr.expr));
+			case TIdent(name):
+				unsupportedTypedValueExpr(expr, "TIdent", "unconsumed compiler identifier `" + name + "`");
+			case TVar(_, _):
+				unsupportedTypedValueExpr(expr, "TVar", "variable declaration reached value lowering");
+			case TFor(_, _, _):
+				unsupportedTypedValueExpr(expr, "TFor", "for loop reached value lowering");
+			case TWhile(_, _, _):
+				unsupportedTypedValueExpr(expr, "TWhile", "while loop reached value lowering");
+			case TReturn(_):
+				unsupportedTypedValueExpr(expr, "TReturn", "return reached value lowering");
 		}
+	}
+
+	/**
+		Fails closed when a typed Haxe statement/intrinsic reaches value lowering.
+
+		The main switch is deliberately exhaustive instead of retaining a generic
+		`nil` fallback. Supported constructs must gain an intentional Ruby lowering;
+		statement-only forms must be consumed by `compileStatement`; and compiler
+		identifiers must be handled by a named intrinsic path before this point.
+	**/
+	static function unsupportedTypedValueExpr(expr:TypedExpr, kind:String, detail:String):RubyExpr {
+		Context.error("RubyHx cannot lower typed expression `"
+			+ kind
+			+ "` in value position ("
+			+ detail
+			+ "). This is a compiler correctness error; use a supported typed construct or add an explicit Ruby lowering.",
+			expr.pos);
+		return RubyNil;
 	}
 
 	static function compileAssignable(expr:TypedExpr):RubyExpr {
@@ -14995,7 +15021,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				lines.join("\n");
 			case RubyRawStatement(code): code;
 			case RubyComment(text): "# " + text;
-			case _: "# TODO: inline statement";
+			case RubyModuleDecl(_, _) | RubyClassDecl(_, _) | RubyClassDeclWithSuper(_, _, _) | RubyMethodDecl(_, _, _):
+				Context.error("Internal Ruby lowering error: a declaration reached the inline statement renderer.", Context.currentPos());
+				"";
 		}
 	}
 

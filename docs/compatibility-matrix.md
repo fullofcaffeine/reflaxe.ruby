@@ -47,6 +47,10 @@ See [Ruby Profiles](profiles.md) for the full profile contract. `-D reflaxe_ruby
 See [Ruby Callable And Method ABI](ruby-callable-abi.md) for the authoring,
 lowering, diagnostics, and verification contract.
 
+Typed-expression lowering is exhaustive and fail-closed. Unsupported compiler
+intrinsics or statement-only shapes reaching value lowering are compile errors,
+not generated `nil` placeholders; see [Ruby Compiler Correctness](compiler-correctness.md).
+
 ## Rails Mode
 
 RailsHx satisfies the production-readiness gate for the documented `0.x` beta

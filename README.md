@@ -63,6 +63,10 @@ For a guided public entrypoint, start with:
 - DeviseHx: [docs/railshx-devisehx-design.md](docs/railshx-devisehx-design.md) for the companion-layer design and [examples/todoapp_rails](examples/todoapp_rails) for the current app-local auth contract in a real Rails flow.
 - Documentation map: [docs/README.md](docs/README.md).
 
+Compiler lowering is fail-closed: a typed Haxe expression without an explicit
+Ruby representation produces a source-positioned compiler diagnostic, never a
+generated `nil`/TODO placeholder. See [Ruby Compiler Correctness](docs/compiler-correctness.md).
+
 ## Target Defines
 
 - `ruby`: injected automatically for RubyHx builds, enabling conventional
