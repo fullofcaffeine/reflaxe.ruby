@@ -31,6 +31,31 @@ class RubyASTPrinterTestMain {
 		eq("structured call", RubyASTPrinter.printExpr(RubyCallableCall(RubyLocal("target"), "visit", callArgs)),
 			'target.visit(1, *items, name: "ruby", **options, &callback)');
 
+		var projected = RubyBegin([
+			RubyComment("Evaluate the typed keyword carrier once."),
+			RubyAssign(RubyLocal("source"), RubyCall(null, "options", [])),
+			RubyAssign(RubyLocal("keywords"), RubySymbolHash([
+				{
+					key: "required",
+					value: RubyIndex(RubyLocal("source"), RubyString("required"))
+				}
+			])),
+			RubyIfStmt(RubyCall(RubyLocal("source"), "key?", [RubyString("optional")]), [
+				RubyAssign(RubyIndex(RubyLocal("keywords"), RubySymbol("optional")), RubyIndex(RubyLocal("source"), RubyString("optional")))
+			]),
+			RubyExprStatement(RubyLocal("keywords"))
+		]);
+		eq("single-evaluation keyword projection",
+			RubyASTPrinter.printExpr(RubyCallableCall(RubyLocal("target"), "configure", [RubyKeywordSplatArgument(projected)])),
+			'target.configure(**begin\n  # Evaluate the typed keyword carrier once.\n  source = options()\n  keywords = {required: source["required"]}\n  if source.key?("optional")\n    keywords[:optional] = source["optional"]\n  end\n  keywords\nend)');
+		eq("conditional optional keyword",
+			RubyASTPrinter.printExpr(RubyConditional(RubyBool(true), RubySymbolHash([{key: "optional", value: RubyNil}]), RubySymbolHash([]))),
+			"(true ? {optional: nil} : {})");
+		eq("writer expression", RubyASTPrinter.printExpr(RubyCall(RubyLocal("target"), "value=", [RubyInt("1")])), "(target.value = 1)");
+		eq("writer statement", printStatement(RubyExprStatement(RubyCall(RubyLocal("target"), "value=", [RubyInt("1")]))), "target.value = 1\n");
+		eq("writer expression precedence", RubyASTPrinter.printExpr(RubyBinary("+", RubyCall(RubyLocal("target"), "value=", [RubyInt("1")]), RubyInt("2"))),
+			"((target.value = 1) + 2)");
+
 		var block:RubyBlock = {
 			args: ["item"],
 			body: [RubyExprStatement(RubyCall(RubyLocal("item"), "to_s", []))]

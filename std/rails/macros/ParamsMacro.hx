@@ -6,6 +6,7 @@ import haxe.macro.Expr;
 import haxe.macro.Type.FieldAccess;
 import haxe.macro.Type.MetaAccess;
 import haxe.macro.Type.TypedExpr;
+import haxe.macro.TypeTools;
 #else
 import haxe.macro.Expr;
 #end
@@ -32,13 +33,24 @@ class ParamsMacro {
 			permit = permit.concat(nestedPermitRootSpecs(nested));
 		}
 		validateFieldModels(rootModel, topLevelFieldInfos(permit), fields.pos);
-		return macro $params.requireParam($root).permit($e{permitArrayExpr(permit)});
+		var permitted = macro $params.requireParam($root).permit($e{permitArrayExpr(permit)});
+		// The macro knows the ModelKey<T> owner. Feed that type back as an expected
+		// `PermittedParams<T>` result so Haxe retains the Rails strong-params runtime
+		// object without a Dynamic/cast boundary.
+		return {
+			expr: ECheckType(permitted, permittedParamsComplexType(railsModelComplexType(root))),
+			pos: permitted.pos
+		};
 	}
 
 	public static macro function mergeField(params:Expr, field:Expr, value:Expr):Expr {
 		var info = fieldInfo(field);
 		if (info.model == null) {
 			Context.error("ParamsMacro.mergeField expects a generated RailsHx model field ref such as Todo.f.userId.", field.pos);
+		}
+		var paramsModel = typedPermittedParamsModel(params);
+		if (paramsModel != null && info.model != null && !sameModelName(paramsModel, info.model)) {
+			Context.error("ParamsMacro.mergeField field refs must belong to the same model as the permitted params value.", field.pos);
 		}
 		return macro rails.action_controller.ParamsRuntime.mergeField($params, $field, $value);
 	}
@@ -172,6 +184,68 @@ class ParamsMacro {
 			return typedModel;
 		}
 		return sourceRailsModelKey(expr);
+	}
+
+	static function typedRailsModelType(expr:Expr):Null<haxe.macro.Type> {
+		return try {
+			extractRailsModelType(Context.typeExpr(expr));
+		} catch (_:Dynamic) {
+			// Haxe's macro typer can throw non-Exception compiler values. This local
+			// probe only enables a typed fallback; canonical ModelKey source syntax is
+			// resolved without this seam and no Dynamic reaches the returned API.
+			null;
+		}
+	}
+
+	static function extractRailsModelType(expr:TypedExpr):Null<haxe.macro.Type> {
+		return switch (expr.expr) {
+			case TMeta(_, inner) | TParenthesis(inner) | TCast(inner, _):
+				extractRailsModelType(inner);
+			case _:
+				genericModelType(expr.t, "ModelKey");
+		}
+	}
+
+	static function railsModelComplexType(expr:Expr):Null<ComplexType> {
+		var sourceName = sourceRailsModelKey(expr);
+		if (sourceName != null) {
+			var parts = sourceName.split(".");
+			return TPath({pack: parts.slice(0, parts.length - 1), name: parts[parts.length - 1]});
+		}
+		var typed = typedRailsModelType(expr);
+		return typed == null ? null : TypeTools.toComplexType(typed);
+	}
+
+	static function permittedParamsComplexType(modelType:Null<ComplexType>):ComplexType {
+		var owner = modelType == null ? (macro :rails.action_controller.Params) : modelType;
+		return TPath({
+			pack: ["rails", "action_controller"],
+			name: "PermittedParams",
+			params: [TPType(owner)]
+		});
+	}
+
+	static function typedPermittedParamsModel(expr:Expr):Null<String> {
+		return try {
+			permittedParamsModelName(Context.typeof(expr));
+		} catch (_:Dynamic) {
+			// Same macro-typer seam as typedRailsModelType; failure falls back to the
+			// nominal Haxe signature, which still rejects incompatible model scopes.
+			null;
+		}
+	}
+
+	static function permittedParamsModelName(type:haxe.macro.Type):Null<String> {
+		return switch (TypeTools.follow(type)) {
+			case TInst(classRef, params):
+				var cls = classRef.get();
+				if (cls.pack.join(".") == "rails.action_controller" && cls.name == "PermittedParams" && params.length == 1) {
+					typeName(params[0]);
+				} else {
+					null;
+				}
+			case _: null;
+		}
 	}
 
 	static function sourceRailsFieldInfo(expr:Expr):Null<FieldInfo> {
@@ -334,18 +408,23 @@ class ParamsMacro {
 	}
 
 	static function genericModelName(type:haxe.macro.Type, expectedName:String):Null<String> {
+		var modelType = genericModelType(type, expectedName);
+		return modelType == null ? null : typeName(modelType);
+	}
+
+	static function genericModelType(type:haxe.macro.Type, expectedName:String):Null<haxe.macro.Type> {
 		return switch (type) {
 			case TAbstract(absRef, params):
 				var abs = absRef.get();
 				if (abs.pack.join(".") == "rails.active_record" && abs.name == expectedName && params.length > 0) {
-					typeName(params[0]);
+					params[0];
 				} else {
 					null;
 				}
 			case TLazy(lazy):
-				genericModelName(lazy(), expectedName);
+				genericModelType(lazy(), expectedName);
 			case TType(_, params) if (params.length > 0):
-				genericModelName(params[0], expectedName);
+				genericModelType(params[0], expectedName);
 			case _:
 				null;
 		}

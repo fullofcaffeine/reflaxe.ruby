@@ -35,6 +35,9 @@ import reflaxe.ruby.compiler.RubyBuildContext;
 import reflaxe.ruby.compiler.RubyBuildContextResolver;
 import reflaxe.ruby.compiler.RubyBlockSemantics;
 import reflaxe.ruby.compiler.RubyCallableShape;
+import reflaxe.ruby.compiler.RubyCallableShape.RubyCallableContract;
+import reflaxe.ruby.compiler.RubyCallableShape.RubyKeywordFieldContract;
+import reflaxe.ruby.compiler.RubyKeywordSemantics;
 import reflaxe.ruby.naming.RubyNaming;
 import reflaxe.ruby.rails.RailsRouteDecl;
 import reflaxe.ruby.rails.RailsRouteTarget;
@@ -163,6 +166,21 @@ typedef LocalNameScope = {
 	capturedSelfAliases:Map<Int, Bool>
 }
 
+/**
+	Definition-side binding for one erased `@:rubyKwargs` carrier.
+
+	Known reads bind directly to Ruby keyword locals. `materialized` methods also
+	have a reconstructed Haxe string-key hash because their body uses the carrier
+	as a first-class value.
+**/
+typedef ActiveRubyKeywordCarrier = {
+	var variableId:Int;
+	var materialized:Bool;
+	var carrierLocalName:String;
+	var optionalBucketName:Null<String>;
+	var fields:Array<RubyKeywordFieldContract>;
+}
+
 enum RailsTestAdapter {
 	RailsMinitest;
 	RailsRspec;
@@ -191,6 +209,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static var hxrubyCallCount:Int = 0;
 	static var localNameScope:Null<LocalNameScope> = null;
 	static var directYieldBlockVariableId:Null<Int> = null;
+	static var activeRubyKeywordCarrier:Null<ActiveRubyKeywordCarrier> = null;
 	static var currentRailsTestAdapter:RailsTestAdapter = RailsMinitest;
 
 	public function new() {
@@ -225,6 +244,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		hxrubyCallCount = 0;
 		localNameScope = null;
 		directYieldBlockVariableId = null;
+		activeRubyKeywordCarrier = null;
 		currentRailsTestAdapter = RailsMinitest;
 	}
 
@@ -866,24 +886,67 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileMethodAs(field:ClassFuncData, emitStatic:Bool):RubyStatement {
 		var contract = RubyCallableShape.resolve(field.field, field.field.pos);
-		return withLocalNameScope([for (arg in field.args) if (arg.tvar != null) arg.tvar], () -> {
-			var name = RubyNaming.toMethodName(field.field.name);
+		var directYieldVariable:Null<TVar> = null;
+		if (contract.hasBlockArg) {
+			var blockArg = field.args[contract.blockIndex];
+			if (!contract.blockOptional && blockArg.tvar != null && !RubyBlockSemantics.parameterEscapes(field.expr, blockArg.tvar)) {
+				directYieldVariable = blockArg.tvar;
+			}
+		}
+		var keywordArg = contract.hasKwargs ? field.args[contract.kwargsIndex] : null;
+		var keywordVariable = keywordArg == null ? null : keywordArg.tvar;
+		if (contract.hasKwargs && keywordVariable == null) {
+			Context.error("@:rubyKwargs requires a named Haxe parameter so the owned method body can retain its typed carrier semantics.", field.field.pos);
+		}
+		var materializeKeywordCarrier = keywordVariable != null
+			&& RubyKeywordSemantics.requiresMaterialization(field.expr, keywordVariable);
+
+		return withLocalNameScope([], () -> {
+			// Required Ruby keyword labels also become local variables. Reserve those
+			// exact names before assigning Haxe locals so a positional/local collision
+			// receives the compiler's normal deterministic suffix instead of producing
+			// an invalid duplicate Ruby parameter.
+			for (keyword in contract.keywordFields) {
+				if (!keyword.optional) {
+					reserveLocalName(keyword.rubyName);
+				}
+			}
+			for (index => arg in field.args) {
+				if (arg.tvar == null) {
+					continue;
+				}
+				if (contract.hasKwargs && index == contract.kwargsIndex && !materializeKeywordCarrier) {
+					continue;
+				}
+				if (directYieldVariable != null && arg.tvar.id == directYieldVariable.id) {
+					continue;
+				}
+				localName(arg.tvar);
+			}
+
+			var name = rubyFieldName(field.field.name, field.field.meta);
 			if (!emitStatic && field.field.name == "new") {
 				name = "initialize";
 			}
 			if (emitStatic) {
 				name = "self." + name;
 			}
-			var directYieldVariable:Null<TVar> = null;
-			if (contract.hasBlockArg) {
-				var blockArg = field.args[contract.blockIndex];
-				if (!contract.blockOptional && blockArg.tvar != null && !RubyBlockSemantics.parameterEscapes(field.expr, blockArg.tvar)) {
-					directYieldVariable = blockArg.tvar;
-				}
-			}
 			var args:Array<RubyMethodParameter> = [];
 			var capturedBlockName:Null<String> = null;
+			var optionalKeywordFields = [for (keyword in contract.keywordFields) if (keyword.optional) keyword];
+			var optionalBucketName:Null<String> = optionalKeywordFields.length == 0 ? null : allocateSyntheticLocalName("optional_keywords");
 			for (index => arg in field.args) {
+				if (contract.hasKwargs && index == contract.kwargsIndex) {
+					for (keyword in contract.keywordFields) {
+						if (!keyword.optional) {
+							args.push(RubyRequiredKeywordParameter(keyword.rubyName));
+						}
+					}
+					if (optionalBucketName != null) {
+						args.push(RubyKeywordRestParameter(optionalBucketName));
+					}
+					continue;
+				}
 				if (contract.hasBlockArg && index == contract.blockIndex) {
 					if (directYieldVariable == null) {
 						capturedBlockName = methodArgName(arg);
@@ -893,19 +956,33 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				}
 				args.push(methodArgParameter(arg));
 			}
+			var keywordBinding:Null<ActiveRubyKeywordCarrier> = null;
+			if (keywordVariable != null) {
+				keywordBinding = {
+					variableId: keywordVariable.id,
+					materialized: materializeKeywordCarrier,
+					carrierLocalName: materializeKeywordCarrier ? localName(keywordVariable) : "",
+					optionalBucketName: optionalBucketName,
+					fields: contract.keywordFields
+				};
+			}
 			// The active variable ID lets ordinary Haxe `block(value)` expressions
 			// lower to `yield(value)` without exposing yield as a second authoring
 			// API. Captured/optional blocks keep their local and compile to `.call`.
-			var body = withDirectYieldBlock(directYieldVariable, () -> compileFunctionBody(field.expr));
+			var body = withActiveRubyKeywordCarrier(keywordBinding, () -> withDirectYieldBlock(directYieldVariable, () -> compileFunctionBody(field.expr)));
+			var entry:Array<RubyStatement> = [];
+			if (keywordBinding != null) {
+				entry = compileOwnedKeywordEntry(name, keywordBinding, optionalKeywordFields);
+			}
 			if (capturedBlockName != null && !contract.blockOptional) {
 				// Ruby permits an omitted `&block`, but the Haxe parameter is required.
 				// Fail at the public Ruby boundary before nil can be stored/returned or
 				// forwarded somewhere that obscures the declaration responsible.
-				body.insert(0, RubyIfStmt(RubyBinary("==", RubyLocal(capturedBlockName), RubyNil), [
+				entry.push(RubyIfStmt(RubyBinary("==", RubyLocal(capturedBlockName), RubyNil), [
 					RubyExprStatement(RubyCall(null, "raise", [RubyLocal("ArgumentError"), RubyString("required block missing for " + name)]))
 				], null));
 			}
-			return RubyMethodDecl(name, args, body);
+			return RubyMethodDecl(name, args, entry.concat(body));
 		});
 	}
 
@@ -936,6 +1013,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function methodArgParameter(arg:ClassFuncArg):RubyMethodParameter {
 		var argName = methodArgName(arg);
+		if (RubyCallableShape.isRestType(arg.type)) {
+			return RubyRestParameter(argName);
+		}
 		if (!arg.opt) {
 			return RubyRequiredParameter(argName);
 		}
@@ -945,6 +1025,54 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function methodArgName(arg:ClassFuncArg):String {
 		return arg.tvar == null ? RubyNaming.toLocalName(arg.getName()) : localName(arg.tvar);
+	}
+
+	/**
+		Builds the definition-side entry contract for optional and materialized kwargs.
+
+		Ruby itself rejects unknown keys when every keyword is explicit. Optional
+		fields instead live in `**optional_keywords` so the Haxe body can distinguish
+		an omitted field from an explicitly supplied `nil`; that bucket therefore
+		needs a small allow-list check. The string-key carrier is rebuilt only when
+		the body uses the anonymous object as a value or mutates it.
+	**/
+	static function compileOwnedKeywordEntry(methodName:String, binding:ActiveRubyKeywordCarrier,
+			optionalFields:Array<RubyKeywordFieldContract>):Array<RubyStatement> {
+		var entry:Array<RubyStatement> = [];
+		if (optionalFields.length > 0 && binding.optionalBucketName != null) {
+			entry.push(RubyComment("Preserve optional keyword presence separately from explicit nil and reject undeclared keys."));
+			var unknownName = allocateSyntheticLocalName("unknown_keywords");
+			entry.push(RubyAssign(RubyLocal(unknownName),
+				RubyBinary("-", RubyCall(RubyLocal(binding.optionalBucketName), "keys", []),
+					RubyArray([for (field in optionalFields) RubySymbol(field.rubyName)]))));
+			entry.push(RubyIfStmt(RubyUnary("!", RubyCall(RubyLocal(unknownName), "empty?", [])), [
+				RubyExprStatement(RubyCall(null, "raise", [
+					RubyLocal("ArgumentError"),
+					RubyBinary("+", RubyString("unknown keyword(s) for " + methodName + ": "), RubyCall(RubyLocal(unknownName), "inspect", []))
+				]))
+			], null));
+		}
+		if (!binding.materialized) {
+			return entry;
+		}
+
+		// This comment is emitted with the otherwise avoidable carrier local. It
+		// tells Ruby readers why the compiler cannot keep the method as direct
+		// keyword-local code at this particular source method.
+		entry.push(RubyComment("Rebuild the typed Haxe keyword carrier because this method uses it as a value."));
+		entry.push(RubyAssign(RubyLocal(binding.carrierLocalName), RubyHash([
+			for (field in binding.fields)
+				if (!field.optional) {key: field.haxeName, value: RubyLocal(field.rubyName)}
+		])));
+		if (binding.optionalBucketName != null) {
+			for (field in optionalFields) {
+				entry.push(RubyIfStmt(RubyCall(RubyLocal(binding.optionalBucketName), "key?", [RubySymbol(field.rubyName)]), [
+					RubyAssign(RubyIndex(RubyLocal(binding.carrierLocalName), RubyString(field.haxeName)),
+						RubyIndex(RubyLocal(binding.optionalBucketName), RubySymbol(field.rubyName)))
+				], null));
+			}
+		}
+		return entry;
 	}
 
 	static function compileRailsModelMethod(field:ClassFuncData):RubyStatement {
@@ -2820,6 +2948,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (expr == null) {
 			return RubyNil;
 		}
+		var keywordCarrierExpr = compileActiveRubyKeywordCarrierExpr(expr);
+		if (keywordCarrierExpr != null) {
+			return keywordCarrierExpr;
+		}
 		// A direct-only owned block parameter is represented by Ruby's implicit
 		// block. Match it before generic/special call lowering so no Proc wrapper
 		// or synthetic local leaks into the generated method.
@@ -2881,9 +3013,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				// so constructor metadata must enter the callable-ABI path explicitly.
 				// This turns `new Type(value, callback)` into the handwritten Ruby
 				// shape `Type.new(value) { ... }` without a wrapper constructor.
-				if (constructor != null && RubyCallableShape.hasCallableMetadata(constructor)) {
+				if (constructor != null && RubyCallableShape.hasRubyCallableShape(constructor)) {
 					var contract = RubyCallableShape.resolve(constructor, constructor.pos, [for (param in params) param.t]);
-					compileRubyCallableCall(receiver, "new", params, contract.hasKwargs, contract.hasBlockArg);
+					compileRubyCallableCall(receiver, "new", params, contract);
 				} else {
 					RubyCall(receiver, "new", [for (param in params) compileExpr(param)]);
 				}
@@ -2964,11 +3096,102 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileAssignable(expr:TypedExpr):RubyExpr {
+		var keywordCarrierTarget = compileActiveRubyKeywordCarrierField(expr);
+		if (keywordCarrierTarget != null) {
+			return keywordCarrierTarget;
+		}
 		return switch (expr.expr) {
 			case TLocal(v): RubyLocal(isCapturedSelfAlias(v) ? "self" : localName(v));
 			case TArray(target, index): RubyRawExpr(printInlineExpr(target) + "[" + printInlineExpr(index) + "]");
 			case TField(target, access): RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
 			case _: RubyRawExpr(printInlineExpr(expr));
+		}
+	}
+
+	/** Resolves reads from the currently erased definition-side keyword carrier. **/
+	static function compileActiveRubyKeywordCarrierExpr(expr:TypedExpr):Null<RubyExpr> {
+		var binding = activeRubyKeywordCarrier;
+		if (binding == null) {
+			return null;
+		}
+		var field = compileActiveRubyKeywordCarrierField(expr);
+		if (field != null) {
+			return field;
+		}
+		return switch (expr.expr) {
+			case TLocal(variable) if (variable.id == binding.variableId):
+				if (!binding.materialized) {
+					Context.error("Internal Ruby keyword lowering error: a first-class carrier use reached code generation without materialization.", expr.pos);
+					RubyNil;
+				} else {
+					RubyLocal(binding.carrierLocalName);
+				}
+			case TCall(callee, [target, key])
+				if (!binding.materialized
+					&& RubyKeywordSemantics.isReflectHasField(callee)
+					&& RubyKeywordSemantics.isParameterLocal(target, binding.variableId)):
+				var haxeName = typedLiteralString(key);
+				if (haxeName == null) {
+					Context.error("Reflect.hasField on an unmaterialized @:rubyKwargs carrier requires a literal field name.", key.pos);
+					RubyBool(false);
+				} else {
+					var keyword = rubyKeywordField(binding.fields, haxeName);
+					if (keyword == null) {
+						RubyBool(false);
+					} else if (!keyword.optional) {
+						RubyBool(true);
+					} else if (binding.optionalBucketName == null) {
+						Context.error("Internal Ruby keyword lowering error: optional field has no presence bucket.", key.pos);
+						RubyBool(false);
+					} else {
+						RubyCall(RubyLocal(binding.optionalBucketName), "key?", [RubySymbol(keyword.rubyName)]);
+					}
+				}
+			case _: null;
+		}
+	}
+
+	static function compileActiveRubyKeywordCarrierField(expr:TypedExpr):Null<RubyExpr> {
+		var binding = activeRubyKeywordCarrier;
+		if (binding == null) {
+			return null;
+		}
+		return switch (expr.expr) {
+			case TField(target, access) if (RubyKeywordSemantics.isParameterLocal(target, binding.variableId)):
+				var haxeName = fieldAccessRawName(access);
+				var keyword = rubyKeywordField(binding.fields, haxeName);
+				if (keyword == null) {
+					Context.error("Typed @:rubyKwargs carrier has no declared field `" + haxeName + "`.", expr.pos);
+					RubyNil;
+				} else if (binding.materialized) {
+					RubyIndex(RubyLocal(binding.carrierLocalName), RubyString(keyword.haxeName));
+				} else if (!keyword.optional) {
+					RubyLocal(keyword.rubyName);
+				} else if (binding.optionalBucketName == null) {
+					Context.error("Internal Ruby keyword lowering error: optional field has no presence bucket.", expr.pos);
+					RubyNil;
+				} else {
+					RubyIndex(RubyLocal(binding.optionalBucketName), RubySymbol(keyword.rubyName));
+				}
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): compileActiveRubyKeywordCarrierField(inner);
+			case _: null;
+		}
+	}
+
+	static function rubyKeywordField(fields:Array<RubyKeywordFieldContract>, haxeName:String):Null<RubyKeywordFieldContract> {
+		for (field in fields) {
+			if (field.haxeName == haxeName) {
+				return field;
+			}
+		}
+		return null;
+	}
+
+	static function typedLiteralString(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TConst(TString(value)): value;
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): typedLiteralString(inner);
+			case _: null;
 		}
 	}
 
@@ -5604,7 +5827,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return RubyNil;
 		}
 		var contract = RubyCallableShape.resolve(field, field.pos, [for (param in params) param.t]);
-		return compileRubyReceiverCall(target, fieldAccessName(access), params, contract.hasKwargs, contract.hasBlockArg);
+		return compileRubyReceiverCall(target, fieldAccessName(access), params, contract);
 	}
 
 	static function compileRubyPatchCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -5619,7 +5842,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var receiver = params[0];
 		var remaining = params.slice(1);
 		var contract = RubyCallableShape.resolve(info.field, info.field.pos);
-		return compileRubyReceiverCall(receiver, rubyFieldName(info.field.name, info.field.meta), remaining, contract.hasKwargs, contract.hasBlockArg);
+		return compileRubyReceiverCall(receiver, rubyFieldName(info.field.name, info.field.meta), remaining, contract);
 	}
 
 	static function rubyPatchCallInfo(callee:TypedExpr):Null<{className:String, field:ClassField}> {
@@ -5636,17 +5859,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function compileRubyReceiverCall(target:TypedExpr, method:String, params:Array<TypedExpr>, useKwargs:Bool, useBlockArg:Bool):RubyExpr {
+	static function compileRubyReceiverCall(target:TypedExpr, method:String, params:Array<TypedExpr>, contract:RubyCallableContract):RubyExpr {
 		var receiver = RubyRawExpr(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(target)));
-		return compileRubyCallableCall(receiver, method, params, useKwargs, useBlockArg);
+		return compileRubyCallableCall(receiver, method, params, contract);
 	}
 
-	/** Builds the structured keyword/block portion shared by methods and constructors. **/
-	static function compileRubyCallableCall(receiver:RubyExpr, method:String, params:Array<TypedExpr>, useKwargs:Bool, useBlockArg:Bool):RubyExpr {
+	/** Builds the structured keyword/block/rest portion shared by methods and constructors. **/
+	static function compileRubyCallableCall(receiver:RubyExpr, method:String, params:Array<TypedExpr>, contract:RubyCallableContract):RubyExpr {
 		var remaining = params.copy();
 		var block:Null<TypedExpr> = null;
 		var blockValue:Null<TypedExpr> = null;
-		if (useBlockArg && remaining.length > 0) {
+		if (contract.hasBlockArg && remaining.length > 0) {
 			var candidate = remaining[remaining.length - 1];
 			if (isFunctionExpr(candidate) && !RubyBlockSemantics.inlineFunctionNeedsLambda(candidate)) {
 				remaining.pop();
@@ -5667,15 +5890,49 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 		}
 		var keywordSource:Null<TypedExpr> = null;
-		if (useKwargs && remaining.length > 0 && isObjectDeclExpr(remaining[remaining.length - 1])) {
+		if (contract.hasKwargs && remaining.length > 0) {
 			keywordSource = remaining.pop();
 		}
-		var args:Array<RubyCallArgument> = [
-			for (param in remaining)
-				RubyPositionalArgument(RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(param))))
-		];
+		var args:Array<RubyCallArgument> = [];
+		if (contract.hasRest) {
+			if (remaining.length <= contract.restIndex) {
+				Context.error("Ruby rest call is missing the final typed haxe.Rest carrier.",
+					params.length == 0 ? Context.currentPos() : params[params.length - 1].pos);
+			} else {
+				for (index in 0...contract.restIndex) {
+					args.push(RubyPositionalArgument(RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(remaining[index])))));
+				}
+				var restParams = remaining.slice(contract.restIndex);
+				if (restParams.length == 1 && RubyCallableShape.isRestType(restParams[0].t)) {
+					var restSource = unwrapRubyRestCarrier(restParams[0]);
+					// Haxe's Cross target packages written rest values into Rest.of([...]).
+					// Flatten that compiler-only literal back to ordinary Ruby arguments;
+					// keep a real `*value` only for a stored/effectful spread expression.
+					// Both forms preserve left-to-right evaluation and avoid visible Rest
+					// scaffolding in generated code.
+					switch (restSource.expr) {
+						case TArrayDecl(values):
+							for (value in values) {
+								args.push(RubyPositionalArgument(compileExpr(value)));
+							}
+						case _:
+							args.push(RubySplatArgument(compileExpr(restSource)));
+					}
+				} else {
+					// Haxe targets that preserve native rest arguments may expose the
+					// individual values instead of the Cross-target Rest.of carrier.
+					for (param in restParams) {
+						args.push(RubyPositionalArgument(compileExpr(param)));
+					}
+				}
+			}
+		} else {
+			for (param in remaining) {
+				args.push(RubyPositionalArgument(RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(param)))));
+			}
+		}
 		if (keywordSource != null) {
-			args = args.concat(compileRubyKeywordArgs(keywordSource));
+			args = args.concat(compileRubyKeywordArgs(keywordSource, contract.keywordFields));
 		}
 		if (blockValue != null) {
 			// Keep both stored callbacks and strict inline lambdas as structured
@@ -5777,16 +6034,83 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function compileRubyKeywordArgs(expr:TypedExpr):Array<RubyCallArgument> {
-		return switch (expr.expr) {
+	/**
+		Projects a typed Haxe carrier onto its declared Ruby keyword schema.
+
+		Object literals stay as direct keyword arguments. Stored carriers read only
+		the declared string-key fields, and optional fields use `Hash#key?` so absent
+		and explicit nil remain distinct. An arbitrary carrier expression is assigned
+		to one meaningful local inside a structured `begin` expression before the
+		projection; this is the only scaffolding needed to preserve Haxe's exactly-once
+		evaluation rule without accepting unknown runtime keys.
+	**/
+	static function compileRubyKeywordArgs(expr:TypedExpr, schema:Array<RubyKeywordFieldContract>):Array<RubyCallArgument> {
+		var source = unwrapRubyCarrier(expr);
+		return switch (source.expr) {
 			case TObjectDecl(fields):
-				[
-					for (field in fields)
-						RubyKeywordArgument(RubyNaming.toMethodName(field.name), RubyRawExpr(printKeywordArgValue(field.name, field.expr)))
-				];
+				var args:Array<RubyCallArgument> = [];
+				for (field in fields) {
+					var keyword = rubyKeywordField(schema, field.name);
+					if (keyword == null) {
+						Context.error("Unknown field `" + field.name + "` in @:rubyKwargs carrier; the declaration's typed schema is authoritative.",
+							field.expr.pos);
+						continue;
+					}
+					args.push(RubyKeywordArgument(keyword.rubyName, RubyRawExpr(printKeywordArgValue(field.name, field.expr))));
+				}
+				args;
+			case TLocal(_):
+				var sourceExpr = compileExpr(source);
+				var args:Array<RubyCallArgument> = [];
+				for (keyword in schema) {
+					if (!keyword.optional) {
+						args.push(RubyKeywordArgument(keyword.rubyName, RubyIndex(sourceExpr, RubyString(keyword.haxeName))));
+					}
+				}
+				for (keyword in schema) {
+					if (keyword.optional) {
+						var value = RubyIndex(sourceExpr, RubyString(keyword.haxeName));
+						args.push(RubyKeywordSplatArgument(RubyConditional(RubyCall(sourceExpr, "key?", [RubyString(keyword.haxeName)]),
+							RubySymbolHash([{key: keyword.rubyName, value: value}]), RubySymbolHash([]))));
+					}
+				}
+				args;
 			case _:
-				[RubyKeywordSplatArgument(RubyRawExpr(printInlineExpr(expr)))];
+				var sourceName = allocateSyntheticLocalName("keyword_options");
+				var projectedName = allocateSyntheticLocalName("projected_keywords");
+				var body:Array<RubyStatement> = [
+					RubyComment("Evaluate the typed keyword carrier once and preserve optional-key presence."),
+					RubyAssign(RubyLocal(sourceName), compileExpr(source)),
+					RubyAssign(RubyLocal(projectedName), RubySymbolHash([
+						for (keyword in schema)
+							if (!keyword.optional) {
+								key: keyword.rubyName,
+								value: RubyIndex(RubyLocal(sourceName), RubyString(keyword.haxeName))
+							}
+					]))
+				];
+				for (keyword in schema) {
+					if (!keyword.optional) {
+						continue;
+					}
+					body.push(RubyIfStmt(RubyCall(RubyLocal(sourceName), "key?", [RubyString(keyword.haxeName)]), [
+						RubyAssign(RubyIndex(RubyLocal(projectedName), RubySymbol(keyword.rubyName)),
+							RubyIndex(RubyLocal(sourceName), RubyString(keyword.haxeName)))
+					], null));
+				}
+				body.push(RubyExprStatement(RubyLocal(projectedName)));
+				[RubyKeywordSplatArgument(RubyBegin(body))];
 		}
+	}
+
+	static function unwrapRubyCarrier(expr:TypedExpr):TypedExpr {
+		var unwrapped = unwrapTypedExpr(expr);
+		var identity = abstractIdentityBlockValue(unwrapped);
+		return identity == null ? unwrapped : unwrapRubyCarrier(identity);
+	}
+
+	static function unwrapRubyRestCarrier(expr:TypedExpr):TypedExpr {
+		return unwrapRubyCarrier(expr);
 	}
 
 	static function printKeywordArgValue(fieldName:String, expr:TypedExpr):String {
@@ -5816,21 +6140,22 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				{expr: TVar(boxLocal, _)},
 				{expr: TBinop(OpAssign, {expr: TLocal(assignLocal)}, {expr: TLocal(sourceLocal)})},
 				{expr: TLocal(retLocal)}
-			]) if (valueInit != null && boxLocal.name == assignLocal.name && boxLocal.name == retLocal.name && valueLocal.name == sourceLocal.name):
+			]) if (valueInit != null && boxLocal.id == assignLocal.id && boxLocal.id == retLocal.id && valueLocal.id == sourceLocal.id):
 				valueInit;
-			case TBlock([decl, assign, ret]):
-				switch [decl.expr, assign.expr, ret.expr] {
-					case [
-						TVar(local, _),
-						TBinop(OpAssign, {expr: TLocal(assignLocal)}, value),
-						TLocal(retLocal)
-					] if (local.name == assignLocal.name && local.name == retLocal.name):
-						value;
-					case _:
-						null;
-				}
+			case TBlock([
+				{expr: TVar(local, _)},
+				{expr: TBinop(OpAssign, {expr: TLocal(assignLocal)}, value)},
+				ret
+			]): var retLocal = transparentLocalVariable(ret); retLocal != null && local.id == assignLocal.id && local.id == retLocal.id ? value : null;
 			case _:
 				null;
+		}
+	}
+
+	static function transparentLocalVariable(expr:TypedExpr):Null<TVar> {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TLocal(variable): variable;
+			case _: null;
 		}
 	}
 
@@ -5983,7 +6308,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function isRubyInteropCall(access:haxe.macro.Type.FieldAccess):Bool {
-		return hasFieldAccessMeta(access, ":rubyKwargs") || hasFieldAccessMeta(access, ":rubyBlockArg");
+		var field = fieldAccessClassField(access);
+		return field != null && RubyCallableShape.hasRubyCallableShape(field);
 	}
 
 	static function isFunctionExpr(expr:TypedExpr):Bool {
@@ -6038,13 +6364,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				isMethodField(field) ? rubyFieldName(field.name, field.meta) : null;
 			case _:
 				null;
-		}
-	}
-
-	static function isObjectDeclExpr(expr:TypedExpr):Bool {
-		return switch (expr.expr) {
-			case TObjectDecl(_): true;
-			case _: false;
 		}
 	}
 
@@ -14135,9 +14454,33 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static function withDirectYieldBlock<T>(variable:Null<TVar>, build:Void->T):T {
 		var previous = directYieldBlockVariableId;
 		directYieldBlockVariableId = variable == null ? null : variable.id;
-		var result = build();
-		directYieldBlockVariableId = previous;
-		return result;
+		try {
+			var result = build();
+			directYieldBlockVariableId = previous;
+			return result;
+		} catch (error:Dynamic) {
+			// Haxe macro/compiler callbacks may throw non-Exception values. Keep the
+			// untyped catch local to state restoration; it never enters generated code
+			// or a public RubyHx API.
+			directYieldBlockVariableId = previous;
+			throw error;
+		}
+	}
+
+	/** Scopes definition-side field/presence rewrites to one owned method body. **/
+	static function withActiveRubyKeywordCarrier<T>(binding:Null<ActiveRubyKeywordCarrier>, build:Void->T):T {
+		var previous = activeRubyKeywordCarrier;
+		activeRubyKeywordCarrier = binding;
+		try {
+			var result = build();
+			activeRubyKeywordCarrier = previous;
+			return result;
+		} catch (error:Dynamic) {
+			// See withDirectYieldBlock: this Dynamic is only the Haxe macro exception
+			// seam needed to restore compiler state before rethrowing the same value.
+			activeRubyKeywordCarrier = previous;
+			throw error;
+		}
 	}
 
 	static function newLocalNameScope():LocalNameScope {
@@ -14158,6 +14501,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var name = next == 0 && base != "self" ? base : base + "__hx" + Std.string(next);
 		localNameScope.names.set(v.id, name);
 		return name;
+	}
+
+	/** Reserves a Ruby-owned local such as a required keyword binding. **/
+	static function reserveLocalName(name:String):Void {
+		if (localNameScope == null) {
+			localNameScope = newLocalNameScope();
+		}
+		if (!localNameScope.nextByBase.exists(name)) {
+			localNameScope.nextByBase.set(name, 1);
+		}
+	}
+
+	/** Allocates a meaningful compiler local while sharing Haxe collision rules. **/
+	static function allocateSyntheticLocalName(base:String):String {
+		if (localNameScope == null) {
+			localNameScope = newLocalNameScope();
+		}
+		var normalized = RubyNaming.toLocalName(base);
+		var next = localNameScope.nextByBase.exists(normalized) ? localNameScope.nextByBase.get(normalized) : 0;
+		localNameScope.nextByBase.set(normalized, next + 1);
+		return next == 0 && normalized != "self" ? normalized : normalized + "__hx" + Std.string(next);
 	}
 
 	static function markCapturedSelfAlias(v:TVar):Void {

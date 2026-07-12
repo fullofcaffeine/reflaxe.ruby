@@ -150,6 +150,8 @@ module HXRuby
           "// Type safety: action names are Haxe methods; optional HHX views are",
           "// rendered through `Template.of(ViewClass)` so renamed/missing views fail",
           "// at Haxe compile time instead of becoming stale Rails strings.",
+          "// Strong params use the model-owned key and field refs, preserving the",
+          "// `PermittedParams<Model>` type that model writes require.",
           "@:railsController",
           "class #{@controller_name} extends rails.action_controller.Base {",
           "\tstatic final lifecycle = [];",
@@ -173,7 +175,7 @@ module HXRuby
                  ]
                elsif @model_name && action == "create"
                  [
-                   "\t\tvar attrs = ParamsMacro.requirePermit(this.params(), #{Common.haxe_string(@resource_name)}, [#{field_literals}]);",
+                   "\t\tvar attrs = ParamsMacro.requirePermit(this.params(), #{@model_name}.railsParamKey, [#{field_refs}]);",
                    "\t\tvar #{@resource_name} = #{@model_name}.create(attrs);",
                    redirect_line,
                  ]
@@ -191,8 +193,8 @@ module HXRuby
         ]
       end
 
-      def field_literals
-        @fields.map { |field| Common.haxe_string(field) }.join(", ")
+      def field_refs
+        @fields.map { |field| "#{@model_name}.f.#{field}" }.join(", ")
       end
 
       def redirect_line

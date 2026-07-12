@@ -12,6 +12,9 @@ class Main
   def self.main()
     count = 2
     puts(HXRuby.stringify(NativeInterop.describe(name: "ruby", count: 2)))
+    puts(HXRuby.stringify(NativeInterop.describe_optional(name: "inline", count: 3)))
+    stored = {"name" => "stored", "count" => 4, "label" => nil}
+    puts(HXRuby.stringify(NativeInterop.describe_optional(count: stored["count"], name: stored["name"], **(stored.key?("label") ? {label_text: stored["label"]} : {}))))
     puts(HXRuby.stringify(NativeInterop.describe_details(name: "ruby", tags: [:fast, :typed], count: count)))
     NativeInterop.each([1, 2]) { |value| puts(HXRuby.stringify(value)) }
     NativeInterop.with_options([3, 4], prefix: "item", tags: [:safe], count: count) do |value__hx1|

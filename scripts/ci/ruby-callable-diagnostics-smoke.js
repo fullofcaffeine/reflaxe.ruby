@@ -100,8 +100,8 @@ class Main {
 }
 `,
 	},
-	{
-		name: "invalid_native_name",
+  {
+    name: "invalid_native_name",
     expected: "is not a valid Ruby method name",
     source: `
 class NativeApi {
@@ -113,6 +113,78 @@ class Main {
 }
 `,
   },
+	{
+		name: "unknown_inline_keyword_field",
+		expected: "has extra field extra",
+		source: `
+extern class NativeApi {
+  @:rubyKwargs
+  public static function describe(options:{name:String}):Void;
+}
+class Main {
+  static function main():Void NativeApi.describe({name: "ruby", extra: 1});
+}
+`,
+	},
+	{
+		name: "invalid_keyword_native_name",
+		expected: "is not a valid Ruby keyword label",
+		source: `
+typedef Options = {
+  @:native("ready?") var value:String;
+}
+extern class NativeApi {
+  @:rubyKwargs
+  public static function describe(options:Options):Void;
+}
+class Main {
+  static function main():Void NativeApi.describe({value: "ruby"});
+}
+`,
+	},
+	{
+		name: "duplicate_keyword_native_name",
+		expected: "both lower to Ruby keyword `retry_count`",
+		source: `
+typedef Options = {
+  var retryCount:Int;
+  @:native("retry_count") var retries:Int;
+}
+extern class NativeApi {
+  @:rubyKwargs
+  public static function describe(options:Options):Void;
+}
+class Main {
+  static function main():Void NativeApi.describe({retryCount: 1, retries: 2});
+}
+`,
+	},
+	{
+		name: "optional_keyword_carrier",
+		expected: "must be required. Put optionality on individual carrier fields",
+		source: `
+extern class NativeApi {
+  @:rubyKwargs
+  public static function describe(?options:{name:String}):Void;
+}
+class Main {
+  static function main():Void NativeApi.describe({name: "ruby"});
+}
+`,
+	},
+	{
+		name: "rest_with_block_metadata",
+		expected: "cannot be combined with a final haxe.Rest parameter",
+		source: `
+extern class NativeApi {
+  @:rubyBlockArg
+  public static function visit(...values:Int):Void;
+}
+class Main {
+  static function main():Void NativeApi.visit(1, 2);
+}
+`,
+	},
 	{
 		name: "dynamic_block_method",
     expected: "cannot be used on a Haxe dynamic method",
@@ -139,6 +211,28 @@ class Model extends rails.active_record.Base<Model> {
 }
 class Main {
   static function main():Void {}
+}
+`,
+	},
+	{
+		name: "permitted_params_wrong_model_merge",
+		expected: "ParamsMacro.mergeField field refs must belong to the same model as the permitted params value",
+		rails: true,
+		source: `
+@:railsModel
+class Todo extends rails.active_record.Base<Todo> {
+  @:railsColumn public var title:String;
+}
+@:railsModel
+class User extends rails.active_record.Base<User> {
+  @:railsColumn public var name:String;
+}
+class Main {
+  static function main():Void {
+    var params:rails.action_controller.Params = null;
+    var permitted = rails.macros.ParamsMacro.requirePermit(params, Todo.railsParamKey, [Todo.f.title]);
+    rails.macros.ParamsMacro.mergeField(permitted, User.f.name, "wrong owner");
+  }
 }
 `,
 	},

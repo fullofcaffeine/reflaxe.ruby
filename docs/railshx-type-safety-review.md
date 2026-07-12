@@ -14,7 +14,7 @@ The todoapp already has strong typed seams:
 - HHX embedded expressions, conditionals, loops, and route helper calls are typed before ERB is emitted.
 - RailsHx-owned templates can be referenced through `Template.of(ViewClass)`/`Template.layout(LayoutViewClass)`, so missing or renamed Haxe view classes fail at compile time.
 - Rails-owned ERB interop is separated through checked `Template.existing(...)` where the ERB file is discoverable, with lower-level `Template.external(...)` reserved for explicit escapes.
-- ActiveRecord columns generate typed field refs such as `Todo.fields.title` and `Todo.f.title : Field<Todo, String>`, plus a typed params/form scope `Todo.railsParamKey : ModelKey<Todo>`. HHX form helpers and `ParamsMacro.requirePermit(...)` can share those refs, so unknown fields and wrong-model strong params fail during Haxe compilation while generated ERB/Ruby still uses normal Rails names and symbols.
+- ActiveRecord columns generate typed field refs such as `Todo.fields.title` and `Todo.f.title : Field<Todo, String>`, plus a typed params/form scope `Todo.railsParamKey : ModelKey<Todo>`. HHX form helpers and `ParamsMacro.requirePermit(...)` share those refs; the macro returns nominal `PermittedParams<Todo>`, and model write overloads preserve Rails' parameters object as one positional value. Unknown fields, wrong-model params, and wrong-model server-owned merges therefore fail during Haxe compilation without `Dynamic`, while generated ERB/Ruby still uses normal Rails names, symbols, and `Todo.create(attrs)`.
 
 The remaining stringly seams are the next targets:
 

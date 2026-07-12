@@ -74,10 +74,10 @@ class ModelMacro {
 		addOptionalStub(fields, "exists", criteriaType, macro :Bool, "criteria", "exists?", pos);
 		addNoArgStub(fields, "count", macro :Int, pos);
 		if (hasTypedAttributes) {
-			addStub(fields, "create", attributesType, selfType, pos, true);
-			addStub(fields, "createBang", attributesType, selfType, pos, true);
-			addStub(fields, "build", attributesType, selfType, pos, true);
-			addInstanceStub(fields, "update", attributesType, macro :Bool, "attrs", pos, true);
+			addStub(fields, "create", attributesType, selfType, pos, true, selfType);
+			addStub(fields, "createBang", attributesType, selfType, pos, true, selfType);
+			addStub(fields, "build", attributesType, selfType, pos, true, selfType);
+			addInstanceStub(fields, "update", attributesType, macro :Bool, "attrs", pos, true, selfType);
 		}
 		addNoArgInstanceStub(fields, "destroy", macro :Bool, pos);
 		addNoArgStub(fields, "first", nullableSelf, pos);
@@ -967,7 +967,7 @@ class ModelMacro {
 					name: field.name,
 					access: [],
 					kind: FVar(fieldValueType(field), null),
-					meta: [{name: ":optional", pos: field.pos}],
+					meta: keywordCarrierFieldMetadata(field),
 					pos: field.pos
 				});
 			} else if (includeAssociations && isRailsAssociation(field)) {
@@ -977,7 +977,7 @@ class ModelMacro {
 						name: field.name,
 						access: [],
 						kind: FVar(targetCriteria, null),
-						meta: [{name: ":optional", pos: field.pos}],
+						meta: keywordCarrierFieldMetadata(field),
 						pos: field.pos
 					});
 				}
@@ -1052,11 +1052,31 @@ class ModelMacro {
 				name: field.name,
 				access: [],
 				kind: FVar(fieldValueType(field), null),
-				meta: [{name: ":optional", pos: field.pos}],
+				meta: keywordCarrierFieldMetadata(field),
 				pos: field.pos
 			});
 		}
 		return criteriaFields.length == 0 ? macro :Dynamic : TAnonymous(criteriaFields);
+	}
+
+	/**
+		Carries field-level Ruby naming into schema-derived kwargs typedefs.
+
+		The anonymous criteria/attribute type is the `@:rubyKwargs` ABI schema, so
+		dropping a model field's `@:native` name here would make typed calls disagree
+		with direct model access. Only `@:optional` and the target naming contract are
+		copied; unrelated model metadata must not leak into the carrier.
+	**/
+	static function keywordCarrierFieldMetadata(field:Field):Metadata {
+		var metadata:Metadata = [{name: ":optional", pos: field.pos}];
+		if (field.meta != null) {
+			for (entry in field.meta) {
+				if (entry.name == ":native") {
+					metadata.push(entry);
+				}
+			}
+		}
+		return metadata;
 	}
 
 	static function classFieldHasMeta(field:haxe.macro.Type.ClassField, name:String):Bool {
@@ -1296,7 +1316,8 @@ class ModelMacro {
 		}
 	}
 
-	static function addStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, pos:Position, useKwargs:Bool = false):Void {
+	static function addStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, pos:Position, useKwargs:Bool = false,
+			permittedModelType:Null<ComplexType> = null):Void {
 		for (field in fields) {
 			if (field.name == name) {
 				return;
@@ -1308,6 +1329,9 @@ class ModelMacro {
 		];
 		if (useKwargs) {
 			metadata.insert(1, {name: ":rubyKwargs", params: [], pos: pos});
+		}
+		if (permittedModelType != null) {
+			metadata.push(permittedParamsOverload("attrs", permittedModelType, ret, pos));
 		}
 		fields.push({
 			name: name,
@@ -1426,7 +1450,7 @@ class ModelMacro {
 	// `@:rubyExternStub` metadata makes the Ruby compiler skip emitting these
 	// placeholder bodies; calls still lower to ordinary receiver dispatch.
 	static function addInstanceStub(fields:Array<Field>, name:String, argType:ComplexType, ret:ComplexType, argName:String, pos:Position,
-			useKwargs:Bool = false):Void {
+			useKwargs:Bool = false, permittedModelType:Null<ComplexType> = null):Void {
 		for (field in fields) {
 			if (field.name == name) {
 				return;
@@ -1439,6 +1463,9 @@ class ModelMacro {
 		if (useKwargs) {
 			metadata.insert(1, {name: ":rubyKwargs", params: [], pos: pos});
 		}
+		if (permittedModelType != null) {
+			metadata.push(permittedParamsOverload(argName, permittedModelType, ret, pos));
+		}
 		fields.push({
 			name: name,
 			access: [APublic],
@@ -1450,6 +1477,36 @@ class ModelMacro {
 			meta: metadata,
 			pos: pos
 		});
+	}
+
+	/**
+		Adds the Rails-owned strong-params path beside the typed Haxe attribute object.
+
+		The primary anonymous carrier keeps inline writes completed and type-checked,
+		then lowers to keywords. `PermittedParams<TModel>` is a nominal Rails runtime
+		object and must stay one positional argument. The shared generated-stub ABI
+		resolver selects between those shapes from the typed invocation.
+	**/
+	static function permittedParamsOverload(argName:String, modelType:ComplexType, ret:ComplexType, pos:Position):MetadataEntry {
+		var permittedType:ComplexType = TPath({
+			pack: ["rails", "action_controller"],
+			name: "PermittedParams",
+			params: [TPType(modelType)]
+		});
+		return {
+			name: ":overload",
+			params: [
+				{
+					expr: EFunction(null, {
+						args: [{name: argName, type: permittedType}],
+						ret: ret,
+						expr: macro {}
+					}),
+					pos: pos
+				}
+			],
+			pos: pos
+		};
 	}
 
 	static function addNoArgInstanceStub(fields:Array<Field>, name:String, ret:ComplexType, pos:Position):Void {

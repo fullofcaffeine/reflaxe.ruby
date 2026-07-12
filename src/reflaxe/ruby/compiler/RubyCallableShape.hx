@@ -7,6 +7,14 @@ import haxe.macro.Type;
 import haxe.macro.Type.ClassField;
 import haxe.macro.Type.MethodKind;
 import haxe.macro.TypeTools;
+import reflaxe.ruby.naming.RubyNaming;
+
+/** One field in the typed anonymous-object carrier used for Ruby keywords. **/
+typedef RubyKeywordFieldContract = {
+	var haxeName:String;
+	var rubyName:String;
+	var optional:Bool;
+}
 
 /**
 	The validated Ruby call ABI attached to one Haxe method declaration.
@@ -21,6 +29,9 @@ typedef RubyCallableContract = {
 	var hasBlockArg:Bool;
 	var blockIndex:Int;
 	var blockOptional:Bool;
+	var keywordFields:Array<RubyKeywordFieldContract>;
+	var hasRest:Bool;
+	var restIndex:Int;
 }
 
 private typedef RubyCallableParameter = {
@@ -48,11 +59,38 @@ class RubyCallableShape {
 		return hasMeta(field, ":rubyKwargs") || hasMeta(field, ":rubyBlockArg");
 	}
 
+	/** True when a call needs structured keyword, block, or rest lowering. **/
+	public static function hasRubyCallableShape(field:ClassField):Bool {
+		if (hasCallableMetadata(field)) {
+			return true;
+		}
+		for (signature in functionSignatures(field)) {
+			if (signatureHasRest(signature)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static function resolve(field:ClassField, ?diagnosticPos:Position, ?callArgumentTypes:Array<Type>):RubyCallableContract {
 		var pos = diagnosticPos == null ? field.pos : diagnosticPos;
 		var declaredKwargs = validateMarker(field, ":rubyKwargs", pos);
 		var hasBlockArg = validateMarker(field, ":rubyBlockArg", pos);
 		validateNativeFieldName(field, pos);
+		var signatures = functionSignatures(field);
+		var declaresRest = false;
+		for (signature in signatures) {
+			if (signatureHasRest(signature)) {
+				declaresRest = true;
+				break;
+			}
+		}
+		if (declaresRest && (declaredKwargs || hasBlockArg)) {
+			Context.error(callableMetadataNames(declaredKwargs, hasBlockArg)
+				+
+				" cannot be combined with a final haxe.Rest parameter. Haxe requires Rest to be final, while Ruby keyword/block carriers occupy the trailing ABI positions; declare a narrower typed facade for that native shape.",
+				pos);
+		}
 		var generatedOverloadCall = callArgumentTypes != null && hasMeta(field, ":rubyExternStub");
 		var hasKwargs = declaredKwargs;
 		if (generatedOverloadCall && hasKwargs) {
@@ -69,23 +107,25 @@ class RubyCallableShape {
 			kwargsIndex: -1,
 			hasBlockArg: false,
 			blockIndex: -1,
-			blockOptional: false
+			blockOptional: false,
+			keywordFields: [],
+			hasRest: false,
+			restIndex: -1
 		};
-		if (!hasKwargs && !hasBlockArg) {
+		if (!hasKwargs && !hasBlockArg && !declaresRest) {
 			return empty;
 		}
 
 		switch (field.kind) {
 			case FMethod(MethDynamic):
-				Context.error(callableMetadataNames(hasKwargs, hasBlockArg)
+				Context.error(callableContractNames(hasKwargs, hasBlockArg, declaresRest)
 					+ " cannot be used on a Haxe dynamic method because rebinding would lose the declared Ruby call ABI.",
 					pos);
 			case FMethod(_):
 			case _:
-				Context.error(callableMetadataNames(hasKwargs, hasBlockArg) + " is valid only on a method declaration.", pos);
+				Context.error(callableContractNames(hasKwargs, hasBlockArg, declaresRest) + " is valid only on a method declaration.", pos);
 		}
 
-		var signatures = functionSignatures(field);
 		if (generatedOverloadCall) {
 			signatures.unshift([
 				for (index in 0...callArgumentTypes.length)
@@ -93,7 +133,7 @@ class RubyCallableShape {
 			]);
 		}
 		if (signatures.length == 0) {
-			Context.error(callableMetadataNames(hasKwargs, hasBlockArg) + " requires a statically typed Haxe function signature.", pos);
+			Context.error(callableContractNames(hasKwargs, hasBlockArg, declaresRest) + " requires a statically typed Haxe function signature.", pos);
 		}
 		var blockCandidates = hasBlockArg ? [
 			for (args in signatures)
@@ -120,13 +160,27 @@ class RubyCallableShape {
 		var blockIndex = hasBlockArg ? args.length - 1 : -1;
 		var kwargsIndex = hasKwargs ? keywordCarrierIndex(args, hasBlockArg) : -1;
 		var blockOptional = hasBlockArg && args[blockIndex].opt;
+		if (hasKwargs && args[kwargsIndex].opt) {
+			Context.error("@:rubyKwargs carrier `"
+				+ args[kwargsIndex].name
+					+ "` on method `"
+					+ field.name
+					+ "` must be required. Put optionality on individual carrier fields so omission and explicit null remain distinguishable.",
+				pos);
+		}
+		var keywordFields = hasKwargs ? keywordFieldContracts(args[kwargsIndex].t, field.name, pos) : [];
+		var hasRest = signatureHasRest(args);
+		var restIndex = hasRest ? args.length - 1 : -1;
 
 		return {
 			hasKwargs: hasKwargs,
 			kwargsIndex: kwargsIndex,
 			hasBlockArg: hasBlockArg,
 			blockIndex: blockIndex,
-			blockOptional: blockOptional
+			blockOptional: blockOptional,
+			keywordFields: keywordFields,
+			hasRest: hasRest,
+			restIndex: restIndex
 		};
 	}
 
@@ -227,6 +281,86 @@ class RubyCallableShape {
 		}
 	}
 
+	/** Recognizes Haxe's native rest contract without following away the abstract. **/
+	public static function isRestType(type:haxe.macro.Type):Bool {
+		return switch (type) {
+			case TAbstract(ref, _): var abstractType = ref.get(); abstractType.pack.join(".") == "haxe" && abstractType.name == "Rest";
+			case TType(ref, _): var defType = ref.get(); defType.pack.join(".") == "haxe.extern" && defType.name == "Rest";
+			case TMono(ref): var resolved = ref.get(); resolved != null && isRestType(resolved);
+			case TLazy(resolve): isRestType(resolve());
+			case _: false;
+		}
+	}
+
+	static function signatureHasRest(args:Array<RubyCallableParameter>):Bool {
+		return args.length > 0 && isRestType(args[args.length - 1].t);
+	}
+
+	/**
+		Extracts the keyword schema once from the declared carrier type.
+
+		Ruby keyword labels are intentionally stricter than method names: predicate,
+		bang, writer, and operator spellings are valid methods but cannot bind normal
+		keyword locals. Rejecting them here keeps both calls and owned definitions on
+		the same ABI instead of quoting one side or falling back to a loose hash.
+	**/
+	static function keywordFieldContracts(type:haxe.macro.Type, methodName:String, pos:Position):Array<RubyKeywordFieldContract> {
+		var anonymous = switch (TypeTools.follow(type)) {
+			case TAnonymous(ref): ref.get();
+			case _:
+				Context.error("@:rubyKwargs on method `" + methodName + "` requires an anonymous-object/typedef carrier.", pos);
+				return [];
+		}
+		var fields:Array<RubyKeywordFieldContract> = [];
+		var rubyNames = new Map<String, String>();
+		for (field in anonymous.fields) {
+			var nativeName = keywordNativeName(field, methodName, pos);
+			var rubyName = nativeName == null ? RubyNaming.toMethodName(field.name) : nativeName;
+			if (!~/^[A-Za-z_][A-Za-z0-9_]*$/.match(rubyName)) {
+				Context.error('@:native("'
+					+ rubyName
+					+ '") on keyword field `'
+					+ field.name
+					+ '` for method `'
+					+ methodName
+					+ '` is not a valid Ruby keyword label. Use a plain Ruby identifier without `?`, `!`, or `=`.',
+					field.pos);
+			}
+			if (rubyNames.exists(rubyName)) {
+				Context.error("Keyword fields `" + rubyNames.get(rubyName) + "` and `" + field.name + "` on method `" + methodName
+					+ "` both lower to Ruby keyword `" + rubyName + "`.",
+					field.pos);
+			}
+			rubyNames.set(rubyName, field.name);
+			fields.push({
+				haxeName: field.name,
+				rubyName: rubyName,
+				optional: hasMeta(field, ":optional")
+			});
+		}
+		return fields;
+	}
+
+	static function keywordNativeName(field:ClassField, methodName:String, pos:Position):Null<String> {
+		if (field.meta == null || field.meta.extract == null) {
+			return null;
+		}
+		var entries = field.meta.extract(":native");
+		if (entries.length == 0) {
+			return null;
+		}
+		if (entries.length != 1 || entries[0].params == null || entries[0].params.length != 1) {
+			Context.error("Keyword field `" + field.name + "` on method `" + methodName + "` requires exactly one non-empty @:native string.", pos);
+		}
+		return switch (entries[0].params[0].expr) {
+			case EConst(CString(value, _)) if (value.length > 0): value;
+			case _:
+				Context.error("Keyword field `" + field.name + "` on method `" + methodName + "` requires exactly one non-empty @:native string.",
+					entries[0].pos);
+				return null;
+		}
+	}
+
 	static function isValidRubyMethodName(value:String):Bool {
 		if (RUBY_OPERATOR_METHODS.indexOf(value) != -1) {
 			return true;
@@ -242,6 +376,11 @@ class RubyCallableShape {
 			return "@:rubyKwargs and @:rubyBlockArg";
 		}
 		return hasKwargs ? "@:rubyKwargs" : "@:rubyBlockArg";
+	}
+
+	static function callableContractNames(hasKwargs:Bool, hasBlockArg:Bool, hasRest:Bool):String {
+		return hasKwargs
+			|| hasBlockArg ? callableMetadataNames(hasKwargs, hasBlockArg) : hasRest ? "A final haxe.Rest parameter" : "Ruby callable metadata";
 	}
 
 	static function hasMeta(field:ClassField, name:String):Bool {

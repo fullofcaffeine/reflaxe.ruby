@@ -103,7 +103,9 @@ for (const expected of [
   /preferred_format_name(?:__hx\d+)? = \(\(preferred_format(?:__hx\d+)? == nil\) \? "" : preferred_format(?:__hx\d+)?\.to_s\(\)\)/,
   /content_mime_type(?:__hx\d+)? = self\.request\(\)\.content_mime_type\(\)/,
   /request_media_type(?:__hx\d+)? = self\.request\(\)\.media_type\(\)/,
-  /self\.request\(\)\.variant=\(\[:phone, :tablet\]\)/,
+  // Native Ruby writers are assignments in source, so keep the snapshot shaped
+  // like hand-written Ruby instead of exposing the parser-level `variant=(...)` call.
+  /self\.request\(\)\.variant = \[:phone, :tablet\]/,
   /request_variant(?:__hx\d+)? = self\.request\(\)\.variant\(\)/,
   /wants_phone_variant(?:__hx\d+)? = request_variant(?:__hx\d+)?\.phone\?\(\)/,
   /request_variant_name(?:__hx\d+)? = request_variant(?:__hx\d+)?\.to_s\(\)/,

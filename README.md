@@ -89,10 +89,15 @@ method values, and forwarding are specified in the
 - `@:native("RubyName")` maps Haxe symbols to Ruby constants or methods.
 - `@:rubyRequire("json")` emits `require "json"`.
 - `@:rubyRequireRelative("./support/foo")` emits `require_relative "./support/foo"`.
-- `@:rubyKwargs` lowers trailing object literals into Ruby keyword args.
+- `@:rubyKwargs` is symmetric for calls and Haxe-owned definitions: its required
+  typed fields become required Ruby keywords, optional fields preserve omission
+  versus explicit `nil`, and stored carriers are projected through the declared
+  schema so wider runtime objects cannot leak unknown keywords.
 - `@:rubyBlockArg` maps one final typed callback symmetrically: call sites emit
   native blocks/`&callback`, while Haxe-owned definitions choose direct `yield`
   or captured `&block` from usage without exposing that Ruby detail to authors.
+- A final Haxe `haxe.Rest<T>` parameter emits Ruby `*args`; Haxe `...values`
+  calls emit native Ruby splats without Ruby-specific rest metadata.
 - `@:rubyMixin`, `@:rubyInclude`, `@:rubyPrepend`, and `@:rubyExtend` model Ruby module extension APIs as typed Haxe contracts while emitting normal Ruby `include`/`prepend`/`extend`.
 - `@:rubyPatch(ReceiverType)` plus Haxe `using` models monkey-patched receiver APIs, including ActiveSupport-style extensions, as typed Haxe calls that lower to direct Ruby receiver dispatch.
 - `@:rubyModule("Name")` and `@:rubyConcern("Name")` let Haxe author Ruby modules and ActiveSupport::Concern-style modules directly.

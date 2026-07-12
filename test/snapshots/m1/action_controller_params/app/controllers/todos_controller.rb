@@ -37,7 +37,7 @@ class TodosController < ApplicationController
     preferred_format_name = ((preferred_format == nil) ? "" : preferred_format.to_s())
     content_mime_type = self.request().content_mime_type()
     request_media_type = self.request().media_type()
-    self.request().variant=([:phone, :tablet])
+    self.request().variant = [:phone, :tablet]
     request_variant = self.request().variant()
     wants_phone_variant = request_variant.phone?()
     request_variant_name = request_variant.to_s()

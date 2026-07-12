@@ -48,7 +48,7 @@ class RubyASTPrinter {
 				writeBody(lines, body, indentLevel + 1);
 				lines.push(indent + "end");
 			case RubyExprStatement(expr):
-				for (line in splitCodeLines(printExpr(expr))) {
+				for (line in splitCodeLines(printStatementExpr(expr))) {
 					lines.push(indent + line);
 				}
 			case RubyAssign(target, value):
@@ -96,23 +96,37 @@ class RubyASTPrinter {
 			case RubyInt(value): value;
 			case RubyFloat(value): normalizeFloatLiteral(value);
 			case RubyString(value): quoteRubyString(value);
+			case RubySymbol(value): rubySymbol(value);
 			case RubyLocal(name): name;
 			case RubyArray(values): "[" + [for (value in values) printExpr(value)].join(", ") + "]";
 			case RubyHash(fields): "{" + [
 					for (field in fields)
 						quoteRubyString(field.key) + " => " + printExpr(field.value)
 				].join(", ") + "}";
+			case RubySymbolHash(fields): "{" + [
+					for (field in fields)
+						isSimpleRubyLabel(field.key) ? field.key + ": " + printExpr(field.value) : rubySymbol(field.key) + " => " + printExpr(field.value)
+				].join(", ") + "}";
+			case RubyIndex(receiver, index): printExpr(receiver) + "[" + printExpr(index) + "]";
 			case RubyBinary(op, left, right): "(" + printExpr(left) + " " + op + " " + printExpr(right) + ")";
 			case RubyUnary(op, value): "(" + op + printExpr(value) + ")";
+			case RubyConditional(cond, thenExpr, elseExpr):
+				"("
+				+ printExpr(cond)
+				+ " ? "
+				+ printExpr(thenExpr)
+				+ " : "
+				+ printExpr(elseExpr)
+				+ ")";
+			case RubyBegin(body): printBegin(body);
 			case RubyLambda(args, body): printLambda(args, body);
 			case RubyCall(receiver, name, args):
 				var printedArgs = args == null ? "" : [for (arg in args) printExpr(arg)].join(", ");
-				receiver == null ? name + "(" + printedArgs + ")" : printExpr(receiver)
-				+ "."
-				+ name
-				+ "("
-				+ printedArgs
-				+ ")";
+				if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1) {
+					"(" + printWriterAssignment(receiver, name, args[0]) + ")";
+				} else {
+					receiver == null ? name + "(" + printedArgs + ")" : printExpr(receiver) + "." + name + "(" + printedArgs + ")";
+				}
 			case RubyCallableCall(receiver, name, args, block):
 				printCallableCall(receiver, name, args, block);
 			case RubyYield(args): args == null || args.length == 0 ? "yield" : "yield(" + [for (arg in args) printExpr(arg)].join(", ") + ")";
@@ -130,6 +144,18 @@ class RubyASTPrinter {
 			case RubyKeywordRestParameter(name): "**" + name;
 			case RubyBlockParameter(name): "&" + name;
 		}
+	}
+
+	static function printStatementExpr(expr:RubyExpr):String {
+		return switch (expr) {
+			case RubyCall(receiver, name, args) if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1):
+				printWriterAssignment(receiver, name, args[0]);
+			case _: printExpr(expr);
+		}
+	}
+
+	static function printWriterAssignment(receiver:RubyExpr, name:String, value:RubyExpr):String {
+		return printExpr(receiver) + "." + name.substr(0, name.length - 1) + " = " + printExpr(value);
 	}
 
 	static function printCallArgument(argument:RubyCallArgument):String {
@@ -194,6 +220,13 @@ class RubyASTPrinter {
 		return lines.join("\n");
 	}
 
+	static function printBegin(body:Array<RubyStatement>):String {
+		var lines = ["begin"];
+		writeBody(lines, body, 1);
+		lines.push("end");
+		return lines.join("\n");
+	}
+
 	static function indentation(level:Int):String {
 		var out = "";
 		for (_ in 0...level) {
@@ -210,6 +243,18 @@ class RubyASTPrinter {
 		escaped = StringTools.replace(escaped, "\r", "\\r");
 		escaped = StringTools.replace(escaped, "\t", "\\t");
 		return "\"" + escaped + "\"";
+	}
+
+	static function rubySymbol(value:String):String {
+		return isSimpleRubyLabel(value) ? ":" + value : ":" + quoteRubyString(value);
+	}
+
+	static function isSimpleRubyLabel(value:String):Bool {
+		return value != null && ~/^[A-Za-z_][A-Za-z0-9_]*$/.match(value);
+	}
+
+	static function isRubyWriterName(value:String):Bool {
+		return value != null && ~/^[A-Za-z_][A-Za-z0-9_]*=$/.match(value);
 	}
 
 	static function normalizeFloatLiteral(value:String):String {

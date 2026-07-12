@@ -30,6 +30,7 @@ Keyword arguments use one typed anonymous object or typedef carrier:
 ```haxe
 typedef SubscribeOptions = {
 	var once:Bool;
+	@:native("queue_name")
 	@:optional var queue:String;
 }
 
@@ -48,6 +49,13 @@ Both metadata markers take no arguments. The typed parameters are the schema;
 there is no second string/index declaration that can drift from the Haxe
 signature.
 
+The keyword carrier parameter itself is required. Put optionality on individual
+fields with `@:optional`; making the whole carrier optional would collapse “no
+keyword object” and “an object with omitted fields” into an ambiguous ABI. A
+field-level `@:native("ruby_name")` can override normal camelCase-to-snake_case
+mapping. Keyword native names must be plain Ruby identifiers: `?`, `!`, `=`,
+and operators are method spellings, not keyword labels.
+
 Compiler-generated overload families may contain both a keyword-carrier form
 and a positional form, such as typed ActiveRecord criteria versus an expression
 predicate. Haxe retains field metadata while selecting an overload, so the
@@ -57,6 +65,48 @@ exception is keyed by the internal generated-stub contract; user-authored
 metadata remains strict and cannot silently fall back to positional behavior.
 
 ## Generated Call Shapes
+
+An inline keyword carrier emits direct, schema-mapped labels:
+
+```haxe
+NativeApi.subscribe("events", {once: true}, value -> value.length);
+```
+
+```ruby
+NativeApi.subscribe("events", once: true) { |value| value.length }
+```
+
+A stored carrier is a Haxe anonymous object, represented as a string-key Ruby
+hash. The compiler projects only declared fields instead of forwarding the hash
+blindly. This makes structural narrowing truthful: a wider Haxe value may be
+assigned to the carrier type, but its extra runtime fields cannot become
+undeclared Ruby keywords. Optional fields use `key?` plus a conditional keyword
+splat, so an absent field emits no keyword while an explicitly stored null emits
+`name: nil`:
+
+```ruby
+NativeApi.subscribe(
+  "events",
+  once: options["once"],
+  **(options.key?("queue") ? {queue_name: options["queue"]} : {})
+) { |value| value.length }
+```
+
+If the carrier is a function call or another effectful expression, the compiler
+uses a small structured `begin` projection with meaningful
+`keyword_options`/`projected_keywords` locals. It evaluates the expression once,
+filters it through the schema, and emits a generated comment explaining why the
+temporary code exists. This scaffolding is required by Haxe evaluation order;
+plain literals and stored locals do not pay for it.
+
+Projection applies only when the selected callable overload actually declares
+the anonymous keyword carrier. A nominal target-owned value can select a
+separate positional overload. RailsHx uses this for
+`PermittedParams<TModel>`: `Todo.create({title: "typed"})` emits typed keywords,
+while `Todo.create(permittedParams)` preserves the single Rails
+`ActionController::Parameters` argument and its permitted/indifferent-access
+semantics. The generic callable ABI keys off the selected types, not Rails or
+facade names.
 
 Tail-safe inline callbacks become native Ruby blocks:
 
@@ -166,6 +216,57 @@ Required carrier fields become required Ruby keywords. Optional fields preserve
 absence, unknown keys are rejected, and the carrier is materialized only when
 the Haxe body uses it as a whole instead of reading known fields.
 
+For example:
+
+```haxe
+typedef ConfigureOptions = {
+	var name:String;
+	@:optional var note:Null<String>;
+}
+
+@:rubyKwargs
+static function configure(options:ConfigureOptions):String {
+	return Reflect.hasField(options, "note")
+		? options.name + ":" + Std.string(options.note)
+		: options.name + ":missing";
+}
+```
+
+```ruby
+def self.configure(name:, **optional_keywords)
+  # Preserve optional keyword presence separately from explicit nil and reject undeclared keys.
+  unknown_keywords = optional_keywords.keys - [:note]
+  if !unknown_keywords.empty?
+    raise ArgumentError, "unknown keyword(s) for self.configure: " + unknown_keywords.inspect
+  end
+  return optional_keywords.key?(:note) ? name + ":" + optional_keywords[:note].to_s : name + ":missing"
+end
+```
+
+Ruby's conventional `note: nil` default cannot implement this contract: both an
+omitted keyword and an explicitly supplied `note: nil` bind the same local
+value. The checked `**optional_keywords` bucket is therefore deliberate, not
+generic hash indirection. It records presence with `key?` and rejects keys that
+are not declared by the Haxe type.
+
+Direct typed field reads bind to `name` or
+`optional_keywords[:note]`; no carrier object or runtime reflection helper is
+emitted. If the body returns, stores, mutates, dynamically reflects over, or
+passes `options` as a value, the compiler conservatively reconstructs the Haxe
+string-key hash. Generated Ruby includes a nearby comment explaining that the
+method needs the carrier as a value. This keeps the common Ruby shape small
+without changing Haxe anonymous-object behavior in the uncommon first-class
+case.
+
+## Native Method Names
+
+Field-level `@:native` is symmetric too. A Haxe-owned method such as
+`@:native("ready?") function ready():Bool` emits `def ready?`; bang methods,
+writers, and supported operators follow the same validated mapping. Calls from
+Haxe use those native names, and ordinary Ruby callers see the exact method
+spelling without a wrapper alias. Keyword-carrier fields use the narrower label
+rule described above.
+
 ## Method Values And Inheritance
 
 Direct annotated calls remain wrapper-free. When an annotated method becomes a
@@ -189,11 +290,38 @@ Haxe's native final `haxe.Rest<T>` parameter is the canonical authoring surface
 for Ruby `*args`, and Haxe spread calls lower to Ruby splats. No Ruby-specific
 rest metadata is needed for shapes Haxe can express directly.
 
+```haxe
+static function join(prefix:String, ...values:Int):String {
+	return prefix + values.toArray().join(",");
+}
+
+join("values:", 1, 2);
+var stored = [3, 4];
+join("stored:", ...stored);
+```
+
+```ruby
+def self.join(prefix, *values)
+  return prefix + values.dup.join(",")
+end
+
+join("values:", 1, 2)
+join("stored:", *stored)
+```
+
+The same rule covers static and instance definitions, constructors, and rest
+forwarding. Ruby-origin callers pass ordinary positional arguments. The Haxe
+Cross target represents both an inline rest list and an explicit spread as one
+typed `Rest` carrier; RubyHx unwraps that compiler identity carrier before
+printing the splat, which is why generated output contains the original array
+rather than `haxe.Rest.of` scaffolding.
+
 Haxe requires `Rest` to be its final parameter, which conflicts with the
 trailing keyword-carrier/block convention for Ruby methods combining all three
-features. That combined shape remains fixture-driven follow-up work; the
-compiler will not add speculative index metadata or weaken the types to model
-it.
+features. RubyHx rejects that combined declaration with a focused diagnostic;
+the compiler will not add speculative index metadata or weaken the types to
+model it. A native API with such a shape should expose a narrow typed facade
+whose implementation owns the target-specific adaptation.
 
 ## Structured Compiler Representation
 
@@ -204,6 +332,8 @@ The Ruby AST distinguishes:
 - Positional, splat, keyword, keyword-splat, and block-pass call arguments.
 - A native block attached to a call versus a first-class strict lambda.
 - `yield` as a dedicated expression.
+- Symbols, symbol-key hashes, indexed access, conditional expressions, and
+  statement-bearing `begin` expressions used by typed keyword projection.
 
 The AST printer owns Ruby punctuation. Compiler passes must not concatenate
 `*`, `**`, `&`, keyword labels, or block delimiters into generic argument
@@ -219,11 +349,14 @@ The compiler rejects:
 - `@:rubyBlockArg` without a final precise function parameter.
 - `@:rubyKwargs` without an anonymous-object/typedef carrier in the required
   position.
+- An optional `@:rubyKwargs` carrier parameter; individual fields own
+  optionality.
+- Invalid or duplicate Ruby names in a keyword schema.
+- A `haxe.Rest` declaration combined with keyword/block metadata.
 - Callable metadata on Haxe `dynamic function` fields, whose rebinding would
   discard the declared ABI.
 - Invalid field-level `@:native` Ruby method names.
-- Eventually, incompatible override/interface shapes and unsupported combined
-  rest shapes before code generation.
+- Eventually, incompatible override/interface shapes before code generation.
 
 Diagnostics point at the declaration because that is the source of the invalid
 ABI promise. Haxe's own type checker continues to own missing required
@@ -245,10 +378,20 @@ Every callable-ABI change must cover the applicable parts of this matrix:
 - All examples, todoapp QA, Playwright browser E2E, packages, and the supported
   Ruby 3.2/3.3/4.0 CI matrix.
 
+The focused executable gates are `npm run test:ruby-owned-blocks`,
+`npm run test:ruby-keyword-rest`, and
+`npm run test:ruby-callable-diagnostics`. Exact generated Ruby is also owned by
+`npm run test:snapshots`; these focused gates do not replace the full
+repository, todoapp, production, or Playwright checks.
+
 Current implementation status is intentionally explicit: extern and Haxe-owned
 block calls/definitions are symmetric, including constructor, module, concern,
 patch-call, optional/captured/forwarded, Ruby-origin, and callback-return
-coverage. Structured AST nodes and declaration validation own the foundation.
-Full keyword/rest definitions, method-value adapters, inherited ABI resolution,
-override checks, and `super` forwarding remain ordered follow-up slices under
-the callable-ABI epic.
+coverage. Keyword calls/definitions are symmetric for required/optional/native
+fields, stored and effectful carriers, structural narrowing, constructor,
+instance, keyword-plus-block, and Ruby-origin shapes. Native method names and
+Rest/splat definitions, calls, constructors, and forwarding are executable and
+snapshotted. Structured AST nodes and declaration validation own the
+foundation. Method-value adapters, inherited ABI resolution, override checks,
+and `super` block forwarding remain the next ordered slices under the
+callable-ABI epic.

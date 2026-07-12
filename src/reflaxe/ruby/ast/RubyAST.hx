@@ -26,11 +26,16 @@ enum RubyExpr {
 	RubyInt(value:String);
 	RubyFloat(value:String);
 	RubyString(value:String);
+	RubySymbol(value:String);
 	RubyLocal(name:String);
 	RubyArray(values:Array<RubyExpr>);
 	RubyHash(fields:Array<RubyHashField>);
+	RubySymbolHash(fields:Array<RubyHashField>);
+	RubyIndex(receiver:RubyExpr, index:RubyExpr);
 	RubyBinary(op:String, left:RubyExpr, right:RubyExpr);
 	RubyUnary(op:String, expr:RubyExpr);
+	RubyConditional(cond:RubyExpr, thenExpr:RubyExpr, elseExpr:RubyExpr);
+	RubyBegin(body:Array<RubyStatement>);
 	RubyLambda(args:Array<String>, body:Array<RubyStatement>);
 	RubyCall(?receiver:RubyExpr, name:String, args:Array<RubyExpr>);
 	RubyCallableCall(?receiver:RubyExpr, name:String, args:Array<RubyCallArgument>, ?block:RubyBlock);

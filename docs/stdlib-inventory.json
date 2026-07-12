@@ -743,6 +743,14 @@
       "reason": "Typed Rails params wrapper for require/permit flows."
     },
     {
+      "id": "std.rails.action_controller_permitted_params",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_controller/PermittedParams.hx",
+      "surface": "rails.action_controller.PermittedParams",
+      "reason": "Nominal model-scoped view of Rails ActionController::Parameters after checked strong-params permitting; preserves the Rails runtime object and positional ActiveRecord write ABI without Dynamic or a wrapper allocation."
+    },
+    {
       "id": "std.rails.action_controller_flash_store",
       "owner": "std",
       "status": "implemented",

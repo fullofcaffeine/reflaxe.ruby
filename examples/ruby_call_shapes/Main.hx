@@ -2,21 +2,35 @@
 //
 // Demonstrates: Ruby keyword arguments, block arguments, Ruby symbols, native
 // method names, and direct Kernel extern calls from typed Haxe.
-// Type safety: object-literal kwargs are checked by Haxe structural typing,
-// block functions have typed parameters, and `Symbol.of(...)` avoids raw symbol
-// strings at call sites.
-// IntelliSense: editors should complete typed extern methods, required kwargs,
-// block function signatures, and `Kernel` helpers.
+// Type safety: inline and stored kwargs are checked by Haxe structural typing;
+// `@:optional` plus field-level `@:native` preserves optional Ruby labels;
+// block functions have typed parameters; and `Symbol.of(...)` avoids raw
+// symbol strings at call sites.
+// IntelliSense: editors should complete typed extern methods, required/optional
+// kwargs, block function signatures, and `Kernel` helpers.
 // Ruby output: idiomatic Ruby calls such as `foo(name: ..., count: ...)`,
 // block syntax, and `:symbol` literals.
 import ruby.Kernel;
 import ruby.Symbol;
+
+typedef OptionalDescribeOptions = {
+	var name:String;
+	var count:Int;
+
+	@:optional
+	@:native("label_text")
+	var label:Null<String>;
+}
 
 @:rubyRequireRelative("./support/native_interop")
 @:native("NativeInterop")
 extern class NativeInterop {
 	@:rubyKwargs
 	public static function describe(options:{name:String, count:Int}):String;
+
+	@:native("describe_optional")
+	@:rubyKwargs
+	public static function describeOptional(options:OptionalDescribeOptions):String;
 
 	@:rubyBlockArg
 	public static function each(values:Array<Int>, block:Int->Void):Void;
@@ -37,6 +51,9 @@ class Main {
 	static function main() {
 		var count = 2;
 		Sys.println(NativeInterop.describe({name: "ruby", count: 2}));
+		Sys.println(NativeInterop.describeOptional({name: "inline", count: 3}));
+		var stored:OptionalDescribeOptions = {name: "stored", count: 4, label: null};
+		Sys.println(NativeInterop.describeOptional(stored));
 		Sys.println(NativeInterop.describeDetails({name: "ruby", tags: [Symbol.of("fast"), Symbol.of("typed")], count: count}));
 		NativeInterop.each([1, 2], function(value) {
 			Sys.println(value);

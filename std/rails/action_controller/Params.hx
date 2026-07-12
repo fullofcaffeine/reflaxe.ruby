@@ -4,7 +4,12 @@ extern class Params {
 	@:native("require")
 	public function requireParam(key:String):Params;
 
-	public function permit(keys:Array<PermitSpec>):Dynamic;
+	/**
+		Returns Rails' own parameters object with a model scope supplied by the
+		`ParamsMacro.requirePermit` expected type. Call the macro for app code; this
+		generic primitive exists so the checked expansion never needs `Dynamic`.
+	**/
+	public function permit<TModel>(keys:Array<PermitSpec>):PermittedParams<TModel>;
 
 	/**
 		Typed facade for Rails params hash lookup.

@@ -116,6 +116,16 @@ to Rails names:
 self.params().require("todo").permit([:title, :notes, :user_id])
 ```
 
+The Haxe result is the nominal `PermittedParams<Todo>`, while the runtime value
+is still Rails' own `ActionController::Parameters`. Model-generated
+`create`/`createBang`/`build` and instance `update` overloads accept the matching
+model scope as one positional argument, so `Todo.create(attrs)` remains the
+normal Rails strong-params call. It is deliberately not treated as the
+string-key anonymous-object carrier used by inline typed writes, and no
+`Dynamic`, cast, wrapper object, or field-by-field reprojection is involved.
+`ParamsMacro.mergeField(attrs, Todo.f.userId, currentUser.id)` preserves the
+same model scope and rejects a field ref from another model.
+
 Nested strong params use the optional fourth argument:
 
 ```haxe
@@ -286,11 +296,15 @@ negotiated_formats__hx0 = self.request().formats()
 preferred_format__hx0 = self.request().negotiate_mime([Mime[:html], Mime[:json]])
 content_mime_type__hx0 = self.request().content_mime_type()
 media_type__hx0 = self.request().media_type()
-self.request().variant=([:phone])
+self.request().variant = [:phone]
 wants_phone__hx0 = self.request().variant().phone?()
 variant_name__hx0 = self.request().variant().to_s()
 status__hx0 = self.response().status()
 ```
+
+The Haxe `request.setVariant(...)` facade is mapped to Ruby's `variant=` writer.
+The compiler prints that writer as an ordinary assignment so generated controller
+code keeps the same shape a Rails author would write by hand.
 
 `request.format()` returns `RequestFormat`, not `Dynamic`, so common MIME
 checks such as `html()`, `json()`, `turboStream()`, `xml()`, and `any()` are

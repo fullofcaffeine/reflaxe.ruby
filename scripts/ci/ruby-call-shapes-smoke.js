@@ -54,6 +54,13 @@ writeFileSync(join(supportDir, "native_interop.rb"), [
   "    values.each { |value| yield value }",
   "  end",
   "",
+  "  def self.describe_optional(name:, count:, **options)",
+  "    unknown = options.keys - [:label_text]",
+  "    raise ArgumentError, \"unknown keyword: #{unknown.inspect}\" unless unknown.empty?",
+  "    label = options.key?(:label_text) ? options[:label_text].inspect : 'missing'",
+  "    \"#{name}:#{count}:#{label}\"",
+  "  end",
+  "",
   "  def self.describe_details(name:, tags:, count:)",
   "    \"#{name}:#{count}:#{tags.join('|')}\"",
   "  end",
@@ -72,6 +79,8 @@ writeFileSync(join(supportDir, "native_interop.rb"), [
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
 for (const expected of [
   /NativeInterop\.describe\(name: "ruby", count: 2\)/,
+  /NativeInterop\.describe_optional\(name: "inline", count: 3\)/,
+  /NativeInterop\.describe_optional\(count: stored\["count"\], name: stored\["name"\], \*\*\(stored\.key\?\("label"\) \? \{label_text: stored\["label"\]\} : \{\}\)\)/,
   /NativeInterop\.describe_details\(name: "ruby", tags: \[:fast, :typed\], count: count(?:__hx\d+)?\)/,
   /NativeInterop\.each\(\[1, 2\]\) \{ \|value(?:__hx\d+)?\| puts\(HXRuby\.stringify\(value(?:__hx\d+)?\)\) \}/,
   /NativeInterop\.with_options\(\[3, 4\], prefix: "item", tags: \[:safe\], count: count(?:__hx\d+)?\) do \|value(?:__hx\d+)?\|/,

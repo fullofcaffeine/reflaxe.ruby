@@ -91,6 +91,26 @@ todo = Todo.create(title: "ship", completed: false)
 todo.update(completed: true)
 ```
 
+Checked strong params use a separate nominal path. `ParamsMacro.requirePermit`
+returns `PermittedParams<Todo>` backed by the original Rails
+`ActionController::Parameters`, and the generated write overload keeps it as a
+single positional value:
+
+```haxe
+var attrs = ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title]);
+Todo.create(attrs);
+```
+
+```ruby
+attrs = params.require("todo").permit([:title])
+Todo.create(attrs)
+```
+
+This distinction is intentional: inline Haxe attribute objects are projected
+to typed Ruby keywords, while Rails-owned permitted params retain Rails'
+indifferent-access keys and permitted-state behavior. Neither path uses
+`Dynamic` in the public Haxe contract.
+
 Some gems or framework modules install writable virtual attributes that are not
 database columns. Declare those as precisely typed `@:railsExternalAttribute`
 fields. They participate in create/build/update completion but do not emit an

@@ -7,7 +7,11 @@ what arguments it accepts, how it changes generated Ruby/Rails artifacts, and
 which safety boundary it carries.
 
 Haxe's built-in `@:native("RubyName")` remains the supported way to map a Haxe
-type or field to an existing Ruby constant or method name. RubyHx does not
+type or field to an existing Ruby constant or method name. On methods, RubyHx
+accepts normal identifiers, predicate/bang/writer suffixes, and supported Ruby
+operators. On fields inside a `@:rubyKwargs` carrier, the value must be a plain
+Ruby keyword identifier because it also becomes a local binding in Haxe-owned
+definitions. RubyHx does not
 define a separate `@:rubyName` alias. Other Haxe-owned metadata such as
 `@:build`, `@:autoBuild`, `@:from`, and `@:to` keeps its normal Haxe meaning;
 this reference covers the target-specific `@:ruby*` and `@:rails*` contracts.
@@ -25,7 +29,7 @@ npm run test:compiler-metadata-docs
 | --- | --- | --- | --- |
 | `@:rubyRequire("feature")` | Any used type; exactly one non-empty string literal; repeatable. | Registers a deduplicated, sorted `require "feature"` in the generated module/run prelude when the annotated type is used. | Models Ruby/std/gem load ownership explicitly. Missing or non-string arguments are compile errors. It does not install the library. |
 | `@:rubyRequireRelative("path")` | Any used type; exactly one non-empty string literal; repeatable. | Registers a deduplicated, sorted `require_relative "path"`. | Use only for a checked packaged/local companion artifact. The path is emitted as declared; this is not a filesystem-existence macro. |
-| `@:rubyKwargs` | A non-dynamic method; no metadata arguments. Its typed anonymous-object/typedef carrier is final, or immediately precedes a `@:rubyBlockArg` callback. | Removes the positional carrier and emits schema fields as Ruby keyword arguments. Haxe field names follow Ruby naming/native mapping. | Invalid placement/carrier types fail at the declaration. Required/optional fields and value types remain Haxe-checked. Do not replace the carrier with `Dynamic`. |
+| `@:rubyKwargs` | A non-dynamic method; no metadata arguments. Its required typed anonymous-object/typedef carrier is final, or immediately precedes a `@:rubyBlockArg` callback. Optionality belongs on carrier fields with `@:optional`, not on the carrier parameter. | Removes the positional carrier on calls and Haxe-owned definitions. Inline literals emit direct keywords; stored/arbitrary carriers are projected through the declared schema with single evaluation. Required fields become required Ruby keywords. Optional fields use a checked `**optional_keywords` bucket so omission remains distinct from explicit `nil`; the Haxe string-key carrier is rebuilt only when the body uses it as a value. Field names follow Ruby naming or field-level `@:native`. | Invalid placement/carrier types, malformed/duplicate keyword names, optional carrier parameters, and undeclared inline fields fail closed. Structurally wider stored values are narrowed to the declared schema. Required/optional fields and value types remain Haxe-checked. Do not replace the carrier with `Dynamic`. |
 | `@:rubyBlockArg` | A non-dynamic method; no metadata arguments. The final Haxe parameter is a precise function type. The marker belongs on the called method, not the callback value. | Removes the function from positional arguments. Tail-safe inline functions emit native blocks; stored/nullable callbacks and inline callbacks with non-tail `return` use Ruby `&callback`/`&lambda`. Haxe-owned definitions emit `yield` for required direct-only use and `&block` plus `.call` for optional/escaping use. | Invalid placement or a non-function final parameter fails at the declaration. Required captured blocks reject missing Ruby-origin blocks. Ruby-owned APIs retain their own lifecycle/`ensure`; this marker preserves that behavior but does not manufacture cleanup. |
 
 When `@:rubyKwargs` and `@:rubyBlockArg` appear together, declare positional
@@ -62,6 +66,14 @@ See [Ruby callable and method ABI](ruby-callable-abi.md) for optional blocks,
 callback-local return semantics, definition-side `yield`/capture policy,
 method-value and inheritance rules, rest/splat boundaries, diagnostics, and the
 required verification matrix.
+
+No metadata is needed for rest arguments. A final `haxe.Rest<T>` parameter is
+the typed Haxe contract for Ruby `*args`, and a Haxe spread call such as
+`visit(...values)` emits `visit(*values)`. Because Haxe requires `Rest` to be
+final while keyword/block carriers occupy their own trailing positions, RubyHx
+rejects a declaration that combines `Rest` with `@:rubyKwargs` or
+`@:rubyBlockArg`; use a narrow typed facade for such a native Ruby API instead
+of weakening the signature.
 
 ## Ruby Extension And Module Metadata
 

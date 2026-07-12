@@ -94,7 +94,7 @@ assertIncludes("src_haxe/controllers/TodosController.hx", [
   "typedef IndexLocals = {",
   "var todos:Array<Todo>;",
   "ViewMacro.renderTemplate(this, (Template.of(IndexView) : Template<IndexLocals>), {title: \"TodosController#index\", todos: todos})",
-  'ParamsMacro.requirePermit(this.params(), "todo", ["title", "isCompleted"])',
+  "ParamsMacro.requirePermit(this.params(), Todo.railsParamKey, [Todo.f.title, Todo.f.isCompleted])",
   'redirectToOptions({action: "index"})',
 ]);
 assertIncludes("src_haxe/views/todos/IndexView.hx", [

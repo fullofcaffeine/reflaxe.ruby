@@ -1,4 +1,6 @@
 ruby:2
+inline:3:missing
+stored:4:nil
 ruby:2:fast|typed
 1
 2
