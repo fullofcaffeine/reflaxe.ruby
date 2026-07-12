@@ -251,11 +251,13 @@ jobs:
       - name: Install exact Haxe toolchain for artifact contracts
         run: |
           set -euo pipefail
+          # Haxe's install hook invokes `lix` by name, so the local binary must be visible
+          # to child processes before either download begins.
+          export PATH="$(pwd)/node_modules/.bin:$PATH"
+          echo "$(pwd)/node_modules/.bin" >> "$GITHUB_PATH"
           ./node_modules/.bin/lix download
           ./node_modules/.bin/lix download haxe "${HAXE_VERSION}"
           ./node_modules/.bin/lix use haxe "${HAXE_VERSION}"
-          echo "$(pwd)/node_modules/.bin" >> "$GITHUB_PATH"
-          export PATH="$(pwd)/node_modules/.bin:$PATH"
           test "$(haxe -version)" = "${HAXE_VERSION}"
 
       - name: Check version and release metadata
@@ -321,11 +323,13 @@ jobs:
       - name: Install exact Haxe toolchain
         run: |
           set -euo pipefail
+          # Haxe's install hook invokes `lix` by name, so the local binary must be visible
+          # to child processes before either download begins.
+          export PATH="$(pwd)/node_modules/.bin:$PATH"
+          echo "$(pwd)/node_modules/.bin" >> "$GITHUB_PATH"
           ./node_modules/.bin/lix download
           ./node_modules/.bin/lix download haxe "4.3.7"
           ./node_modules/.bin/lix use haxe "4.3.7"
-          echo "$(pwd)/node_modules/.bin" >> "$GITHUB_PATH"
-          export PATH="$(pwd)/node_modules/.bin:$PATH"
           test "$(haxe -version)" = "4.3.7"
 
       - name: Derive, package, tag, and publish the tested SHA

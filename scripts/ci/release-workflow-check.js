@@ -91,6 +91,18 @@ assert(!release.includes("actions/cache"), "privileged release must not restore 
 assert(!release.includes("download-artifact"), "privileged release must rebuild instead of importing artifacts");
 assert(!release.includes("RELEASE_TOKEN"), "release must use the scoped workflow token, not a broad custom token");
 
+const directLixDownloads = [...ci.matchAll(/^\s*\.\/node_modules\/\.bin\/lix download$/gm)];
+assert.equal(directLixDownloads.length, 2, "contract and publication jobs must each install the exact Haxe toolchain");
+for (const download of directLixDownloads) {
+  const stepStart = ci.lastIndexOf("\n      - name:", download.index);
+  const stepPrefix = ci.slice(stepStart, download.index);
+  requireMatch(
+    stepPrefix,
+    /export PATH="\$\(pwd\)\/node_modules\/\.bin:\$PATH"/,
+    "direct lix installs must expose the local binary to child processes before downloading Haxe",
+  );
+}
+
 for (const { 1: action } of ci.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
   assert.match(action, /@[0-9a-f]{40}$/, `workflow action must use a full commit SHA: ${action}`);
 }

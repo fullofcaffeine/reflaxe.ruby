@@ -68,6 +68,11 @@ release job verifies Node, npm, Ruby, RubyGems, and Haxe versions before running
 the locked semantic-release binary directly. Changing any pin is an ordinary
 reviewed code change and must keep `npm audit` clean.
 
+The Haxe setup exports the locked local `node_modules/.bin` directory before
+running lix. Haxe's installation hook invokes `lix` by name in a child process;
+ordering the PATH setup first keeps clean hosted runners reproducible instead of
+accidentally relying on a developer shell's existing PATH.
+
 ## Executable contract
 
 Run:
