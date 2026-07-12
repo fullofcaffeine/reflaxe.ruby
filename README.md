@@ -29,6 +29,10 @@ creates a release commit or rewrites README/package metadata.
 The exact ZIP and gem are reproducibly built from that Git commit, carry full
 content manifests, and are uploaded with SHA-256 identity sidecars. See
 [Reproducible Release Artifacts](docs/release-artifacts.md).
+Publication is the final minimal-permission job of the same successful
+canonical-main CI run; it checks out that run's exact SHA and rebuilds under an
+exact Node/npm/Ruby/RubyGems/Haxe toolchain. See
+[Tested-Commit Publication Workflow](docs/release-publication-workflow.md).
 
 There are two first-class layers:
 
@@ -446,7 +450,7 @@ brew install gitleaks # or use another gitleaks install method
 rake hooks:install
 ```
 
-The hook runs a staged `gitleaks` scan and formats staged `.hx` files with [haxe-formatter](https://github.com/HaxeCheckstyle/haxe-formatter). CI runs the full Haxe formatter check and a dedicated gitleaks workflow, so local hooks catch the same class of issues before review.
+The hook runs a staged `gitleaks` scan and formats staged `.hx` files with [haxe-formatter](https://github.com/HaxeCheckstyle/haxe-formatter). CI runs the full Haxe formatter check plus locked-dependency and full-history Gitleaks security gates in the same workflow that authorizes publication, so local hooks catch the same class of issues before review.
 
 ## Haxelib Package
 

@@ -7,7 +7,7 @@ This document records the supported tool/runtime contract for `reflaxe.ruby`.
 | Surface | Versions | Status | Notes |
 | --- | --- | --- | --- |
 | Haxe | `4.3.7` | Supported | Pinned by `.haxerc` and `.github/workflows/ci.yml`. |
-| Node.js | `20` | Supported | Used for CI scripts, release tooling, and repository sample materializers. Rails-facing generators are Ruby-native. |
+| Node.js | `22.14.0` | Supported | Exact CI/release runtime; npm is pinned to `10.9.2`. Rails-facing generators remain Ruby-native. |
 | Ruby | `3.2`, `3.3`, `4.0` | Supported | CI matrix validates runtime smoke tests against these versions. |
 | Rails | Rails 7+/8 style app shape | Compile/syntax and runtime covered | `rake test`/`npm test` keeps local runtime checks optional when generated app bundles are missing; `rake test:rails:runtime` and CI make Rails integration/interop runtime execution mandatory. |
 

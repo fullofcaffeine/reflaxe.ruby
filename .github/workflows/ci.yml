@@ -4,30 +4,62 @@ on:
   push: {}
   pull_request:
     branches: [main]
-  workflow_dispatch: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # A newer main push must not cancel an older run once that run can enter publication. Branch and
+  # pull-request runs still supersede older work for the same ref.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "22.14.0"
+  NPM_VERSION: "10.9.2"
   HAXE_VERSION: "4.3.7"
 
 jobs:
+  security:
+    name: Locked dependency + secret audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history for secret scanning
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup exact Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Audit locked release dependencies
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v${NODE_VERSION}"
+          test "$(npm --version)" = "${NPM_VERSION}"
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm audit
+
+      - name: Scan full Git history for secrets
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
   haxe-format:
     name: Haxe formatter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -52,7 +84,7 @@ jobs:
 
   test:
     name: Ruby ${{ matrix.ruby_version }} / Haxe 4.3.7
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # This lane runs the full compiler, RailsHx, generator, snapshot, and package
     # suite across Ruby versions. Keep the cap above normal runtime so GitHub
     # does not cancel healthy runs while late snapshot/package checks are active.
@@ -63,20 +95,20 @@ jobs:
         ruby_version: ["3.2", "3.3", "4.0"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
         with:
           ruby-version: ${{ matrix.ruby_version }}
 
       - name: Install npm dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Install Haxe (pinned via lix)
         run: |
@@ -93,19 +125,19 @@ jobs:
 
   rails-browser:
     name: RailsHx browser sentinel
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
         with:
           ruby-version: "3.3"
 
@@ -123,14 +155,14 @@ jobs:
           haxe -version
 
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: Run RailsHx Playwright sentinel
         run: npm run test:todoapp-playwright
 
   rails-runtime:
     name: RailsHx runtime integration / Ruby ${{ matrix.ruby_version }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -138,15 +170,15 @@ jobs:
         ruby_version: ["3.2", "3.3", "4.0"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
         with:
           ruby-version: ${{ matrix.ruby_version }}
 
@@ -168,19 +200,19 @@ jobs:
 
   rails-production:
     name: RailsHx production dogfood
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
         with:
           ruby-version: "3.3"
 
@@ -202,22 +234,102 @@ jobs:
 
   release-contracts:
     name: Release contracts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      - name: Install exact Haxe toolchain for artifact contracts
+        run: |
+          set -euo pipefail
+          ./node_modules/.bin/lix download
+          ./node_modules/.bin/lix download haxe "${HAXE_VERSION}"
+          ./node_modules/.bin/lix use haxe "${HAXE_VERSION}"
+          echo "$(pwd)/node_modules/.bin" >> "$GITHUB_PATH"
+          export PATH="$(pwd)/node_modules/.bin:$PATH"
+          test "$(haxe -version)" = "${HAXE_VERSION}"
+
       - name: Check version and release metadata
         run: |
           node scripts/ci/version-sync-check.js
           npm run test:release-version-policy
-          node scripts/ci/release-contracts-check.js
+          npm run ci:release-contracts
+
+  release:
+    name: Release exact CI-tested commit
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'fullofcaffeine/reflaxe.ruby'
+    needs:
+      - security
+      - haxe-format
+      - test
+      - rails-browser
+      - rails-runtime
+      - rails-production
+      - release-contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    concurrency:
+      # The repair-only workflow added by the hosted-verification slice must use this exact group.
+      group: release-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout exact tested commit with full history
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Setup exact Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "22.14.0"
+          # setup-node v6 otherwise auto-enables npm caching when packageManager is declared.
+          package-manager-cache: false
+
+      - name: Setup exact Ruby and RubyGems
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        with:
+          ruby-version: "3.3.11"
+          rubygems: "3.5.22"
+          bundler: none
+
+      - name: Verify exact release toolchain
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = "v22.14.0"
+          test "$(npm --version)" = "10.9.2"
+          test "$(ruby --disable-gems -e 'print RUBY_VERSION')" = "3.3.11"
+          test "$(gem --version)" = "3.5.22"
+
+      - name: Install and audit locked npm dependencies
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm audit
+
+      - name: Install exact Haxe toolchain
+        run: |
+          set -euo pipefail
+          ./node_modules/.bin/lix download
+          ./node_modules/.bin/lix download haxe "4.3.7"
+          ./node_modules/.bin/lix use haxe "4.3.7"
+          echo "$(pwd)/node_modules/.bin" >> "$GITHUB_PATH"
+          export PATH="$(pwd)/node_modules/.bin:$PATH"
+          test "$(haxe -version)" = "4.3.7"
+
+      - name: Derive, package, tag, and publish the tested SHA
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./node_modules/.bin/semantic-release

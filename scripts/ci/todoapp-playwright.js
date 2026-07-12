@@ -7,6 +7,10 @@ const { spawn, spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const appDir = join(root, "examples", "todoapp_rails", "build", "rails");
+// Use the lockfile-installed binary directly. Nested `npx` inherits npm-exec configuration from
+// exact-toolchain wrappers and can reinterpret the call under npm 10.9; the local binary is both
+// unambiguous and guaranteed to be the reviewed Playwright version.
+const playwright = join(root, "node_modules", ".bin", "playwright");
 const requestedPort = process.env.RAILSHX_PLAYWRIGHT_PORT ?? process.env.PORT;
 const defaultPort = "3100";
 const bind = process.env.BIND ?? "127.0.0.1";
@@ -72,7 +76,7 @@ async function main() {
 
   await stageAsync("browser readiness", () => waitForReady(`${baseUrl}/todos`, 45_000));
   const specArgs = spec.split(/\s+/).filter(Boolean);
-  const result = stage("browser specs", () => run("npx", ["playwright", "test", ...specArgs, "--workers=1"], {
+  const result = stage("browser specs", () => run(playwright, ["test", ...specArgs, "--workers=1"], {
     allowFailure: true,
     env: { ...process.env, BASE_URL: baseUrl },
   }));
@@ -120,7 +124,7 @@ function ensurePlaywrightBrowser() {
   if (hasChromiumBrowser()) {
     return;
   }
-  run("npx", ["playwright", "install", "chromium"]);
+  run(playwright, ["install", "chromium"]);
 }
 
 function hasChromiumBrowser() {

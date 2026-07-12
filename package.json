@@ -2,6 +2,11 @@
   "name": "reflaxe-ruby",
   "private": true,
   "version": "0.0.0",
+  "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": ">=22.14.0 <23",
+    "npm": "10.9.2"
+  },
   "license": "GPL-3.0-only",
   "description": "Reflaxe-based Ruby target for Haxe.",
   "scripts": {
@@ -14,8 +19,9 @@
     "hooks:install": "bash scripts/hooks/install.sh",
     "public:precommit": "npm run format:haxe:check && npm run security:gitleaks",
     "ci:version-sync": "node scripts/ci/version-sync-check.js",
-    "ci:release-contracts": "node scripts/ci/release-contracts-check.js && npm run test:release-artifacts",
+    "ci:release-contracts": "node scripts/ci/release-contracts-check.js && npm run test:release-workflow && npm run test:release-artifacts",
     "test:release-version-policy": "node scripts/ci/release-version-policy-check.mjs",
+    "test:release-workflow": "node scripts/ci/release-workflow-check.js",
     "test:release-artifacts": "node scripts/ci/release-artifact-reproducibility-check.js",
     "test:examples-compile": "node scripts/ci/examples-compile-smoke.js",
     "test:haxe-build-context": "haxe test/build_context_compile.hxml",
@@ -119,14 +125,14 @@
     "release:dry-run": "semantic-release --dry-run"
   },
   "devDependencies": {
-    "@playwright/test": "^1.56.1",
-    "@semantic-release/commit-analyzer": "^13.0.1",
-    "@semantic-release/exec": "^6.0.3",
-    "@semantic-release/github": "^11.0.3",
-    "@semantic-release/release-notes-generator": "^14.0.3",
+    "@playwright/test": "1.60.0",
+    "@semantic-release/commit-analyzer": "13.0.1",
+    "@semantic-release/exec": "7.1.0",
+    "@semantic-release/github": "12.0.9",
+    "@semantic-release/release-notes-generator": "14.1.1",
     "fflate": "0.8.3",
-    "lix": "^15.12.4",
-    "semantic-release": "^24.2.5",
+    "lix": "15.12.4",
+    "semantic-release": "25.0.5",
     "semver": "7.8.4"
   },
   "repository": {
@@ -157,6 +163,10 @@
         {
           "releaseNameTemplate": "v${nextRelease.version}",
           "releaseBodyTemplate": "## v${nextRelease.version}\n\n${nextRelease.notes}",
+          "successCommentCondition": false,
+          "failCommentCondition": false,
+          "releasedLabels": false,
+          "addReleases": false,
           "assets": [
             {
               "path": "dist/reflaxe.ruby-release.zip",
