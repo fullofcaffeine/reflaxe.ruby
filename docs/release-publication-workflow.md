@@ -19,11 +19,14 @@ same-run dependencies:
 - RailsHx production dogfood;
 - release policy, workflow, and reproducible-artifact contracts.
 
-GitHub does not start a job with ordinary `needs` unless every dependency
-succeeds. A failed, cancelled, skipped, or absent result therefore cannot
-publish. Pull requests, feature pushes, fork repositories, and manual events
-fail the job-level eligibility condition. Normal CI intentionally has no
-`workflow_dispatch` or cross-workflow `workflow_run` publication path.
+The job condition includes `!cancelled()` to replace GitHub's implicit status
+filter, then compares every named `needs.<job>.result` to `success`. A failed,
+cancelled, skipped, or absent result therefore cannot publish, while an opaque
+scheduler-level aggregate state cannot silently skip publication after every
+declared dependency has independently reported success. Pull requests, feature
+pushes, fork repositories, and manual events fail the same condition. Normal CI
+intentionally has no `workflow_dispatch` or cross-workflow `workflow_run`
+publication path.
 
 Main workflow runs are not auto-cancelled because an older run may already be
 inside its privileged publication job. Publication additionally uses the fixed

@@ -78,10 +78,22 @@ assert.notEqual(releaseStart, -1, "CI must contain the final release job");
 const release = ci.slice(releaseStart);
 requireMatch(
   release,
-  /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/main' && github\.repository == 'fullofcaffeine\/reflaxe\.ruby'/,
+  /if: >-\n\s+\$\{\{\n\s+!cancelled\(\)/,
+  "release must override implicit scheduler status and reject cancellation explicitly",
+);
+requireMatch(
+  release,
+  /github\.event_name == 'push'[\s\S]*github\.ref == 'refs\/heads\/main'[\s\S]*github\.repository == 'fullofcaffeine\/reflaxe\.ruby'/,
   "release must be canonical-repository push/main only",
 );
-for (const need of requiredNeeds) requireMatch(release, new RegExp(`\\n      - ${need.replaceAll("-", "\\-")}`), `release must wait for ${need}`);
+for (const need of requiredNeeds) {
+  requireMatch(release, new RegExp(`\\n      - ${need.replaceAll("-", "\\-")}`), `release must wait for ${need}`);
+  requireMatch(
+    release,
+    new RegExp(`needs\\.${need.replaceAll("-", "\\-")}\\.result == 'success'`),
+    `release must explicitly require successful ${need}`,
+  );
+}
 requireMatch(release, /runs-on: ubuntu-24\.04/, "release runner image must be exact");
 requireMatch(release, /permissions:\n\s+contents: write/, "only release content publication needs write authority");
 assert(!release.includes("issues: write"), "release must not receive issue write authority");

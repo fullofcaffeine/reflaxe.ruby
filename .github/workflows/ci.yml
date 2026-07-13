@@ -268,7 +268,6 @@ jobs:
 
   release:
     name: Release exact CI-tested commit
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'fullofcaffeine/reflaxe.ruby'
     needs:
       - security
       - haxe-format
@@ -277,6 +276,23 @@ jobs:
       - rails-runtime
       - rails-production
       - release-contracts
+    # Referencing a status function disables GitHub's implicit success() filter. Every declared
+    # dependency is then checked explicitly, so skipped/missing/failed/cancelled lanes still fail
+    # closed while a scheduler-level aggregate status cannot silently skip an all-green release.
+    if: >-
+      ${{
+        !cancelled()
+        && github.event_name == 'push'
+        && github.ref == 'refs/heads/main'
+        && github.repository == 'fullofcaffeine/reflaxe.ruby'
+        && needs.security.result == 'success'
+        && needs.haxe-format.result == 'success'
+        && needs.test.result == 'success'
+        && needs.rails-browser.result == 'success'
+        && needs.rails-runtime.result == 'success'
+        && needs.rails-production.result == 'success'
+        && needs.release-contracts.result == 'success'
+      }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
