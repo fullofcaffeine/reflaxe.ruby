@@ -6,7 +6,7 @@ authoring layer for ActiveRecord, ActionController, ActionView/HHX, routing,
 Turbo, ActionCable, generators, migrations, tests, and installed-gem companion
 contracts such as DeviseHx.
 
-The latest public baseline tag, `v0.1.0-beta.2`, supports executable Ruby smoke fixtures,
+The historical public baseline tag, `v0.1.0-beta.2`, established executable Ruby smoke fixtures,
 shared `hxruby` runtime files and gem packaging, Ruby interop
 metadata, typed extension/mixin contracts, and a RailsHx dogfood app with typed
 models, relations, migrations, controllers, params, HHX templates, Haxe-owned
@@ -19,9 +19,9 @@ major-zero breaking changes advance minor, and `1.0.0` plus each later stable
 major require independent policy approval. Major zero already communicates
 initial development, so the normal channel does not add a `-beta` suffix. See
 [Release Version Policy](docs/release-version-policy.md).
-The first stable publication uses a tested one-time bridge from the immutable
-beta tag to `v0.1.0`; its temporary local alias is removed before tags are
-pushed and never becomes public history.
+The first normal publication used a tested one-time bridge from the historical
+beta tag to `v0.1.0`; its temporary local alias was removed before tags were
+pushed and never became public history.
 
 Tracked version files intentionally use the `0.0.0` development sentinel; it
 is never a public release version. Release preparation derives the real version
@@ -41,6 +41,12 @@ ZIP/gem identity, exact four hosted assets, and downloaded SHA-256 bytes agree;
 future completed releases are natively immutable. Manual recovery accepts only
 an existing tag and cannot derive or move a version. See
 [Hosted Release Identity And Repair](docs/release-hosting-and-repair.md).
+GitHub Releases is currently the sole distribution host: the ZIP is not
+published to the Haxelib registry and the gem is not pushed to RubyGems.org.
+Consumers should download the matching SHA-256 sidecar, verify filename, byte
+count, digest, tag, and source SHA, then install the local ZIP or gem. The exact
+transition and live hosted proofs are recorded in
+[Live Release Protocol Evidence](docs/release-live-evidence.md).
 
 There are two first-class layers:
 
@@ -478,6 +484,10 @@ rake package:haxelib:test
 
 Semantic-release runs the same package builder during release preparation and uploads only the fixed local path `dist/reflaxe.ruby-release.zip`, naming the hosted asset with the selected version. The archive contains `release-provenance.json` with that version, its matching tag, and the tested source SHA, plus `artifact-manifest.json` with the exact path, bytes, SHA-256, and normalized mode of every packaged file. The adjacent `dist/reflaxe.ruby-release.zip.sha256.json` binds the exact upload bytes and hosted filename to the same identity. See [Reproducible Release Artifacts](docs/release-artifacts.md).
 
+The ZIP is installed from the verified GitHub asset with
+`haxelib install ./reflaxe.ruby-<version>.zip --skip-dependencies`; there is no
+separate Haxelib-registry publication today.
+
 Packaging follows Reflaxe build conventions: source std overrides live in
 `std/ruby/_std/**/*.hx`, while the release zip contains generated
 `src/**/*.cross.hx` files produced by Reflaxe's build runner. Ruby's package
@@ -575,6 +585,10 @@ dependency to the `hxruby` gem. See
 criteria before publishing a standalone `devisehx` or `hxruby-devise` package.
 
 Semantic-release builds the gem during release preparation and uploads only the fixed local path `dist/hxruby-release.gem`, naming the hosted asset with the selected version. The gem specification, `HXRuby::VERSION`, staged `haxelib.json`, and `release-provenance.json` all expose the same release identity. Its full `artifact-manifest.json` and adjacent `dist/hxruby-release.gem.sha256.json` make the packaged content and exact upload bytes independently checkable.
+
+The gem is installed from the verified GitHub asset with
+`gem install --local ./hxruby-<version>.gem --no-document`; it is not currently
+published to RubyGems.org.
 
 ## Gap Report
 

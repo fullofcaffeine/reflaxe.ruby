@@ -98,6 +98,28 @@ Release-note regeneration reads the input tag and previous canonical tag; it
 does not derive a new release version. It uses the official locked release-note
 generator and requires version heading, compare link, and commit links.
 
+### Operator procedure
+
+Use repair only after the canonical tag already exists and normal publication
+left no release or a draft. Confirm the remote tag first, then dispatch the
+manual workflow with that exact tag:
+
+```bash
+tag=v0.1.2
+git ls-remote --exit-code --tags origin "refs/tags/${tag}"
+gh workflow run release-repair.yml -f tag="${tag}"
+gh run list --workflow release-repair.yml --limit 1
+```
+
+Inspect and watch the returned run before treating recovery as complete. The
+run must resolve the input tag to the expected source SHA, rebuild the four
+files from that tag, report the reviewed `github.workflow_sha` used only for
+repair tooling, and finish with either immutable publication or immutable
+verification. Do not create a missing tag by hand, dispatch repair against a
+branch/SHA, delete an unexpected asset, or retry by moving the tag. A completed
+mutable, incomplete, or mismatched release requires a new corrective version,
+not repair of published history.
+
 ## Repository protections and creation identity
 
 The repository enables native immutable releases for future publications.
@@ -120,6 +142,10 @@ enabled. Historical `v0.1.0` was verified against its four hosted assets and
 sidecars before this repository setting existed; its tag is covered by the
 version-tag ruleset. It must not be deleted/recreated merely to change that
 historical GitHub flag.
+
+The exact historical and immutable release metadata, artifact digests, normal
+publication workflow/job identities, and existing-tag repair proof are kept in
+[Live Release Protocol Evidence](release-live-evidence.md).
 
 ## Executable checks
 

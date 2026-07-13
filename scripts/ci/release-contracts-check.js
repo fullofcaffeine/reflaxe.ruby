@@ -41,6 +41,7 @@ const releaseVersionPolicyDocs = readFileSync("docs/release-version-policy.md", 
 const releaseArtifactDocs = readFileSync("docs/release-artifacts.md", "utf8");
 const releaseWorkflowDocs = readFileSync("docs/release-publication-workflow.md", "utf8");
 const releaseHostingDocs = readFileSync("docs/release-hosting-and-repair.md", "utf8");
+const releaseEvidenceDocs = readFileSync("docs/release-live-evidence.md", "utf8");
 const artifactUtils = readFileSync("scripts/release/artifact-utils.js", "utf8");
 const deterministicZip = readFileSync("scripts/release/deterministic-zip.js", "utf8");
 const artifactReproducibilityCheck = readFileSync("scripts/ci/release-artifact-reproducibility-check.js", "utf8");
@@ -177,13 +178,43 @@ expectIncludes(releaseVersionPolicyCheck, 'from "semantic-release"', "release ve
 expectIncludes(releaseVersionPolicyCheck, '"99.99.99"', "release version policy package-independence fixture");
 expectIncludes(releaseVersionPolicyDocs, "normal `0.x` releases from `main`", "release version policy docs");
 expectIncludes(releaseVersionPolicyDocs, "v0.1.0-beta.2", "release version policy transition docs");
+expectIncludes(releaseVersionPolicyDocs, "separate SemVer concepts", "release version policy prerelease distinction");
+expectIncludes(releaseVersionPolicyDocs, "## v<SemVer>", "release notes format documentation");
 expectIncludes(releaseArtifactDocs, "follows the established", "release artifact design rationale");
 expectIncludes(releaseArtifactDocs, "artifact-manifest.json", "release artifact content contract docs");
 expectIncludes(releaseArtifactDocs, "SHA-256", "release artifact sidecar docs");
+expectIncludes(releaseArtifactDocs, "GitHub Releases is currently the sole public distribution host", "release distribution host documentation");
+expectIncludes(releaseArtifactDocs, "does not publish it to the Haxelib registry", "Haxelib distribution documentation");
+expectIncludes(releaseArtifactDocs, "does not push it to", "RubyGems distribution documentation");
+expectIncludes(releaseArtifactDocs, "Digest::SHA256.file", "consumer digest verification documentation");
 expectIncludes(releaseHostingDocs, "Completed immutable release", "hosted repair state documentation");
 expectIncludes(releaseHostingDocs, "dedicated GitHub App identity", "multi-writer creation identity documentation");
 expectIncludes(releaseHostingDocs, "Historical `v0.1.0`", "legacy immutability boundary documentation");
+expectIncludes(releaseHostingDocs, "gh workflow run release-repair.yml", "existing-tag repair operator documentation");
 expectIncludes(readme, "Hosted Release Identity And Repair", "README hosted release documentation");
+expectIncludes(readme, "GitHub Releases is currently the sole distribution host", "README distribution host documentation");
+expectIncludes(readme, "Live Release Protocol Evidence", "README live release evidence");
+for (const evidence of [
+  "56c65adedf0a56b24a32a4161f9235171eac6cbe",
+  "29215071466",
+  "86712738698",
+  "hxruby-0.1.0.gem",
+  "281bab21677bb7dd24762baa612430d4a066ce25518b4e5467394009d76ba5da",
+  "reflaxe.ruby-0.1.0.zip",
+  "cfa2f0c74d727974cc9849758254aabfec6dae3e4efbd1ed226ef6ee003c0de1",
+  "a78bb96858e02210388be66c7b3ba4edfa94e813",
+  "a45eb02dd1dbaaa8bc8dec0da426613c3c3e0e98",
+  "29221904625",
+  "29221893930",
+  "immutable=true",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "live release protocol evidence");
+}
+expectIncludes(releaseEvidenceDocs, "`prerelease=true`", "historical prerelease channel evidence");
+expectIncludes(releaseEvidenceDocs, "`prerelease=false`", "normal major-zero channel evidence");
+expectIncludes(releaseEvidenceDocs, "`immutable=false`", "historical host immutability evidence");
+expectIncludes(releaseEvidenceDocs, "`v0.0.0` alias is absent", "transition alias absence evidence");
+expectIncludes(releaseEvidenceDocs, "## No-release continuity proof", "hosted no-release evidence section");
 expectIncludes(releaseWorkflowDocs, "final job", "tested-commit publication docs");
 expectIncludes(releaseWorkflowDocs, "contents: write", "publication permission docs");
 expectIncludes(releaseWorkflowDocs, "22.14.0", "publication toolchain docs");

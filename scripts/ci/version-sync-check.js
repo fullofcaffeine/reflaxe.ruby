@@ -38,7 +38,7 @@ for (const [surface, text, define] of [
 }
 if (!hxrubyVersion.includes(`VERSION = "${DEVELOPMENT_VERSION}"`)) fail("lib/hxruby/version.rb must use development sentinel");
 if (!readme.includes("Tracked version files intentionally use the `0.0.0` development sentinel")) fail("README must document the development sentinel");
-if (!readme.includes("`v0.1.0-beta.2`")) fail("README must preserve the latest public baseline tag");
+if (!readme.includes("`v0.1.0-beta.2`")) fail("README must preserve the historical public baseline tag");
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log(`[version-sync] OK: tracked development sentinel ${DEVELOPMENT_VERSION}`);

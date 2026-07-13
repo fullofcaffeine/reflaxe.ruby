@@ -65,6 +65,54 @@ once in sorted order with its exact path, byte count, SHA-256, and `0644` mode.
 Verification rejects missing, altered, duplicate, extra, unsafe-mode, symlink,
 or structurally unsafe content before consumer tests run.
 
+## Distribution and consumer verification
+
+GitHub Releases is currently the sole public distribution host for both
+artifacts and both sidecars. The ZIP is a Haxelib-compatible package, but the
+workflow does not publish it to the Haxelib registry. The gem is a
+RubyGems-compatible package, but the workflow does not push it to
+RubyGems.org. Registry publication would be a separate reviewed feature with
+its own credentials, exact-same-bytes verification, recovery contract, and
+documentation; consumers must not infer registry availability from the file
+formats.
+
+Download one artifact only with its adjacent sidecar. For example:
+
+```bash
+version=0.1.2
+base="https://github.com/fullofcaffeine/reflaxe.ruby/releases/download/v${version}"
+curl -fLO "${base}/hxruby-${version}.gem"
+curl -fLO "${base}/hxruby-${version}.gem.sha256.json"
+curl -fLO "${base}/reflaxe.ruby-${version}.zip"
+curl -fLO "${base}/reflaxe.ruby-${version}.zip.sha256.json"
+
+ruby -rjson -rdigest -e '
+  artifact, sidecar_path = ARGV
+  sidecar = JSON.parse(File.read(sidecar_path))
+  abort "hosted filename mismatch" unless sidecar.fetch("hostedFilename") == File.basename(artifact)
+  abort "byte count mismatch" unless sidecar.fetch("bytes") == File.size(artifact)
+  abort "SHA-256 mismatch" unless sidecar.fetch("sha256") == Digest::SHA256.file(artifact).hexdigest
+  puts "verified #{artifact} from #{sidecar.fetch("gitTag")} at #{sidecar.fetch("sourceSha")}"
+' "hxruby-${version}.gem" "hxruby-${version}.gem.sha256.json"
+
+ruby -rjson -rdigest -e '
+  artifact, sidecar_path = ARGV
+  sidecar = JSON.parse(File.read(sidecar_path))
+  abort "hosted filename mismatch" unless sidecar.fetch("hostedFilename") == File.basename(artifact)
+  abort "byte count mismatch" unless sidecar.fetch("bytes") == File.size(artifact)
+  abort "SHA-256 mismatch" unless sidecar.fetch("sha256") == Digest::SHA256.file(artifact).hexdigest
+  puts "verified #{artifact} from #{sidecar.fetch("gitTag")} at #{sidecar.fetch("sourceSha")}"
+' "reflaxe.ruby-${version}.zip" "reflaxe.ruby-${version}.zip.sha256.json"
+```
+
+After verification, install locally with
+`gem install --local ./hxruby-${version}.gem --no-document` and
+`haxelib install ./reflaxe.ruby-${version}.zip --skip-dependencies`. The
+sidecar's `version`, `gitTag`, and `sourceSha` should match the release and tag
+the consumer intended to trust. Native immutable releases and the protected
+version tag keep that hosted identity from being silently replaced after
+publication.
+
 ## Gates
 
 Run the focused reproducibility and package-consumer gates with:

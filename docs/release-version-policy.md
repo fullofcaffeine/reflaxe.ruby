@@ -3,8 +3,17 @@
 RubyHx uses normal `0.x` releases from `main`. Major zero already communicates
 that the API is in initial development, so normal releases do not carry an
 automatic `-beta` suffix. The existing `v0.1.0-beta.2` tag remains immutable
-history and is a valid tag-derived baseline; the next qualifying main release
-promotes that lineage to an ordinary `0.x` version.
+history and was the valid tag-derived baseline; the first qualifying main
+release promoted that lineage to the ordinary `v0.1.0` version.
+
+These are separate SemVer concepts. A `0.y.z` version communicates initial
+development and may make breaking changes according to the major-zero bump
+policy below. A suffix such as `-beta.2` is an explicit prerelease identifier
+that sorts before its corresponding normal version and belongs to a deliberate
+prerelease channel. RubyHx currently has no ongoing prerelease branch or
+channel: normal `main` releases have no suffix and GitHub marks them
+`prerelease=false`. Adding a future prerelease channel requires an explicit,
+tested branch/channel policy; it cannot be inferred merely from major zero.
 
 semantic-release intentionally excludes prerelease tags when it calculates the
 last release for a stable branch. RubyHx handles that single historical
@@ -98,3 +107,17 @@ temporary Git repositories. One fixture proves that `v0.2.3` plus a fix selects
 `0.2.4` despite contradictory `99.99.99` package metadata. Another performs the
 complete `v0.1.0-beta.2` to `v0.1.0` transition and asserts the public compare
 link plus the exact remote tag set, including that `v0.0.0` is never pushed.
+
+## Release notes
+
+Canonical hosted notes are generated from the Conventional Commits between
+the previous canonical tag and the exact new tag. Every public release body
+starts with a `## v<SemVer>` heading and includes a compare link, categorized
+change bullets, and commit links. `CHANGELOG.md` is reviewed source history and
+may be edited in an ordinary commit, but release automation never rewrites or
+commits it. Existing-tag repair regenerates the same notes from the existing
+tag range; it never selects a new version. A docs/tests/chore-only commit that
+the analyzer classifies as no release creates neither a tag nor release notes.
+
+The first hosted transition, normal immutable publication, repair, and no-op
+evidence are recorded in [Live Release Protocol Evidence](release-live-evidence.md).
