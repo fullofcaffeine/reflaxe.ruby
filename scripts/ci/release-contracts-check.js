@@ -42,6 +42,13 @@ const releaseArtifactDocs = readFileSync("docs/release-artifacts.md", "utf8");
 const releaseWorkflowDocs = readFileSync("docs/release-publication-workflow.md", "utf8");
 const releaseHostingDocs = readFileSync("docs/release-hosting-and-repair.md", "utf8");
 const releaseEvidenceDocs = readFileSync("docs/release-live-evidence.md", "utf8");
+const docsIndex = readFileSync("docs/README.md", "utf8");
+const productPositioning = readFileSync("docs/why-rubyhx.md", "utf8");
+const productionReadiness = readFileSync("docs/railshx-production-readiness.md", "utf8");
+const stableReviewPrompt = readFileSync("docs/rubyhx-railshx-gpt56-1.0-review.md", "utf8");
+const packageInstallation = readFileSync("docs/packages-and-installation.md", "utf8");
+const gettingStarted = readFileSync("docs/getting-started.md", "utf8");
+const developmentDocs = readFileSync("docs/development.md", "utf8");
 const artifactUtils = readFileSync("scripts/release/artifact-utils.js", "utf8");
 const deterministicZip = readFileSync("scripts/release/deterministic-zip.js", "utf8");
 const artifactReproducibilityCheck = readFileSync("scripts/ci/release-artifact-reproducibility-check.js", "utf8");
@@ -98,7 +105,45 @@ if ((haxelibJson.reflaxe?.stdPaths ?? []).join("\n") !== "std\nstd/ruby/_std") {
   fail('haxelib.json reflaxe.stdPaths must be ["std", "std/ruby/_std"]');
 }
 expectExcludes(readme, "pre-1.0", "README release status");
-expectIncludes(readme, "Tracked version files intentionally use the `0.0.0` development sentinel", "README release status");
+expectIncludes(readme, "Write typed Haxe. Ship ordinary Ruby.", "README product thesis");
+expectIncludes(readme, "Start Where It Pays", "README entrypoint design");
+expectIncludes(readme, "production-ready beta", "README maturity contract");
+expectIncludes(readme, "docs/why-rubyhx.md", "README product thesis link");
+expectIncludes(readme, "docs/getting-started.md", "README getting-started link");
+expectIncludes(readme, "docs/packages-and-installation.md", "README package docs link");
+if (readme.split(/\r?\n/).length > 240) {
+  fail("README must remain a concise product landing page (maximum 240 lines)");
+}
+for (const referenceHeading of [
+  "## Target Defines",
+  "## Haxelib Package",
+  "## Ruby Gem Package",
+  "## Gap Report",
+  "## Repository Map",
+]) {
+  expectExcludes(readme, referenceHeading, "README landing-page scope");
+}
+expectIncludes(gettingStarted, "## Compiler Defines", "getting-started compiler reference");
+expectIncludes(gettingStarted, "npm run test:hello-world", "getting-started executable path");
+expectIncludes(developmentDocs, "## Local Hooks", "repository development docs");
+expectIncludes(developmentDocs, "## Repository Map", "repository development docs");
+expectIncludes(productPositioning, "RubyHx is a typed way to author Ruby software without replacing the Ruby", "product positioning");
+expectIncludes(productPositioning, "Ruby/JavaScript applications commonly share", "full-stack positioning boundary");
+expectIncludes(productPositioning, "does not promise zero support code", "generated Ruby positioning boundary");
+expectIncludes(productPositioning, "a better way to write the Ruby-bound parts", "Ruby alternative positioning boundary");
+expectIncludes(productionReadiness, "Stable 1.0 Exit Rules", "stable 1.0 readiness contract");
+expectIncludes(productionReadiness, "Performance and resource behavior", "stable 1.0 performance gate");
+expectIncludes(productionReadiness, "Debugging and observability", "stable 1.0 debugging gate");
+expectIncludes(productionReadiness, "Maintenance and support", "stable 1.0 maintenance gate");
+expectIncludes(stableReviewPrompt, "Do not answer from the README alone", "stable 1.0 independent review prompt");
+expectIncludes(stableReviewPrompt, "claim-evidence matrix", "stable 1.0 claim audit");
+expectIncludes(stableReviewPrompt, "NOT READY — P1 STABLE-RELEASE BLOCKERS", "stable 1.0 verdict rubric");
+expectIncludes(stableReviewPrompt, "docs/reviews/rubyhx-railshx-1.0-readiness-review.md", "stable 1.0 review artifact");
+expectIncludes(docsIndex, "why-rubyhx.md", "docs index product thesis");
+expectIncludes(docsIndex, "rubyhx-railshx-gpt56-1.0-review.md", "docs index stable review prompt");
+expectIncludes(docsIndex, "getting-started.md", "docs index getting started");
+expectIncludes(docsIndex, "packages-and-installation.md", "docs index package installation");
+expectIncludes(docsIndex, "development.md", "docs index repository development");
 
 const releaseConfig = packageJson.release;
 if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
@@ -199,9 +244,9 @@ expectIncludes(releaseHostingDocs, "Completed immutable release", "hosted repair
 expectIncludes(releaseHostingDocs, "dedicated GitHub App identity", "multi-writer creation identity documentation");
 expectIncludes(releaseHostingDocs, "Historical `v0.1.0`", "legacy immutability boundary documentation");
 expectIncludes(releaseHostingDocs, "gh workflow run release-repair.yml", "existing-tag repair operator documentation");
-expectIncludes(readme, "Hosted Release Identity And Repair", "README hosted release documentation");
-expectIncludes(readme, "GitHub Releases is currently the sole distribution host", "README distribution host documentation");
-expectIncludes(readme, "Live Release Protocol Evidence", "README live release evidence");
+expectIncludes(packageInstallation, "Hosted Release Identity And Repair", "package installation hosted release documentation");
+expectIncludes(packageInstallation, "GitHub Releases is currently the sole public distribution host", "package installation distribution host documentation");
+expectIncludes(packageInstallation, "Live Release Protocol Evidence", "package installation live release evidence");
 for (const evidence of [
   "56c65adedf0a56b24a32a4161f9235171eac6cbe",
   "29215071466",
@@ -321,7 +366,7 @@ expectIncludes(packageJson.scripts["ci:release-contracts"] ?? "", "test:release-
 expectIncludes(packageJson.scripts["ci:release-contracts"] ?? "", "test:release-artifacts", "npm test release artifact wiring");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-package.js", "package.json scripts");
-expectIncludes(versionSyncCheck, "README must document the development sentinel", "version sync check");
+expectIncludes(versionSyncCheck, "release version policy must document the development sentinel", "version sync check");
 expectIncludes(versionSyncCheck, "railshx.client", "version sync check");
 expectIncludes(releaseArtifactPrepare, 'release-hosting.mjs", "local"', "pre-tag local identity gate");
 expectIncludes(releaseHosting, "published-immutable", "hosted release finalizer");
@@ -433,18 +478,18 @@ expectIncludes(rootRakefile, "namespace :rails", "root Rakefile");
 expectIncludes(rootRakefile, "task :routes", "root Rakefile Rails generator tasks");
 expectIncludes(rootRakefile, "task :controller", "root Rakefile Rails generator tasks");
 expectIncludes(rootRakefile, "namespace :package", "root Rakefile package tasks");
-expectIncludes(readme, "rake package:haxelib:build", "README Haxelib package docs");
-expectIncludes(readme, "rake package:haxelib:test", "README Haxelib package docs");
-expectIncludes(readme, "-lib reflaxe.ruby", "README Haxelib package docs");
-expectIncludes(readme, "-lib railshx.client", "README RailsHx client package docs");
-expectIncludes(readme, "rake package:gem:build", "README Ruby gem package docs");
-expectIncludes(readme, "rake package:gem:test", "README Ruby gem package docs");
-expectIncludes(readme, "dist/reflaxe.ruby-release.zip", "README Haxelib package docs");
-expectIncludes(readme, "dist/hxruby-release.gem", "README Ruby gem package docs");
-expectIncludes(readme, 'Plain `require "hxruby"` has no gem runtime dependencies.', "README Ruby gem package docs");
-expectIncludes(readme, "DeviseHx Release Lane", "README DeviseHx release docs");
-expectIncludes(readme, "std/devisehx/**", "README DeviseHx release docs");
-expectIncludes(readme, "bin/rails generate hxruby:adopt --gem devise", "README DeviseHx release docs");
+expectIncludes(packageInstallation, "rake package:haxelib:build", "package installation Haxelib docs");
+expectIncludes(packageInstallation, "rake package:haxelib:test", "package installation Haxelib docs");
+expectIncludes(packageInstallation, "-lib reflaxe.ruby", "package installation Haxelib docs");
+expectIncludes(packageInstallation, "-lib railshx.client", "package installation RailsHx client docs");
+expectIncludes(packageInstallation, "rake package:gem:build", "package installation Ruby gem docs");
+expectIncludes(packageInstallation, "rake package:gem:test", "package installation Ruby gem docs");
+expectIncludes(packageInstallation, "dist/reflaxe.ruby-release.zip", "package installation Haxelib docs");
+expectIncludes(packageInstallation, "dist/hxruby-release.gem", "package installation Ruby gem docs");
+expectIncludes(packageInstallation, '`require "hxruby"` has no gem runtime dependencies', "package installation Ruby gem docs");
+expectIncludes(packageInstallation, "DeviseHx Release Lane", "package installation DeviseHx docs");
+expectIncludes(packageInstallation, "std/devisehx/**", "package installation DeviseHx docs");
+expectIncludes(packageInstallation, "bin/rails generate hxruby:adopt --gem devise", "package installation DeviseHx docs");
 expectIncludes(changelog, "incubated DeviseHx release lane", "CHANGELOG DeviseHx release docs");
 expectIncludes(ciWorkflow, "Release exact CI-tested commit", "CI release job");
 expectIncludes(ciWorkflow, "./node_modules/.bin/semantic-release", "CI release job");

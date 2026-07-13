@@ -11,9 +11,21 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 
 ## Start Here
 
+- [Why RubyHx](why-rubyhx.md): product thesis, Ruby-developer value,
+  Ruby/JavaScript sharing boundaries, adoption modes, tradeoffs, maturity, and
+  reusable pitch.
+- [Getting Started](getting-started.md): prerequisites, first compile/run,
+  compiler defines, Ruby interop, RailsHx setup, and generator entrypoints.
+- [Packages And Installation](packages-and-installation.md): verified release
+  ZIP/gem consumption, Haxelib and Ruby package contracts, and client/DeviseHx
+  packaging boundaries.
 - [Compatibility Matrix](compatibility-matrix.md): supported Haxe, Node, and Ruby versions.
 - [Ruby Callable And Method ABI](ruby-callable-abi.md): typed blocks, keyword/rest arguments, method values, forwarding, definitions, and diagnostics.
 - [Ruby Compiler Correctness](compiler-correctness.md): exhaustive typed-expression ownership and fail-closed diagnostics.
+- [RubyHx And RailsHx Production Readiness](railshx-production-readiness.md):
+  production-ready beta evidence and the cross-dimensional stable `1.0` bar.
+- [GPT 5.6 Pro 1.0 Review Packet](rubyhx-railshx-gpt56-1.0-review.md):
+  independent repository, architecture, product, and stable-release audit brief.
 - [Release Version Policy](release-version-policy.md): conventional major-zero releases, tag-derived lineage, and independent stable-major approvals.
 - [Reproducible Release Artifacts](release-artifacts.md): tested-commit staging, canonical ZIP/gem bytes, full content manifests, SHA-256 sidecars, and consumer gates.
 - [Tested-Commit Publication Workflow](release-publication-workflow.md): same-run release authorization, exact toolchain/action pins, minimal permissions, and trigger matrix.
@@ -26,11 +38,12 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Ruby Stdlib R&D Plan](ruby-stdlib-rd.md): staged typed stdlib coverage, runtime-helper policy, and follow-up beads.
 - [Ruby Stdlib Facades](ruby-stdlib-facades.md): authoring typed `ruby.*` facades over Ruby stdlib APIs.
 - [Gap Report Guidance](gap-report-guidance.md): updating std/runtime coverage inventory.
+- [Repository Development](development.md): contributor gates, example/test
+  ownership, hooks, bead workflow, inventory commands, and repository map.
 
 ## RailsHx Guides
 
 - [RailsHx Roadmap](railshx-roadmap.md): current Rails plan and sequencing.
-- [Production Readiness](railshx-production-readiness.md): gap tracker for real Rails adoption.
 - [Generator Workflows](railshx-generator-workflows.md): app-facing generator commands, generated artifacts, runtime handoff, diagnostics, and CI gates.
 - [Generators And Tasks](railshx-generators-and-tasks-design.md): Rails-native generator/task ownership, generated starter skeleton, and `hxruby:start` workflows.
 - [Generated Artifact Ownership](railshx-generated-artifact-ownership.md): manifest/header safety and overwrite policy.

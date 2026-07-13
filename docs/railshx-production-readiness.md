@@ -1,11 +1,18 @@
-# RailsHx Production Readiness
+# RubyHx And RailsHx Production Readiness
 
-RailsHx is intended to become production-ready for real Rails applications, not
-only a compiler demo. The production-readiness gate for the documented `0.x`
-beta contract is satisfied when the checks and ownership rules in this document
-stay green. This is still a beta contract: supported surfaces are production
-ready, but new Rails/Ruby surfaces must be added through explicit beads, tests,
-and compatibility notes before users should rely on them.
+RubyHx and RailsHx are intended for real Ruby and Rails applications, not only
+compiler demonstrations. The production-readiness gate for the documented
+`0.x` beta contract is satisfied when the checks and ownership rules in this
+document stay green. This is still a beta contract: supported surfaces are
+production ready, but new Rails/Ruby surfaces must be added through explicit
+beads, tests, and compatibility notes before users should rely on them.
+
+A stable `1.0` claim is a separate, stronger project-wide commitment. RailsHx
+cannot be stable if the RubyHx compiler, runtime, interop, packaging, debugging,
+or upgrade story underneath it is not stable. Conversely, compiler correctness
+alone cannot establish that RailsHx is ready for production teams. The stable
+gate therefore evaluates the whole authoring-to-deployment system across the
+dimensions below.
 
 Tracking epic: `haxe.ruby-bjv` RailsHx production readiness.
 
@@ -27,6 +34,11 @@ escape-hatch policy, and Rails-native app/generator workflows are tracked and
 covered. Future breadth remains normal beta evolution, not an implicit blocker
 for the closed readiness gate.
 
+Stable `1.0` has **not** been declared. It requires an independent evidence
+review, closure of every resulting stable-release blocker, a public API and
+compatibility commitment, and explicit release-policy approval. The review
+packet is [RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
+
 ## Supported Baseline And Adoption Guidance
 
 RailsHx should be described as production-ready for the documented beta
@@ -35,7 +47,7 @@ keep generated artifacts in CI, run the gates below, and expect unsupported API
 gaps to become explicit beads before broad rollout.
 
 The current supported toolchain baseline is documented in
-[Compatibility Matrix](compatibility-matrix.md): Haxe `4.3.7`, Node `20`, and
+[Compatibility Matrix](compatibility-matrix.md): Haxe `4.3.7`, Node `22.14.0`, and
 Ruby `3.2`, `3.3`, and `4.0` in CI. Rails output targets Rails 7+/8-style app
 shape unless a future compatibility row narrows or expands that contract.
 
@@ -47,7 +59,7 @@ Support expectation for production-beta use:
 - No unsupported-version promises: users should stay on the documented matrix.
 - No stable `1.x` compatibility promise while public versioning remains `0.x`.
 
-## Production-Ready Definition
+## Production-Ready Beta Definition
 
 RailsHx can be called production-ready when all of these are true:
 
@@ -72,6 +84,63 @@ RailsHx can be called production-ready when all of these are true:
   type safety at every boundary.
 - Docs tell users what is supported, what is still alpha, what commands prove
   readiness, and which versions are supported.
+
+## Stable 1.0 Definition
+
+Stable `1.0` means the documented supported scope is coherent, dependable, and
+covered by an upgrade policy. It does not mean every Ruby gem, Haxe std module,
+Rails API, database adapter, or deployment platform is implemented. Unsupported
+surfaces may remain outside the contract when they are explicit, diagnostically
+clear, and do not undermine a marketed core workflow.
+
+The following dimensions form one release decision. Existing beta evidence is
+an input, not automatic proof that a dimension is complete.
+
+| Dimension | Stable `1.0` evidence required |
+| --- | --- |
+| Product scope and claims | RubyHx, RailsHx, `hxruby`, profiles, adoption modes, supported use cases, and non-goals are named consistently. Every material public claim has a repository proof or narrower wording. |
+| Compiler and Haxe semantics | Supported typed expressions, control flow, classes, modules, functions, enums, exceptions, numeric/string/collection behavior, and both profile contracts are fail-closed and covered by snapshots plus runtime parity tests. Unsupported lowering never silently changes behavior. |
+| Generated Ruby and runtime helpers | Output is deterministic, readable, syntax-valid, and Ruby-native where behavior permits. Every helper has documented ownership, compatibility, loading, versioning, and security policy; runtime-free claims are made only for fixtures that prove them. |
+| Ruby stdlib and ecosystem interop | The supported std inventory is explicit. Blocks, keywords, rest/forwarding, constants, modules, mixins, monkey patches, gems, RBS, YARD, native extensions, and dynamic boundaries have typed contracts, diagnostics, examples, and honest unsupported cases. |
+| Rails framework contract | The marketed path across ActiveRecord, migrations, controllers, params, routing, ActionView/HHX, Hotwire, jobs, mailers, storage, tests, generators, engines, and gradual adoption is Rails-native and tested. Breadth gaps are classified as blocker, documented unsupported surface, or post-1.0 enhancement. |
+| Authoring UX and API stability | Canonical Haxe APIs are typed, ergonomic, documented, discoverable in editors, and free of accidental compiler plumbing. Public packages, metadata, defines, generated manifests, diagnostics, and compatibility aliases have an inventory and deprecation policy. |
+| Gradual adoption and ownership | Ruby-owned, Haxe-owned, and partial-ownership modes fail closed on unsafe paths or unowned content. Existing Ruby can call generated code and typed Haxe can consume existing code without requiring a rewrite or leaking broad `Dynamic` contracts. |
+| Full-stack Ruby/JavaScript sharing | At least one maintained reference flow proves selected shared types or behavior on both targets, with target-specific boundaries, serialization compatibility, client build integration, and two-target tests. Docs do not imply that all application code should be isomorphic. |
+| Tests and reference applications | Compiler snapshots, negative diagnostics, Ruby runtime parity, Rails matrix tests, Playwright, production builds, packaging checks, and executable examples cover each public workflow. Flake policy, failure triage, and generated-artifact determinism are documented. |
+| Security and supply chain | Escape hatches, raw Ruby/ERB/SQL, paths, generated contracts, dependency/action pins, secrets, release permissions, artifact identity, and advisory boundaries have threat-oriented review and mandatory gates. No known critical/high issue remains open in the supported scope. |
+| Performance and resource behavior | Representative compile time, generated-code runtime, startup, memory/allocation, artifact size, and Rails production behavior have measured baselines and regression policy. Claims are workload-scoped; unexplained material regressions block release. |
+| Debugging and observability | Compile diagnostics, generated-source locations, Ruby stack traces, exception behavior, logs, instrumentation, source correlation, and production failure workflows are documented and exercised. Users can diagnose a generated application without treating compiler output as opaque. |
+| Packaging, compatibility, and upgrades | Supported Haxe/Ruby/Rails/Node/platform versions are explicit and continuously tested. Reproducible packages, install/uninstall flows, SemVer boundaries, deprecation windows, migration guidance, generated-artifact upgrades, and rollback/recovery are proven. |
+| Documentation and onboarding | A Ruby developer can evaluate, install, compile, run, test, debug, adopt gradually, deploy, and upgrade from maintained docs and executable examples. Generated projects inherit the operational and ownership guidance they need. |
+| Maintenance and support | Release ownership, security reporting, compatibility decisions, issue triage, support expectations, dependency updates, and the distinction between core and companion packages are sustainable and publicly stated. A stable promise must have an owner, not only green code. |
+
+### Stable 1.0 Exit Rules
+
+The project may request `1.0.0` approval only when all of the following are
+true:
+
+- an evidence review covers every dimension above and records file, test,
+  workflow, release, or runtime evidence rather than confidence alone;
+- every P0 correctness, data-loss, security, or release-integrity finding is
+  closed, and every P1 stable-release blocker is closed or removed from public
+  scope with accurate diagnostics and docs;
+- the supported API/metadata/define/generated-artifact inventory and SemVer
+  boundary are reviewed, with deprecation and migration policy in place;
+- the compatibility matrix and reference workflows pass on the exact release
+  candidate, including Ruby compiler/runtime, Rails runtime, browser, production,
+  and package-consumer lanes;
+- performance, debugging/source-correlation, onboarding, upgrade, and support
+  evidence exist; these dimensions cannot be waived merely because functional
+  tests are green;
+- the README and release notes use only claims supported by the final
+  claim-evidence matrix;
+- an independent reviewer challenges the result after blocker closure, and the
+  stable-major policy approval explicitly records the decision.
+
+The review should create or update beads for concrete gaps. “Needs more
+confidence,” “support everything,” or “improve quality” are not actionable exit
+criteria; each finding needs an owner, bounded outcome, evidence gate, and
+severity tied to the documented supported scope.
 
 ## Tracked Work
 

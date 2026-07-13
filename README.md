@@ -1,654 +1,193 @@
-# reflaxe.ruby
+<h1 align="center">reflaxe.ruby</h1>
 
-`reflaxe.ruby` is a Reflaxe-based Haxe target that emits readable,
-idiomatic Ruby from typed Haxe. It also includes RailsHx, a Rails-native typed
-authoring layer for ActiveRecord, ActionController, ActionView/HHX, routing,
-Turbo, ActionCable, generators, migrations, tests, and installed-gem companion
-contracts such as DeviseHx.
+<p align="center">
+  <strong>Write typed Haxe. Ship ordinary Ruby.</strong><br>
+  A typed Ruby authoring path—and a Rails-native framework layer—without a new runtime.
+</p>
 
-The historical public baseline tag, `v0.1.0-beta.2`, established executable Ruby smoke fixtures,
-shared `hxruby` runtime files and gem packaging, Ruby interop
-metadata, typed extension/mixin contracts, and a RailsHx dogfood app with typed
-models, relations, migrations, controllers, params, HHX templates, Haxe-owned
-routes, Devise-backed sessions, Turbo Streams, Haxe-authored browser code,
-Rails tests, Playwright, and production smoke coverage.
+<p align="center">
+  <a href="https://github.com/fullofcaffeine/reflaxe.ruby/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/fullofcaffeine/reflaxe.ruby/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <img alt="Maturity: production-ready beta" src="https://img.shields.io/badge/maturity-production--ready_beta-7c3aed">
+  <img alt="Haxe 4.3.7" src="https://img.shields.io/badge/Haxe-4.3.7-ea8220?logo=haxe&logoColor=white">
+  <img alt="Ruby 3.2, 3.3, and 4.0" src="https://img.shields.io/badge/Ruby-3.2_%7C_3.3_%7C_4.0-cc342d?logo=ruby&logoColor=white">
+  <a href="LICENSE"><img alt="GPL-3.0 license" src="https://img.shields.io/badge/license-GPL--3.0-2563eb"></a>
+</p>
 
-That baseline is the historical prerelease tag. Normal releases from `main`
-use conventional `0.x` SemVer: fix commits advance patch, features and
-major-zero breaking changes advance minor, and `1.0.0` plus each later stable
-major require independent policy approval. Major zero already communicates
-initial development, so the normal channel does not add a `-beta` suffix. See
-[Release Version Policy](docs/release-version-policy.md).
-The first normal publication used a tested one-time bridge from the historical
-beta tag to `v0.1.0`; its temporary local alias was removed before tags were
-pushed and never became public history.
+<p align="center">
+  <a href="docs/why-rubyhx.md">Why RubyHx?</a> ·
+  <a href="#try-it">Try it</a> ·
+  <a href="#railshx">RailsHx</a> ·
+  <a href="docs/railshx-gradual-adoption.md">Gradual adoption</a> ·
+  <a href="docs/getting-started.md">Getting started</a> ·
+  <a href="docs/README.md">Docs</a>
+</p>
 
-Tracked version files intentionally use the `0.0.0` development sentinel; it
-is never a public release version. Release preparation derives the real version
-from Git-tag lineage and injects the version, matching tag, and tested source
-SHA only into temporary Haxelib and gem staging trees. `CHANGELOG.md` is frozen
-public history unless an ordinary reviewed commit updates it; publication never
-creates a release commit or rewrites README/package metadata.
-The exact ZIP and gem are reproducibly built from that Git commit, carry full
-content manifests, and are uploaded with SHA-256 identity sidecars. See
-[Reproducible Release Artifacts](docs/release-artifacts.md).
-Publication is the final minimal-permission job of the same successful
-canonical-main CI run; it checks out that run's exact SHA and rebuilds under an
-exact Node/npm/Ruby/RubyGems/Haxe toolchain. See
-[Tested-Commit Publication Workflow](docs/release-publication-workflow.md).
-GitHub publication stays draft until the local tag, origin tag, embedded
-ZIP/gem identity, exact four hosted assets, and downloaded SHA-256 bytes agree;
-future completed releases are natively immutable. Manual recovery accepts only
-an existing tag and cannot derive or move a version. See
-[Hosted Release Identity And Repair](docs/release-hosting-and-repair.md).
-GitHub Releases is currently the sole distribution host: the ZIP is not
-published to the Haxelib registry and the gem is not pushed to RubyGems.org.
-Consumers should download the matching SHA-256 sidecar, verify filename, byte
-count, digest, tag, and source SHA, then install the local ZIP or gem. The exact
-transition and live hosted proofs are recorded in
-[Live Release Protocol Evidence](docs/release-live-evidence.md).
+`reflaxe.ruby` compiles typed Haxe to readable Ruby. **RubyHx** is the
+framework-independent compiler and interop layer. **RailsHx** adds typed Rails
+authoring while Rails remains the runtime.
 
-There are two first-class layers:
+Keep Ruby, Rails, Bundler, gems, and deployment conventions. Add static types,
+closed domain states, compile-time Rails checks, generated references, and
+selected Ruby/JavaScript code sharing where they are worth the build step.
 
-- **RubyHx / pure Ruby**: compile Haxe to normal Ruby, consume Ruby gems through typed externs/contracts, author Ruby modules/concerns from Haxe, and keep generated Ruby readable to Ruby developers.
-- **RailsHx**: a Rails-native typed authoring layer on top of the same Ruby compiler. Haxe/HHX is source of truth; Rails still owns runtime tasks such as `db:migrate`, `test`, Zeitwerk, and assets.
+The deployable result is Ruby source—not a hidden VM or parallel app server.
+When Haxe semantics need support, they use explicit, versioned `hxruby` helpers.
 
-Rails is the flagship framework target because it is the dominant Ruby framework, but it is not the only intended use of `haxe.ruby`. Other framework layers can live in this monorepo or in separate repos that consume the published haxelib/gem and add their own typed std/macros/generators.
+## Why It Exists
 
-## Quick Start
+- **Type the risky parts.** Start with one high-change service, domain module,
+  Rails feature, or shared package; the rest can remain Ruby.
+- **Catch drift earlier.** Supported fields, params, routes, templates,
+  associations, migrations, and helpers become checked Haxe contracts.
+- **Adopt in either direction.** Ruby can call generated Haxe, while Haxe can
+  consume existing Ruby, gems, RBS, YARD, routes, schemas, and ERB.
+- **Share behavior, not just schemas.** Suitable types and pure logic can compile
+  to both Ruby and JavaScript; target-specific code stays at the edges.
+- **Keep the output recognizable.** Ruby blocks, keywords, modules, mixins,
+  exceptions, Rails declarations, and native library calls stay Ruby-shaped.
 
-Install repository dependencies and run the default compiler/test suite:
+RubyHx is not “Ruby is obsolete.” It is a better authoring option for the parts
+of a Ruby system where stronger guarantees and multi-target reuse pay off.
 
-```bash
-npm install
-npm test
+## One Pipeline, Two Layers
+
+| RubyHx | RailsHx |
+| --- | --- |
+| Pure Ruby target, Haxe std/runtime semantics, typed stdlib and gem interop, modules, concerns, blocks, keywords, and extension APIs. | Rails-native models, queries, controllers, params, routes, migrations, HHX views, Hotwire, jobs, mailers, storage, tests, and generators. |
+| Useful for libraries, services, CLIs, framework layers, or one typed island inside Ruby. | Built on RubyHx; Rails still owns migrations, tests, Zeitwerk, assets, jobs, gems, and app boot. |
+
+```text
+typed Haxe / HHX  →  reflaxe.ruby  →  Ruby + Rails artifacts + browser JavaScript
+                                            ↓
+                                ordinary Ruby / Rails runtime
 ```
 
-`npm test` is intentionally broad: it runs compiler snapshots, smoke tests,
-example compilation, package checks, strict-boundary policy checks, and fast
-RailsHx materialization checks. Full Rails runtime/browser/production lanes are
-documented below.
+## Start Where It Pays
 
-Compile a Haxe entrypoint by setting `ruby_output` and loading the compiler macros:
+| Goal | Start here |
+| --- | --- |
+| See Haxe compile and run as Ruby | [`examples/hello_world`](examples/hello_world) |
+| Expose native blocks, keywords, and methods to Ruby | [`examples/ruby_callable_abi`](examples/ruby_callable_abi) |
+| Add Haxe to an existing Ruby/ERB app | [`examples/rails_interop_app`](examples/rails_interop_app) |
+| Explore a complete RailsHx application | [`examples/todoapp_rails`](examples/todoapp_rails) |
+| Install packages or generate an app | [Packages And Installation](docs/packages-and-installation.md) |
 
-```bash
-haxe \
-  -D ruby_output=out/ruby \
-  -D reflaxe_runtime \
-  -cp src \
-  -cp examples/hello_world \
-  -cp vendor/reflaxe/src \
-  --macro "reflaxe.ruby.CompilerBootstrap.Start()" \
-  --macro "reflaxe.ruby.CompilerInit.Start()" \
-  -main Main
+No all-at-once rewrite is required.
 
-ruby out/ruby/run.rb
-```
+## A Ruby-Native ABI From Typed Haxe
 
-For a guided public entrypoint, start with:
-
-- Pure Ruby: [examples/hello_world](examples/hello_world),
-  [examples/ruby_callable_abi](examples/ruby_callable_abi) for typed blocks,
-  keywords, forwarding, externs, and Ruby callers, [Ruby Extension
-  Interop](docs/ruby-extension-interop.md), and
-  [examples/ruby_extensions](examples/ruby_extensions).
-- RailsHx: [examples/todoapp_rails](examples/todoapp_rails) for a full app, [examples/rails_routes_dsl](examples/rails_routes_dsl) for focused Haxe-owned route snapshots, and [examples/rails_interop_app](examples/rails_interop_app) for gradual adoption from existing Ruby/ERB.
-- DeviseHx: [docs/railshx-devisehx-design.md](docs/railshx-devisehx-design.md) for the companion-layer design and [examples/todoapp_rails](examples/todoapp_rails) for the current app-local auth contract in a real Rails flow.
-- Documentation map: [docs/README.md](docs/README.md).
-
-Compiler lowering is fail-closed: a typed Haxe expression without an explicit
-Ruby representation produces a source-positioned compiler diagnostic, never a
-generated `nil`/TODO placeholder. See [Ruby Compiler Correctness](docs/compiler-correctness.md).
-
-## Target Defines
-
-- `ruby`: injected automatically for RubyHx builds, enabling conventional
-  `#if ruby` target branches in application and library code.
-- `ruby_output=<dir>`: output directory used by Reflaxe.
-- `reflaxe_runtime`: emits/copies shared `hxruby` runtime helpers.
-- `reflaxe_ruby_profile=ruby_first|portable`: declares the Ruby profile contract; default is `ruby_first`. The legacy `idiomatic` value remains accepted.
-- `reflaxe_ruby_rails`: writes app-owned code under `app/haxe_gen` and emits a Rails autoload initializer.
-- `reflaxe_ruby_rails_output_root=<path>`: overrides the Rails output root; default is `app/haxe_gen`. Use safe relative paths such as `engines/blog/app/haxe_gen` for engine/plugin output; see [RailsHx Engines And Plugins Guide](docs/railshx-engines-plugins-guide.md).
-- `reflaxe_ruby_strict_examples`: rejects raw `__ruby__` injection in repo examples/snapshots.
-- `reflaxe_ruby_strict`: rejects raw `__ruby__` injection in user/project sources.
-- `reflaxe_ruby_strict_policy=auto|on|off`: policy hook for strict user boundaries.
-
-See [Ruby Profiles](docs/profiles.md) for the profile contract: both profiles should emit idiomatic Ruby where safe, `portable` preserves Haxe semantics first, and `ruby_first` is the Ruby-first default. Profiles are semantic guardrails in one compiler pipeline, not separate backends.
-
-## Ruby Interop
-
-Interop is typed through metadata and small std surfaces:
-
-The authoritative placement, arguments, lowering, interaction, diagnostic, and
-safety contracts for all RubyHx/RailsHx compiler metadata live in
-[`docs/compiler-metadata.md`](docs/compiler-metadata.md). CI rejects newly
-recognized target metadata that is absent from that reference.
-The symmetric call/definition rules for blocks, keywords, rest arguments,
-method values, and forwarding are specified in the
-[`Ruby Callable And Method ABI`](docs/ruby-callable-abi.md).
-
-- `@:native("RubyName")` maps Haxe symbols to Ruby constants or methods.
-- `@:rubyRequire("json")` emits `require "json"`.
-- `@:rubyRequireRelative("./support/foo")` emits `require_relative "./support/foo"`.
-- `@:rubyKwargs` is symmetric for calls and Haxe-owned definitions: its required
-  typed fields become required Ruby keywords, optional fields preserve omission
-  versus explicit `nil`, and stored carriers are projected through the declared
-  schema so wider runtime objects cannot leak unknown keywords.
-- `@:rubyBlockArg` maps one final typed callback symmetrically: call sites emit
-  native blocks/`&callback`, while Haxe-owned definitions choose direct `yield`
-  or captured `&block` from usage without exposing that Ruby detail to authors.
-- Keyword/block metadata is inherited through overrides and interfaces.
-  Direct calls remain wrapper-free; a genuine Haxe method-value capture emits
-  one documented adapter and evaluates an effectful receiver exactly once.
-- A final Haxe `haxe.Rest<T>` parameter emits Ruby `*args`; Haxe `...values`
-  calls emit native Ruby splats without Ruby-specific rest metadata.
-- Behavior-preserving Array calls that reach the backend use native Ruby
-  `map`/`select` blocks. Stored callbacks and callbacks with non-tail Haxe
-  returns remain strict lambdas passed with `&`; no `array_map` or
-  `array_filter` runtime helper is emitted.
-- `@:rubyMixin`, `@:rubyInclude`, `@:rubyPrepend`, and `@:rubyExtend` model Ruby module extension APIs as typed Haxe contracts while emitting normal Ruby `include`/`prepend`/`extend`.
-- `@:rubyPatch(ReceiverType)` plus Haxe `using` models monkey-patched receiver APIs, including ActiveSupport-style extensions, as typed Haxe calls that lower to direct Ruby receiver dispatch.
-- `@:rubyModule("Name")` and `@:rubyConcern("Name")` let Haxe author Ruby modules and ActiveSupport::Concern-style modules directly.
-- `ruby.Symbol.of("ready")` lowers to `:ready`.
-- `ruby.Pathname` provides typed, chainable Ruby path operations and emits
-  `require "pathname"`, `Pathname.new(...)`, and direct receiver calls.
-- `ruby.Dir` provides typed directory queries, globbing, and explicit
-  process-working-directory changes while emitting direct core `Dir.*` calls
-  without a require or wrapper.
-- `ruby.FileUtils` provides typed single-path copy, move, creation, removal,
-  touch, comparison, and freshness operations. Recursive deletion defaults to
-  Ruby's TOCTTOU-resistant `remove_entry_secure` operation.
-- `ruby.Tempfile.create*` provides typed resource-scoped callbacks that emit
-  native Ruby blocks and deterministically close and unlink temporary files;
-  explicit `ruby.Tempfile` values expose a documented `closeAndUnlink()` path.
-- `ruby.BinaryFormat`, `ruby.ArrayPacking`, and `ruby.BinaryString` provide a
-  checked binary interop seam: nominal pack/unpack directives keep Int and Float
-  results aligned while generated Ruby remains direct `pack`, `byteslice`, and
-  `unpack1` calls without `Dynamic` or raw injection.
-
-Rails/ActiveSupport facades are typed std contracts over real Rails APIs:
+Haxe authors use an ordinary typed function parameter:
 
 ```haxe
-using rails.active_support.ObjectPresence;
-using rails.active_support.StringFilters;
-
-var normalized = "  Ship   typed Rails  ".squish();
-var maybeTitle = normalized.presence();
-if (maybeTitle.present()) trace(maybeTitle);
+class CallableApi {
+  @:rubyBlockArg
+  public static function direct(value:Int, block:Int->Int):Int {
+    return block(value);
+  }
+}
 ```
 
-Generated Ruby requires the matching ActiveSupport core extension files and calls the patched receivers directly.
+Handwritten Ruby sees a normal block API:
 
-Raw `__ruby__` injection exists as an escape hatch, but examples and
-production-style code should prefer typed externs, generated contracts, or
-std/runtime wrappers. The strict boundary defines enforce that policy.
+```ruby
+puts CallableApi.direct(4) { |value| value * 3 }
+```
 
-See [Ruby Extension Interop](docs/ruby-extension-interop.md) for examples ranging from simple module include/extend through existing gem wrapping, gradual adoption, Haxe-owned libraries, and metaprogramming-heavy contract generation. For installed Rails gems such as Devise, see [RailsHx Gem Layers](docs/railshx-gem-layers.md): Ruby/Bundler owns the runtime gem, while RailsHx provides typed contracts, macros, generators, and reusable companion packages when a gem is common enough. The reusable DeviseHx layer starts from the [folded design review](docs/railshx-devisehx-design.md), which was produced from the [GPT 5.5 Pro design prompt](docs/railshx-devisehx-gpt55-prompt.md).
+The compiler chooses native `yield` or captured `&block` from actual usage.
+Haxe authors keep one typed contract; Ruby callers keep familiar Ruby syntax.
+The executable example covers blocks, keywords, forwarding, optional callbacks,
+method values, and Ruby stdlib block lifecycles without semantic runtime helpers.
 
-## Rails Workflow
+## Try It
 
-Rails mode is enabled with `-D reflaxe_ruby_rails`. It emits Haxe-owned app files under `app/haxe_gen`, plus:
+```bash
+git clone https://github.com/fullofcaffeine/reflaxe.ruby.git
+cd reflaxe.ruby
+npm install
+npm run test:hello-world
+```
 
-- `config/initializers/hxruby_autoload.rb`
-- Rails-friendly constant/file paths for Zeitwerk
-- typed `rails.active_record.Base<T>` model classes
-- generated ActiveRecord schema metadata via `Model.__hx_rails_schema`
-- generated Rails migrations from Haxe-authored `@:railsMigration(...)` classes
-- typed `rails.action_controller.Base` controller classes
-- `ParamsMacro.requirePermit(...)` for strong params
-- model metadata for `@:belongsTo`, `@:hasMany`, `@:hasOne`, `@:validates`, `@:railsEnum`, and typed callback metadata such as `@:beforeValidation`
+That compiles the smallest Haxe entrypoint, runs the generated Ruby, and checks
+its real stdout. Continue with [Getting Started](docs/getting-started.md) for
+direct compiler use, profiles, defines, package consumption, and Rails setup.
 
-The canonical RailsHx end-to-end example is `examples/todoapp_rails`. The mixed Rails adoption example is `examples/rails_interop_app`.
+## RailsHx
 
-RailsHx is not a Rails replacement. Rails still owns runtime execution:
-`bin/rails db:migrate`, `bin/rails test`, Zeitwerk, assets, ActionCable,
-Devise/Warden, and app boot remain ordinary Rails. RailsHx owns typed Haxe/HHX
-source, compile-time validation, generated Rails-shaped artifacts, and a better
-developer workflow around those artifacts.
+RailsHx authors Haxe and HHX, then emits ordinary Rails-shaped artifacts:
 
-Run the generated Rails todo app locally:
+- ActiveRecord models, typed relations, associations, validations, and scopes;
+- controllers, lifecycle hooks, strong params, statuses, and route helpers;
+- migrations, Haxe-owned routes, HHX-to-ERB views, layouts, and components;
+- Turbo, ActionCable, jobs, mailers, storage, instrumentation, and DeviseHx;
+- Haxe-authored browser code, Rails tests, Playwright, and production assets.
+
+Run the canonical app:
 
 ```bash
 rake todoapp:start
 ```
 
-Then open `http://127.0.0.1:3000/`. The app now demonstrates a protected
-Devise-backed board, guest sign-in, user-scoped todos, admin-only user
-management, typed ActiveRecord relations, Haxe-authored HHX views,
-Turbo Streams chat, Haxe-authored browser code, Rails request/model tests, and
-Playwright UX checks.
+The app proves a protected Devise-backed board, scoped data, typed Rails APIs,
+HHX views, Turbo Streams chat, browser code, runtime tests, and a production
+build. See the [todoapp tutorial](docs/railshx-skeleton-and-todoapp-tutorial.md)
+or [RailsHx guides](docs/README.md#railshx-guides).
 
-For the RailsHx development loop, start the app with the integrated watcher:
+Existing apps can keep Ruby/ERB as source of truth and adopt typed boundaries
+incrementally. See [Gradual Adoption](docs/railshx-gradual-adoption.md).
 
-```bash
-rake todoapp:start:watch
-# or:
-WATCH=1 rake todoapp:start
-# or:
-rake 'todoapp:start[watch]'
-```
+## Evidence, Not Just A Pitch
 
-That prepares the app once, runs Rails and the RailsHx watcher together, and refreshes generated Rails files when Haxe/HHX or Haxe-authored JS changes.
+- Unsupported typed lowering fails with a source-positioned diagnostic instead
+  of silently generating a placeholder.
+- Exact Ruby/Rails/ERB/JS output is snapshot-tested and rebuilt twice for
+  determinism.
+- Every example compiles under one inventory gate and owns an output, negative,
+  runtime, or browser contract.
+- Ruby runtime, Rails runtime, Playwright, production-build, security, package,
+  and reproducible-release lanes cover what snapshots cannot prove.
+- The supported baseline is Haxe `4.3.7`, Node.js `22.14.0`, and Ruby `3.2`,
+  `3.3`, and `4.0`.
 
-For a real-browser RailsHx smoke, run the Playwright sentinel lane:
+Read the [compiler correctness contract](docs/compiler-correctness.md),
+[testing strategy](docs/railshx-testing-strategy.md), and
+[compatibility matrix](docs/compatibility-matrix.md).
 
-```bash
-rake todoapp:playwright
-```
+## Maturity
 
-That prepares the generated Rails app, boots Rails on a dedicated port, runs `examples/todoapp_rails/e2e/*.spec.ts`, and tears the server down.
-The browser lane also compiles the optional Haxe-authored Playwright spec from
-`examples/todoapp_rails/e2e_haxe/**` into disposable ES-module specs under
-`examples/todoapp_rails/e2e/generated/**`; vanilla TypeScript specs remain
-first-class. For the lightweight compile/output-shape check without booting
-Rails, run `npm run test:haxe-playwright`.
+The current claim is **production-ready beta for the documented and tested
+surface**. It is not yet a stable `1.x` compatibility promise.
 
-For the tutorial-style walkthrough of the generated skeleton and todoapp
-patterns, see
-[RailsHx Skeleton And Todoapp Tutorial](docs/railshx-skeleton-and-todoapp-tutorial.md).
+Teams using it today should pin a release, stay inside the supported matrix,
+and run the documented compiler, Rails, browser, production, and package gates.
 
-For gradual adoption of an existing Rails app or a quick Ruby/ERB PoC, use typed boundaries instead of an all-at-once rewrite:
+Stable `1.0` requires a cross-dimensional evidence review covering compiler and
+runtime correctness, Ruby/Rails interop, UX/API stability, gradual adoption,
+security, performance, debugging, upgrades, packaging, docs, and maintenance.
 
-```bash
-npm run test:rails-interop
-```
+See [Production Readiness](docs/railshx-production-readiness.md) and the
+[independent GPT 5.6 Pro review packet](docs/rubyhx-railshx-gpt56-1.0-review.md).
 
-That lane proves Haxe can render existing ERB through `Template.external("path") : Template<TLocals>`, call existing Ruby through typed externs, and let legacy ERB consume generated Haxe services/partials as normal Rails artifacts. See [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md).
+## Explore
 
-To force the generated Rails runtime apps to install their bundles and execute Rails tests, run:
+| Topic | Guide |
+| --- | --- |
+| Product thesis and honest tradeoffs | [Why RubyHx](docs/why-rubyhx.md) |
+| Setup, compiler defines, and first apps | [Getting Started](docs/getting-started.md) |
+| Blocks, keywords, modules, gems, and extensions | [Ruby Interop](docs/ruby-extension-interop.md) |
+| Rails APIs and workflows | [RailsHx Docs](docs/README.md#railshx-guides) |
+| Release ZIP, gem, and verified installation | [Packages And Installation](docs/packages-and-installation.md) |
+| Contributor gates and repository map | [Repository Development](docs/development.md) |
+| Everything else | [Documentation Index](docs/README.md) |
 
-```bash
-rake test:rails:runtime
-```
-
-This is the mandatory runtime lane for Rails coverage across the supported Ruby matrix (`3.2`, `3.3`, `4.0`). Plain `rake test`/`npm test` keeps the compiler loop fast and still syntax-checks generated Rails artifacts; the Rails runtime lanes skip only when Rails gems are unavailable in a local environment. CI runs the underlying npm script, so missing generated-app Rails gems become hard failures there.
-
-For a Rails app adoption scaffold, generate the RailsHx source layout, compile config, rake hook, dev process files, and a small typed starter app:
-
-```bash
-rake rails:app ARGS="--output path/to/rails-app --name MyApp"
-```
-
-The generated starter includes a typed `HomeController`, HHX layout, HHX home
-page, Haxe-owned root route, route-helper extern placeholder, Haxe-authored
-client JS, CSS/importmap wiring, app-local Rake tasks, `bin/railshx-*` helpers,
-and `docs/railshx/gem_layers.md` for deterministic-first installed-gem
-wrapping. Rails-facing generators are implemented in Ruby and exposed through
-`bin/rails generate hxruby:*`, repository Rake wrappers, and installed-app
-`hxruby` rake tasks, following the same host-framework-native generator lesson
-as PhoenixHx Mix tasks. npm remains repo infrastructure for Lix, Playwright,
-semantic-release, and Node-based CI scripts; the RailsHx user-facing path is
-Rake/Rails.
-
-In an installed Rails app, prefer the Rails generator entrypoints:
-
-```bash
-bin/rails generate hxruby:install MyApp
-bin/rails generate hxruby:routes
-bin/rails generate hxruby:controller Todos index show --templates
-bin/rails generate hxruby:mailer UserMailer welcome
-bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
-bin/rails generate hxruby:scaffold Todo title:String --controller --skip-tests
-bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
-bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
-bin/rails generate hxruby:adopt --service Billing::PriceFormatter --yard app/services/billing/price_formatter.rb
-bin/rails generate hxruby:adopt --gem some_gem --discover
-bin/rails generate hxruby:adopt --gem some_gem --write contracts
-bin/rails generate hxruby:adopt --schema --discover
-bin/rails generate hxruby:adopt --schema --models Todo,User
-bin/rails generate hxruby:adopt --migrations --discover
-bin/rails generate hxruby:adopt --discover
-```
-
-`--rbs` and `--yard` are deterministic, file-backed service-adoption lanes.
-RBS supports precise scalar, nilable, `Symbol`, and `Array<T>` positional
-signatures. YARD parses immediately preceding `@param`/`@return` tags without
-executing Ruby. Both lanes generate only fully mapped Haxe signatures and omit
-unsupported or incomplete methods behind review comments instead of widening
-them to `Dynamic`. Their input files are canonicalized inside the app root, so
-missing files, symlink escapes, and malformed RBS structure fail closed. RBS
-wins when both sources describe the same constant; YARD wins over loose
-`--service-source` inference. See
-[Gradual Adoption](docs/railshx-gradual-adoption.md) for the supported type and
-method subset.
-
-Generic `--gem ... --discover` / `--write contracts` adoption resolves the gem
-through the app's Bundler definition and automatically inspects YARD tags under
-the resolved gem `lib` root without loading gem code. A constant with actual
-YARD signature tags gets the same strict precise-or-omitted contract as the
-explicit `--yard` lane; undocumented, unsupported, and reopened source-only
-methods become review comments instead of `Dynamic`. Constants with no YARD
-signature metadata retain the existing visibly review-marked Ruby-shape
-skeleton. Canonical path checks reject gem-source symlinks that escape the
-Bundler-resolved `lib` root.
-
-Inside a generated RailsHx app, the recommended development flow is one command:
-
-```bash
-bundle exec rake hxruby:start
-```
-
-For the edit loop, run Rails and both Haxe watchers together:
-
-```bash
-bundle exec rake hxruby:start:watch
-# or:
-WATCH=1 bundle exec rake hxruby:start
-# or:
-bundle exec rake 'hxruby:start[watch]'
-```
-
-Generated apps also include `bin/railshx-dev`, which starts Rails, the server Haxe watcher, and the client Haxe watcher through `foreman` or `overmind` when either tool is installed. Without those tools it falls back to `bundle exec rake hxruby:start:watch`. If you need the lower-level pieces for CI debugging, use `bundle exec rake hxruby:compile`, `bundle exec rake hxruby:compile:client`, `bundle exec rake hxruby:watch`, and `bundle exec rake hxruby:watch:client` directly.
-
-For Rails tasks that consume generated artifacts, use the RailsHx-prefixed
-compile-then-delegate tasks:
-
-```bash
-bundle exec rake hxruby:db:migrate   # compile Haxe migrations, then rails db:migrate
-bundle exec rake hxruby:db:prepare   # compile Haxe artifacts, then rails db:prepare
-bundle exec rake hxruby:test         # compile server/client artifacts, then rails test
-bundle exec rake hxruby:rails TASK=zeitwerk:check
-bundle exec rake hxruby:doctor       # non-mutating health report for Haxe/build files/manifests
-bundle exec rake hxruby:check        # compile and ruby -c generated Ruby
-bundle exec rake hxruby:clean        # remove manifest-owned generated artifacts
-```
-
-Raw `bin/rails db:migrate`, `bin/rails test`, and other Rails tasks still work
-when artifacts are already current. The `hxruby:*` variants are the safer daily
-path because they refresh generated Ruby, ERB, migrations, route files, and
-client JS before Rails consumes them.
-
-Use `hxruby:doctor` when onboarding or debugging a generated app: it verifies
-Haxe availability, build files, JSON manifests, Rails command availability, and
-configured output roots without mutating the app. It also reports manifest output
-drift/missing files, stale Haxe-owned route externs, duplicate Rails migration
-timestamps/classes, and likely Haxe-authored client JS/importmap gaps. Use
-`hxruby:check` in CI for a fast generated-artifact gate; add `CLIENT=1`,
-`ROUTES=1`, or `ZEITWERK=1` when that CI lane should also compile Haxe-authored
-JavaScript, sync route externs, or delegate to Rails' `zeitwerk:check`.
-
-For production builds, compile Haxe/HHX before the normal Rails build/release steps so generated `app/haxe_gen/**`, generated ActionView templates, generated `db/migrate/**` files, and `config/initializers/hxruby_autoload.rb` exist in the release artifact:
-
-```bash
-bin/railshx-prod
-# or, in CI/buildpacks:
-RAILS_ENV=production bundle exec rake hxruby:production
-```
-
-`hxruby:production` runs the server Haxe compile, client Haxe compile, `rails zeitwerk:check`, and `rails assets:precompile` with production defaults. It intentionally fails closed if required Haxe build files are missing, so releases do not accidentally ship stale generated Ruby, ERB, migrations, or JavaScript.
-
-The canonical dogfood app has a production smoke that exercises the same shape end to end:
-
-```bash
-rake todoapp:production
-```
-
-That command compiles Haxe/HHX, compiles Haxe-authored JS, materializes the generated Rails app, runs Rails migrations/tests, runs `zeitwerk:check`, precompiles production assets, creates `test/.generated/rails_integration_release.tgz`, and verifies the release artifact includes generated RailsHx files.
-
-RailsHx satisfies the production-readiness gate for the documented major-zero
-initial-development contract without making a stable `1.x` compatibility
-promise. The readiness contract and required gates are documented in
-[docs/railshx-production-readiness.md](docs/railshx-production-readiness.md).
-
-The RailsHx work is tracked in [docs/railshx-roadmap.md](docs/railshx-roadmap.md), covering typed ActiveRecord, migrations, controllers, routes, generators, and integration tests inspired by the Phoenix/Ecto implementation in `../haxe.elixir.codex`. Start with [docs/railshx-generator-workflows.md](docs/railshx-generator-workflows.md) for app-facing generator commands, generated artifacts, runtime handoff, diagnostics, and CI gates. See [docs/railshx-generators-and-tasks-design.md](docs/railshx-generators-and-tasks-design.md) for the generated app skeleton and Rake/Rails task contract, [docs/railshx-routing-design.md](docs/railshx-routing-design.md) for Haxe-owned and Rails-owned route source-of-truth modes, [docs/railshx-controller-guide.md](docs/railshx-controller-guide.md) for typed controllers/params, [docs/railshx-action-mailer-guide.md](docs/railshx-action-mailer-guide.md) for typed ActionMailer classes and HHX mail templates, [docs/railshx-active-job-guide.md](docs/railshx-active-job-guide.md) for typed ActiveJob classes and enqueue helpers, [docs/railshx-active-storage-guide.md](docs/railshx-active-storage-guide.md) for typed ActiveStorage refs, [docs/railshx-turbo-guide.md](docs/railshx-turbo-guide.md) for typed Turbo client and server-side stream helpers, [docs/railshx-action-cable-guide.md](docs/railshx-action-cable-guide.md) for typed ActionCable channels/subscriptions, [docs/railshx-instrumentation-guide.md](docs/railshx-instrumentation-guide.md) for typed ActiveSupport instrumentation, [docs/railshx-components-guide.md](docs/railshx-components-guide.md) for typed Rails-native components, [docs/railshx-engines-plugins-guide.md](docs/railshx-engines-plugins-guide.md) for engine/plugin output roots and host-app consumption, [docs/railshx-gradual-adoption.md](docs/railshx-gradual-adoption.md) for mixed Ruby/ERB and Haxe adoption patterns, and [docs/railshx-haxe-authored-testing-design.md](docs/railshx-haxe-authored-testing-design.md) for the optional Haxe-authored Ruby/JS test-layer design.
-
-Useful tooling:
-
-```bash
-rake rails:routes ARGS="--input routes.txt --output src_haxe/routes/Routes.hx"
-rake rails:controller ARGS="Todos index show --templates --output tmp/todo"
-rake rails:scaffold ARGS="--model Todo --fields title:String,isCompleted:Bool --validate title --controller --output tmp/todo"
-rake rails:adopt ARGS="--service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String --output tmp/rails_app"
-rake rails:app ARGS="--output tmp/rails_app --name TodoApp"
-```
-
-`rake test:rails:integration` materializes a generated Rails app and always syntax-checks Ruby files. It runs `rails db:migrate` and `rails test` when Rails gems are installed. `rake test:rails:runtime` sets `REQUIRE_RAILS=1`, installs generated app bundles when needed, and makes both Rails integration and mixed-interop runtime execution mandatory.
-
-RailsHx routing supports both ownership directions. Existing Rails apps can keep Rails-owned `config/routes.rb` and generate typed Haxe externs from `rails routes`. Greenfield RailsHx apps can use Haxe-owned `@:railsRoutes` sources that emit normal `config/routes.rb`; Rails still remains the route-helper naming oracle by feeding `rails routes` back into `Routes.hx`. See [docs/railshx-routing-design.md](docs/railshx-routing-design.md) and the focused [examples/rails_routes_dsl](examples/rails_routes_dsl) snapshot fixture.
-
-Devise routes follow the same principle. A Haxe-owned route file can declare
-`DeviseRoutes.deviseFor(UserAuth.scope)` for the supported no-options MVP; the
-compiler emits ordinary `devise_for :users`, validates the Devise mapping by
-booting Rails, and still generates typed route helpers from actual
-`rails routes` output. More complex Devise route options remain Rails-owned
-until their typed DSL phases land.
-
-## Compatibility
-
-See [docs/compatibility-matrix.md](docs/compatibility-matrix.md).
-
-The CI contract targets:
-
-- Haxe `4.3.7`
-- Node `20`
-- Ruby `3.2`, `3.3`, and `4.0`
-
-Local Ruby `2.6` can still run some non-Rails smoke tests, but it is not the supported runtime baseline for Rails-oriented work.
-
-### Local Ruby Setup
-
-Use `rbenv` for local Rails/compiler work. The repo pins Ruby with `.ruby-version`; install that version and initialize rbenv in your shell:
-
-```bash
-brew install rbenv ruby-build
-rbenv install
-eval "$(rbenv init - zsh)"
-ruby -v
-```
-
-For mandatory Rails runtime integration, use the pinned Ruby and let the generated apps install their own bundles:
-
-```bash
-rake test:rails:runtime
-```
-
-`rake test`/`npm test` will run Rails runtime checks when generated app bundles are already available. `rake test:rails:runtime` makes missing Rails gems a hard failure and installs the generated bundles first, matching the dedicated CI lane. Runtime logs are stage-labeled (`compiler`, `materialization`, `migration`, `request tests`, and browser stages) so CI failures point at the failing boundary.
-
-## Quality Gates
+## Development
 
 ```bash
 npm test
-npm run test:examples-compile
-rake format:haxe:check
-rake security:gitleaks
-rake test:snapshots
-rake test:strict_boundaries
-rake test:rails:runtime
-rake ci:version_sync
-rake ci:release_contracts
-rake package:gem:test
 ```
 
-Snapshot tests compile with `reflaxe_ruby_strict_examples`, compare committed
-Ruby output, reject CRLF/trailing-newline/path leaks, and compile each snapshot
-case twice to catch non-deterministic output.
+The full Rails/browser/production stack and contributor workflow live in
+[Repository Development](docs/development.md).
 
-`npm run test:examples-compile` compiles every `examples/*/Main.hx` entrypoint
-and known example client builds, then verifies each example has an explicit
-snapshot/smoke/runtime/browser coverage contract. This keeps examples useful as
-living documentation and as an additional compiler QA lane.
+## License
 
-Snapshots are the primary compiler/codegen contract: they show the exact Ruby,
-ERB, JS, migration, initializer, and runtime-support artifacts that Rails/Ruby
-users should be able to review as hand-written-looking output. Smoke tests are
-supporting gates for focused invariants such as required files, syntax checks,
-negative Haxe compile failures, package/generator flows, and thin Rails
-consumption seams. Runtime Rails tests should prove that Rails can load/render/
-migrate/deliver/subscribe to generated artifacts; they should not broadly
-retest Rails itself unless RailsHx adds custom runtime behavior. See
-[RailsHx Testing Strategy](docs/railshx-testing-strategy.md) for the
-snapshot-vs-smoke decision rules.
-
-### Local Hooks
-
-Install the repo-managed pre-commit hook:
-
-```bash
-haxelib install formatter
-brew install gitleaks # or use another gitleaks install method
-rake hooks:install
-```
-
-The hook runs a staged `gitleaks` scan and formats staged `.hx` files with [haxe-formatter](https://github.com/HaxeCheckstyle/haxe-formatter). CI runs the full Haxe formatter check plus locked-dependency and full-history Gitleaks security gates in the same workflow that authorizes publication, so local hooks catch the same class of issues before review.
-
-## Haxelib Package
-
-Build the release zip locally with:
-
-```bash
-rake package:haxelib:build
-```
-
-Validate the package contents, compile the extracted `examples/hello_world`
-fixture, and smoke-test an installed Ruby-target `-lib reflaxe.ruby` consumer
-with:
-
-```bash
-rake package:haxelib:test
-```
-
-Semantic-release runs the same package builder during release preparation and uploads only the fixed local path `dist/reflaxe.ruby-release.zip`, naming the hosted asset with the selected version. The archive contains `release-provenance.json` with that version, its matching tag, and the tested source SHA, plus `artifact-manifest.json` with the exact path, bytes, SHA-256, and normalized mode of every packaged file. The adjacent `dist/reflaxe.ruby-release.zip.sha256.json` binds the exact upload bytes and hosted filename to the same identity. See [Reproducible Release Artifacts](docs/release-artifacts.md).
-
-The ZIP is installed from the verified GitHub asset with
-`haxelib install ./reflaxe.ruby-<version>.zip --skip-dependencies`; there is no
-separate Haxelib-registry publication today.
-
-Packaging follows Reflaxe build conventions: source std overrides live in
-`std/ruby/_std/**/*.hx`, while the release zip contains generated
-`src/**/*.cross.hx` files produced by Reflaxe's build runner. Ruby's package
-script is only a thin wrapper that adds Ruby/Rails extras after Reflaxe builds
-`_Build`. Browser builds should use `-lib railshx.client` from the `hxruby`
-gem/source layout, not the haxelib package's flattened Ruby-target
-`.cross.hx` sources. See [Haxelib Packaging](docs/haxelib-packaging.md).
-
-The package deliberately ships the vendored Reflaxe used by the compiler,
-including the narrowly scoped lazy function-field fix from
-[Reflaxe PR #52](https://github.com/SomeRanDev/reflaxe/pull/52). Its upstream
-commit, semantic boundary, replacement rule, and executable regression are
-recorded in [the vendored patch ledger](vendor/reflaxe/PATCHES.md) and enforced
-by `npm run test:reflaxe-lazy-function-field` plus the haxelib package gate.
-
-The incubated DeviseHx Haxe API currently ships inside this haxelib package
-under `std/devisehx/**`. Its release contract is documented in
-[DeviseHx Release Lane](docs/railshx-devisehx-release-lane.md): Rails apps keep
-the Devise gem in their own Bundler environment, while `reflaxe.ruby` ships the
-typed Haxe companion API and checks package contents in
-`npm run test:haxelib-package`.
-
-## Ruby Gem Package
-
-Build the `hxruby` runtime gem locally with:
-
-```bash
-rake package:gem:build
-```
-
-Validate the gem contents, runtime require path, rake task registration, and local gem install behavior with:
-
-```bash
-rake package:gem:test
-```
-
-The gem exposes `require "hxruby"` for runtime helpers and `require "hxruby/tasks"` for Rails-oriented rake tasks:
-
-```bash
-bin/rails generate hxruby:install MyApp
-bin/rails generate hxruby:routes
-bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
-bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
-bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
-bin/rails generate hxruby:adopt --service Billing::PriceFormatter --yard app/services/billing/price_formatter.rb
-bin/rails generate hxruby:adopt --schema --discover
-bin/rails generate hxruby:adopt --schema --models Todo,User
-bin/rails generate hxruby:adopt --migrations --discover
-rake hxruby:compile
-rake hxruby:compile:client
-rake hxruby:db:migrate
-rake hxruby:db:prepare
-rake hxruby:db:rollback
-rake hxruby:start
-rake hxruby:start:watch
-rake hxruby:routes
-rake hxruby:doctor
-rake hxruby:check
-rake hxruby:clean
-rake hxruby:test
-rake hxruby:rails TASK=zeitwerk:check
-rake hxruby:production
-rake hxruby:watch
-rake hxruby:watch:client
-rake hxruby:gen:app
-rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=label:String,tone:String
-rake hxruby:gen:adopt SERVICE=RbsPriceFormatter RBS=sig/rbs_price_formatter.rbs
-rake hxruby:gen:adopt SERVICE=Billing::PriceFormatter YARD=app/services/billing/price_formatter.rb
-rake hxruby:gen:adopt GEM=some_gem WRITE=contracts
-rake hxruby:gen:routes
-rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
-rake hxruby:gen:mailer MAILER=UserMailer ACTION=welcome
-rake hxruby:gen:template PATH=controllers/todos/_card LOCALS=title:String,count:Int
-rake hxruby:gen:test NAME=models/todo
-```
-
-Greenfield app/scaffold generators default to Haxe-owned routes. Pass
-`--routes=haxe|snippet|rails|none` to choose the route source-of-truth mode:
-`haxe` emits typed `@:railsRoutes`, `rails` keeps route helper extern generation
-for an existing Rails-owned `config/routes.rb`, `snippet` writes reviewable
-instructions, and `none` leaves route files untouched.
-
-Scaffolds also generate a small Haxe-authored Rails model test by default under
-`test_haxe/**`. The Haxe test compiles through `@:railsTest` into normal
-Minitest output under `test/generated/**`, so the starter app exercises both
-typed source and Rails-native test artifacts. Use `--skip-tests` only when an
-existing test layout owns that boundary already.
-
-When `--controller` is enabled, the scaffold composes the controller generator's
-typed HHX view path too: the index action renders `Template.of(IndexView)` with
-typed locals, and the compiler emits ordinary Rails ERB under `app/views/**`.
-
-Plain `require "hxruby"` has no gem runtime dependencies. The task entrypoint requires `rake`, which is available in the supported CI Rubies and normal Rails applications.
-
-RailsHx browser builds generated by the gem use `-lib railshx.client` plus
-`-lib genes`. The client library resolves typed Hotwire/Turbo and
-`reflaxe.js.Async` helpers from the browser-safe shared `std/` source shipped
-with `hxruby`, while Ruby server builds keep using `-lib reflaxe.ruby`.
-
-For DeviseHx, `hxruby` is the generator bridge rather than an auth runtime: it
-exposes `bin/rails generate hxruby:adopt --gem devise`, writes deterministic
-inventory/contracts/docs under app ownership, and does not add a Devise runtime
-dependency to the `hxruby` gem. See
-[DeviseHx Release Lane](docs/railshx-devisehx-release-lane.md) for the split
-criteria before publishing a standalone `devisehx` or `hxruby-devise` package.
-
-Semantic-release builds the gem during release preparation and uploads only the fixed local path `dist/hxruby-release.gem`, naming the hosted asset with the selected version. The gem specification, `HXRuby::VERSION`, staged `haxelib.json`, and `release-provenance.json` all expose the same release identity. Its full `artifact-manifest.json` and adjacent `dist/hxruby-release.gem.sha256.json` make the packaged content and exact upload bytes independently checkable.
-
-The gem is installed from the verified GitHub asset with
-`gem install --local ./hxruby-<version>.gem --no-document`; it is not currently
-published to RubyGems.org.
-
-## Gap Report
-
-The std/runtime gap report is generated from `docs/stdlib-inventory.json`.
-Upstream behavioral parity is tracked separately in
-`test/upstream_unitstd/manifest.json`; the Ruby lane includes dedicated
-StringMap, IntMap, ObjectMap, EnumValueMap, and Vector coverage while preserving
-native Ruby Hash/Array storage.
-
-```bash
-npm run test:gap-report
-UPDATE_GAP_REPORT=1 npm run test:gap-report
-```
-
-See [docs/gap-report-guidance.md](docs/gap-report-guidance.md) for how to update inventory entries and interpret remaining gaps.
-
-## Repository Map
-
-- `src/reflaxe/ruby`: compiler, build context, naming, macros, and Ruby AST printer.
-- `std`: additive Ruby/Rails Haxe APIs and target std surfaces.
-- `std/ruby/_std`: source-checkout upstream Haxe std overrides; packaged as `src/**/*.cross.hx` by Reflaxe build.
-- `haxe_libraries/railshx.client.hxml`: browser-safe RailsHx client helper library used by generated Rails apps.
-- `runtime/hxruby`: shared Ruby runtime helpers copied into generated output.
-- `examples`: executable compiler/Rails fixtures.
-- `scripts/ci`: smoke, snapshot, inventory, release, and hardening checks.
-- `scripts/rails`: Rails-oriented generators.
-- `scripts/hooks`, `scripts/lint`, `scripts/security`: local hook installer, Haxe formatter guard, and secret scanning wrapper.
-- `test/snapshots`: committed generated Ruby contracts.
+[GPL-3.0](LICENSE)

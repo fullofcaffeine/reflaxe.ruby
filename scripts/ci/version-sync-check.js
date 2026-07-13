@@ -18,7 +18,7 @@ const haxelibJson = readJson("haxelib.json");
 const rubyHxml = fs.readFileSync("haxe_libraries/reflaxe.ruby.hxml", "utf8");
 const clientHxml = fs.readFileSync("haxe_libraries/railshx.client.hxml", "utf8");
 const hxrubyVersion = fs.readFileSync("lib/hxruby/version.rb", "utf8");
-const readme = fs.readFileSync("README.md", "utf8");
+const releaseVersionPolicy = fs.readFileSync("docs/release-version-policy.md", "utf8");
 
 for (const [surface, actual] of [
   ["package.json", packageJson.version],
@@ -37,8 +37,8 @@ for (const [surface, text, define] of [
   if (!text.includes(`-D ${define}=${DEVELOPMENT_VERSION}`)) fail(`${surface} must use development sentinel`);
 }
 if (!hxrubyVersion.includes(`VERSION = "${DEVELOPMENT_VERSION}"`)) fail("lib/hxruby/version.rb must use development sentinel");
-if (!readme.includes("Tracked version files intentionally use the `0.0.0` development sentinel")) fail("README must document the development sentinel");
-if (!readme.includes("`v0.1.0-beta.2`")) fail("README must preserve the historical public baseline tag");
+if (!releaseVersionPolicy.includes("Tracked version surfaces use the non-release `0.0.0` development sentinel")) fail("release version policy must document the development sentinel");
+if (!releaseVersionPolicy.includes("`v0.1.0-beta.2`")) fail("release version policy must preserve the historical public baseline tag");
 
 if (process.exitCode) process.exit(process.exitCode);
 console.log(`[version-sync] OK: tracked development sentinel ${DEVELOPMENT_VERSION}`);
