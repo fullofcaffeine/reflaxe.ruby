@@ -7,6 +7,12 @@ document stay green. This is still a beta contract: supported surfaces are
 production ready, but new Rails/Ruby surfaces must be added through explicit
 beads, tests, and compatibility notes before users should rely on them.
 
+The contract covers two distinct starting points. Ruby-first teams can add
+typed Haxe components to an existing system. Haxe-first teams can keep nearly
+all owned library or application source in Haxe/HHX and use Ruby primarily as
+the generated runtime target. Evidence for one path does not automatically
+prove the other.
+
 A stable `1.0` claim is a separate, stronger project-wide commitment. RailsHx
 cannot be stable if the RubyHx compiler, runtime, interop, packaging, debugging,
 or upgrade story underneath it is not stable. Conversely, compiler correctness
@@ -20,6 +26,8 @@ Tracking epic: `haxe.ruby-bjv` RailsHx production readiness.
 
 RailsHx now proves the main production shape:
 
+- Framework-independent RubyHx examples prove Haxe-first compilation, readable
+  generated Ruby, native Ruby callable boundaries, and runtime behavior.
 - Haxe-authored Rails models, relations, controllers, params, migrations, routes,
   HHX templates, generators, and Rails interop can emit Rails-native artifacts.
 - The canonical todo app and mixed adoption fixtures cover compile-time output,
@@ -59,6 +67,11 @@ Support expectation for production-beta use:
 - No unsupported-version promises: users should stay on the documented matrix.
 - No stable `1.x` compatibility promise while public versioning remains `0.x`.
 
+Haxe-first users should treat Haxe/HHX as the source of truth, generated Ruby as
+a checked build artifact, and Ruby-level integration, operations, and debugging
+as part of using the target ecosystem. Ruby-first adopters should keep ownership
+boundaries explicit so generated workflows never overwrite Rails-owned source.
+
 ## Production-Ready Beta Definition
 
 RailsHx can be called production-ready when all of these are true:
@@ -82,6 +95,8 @@ RailsHx can be called production-ready when all of these are true:
   `assets:precompile` consume the generated artifacts.
 - Existing Ruby/ERB/Rails apps can adopt RailsHx incrementally without losing
   type safety at every boundary.
+- Haxe-first users can author the documented framework-independent and Rails
+  workflows without routinely editing generated Ruby or ERB.
 - Docs tell users what is supported, what is still alpha, what commands prove
   readiness, and which versions are supported.
 
@@ -98,20 +113,20 @@ an input, not automatic proof that a dimension is complete.
 
 | Dimension | Stable `1.0` evidence required |
 | --- | --- |
-| Product scope and claims | RubyHx, RailsHx, `hxruby`, profiles, adoption modes, supported use cases, and non-goals are named consistently. Every material public claim has a repository proof or narrower wording. |
+| Product scope and claims | RubyHx, RailsHx, `hxruby`, profiles, Haxe-first authoring, Ruby-first adoption, supported use cases, and non-goals are named consistently. Every material public claim has a repository proof or narrower wording. |
 | Compiler and Haxe semantics | Supported typed expressions, control flow, classes, modules, functions, enums, exceptions, numeric/string/collection behavior, and both profile contracts are fail-closed and covered by snapshots plus runtime parity tests. Unsupported lowering never silently changes behavior. |
 | Generated Ruby and runtime helpers | Output is deterministic, readable, syntax-valid, and Ruby-native where behavior permits. Every helper has documented ownership, compatibility, loading, versioning, and security policy; runtime-free claims are made only for fixtures that prove them. |
 | Ruby stdlib and ecosystem interop | The supported std inventory is explicit. Blocks, keywords, rest/forwarding, constants, modules, mixins, monkey patches, gems, RBS, YARD, native extensions, and dynamic boundaries have typed contracts, diagnostics, examples, and honest unsupported cases. |
-| Rails framework contract | The marketed path across ActiveRecord, migrations, controllers, params, routing, ActionView/HHX, Hotwire, jobs, mailers, storage, tests, generators, engines, and gradual adoption is Rails-native and tested. Breadth gaps are classified as blocker, documented unsupported surface, or post-1.0 enhancement. |
-| Authoring UX and API stability | Canonical Haxe APIs are typed, ergonomic, documented, discoverable in editors, and free of accidental compiler plumbing. Public packages, metadata, defines, generated manifests, diagnostics, and compatibility aliases have an inventory and deprecation policy. |
-| Gradual adoption and ownership | Ruby-owned, Haxe-owned, and partial-ownership modes fail closed on unsafe paths or unowned content. Existing Ruby can call generated code and typed Haxe can consume existing code without requiring a rewrite or leaking broad `Dynamic` contracts. |
+| Rails framework contract | The marketed Haxe-first and gradual-adoption paths across ActiveRecord, migrations, controllers, params, routing, ActionView/HHX, Hotwire, jobs, mailers, storage, tests, generators, and engines are Rails-native and tested. Breadth gaps are classified as blocker, documented unsupported surface, or post-1.0 enhancement. |
+| Authoring UX and API stability | Canonical Haxe APIs are typed, ergonomic, documented, discoverable in editors, and free of accidental compiler plumbing. A Haxe-first user can complete normal workflows without editing generated Ruby. Public packages, metadata, defines, generated manifests, diagnostics, and compatibility aliases have an inventory and deprecation policy. |
+| Haxe-first authoring, gradual adoption, and ownership | Haxe-owned, Ruby-owned, and partial-ownership modes are each proven and fail closed on unsafe paths or unowned content. Existing Ruby can call generated code and typed Haxe can consume existing code without requiring a rewrite or leaking broad `Dynamic` contracts. Haxe-first evidence is not inferred from mixed-adoption evidence. |
 | Full-stack Ruby/JavaScript sharing | At least one maintained reference flow proves selected shared types or behavior on both targets, with target-specific boundaries, serialization compatibility, client build integration, and two-target tests. Docs do not imply that all application code should be isomorphic. |
 | Tests and reference applications | Compiler snapshots, negative diagnostics, Ruby runtime parity, Rails matrix tests, Playwright, production builds, packaging checks, and executable examples cover each public workflow. Flake policy, failure triage, and generated-artifact determinism are documented. |
 | Security and supply chain | Escape hatches, raw Ruby/ERB/SQL, paths, generated contracts, dependency/action pins, secrets, release permissions, artifact identity, and advisory boundaries have threat-oriented review and mandatory gates. No known critical/high issue remains open in the supported scope. |
 | Performance and resource behavior | Representative compile time, generated-code runtime, startup, memory/allocation, artifact size, and Rails production behavior have measured baselines and regression policy. Claims are workload-scoped; unexplained material regressions block release. |
 | Debugging and observability | Compile diagnostics, generated-source locations, Ruby stack traces, exception behavior, logs, instrumentation, source correlation, and production failure workflows are documented and exercised. Users can diagnose a generated application without treating compiler output as opaque. |
 | Packaging, compatibility, and upgrades | Supported Haxe/Ruby/Rails/Node/platform versions are explicit and continuously tested. Reproducible packages, install/uninstall flows, SemVer boundaries, deprecation windows, migration guidance, generated-artifact upgrades, and rollback/recovery are proven. |
-| Documentation and onboarding | A Ruby developer can evaluate, install, compile, run, test, debug, adopt gradually, deploy, and upgrade from maintained docs and executable examples. Generated projects inherit the operational and ownership guidance they need. |
+| Documentation and onboarding | A Ruby developer or Haxe-first adopter can evaluate, install, compile, run, test, debug, choose an ownership direction, deploy, and upgrade from maintained docs and executable examples. Generated projects inherit the operational and ownership guidance they need. |
 | Maintenance and support | Release ownership, security reporting, compatibility decisions, issue triage, support expectations, dependency updates, and the distinction between core and companion packages are sustainable and publicly stated. A stable promise must have an owner, not only green code. |
 
 ### Stable 1.0 Exit Rules

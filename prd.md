@@ -116,7 +116,7 @@ generator tasks that are “Haxe-first” (generate Haxe sources; compilation ge
 
 That’s exactly the shape you want for Rails.
 
-PRD — reflaxe.ruby (Haxe → idiomatic Ruby, with Rails-first typed APIs)
+PRD: reflaxe.ruby (Haxe → idiomatic Ruby, with Rails-first typed APIs)
 0) Executive summary
 
 Build reflaxe.ruby, a Reflaxe-based Haxe compilation target that outputs idiomatic Ruby and supports Rails as a first-class framework via typed externs + macro-powered code generation.
@@ -128,7 +128,7 @@ Rails is on 8.1.x (Rails 8.1.2 released Jan 2026).
 Rails 8.0/8.1 require Ruby ≥ 3.2.0.
 So the baseline runtime can assume modern Ruby features like pattern matching (introduced 2.7, stabilized 3.0) and Data.define (Ruby 3.2).
 1) Goals
-G1 — Ruby output is idiomatic by default
+G1: Ruby output is idiomatic by default
 
 Generated Ruby should look like something a Rails dev would accept in a PR:
 
@@ -137,18 +137,18 @@ CamelCase constants/modules
 Ruby blocks where safe/appropriate
 keyword args where appropriate
 stable formatting (2-space indentation)
-G2 — “Rails-first” typed ergonomics in Haxe
+G2: “Rails-first” typed ergonomics in Haxe
 
 Provide typed Rails APIs in Haxe that:
 
 map 1:1 to Rails concepts (ActiveRecord, controllers, params, routes),
 improve safety (typed columns, typed where, typed params),
 avoid “API cliff” (don’t force a totally alien DSL).
-G3 — Minimal runtime (hxruby), maximum leverage of Ruby core
+G3: Minimal runtime (hxruby), maximum leverage of Ruby core
 
 Prefer Ruby’s native classes (Array, Hash, String, Integer) instead of heavy wrapper types, but supply a runtime for Haxe-specific semantics where needed (enums, exceptions, reflection helpers).
 
-G4 — Tooling + examples match existing target repos
+G4: Tooling + examples match existing target repos
 examples like other targets
 a Rails todoapp showcasing:
 typed model
@@ -156,7 +156,7 @@ typed controller/actions
 typed params (strong parameters)
 associations/validations
 migrations generation (at least for the example)
-G5 — A path to “strict mode”
+G5: A path to “strict mode”
 
 Allow opting out of __ruby__ escape hatches for “pure Haxe” projects, mirroring the policy approach in reflaxe.rust.
 
@@ -490,7 +490,7 @@ This gives you Rails ergonomics without the typical “permit list typo” foot-
 
 10.5 Routes: typed helpers (gradual)
 
-Two viable approaches—PRD recommends doing A for 1.0, B later.
+Two viable approaches. The PRD recommends doing A for 1.0 and B later.
 
 A) Generator-based (recommended for 1.0)
 
@@ -617,34 +617,34 @@ README.md
 CHANGELOG.md
 LICENSE
 15) Milestones (implementation plan)
-M0 — Compiler boots and emits Ruby
+M0: Compiler boots and emits Ruby
 compiler registers
 ruby_output works
 emits main.rb + a module file
 can run ruby main.rb
-M1 — Core language subset
+M1: Core language subset
 expressions, locals, if/while/for, arrays/hashes
 classes + methods + fields
 function values as lambdas
-M2 — Enums + switch + exceptions
+M2: Enums + switch + exceptions
 enum representation via Data.define
 switch on enums via pattern matching
 throw/try/catch via HxException
-M3 — Stdlib MVP
+M3: Stdlib MVP
 enough std overrides to compile typical code + Rails wrappers
 runtime hxruby included and wired
-M4 — Ruby interop polish
+M4: Ruby interop polish
 @:native, @:rubyRequire, symbols, kwargs, block args metadata
-M5 — Rails MVP + todoapp
+M5: Rails MVP + todoapp
 ActiveRecord base + typed where/create
 controller base + typed params macro
 todoapp builds and runs
-M6 — Ergonomics upgrades
+M6: Ergonomics upgrades
 associations typed
 validations typed-ish
 routes extern generator task
 better output idioms (blocks/kwargs) where safe
-M7 — 1.0 hardening
+M7: 1.0 hardening
 docs + gap report
 stable code formatting and deterministic outputs
 CI matrix green

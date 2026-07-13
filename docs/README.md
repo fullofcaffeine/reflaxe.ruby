@@ -5,13 +5,18 @@ This repo has one compiler pipeline with multiple authoring layers:
 - **RubyHx** covers pure Ruby output, Ruby std/runtime support, gem interop, Ruby extension APIs, and framework-independent Haxe-to-Ruby authoring.
 - **RailsHx** is the Rails-first layer: typed ActiveRecord, ActionController, ActionView/HHX, generators, migrations, Turbo/importmap, tests, and Rails-native app workflows.
 
+Both selective Ruby-first adoption and Haxe-first authoring are supported.
+Haxe-first projects can keep nearly all owned library or application source in
+Haxe/HHX while using generated Ruby with the normal runtime, gems, Rails, and
+deployment ecosystem.
+
 RailsHx is a first-class citizen, not a separate backend. Rails remains the runtime owner for `db:migrate`, `test`, Zeitwerk, assets, and app boot. RailsHx owns typed Haxe source, compile-time validation, generated Rails artifacts, and the developer UX around those artifacts.
 
 Future Ruby framework layers should reuse the same split: add typed std/macros/generators for the framework, emit framework-native Ruby artifacts, and keep framework runtime tasks owned by the framework. Those layers can live here if they share compiler/runtime code tightly, or in separate repos that consume `reflaxe.ruby`/`hxruby`.
 
 ## Start Here
 
-- [Why RubyHx](why-rubyhx.md): product thesis, Ruby-developer value,
+- [Why RubyHx](why-rubyhx.md): product thesis, Ruby-first and Haxe-first value,
   Ruby/JavaScript sharing boundaries, adoption modes, tradeoffs, maturity, and
   reusable pitch.
 - [Getting Started](getting-started.md): prerequisites, first compile/run,

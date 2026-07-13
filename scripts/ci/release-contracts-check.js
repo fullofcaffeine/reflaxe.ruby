@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, readFileSync } = require("node:fs");
+const { existsSync, readFileSync, readdirSync } = require("node:fs");
 
 function fail(message) {
   console.error(`[release-contracts] ERROR: ${message}`);
@@ -21,6 +21,16 @@ function expectExcludes(haystack, needle, label) {
   if (haystack.includes(needle)) {
     fail(`${label} must not include ${needle}`);
   }
+}
+
+function markdownFilesUnder(directory) {
+  return readdirSync(directory, { withFileTypes: true })
+    .flatMap((entry) => {
+      const path = `${directory}/${entry.name}`;
+      if (entry.isDirectory()) return markdownFilesUnder(path);
+      return entry.isFile() && entry.name.endsWith(".md") ? [path] : [];
+    })
+    .sort();
 }
 
 const packageJson = readJson("package.json");
@@ -111,6 +121,8 @@ expectIncludes(readme, "production-ready beta", "README maturity contract");
 expectIncludes(readme, "docs/why-rubyhx.md", "README product thesis link");
 expectIncludes(readme, "docs/getting-started.md", "README getting-started link");
 expectIncludes(readme, "docs/packages-and-installation.md", "README package docs link");
+expectIncludes(readme, "You can also go\nHaxe-first", "README Haxe-first product path");
+expectIncludes(readme, "without making Ruby your day-to-day authoring language", "README Haxe-first value");
 if (readme.split(/\r?\n/).length > 240) {
   fail("README must remain a concise product landing page (maximum 240 lines)");
 }
@@ -127,23 +139,33 @@ expectIncludes(gettingStarted, "## Compiler Defines", "getting-started compiler 
 expectIncludes(gettingStarted, "npm run test:hello-world", "getting-started executable path");
 expectIncludes(developmentDocs, "## Local Hooks", "repository development docs");
 expectIncludes(developmentDocs, "## Repository Map", "repository development docs");
-expectIncludes(productPositioning, "RubyHx is a typed way to author Ruby software without replacing the Ruby", "product positioning");
+expectIncludes(productPositioning, "RubyHx is a typed way to author software for the Ruby ecosystem", "product positioning");
 expectIncludes(productPositioning, "Ruby/JavaScript applications commonly share", "full-stack positioning boundary");
 expectIncludes(productPositioning, "does not promise zero support code", "generated Ruby positioning boundary");
 expectIncludes(productPositioning, "a better way to write the Ruby-bound parts", "Ruby alternative positioning boundary");
+expectIncludes(productPositioning, "## Two First-Class Starting Points", "Haxe-first and Ruby-first positioning");
+expectIncludes(productPositioning, "### Haxe-first Ruby application or library", "framework-independent Haxe-first adoption mode");
 expectIncludes(productionReadiness, "Stable 1.0 Exit Rules", "stable 1.0 readiness contract");
 expectIncludes(productionReadiness, "Performance and resource behavior", "stable 1.0 performance gate");
 expectIncludes(productionReadiness, "Debugging and observability", "stable 1.0 debugging gate");
 expectIncludes(productionReadiness, "Maintenance and support", "stable 1.0 maintenance gate");
 expectIncludes(stableReviewPrompt, "Do not answer from the README alone", "stable 1.0 independent review prompt");
 expectIncludes(stableReviewPrompt, "claim-evidence matrix", "stable 1.0 claim audit");
-expectIncludes(stableReviewPrompt, "NOT READY — P1 STABLE-RELEASE BLOCKERS", "stable 1.0 verdict rubric");
+expectIncludes(stableReviewPrompt, "Test these as separate claims", "independent Haxe-first review contract");
+expectIncludes(stableReviewPrompt, "NOT READY: P1 STABLE-RELEASE BLOCKERS", "stable 1.0 verdict rubric");
 expectIncludes(stableReviewPrompt, "docs/reviews/rubyhx-railshx-1.0-readiness-review.md", "stable 1.0 review artifact");
 expectIncludes(docsIndex, "why-rubyhx.md", "docs index product thesis");
 expectIncludes(docsIndex, "rubyhx-railshx-gpt56-1.0-review.md", "docs index stable review prompt");
 expectIncludes(docsIndex, "getting-started.md", "docs index getting started");
 expectIncludes(docsIndex, "packages-and-installation.md", "docs index package installation");
 expectIncludes(docsIndex, "development.md", "docs index repository development");
+
+// Public prose uses compact punctuation consistently. Keeping this automated
+// prevents the README and detailed guides from drifting back to em dashes.
+const emDash = String.fromCodePoint(0x2014);
+for (const path of ["README.md", "prd.md", ...markdownFilesUnder("docs")]) {
+  expectExcludes(readFileSync(path, "utf8"), emDash, `${path} prose style`);
+}
 
 const releaseConfig = packageJson.release;
 if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {

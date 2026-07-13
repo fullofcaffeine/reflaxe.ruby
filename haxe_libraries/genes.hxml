@@ -1,4 +1,4 @@
-# genes — ES6 JavaScript generator (vendored)
+# genes: ES6 JavaScript generator (vendored)
 #
 # RailsHx vendors the same small Genes generator used by PhoenixHx so generated
 # Rails apps can build readable ES module JavaScript without relying on a global

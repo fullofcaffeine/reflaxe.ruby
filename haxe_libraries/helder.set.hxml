@@ -1,4 +1,4 @@
-# helder.set — small Set<T> abstraction used by genes.
+# helder.set: small Set<T> abstraction used by genes.
 #
 # `lix download` resolves this into HAXE_LIBCACHE from the @install directive.
 

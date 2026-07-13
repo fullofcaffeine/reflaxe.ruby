@@ -5,6 +5,20 @@ the project README. Start with the source checkout when evaluating the current
 major-zero release line; packaged installation is covered in
 [Packages And Installation](packages-and-installation.md).
 
+## Choose An Adoption Direction
+
+- **Haxe-first:** use Haxe as the normal source language for a Ruby library,
+  service, CLI, framework layer, or Rails application. Start with the smallest
+  Ruby program and direct compiler setup below. For Rails, the todo application
+  shows nearly all owned app source in Haxe/HHX.
+- **Ruby-first:** keep an existing Ruby or Rails system authoritative and add a
+  typed component or boundary. Start with Ruby interop or the gradual-adoption
+  example below.
+
+Both paths emit ordinary Ruby artifacts and use the normal Ruby runtime and
+ecosystem. Haxe-first minimizes day-to-day Ruby authoring, but target-level Ruby
+knowledge remains useful for gem integration, operations, and debugging.
+
 ## Prerequisites
 
 The exact supported versions live in the
@@ -98,7 +112,8 @@ Continue with:
 
 ## Try RailsHx
 
-Prepare and run the canonical generated Rails app:
+To use RailsHx as a Haxe-first authoring path, prepare and run the canonical
+generated Rails app:
 
 ```bash
 rake todoapp:start
@@ -110,7 +125,8 @@ For the integrated edit loop:
 rake todoapp:start:watch
 ```
 
-The reference app demonstrates Haxe-owned models, controllers, migrations,
+The reference app demonstrates a workflow where nearly all owned application
+source is Haxe/HHX: models, controllers, migrations,
 routes, HHX views, Devise-backed auth, Turbo/ActionCable, Haxe-authored browser
 code, Rails tests, Playwright, and a production build. See the
 [RailsHx Skeleton And Todoapp Tutorial](railshx-skeleton-and-todoapp-tutorial.md).

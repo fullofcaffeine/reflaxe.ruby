@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Write typed Haxe. Ship ordinary Ruby.</strong><br>
-  A typed Ruby authoring path—and a Rails-native framework layer—without a new runtime.
+  A typed Ruby authoring path and a Rails-native framework layer, without a new runtime.
 </p>
 
 <p align="center">
@@ -26,17 +26,25 @@
 framework-independent compiler and interop layer. **RailsHx** adds typed Rails
 authoring while Rails remains the runtime.
 
+You can add one typed Haxe island to an existing Ruby system. You can also go
+Haxe-first: write nearly all application or library code in Haxe/HHX, emit Ruby
+artifacts, and use the Ruby runtime, gems, Bundler, Rails, and deployment
+ecosystem without making Ruby your day-to-day authoring language.
+
 Keep Ruby, Rails, Bundler, gems, and deployment conventions. Add static types,
 closed domain states, compile-time Rails checks, generated references, and
 selected Ruby/JavaScript code sharing where they are worth the build step.
 
-The deployable result is Ruby source—not a hidden VM or parallel app server.
+The deployable result is Ruby source, not a hidden VM or parallel app server.
 When Haxe semantics need support, they use explicit, versioned `hxruby` helpers.
 
 ## Why It Exists
 
 - **Type the risky parts.** Start with one high-change service, domain module,
   Rails feature, or shared package; the rest can remain Ruby.
+- **Make Haxe the primary language.** Build libraries, services, CLIs, or Rails
+  apps almost entirely in Haxe/HHX when you want the Ruby ecosystem and runtime
+  but prefer not to write much Ruby.
 - **Catch drift earlier.** Supported fields, params, routes, templates,
   associations, migrations, and helpers become checked Haxe contracts.
 - **Adopt in either direction.** Ruby can call generated Haxe, while Haxe can
@@ -46,8 +54,10 @@ When Haxe semantics need support, they use explicit, versioned `hxruby` helpers.
 - **Keep the output recognizable.** Ruby blocks, keywords, modules, mixins,
   exceptions, Rails declarations, and native library calls stay Ruby-shaped.
 
-RubyHx is not “Ruby is obsolete.” It is a better authoring option for the parts
-of a Ruby system where stronger guarantees and multi-target reuse pay off.
+RubyHx is not “Ruby is obsolete.” It supports both selective adoption inside a
+Ruby system and Haxe-first authoring. In either mode, the deployed target is
+still Ruby, so Ruby familiarity remains useful for ecosystem integration,
+operations, and debugging even when most source is Haxe.
 
 ## One Pipeline, Two Layers
 
@@ -67,9 +77,10 @@ typed Haxe / HHX  →  reflaxe.ruby  →  Ruby + Rails artifacts + browser JavaS
 | Goal | Start here |
 | --- | --- |
 | See Haxe compile and run as Ruby | [`examples/hello_world`](examples/hello_world) |
+| Author a Ruby library, service, or CLI primarily in Haxe | [Getting Started](docs/getting-started.md) |
 | Expose native blocks, keywords, and methods to Ruby | [`examples/ruby_callable_abi`](examples/ruby_callable_abi) |
 | Add Haxe to an existing Ruby/ERB app | [`examples/rails_interop_app`](examples/rails_interop_app) |
-| Explore a complete RailsHx application | [`examples/todoapp_rails`](examples/todoapp_rails) |
+| Author a Rails app primarily in Haxe/HHX | [`examples/todoapp_rails`](examples/todoapp_rails) |
 | Install packages or generate an app | [Packages And Installation](docs/packages-and-installation.md) |
 
 No all-at-once rewrite is required.
@@ -120,6 +131,10 @@ RailsHx authors Haxe and HHX, then emits ordinary Rails-shaped artifacts:
 - migrations, Haxe-owned routes, HHX-to-ERB views, layouts, and components;
 - Turbo, ActionCable, jobs, mailers, storage, instrumentation, and DeviseHx;
 - Haxe-authored browser code, Rails tests, Playwright, and production assets.
+
+This can be the default authoring path, not only an incremental migration tool.
+A Haxe-first team can keep nearly all owned application source in Haxe/HHX while
+Rails, Ruby, Bundler, and gems continue to own runtime and deployment behavior.
 
 Run the canonical app:
 

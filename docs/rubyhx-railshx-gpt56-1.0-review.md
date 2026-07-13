@@ -35,16 +35,25 @@ operability, and an upgrade/support commitment.
 
 ### Product Thesis To Test
 
-The intended positioning is:
+The intended positioning has two first-class modes:
 
-> RubyHx lets teams write typed Haxe and ship readable Ruby, adopting it one
-> component or Rails feature at a time while keeping Ruby, Rails, Bundler, gems,
-> and deployment workflows in charge at runtime.
+- **Ruby-first adoption:** add typed Haxe one component or Rails feature at a
+  time while existing Ruby source remains authoritative where desired.
+- **Haxe-first authoring:** keep nearly all owned application or library source
+  in Haxe/HHX, ship readable generated Ruby, and use Ruby runtimes, Bundler,
+  gems, Rails, and deployment infrastructure without making Ruby the normal
+  source language.
+
+Test these as separate claims. A mixed Ruby/Haxe fixture does not prove that a
+Haxe-first user can complete a realistic day-to-day workflow, and a greenfield
+Haxe-owned application does not prove safe gradual adoption.
 
 RubyHx is meant to be a better authoring option for Ruby-bound code where static
 guarantees, compile-time framework checks, generated references, or selected
-Ruby/JavaScript implementation sharing justify a build step. It is not a claim
-that Ruby is obsolete or that every Ruby file should be migrated.
+Ruby/JavaScript implementation sharing justify a build step. A team may use it
+sparingly or make Haxe its primary language. It is not a claim that Ruby is
+obsolete, nor does Haxe-first usage make target-level Ruby knowledge irrelevant
+for gem integration, operations, or debugging.
 
 RailsHx is the Rails-native layer on RubyHx, not a separate compiler or Rails
 runtime. Haxe/HHX may own selected artifacts or a whole application; Rails must
@@ -129,8 +138,9 @@ Use `bd prime`, `bd list`, `bd show`, `bd blocked`, and tracked
 `.beads/issues.jsonl` history to understand open and closed work. Do not assume a
 closed bead proves its acceptance criteria; locate the implementation and test.
 
-When current external facts matter—supported Ruby/Rails/Haxe versions, security
-advisories, package/release state, action versions, or upstream behavior—verify
+When current external facts matter, including supported Ruby/Rails/Haxe
+versions, security advisories, package/release state, action versions, or
+upstream behavior, verify
 them from primary sources and cite direct links. Do not browse merely to replace
 local implementation evidence.
 
@@ -169,9 +179,10 @@ internally contradictory or harmful:
 2. Build a public-surface inventory: packages, metadata, defines, profiles,
    CLI/Rake/Rails commands, runtime helpers, generated artifact formats,
    ownership manifests, compatibility aliases, and companion-package boundaries.
-3. Trace the canonical workflows end to end: minimal Ruby, Ruby callable
-   interop, existing-Ruby adoption, greenfield Rails generation, Rails runtime,
-   browser code, production build, package consumption, and upgrade/recovery.
+3. Trace the canonical workflows end to end: a framework-independent Haxe-first
+   Ruby program, Ruby callable interop, existing-Ruby adoption, a Haxe-first
+   Rails application, Rails runtime, browser code, production build, package
+   consumption, and upgrade/recovery.
 4. For each advertised capability, identify compiler/snapshot evidence, a
    negative diagnostic when misuse is knowable, runtime evidence where target
    behavior matters, and user-facing documentation.
@@ -201,6 +212,11 @@ For every dimension, assign `PROVEN`, `PARTIAL`, `MISSING`, or
 - Are “ordinary Ruby,” gradual adoption, better ergonomics, critical-component
   use, Rails integration, and shared server/browser code demonstrated rather
   than asserted?
+- Is Haxe-first authoring demonstrated independently from gradual adoption for
+  both framework-independent RubyHx and the RailsHx application path?
+- Can someone who prefers Haxe keep nearly all owned source in Haxe/HHX without
+  the docs pretending that Ruby ecosystem, operations, and debugging knowledge
+  becomes unnecessary?
 - Which claims would an experienced Ruby developer reject as hype, imprecise,
   or dismissive of existing Ruby/JavaScript practices?
 - Are costs and non-goals visible enough for an informed adoption decision?
@@ -273,8 +289,10 @@ For every dimension, assign `PROVEN`, `PARTIAL`, `MISSING`, or
 - Identify aliases or experimental APIs that need removal, stabilization,
   deprecation, or explicit exclusion before `1.0`.
 
-#### 8. Gradual adoption and ecosystem integration
+#### 8. Haxe-first authoring, gradual adoption, and ecosystem integration
 
+- Prove a realistic Haxe-first framework-independent workflow and a Haxe-first
+  Rails workflow without requiring routine edits to generated Ruby or ERB.
 - Prove Ruby-owned, Haxe-owned, and mixed ownership in real files and runtime
   calls, not only compile fixtures.
 - Are generated manifests, marker blocks, conflict detection, path validation,
@@ -351,8 +369,9 @@ For every dimension, assign `PROVEN`, `PARTIAL`, `MISSING`, or
 
 #### 15. Documentation, onboarding, and maintenance
 
-- Attempt the README/quick-start, pure Ruby path, mixed adoption path, Rails app
-  path, test/debug loop, production build, and package consumption as a new user.
+- Attempt the README/quick-start, Haxe-first RubyHx path, mixed-adoption path,
+  Haxe-first RailsHx path, test/debug loop, production build, and package
+  consumption as a new user.
 - Check docs for stale names, insider assumptions, contradictory ownership,
   unsupported claims, missing examples, and generated-app guidance drift.
 - Identify the human ownership model for releases, security reports,
@@ -410,8 +429,8 @@ implementation, state both options and their tradeoff.
 
 Use one of these final verdicts:
 
-- `NOT READY — P0 STOP-SHIP FINDINGS`
-- `NOT READY — P1 STABLE-RELEASE BLOCKERS`
+- `NOT READY: P0 STOP-SHIP FINDINGS`
+- `NOT READY: P1 STABLE-RELEASE BLOCKERS`
 - `READY FOR 1.0 RELEASE-CANDIDATE HARDENING`
 - `READY TO REQUEST STABLE-MAJOR APPROVAL`
 
@@ -426,8 +445,9 @@ Produce one review document ready to commit as
 1. Reviewed commit, date, environment, reviewer/model, scope, and evidence
    limitations.
 2. Executive verdict and the five most important reasons.
-3. Product thesis assessment, including a Ruby-developer credibility critique
-   and recommended wording changes.
+3. Product thesis assessment, including separate evidence for Haxe-first and
+   Ruby-first adoption, a Ruby-developer credibility critique, and recommended
+   wording changes.
 4. Architecture map and findings, especially compiler orchestration, Rails
    modularity, runtime/helper ownership, Reflaxe provenance, client boundary,
    generators, and companion packages.

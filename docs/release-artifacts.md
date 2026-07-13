@@ -2,7 +2,7 @@
 
 RubyHx publishes two artifacts from one tested commit: the Reflaxe Haxelib ZIP
 and the `hxruby` Ruby gem. This contract deliberately follows the established
-`haxe.rust` release pattern—canonical Git input, fixed output paths,
+`haxe.rust` release pattern: canonical Git input, fixed output paths,
 deterministic bytes, SHA-256 metadata, and isolated consumer smoke tests. It
 does not introduce a second SemVer algorithm. Ruby adds one necessary target
 difference: RubyGems must also produce a deterministic gem alongside the ZIP.

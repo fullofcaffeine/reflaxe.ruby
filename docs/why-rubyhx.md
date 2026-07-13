@@ -1,7 +1,10 @@
 # Why RubyHx
 
-RubyHx is a typed way to author Ruby software without replacing the Ruby
-runtime or ecosystem. The short version is:
+RubyHx is a typed way to author software for the Ruby ecosystem without
+replacing its runtime. It supports two first-class directions: add Haxe
+selectively to an existing Ruby system, or make Haxe/HHX the primary source
+language and use Ruby mainly as the generated deployment target. The short
+version is:
 
 > **Write typed Haxe. Ship ordinary Ruby.**
 
@@ -23,7 +26,7 @@ strong refactoring guarantees, closed domain states, checked framework
 metadata, or one implementation shared with a browser client.
 
 RubyHx lets a team opt into those properties without moving the application to
-a non-Ruby runtime:
+a non-Ruby runtime or requiring Ruby to remain its main authoring language:
 
 - Haxe supplies static types, inference, algebraic enums, pattern matching,
   macros, editor tooling, and multiple compilation targets.
@@ -33,6 +36,9 @@ a non-Ruby runtime:
 - RailsHx moves Rails facts such as model fields, associations, params,
   templates, routes, migrations, and helper names into checked Haxe surfaces
   where practical, while emitting Rails-native artifacts.
+- Haxe-first teams can keep nearly all owned application or library source in
+  Haxe/HHX while using the Ruby runtime, Bundler, gems, Rails, and established
+  deployment infrastructure.
 - Existing Ruby remains callable from Haxe, and generated Haxe remains callable
   from Ruby. Adoption can therefore be component-by-component rather than a
   rewrite.
@@ -53,11 +59,31 @@ result stays in the Ruby ecosystem.
 RubyHx must remain useful without Rails. RailsHx must remain Rails-native rather
 than becoming a separate backend or application runtime.
 
-## The Ruby Developer Value Proposition
+## Two First-Class Starting Points
+
+**Ruby-first adoption** starts with an existing Ruby or Rails system. A team can
+compile one critical component from Haxe, wrap existing Ruby through typed
+contracts, and migrate only where the extra guarantees repay the build step.
+
+**Haxe-first authoring** starts with Haxe as the normal source language. A team
+can build a Ruby library, service, CLI, framework layer, or Rails application
+with nearly all owned code in Haxe/HHX, then use generated Ruby artifacts with
+the normal Ruby ecosystem. This is useful even for developers who do not enjoy
+writing Ruby but want access to Ruby runtimes, gems, Rails, or deployment
+platforms.
+
+Haxe-first does not mean Ruby disappears. Generated output is Ruby, runtime
+libraries and framework behavior remain Ruby-owned, and enough Ruby knowledge
+to integrate gems, operate the application, and diagnose target-level failures
+is still valuable. The promise is that writing Ruby can be uncommon in the
+day-to-day authoring loop, not that the target ecosystem becomes invisible.
+
+## The Value Proposition
 
 | Need | RubyHx/RailsHx approach | What remains normal Ruby/Rails |
 | --- | --- | --- |
 | Add types where mistakes are expensive | Compile a selected service, domain module, library, or Rails feature from Haxe | Ruby callers invoke ordinary constants and methods |
+| Prefer Haxe as the main language | Keep nearly all owned source in Haxe/HHX and generate Ruby libraries, services, CLIs, or Rails artifacts | Ruby runtimes, gems, Bundler, Rails, deployment, and target-level operations |
 | Modernize gradually | Wrap existing Ruby, ERB, gems, RBS, YARD, routes, and schemas through checked contracts | Existing source stays Ruby-owned until deliberately migrated |
 | Catch framework drift earlier | Generate typed field, route, template, params, association, and helper references | Rails remains authoritative for runtime behavior and final artifacts |
 | Reduce stringly repetition | Derive names and contracts with macros and generators | Output uses familiar Rails names, symbols, paths, and calls |
@@ -73,7 +99,7 @@ The strongest positioning is not “Ruby is obsolete.” It is:
 
 That boundary may be one critical component, a new bounded context, a shared
 domain package, a Rails engine, or an entire application. The rest can remain
-Ruby.
+Ruby, or Haxe can be the default for new owned source.
 
 ## Why Haxe Fits The Job
 
@@ -136,11 +162,11 @@ is not the goal.
 ## What Ordinary Ruby Output Means
 
 The compiler output is Ruby source that Ruby tools can parse and execute. The
-compiler should prefer native constructs—classes, modules, methods, blocks,
-keywords, arrays, hashes, exceptions, `require`, Rails declarations, and direct
-receiver calls—when they preserve the selected profile contract. Generated
-Rails artifacts should look recognizable to a Rails developer and remain
-consumable by Ruby-owned code.
+compiler should prefer native constructs such as classes, modules, methods,
+blocks, keywords, arrays, hashes, exceptions, `require`, Rails declarations,
+and direct receiver calls when they preserve the selected profile contract.
+Generated Rails artifacts should look recognizable to a Rails developer and
+remain consumable by Ruby-owned code.
 
 “Ordinary Ruby” does not promise zero support code in every program. Some Haxe
 semantics need small, versioned `hxruby` helpers. Those helpers are explicit,
@@ -174,6 +200,13 @@ Own selected models, controllers, routes, migrations, and HHX views in Haxe.
 Generate Rails-native files under explicit ownership rules and let the rest of
 the application remain Rails-owned.
 
+### Haxe-first Ruby application or library
+
+Use Haxe as the source of truth for nearly all owned code in a library, service,
+CLI, framework layer, or application. Treat generated Ruby as the deployable
+artifact, consume Ruby libraries through typed contracts, and keep Ruby-specific
+adapters at explicit edges. Rails is optional in this mode.
+
 ### Greenfield RailsHx application
 
 Use Haxe/HHX as the default source of truth, generated Rails files as build
@@ -199,7 +232,7 @@ measured and documented rather than assumed.
 
 Ruby metaprogramming can expose behavior that no static contract can infer
 perfectly. RubyHx should use deterministic metadata, conservative externs, and
-explicit reviewed escapes—not `Dynamic` everywhere and not invented certainty.
+explicit reviewed escapes, not `Dynamic` everywhere or invented certainty.
 Some highly dynamic code will remain clearer in Ruby.
 
 RubyHx also has a smaller authoring ecosystem than Ruby. It should leverage

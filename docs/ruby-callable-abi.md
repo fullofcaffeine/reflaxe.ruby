@@ -450,7 +450,7 @@ The focused executable gates are `npm run test:ruby-owned-blocks`,
 
 Focused smoke tests and snapshots own different failure modes. Smoke tests
 compile fixtures, run `ruby -c`, execute Haxe-origin and Ruby-origin behavior,
-compare stdout, and—especially for the diagnostics gate—prove intentionally
+compare stdout and, especially for the diagnostics gate, prove intentionally
 invalid programs fail with a useful message. Snapshots own the complete exact
 Ruby text for valid programs. A snapshot cannot prove that invalid input emits
 no output, while a pattern/runtime smoke test should not approve unrelated
