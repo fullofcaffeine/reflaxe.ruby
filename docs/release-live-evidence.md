@@ -71,13 +71,25 @@ and the ZIP is 1077874 bytes with SHA-256
 
 ## No-release continuity proof
 
-The next commit after `v0.1.2` deliberately changes documentation and release
-contract assertions only. Its Conventional Commit type is `docs`, so the
-locked analyzer must return no release while the complete same-run gate graph
-remains green. After that hosted run completes, this section records its exact
-commit, workflow, release-job identity, conclusion, and the unchanged remote
-version-tag set. That two-step record distinguishes a real hosted no-op from a
-local analyzer simulation.
+The first commit after `v0.1.2` was
+[`e485d098056cc3b1377a8b52928a302963570538`](https://github.com/fullofcaffeine/reflaxe.ruby/commit/e485d098056cc3b1377a8b52928a302963570538),
+`docs: record live release protocol`. It changed documentation and release
+contract assertions only.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Same-run CI workflow | [`29225406658`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29225406658), `success` |
+| Privileged release job | [`86742889294`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29225406658/job/86742889294), `success` |
+| Required gate graph | Security/Gitleaks, formatter, release contracts, browser, production, Ruby compiler/package 3.2/3.3/4.0, and Rails runtime 3.2/3.3/4.0 all `success` |
+| Analyzer result | Found `v0.1.2`, analyzed exactly one commit, reported `no release`, and logged `There are no relevant changes, so no new version is released.` |
+| Hosted result | No tag, GitHub Release, draft, asset, or release notes were created |
+
+After completion, the complete remote version-tag set was still
+`v0.1.0-beta.2`, `v0.1.0`, `v0.1.1`, and `v0.1.2`. Neither the local-only
+transition alias `v0.0.0` nor a spurious `v0.1.3` existed. The GitHub Release
+set remained the same four completed releases with zero drafts, `v0.1.2`
+remained the newest release, and native immutable releases remained enabled.
+This is a hosted same-run no-op proof, not merely a local analyzer simulation.
 
 ## Evidence reproduction
 
@@ -89,6 +101,7 @@ git ls-remote --tags origin
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v0.1.2
 gh run view 29221893930 --json headSha,conclusion,jobs,url
 gh run view 29221904625 --json headSha,conclusion,jobs,url
+gh run view 29225406658 --json headSha,conclusion,jobs,url
 gh api repos/fullofcaffeine/reflaxe.ruby/immutable-releases
 gh api repos/fullofcaffeine/reflaxe.ruby/rulesets/18851281
 ```

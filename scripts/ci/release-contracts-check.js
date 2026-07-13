@@ -215,6 +215,17 @@ expectIncludes(releaseEvidenceDocs, "`prerelease=false`", "normal major-zero cha
 expectIncludes(releaseEvidenceDocs, "`immutable=false`", "historical host immutability evidence");
 expectIncludes(releaseEvidenceDocs, "`v0.0.0` alias is absent", "transition alias absence evidence");
 expectIncludes(releaseEvidenceDocs, "## No-release continuity proof", "hosted no-release evidence section");
+for (const evidence of [
+  "e485d098056cc3b1377a8b52928a302963570538",
+  "29225406658",
+  "86742889294",
+  "analyzed exactly one commit",
+  "no new version is released",
+  "zero drafts",
+  "spurious `v0.1.3`",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "hosted no-release continuity evidence");
+}
 expectIncludes(releaseWorkflowDocs, "final job", "tested-commit publication docs");
 expectIncludes(releaseWorkflowDocs, "contents: write", "publication permission docs");
 expectIncludes(releaseWorkflowDocs, "22.14.0", "publication toolchain docs");
