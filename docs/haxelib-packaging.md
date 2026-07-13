@@ -44,6 +44,13 @@ streams. Browser-only APIs such as `rails.turbo.Turbo` and
 `reflaxe.js.Async` also live in `std/` today, but the library boundary keeps
 them out of Ruby target bootstrap behavior.
 
+The canonical browser lane also uses `-lib genes`. Haxe still types a normal
+`-js` build, while Genes registers a custom final emitter that produces split
+ES modules for Rails importmap/Propshaft. See
+[RailsHx Client JavaScript And Genes](railshx-client-javascript.md) for why the
+stock Haxe JavaScript emitter is not the generated-app default and how the
+packaged client module graph reaches Rails.
+
 Do not check in generated `src/**/*.cross.hx` mirrors for those `_std` files.
 
 ## Package Layout

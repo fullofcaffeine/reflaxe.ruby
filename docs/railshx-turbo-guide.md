@@ -253,6 +253,12 @@ entry asset is still imported from `app/javascript/application.js` alongside
 `@hotwired/turbo-rails`, while relative module imports stay inside
 `app/javascript/railshx/**`.
 
+This remains a Haxe `-js` build for typing, JS externs, macros, and DCE, but
+Genes registers Haxe's custom JavaScript generator and replaces the stock final
+emitter. It does not participate in the Reflaxe.Ruby server compile. The full
+architecture, stock-emitter alternative, packaging boundary, and tradeoffs are
+documented in [RailsHx Client JavaScript And Genes](railshx-client-javascript.md).
+
 RailsHx rake tasks set `HXRUBY_GEM_ROOT` before invoking Haxe so generated apps
 can resolve vendored Genes source and `railshx.client` typed browser helpers
 shipped with the `hxruby` package. After client compilation,

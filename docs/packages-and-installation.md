@@ -104,6 +104,14 @@ Generated Rails client builds use `-lib railshx.client` plus `-lib genes`.
 layout without pulling Ruby compiler wiring into JavaScript builds. Ruby server
 builds continue to use `-lib reflaxe.ruby`.
 
+This client lane still uses Haxe's `-js` typing pipeline, but
+`genes.Generator.use()` installs Genes as the final custom emitter instead of
+the stock Haxe JavaScript generator. The result is a split ES-module graph for
+Rails importmap/Propshaft. Genes is vendored in the package and is never loaded
+by the Ruby server runtime. See
+[RailsHx Client JavaScript And Genes](railshx-client-javascript.md) for the
+complete build, import rewrite, alternative-toolchain, and upgrade contract.
+
 ## DeviseHx Packaging Boundary
 
 The incubated typed Devise API ships under `std/devisehx/**` in the compiler

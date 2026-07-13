@@ -86,9 +86,11 @@ day-to-day authoring loop, not that the target ecosystem becomes invisible.
 | Prefer Haxe as the main language | Keep nearly all owned source in Haxe/HHX and generate Ruby libraries, services, CLIs, or Rails artifacts | Ruby runtimes, gems, Bundler, Rails, deployment, and target-level operations |
 | Modernize gradually | Wrap existing Ruby, ERB, gems, RBS, YARD, routes, and schemas through checked contracts | Existing source stays Ruby-owned until deliberately migrated |
 | Catch framework drift earlier | Generate typed field, route, template, params, association, and helper references | Rails remains authoritative for runtime behavior and final artifacts |
+| Type server-rendered views | Author TSX-like HHX with typed locals, expressions, helpers, routes, fields, partials, and components | Rails still renders ordinary generated ERB through ActionView |
 | Reduce stringly repetition | Derive names and contracts with macros and generators | Output uses familiar Rails names, symbols, paths, and calls |
 | Share selected full-stack behavior | Compile portable Haxe types and logic to Ruby and JavaScript | Server-only Rails code and browser-only DOM code stay target-specific |
 | Keep the ecosystem | Consume installed gems through typed externs or generated companion contracts | Bundler and the gems still own installation and runtime semantics |
+| Use Ruby itself without untyped calls | Import supported `ruby.*` core and stdlib facades with completion and checked signatures | Native Ruby constants and libraries still own runtime behavior |
 | Review and debug the result | Prefer direct, readable Ruby lowering and committed output snapshots | Ruby syntax checks, Rails tests, logs, and production tooling still apply |
 
 The strongest positioning is not “Ruby is obsolete.” It is:
@@ -131,6 +133,38 @@ functions or that Ruby and JavaScript cannot share schemas. They can. The
 additional capability is compiling the same suitable implementation source to
 both Ruby and JavaScript when keeping behavior aligned is valuable.
 
+## Typed Views Without A New View Runtime
+
+RailsHx views use HHX, a TSX-like markup syntax embedded in valid Haxe. The
+analogy is about authoring and tooling: markup and expressions live together in
+one typed source file. The runtime model remains Rails. The compiler emits
+ordinary `.html.erb`, and ActionView still owns escaping, helpers, partials,
+layouts, rendering, caching, and request behavior.
+
+This moves several common view failures earlier:
+
+- malformed HHX structure and invalid Haxe syntax fail in the parser;
+- embedded expressions, branch conditions, loop values, and typed locals fail
+  during Haxe type checking;
+- supported Rails helper tags validate argument types;
+- typed template, route, model-field, params-field, and component references
+  catch many rename and composition mistakes;
+- editors can complete and refactor locals, model values, helpers, components,
+  and shared hooks instead of treating an ERB body as loosely connected text.
+
+Standard Rails ERB does not combine all of those checks in one static language
+contract. Ruby and Rails have useful template parsers, linters, tests, and
+third-party typing tools, but HHX can check the markup structure and the typed
+Haxe expressions that produce it in the same compile.
+
+HHX is still server-rendered Rails, not a virtual DOM or hydration framework.
+It can therefore improve view authoring without adding a browser rendering
+runtime or preventing Ruby-owned helpers and partials from participating.
+Browser tests remain necessary for HTML semantics, accessibility, CSS, Turbo,
+and runtime data that compilation cannot prove. See
+[Typed Views And HHX](railshx-typed-views.md) for the exact guarantees and
+limits.
+
 ## Full-Stack Sharing Without A Shared-Code Trap
 
 Ruby/JavaScript applications commonly share OpenAPI, JSON Schema, GraphQL, or
@@ -143,6 +177,12 @@ domain enums, serializable payload types, pure validation rules, formatting,
 constants, state transitions, test fixtures, and typed DOM/route hooks. The
 canonical todo application also proves that Haxe-authored server and browser
 code can coexist in a normal Rails production build.
+
+The canonical RailsHx browser lane uses the Haxe JavaScript target with Genes
+installed as its custom emitter. Genes produces readable ES modules for Rails
+importmap/Propshaft instead of the stock Haxe emitter's flattened output. This
+client build is separate from Reflaxe.Ruby and optional for Ruby-only programs.
+See [Client JavaScript And Genes](railshx-client-javascript.md).
 
 The boundary should stay deliberate:
 
@@ -276,9 +316,9 @@ independent review packet lives in
 
 One sentence:
 
-> RubyHx lets teams write typed Haxe and ship readable Ruby, adopting it one
-> component or Rails feature at a time while keeping Ruby, Rails, Bundler, gems,
-> and deployment workflows in charge at runtime.
+> RubyHx lets teams write typed Haxe and ship readable Ruby, either one
+> component at a time or with Haxe as the primary source language, while Ruby,
+> Rails, Bundler, gems, and deployment workflows stay in charge at runtime.
 
 Short form:
 
@@ -286,9 +326,11 @@ Short form:
 > inference, enums, pattern matching, macros, and multi-target compiler to catch
 > supported mistakes earlier and share selected browser/server behavior. The
 > result is ordinary Ruby that works with existing code and gems. RailsHx adds
-> typed Rails APIs and HHX while still emitting native Rails artifacts, so teams
-> can start with one critical component, modernize an existing app gradually,
-> or author a complete Rails application without abandoning the Ruby ecosystem.
+> typed Rails APIs and TSX-like HHX views while still emitting native Rails
+> artifacts, so teams can catch supported controller, model, route, params, and
+> view mistakes before runtime. Teams can start with one critical component,
+> modernize an existing app gradually, or author a complete Rails application
+> without abandoning the Ruby ecosystem.
 
 ## Evidence Entry Points
 
@@ -297,6 +339,8 @@ Short form:
 - [Ruby Extension Interop](ruby-extension-interop.md)
 - [Ruby Profiles](profiles.md)
 - [RailsHx Gradual Adoption](railshx-gradual-adoption.md)
+- [RailsHx Typed Views And HHX](railshx-typed-views.md)
+- [RailsHx Client JavaScript And Genes](railshx-client-javascript.md)
 - [RailsHx Testing Strategy](railshx-testing-strategy.md)
 - [RailsHx Production Readiness](railshx-production-readiness.md)
 - [Compatibility Matrix](compatibility-matrix.md)

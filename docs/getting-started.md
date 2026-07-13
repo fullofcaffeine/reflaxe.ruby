@@ -131,6 +131,15 @@ routes, HHX views, Devise-backed auth, Turbo/ActionCable, Haxe-authored browser
 code, Rails tests, Playwright, and a production build. See the
 [RailsHx Skeleton And Todoapp Tutorial](railshx-skeleton-and-todoapp-tutorial.md).
 
+Two focused guides explain the less familiar authoring layers:
+
+- [Typed Views And HHX](railshx-typed-views.md) shows how TSX-like HHX catches
+  markup, expression, locals, helper, route, field, and component mistakes
+  before emitting normal Rails ERB.
+- [Client JavaScript And Genes](railshx-client-javascript.md) explains why the
+  canonical browser build uses the Genes custom ES-module generator rather than
+  Reflaxe.Ruby or Haxe's stock JavaScript emitter.
+
 To prove gradual adoption instead:
 
 ```bash

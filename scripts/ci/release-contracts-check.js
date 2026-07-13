@@ -56,6 +56,9 @@ const docsIndex = readFileSync("docs/README.md", "utf8");
 const productPositioning = readFileSync("docs/why-rubyhx.md", "utf8");
 const productionReadiness = readFileSync("docs/railshx-production-readiness.md", "utf8");
 const stableReviewPrompt = readFileSync("docs/rubyhx-railshx-gpt56-1.0-review.md", "utf8");
+const typedViews = readFileSync("docs/railshx-typed-views.md", "utf8");
+const clientJavaScript = readFileSync("docs/railshx-client-javascript.md", "utf8");
+const rubyStdlibFacades = readFileSync("docs/ruby-stdlib-facades.md", "utf8");
 const packageInstallation = readFileSync("docs/packages-and-installation.md", "utf8");
 const gettingStarted = readFileSync("docs/getting-started.md", "utf8");
 const developmentDocs = readFileSync("docs/development.md", "utf8");
@@ -121,6 +124,8 @@ expectIncludes(readme, "production-ready beta", "README maturity contract");
 expectIncludes(readme, "docs/why-rubyhx.md", "README product thesis link");
 expectIncludes(readme, "docs/getting-started.md", "README getting-started link");
 expectIncludes(readme, "docs/packages-and-installation.md", "README package docs link");
+expectIncludes(readme, "docs/railshx-typed-views.md", "README typed views link");
+expectIncludes(readme, "docs/railshx-client-javascript.md", "README Genes architecture link");
 expectIncludes(readme, "You can also go\nHaxe-first", "README Haxe-first product path");
 expectIncludes(readme, "without making Ruby your day-to-day authoring language", "README Haxe-first value");
 if (readme.split(/\r?\n/).length > 240) {
@@ -145,6 +150,15 @@ expectIncludes(productPositioning, "does not promise zero support code", "genera
 expectIncludes(productPositioning, "a better way to write the Ruby-bound parts", "Ruby alternative positioning boundary");
 expectIncludes(productPositioning, "## Two First-Class Starting Points", "Haxe-first and Ruby-first positioning");
 expectIncludes(productPositioning, "### Haxe-first Ruby application or library", "framework-independent Haxe-first adoption mode");
+expectIncludes(typedViews, "TSX-like typed authoring surface", "typed HHX product contract");
+expectIncludes(typedViews, "no virtual DOM, hydration pass", "typed HHX runtime boundary");
+expectIncludes(typedViews, "## Honest Limits", "typed HHX claim limits");
+expectIncludes(clientJavaScript, "Genes performs the final code emission", "Genes custom-emitter contract");
+expectIncludes(clientJavaScript, "## Why Not Reflaxe.Ruby Or The Stock Haxe Emitter?", "Genes target boundary");
+expectIncludes(clientJavaScript, "canonical generated RailsHx client contract today", "stock Haxe emitter scope");
+expectIncludes(rubyStdlibFacades, "## Coverage Goal", "Ruby stdlib facade coverage contract");
+expectIncludes(rubyStdlibFacades, "## Relationship To Haxe Std", "Ruby and Haxe std layering contract");
+expectIncludes(rubyStdlibFacades, '"what does Ruby do?"', "Ruby std semantic ownership");
 expectIncludes(productionReadiness, "Stable 1.0 Exit Rules", "stable 1.0 readiness contract");
 expectIncludes(productionReadiness, "Performance and resource behavior", "stable 1.0 performance gate");
 expectIncludes(productionReadiness, "Debugging and observability", "stable 1.0 debugging gate");
@@ -159,6 +173,8 @@ expectIncludes(docsIndex, "rubyhx-railshx-gpt56-1.0-review.md", "docs index stab
 expectIncludes(docsIndex, "getting-started.md", "docs index getting started");
 expectIncludes(docsIndex, "packages-and-installation.md", "docs index package installation");
 expectIncludes(docsIndex, "development.md", "docs index repository development");
+expectIncludes(docsIndex, "railshx-typed-views.md", "docs index typed views");
+expectIncludes(docsIndex, "railshx-client-javascript.md", "docs index Genes architecture");
 
 // Public prose uses compact punctuation consistently. Keeping this automated
 // prevents the README and detailed guides from drifting back to em dashes.

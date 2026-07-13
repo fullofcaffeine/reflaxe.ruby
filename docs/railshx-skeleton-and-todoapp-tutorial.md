@@ -35,8 +35,8 @@ moves greenfield authoring into typed Haxe.
 The differences should be positive:
 
 - Views are Haxe classes with typed HHX render methods, not hand-written ERB
-  files. This feels closer to component authoring in React or Phoenix HEEx, but
-  Rails still receives `.html.erb` output.
+  files. HHX gives Rails a TSX-like authoring experience with parser and type
+  checks, but Rails still receives `.html.erb` output and no client view runtime.
 - Route helpers, model fields, params keys, template locals, and Turbo hooks are
   typed values instead of repeated strings.
 - Controllers can use Rails-shaped APIs while Haxe checks locals, params, and
@@ -204,6 +204,13 @@ write raw ERB for RailsHx-owned templates. That is deliberate: HHX lets Haxe
 type-check embedded expressions, branch conditions, loop binders, partial
 locals, routes, and form fields.
 
+This is more than ERB syntax coloring. Haxe owns the markup AST and the embedded
+expressions in one compile, so malformed HHX, unknown locals, wrong helper
+arguments, invalid partial-local objects, and supported route/field drift can
+fail before Rails boots. Editors also gain completion and rename support across
+those typed values. See [Typed Views And HHX](railshx-typed-views.md) for the
+guarantees, additional advantages, and limits.
+
 Use `Template.of(ViewClass)` for owned templates/partials. Keep
 `Template.existing("legacy/path")` for Rails-owned ERB during adoption.
 
@@ -243,6 +250,12 @@ The chatroom does not build DOM rows in JavaScript. Rails renders a typed HHX
 partial and broadcasts a normal Turbo Stream. That keeps the output pleasant to
 Rails developers while Haxe owns safer stream names, targets, templates, locals,
 and selectors.
+
+The browser build still uses Haxe's JavaScript typing pipeline, but Genes
+replaces the stock final emitter with readable split ES modules. It is not part
+of the Ruby server compiler or runtime. See
+[Client JavaScript And Genes](railshx-client-javascript.md) for the exact build
+and importmap ownership contract.
 
 ## Understand Generated Artifacts
 

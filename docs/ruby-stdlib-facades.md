@@ -42,6 +42,83 @@ contract is known. Use `Dynamic` only at a real Ruby boundary, such as
 `JSON.parse` before a typed decoder exists, and document or narrow the value
 before app logic depends on its shape.
 
+## Coverage Goal
+
+RubyHx should ultimately provide broad typed access to the Ruby core and
+standard-library APIs that are available across its supported Ruby matrix. In
+Haxe source, these are imported as `ruby.*` types such as `ruby.Pathname`; the
+physical `std/ruby` directory is an implementation and packaging detail, not a
+package named `@std/ruby`.
+
+Broad coverage does not mean copying every Ruby method by hand or pretending
+that every open Ruby contract is statically sound. The coverage program should:
+
+- inventory Ruby core APIs, standard libraries, default gems, bundled gems, and
+  platform-specific libraries separately;
+- establish the common contract for the supported Ruby versions before adding
+  a version-specific API;
+- generate conservative low-level contracts from deterministic RBS where that
+  is mechanical, then compile, review, document, and runtime-test them;
+- curate Haxe-idiomatic names, overloads, blocks, keyword arguments,
+  nullability, and return types where a mechanical signature is not sufficient;
+- omit an uncertain operation or expose an explicitly named narrow unchecked
+  boundary instead of widening a whole facade to `Dynamic`;
+- keep Rails and third-party gem APIs in RailsHx, companion packages, or
+  generated app-local contracts rather than treating them as Ruby core.
+
+The complete inventory is a useful long-term goal. Stable releases should state
+which domains and Ruby versions are covered instead of making an unqualified
+"whole stdlib" claim. A smaller precise facade is more valuable than a large
+surface whose types do not describe Ruby's actual behavior.
+
+## Relationship To Haxe Std
+
+The public Ruby-native surface and the Haxe std compatibility surface have
+different semantic owners:
+
+```text
+                       native Ruby constants and methods
+                                    |
+                   typed externs and narrow target primitives
+                              /                 \
+                    public ruby.*          std/ruby/_std
+                    Ruby semantics          Haxe semantics
+                                              |
+                                   semantic adapters only
+                                   where Ruby behavior differs
+```
+
+`std/ruby/_std` is not a second Ruby library API. It implements portable Haxe
+types such as `haxe.Json`, `haxe.ds.Map`, `sys.FileSystem`, and `sys.io.File` on
+the Ruby target. Those APIs must retain their Haxe contracts even when the most
+direct implementation uses Ruby's `JSON`, `Hash`, `File`, `Dir`, or
+`FileUtils` underneath.
+
+The preferred implementation rule is:
+
+1. Model a reusable native operation with a precise typed `ruby.*` extern or a
+   narrow internal target primitive.
+2. Let Haxe std overrides consume that typed operation when its contract is an
+   exact fit.
+3. Add a small Haxe-semantic adapter when return values, indexing, mutation,
+   exceptions, encodings, nullability, blocks, or other behavior differs.
+4. Keep the adapter's public result in Haxe std types. Do not leak a
+   `ruby.Pathname`, native status value, or Ruby-only exception contract through
+   a portable Haxe API.
+
+This means a typed-native-first implementation is desirable for new reusable
+domains, but it is not a rigid prerequisite for every Haxe std parity fix. A
+private native carrier can be the correct boundary when no useful public Ruby
+facade exists, and a compiler lowering can be better than introducing a public
+wrapper solely for `_std`. Conversely, a completed public `ruby.*` facade must
+not wait for a Haxe std consumer: Ruby-first code is itself a first-class use
+case.
+
+The two branches should share typed native contracts where doing so removes raw
+target access and duplication. They should not be collapsed into one public API.
+`ruby.*` answers "what does Ruby do?" while Haxe std answers "what does this
+Haxe API promise on every target?"
+
 ## Direct Ruby First
 
 When Ruby behavior matches the Haxe/RubyHx contract, emit the Ruby call directly:

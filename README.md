@@ -47,8 +47,13 @@ When Haxe semantics need support, they use explicit, versioned `hxruby` helpers.
   but prefer not to write much Ruby.
 - **Catch drift earlier.** Supported fields, params, routes, templates,
   associations, migrations, and helpers become checked Haxe contracts.
-- **Adopt in either direction.** Ruby can call generated Haxe, while Haxe can
-  consume existing Ruby, gems, RBS, YARD, routes, schemas, and ERB.
+- **Type the view layer.** Author Rails views in TSX-like HHX so markup,
+  embedded expressions, locals, helpers, partials, routes, and form fields can
+  fail during Haxe compilation before Rails renders ERB.
+- **Adopt in either direction.** Ruby can call Haxe-generated Ruby, while Haxe
+  can consume existing Ruby, gems, RBS, YARD, routes, schemas, and ERB.
+- **Type native Ruby APIs.** Supported Ruby core and stdlib contracts remain
+  direct Ruby calls while Haxe supplies completion and compile-time checking.
 - **Share behavior, not just schemas.** Suitable types and pure logic can compile
   to both Ruby and JavaScript; target-specific code stays at the edges.
 - **Keep the output recognizable.** Ruby blocks, keywords, modules, mixins,
@@ -59,7 +64,7 @@ Ruby system and Haxe-first authoring. In either mode, the deployed target is
 still Ruby, so Ruby familiarity remains useful for ecosystem integration,
 operations, and debugging even when most source is Haxe.
 
-## One Pipeline, Two Layers
+## One Ruby Pipeline, Two Product Layers
 
 | RubyHx | RailsHx |
 | --- | --- |
@@ -67,9 +72,8 @@ operations, and debugging even when most source is Haxe.
 | Useful for libraries, services, CLIs, framework layers, or one typed island inside Ruby. | Built on RubyHx; Rails still owns migrations, tests, Zeitwerk, assets, jobs, gems, and app boot. |
 
 ```text
-typed Haxe / HHX  →  reflaxe.ruby  →  Ruby + Rails artifacts + browser JavaScript
-                                            ↓
-                                ordinary Ruby / Rails runtime
+server Haxe / HHX  →  reflaxe.ruby  →  Ruby + Rails + ERB       →  Ruby/Rails runtime
+shared/client Haxe →  Haxe + Genes  →  Rails importmap modules  →  browser
 ```
 
 ## Start Where It Pays
@@ -130,7 +134,13 @@ RailsHx authors Haxe and HHX, then emits ordinary Rails-shaped artifacts:
 - controllers, lifecycle hooks, strong params, statuses, and route helpers;
 - migrations, Haxe-owned routes, HHX-to-ERB views, layouts, and components;
 - Turbo, ActionCable, jobs, mailers, storage, instrumentation, and DeviseHx;
-- Haxe-authored browser code, Rails tests, Playwright, and production assets.
+- Haxe-authored browser code emitted by Genes as readable ES modules, plus
+  Rails tests, Playwright, and production assets.
+
+HHX gives server-rendered Rails views a TSX-like typed authoring experience.
+Haxe parses the markup and type-checks embedded expressions, locals, helper
+arguments, template refs, routes, and model/form fields, then emits normal ERB.
+There is no client view runtime or hydration layer.
 
 This can be the default authoring path, not only an incremental migration tool.
 A Haxe-first team can keep nearly all owned application source in Haxe/HHX while
@@ -189,7 +199,10 @@ See [Production Readiness](docs/railshx-production-readiness.md) and the
 | Product thesis and honest tradeoffs | [Why RubyHx](docs/why-rubyhx.md) |
 | Setup, compiler defines, and first apps | [Getting Started](docs/getting-started.md) |
 | Blocks, keywords, modules, gems, and extensions | [Ruby Interop](docs/ruby-extension-interop.md) |
+| Typed Ruby core and standard-library APIs | [Ruby Stdlib Facades](docs/ruby-stdlib-facades.md) |
 | Rails APIs and workflows | [RailsHx Docs](docs/README.md#railshx-guides) |
+| TSX-like typed Rails views and HHX | [Typed Views](docs/railshx-typed-views.md) |
+| Haxe-authored browser JS and Genes | [Client JavaScript](docs/railshx-client-javascript.md) |
 | Release ZIP, gem, and verified installation | [Packages And Installation](docs/packages-and-installation.md) |
 | Contributor gates and repository map | [Repository Development](docs/development.md) |
 | Everything else | [Documentation Index](docs/README.md) |

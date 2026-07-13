@@ -52,6 +52,12 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Generator Workflows](railshx-generator-workflows.md): app-facing generator commands, generated artifacts, runtime handoff, diagnostics, and CI gates.
 - [Generators And Tasks](railshx-generators-and-tasks-design.md): Rails-native generator/task ownership, generated starter skeleton, and `hxruby:start` workflows.
 - [Generated Artifact Ownership](railshx-generated-artifact-ownership.md): manifest/header safety and overwrite policy.
+- [Typed Views And HHX](railshx-typed-views.md): TSX-like Haxe view
+  authoring, compile-time checks, Rails-native ERB output, advantages, and
+  honest limits.
+- [Client JavaScript And Genes](railshx-client-javascript.md): the separate
+  browser build, Genes versus the stock Haxe JavaScript emitter, Rails
+  importmap integration, ownership, and tradeoffs.
 - [Gradual Adoption](railshx-gradual-adoption.md): mixing existing Ruby/ERB with Haxe/HHX.
 - [Gem Layers](railshx-gem-layers.md): wrapping installed Ruby gems through typed contracts and reusable companion packages such as future DeviseHx.
 - [Gem-Layer Testing](railshx-gem-layer-testing.md): testing pyramid for reusable RailsHx companion packages over Ruby gems.

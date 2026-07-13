@@ -100,6 +100,15 @@ npm run test:ruby-stdlib-parity-audit
 
 Use these tiers when deciding what to implement next.
 
+The long-term inventory should cover the Ruby core and standard-library surface
+available across the supported Ruby versions, but implementation should advance
+in coherent, tested domains rather than one generated dump. Build reusable
+typed Ruby-native contracts first when practical, then let Haxe `_std`
+implementations consume them only where their semantics match. The two public
+surfaces remain distinct: `ruby.*` preserves Ruby behavior, while Haxe std
+preserves Haxe behavior and adds an adapter for any mismatch. The complete
+layering and generation rules live in `docs/ruby-stdlib-facades.md`.
+
 ### Tier 0: Haxe Semantics Needed By Existing Output
 
 These are required for current examples, RailsHx, and shared Haxe domain code.
@@ -318,9 +327,15 @@ For Ruby stdlib facades:
 
 Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
-1. Add Ruby stdlib facades separately under `std/ruby/**` for
-   `ruby.URI`,
-   and later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
+1. `haxe_ruby-hjm` owns the broad versioned Ruby
+   core/stdlib/default-gem coverage inventory and deterministic RBS-to-Haxe
+   contract pipeline. Generated contracts remain conservative, reviewed,
+   compiled, and runtime-tested.
+2. Add Ruby stdlib facades separately under `std/ruby/**` for `ruby.URI`, and
+   later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
+3. Audit existing `_std` raw-native seams and replace them with shared typed
+   Ruby contracts where reuse improves safety without changing generated Ruby
+   or Haxe semantics.
 
 ## Non-Goals
 

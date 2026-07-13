@@ -212,6 +212,9 @@ For every dimension, assign `PROVEN`, `PARTIAL`, `MISSING`, or
 - Are “ordinary Ruby,” gradual adoption, better ergonomics, critical-component
   use, Rails integration, and shared server/browser code demonstrated rather
   than asserted?
+- Is the TSX-like typed-view claim precise about which markup, expression,
+  locals, helper, route, field, and component errors compile time can catch,
+  which behavior remains runtime-only, and the fact that output is normal ERB?
 - Is Haxe-first authoring demonstrated independently from gradual adoption for
   both framework-independent RubyHx and the RailsHx application path?
 - Can someone who prefers Haxe keep nearly all owned source in Haxe/HHX without
@@ -227,6 +230,10 @@ For every dimension, assign `PROVEN`, `PARTIAL`, `MISSING`, or
   for unrelated Rails/compiler concerns?
 - Are compiler AST/lowering, Ruby std, runtime helpers, Rails modules,
   generators, client support, and companion layers separated by typed APIs?
+- Is the browser build accurately described as Haxe `-js` typing with Genes as
+  a custom final emitter, rather than Reflaxe.Ruby or the stock Haxe emitter?
+- Are Genes vendoring, `helder.set`, importmap rewriting, output ownership,
+  upgrade policy, and app-owned alternative JavaScript toolchains explicit?
 - Is vendored Reflaxe usage, upstream patch provenance, and upgrade path clear?
 - Are duplicate or transitional architectures creating inconsistent behavior?
 - Can another Ruby framework layer reuse RubyHx without importing Rails policy?
@@ -257,6 +264,13 @@ For every dimension, assign `PROVEN`, `PARTIAL`, `MISSING`, or
 #### 5. Ruby stdlib, gems, and native interop
 
 - Is std ownership explicit and is upstream `unitstd` coverage representative?
+- Are public `ruby.*` coverage claims backed by a versioned inventory that
+  distinguishes Ruby core, stdlib, default gems, bundled gems, and
+  platform-specific APIs?
+- Does `_std` reuse typed native contracts where appropriate without leaking
+  Ruby semantics through portable Haxe APIs or duplicating wrapper runtimes?
+- Is deterministic RBS generation conservative, reviewable, compile-checked,
+  runtime-tested, and free of broad fallback types?
 - Do blocks, proc/lambda strictness, `yield`/captured blocks, keywords, optional
   omission, rest/splat, method values, forwarding, requires, modules, concerns,
   mixins, monkey patches, symbols, IO/filesystem, JSON, binary data, time,
@@ -273,6 +287,11 @@ For every dimension, assign `PROVEN`, `PARTIAL`, `MISSING`, or
   mailers, storage, instrumentation, tests, engines/plugins, generators, schema
   adoption, DeviseHx, assets/importmap, Zeitwerk, and production boot.
 - Does authoring remain valid Haxe and generated output remain ordinary Rails?
+- Do HHX views provide the claimed TSX-like parser/type-checking experience for
+  embedded expressions, locals, helpers, typed refs, and components while
+  avoiding a client rendering runtime?
+- Are HTML semantics, accessibility, CSS, external helpers, runtime data, and
+  browser behavior correctly left to Rails/lint/runtime/browser evidence?
 - Are compile-time checks genuinely stronger and more ergonomic than stringly
   Ruby without adding excessive ceremony?
 - Classify each breadth gap as a 1.0 blocker, explicit unsupported surface, or
@@ -306,6 +325,9 @@ For every dimension, assign `PROVEN`, `PARTIAL`, `MISSING`, or
 
 - Identify what the reference app actually shares versus merely authors in the
   same language.
+- Verify that the client path uses the documented Genes custom emitter and
+  post-compile importmap rewrite, and classify the stock Haxe JS emitter as an
+  app-owned alternative unless equivalent RailsHx evidence exists.
 - Verify serialization, nullability, enum/value semantics, validation parity,
   route/DOM hooks, target guards, client packaging, asset integration, and tests
   on both outputs.

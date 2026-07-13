@@ -44,6 +44,15 @@ without exposing `Dynamic` or raw Ruby injection. The Ruby-owned
 `ruby.BinaryFormat`/`ruby.BinaryString` contracts so exact floating-point bit
 reinterpretation stays direct and statically typed as well.
 
+For new reusable target operations, prefer defining the precise Ruby-native
+contract first and consuming it from `_std` where Ruby and Haxe semantics match.
+This is a reuse rule, not a promise that Haxe std is implemented in terms of the
+public Ruby API. When the semantics differ, `_std` owns the adapter and must not
+leak Ruby-specific values or behavior. When a native operation is useful only
+inside one Haxe override, a private typed carrier or direct compiler lowering
+can remain narrower than a public facade. See `docs/ruby-stdlib-facades.md` for
+the full two-surface coverage and layering policy.
+
 Those RubyHx facades are also valid public authoring surfaces for developers who
 want a typed Ruby layer instead of a Haxe-stdlib-first abstraction. Keep that
 surface typed with generics, abstracts, externs, typedefs, or narrow unchecked
