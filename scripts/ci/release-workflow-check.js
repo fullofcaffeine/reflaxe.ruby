@@ -5,6 +5,9 @@ const { existsSync, readFileSync } = require("node:fs");
 
 const ciPath = ".github/workflows/ci.yml";
 const ci = readFileSync(ciPath, "utf8");
+const repairPath = ".github/workflows/release-repair.yml";
+const repair = readFileSync(repairPath, "utf8");
+const workflows = `${ci}\n${repair}`;
 const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const requiredNeeds = [
   "security",
@@ -59,6 +62,7 @@ for (const [label, context, expected] of cases) {
 }
 
 assert(!existsSync(".github/workflows/release.yml"), "separate branch/manual normal release workflow must be removed");
+assert(existsSync(repairPath), "existing-tag-only repair workflow must exist");
 assert(!existsSync(".github/workflows/security-gitleaks.yml"), "security must be a declared need in the publication graph");
 assert(!ci.includes("workflow_dispatch"), "normal CI/publication must not have a manual-ref bypass");
 assert(!ci.includes("workflow_run"), "publication must not cross into a separately privileged workflow");
@@ -103,11 +107,11 @@ for (const download of directLixDownloads) {
   );
 }
 
-for (const { 1: action } of ci.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
+for (const { 1: action } of workflows.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
   assert.match(action, /@[0-9a-f]{40}$/, `workflow action must use a full commit SHA: ${action}`);
 }
-assert(!ci.includes("ubuntu-latest"), "runner images must be explicit");
-assert(!/\bnpm install\b/.test(ci), "workflow dependency installation must use npm ci exclusively");
+assert(!workflows.includes("ubuntu-latest"), "runner images must be explicit");
+assert(!/\bnpm install\b/.test(workflows), "workflow dependency installation must use npm ci exclusively");
 requireMatch(release, /node-version: "22\.14\.0"/, "release Node must be exact");
 requireMatch(release, /test "\$\(npm --version\)" = "10\.9\.2"/, "release npm must be exact");
 requireMatch(release, /ruby-version: "3\.3\.11"/, "release Ruby must be exact");
@@ -137,5 +141,28 @@ const githubPlugin = packageJson.release.plugins.find((entry) => Array.isArray(e
 assert.equal(githubPlugin?.successCommentCondition, false, "release issue/PR success comments must be disabled");
 assert.equal(githubPlugin?.failCommentCondition, false, "release failure issues/comments must be disabled");
 assert.equal(githubPlugin?.releasedLabels, false, "release issue/PR labeling must be disabled");
+
+requireMatch(repair, /workflow_dispatch:\n\s+inputs:\n\s+tag:/, "repair must accept only an explicit tag input");
+requireMatch(repair, /tag:\n\s+description: Existing immutable v<SemVer> tag to verify or resume\n\s+required: true\n\s+type: string/, "repair tag input must be required and typed");
+assert(!/^\s+push:/m.test(repair) && !/^\s+pull_request:/m.test(repair), "repair must be manual only");
+requireMatch(repair, /permissions:\n\s+contents: write/, "repair needs only release-content write permission");
+requireMatch(repair, /group: release-\$\{\{ github\.repository \}\}/, "repair must share the fixed publication concurrency group");
+requireMatch(repair, /cancel-in-progress: false/, "repair must never cancel another publication");
+requireMatch(repair, /runs-on: ubuntu-24\.04/, "repair runner image must be exact");
+const repairValidation = repair.indexOf("Validate that the input tag already exists");
+const repairCheckout = repair.indexOf("Checkout only the existing input tag");
+assert(repairValidation >= 0 && repairValidation < repairCheckout, "repair must validate tag existence before checkout");
+requireMatch(repair, /git\/ref\/tags\/\$\{TAG\}/, "repair must query the existing GitHub tag ref");
+requireMatch(repair, /ref: refs\/tags\/\$\{\{ inputs\.tag \}\}/, "repair must check out only the input tag");
+requireMatch(repair, /persist-credentials: false/, "repair checkout must not retain Git tag push credentials");
+requireMatch(repair, /fetch-depth: 0/, "repair must fetch full tag history");
+assert(!/ref:\s+main\b/.test(repair), "repair must never check out main");
+assert(!repair.includes("semantic-release"), "repair must never derive a release version");
+assert(!/^\s*git tag(?:\s|$)/m.test(repair), "repair must never create, move, or delete a tag");
+requireMatch(repair, /node-version: "22\.14\.0"/, "repair Node must be exact");
+requireMatch(repair, /ruby-version: "3\.3\.11"/, "repair Ruby must be exact");
+requireMatch(repair, /rubygems: "3\.5\.22"/, "repair RubyGems must be exact");
+requireMatch(repair, /lix download haxe "4\.3\.7"/, "repair Haxe must be exact");
+requireMatch(repair, /release-hosting\.mjs repair/, "repair must use the shared hosted identity state machine");
 
 console.log(`[release-workflow] OK: ${cases.length} publication event and gate cases`);

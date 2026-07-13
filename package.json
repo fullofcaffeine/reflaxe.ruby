@@ -19,9 +19,10 @@
     "hooks:install": "bash scripts/hooks/install.sh",
     "public:precommit": "npm run format:haxe:check && npm run security:gitleaks",
     "ci:version-sync": "node scripts/ci/version-sync-check.js",
-    "ci:release-contracts": "node scripts/ci/release-contracts-check.js && npm run test:release-workflow && npm run test:release-artifacts",
+    "ci:release-contracts": "node scripts/ci/release-contracts-check.js && npm run test:release-workflow && npm run test:release-hosting && npm run test:release-artifacts",
     "test:release-version-policy": "node scripts/ci/release-version-policy-check.mjs",
     "test:release-workflow": "node scripts/ci/release-workflow-check.js",
+    "test:release-hosting": "node scripts/ci/release-hosting-check.mjs",
     "test:release-artifacts": "node scripts/ci/release-artifact-reproducibility-check.js",
     "test:examples-compile": "node scripts/ci/examples-compile-smoke.js",
     "test:haxe-build-context": "haxe test/build_context_compile.hxml",
@@ -154,14 +155,9 @@
         }
       ],
       [
-        "@semantic-release/exec",
-        {
-          "prepareCmd": "node scripts/release/prepare-release-artifacts.js ${nextRelease.version} ${nextRelease.gitTag} ${nextRelease.gitHead}"
-        }
-      ],
-      [
         "@semantic-release/github",
         {
+          "draftRelease": true,
           "releaseNameTemplate": "v${nextRelease.version}",
           "releaseBodyTemplate": "## v${nextRelease.version}\n\n${nextRelease.notes}",
           "successCommentCondition": false,
@@ -190,6 +186,13 @@
               "label": "hxruby ${nextRelease.version} SHA-256 metadata"
             }
           ]
+        }
+      ],
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "node scripts/release/prepare-release-artifacts.js ${nextRelease.version} ${nextRelease.gitTag} ${nextRelease.gitHead}",
+          "publishCmd": "node scripts/release/release-hosting.mjs finalize ${nextRelease.version} ${nextRelease.gitTag} ${nextRelease.gitHead}"
         }
       ]
     ]

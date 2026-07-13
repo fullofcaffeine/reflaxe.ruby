@@ -40,10 +40,14 @@ const releaseVersionPolicyCheck = readFileSync("scripts/ci/release-version-polic
 const releaseVersionPolicyDocs = readFileSync("docs/release-version-policy.md", "utf8");
 const releaseArtifactDocs = readFileSync("docs/release-artifacts.md", "utf8");
 const releaseWorkflowDocs = readFileSync("docs/release-publication-workflow.md", "utf8");
+const releaseHostingDocs = readFileSync("docs/release-hosting-and-repair.md", "utf8");
 const artifactUtils = readFileSync("scripts/release/artifact-utils.js", "utf8");
 const deterministicZip = readFileSync("scripts/release/deterministic-zip.js", "utf8");
 const artifactReproducibilityCheck = readFileSync("scripts/ci/release-artifact-reproducibility-check.js", "utf8");
 const releaseArtifactPrepare = readFileSync("scripts/release/prepare-release-artifacts.js", "utf8");
+const releaseHosting = readFileSync("scripts/release/release-hosting.mjs", "utf8");
+const releaseHostingCheck = readFileSync("scripts/ci/release-hosting-check.mjs", "utf8");
+const releaseRepairWorkflow = readFileSync(".github/workflows/release-repair.yml", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const haxelibPackageCheckText = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
@@ -120,11 +124,18 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   const execPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/exec");
   const prepareCmd = execPlugin?.[1]?.prepareCmd ?? "";
   expectIncludes(prepareCmd, "prepare-release-artifacts.js ${nextRelease.version} ${nextRelease.gitTag} ${nextRelease.gitHead}", "@semantic-release/exec prepareCmd");
+  expectIncludes(execPlugin?.[1]?.publishCmd ?? "", "release-hosting.mjs finalize ${nextRelease.version} ${nextRelease.gitTag} ${nextRelease.gitHead}", "@semantic-release/exec publishCmd");
   if (releaseConfig.plugins.some((entry) => ["@semantic-release/git", "@semantic-release/changelog"].includes(Array.isArray(entry) ? entry[0] : entry))) {
     fail("release configuration must not create release commits or mutate CHANGELOG.md");
   }
 
   const githubPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/github");
+  if (releaseConfig.plugins.indexOf(githubPlugin) > releaseConfig.plugins.indexOf(execPlugin)) {
+    fail("GitHub must upload the draft before the exec plugin verifies and publishes it");
+  }
+  if (githubPlugin?.[1]?.draftRelease !== true) {
+    fail("GitHub releases must remain draft until hosted bytes pass verification");
+  }
   const githubAssets = githubPlugin?.[1]?.assets ?? [];
   expectIncludes(githubPlugin?.[1]?.releaseBodyTemplate ?? "", "## v${nextRelease.version}", "GitHub release body heading");
   expectIncludes(githubPlugin?.[1]?.releaseBodyTemplate ?? "", "${nextRelease.notes}", "GitHub generated release notes");
@@ -169,6 +180,10 @@ expectIncludes(releaseVersionPolicyDocs, "v0.1.0-beta.2", "release version polic
 expectIncludes(releaseArtifactDocs, "follows the established", "release artifact design rationale");
 expectIncludes(releaseArtifactDocs, "artifact-manifest.json", "release artifact content contract docs");
 expectIncludes(releaseArtifactDocs, "SHA-256", "release artifact sidecar docs");
+expectIncludes(releaseHostingDocs, "Completed immutable release", "hosted repair state documentation");
+expectIncludes(releaseHostingDocs, "dedicated GitHub App identity", "multi-writer creation identity documentation");
+expectIncludes(releaseHostingDocs, "Historical `v0.1.0`", "legacy immutability boundary documentation");
+expectIncludes(readme, "Hosted Release Identity And Repair", "README hosted release documentation");
 expectIncludes(releaseWorkflowDocs, "final job", "tested-commit publication docs");
 expectIncludes(releaseWorkflowDocs, "contents: write", "publication permission docs");
 expectIncludes(releaseWorkflowDocs, "22.14.0", "publication toolchain docs");
@@ -246,12 +261,20 @@ expectIncludes(packageJson.scripts["test:haxelib-package"] ?? "", "haxelib-packa
 expectIncludes(packageJson.scripts["test:gem-package"] ?? "", "gem-package-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:release-artifacts"] ?? "", "release-artifact-reproducibility-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:release-workflow"] ?? "", "release-workflow-check.js", "package.json scripts");
+expectIncludes(packageJson.scripts["test:release-hosting"] ?? "", "release-hosting-check.mjs", "package.json scripts");
 expectIncludes(packageJson.scripts["ci:release-contracts"] ?? "", "test:release-workflow", "npm test release workflow wiring");
+expectIncludes(packageJson.scripts["ci:release-contracts"] ?? "", "test:release-hosting", "npm test release hosting wiring");
 expectIncludes(packageJson.scripts["ci:release-contracts"] ?? "", "test:release-artifacts", "npm test release artifact wiring");
 expectIncludes(packageJson.scripts["release:haxelib-package"] ?? "", "build-haxelib-package.js", "package.json scripts");
 expectIncludes(packageJson.scripts["release:gem-package"] ?? "", "build-gem-package.js", "package.json scripts");
 expectIncludes(versionSyncCheck, "README must document the development sentinel", "version sync check");
 expectIncludes(versionSyncCheck, "railshx.client", "version sync check");
+expectIncludes(releaseArtifactPrepare, 'release-hosting.mjs", "local"', "pre-tag local identity gate");
+expectIncludes(releaseHosting, "published-immutable", "hosted release finalizer");
+expectIncludes(releaseHosting, "unexpected assets", "hosted release fail-closed asset set");
+expectIncludes(releaseHosting, '"ls-remote"', "local/origin tag identity gate");
+expectIncludes(releaseHostingCheck, "completed immutable release must be verification-only", "hosted release state tests");
+expectIncludes(releaseRepairWorkflow, "persist-credentials: false", "repair workflow tag mutation guard");
 expectIncludes(haxelibPackageBuilder, `"--run", "Run", "build", "_Build"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"vendor", "reflaxe"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");

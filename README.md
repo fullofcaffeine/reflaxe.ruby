@@ -36,6 +36,11 @@ Publication is the final minimal-permission job of the same successful
 canonical-main CI run; it checks out that run's exact SHA and rebuilds under an
 exact Node/npm/Ruby/RubyGems/Haxe toolchain. See
 [Tested-Commit Publication Workflow](docs/release-publication-workflow.md).
+GitHub publication stays draft until the local tag, origin tag, embedded
+ZIP/gem identity, exact four hosted assets, and downloaded SHA-256 bytes agree;
+future completed releases are natively immutable. Manual recovery accepts only
+an existing tag and cannot derive or move a version. See
+[Hosted Release Identity And Repair](docs/release-hosting-and-repair.md).
 
 There are two first-class layers:
 

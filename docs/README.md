@@ -17,6 +17,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Release Version Policy](release-version-policy.md): conventional major-zero releases, tag-derived lineage, and independent stable-major approvals.
 - [Reproducible Release Artifacts](release-artifacts.md): tested-commit staging, canonical ZIP/gem bytes, full content manifests, SHA-256 sidecars, and consumer gates.
 - [Tested-Commit Publication Workflow](release-publication-workflow.md): same-run release authorization, exact toolchain/action pins, minimal permissions, and trigger matrix.
+- [Hosted Release Identity And Repair](release-hosting-and-repair.md): draft verification, exact hosted bytes, immutable releases/tags, and existing-tag-only recovery.
 - [Ruby Profiles](profiles.md): `ruby_first` vs `portable`.
 - [Ruby Extension Interop](ruby-extension-interop.md): typed `include`, `extend`, monkey patches, externs, and metaprogramming-heavy library adoption.
 - [Std Ownership](stdlib-ownership.md): how Ruby/Haxe std coverage is tracked.

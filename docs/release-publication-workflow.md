@@ -28,9 +28,9 @@ fail the job-level eligibility condition. Normal CI intentionally has no
 Main workflow runs are not auto-cancelled because an older run may already be
 inside its privileged publication job. Publication additionally uses the fixed
 `release-${{ github.repository }}` concurrency group with cancellation disabled.
-The existing-tag-only repair workflow introduced by the hosted-verification
-slice must use this same group; it may repair an immutable tag but must never
-derive or create a new version.
+The existing-tag-only repair workflow uses this same group; it may resume a
+draft associated with an existing immutable tag but never derives or creates a
+new version.
 
 ## Privileged job
 
@@ -46,6 +46,14 @@ custom broad release token. setup-node's implicit package-manager cache is
 explicitly disabled in this job. It runs `npm ci`, audits the lockfile again, and
 rebuilds both upload candidates locally from the exact Git tree before tagging
 and publishing through the scoped workflow token.
+
+The GitHub plugin creates a draft and uploads all four reviewed assets. The
+following locked exec hook resolves the local/origin tag, validates both
+embedded package identities, compares GitHub asset metadata and freshly
+downloaded bytes to the local candidates, and only then publishes the draft.
+Publication must immediately report native immutability. Failures leave a draft
+for the separate existing-tag-only repair workflow; completed releases are
+verification-only. See `release-hosting-and-repair.md`.
 
 ## Exact release toolchain
 

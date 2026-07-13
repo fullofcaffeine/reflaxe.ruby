@@ -68,6 +68,10 @@ for (const sidecarName of expectedOutputs.filter((name) => name.endsWith(".sha25
   }
 }
 
+// This is the last pre-tag gate: inspect both embedded package identities and the exact four
+// upload candidates while the release can still fail without creating or pushing a version tag.
+run("node", ["scripts/release/release-hosting.mjs", "local", identity.version, identity.gitTag, identity.sourceSha]);
+
 if (trackedDiff() !== before) {
   throw new Error("Release preparation changed tracked checkout files");
 }

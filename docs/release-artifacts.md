@@ -23,6 +23,10 @@ Release preparation additionally requires the supplied SHA to equal checked-out
 `HEAD` and refuses any tracked diff. Normal publication enforces this inside
 the final job of the same successful main-push workflow; see
 `release-publication-workflow.md`.
+The pre-tag preparation gate also reopens both artifacts and verifies embedded
+version/tag/source provenance. After upload, the same identity contract checks
+the origin tag, GitHub Release, asset metadata, and downloaded bytes before a
+draft may become immutable; see `release-hosting-and-repair.md`.
 
 ## Fixed outputs
 
