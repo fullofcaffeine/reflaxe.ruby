@@ -187,7 +187,7 @@ run("haxe", [
   "-main",
   "Main",
 ]);
-if (!existsSync(join(compiledOut, "Main.rb"))) {
+if (!existsSync(join(compiledOut, "main.rb"))) {
   fail("YARD adoption contract did not compile through the Ruby backend.");
 }
 
