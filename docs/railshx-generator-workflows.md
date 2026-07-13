@@ -379,6 +379,24 @@ bin/rails generate hxruby:adopt \
 Generates checked Haxe wrappers around existing Ruby services and Rails-owned
 ERB partials so Haxe code can consume them safely during gradual migration.
 
+YARD-documented Ruby service:
+
+```bash
+bin/rails generate hxruby:adopt \
+  --service Billing::PriceFormatter \
+  --yard app/services/billing/price_formatter.rb
+```
+
+This lane parses the checked Ruby source without executing it. Immediately
+preceding typed `@param`/`@return` tags can produce constructors, instance
+methods, and class methods with precise scalar, nilable, Boolean, and
+`Array<T>` Haxe types. Unsupported types or argument shapes, missing tags, and
+name mismatches omit that method with a review marker; they never silently
+become `Dynamic`. `--yard` requires an explicit `--service`, and missing,
+unsafe, or unparseable files fail closed. When inputs overlap, service metadata
+precedence is RBS, then YARD, then shape-only `--service-source` inference. See
+[Gradual Adoption](railshx-gradual-adoption.md) for the exact first subset.
+
 Failure examples: missing `db/schema.rb`, `structure.sql` input, unsafe paths,
 unconventional table/column names, Haxe field-name collisions, unknown DB types
 without `--allow-dynamic`, and non-owned output collisions fail closed.
@@ -412,6 +430,7 @@ npm run test:migration-generator
 npm run test:controller-generator
 npm run test:scaffold-cli
 npm run test:rails-adopt-generator
+npm run test:yard-adopt-generator
 npm run test:todoapp-rails
 npm run test:todoapp-playwright
 ```

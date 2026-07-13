@@ -25,7 +25,10 @@ There are two time horizons:
 - **Implemented now:** use `hxruby:adopt --gem NAME --discover` for a
   deterministic Bundler inventory and `hxruby:adopt --gem NAME --write
   contracts` for a conservative app-local Haxe skeleton under
-  `src_haxe/interop/gems/<gem>`.
+  `src_haxe/interop/gems/<gem>`. For a selected service constant with
+  YARD-documented source, `hxruby:adopt --service CONSTANT --yard PATH` now
+  generates the first precise deterministic extern subset without executing
+  Ruby.
 - **Planned next:** grow a dedicated `hxruby:gem-layer` generator and reusable
   companion packages such as DeviseHx once the generic adoption lane has enough
   production evidence.
@@ -46,9 +49,19 @@ present in Bundler's resolved specs, the gem path cannot be resolved safely, or
 the write mode is not explicit. Generated Haxe may contain `Dynamic` only with
 review/TODO markers because Ruby source rarely proves complete Haxe types.
 
+The separate `--yard` service lane is stricter than that generic gem skeleton:
+it accepts only documented positional signatures whose scalar, nilable,
+Boolean, or `Array<T>` types are fully understood. Unsupported or incomplete
+methods are omitted with review markers instead of receiving a broad type. RBS
+has precedence over YARD for the same constant, and YARD has precedence over
+shape-only Ruby-source inference. This is an app-local building block for gem
+adoption; automatic YARD discovery across an installed gem remains future
+`hxruby:gem-layer` work.
+
 The first pass should be deterministic. Before asking an LLM for help, the
 generator should mechanically inventory what it can prove: installed gem path and
-version, exported Ruby constants, RBS/YARD signatures, source-defined modules and
+version, exported Ruby constants, RBS signatures, explicitly selected YARD
+service signatures, source-defined modules and
 methods, Rails generators, routes, migrations, initializers, model concerns, and
 test helpers. That pass should emit a conservative Haxe skeleton plus explicit
 TODO/review markers for anything uncertain.

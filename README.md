@@ -291,11 +291,21 @@ bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controll
 bin/rails generate hxruby:scaffold Todo title:String --controller --skip-tests
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
+bin/rails generate hxruby:adopt --service Billing::PriceFormatter --yard app/services/billing/price_formatter.rb
 bin/rails generate hxruby:adopt --schema --discover
 bin/rails generate hxruby:adopt --schema --models Todo,User
 bin/rails generate hxruby:adopt --migrations --discover
 bin/rails generate hxruby:adopt --discover
 ```
+
+`--yard` is a deterministic, file-backed service-adoption lane. It parses
+immediately preceding YARD `@param`/`@return` tags without executing Ruby,
+generates only precisely mapped Haxe signatures, and omits unsupported or
+incomplete methods behind review comments instead of widening them to
+`Dynamic`. RBS wins when both `--rbs` and `--yard` describe the same constant;
+YARD wins over loose `--service-source` inference. See
+[Gradual Adoption](docs/railshx-gradual-adoption.md) for the supported type and
+method subset.
 
 Inside a generated RailsHx app, the recommended development flow is one command:
 
@@ -532,6 +542,7 @@ bin/rails generate hxruby:routes
 bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
+bin/rails generate hxruby:adopt --service Billing::PriceFormatter --yard app/services/billing/price_formatter.rb
 bin/rails generate hxruby:adopt --schema --discover
 bin/rails generate hxruby:adopt --schema --models Todo,User
 bin/rails generate hxruby:adopt --migrations --discover
@@ -554,6 +565,7 @@ rake hxruby:watch:client
 rake hxruby:gen:app
 rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=label:String,tone:String
 rake hxruby:gen:adopt SERVICE=RbsPriceFormatter RBS=sig/rbs_price_formatter.rbs
+rake hxruby:gen:adopt SERVICE=Billing::PriceFormatter YARD=app/services/billing/price_formatter.rb
 rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
 rake hxruby:gen:mailer MAILER=UserMailer ACTION=welcome

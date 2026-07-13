@@ -109,6 +109,54 @@ bundle exec rake hxruby:gen:adopt \
 
 RBS-backed adoption is file-backed and fail-closed: a missing `--rbs` path is a generator error, and the path must stay inside the app/output root. The first deterministic subset supports class declarations, `initialize`, instance methods, and `self.method` signatures with simple required and optional positional arguments. Known scalar types lower to Haxe types, and nilable scalar forms such as `String?` lower to `Null<String>`, while unsupported or application-specific RBS types lower to `Dynamic` with TODO/review comments in the generated extern. LLM-generated suggestions may help draft contracts later, but they must remain advisory patches; they do not bypass generator validation, Haxe compilation, Ruby syntax checks, or Rails runtime gates.
 
+If the Ruby source carries YARD documentation but no RBS, adopt its typed
+service contract directly:
+
+```bash
+bin/rails generate hxruby:adopt \
+  --service Billing::PriceFormatter \
+  --yard app/services/billing/price_formatter.rb
+
+rake rails:adopt ARGS="--service Billing::PriceFormatter --yard app/services/billing/price_formatter.rb"
+
+bundle exec rake hxruby:gen:adopt \
+  SERVICE=Billing::PriceFormatter \
+  YARD=app/services/billing/price_formatter.rb
+```
+
+The YARD lane reads the checked Ruby file with `Ripper`; it never loads or
+executes application code. The requested constant must be explicit, the path
+must stay inside the app/output root, and missing, unsafe, or unparseable input
+fails the generator. Nested module/class constants, `initialize`, instance
+methods, and `self.method` are supported when they use required or optional
+positional arguments. Tags must be in the contiguous comment block immediately
+above the method and may use either conventional parameter layout:
+
+```ruby
+# @param currency [String] ISO currency code
+# @param [Integer, nil] cents optional amount
+# @return [String] rendered label
+def label_for(currency, cents = nil)
+end
+```
+
+The first type subset maps `String`, `Integer`/`Fixnum`, `Float`,
+`Boolean`/`bool`, `TrueClass`/`FalseClass`, and `Symbol` to their precise Haxe
+equivalents. It also supports recursive `Array<T>`, a top-level `nil` union as
+`Null<T>`, `[true, false]` as `Bool`, and `void` for returns. Broad types such as
+`Numeric`, free-form domain types, other unions/containers, malformed or
+mismatched tags, overload/option/yield tags, keyword/splat/block/post arguments,
+and missing returns are not guessed. The whole method is omitted from the extern
+with an actionable review comment, so the YARD lane never introduces
+`Dynamic`, `cast`, `untyped`, or raw Ruby into the generated contract.
+
+When multiple metadata sources describe the same service, deterministic
+precedence is RBS, then YARD, then loose Ruby `--service-source` inference. This
+lets a formal RBS contract override documentation while still preferring typed
+YARD evidence over shape-only Ruby inference. LLM suggestions remain advisory
+patches after this deterministic pass and must still compile and pass runtime
+gates.
+
 Add or tighten method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
 
 For Ruby extension modules, the generator can inspect a checked source file and scaffold `@:rubyMixin` contracts:
@@ -210,6 +258,7 @@ Run the smoke lane:
 ```bash
 npm run test:rails-interop
 npm run test:rails-adopt-generator
+npm run test:yard-adopt-generator
 ```
 
 The smoke compiles Haxe, materializes `test/.generated/rails_interop`, copies the Rails-owned Ruby/ERB files, checks the generated artifacts, verifies a wrong external-template locals object fails at Haxe compile time, and runs Rails request tests when the local Rails bundle is available.

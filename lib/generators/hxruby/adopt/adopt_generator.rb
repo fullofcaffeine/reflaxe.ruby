@@ -12,6 +12,7 @@ if defined?(Rails::Generators::Base)
       class_option :service, type: :string, desc: "Ruby constant(s) to wrap, comma-separated"
       class_option :service_source, type: :string, desc: "Ruby source file(s) to inspect for selected service signatures, comma-separated"
       class_option :rbs, type: :string, desc: "RBS file(s) to inspect for selected service signatures, comma-separated"
+      class_option :yard, type: :string, desc: "YARD-documented Ruby source file(s) to inspect for selected service signatures, comma-separated"
       class_option :template, type: :string, desc: "Rails template path(s) to wrap, comma-separated"
       class_option :extension_source, type: :string, desc: "Ruby source file(s) to inspect for module extension contracts, comma-separated"
       class_option :extension_module, type: :string, desc: "Ruby module name(s) to generate from extension source, comma-separated"
@@ -37,6 +38,7 @@ if defined?(Rails::Generators::Base)
         args += ["--service", hxruby_option(:service)] if hxruby_option(:service)
         args += ["--service-source", hxruby_option(:service_source)] if hxruby_option(:service_source)
         args += ["--rbs", hxruby_option(:rbs)] if hxruby_option(:rbs)
+        args += ["--yard", hxruby_option(:yard)] if hxruby_option(:yard)
         args += ["--template", hxruby_option(:template)] if hxruby_option(:template)
         args += ["--extension-source", hxruby_option(:extension_source)] if hxruby_option(:extension_source)
         args += ["--extension-module", hxruby_option(:extension_module)] if hxruby_option(:extension_module)

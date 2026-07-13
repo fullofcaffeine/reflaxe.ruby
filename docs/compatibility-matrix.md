@@ -151,4 +151,5 @@ generator-inference policy.
 | Typed ActiveSupport receiver facades | `rails.active_support.ObjectPresence`, `rails.active_support.StringFilters` | Initial facade slice |
 | Generator-assisted contracts from Ruby source metadata | `hxruby:adopt --extension-source ... --extension-module ...` | Initial Ripper-backed implementation |
 | Generator-assisted contracts from RBS | `hxruby:adopt --service Foo --rbs sig/foo.rbs` | Initial deterministic subset implemented |
-| Generator-assisted contracts from YARD/Rails metadata/LLM suggestions | planned | Not implemented; LLM suggestions must remain advisory and pass compile/tests |
+| Generator-assisted service contracts from YARD | `hxruby:adopt --service Foo --yard app/services/foo.rb` | Initial deterministic, no-execution, precise-or-omitted subset implemented |
+| Generator-assisted contracts from broader Rails metadata/LLM suggestions | planned | Not implemented; LLM suggestions must remain advisory and pass compile/tests |

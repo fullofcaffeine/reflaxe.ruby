@@ -248,6 +248,7 @@ module HXRuby
             args += ["--service", ENV["SERVICE"]] if ENV["SERVICE"]
             args += ["--service-source", ENV["SERVICE_SOURCE"]] if ENV["SERVICE_SOURCE"]
             args += ["--rbs", ENV["RBS"]] if ENV["RBS"]
+            args += ["--yard", ENV["YARD"]] if ENV["YARD"]
             args += ["--template", ENV["TEMPLATE"]] if ENV["TEMPLATE"]
             args += ["--extension-source", ENV["EXTENSION_SOURCE"]] if ENV["EXTENSION_SOURCE"]
             args += ["--extension-module", ENV["EXTENSION_MODULE"]] if ENV["EXTENSION_MODULE"]

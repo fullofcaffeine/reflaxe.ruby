@@ -18,6 +18,7 @@ module HXRuby
           services: [],
           service_sources: [],
           rbs_sources: [],
+          yard_sources: [],
           templates: [],
           extension_sources: [],
           extension_modules: [],
@@ -39,6 +40,7 @@ module HXRuby
           parser.on("--service NAME") { |value| options[:services].concat(Common.split_csv(value)) }
           parser.on("--service-source PATH") { |value| options[:service_sources].concat(Common.split_csv(value)) }
           parser.on("--rbs PATH") { |value| options[:rbs_sources].concat(Common.split_csv(value)) }
+          parser.on("--yard PATH") { |value| options[:yard_sources].concat(Common.split_csv(value)) }
           parser.on("--template PATH") { |value| options[:templates].concat(Common.split_csv(value)) }
           parser.on("--extension-source PATH") { |value| options[:extension_sources].concat(Common.split_csv(value)) }
           parser.on("--extension-module NAME") { |value| options[:extension_modules].concat(Common.split_csv(value)) }
@@ -59,6 +61,9 @@ module HXRuby
         end
         if options[:services].empty? && options[:rbs_sources].any?
           raise Error, "--rbs requires at least one explicit --service constant."
+        end
+        if options[:services].empty? && options[:yard_sources].any?
+          raise Error, "--yard requires at least one explicit --service constant."
         end
         if options[:gems].any? && !options[:discover] && options[:write] != "contracts"
           raise Error, "--gem requires --discover or --write contracts."
@@ -88,6 +93,7 @@ module HXRuby
         @services = options.fetch(:services).map { |service| checked_constant_path(service, "--service") }
         @service_sources = options.fetch(:service_sources)
         @rbs_sources = options.fetch(:rbs_sources)
+        @yard_sources = options.fetch(:yard_sources)
         @templates = options.fetch(:templates).map { |template| checked_template_path(template) }
         @extension_sources = options.fetch(:extension_sources)
         @extension_modules = options.fetch(:extension_modules).map { |mod| checked_constant_path(mod, "--extension-module") }
@@ -249,6 +255,11 @@ module HXRuby
               "// Generated from deterministic RBS metadata.",
               "// TODO: Review any Dynamic placeholders from unsupported or application-specific RBS types.",
             ]
+          elsif contract.fetch(:source_kind, "ruby_source") == "yard"
+            lines += [
+              "// Generated from deterministic YARD @param/@return tags without executing Ruby.",
+              "// Unsupported or incomplete signatures are omitted with review markers; no broad fallback type is synthesized.",
+            ]
           else
             lines += [
               "// Review required: Ruby source does not carry complete Haxe type metadata.",
@@ -275,11 +286,14 @@ module HXRuby
       end
 
       def service_contract(native_name)
-        return nil if @service_sources.empty? && @rbs_sources.empty?
+        return nil if @service_sources.empty? && @rbs_sources.empty? && @yard_sources.empty?
 
-        contracts = rbs_contracts + service_source_contracts
+        # RBS is a formal signature source, so it wins over YARD when callers
+        # explicitly provide both. YARD in turn wins over untyped Ruby-source
+        # inference because its tags can prove precise argument/return types.
+        contracts = rbs_contracts + yard_contracts + service_source_contracts
         contract = contracts.find { |candidate| candidate.fetch(:constant_name) == native_name }
-        raise Error, "Service #{native_name} not found in --service-source/--rbs file(s)." unless contract
+        raise Error, "Service #{native_name} not found in --service-source/--rbs/--yard file(s)." unless contract
 
         contract
       end
@@ -302,7 +316,27 @@ module HXRuby
         end
       end
 
+      def yard_contracts
+        @yard_contracts ||= @yard_sources.flat_map do |source|
+          source_path = checked_input_file(source, "--yard")
+          raise Error, "YARD source does not exist: #{source}" unless File.file?(source_path)
+          real_output = File.realpath(@output_dir)
+          real_source = File.realpath(source_path)
+          unless real_source == real_output || real_source.start_with?("#{real_output}#{File::SEPARATOR}")
+            raise Error, "--yard must resolve to a file inside the generator output/app root"
+          end
+
+          YardSourceParser.new(real_source, relative_output_path(source_path)).contracts
+        end
+      end
+
       def render_service_method(method, kind)
+        if method[:skip_reason]
+          return [
+            "\t// Review required: skipped #{method.fetch(:ruby_name)}: #{method.fetch(:skip_reason)}",
+          ]
+        end
+
         if method.fetch(:complex)
           return [
             "\t// TODO: #{method.fetch(:ruby_name)} uses splat, keyword, block, or post arguments and needs manual typing.",
@@ -316,7 +350,7 @@ module HXRuby
         case kind
         when :constructor
           [
-            "\t// Inferred from Ruby initialize; tighten argument types after review.",
+            "\t// #{method.fetch(:comment, "Inferred from Ruby initialize; tighten argument types after review.")}",
             "\tpublic function new(#{args.join(", ")}):Void;",
           ]
         when :class_method
@@ -1825,7 +1859,7 @@ module HXRuby
 
         def contracts
           sexp = Ripper.sexp(@source)
-          raise Error, "Unable to parse Ruby service source: #{@path}" unless sexp
+          raise Error, "Unable to parse #{parser_source_name}: #{@path}" unless sexp
 
           out = []
           collect_constants(sexp).each do |contract|
@@ -1852,7 +1886,7 @@ module HXRuby
               constructors: [],
               instance: [],
               class_methods: [],
-            }
+            }.merge(contract_metadata)
             body.each do |statement|
               case statement&.[](0)
               when :def
@@ -1866,7 +1900,10 @@ module HXRuby
                 method = singleton_method_info(statement)
                 contract[:class_methods] << method if method
               when :class, :module
-                out.concat(collect_constants(statement, namespace + constant_name.split("::")))
+                # `constant_name` is already fully qualified. Reusing its
+                # absolute parts avoids duplicating parent namespaces at three
+                # or more levels (for example Commerce::Billing::Formatter).
+                out.concat(collect_constants(statement, constant_name.split("::")))
               end
             end
             out << contract
@@ -1951,6 +1988,253 @@ module HXRuby
           else
             "Dynamic"
           end
+        end
+
+        # Subclasses can attach provenance while retaining the same Ripper AST
+        # walk. The default parser intentionally keeps its historical source
+        # shape so existing generated manifests and contracts remain stable.
+        def contract_metadata
+          {}
+        end
+
+        def parser_source_name
+          "Ruby service source"
+        end
+      end
+
+      # Parses the deterministic subset of YARD tags directly from checked Ruby
+      # source. Ruby is syntax-checked with Ripper but never loaded or executed.
+      # Only immediately preceding, single-line @param/@return tags participate;
+      # free-form YARD types are omitted for review instead of widened to Dynamic.
+      class YardSourceParser < ServiceSourceParser
+        SCALAR_TYPES = {
+          "String" => "String",
+          "string" => "String",
+          "Integer" => "Int",
+          "Fixnum" => "Int",
+          "integer" => "Int",
+          "int" => "Int",
+          "Float" => "Float",
+          "float" => "Float",
+          "Boolean" => "Bool",
+          "bool" => "Bool",
+          "TrueClass" => "Bool",
+          "FalseClass" => "Bool",
+          "Symbol" => "ruby.Symbol",
+        }.freeze
+        UNSUPPORTED_SIGNATURE_TAGS = %w[@overload @option @yield @yieldparam @yieldreturn @!method].freeze
+
+        def initialize(path, source_label)
+          super
+          @source_lines = @source.lines
+        end
+
+        private
+
+        def contract_metadata
+          { source_kind: "yard" }
+        end
+
+        def parser_source_name
+          "YARD source"
+        end
+
+        def method_info(node)
+          yard_method_info(node[1][1], node[2], node[1][2][0])
+        end
+
+        def singleton_method_info(node)
+          target = node[1]
+          return nil unless target&.[](0) == :var_ref && target[1]&.[](1) == "self"
+
+          yard_method_info(node[3][1], node[4], node[3][2][0])
+        end
+
+        def yard_method_info(ruby_name, params_node, line_number)
+          signature = params_info(params_node)
+          if signature.fetch(:complex)
+            return {
+              ruby_name: ruby_name,
+              **signature,
+              skip_reason: "splat, keyword, block, or post arguments are outside the first deterministic YARD subset.",
+            }
+          end
+
+          tags = yard_tags_for(line_number)
+          if tags.fetch(:lines).empty?
+            return skipped_method(ruby_name, signature, "no immediately preceding YARD @param/@return tags were found.")
+          end
+          if tags.fetch(:issues).any?
+            return skipped_method(ruby_name, signature, tags.fetch(:issues).join(" "))
+          end
+
+          args = signature.fetch(:args)
+          expected_names = args.map { |arg| arg.fetch(:name) }
+          provided_names = tags.fetch(:params).keys
+          missing_names = expected_names - provided_names
+          extra_names = provided_names - expected_names
+          if missing_names.any? || extra_names.any?
+            parts = []
+            parts << "missing @param tag(s) for #{missing_names.join(", ")}" if missing_names.any?
+            parts << "unknown @param tag(s) for #{extra_names.join(", ")}" if extra_names.any?
+            return skipped_method(ruby_name, signature, "YARD parameter names do not match Ruby: #{parts.join("; ")}.")
+          end
+
+          typed_args = []
+          args.each do |arg|
+            type_spec = tags.fetch(:params).fetch(arg.fetch(:name))
+            haxe_type = yard_haxe_type(type_spec, role: :parameter)
+            unless haxe_type
+              return skipped_method(
+                ruby_name,
+                signature,
+                "unsupported YARD @param #{arg.fetch(:name)} type [#{type_spec}]; use a precise scalar, nilable scalar, or Array<T> contract."
+              )
+            end
+            typed_args << arg.merge(type: haxe_type)
+          end
+
+          return_type = if ruby_name == "initialize"
+            "Void"
+          else
+            return_spec = tags[:return]
+            unless return_spec
+              return skipped_method(ruby_name, signature, "a typed @return tag is required.")
+            end
+            yard_haxe_type(return_spec, role: :return)
+          end
+          unless return_type
+            return skipped_method(
+              ruby_name,
+              signature,
+              "unsupported YARD @return type [#{tags[:return]}]; use a precise scalar, nilable scalar, Array<T>, or void contract."
+            )
+          end
+
+          {
+            ruby_name: ruby_name,
+            args: typed_args,
+            complex: false,
+            return_type: return_type,
+            comment: "Inferred from deterministic YARD @param/@return tags; verify the documented contract matches runtime behavior.",
+          }
+        end
+
+        def skipped_method(ruby_name, signature, reason)
+          {
+            ruby_name: ruby_name,
+            **signature,
+            skip_reason: reason,
+          }
+        end
+
+        def yard_tags_for(method_line)
+          lines = []
+          index = method_line - 2
+          while index >= 0
+            # `String#lines` retains the newline. Chomp before matching so a
+            # normal `# @param ...\n` line is recognized as documentation,
+            # while any non-comment line still ends the attached YARD block.
+            match = @source_lines[index].chomp.match(/\A\s*#\s?(.*)\z/)
+            break unless match
+
+            lines.unshift(match[1].strip)
+            index -= 1
+          end
+
+          params = {}
+          return_type = nil
+          issues = []
+          lines.each do |line|
+            if (match = line.match(/\A@param\s+([A-Za-z_][A-Za-z0-9_]*)\s+\[([^\]]+)\](?:\s|\z)/))
+              name = match[1]
+              if params.key?(name)
+                issues << "duplicate @param tag for #{name}."
+              else
+                params[name] = match[2].strip
+              end
+            elsif (match = line.match(/\A@param\s+\[([^\]]+)\]\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s|\z)/))
+              name = match[2]
+              if params.key?(name)
+                issues << "duplicate @param tag for #{name}."
+              else
+                params[name] = match[1].strip
+              end
+            elsif line.start_with?("@param")
+              issues << "unsupported @param syntax #{line.inspect}; expected @param name [Type] or @param [Type] name."
+            elsif (match = line.match(/\A@return\s+\[([^\]]+)\](?:\s|\z)/))
+              if return_type
+                issues << "multiple @return tags are outside the first deterministic YARD subset."
+              else
+                return_type = match[1].strip
+              end
+            elsif line.start_with?("@return")
+              issues << "a typed @return [Type] tag is required."
+            elsif UNSUPPORTED_SIGNATURE_TAGS.any? { |tag| line.start_with?(tag) }
+              issues << "#{line.split.first} is outside the first deterministic YARD subset."
+            end
+          end
+
+          { lines: lines, params: params, return: return_type, issues: issues }
+        end
+
+        def yard_haxe_type(raw_type, role:)
+          types = split_yard_types(raw_type)
+          return nil unless types && types.any?
+
+          normalized = types.map { |type| type.strip.delete_prefix("::") }
+          nilable = normalized.delete("nil")
+          mapped = if normalized.sort == %w[false true]
+            "Bool"
+          elsif normalized.length == 1
+            yard_single_haxe_type(normalized.first, role: role)
+          end
+          return nil unless mapped
+          return mapped unless nilable
+          return nil if mapped == "Void"
+
+          "Null<#{mapped}>"
+        end
+
+        def yard_single_haxe_type(type, role:)
+          return "Void" if role == :return && type == "void"
+          return SCALAR_TYPES[type] if SCALAR_TYPES.key?(type)
+
+          array_match = type.match(/\AArray\s*<(.+)>\z/)
+          return nil unless array_match
+
+          member_type = yard_haxe_type(array_match[1], role: :value)
+          member_type ? "Array<#{member_type}>" : nil
+        end
+
+        def split_yard_types(raw_type)
+          out = []
+          token = +""
+          depth = 0
+          raw_type.to_s.each_char do |char|
+            case char
+            when "<", "(", "{"
+              depth += 1
+              token << char
+            when ">", ")", "}"
+              depth -= 1
+              return nil if depth.negative?
+              token << char
+            when ","
+              if depth.zero?
+                out << token.strip
+                token = +""
+              else
+                token << char
+              end
+            else
+              token << char
+            end
+          end
+          return nil unless depth.zero?
+
+          out << token.strip
+          out.reject(&:empty?)
         end
       end
 
