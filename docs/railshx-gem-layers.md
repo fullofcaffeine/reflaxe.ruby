@@ -57,8 +57,12 @@ real YARD signature tag is found for a constant, supported methods are precise
 and unsupported, undocumented, complex, or reopened source-only methods are
 omitted with review markers instead of receiving a broad type. Constants with
 no YARD signature metadata retain the existing review-marked Ruby-shape
-skeleton. RBS has precedence over explicitly supplied YARD for an app service,
-and YARD has precedence over shape-only Ruby-source inference. A dedicated
+skeleton. Explicit app-service RBS is also strict precise-or-omitted: supported
+scalar, nilable, `Symbol`, and `Array<T>` signatures are typed, while uncertain
+methods are omitted rather than widened. RBS has precedence over explicitly
+supplied YARD for an app service, and YARD has precedence over shape-only
+Ruby-source inference. Automatic installed-gem RBS discovery is not yet part of
+the generic gem lane. A dedicated
 `hxruby:gem-layer` command and broader metadata inventory remain future work;
 automatic strict YARD discovery itself is implemented in the generic adoption
 lane.

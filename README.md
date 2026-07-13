@@ -300,12 +300,15 @@ bin/rails generate hxruby:adopt --migrations --discover
 bin/rails generate hxruby:adopt --discover
 ```
 
-`--yard` is a deterministic, file-backed service-adoption lane. It parses
-immediately preceding YARD `@param`/`@return` tags without executing Ruby,
-generates only precisely mapped Haxe signatures, and omits unsupported or
-incomplete methods behind review comments instead of widening them to
-`Dynamic`. RBS wins when both `--rbs` and `--yard` describe the same constant;
-YARD wins over loose `--service-source` inference. See
+`--rbs` and `--yard` are deterministic, file-backed service-adoption lanes.
+RBS supports precise scalar, nilable, `Symbol`, and `Array<T>` positional
+signatures. YARD parses immediately preceding `@param`/`@return` tags without
+executing Ruby. Both lanes generate only fully mapped Haxe signatures and omit
+unsupported or incomplete methods behind review comments instead of widening
+them to `Dynamic`. Their input files are canonicalized inside the app root, so
+missing files, symlink escapes, and malformed RBS structure fail closed. RBS
+wins when both sources describe the same constant; YARD wins over loose
+`--service-source` inference. See
 [Gradual Adoption](docs/railshx-gradual-adoption.md) for the supported type and
 method subset.
 

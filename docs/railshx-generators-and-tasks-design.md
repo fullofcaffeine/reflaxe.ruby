@@ -465,6 +465,12 @@ bin/rails generate hxruby:adopt --template legacy/badge --locals label:String,to
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --rbs sig/legacy_price_formatter.rbs
 ```
 
+Explicit RBS service adoption is strict and fail-closed. It canonicalizes the
+signature file inside the app root and emits only fully supported positional
+scalar, nilable, `Symbol`, and `Array<T>` signatures. Unsupported/open types,
+overloads, and complex method shapes remain review-marked omissions rather than
+`Dynamic` extern methods.
+
 Unknown DB types, ambiguous associations, unsupported `structure.sql` input,
 unsafe schema identifiers, Haxe field-name collisions, and missing metadata
 should fail or produce review-marked contracts only with an explicit opt-in such

@@ -379,6 +379,22 @@ bin/rails generate hxruby:adopt \
 Generates checked Haxe wrappers around existing Ruby services and Rails-owned
 ERB partials so Haxe code can consume them safely during gradual migration.
 
+RBS-backed Ruby service:
+
+```bash
+bin/rails generate hxruby:adopt \
+  --service RbsPriceFormatter \
+  --rbs sig/rbs_price_formatter.rbs
+```
+
+The generator canonicalizes the explicit RBS file inside the app root and
+parses it without executing Ruby. Supported positional scalar, nilable,
+`Symbol`, and recursive `Array<T>` signatures produce precise constructors,
+instance methods, and class methods. Unsupported types/shapes and overloads
+omit the whole method with a review marker instead of becoming `Dynamic`.
+Missing files, symlink escapes, malformed structure, and unsafe paths fail
+closed.
+
 YARD-documented Ruby service:
 
 ```bash

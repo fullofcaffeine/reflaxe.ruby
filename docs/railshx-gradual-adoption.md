@@ -107,7 +107,25 @@ bundle exec rake hxruby:gen:adopt \
   RBS=sig/rbs_price_formatter.rbs
 ```
 
-RBS-backed adoption is file-backed and fail-closed: a missing `--rbs` path is a generator error, and the path must stay inside the app/output root. The first deterministic subset supports class declarations, `initialize`, instance methods, and `self.method` signatures with simple required and optional positional arguments. Known scalar types lower to Haxe types, and nilable scalar forms such as `String?` lower to `Null<String>`, while unsupported or application-specific RBS types lower to `Dynamic` with TODO/review comments in the generated extern. LLM-generated suggestions may help draft contracts later, but they must remain advisory patches; they do not bypass generator validation, Haxe compilation, Ruby syntax checks, or Rails runtime gates.
+RBS-backed adoption is file-backed and fail-closed. A missing `--rbs` path is a
+generator error, and the canonical file must stay inside the canonical
+app/output root; an app-local symlink cannot escape that boundary. The strict
+deterministic subset supports fully qualified class/module declarations,
+`initialize`, instance methods, and `self.method` signatures with one simple
+required/optional positional signature. `String`, `Integer`/`int`,
+`Float`/`float`, `bool`/`boolish`/`Boolean`, `Symbol`, recursive `Array<T>`, and
+nilable `T?` forms lower precisely to Haxe types. Constructor returns must be
+`void`.
+
+RBS is a precise-or-omitted contract: open top types, `Object`, domain types,
+keyword/splat/block shapes, overloads, unsupported containers, malformed
+signatures, and unsupported returns omit the entire method with an actionable
+review comment. They never introduce `Dynamic`, `cast`, `untyped`, or raw Ruby
+into the generated extern. Structurally malformed files fail the generator
+instead of producing a partial contract. LLM-generated suggestions may help
+draft omitted signatures later, but they remain advisory patches and cannot
+bypass generator validation, Haxe compilation, Ruby syntax checks, or Rails
+runtime gates.
 
 If the Ruby source carries YARD documentation but no RBS, adopt its typed
 service contract directly:

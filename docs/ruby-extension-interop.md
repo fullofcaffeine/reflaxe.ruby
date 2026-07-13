@@ -301,7 +301,14 @@ bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_
 
 The initial source-backed generator uses Ruby's parser to inspect module declarations and method signatures without executing app code. Source paths must stay inside the app/output root. It emits `@:rubyMixin` instance/class-method contracts with `Dynamic` placeholders and review comments when source files lack real type metadata. Simple required and optional arguments are emitted; splats, keyword-heavy methods, and block signatures are skipped with comments so the generated Haxe remains compileable.
 
-For services with RBS, the generator can use `--rbs` as a deterministic metadata source. The supported subset covers class declarations plus simple constructor, instance-method, and `self.method` signatures. Missing RBS files fail closed, paths must stay inside the app/output root, and application-specific or unsupported RBS types are emitted as `Dynamic` with TODO/review comments instead of pretending the contract is stronger than the metadata supports.
+For services with RBS, the generator can use `--rbs` as a deterministic
+metadata source. The strict subset covers class/module declarations plus simple
+constructor, instance-method, and `self.method` positional signatures with
+scalar, nilable, `Symbol`, and recursive `Array<T>` types. The input is
+canonicalized inside the app/output root; missing files, symlink escapes, and
+malformed structure fail closed. Application-specific, open, overloaded, or
+otherwise unsupported signatures are omitted as review comments rather than
+widened to `Dynamic`, so a generated RBS-backed extern is precise-or-omitted.
 
 The generator should produce Haxe externs and extension contracts, never unchecked dynamic calls by default. LLM assistance is acceptable as a suggest-only layer: it can draft contracts from Ruby source/docs, but the generated Haxe should compile, and risky guesses should be marked for review.
 

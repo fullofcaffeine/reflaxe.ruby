@@ -150,7 +150,7 @@ generator-inference policy.
 | Typed monkey-patch/`using` contracts | `@:rubyPatch(ReceiverType)` plus Haxe `using` | Initial implementation |
 | Typed ActiveSupport receiver facades | `rails.active_support.ObjectPresence`, `rails.active_support.StringFilters` | Initial facade slice |
 | Generator-assisted contracts from Ruby source metadata | `hxruby:adopt --extension-source ... --extension-module ...` | Initial Ripper-backed implementation |
-| Generator-assisted contracts from RBS | `hxruby:adopt --service Foo --rbs sig/foo.rbs` | Initial deterministic subset implemented |
+| Generator-assisted contracts from RBS | `hxruby:adopt --service Foo --rbs sig/foo.rbs` | Strict non-executing precise-or-omitted subset with scalar/nilable/Symbol/Array typing, canonical path checks, malformed-file failures, and no broad fallback types |
 | Generator-assisted service contracts from YARD | `hxruby:adopt --service Foo --yard app/services/foo.rb` | Initial deterministic, no-execution, precise-or-omitted subset implemented |
 | Automatic gem contracts from YARD | `hxruby:adopt --gem some_gem --discover` / `--write contracts` | Bundler-resolved `lib` discovery implemented with canonical path checks, reopened-constant aggregation, strict precise-or-omitted YARD contracts, and review-marked source fallback only for constants without YARD signatures |
 | Generator-assisted contracts from broader Rails metadata/LLM suggestions | planned | Not implemented; LLM suggestions must remain advisory and pass compile/tests |

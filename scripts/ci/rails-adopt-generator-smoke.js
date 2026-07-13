@@ -277,8 +277,13 @@ writeFileSync(rbsSource, [
   "  def label_for: (String kind, ?Integer cents) -> String",
   "  def maybe_label: (String? kind, ?Integer? cents) -> String?",
   "  def maybe_total: (Float? amount) -> Float?",
+  "  def normalize_tags: (Array[String] labels) -> Array[String]",
+  "  def maybe_symbols: (Array[Symbol]? symbols) -> Array[Symbol]?",
   "  def unknown_shape: (Money amount) -> Money",
   "  def unknown_optional: (Money? amount) -> Money?",
+  "  def open_input: (untyped payload) -> String",
+  "  def open_return: (String label) -> Object",
+  "  def overloaded: (String value) -> String | (Integer value) -> String",
   "  def self.call: (Integer cents, ?bool include_symbol) -> String",
   "  def self.parse_flag: (bool? raw) -> bool?",
   "end",
@@ -326,18 +331,30 @@ assertIncludes("src_haxe/interop/RbsPriceFormatter.hx", [
   "package interop;",
   "// Generated from sig/rbs_price_formatter.rbs.",
   "// Generated from deterministic RBS metadata.",
-  "// TODO: Review any Dynamic placeholders from unsupported or application-specific RBS types.",
+  "// Unsupported or incomplete signatures are omitted with review markers; no broad fallback type is synthesized.",
   '@:native("RbsPriceFormatter")',
   "extern class RbsPriceFormatter",
   "public function new(?currency:String):Void;",
   "public function labelFor(kind:String, ?cents:Int):String;",
   "public function maybeLabel(kind:Null<String>, ?cents:Null<Int>):Null<String>;",
   "public function maybeTotal(amount:Null<Float>):Null<Float>;",
-  "public function unknownShape(amount:Dynamic):Dynamic;",
-  "public function unknownOptional(amount:Dynamic):Dynamic;",
+  "public function normalizeTags(labels:Array<String>):Array<String>;",
+  "public function maybeSymbols(symbols:Null<Array<ruby.Symbol>>):Null<Array<ruby.Symbol>>;",
+  "Review required: skipped unknown_shape: unsupported RBS parameter type for amount",
+  "Review required: skipped unknown_optional: unsupported RBS parameter type for amount",
+  "Review required: skipped open_input: unsupported RBS parameter type for payload",
+  "Review required: skipped open_return: unsupported RBS return type",
+  "Review required: skipped overloaded:",
   "public static function call(cents:Int, ?includeSymbol:Bool):String;",
   "public static function parseFlag(raw:Null<Bool>):Null<Bool>;",
 ]);
+const strictRbsContract = readFileSync(join(outputDir, "src_haxe", "interop", "RbsPriceFormatter.hx"), "utf8");
+for (const forbidden of ["Dynamic", "untyped", "__ruby__", "cast "]) {
+  if (strictRbsContract.includes(forbidden)) {
+    fail(`strict RBS contract contains forbidden broad escape ${forbidden}`);
+  }
+}
+assertRbsSnapshot("src_haxe/interop/RbsPriceFormatter.hx");
 assertIncludes("src_haxe/interop/templates/LegacyBadgeTemplate.hx", [
   "package interop.templates;",
   "import rails.action_view.Template;",
@@ -901,6 +918,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\t\trbsFormatter.labelFor(\"ok\", 1);",
   "\t\t\trbsFormatter.maybeLabel(null, null);",
   "\t\t\trbsFormatter.maybeTotal(null);",
+  "\t\t\trbsFormatter.normalizeTags([\"typed\"]);",
+  "\t\t\trbsFormatter.maybeSymbols(null);",
   "\t\t\tRbsPriceFormatter.call(100);",
   "\t\t\tRbsPriceFormatter.parseFlag(null);",
   "\t\t\tvar manager = new SessionManager();",
@@ -1076,6 +1095,33 @@ if (missingRbs.status === 0 || !missingRbs.stderr.includes("RBS source does not 
   process.stderr.write(missingRbs.stderr);
   fail("adoption generator did not fail closed for missing RBS source");
 }
+
+const escapedRbs = join(outputDir, "sig", "escaped.rbs");
+symlinkSync(join(root, "README.md"), escapedRbs);
+expectGeneratorFailure("RBS symlink escape", [
+  "--output",
+  outputDir,
+  "--service",
+  "RbsPriceFormatter",
+  "--rbs",
+  escapedRbs,
+], "--rbs must resolve to a file inside the generator output/app root");
+rmSync(escapedRbs);
+
+const malformedRbs = join(outputDir, "sig", "malformed.rbs");
+writeFileSync(malformedRbs, [
+  "class MalformedContract",
+  "  def call: (String value) -> String",
+  "",
+].join("\n"));
+expectGeneratorFailure("unterminated RBS declaration", [
+  "--output",
+  outputDir,
+  "--service",
+  "MalformedContract",
+  "--rbs",
+  malformedRbs,
+], "Unterminated RBS declaration");
 
 expectGeneratorFailure("unsafe package", [
   "--output",
@@ -1302,6 +1348,22 @@ function assertGemSnapshot(relativeFile) {
   const expected = readFileSync(snapshotPath, "utf8");
   if (actual !== expected) {
     fail(`gem adoption snapshot mismatch: ${relativeFile}`);
+  }
+}
+
+function assertRbsSnapshot(relativeFile) {
+  const actualPath = join(outputDir, relativeFile);
+  const snapshotPath = join(root, "test", "snapshots", "m1", "rails_adopt_rbs", relativeFile);
+  if (!existsSync(actualPath)) {
+    fail(`missing generated RBS snapshot source: ${relativeFile}`);
+  }
+  const actual = readFileSync(actualPath, "utf8");
+  if (!existsSync(snapshotPath)) {
+    fail(`missing RBS adoption snapshot: ${snapshotPath}`);
+  }
+  const expected = readFileSync(snapshotPath, "utf8");
+  if (actual !== expected) {
+    fail(`RBS adoption snapshot mismatch: ${relativeFile}`);
   }
 }
 
