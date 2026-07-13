@@ -114,6 +114,9 @@ requireMatch(release, /ruby-version: "3\.3\.11"/, "release Ruby must be exact");
 requireMatch(release, /rubygems: "3\.5\.22"/, "release RubyGems must be exact");
 requireMatch(release, /lix download haxe "4\.3\.7"/, "release Haxe must be exact");
 requireMatch(release, /\.\/node_modules\/\.bin\/semantic-release/, "release must execute the locked semantic-release binary directly");
+const transitionIndex = release.indexOf("node scripts/release/prepare-semver-transition.mjs");
+const engineIndex = release.indexOf("./node_modules/.bin/semantic-release");
+assert(transitionIndex >= 0 && transitionIndex < engineIndex, "release must prepare the historical SemVer bridge before the locked engine");
 
 assert.equal(packageJson.packageManager, "npm@10.9.2", "package manager must pin release npm");
 assert.equal(packageJson.engines?.node, ">=22.14.0 <23", "package engine must bound the exact release Node major");

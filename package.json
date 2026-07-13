@@ -148,10 +148,11 @@
       [
         "./scripts/release/analyze-commits.mjs",
         {
-          "approvedStableMajors": []
+          "approvedStableMajors": [],
+          "historicalPrereleaseBaseline": "v0.1.0-beta.2",
+          "transitionAliasTag": "v0.0.0"
         }
       ],
-      "@semantic-release/release-notes-generator",
       [
         "@semantic-release/exec",
         {

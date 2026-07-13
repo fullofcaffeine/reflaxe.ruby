@@ -6,6 +6,18 @@ automatic `-beta` suffix. The existing `v0.1.0-beta.2` tag remains immutable
 history and is a valid tag-derived baseline; the next qualifying main release
 promotes that lineage to an ordinary `0.x` version.
 
+semantic-release intentionally excludes prerelease tags when it calculates the
+last release for a stable branch. RubyHx handles that single historical
+transition with `scripts/release/prepare-semver-transition.mjs`: when no stable
+tag exists, it verifies that the configured `v0.1.0-beta.2` tag is the newest
+canonical prerelease merged into the tested commit, then creates an ephemeral
+local `v0.0.0` alias at exactly the same commit. The policy forces any
+qualifying fix, feature, or major-zero breaking change to stable `0.1.0`, uses
+the real beta tag in the generated compare link, and deletes the alias in the
+first prepare hook before semantic-release can run `git push --tags`. The alias
+is never pushed, released, or used after a stable tag exists. Missing,
+persistent, mismatched, or non-newest transition tags fail closed.
+
 This document owns version selection and the boundary into artifact staging.
 Tracked version surfaces use the non-release `0.0.0` development sentinel.
 Release preparation injects the selected version, matching tag, and tested
@@ -81,6 +93,8 @@ The gate exercises fix, feature, major-zero breaking, approved `1.0.0`, stable
 breaking, historical prerelease promotion, and no-release commit sets through
 the real analyzer. Negative cases cover absent/mismatched tags, invalid or
 unsupported SemVer, unknown majors, missing next-major approval, and malformed
-approval lists. It also creates a temporary Git repository and runs the
-installed semantic-release engine in dry-run mode, proving that `v0.2.3` plus a
-fix selects `0.2.4` even when the fixture's package metadata says `99.99.99`.
+approval lists. It also runs the installed semantic-release engine against
+temporary Git repositories. One fixture proves that `v0.2.3` plus a fix selects
+`0.2.4` despite contradictory `99.99.99` package metadata. Another performs the
+complete `v0.1.0-beta.2` to `v0.1.0` transition and asserts the public compare
+link plus the exact remote tag set, including that `v0.0.0` is never pushed.

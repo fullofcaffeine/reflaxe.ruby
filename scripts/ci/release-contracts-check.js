@@ -35,6 +35,7 @@ const haxelibPackageBuilder = readFileSync("scripts/release/build-haxelib-packag
 const haxelibPackageCheck = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
 const versionSyncCheck = readFileSync("scripts/ci/version-sync-check.js", "utf8");
 const releaseVersionPolicy = readFileSync("scripts/release/analyze-commits.mjs", "utf8");
+const releaseTransition = readFileSync("scripts/release/prepare-semver-transition.mjs", "utf8");
 const releaseVersionPolicyCheck = readFileSync("scripts/ci/release-version-policy-check.mjs", "utf8");
 const releaseVersionPolicyDocs = readFileSync("docs/release-version-policy.md", "utf8");
 const releaseArtifactDocs = readFileSync("docs/release-artifacts.md", "utf8");
@@ -92,7 +93,6 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
 } else {
   for (const plugin of [
     "./scripts/release/analyze-commits.mjs",
-    "@semantic-release/release-notes-generator",
     "@semantic-release/exec",
     "@semantic-release/github",
   ]) {
@@ -112,6 +112,9 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   );
   if (!policyPlugin || JSON.stringify(policyPlugin[1]?.approvedStableMajors) !== "[]") {
     fail("release policy must keep stable majors unapproved until an explicit reviewed policy change");
+  }
+  if (policyPlugin?.[1]?.historicalPrereleaseBaseline !== "v0.1.0-beta.2" || policyPlugin?.[1]?.transitionAliasTag !== "v0.0.0") {
+    fail("release policy must pin the public beta baseline and reserved local-only transition alias");
   }
 
   const execPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/exec");
@@ -152,10 +155,13 @@ if (packageJson.devDependencies?.fflate !== "0.8.3") {
   fail("deterministic ZIP creation must directly pin fflate at the haxe.rust-aligned 0.8.3 version");
 }
 expectIncludes(releaseVersionPolicy, 'from "@semantic-release/commit-analyzer"', "release version policy");
+expectIncludes(releaseVersionPolicy, 'from "@semantic-release/release-notes-generator"', "release note policy");
 expectIncludes(releaseVersionPolicy, 'from "semver"', "release version policy");
 expectIncludes(releaseVersionPolicy, "validateTagLineage", "release version policy");
 expectIncludes(releaseVersionPolicy, "approvedStableMajors", "release version policy");
 expectExcludes(releaseVersionPolicy, 'readFileSync("package.json"', "release version policy");
+expectIncludes(releaseTransition, "git push --tags", "release transition safety explanation");
+expectIncludes(releaseTransition, "newest merged prerelease", "release transition baseline guard");
 expectIncludes(releaseVersionPolicyCheck, 'from "semantic-release"', "release version policy check");
 expectIncludes(releaseVersionPolicyCheck, '"99.99.99"', "release version policy package-independence fixture");
 expectIncludes(releaseVersionPolicyDocs, "normal `0.x` releases from `main`", "release version policy docs");

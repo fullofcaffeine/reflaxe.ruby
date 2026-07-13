@@ -1,5 +1,10 @@
 import { analyzeCommits as analyzeConventionalCommits } from "@semantic-release/commit-analyzer";
+import { generateNotes as generateConventionalNotes } from "@semantic-release/release-notes-generator";
+import { execFileSync } from "node:child_process";
 import semver from "semver";
+
+const BASELINE_ENV = "RUBYHX_RELEASE_BASELINE_TAG";
+const ALIAS_ENV = "RUBYHX_RELEASE_TRANSITION_ALIAS";
 
 /**
  * A fail-closed policy error raised before semantic-release can select a tag.
@@ -16,6 +21,56 @@ export class ReleasePolicyError extends Error {
 
 function fail(message) {
 	throw new ReleasePolicyError(message);
+}
+
+/**
+ * Read the one-time prerelease-to-stable bridge prepared from Git before
+ * semantic-release starts. Stable release branches intentionally ignore
+ * prerelease tags, so the bridge exposes an ephemeral stable alias to the
+ * engine without publishing that alias or treating package metadata as
+ * lineage. Both variables must be present together or the run fails closed.
+ */
+function transitionContext(context) {
+	const baselineTag = context?.env?.[BASELINE_ENV];
+	const aliasTag = context?.env?.[ALIAS_ENV];
+	if (baselineTag == null && aliasTag == null) return null;
+	if (typeof baselineTag !== "string" || baselineTag.length === 0 || typeof aliasTag !== "string" || aliasTag.length === 0) {
+		fail("historical prerelease transition requires both baseline and alias tags");
+	}
+
+	const baselineVersion = baselineTag.slice(1);
+	const baseline = semver.parse(baselineVersion);
+	if (baselineTag !== `v${baselineVersion}` || semver.valid(baselineVersion) !== baselineVersion) {
+		fail(`historical prerelease baseline ${JSON.stringify(baselineTag)} must be an exact canonical v<SemVer> tag`);
+	}
+	if (baseline?.major !== 0 || baseline.prerelease.length === 0) {
+		fail(`historical prerelease baseline ${baselineTag} must be a major-zero prerelease`);
+	}
+	if (aliasTag !== "v0.0.0") {
+		fail(`historical prerelease transition alias must be the reserved local tag v0.0.0, got ${JSON.stringify(aliasTag)}`);
+	}
+	if (context?.lastRelease?.gitTag !== aliasTag || context?.lastRelease?.version !== aliasTag.slice(1)) {
+		fail(`semantic-release must derive the historical transition from ephemeral ${aliasTag}`);
+	}
+
+	return {
+		aliasTag,
+		baselineTag,
+		stableVersion: `${baseline.major}.${baseline.minor}.${baseline.patch}`,
+	};
+}
+
+function tagCommit(tag, context) {
+	try {
+		return execFileSync("git", ["rev-list", "-n", "1", tag], {
+			cwd: context.cwd,
+			encoding: "utf8",
+			env: { ...process.env, ...context.env },
+			stdio: ["ignore", "pipe", "pipe"],
+		}).trim();
+	} catch {
+		fail(`cannot resolve required release tag ${tag}`);
+	}
 }
 
 /**
@@ -88,6 +143,7 @@ export async function analyzeCommits(pluginConfig, context) {
 	// semantic-release core that already validated them.
 	const approvedStableMajors = validateApprovedStableMajors(pluginConfig?.approvedStableMajors ?? []);
 	const lineage = validateTagLineage(context?.lastRelease, approvedStableMajors);
+	const transition = transitionContext(context);
 	const conventionalType = await analyzeConventionalCommits(
 		{
 			// The analyzer's bundled Angular preset recognizes BREAKING CHANGE
@@ -102,6 +158,15 @@ export async function analyzeCommits(pluginConfig, context) {
 		},
 		context
 	);
+	if (transition && conventionalType) {
+		if (semver.inc(lineage.version, "minor") !== transition.stableVersion) {
+			fail(`ephemeral ${lineage.version} cannot promote ${transition.baselineTag} to ${transition.stableVersion}`);
+		}
+		context.logger.log(
+			`Promoting historical ${transition.baselineTag} to stable ${transition.stableVersion}; ephemeral ${transition.aliasTag} will not be published`
+		);
+		return "minor";
+	}
 
 	if (conventionalType !== "major") {
 		return conventionalType;
@@ -119,4 +184,40 @@ export async function analyzeCommits(pluginConfig, context) {
 	}
 
 	fail(`breaking stable major ${lineage.major} requires independent approval for major ${nextStableMajor}`);
+}
+
+/**
+ * Delegate release-note construction to the official generator. During the
+ * one-time stable promotion, semantic-release sees the local alias; replace
+ * only that compare-link baseline with the immutable public prerelease tag so
+ * published notes remain truthful and navigable.
+ */
+export async function generateNotes(pluginConfig, context) {
+	const notes = await generateConventionalNotes(pluginConfig, context);
+	const transition = transitionContext(context);
+	if (!transition) return notes;
+
+	const aliasCompare = `/compare/${transition.aliasTag}...`;
+	if (!notes.includes(aliasCompare)) {
+		fail(`generated release notes do not contain expected transition comparison ${aliasCompare}`);
+	}
+	return notes.replaceAll(aliasCompare, `/compare/${transition.baselineTag}...`);
+}
+
+/**
+ * Delete the ephemeral alias in the first prepare hook, before semantic-release
+ * creates or pushes the real tag. Matching both refs to one commit prevents a
+ * stale or attacker-controlled local tag from being used as the bridge.
+ */
+export async function prepare(_pluginConfig, context) {
+	const transition = transitionContext(context);
+	if (!transition) return;
+	if (tagCommit(transition.aliasTag, context) !== tagCommit(transition.baselineTag, context)) {
+		fail(`${transition.aliasTag} must resolve to the same commit as ${transition.baselineTag}`);
+	}
+	execFileSync("git", ["tag", "-d", transition.aliasTag], {
+		cwd: context.cwd,
+		env: { ...process.env, ...context.env },
+		stdio: "ignore",
+	});
 }

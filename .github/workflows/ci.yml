@@ -332,6 +332,9 @@ jobs:
           ./node_modules/.bin/lix use haxe "4.3.7"
           test "$(haxe -version)" = "4.3.7"
 
+      - name: Prepare historical prerelease transition
+        run: node scripts/release/prepare-semver-transition.mjs
+
       - name: Derive, package, tag, and publish the tested SHA
         env:
           GITHUB_TOKEN: ${{ github.token }}

@@ -13,6 +13,7 @@ import {
 	ReleasePolicyError,
 	analyzeCommits,
 } from "../release/analyze-commits.mjs";
+import { prepareHistoricalBaseline } from "../release/prepare-semver-transition.mjs";
 
 const silentLogger = {
 	log() {},
@@ -90,10 +91,7 @@ async function proveSemanticReleaseIntegration() {
 				branches: ["main"],
 				tagFormat: "v${version}",
 				repositoryUrl: pathToFileURL(cwd).href,
-				plugins: [
-					[policyPlugin, { approvedStableMajors: [] }],
-					"@semantic-release/release-notes-generator",
-				],
+				plugins: [[policyPlugin, { approvedStableMajors: [] }]],
 				dryRun: true,
 				ci: false,
 			},
@@ -106,6 +104,94 @@ async function proveSemanticReleaseIntegration() {
 		assert.match(result?.nextRelease?.notes ?? "", /commit\//, "semantic-release integration: commit link");
 	} finally {
 		rmSync(cwd, { recursive: true, force: true });
+	}
+}
+
+/**
+ * Exercise the only special transition in the real engine. semantic-release
+ * normally excludes prerelease tags on stable branches; the local alias lets
+ * the engine select 0.1.0 while the policy plugin rewrites notes to the public
+ * beta baseline and removes the alias before `git push --tags`.
+ */
+async function proveHistoricalPrereleaseTransition() {
+	const root = mkdtempSync(join(tmpdir(), "rubyhx-release-transition-"));
+	const cwd = join(root, "work");
+	const remote = join(root, "remote.git");
+	const policyPlugin = fileURLToPath(new URL("../release/analyze-commits.mjs", import.meta.url));
+	const git = (directory, ...args) => execFileSync("git", args, {
+		cwd: directory,
+		encoding: "utf8",
+		stdio: ["ignore", "pipe", "pipe"],
+	}).trim();
+
+	try {
+		execFileSync("git", ["init", "--bare", "--initial-branch=main", remote], { stdio: "ignore" });
+		execFileSync("git", ["init", "-b", "main", cwd], { stdio: "ignore" });
+		git(cwd, "config", "user.email", "release-transition@example.test");
+		git(cwd, "config", "user.name", "RubyHx release transition test");
+		writeFileSync(join(cwd, "package.json"), '{"name":"transition-fixture","version":"99.99.99"}\n');
+		writeFileSync(join(cwd, "fixture.txt"), "beta baseline\n");
+		git(cwd, "add", ".");
+		git(cwd, "commit", "-m", "chore: establish historical beta");
+		git(cwd, "tag", "v0.1.0-beta.2");
+		writeFileSync(join(cwd, "fixture.txt"), "beta baseline\nfixed\n");
+		git(cwd, "add", ".");
+		git(cwd, "commit", "-m", "fix: publish the tested compiler");
+		git(cwd, "remote", "add", "origin", pathToFileURL(remote).href);
+		git(cwd, "push", "-u", "origin", "main");
+		git(cwd, "push", "origin", "v0.1.0-beta.2");
+
+		const transition = prepareHistoricalBaseline({
+			cwd,
+			historicalPrereleaseBaseline: "v0.1.0-beta.2",
+			transitionAliasTag: "v0.0.0",
+		});
+		assert.equal(transition.kind, "historical-prerelease", "historical transition must be selected");
+
+		const result = await semanticRelease(
+			{
+				branches: ["main"],
+				tagFormat: "v${version}",
+				repositoryUrl: pathToFileURL(remote).href,
+				plugins: [[policyPlugin, {
+					approvedStableMajors: [],
+					historicalPrereleaseBaseline: "v0.1.0-beta.2",
+					transitionAliasTag: "v0.0.0",
+				}]],
+				ci: false,
+			},
+			{
+				cwd,
+				env: { ...process.env, ...transition.environment },
+				stdout: silentStream,
+				stderr: silentStream,
+			}
+		);
+
+		assert.equal(result?.nextRelease?.type, "minor", "historical transition: release type");
+		assert.equal(result?.nextRelease?.version, "0.1.0", "historical transition: stable version");
+		assert.match(
+			result?.nextRelease?.notes ?? "",
+			/compare\/v0\.1\.0-beta\.2\.\.\.v0\.1\.0/,
+			"historical transition: public compare link"
+		);
+		assert.deepEqual(
+			git(remote, "tag", "--list").split("\n").filter(Boolean).sort(),
+			["v0.1.0", "v0.1.0-beta.2"],
+			"historical transition: remote tags"
+		);
+		assert.equal(git(cwd, "tag", "--list", "v0.0.0"), "", "historical transition: local alias removed");
+		assert.equal(
+			prepareHistoricalBaseline({
+				cwd,
+				historicalPrereleaseBaseline: "v0.1.0-beta.2",
+				transitionAliasTag: "v0.0.0",
+			}).kind,
+			"stable",
+			"historical transition: future stable releases bypass the bridge"
+		);
+	} finally {
+		rmSync(root, { recursive: true, force: true });
 	}
 }
 
@@ -206,5 +292,6 @@ await expectPolicyFailure(
 );
 
 await proveSemanticReleaseIntegration();
+await proveHistoricalPrereleaseTransition();
 
 console.log("[release-version-policy] OK: conventional 0.x and independently approved stable majors");

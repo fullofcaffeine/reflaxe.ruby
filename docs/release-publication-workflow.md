@@ -68,6 +68,12 @@ release job verifies Node, npm, Ruby, RubyGems, and Haxe versions before running
 the locked semantic-release binary directly. Changing any pin is an ordinary
 reviewed code change and must keep `npm audit` clean.
 
+Immediately before the locked engine, the job runs the fail-closed historical
+SemVer transition check documented in `release-version-policy.md`. It is a
+one-time compatibility bridge for `v0.1.0-beta.2`: the derived local alias is
+removed by the policy plugin before any tag push. Once `v0.1.0` exists, the
+check is a no-op and all later releases use ordinary stable tag lineage.
+
 The Haxe setup exports the locked local `node_modules/.bin` directory before
 running lix. Haxe's installation hook invokes `lix` by name in a child process;
 ordering the PATH setup first keeps clean hosted runners reproducible instead of

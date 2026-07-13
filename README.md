@@ -19,6 +19,9 @@ major-zero breaking changes advance minor, and `1.0.0` plus each later stable
 major require independent policy approval. Major zero already communicates
 initial development, so the normal channel does not add a `-beta` suffix. See
 [Release Version Policy](docs/release-version-policy.md).
+The first stable publication uses a tested one-time bridge from the immutable
+beta tag to `v0.1.0`; its temporary local alias is removed before tags are
+pushed and never becomes public history.
 
 Tracked version files intentionally use the `0.0.0` development sentinel; it
 is never a public release version. Release preparation derives the real version
