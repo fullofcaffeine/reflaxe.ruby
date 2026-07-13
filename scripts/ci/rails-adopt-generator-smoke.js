@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -51,14 +51,35 @@ writeFileSync(join(outputDir, "vendor", "demo_auth", "lib", "demo_auth.rb"), [
   "",
   "module DemoAuth",
   "  class SessionManager",
+  "    # @param scope [String] logical authentication scope",
   '    def initialize(scope = "user")',
   "      @scope = scope",
   "    end",
   "",
+  "    # @param controller [String] controller identifier",
+  "    # @return [String, nil] current user identifier",
   "    def current_user(controller)",
   "      nil",
   "    end",
   "",
+  "    # This ordinary comment must not be mistaken for YARD signature evidence.",
+  "    def undocumented_status",
+  "      :unknown",
+  "    end",
+  "",
+  "    # @param payload [Hash] unsupported open payload",
+  "    # @return [String] rendered payload",
+  "    def unsupported_payload(payload)",
+  "      payload.to_s",
+  "    end",
+  "",
+  "    # @return [String] first documented reopening",
+  "    def duplicate_marker",
+  '      "first"',
+  "    end",
+  "",
+  "    # @param scope [String] logical authentication scope",
+  "    # @return [Boolean] whether authentication is enabled",
   "    def self.enabled?(scope)",
   "      true",
   "    end",
@@ -67,6 +88,29 @@ writeFileSync(join(outputDir, "vendor", "demo_auth", "lib", "demo_auth.rb"), [
   "  module ControllerHelpers",
   "    def authenticate_user!",
   "      true",
+  "    end",
+  "  end",
+  "",
+  "  class SessionManager",
+  "    def same_file_token",
+  '      "same:#{@scope}"',
+  "    end",
+  "  end",
+  "",
+  "  class SessionManager",
+  "    # @return [Integer] conflicting documented reopening",
+  "    def duplicate_marker",
+  "      2",
+  "    end",
+  "  end",
+  "end",
+  "",
+].join("\n"));
+writeFileSync(join(outputDir, "vendor", "demo_auth", "lib", "demo_auth", "session_extensions.rb"), [
+  "module DemoAuth",
+  "  class SessionManager",
+  "    def audit_token(prefix)",
+  '      "#{prefix}:#{@scope}"',
   "    end",
   "  end",
   "end",
@@ -552,7 +596,11 @@ const gemDiscover = run("ruby", [
   "demo_auth",
   "--discover",
 ]);
-if (!gemDiscover.stdout.includes("[rails:adopt:gem] demo_auth 0.1.0") || !gemDiscover.stdout.includes("constant: DemoAuth::SessionManager")) {
+if (
+  !gemDiscover.stdout.includes("[rails:adopt:gem] demo_auth 0.1.0")
+  || !gemDiscover.stdout.includes("constant: DemoAuth::SessionManager")
+  || !gemDiscover.stdout.includes("strict YARD contract: DemoAuth::SessionManager")
+) {
   process.stdout.write(gemDiscover.stdout);
   process.stderr.write(gemDiscover.stderr);
   fail("gem discovery did not report deterministic Bundler inventory");
@@ -580,13 +628,29 @@ assertIncludes("src_haxe/interop/gems/demo_auth/GemLayer.hx", [
 assertIncludes("src_haxe/interop/gems/demo_auth/SessionManager.hx", [
   "package interop.gems.demo_auth;",
   "// Generated from Bundler gem demo_auth.",
+  "// Generated from deterministic YARD @param/@return tags without executing Ruby.",
+  "// Unsupported or incomplete signatures are omitted with review markers; no broad fallback type is synthesized.",
   '@:native("DemoAuth::SessionManager")',
   "extern class SessionManager",
   "public function new(?scope:String):Void;",
-  "public function currentUser(controller:Dynamic):Dynamic;",
+  "public function currentUser(controller:String):Null<String>;",
+  "Review required: skipped undocumented_status: no immediately preceding YARD @param/@return tags were found.",
+  "Review required: skipped unsupported_payload: unsupported YARD @param payload type [Hash]",
+  "Review required: skipped duplicate_marker: multiple YARD-documented definitions were found across gem sources; Ruby load order is not inferred.",
+  "Review required: skipped same_file_token: no deterministic YARD signature was found for this method in the reopened gem source.",
+  "Review required: skipped audit_token: no deterministic YARD signature was found for this method in the reopened gem source.",
   '@:native("enabled?")',
-  "public static function enabled(scope:Dynamic):Dynamic;",
+  "public static function enabled(scope:String):Bool;",
 ]);
+const sessionManagerContract = readFileSync(
+  join(outputDir, "src_haxe", "interop", "gems", "demo_auth", "SessionManager.hx"),
+  "utf8",
+);
+for (const forbidden of ["Dynamic", "cast ", "__ruby__", "untyped"]) {
+  if (sessionManagerContract.includes(forbidden)) {
+    fail(`strict gem YARD contract contains forbidden broad escape ${forbidden}`);
+  }
+}
 assertIncludes("src_haxe/interop/gems/demo_auth/ControllerHelpers.hx", [
   "package interop.gems.demo_auth;",
   '@:native("DemoAuth::ControllerHelpers")',
@@ -598,15 +662,32 @@ assertIncludes("docs/railshx/gems/demo_auth.md", [
   "# RailsHx Gem Layer: demo_auth",
   "- Gem: `demo_auth`",
   "- Version: `0.1.0`",
+  "automatically discovered YARD tags",
   "- `DemoAuth::SessionManager`",
+  "`DemoAuth::SessionManager`: strict deterministic YARD contract",
+  "`DemoAuth::ControllerHelpers`: Ruby-shape skeleton",
+  "Strict YARD contracts never synthesize broad fallback types",
   "Replace any generated `Dynamic` placeholders",
 ]);
+assertGemSnapshot("src_haxe/interop/gems/demo_auth/SessionManager.hx");
+assertGemSnapshot("docs/railshx/gems/demo_auth.md");
 assertManifest([
   ["src_haxe/interop/gems/demo_auth/GemLayer.hx", "haxe_adopted_gem_layer"],
   ["src_haxe/interop/gems/demo_auth/SessionManager.hx", "haxe_adopted_gem_contract"],
   ["src_haxe/interop/gems/demo_auth/ControllerHelpers.hx", "haxe_adopted_gem_contract"],
   ["docs/railshx/gems/demo_auth.md", "docs"],
 ]);
+
+const escapedGemSource = join(outputDir, "vendor", "demo_auth", "lib", "escaped.rb");
+symlinkSync(join(root, "README.md"), escapedGemSource);
+expectGeneratorFailure("gem source symlink escape", [
+  "--output",
+  outputDir,
+  "--gem",
+  "demo_auth",
+  "--discover",
+], "Ruby source escapes the resolved gem lib root");
+rmSync(escapedGemSource);
 
 const deviseDiscover = run("ruby", [
   "-I",
@@ -822,6 +903,9 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\t\trbsFormatter.maybeTotal(null);",
   "\t\t\tRbsPriceFormatter.call(100);",
   "\t\t\tRbsPriceFormatter.parseFlag(null);",
+  "\t\t\tvar manager = new SessionManager();",
+  "\t\t\tvar currentUser:Null<String> = manager.currentUser(\"controller\");",
+  "\t\t\tvar enabled:Bool = SessionManager.enabled(\"user\");",
   "\t\t\tvar user = new User();",
   "\t\t\tvar todo = new Todo();",
   "\t\t\ttodo.title = \"typed\";",
@@ -838,6 +922,8 @@ writeFileSync(join(outputDir, "src_haxe", "Main.hx"), [
   "\t\t\tvar confirmationView:HtmlNode = ConfirmationsNewView.render({resource: user});",
   "\t\t\tvar unlockView:HtmlNode = UnlocksNewView.render({resource: user});",
   "\t\t\tSys.println(UserAuth.signedIn(controller));",
+  "\t\t\tSys.println(currentUser);",
+  "\t\t\tSys.println(enabled);",
   "\t\t}",
   "\t\tSys.println(service != null);",
   "\t\tSys.println(rbsService != null);",
@@ -1200,6 +1286,22 @@ function assertSnapshot(relativeFile) {
   const expected = readFileSync(snapshotPath, "utf8");
   if (actual !== expected) {
     fail(`DeviseHx adoption snapshot mismatch: ${relativeFile}`);
+  }
+}
+
+function assertGemSnapshot(relativeFile) {
+  const actualPath = join(outputDir, relativeFile);
+  const snapshotPath = join(root, "test", "snapshots", "m1", "rails_adopt_gem", relativeFile);
+  if (!existsSync(actualPath)) {
+    fail(`missing generated gem snapshot source: ${relativeFile}`);
+  }
+  const actual = readFileSync(actualPath, "utf8");
+  if (!existsSync(snapshotPath)) {
+    fail(`missing gem adoption snapshot: ${snapshotPath}`);
+  }
+  const expected = readFileSync(snapshotPath, "utf8");
+  if (actual !== expected) {
+    fail(`gem adoption snapshot mismatch: ${relativeFile}`);
   }
 }
 

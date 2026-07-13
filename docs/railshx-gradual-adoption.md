@@ -157,6 +157,27 @@ YARD evidence over shape-only Ruby inference. LLM suggestions remain advisory
 patches after this deterministic pass and must still compile and pass runtime
 gates.
 
+For an installed generic gem, RailsHx performs that YARD selection
+automatically inside the Bundler-owned boundary:
+
+```bash
+bin/rails generate hxruby:adopt --gem some_gem --discover
+bin/rails generate hxruby:adopt --gem some_gem --write contracts
+
+bundle exec rake hxruby:gen:adopt GEM=some_gem WRITE=contracts
+```
+
+The generator resolves the gem from the app `Gemfile`/Bundler definition,
+canonicalizes its `lib` root, rejects Ruby-source symlinks that escape that
+root, and parses source without requiring it. Discovery reports constants that
+have real YARD signature tags. During writes, those constants become strict
+YARD contracts: supported methods are precise, while undocumented, unsupported,
+complex, or source-only reopened methods are emitted only as review comments.
+The generated YARD-backed extern therefore contains no `Dynamic`, `cast`,
+`untyped`, or raw Ruby fallback. A constant with no YARD signature metadata
+keeps the older explicit Ruby-shape review skeleton so adoption does not pretend
+that source alone proved application types.
+
 Add or tighten method signatures as the Ruby boundary stabilizes, then let Haxe enforce those calls from app code.
 
 For Ruby extension modules, the generator can inspect a checked source file and scaffold `@:rubyMixin` contracts:

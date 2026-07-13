@@ -25,10 +25,11 @@ There are two time horizons:
 - **Implemented now:** use `hxruby:adopt --gem NAME --discover` for a
   deterministic Bundler inventory and `hxruby:adopt --gem NAME --write
   contracts` for a conservative app-local Haxe skeleton under
-  `src_haxe/interop/gems/<gem>`. For a selected service constant with
-  YARD-documented source, `hxruby:adopt --service CONSTANT --yard PATH` now
-  generates the first precise deterministic extern subset without executing
-  Ruby.
+  `src_haxe/interop/gems/<gem>`. Generic gem adoption automatically discovers
+  actual YARD signature tags in Bundler-resolved `lib/**/*.rb` files and uses
+  the precise-or-omitted YARD contract for those constants. For a selected app
+  service constant, `hxruby:adopt --service CONSTANT --yard PATH` exposes the
+  same precise deterministic subset explicitly without executing Ruby.
 - **Planned next:** grow a dedicated `hxruby:gem-layer` generator and reusable
   companion packages such as DeviseHx once the generic adoption lane has enough
   production evidence.
@@ -49,19 +50,30 @@ present in Bundler's resolved specs, the gem path cannot be resolved safely, or
 the write mode is not explicit. Generated Haxe may contain `Dynamic` only with
 review/TODO markers because Ruby source rarely proves complete Haxe types.
 
-The separate `--yard` service lane is stricter than that generic gem skeleton:
-it accepts only documented positional signatures whose scalar, nilable,
-Boolean, or `Array<T>` types are fully understood. Unsupported or incomplete
-methods are omitted with review markers instead of receiving a broad type. RBS
-has precedence over YARD for the same constant, and YARD has precedence over
-shape-only Ruby-source inference. This is an app-local building block for gem
-adoption; automatic YARD discovery across an installed gem remains future
-`hxruby:gem-layer` work.
+The YARD-backed part of a generic gem skeleton is as strict as the separate
+`--yard` service lane: it accepts only documented positional signatures whose
+scalar, nilable, Boolean, or `Array<T>` types are fully understood. Once any
+real YARD signature tag is found for a constant, supported methods are precise
+and unsupported, undocumented, complex, or reopened source-only methods are
+omitted with review markers instead of receiving a broad type. Constants with
+no YARD signature metadata retain the existing review-marked Ruby-shape
+skeleton. RBS has precedence over explicitly supplied YARD for an app service,
+and YARD has precedence over shape-only Ruby-source inference. A dedicated
+`hxruby:gem-layer` command and broader metadata inventory remain future work;
+automatic strict YARD discovery itself is implemented in the generic adoption
+lane.
+
+Gem inspection trusts Bundler only for the installed root. RailsHx canonicalizes
+the resolved `lib` directory and every discovered Ruby source, rejects symlink
+escapes, parses with `Ripper`, and never requires or executes gem files. Reopened
+constants are aggregated deterministically so a later source file cannot
+silently overwrite a previously generated extern; any YARD-backed reopening
+makes the whole constant precise-or-omitted.
 
 The first pass should be deterministic. Before asking an LLM for help, the
 generator should mechanically inventory what it can prove: installed gem path and
-version, exported Ruby constants, RBS signatures, explicitly selected YARD
-service signatures, source-defined modules and
+version, exported Ruby constants, RBS signatures, automatically discovered gem
+YARD signatures, explicitly selected app-service YARD signatures, source-defined modules and
 methods, Rails generators, routes, migrations, initializers, model concerns, and
 test helpers. That pass should emit a conservative Haxe skeleton plus explicit
 TODO/review markers for anything uncertain.

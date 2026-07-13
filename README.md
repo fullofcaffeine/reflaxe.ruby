@@ -292,6 +292,8 @@ bin/rails generate hxruby:scaffold Todo title:String --controller --skip-tests
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter --template legacy/badge --locals label:String,tone:String
 bin/rails generate hxruby:adopt --service RbsPriceFormatter --rbs sig/rbs_price_formatter.rbs
 bin/rails generate hxruby:adopt --service Billing::PriceFormatter --yard app/services/billing/price_formatter.rb
+bin/rails generate hxruby:adopt --gem some_gem --discover
+bin/rails generate hxruby:adopt --gem some_gem --write contracts
 bin/rails generate hxruby:adopt --schema --discover
 bin/rails generate hxruby:adopt --schema --models Todo,User
 bin/rails generate hxruby:adopt --migrations --discover
@@ -306,6 +308,16 @@ incomplete methods behind review comments instead of widening them to
 YARD wins over loose `--service-source` inference. See
 [Gradual Adoption](docs/railshx-gradual-adoption.md) for the supported type and
 method subset.
+
+Generic `--gem ... --discover` / `--write contracts` adoption resolves the gem
+through the app's Bundler definition and automatically inspects YARD tags under
+the resolved gem `lib` root without loading gem code. A constant with actual
+YARD signature tags gets the same strict precise-or-omitted contract as the
+explicit `--yard` lane; undocumented, unsupported, and reopened source-only
+methods become review comments instead of `Dynamic`. Constants with no YARD
+signature metadata retain the existing visibly review-marked Ruby-shape
+skeleton. Canonical path checks reject gem-source symlinks that escape the
+Bundler-resolved `lib` root.
 
 Inside a generated RailsHx app, the recommended development flow is one command:
 
@@ -566,6 +578,7 @@ rake hxruby:gen:app
 rake hxruby:gen:adopt SERVICE=LegacyPriceFormatter TEMPLATE=legacy/badge LOCALS=label:String,tone:String
 rake hxruby:gen:adopt SERVICE=RbsPriceFormatter RBS=sig/rbs_price_formatter.rbs
 rake hxruby:gen:adopt SERVICE=Billing::PriceFormatter YARD=app/services/billing/price_formatter.rb
+rake hxruby:gen:adopt GEM=some_gem WRITE=contracts
 rake hxruby:gen:routes
 rake hxruby:gen:model MODEL=Todo FIELDS=title:String CONTROLLER=1
 rake hxruby:gen:mailer MAILER=UserMailer ACTION=welcome

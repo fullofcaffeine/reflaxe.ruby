@@ -397,6 +397,22 @@ unsafe, or unparseable files fail closed. When inputs overlap, service metadata
 precedence is RBS, then YARD, then shape-only `--service-source` inference. See
 [Gradual Adoption](railshx-gradual-adoption.md) for the exact first subset.
 
+Installed generic gem with automatic YARD selection:
+
+```bash
+bin/rails generate hxruby:adopt --gem some_gem --discover
+bin/rails generate hxruby:adopt --gem some_gem --write contracts
+```
+
+Bundler owns the gem root and runtime. The generator canonicalizes the resolved
+`lib` tree, rejects symlink escapes, and parses Ruby without loading it.
+Discovery identifies constants with actual YARD signature tags. On write, a
+YARD-backed constant is strict precise-or-omitted across reopened files, so no
+uncertain signature is widened to `Dynamic`; constants without signature tags
+remain visibly review-marked Ruby-shape skeletons. The generated
+`docs/railshx/gems/<gem>.md` file records the metadata source chosen for every
+emitted constant.
+
 Failure examples: missing `db/schema.rb`, `structure.sql` input, unsafe paths,
 unconventional table/column names, Haxe field-name collisions, unknown DB types
 without `--allow-dynamic`, and non-owned output collisions fail closed.

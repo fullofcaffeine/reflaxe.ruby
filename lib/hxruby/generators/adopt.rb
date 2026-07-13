@@ -147,12 +147,21 @@ module HXRuby
           end
 
           inventory = gem_inventory(gem_name)
+          contracts = gem_service_contracts(inventory)
           puts "[rails:adopt:gem] #{inventory.fetch(:name)} #{inventory.fetch(:version)}"
           puts "  source files: #{inventory.fetch(:ruby_files).length}"
           if inventory.fetch(:constants).empty?
             puts "  constants: (none found)"
           else
             inventory.fetch(:constants).each { |constant| puts "  constant: #{constant}" }
+          end
+          strict_yard_constants = contracts.filter_map do |contract|
+            contract.fetch(:constant_name) if contract.fetch(:source_kind, "ruby_source") == "yard"
+          end
+          if strict_yard_constants.empty?
+            puts "  strict YARD contracts: (none found)"
+          else
+            strict_yard_constants.each { |constant| puts "  strict YARD contract: #{constant}" }
           end
           puts "  next: bin/rails generate hxruby:adopt --gem #{gem_name} --write contracts"
         end
@@ -600,11 +609,16 @@ module HXRuby
           end
 
           inventory = gem_inventory(gem_name)
+          contracts = gem_service_contracts(inventory)
           package = "#{@package_name}.gems.#{Common.file_name(gem_name).tr("-", "_")}"
           gem_dir = File.join(@output_dir, "src_haxe", Common.package_path(package))
           write_owned(File.join(gem_dir, "GemLayer.hx"), render_gem_layer(package, inventory), kind: "haxe_adopted_gem_layer")
-          write_owned(File.join(@output_dir, "docs", "railshx", "gems", "#{Common.file_name(gem_name)}.md"), render_gem_layer_doc(inventory), kind: "docs")
-          gem_service_contracts(inventory).each do |contract|
+          write_owned(
+            File.join(@output_dir, "docs", "railshx", "gems", "#{Common.file_name(gem_name)}.md"),
+            render_gem_layer_doc(inventory, contracts),
+            kind: "docs"
+          )
+          contracts.each do |contract|
             native_name = contract.fetch(:constant_name)
             next if native_name.to_s.empty?
 
@@ -620,10 +634,10 @@ module HXRuby
 
       def gem_inventory(gem_name)
         spec = resolve_bundler_gem(gem_name)
-        gem_root = File.expand_path(spec.full_gem_path)
+        gem_root = File.realpath(File.expand_path(spec.full_gem_path))
         raise Error, "Bundler gem #{gem_name} has an unsafe or missing path." unless File.directory?(gem_root)
 
-        ruby_files = Dir.glob(File.join(gem_root, "lib", "**", "*.rb")).sort
+        ruby_files = checked_gem_ruby_files(gem_root, gem_name)
         constants = ruby_files.flat_map { |path| GemSourceInventory.new(path).constants }.uniq.sort
         {
           name: spec.name,
@@ -631,6 +645,35 @@ module HXRuby
           ruby_files: ruby_files,
           constants: constants,
         }
+      rescue Errno::ENOENT, Errno::EACCES => error
+        raise Error, "Unable to inspect Bundler gem #{gem_name} source paths safely: #{error.message}"
+      end
+
+      # Bundler is authoritative for the installed gem root, but individual
+      # lib entries may still be symlinks. Canonicalize every Ruby source and
+      # reject escapes so deterministic adoption never reads an unrelated file
+      # merely because it was reachable through the gem's directory tree.
+      def checked_gem_ruby_files(gem_root, gem_name)
+        lib_root = File.join(gem_root, "lib")
+        return [] unless File.directory?(lib_root)
+
+        real_lib_root = File.realpath(lib_root)
+        unless path_inside?(real_lib_root, gem_root)
+          raise Error, "Bundler gem #{gem_name} lib root escapes the resolved gem path."
+        end
+
+        Dir.glob(File.join(lib_root, "**", "*.rb")).sort.map do |source_path|
+          real_source = File.realpath(source_path)
+          unless File.file?(real_source) && path_inside?(real_source, real_lib_root)
+            raise Error, "Bundler gem #{gem_name} Ruby source escapes the resolved gem lib root: #{source_path}"
+          end
+
+          real_source
+        end.uniq
+      end
+
+      def path_inside?(path, root)
+        path == root || path.start_with?("#{root}#{File::SEPARATOR}")
       end
 
       def resolve_bundler_gem(gem_name)
@@ -653,11 +696,86 @@ module HXRuby
       end
 
       def gem_service_contracts(inventory)
-        inventory.fetch(:ruby_files).flat_map do |source_path|
-          ServiceSourceParser.new(source_path, "Bundler gem #{inventory.fetch(:name)}").contracts
+        source_label = "Bundler gem #{inventory.fetch(:name)}"
+        candidates = inventory.fetch(:ruby_files).flat_map do |source_path|
+          source_contracts = ServiceSourceParser.new(source_path, source_label).contracts
+          yard_contracts = YardSourceParser.new(source_path, source_label).contracts
+          yard_by_constant = yard_contracts.group_by { |contract| contract.fetch(:constant_name) }
+
+          source_contracts.map do |contract|
+            # Both parsers walk the same Ripper tree, so consume matching
+            # reopenings in declaration order instead of collapsing repeated
+            # constants through a hash key before the cross-file merge runs.
+            yard_contract = yard_by_constant.fetch(contract.fetch(:constant_name), []).shift
+            if yard_contract&.fetch(:yard_signature_tags, false)
+              yard_contract
+            else
+              contract
+            end
+          end
         rescue Error
+          # A file Ripper cannot parse contributes no guessed signatures. Other
+          # parseable files in the Bundler-resolved gem remain reviewable.
           []
         end
+
+        candidates
+          .group_by { |contract| contract.fetch(:constant_name) }
+          .sort_by { |constant_name, _contracts| constant_name }
+          .map { |_constant_name, contracts| merge_gem_service_contracts(contracts, source_label) }
+      end
+
+      # Ruby constants may be reopened across gem files. Aggregate them once so
+      # output does not depend on a later file overwriting an earlier contract.
+      # If any reopening carries real YARD signature tags, the whole constant
+      # becomes strict: YARD methods win and source-only methods become review
+      # comments rather than leaking shape-inferred Dynamic types.
+      def merge_gem_service_contracts(contracts, source_label)
+        yard_contracts = contracts.select { |contract| contract.fetch(:source_kind, "ruby_source") == "yard" }
+        strict_yard = yard_contracts.any?
+        selected = strict_yard ? yard_contracts : contracts
+        merged = {
+          constant_name: contracts.first.fetch(:constant_name),
+          source_label: source_label,
+          constructors: merge_gem_methods(selected, :constructors, strict_yard: strict_yard),
+          instance: merge_gem_methods(selected, :instance, strict_yard: strict_yard),
+          class_methods: merge_gem_methods(selected, :class_methods, strict_yard: strict_yard),
+        }
+        return merged unless strict_yard
+
+        merged[:source_kind] = "yard"
+        source_only = contracts - yard_contracts
+        %i[constructors instance class_methods].each do |kind|
+          known_names = merged.fetch(kind).map { |method| method.fetch(:ruby_name) }
+          source_only.each do |contract|
+            contract.fetch(kind).each do |method|
+              next if known_names.include?(method.fetch(:ruby_name))
+
+              merged.fetch(kind) << {
+                ruby_name: method.fetch(:ruby_name),
+                skip_reason: "no deterministic YARD signature was found for this method in the reopened gem source.",
+              }
+              known_names << method.fetch(:ruby_name)
+            end
+          end
+        end
+        merged
+      end
+
+      def merge_gem_methods(contracts, kind, strict_yard:)
+        contracts
+          .flat_map { |contract| contract.fetch(kind) }
+          .group_by { |method| method.fetch(:ruby_name) }
+          .map do |ruby_name, methods|
+            if strict_yard && methods.length > 1
+              {
+                ruby_name: ruby_name,
+                skip_reason: "multiple YARD-documented definitions were found across gem sources; Ruby load order is not inferred.",
+              }
+            else
+              methods.first
+            end
+          end
       end
 
       def render_gem_layer(package, inventory)
@@ -667,8 +785,8 @@ module HXRuby
           "// RailsHx generated this app-local gem layer from deterministic Bundler metadata.",
           "// Runtime ownership stays with the Ruby gem; this class only records the",
           "// reviewed Haxe contract boundary for application code and tooling.",
-          "// Review required: generated externs may contain Dynamic placeholders when",
-          "// Ruby source/RBS did not prove a precise Haxe type.",
+          "// Strict YARD-backed externs are precise-or-omitted. Review required:",
+          "// source-only externs may contain Dynamic until deterministic metadata proves a type.",
           "class GemLayer {",
           "\tpublic static inline final gemName:String = #{Common.haxe_string(inventory.fetch(:name))};",
           "\tpublic static inline final version:String = #{Common.haxe_string(inventory.fetch(:version))};",
@@ -678,13 +796,21 @@ module HXRuby
         ].join("\n")
       end
 
-      def render_gem_layer_doc(inventory)
+      def render_gem_layer_doc(inventory, contracts)
+        contract_lines = contracts.map do |contract|
+          constant_name = contract.fetch(:constant_name)
+          if contract.fetch(:source_kind, "ruby_source") == "yard"
+            "- `#{constant_name}`: strict deterministic YARD contract; supported signatures are precise and uncertain methods are omitted for review."
+          else
+            "- `#{constant_name}`: Ruby-shape skeleton; `Dynamic` placeholders remain explicit review boundaries until deterministic type metadata is available."
+          end
+        end
         [
           "# RailsHx Gem Layer: #{inventory.fetch(:name)}",
           "",
           "- Gem: `#{inventory.fetch(:name)}`",
           "- Version: `#{inventory.fetch(:version)}`",
-          "- Metadata source: Bundler app Gemfile plus parsed Ruby source files.",
+          "- Metadata source: Bundler app Gemfile plus parsed Ruby source and automatically discovered YARD tags.",
           "- Runtime owner: the Ruby gem and Bundler.",
           "- Haxe owner: app-local reviewed extern/contracts under `src_haxe/#{Common.package_path(@package_name)}/gems/#{Common.file_name(inventory.fetch(:name)).tr("-", "_")}`.",
           "",
@@ -692,8 +818,13 @@ module HXRuby
           "",
           *(inventory.fetch(:constants).empty? ? ["- None found."] : inventory.fetch(:constants).map { |constant| "- `#{constant}`" }),
           "",
+          "## Generated Contract Sources",
+          "",
+          *(contract_lines.empty? ? ["- No parseable method contracts found."] : contract_lines),
+          "",
           "## Review Checklist",
           "",
+          "- Strict YARD contracts never synthesize broad fallback types; review omitted-method comments and add deterministic metadata before exposing those APIs.",
           "- Replace any generated `Dynamic` placeholders with precise Haxe types where the app relies on that API.",
           "- Keep runtime setup in Ruby/Rails: Gemfile, initializers, migrations, routes, and gem generators.",
           "- Run `bundle exec rake hxruby:compile`, Rails tests, route parity, and browser/runtime gates relevant to this gem.",
@@ -2029,6 +2160,17 @@ module HXRuby
           @source_lines = @source.lines
         end
 
+        # Expose only the provenance bit the gem adoption lane needs. This is
+        # derived from actual YARD signature tags, not from arbitrary comments,
+        # so a normally documented class does not accidentally opt into the
+        # strict precise-or-omitted contract.
+        def contracts
+          super.map do |contract|
+            methods = contract.fetch(:constructors) + contract.fetch(:instance) + contract.fetch(:class_methods)
+            contract.merge(yard_signature_tags: methods.any? { |method| method.fetch(:yard_signature_tags, false) })
+          end
+        end
+
         private
 
         def contract_metadata
@@ -2052,20 +2194,31 @@ module HXRuby
 
         def yard_method_info(ruby_name, params_node, line_number)
           signature = params_info(params_node)
+          tags = yard_tags_for(line_number)
           if signature.fetch(:complex)
             return {
               ruby_name: ruby_name,
               **signature,
               skip_reason: "splat, keyword, block, or post arguments are outside the first deterministic YARD subset.",
+              yard_signature_tags: tags.fetch(:signature_tags),
             }
           end
 
-          tags = yard_tags_for(line_number)
-          if tags.fetch(:lines).empty?
-            return skipped_method(ruby_name, signature, "no immediately preceding YARD @param/@return tags were found.")
+          unless tags.fetch(:signature_tags)
+            return skipped_method(
+              ruby_name,
+              signature,
+              "no immediately preceding YARD @param/@return tags were found.",
+              yard_signature_tags: false
+            )
           end
           if tags.fetch(:issues).any?
-            return skipped_method(ruby_name, signature, tags.fetch(:issues).join(" "))
+            return skipped_method(
+              ruby_name,
+              signature,
+              tags.fetch(:issues).join(" "),
+              yard_signature_tags: tags.fetch(:signature_tags)
+            )
           end
 
           args = signature.fetch(:args)
@@ -2077,7 +2230,12 @@ module HXRuby
             parts = []
             parts << "missing @param tag(s) for #{missing_names.join(", ")}" if missing_names.any?
             parts << "unknown @param tag(s) for #{extra_names.join(", ")}" if extra_names.any?
-            return skipped_method(ruby_name, signature, "YARD parameter names do not match Ruby: #{parts.join("; ")}.")
+            return skipped_method(
+              ruby_name,
+              signature,
+              "YARD parameter names do not match Ruby: #{parts.join("; ")}.",
+              yard_signature_tags: tags.fetch(:signature_tags)
+            )
           end
 
           typed_args = []
@@ -2088,7 +2246,8 @@ module HXRuby
               return skipped_method(
                 ruby_name,
                 signature,
-                "unsupported YARD @param #{arg.fetch(:name)} type [#{type_spec}]; use a precise scalar, nilable scalar, or Array<T> contract."
+                "unsupported YARD @param #{arg.fetch(:name)} type [#{type_spec}]; use a precise scalar, nilable scalar, or Array<T> contract.",
+                yard_signature_tags: tags.fetch(:signature_tags)
               )
             end
             typed_args << arg.merge(type: haxe_type)
@@ -2099,7 +2258,12 @@ module HXRuby
           else
             return_spec = tags[:return]
             unless return_spec
-              return skipped_method(ruby_name, signature, "a typed @return tag is required.")
+              return skipped_method(
+                ruby_name,
+                signature,
+                "a typed @return tag is required.",
+                yard_signature_tags: tags.fetch(:signature_tags)
+              )
             end
             yard_haxe_type(return_spec, role: :return)
           end
@@ -2107,7 +2271,8 @@ module HXRuby
             return skipped_method(
               ruby_name,
               signature,
-              "unsupported YARD @return type [#{tags[:return]}]; use a precise scalar, nilable scalar, Array<T>, or void contract."
+              "unsupported YARD @return type [#{tags[:return]}]; use a precise scalar, nilable scalar, Array<T>, or void contract.",
+              yard_signature_tags: tags.fetch(:signature_tags)
             )
           end
 
@@ -2117,14 +2282,16 @@ module HXRuby
             complex: false,
             return_type: return_type,
             comment: "Inferred from deterministic YARD @param/@return tags; verify the documented contract matches runtime behavior.",
+            yard_signature_tags: tags.fetch(:signature_tags),
           }
         end
 
-        def skipped_method(ruby_name, signature, reason)
+        def skipped_method(ruby_name, signature, reason, yard_signature_tags:)
           {
             ruby_name: ruby_name,
             **signature,
             skip_reason: reason,
+            yard_signature_tags: yard_signature_tags,
           }
         end
 
@@ -2175,7 +2342,10 @@ module HXRuby
             end
           end
 
-          { lines: lines, params: params, return: return_type, issues: issues }
+          signature_tags = lines.any? do |line|
+            line.start_with?("@param", "@return", *UNSUPPORTED_SIGNATURE_TAGS)
+          end
+          { lines: lines, params: params, return: return_type, issues: issues, signature_tags: signature_tags }
         end
 
         def yard_haxe_type(raw_type, role:)
