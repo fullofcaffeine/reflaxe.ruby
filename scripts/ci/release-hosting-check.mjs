@@ -68,7 +68,10 @@ class FakeAdapter {
 
 	async updateDraftMetadata(_id, _identity, body) {
 		this.operations.push("metadata");
-		this.release.body = body;
+		this.release.tag_name = _identity.gitTag;
+		this.release.name = _identity.gitTag;
+		this.release.target_commitish = _identity.sourceSha;
+		if (body !== undefined) this.release.body = body;
 		return this.release;
 	}
 
@@ -152,6 +155,13 @@ try {
 	assert.equal(finalizedResult.state, "published-immutable");
 	assert.deepEqual(finalized.operations, ["tag-check", "publish"], "normal publication only verifies then publishes");
 
+	const temporaryDraft = completeFixture(expected);
+	temporaryDraft.release.tag_name = "untagged-deadbeef";
+	const temporaryResult = await reconcileHostedRelease({ mode: "finalize", identity, expected, adapter: temporaryDraft });
+	assert.equal(temporaryResult.state, "published-immutable");
+	assert.deepEqual(temporaryDraft.operations, ["metadata", "publish"], "temporary GitHub draft tag must bind before publication");
+	assert.equal(temporaryDraft.release.tag_name, identity.gitTag, "published draft must use the real immutable tag");
+
 	const partialFinalize = completeFixture(expected.slice(0, 2));
 	await expectHostingFailure(
 		"normal partial draft",
@@ -224,7 +234,7 @@ try {
 				return new Response("not found", { status: 404 });
 			}
 			if (url.endsWith("/releases?per_page=100&page=1")) {
-				return Response.json([releaseRecord()]);
+				return Response.json([{ ...releaseRecord(), tag_name: "untagged-deadbeef" }]);
 			}
 			return new Response("unexpected request", { status: 500 });
 		},
@@ -233,7 +243,7 @@ try {
 	assert.equal(rediscoveredDraft?.draft, true, "authenticated list lookup must rediscover a draft omitted by tag lookup");
 	assert.equal(requests.length, 2, "draft lookup must use one tag request and one bounded list page");
 
-	console.log("[release-hosting] OK: 11 creation, draft lookup, repair, verification, and immutability states");
+	console.log("[release-hosting] OK: 12 creation, draft binding, lookup, repair, verification, and immutability states");
 } finally {
 	rmSync(tempRoot, { recursive: true, force: true });
 }

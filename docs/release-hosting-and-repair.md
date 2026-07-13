@@ -43,8 +43,12 @@ RubyHx tooling.
 GitHub's release-by-tag endpoint omits drafts. The shared adapter therefore
 tries that narrow endpoint first for completed releases, then uses the
 authenticated, bounded release-list pagination required to rediscover the
-matching draft by its exact `tag_name`. Duplicate matches and pagination beyond
-the safety limit fail closed.
+matching draft. GitHub may expose a draft through an internal `untagged-<hex>`
+identifier; that shape is accepted only when the draft name is the exact `vV`.
+The verifier checks the complete hosted asset set before rebinding the draft's
+tag, target SHA, and name to the release identity, then validates them again
+before publication. Completed releases never accept an internal tag. Duplicate
+matches and pagination beyond the safety limit fail closed.
 
 ## Exact hosted asset set
 

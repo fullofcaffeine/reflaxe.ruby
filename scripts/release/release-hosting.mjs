@@ -240,8 +240,16 @@ export function verifyGitIdentity(identity, repoRoot = root) {
 	return identity;
 }
 
-function validateReleaseMetadata(release, identity, expectedDraft) {
-	if (release?.tag_name !== identity.gitTag) fail("GitHub Release tag does not match release identity");
+function hasTemporaryDraftTag(release, identity) {
+	return release?.draft === true
+		&& release?.name === identity.gitTag
+		&& /^untagged-[0-9a-f]+$/.test(release?.tag_name ?? "");
+}
+
+function validateReleaseMetadata(release, identity, expectedDraft, { allowTemporaryDraftTag = false } = {}) {
+	if (release?.tag_name !== identity.gitTag && !(allowTemporaryDraftTag && hasTemporaryDraftTag(release, identity))) {
+		fail("GitHub Release tag does not match release identity");
+	}
 	if (release?.name !== identity.gitTag) fail("GitHub Release name must equal its immutable version tag");
 	if (release?.prerelease !== false) fail("normal RubyHx releases must not be GitHub prereleases");
 	if (expectedDraft != null && release?.draft !== expectedDraft) {
@@ -322,7 +330,8 @@ export async function reconcileHostedRelease({
 		if (mode !== "repair") fail(`GitHub Release ${identity.gitTag} does not exist`);
 		release = await adapter.createDraft(identity, notes);
 	}
-	validateReleaseMetadata(release, identity, release.draft);
+	const temporaryDraftTag = hasTemporaryDraftTag(release, identity);
+	validateReleaseMetadata(release, identity, release.draft, { allowTemporaryDraftTag: temporaryDraftTag });
 
 	if (release.draft === false) {
 		if (release.immutable !== true) fail(`completed ${identity.gitTag} is not protected by immutable releases`);
@@ -351,6 +360,10 @@ export async function reconcileHostedRelease({
 			await adapter.uploadAsset(release.id, asset);
 		}
 		release = await adapter.getRelease(identity.gitTag);
+	} else if (temporaryDraftTag) {
+		// Verify uploaded bytes before binding GitHub's temporary draft identifier to the real tag.
+		await verifyHostedAssets(adapter, release, expected);
+		release = await adapter.updateDraftMetadata(release.id, identity);
 	}
 
 	validateReleaseMetadata(release, identity, true);
@@ -412,7 +425,11 @@ export class GitHubReleaseAdapter {
 		for (let page = 1; page <= 100; page += 1) {
 			const releases = await this.request(`/repos/${this.repository}/releases?per_page=100&page=${page}`);
 			if (!Array.isArray(releases)) fail("GitHub Release list response is invalid");
-			const matches = releases.filter((release) => release?.tag_name === tag);
+			const matches = releases.filter((release) => release?.tag_name === tag || (
+				release?.draft === true
+				&& release?.name === tag
+				&& /^untagged-[0-9a-f]+$/.test(release?.tag_name ?? "")
+			));
 			if (matches.length > 1) fail(`GitHub returned duplicate releases for ${tag}`);
 			if (matches.length === 1) return matches[0];
 			if (releases.length < 100) return null;
@@ -454,9 +471,17 @@ export class GitHubReleaseAdapter {
 	}
 
 	updateDraftMetadata(id, identity, notes) {
+		const body = {
+			tag_name: identity.gitTag,
+			target_commitish: identity.sourceSha,
+			name: identity.gitTag,
+			draft: true,
+			prerelease: false,
+		};
+		if (notes !== undefined) body.body = notes;
 		return this.request(`/repos/${this.repository}/releases/${id}`, {
 			method: "PATCH",
-			body: { name: identity.gitTag, body: notes, draft: true, prerelease: false },
+			body,
 		});
 	}
 
