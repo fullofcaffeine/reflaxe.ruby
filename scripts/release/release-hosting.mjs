@@ -400,8 +400,24 @@ export class GitHubReleaseAdapter {
 		return binaryResponse ? Buffer.from(await response.arrayBuffer()) : response.json();
 	}
 
-	getRelease(tag) {
-		return this.request(`/repos/${this.repository}/releases/tags/${encodeURIComponent(tag)}`, { allow404: true });
+	async getRelease(tag) {
+		const published = await this.request(
+			`/repos/${this.repository}/releases/tags/${encodeURIComponent(tag)}`,
+			{ allow404: true },
+		);
+		if (published) return published;
+
+		// GitHub's release-by-tag endpoint intentionally omits drafts. Normal publication creates
+		// the draft first, so authenticated list pagination is the only API that can rediscover it.
+		for (let page = 1; page <= 100; page += 1) {
+			const releases = await this.request(`/repos/${this.repository}/releases?per_page=100&page=${page}`);
+			if (!Array.isArray(releases)) fail("GitHub Release list response is invalid");
+			const matches = releases.filter((release) => release?.tag_name === tag);
+			if (matches.length > 1) fail(`GitHub returned duplicate releases for ${tag}`);
+			if (matches.length === 1) return matches[0];
+			if (releases.length < 100) return null;
+		}
+		fail(`GitHub Release pagination exceeded the safety limit while finding ${tag}`);
 	}
 
 	downloadAsset(id) {

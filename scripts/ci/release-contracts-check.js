@@ -273,7 +273,9 @@ expectIncludes(releaseArtifactPrepare, 'release-hosting.mjs", "local"', "pre-tag
 expectIncludes(releaseHosting, "published-immutable", "hosted release finalizer");
 expectIncludes(releaseHosting, "unexpected assets", "hosted release fail-closed asset set");
 expectIncludes(releaseHosting, '"ls-remote"', "local/origin tag identity gate");
+expectIncludes(releaseHosting, "releases?per_page=100", "authenticated draft release lookup");
 expectIncludes(releaseHostingCheck, "completed immutable release must be verification-only", "hosted release state tests");
+expectIncludes(releaseHostingCheck, "draft lookup must use one tag request", "hosted draft lookup regression test");
 expectIncludes(releaseRepairWorkflow, "persist-credentials: false", "repair workflow tag mutation guard");
 expectIncludes(haxelibPackageBuilder, `"--run", "Run", "build", "_Build"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"vendor", "reflaxe"`, "Haxelib package builder");

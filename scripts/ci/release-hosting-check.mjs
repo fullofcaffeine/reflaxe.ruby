@@ -6,6 +6,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+	GitHubReleaseAdapter,
 	ReleaseHostingError,
 	reconcileHostedRelease,
 } from "../release/release-hosting.mjs";
@@ -213,7 +214,26 @@ try {
 		/tag does not match/,
 	);
 
-	console.log("[release-hosting] OK: 10 creation, repair, verification, and immutability states");
+	const requests = [];
+	const draftLookup = new GitHubReleaseAdapter({
+		repository: "fullofcaffeine/reflaxe.ruby",
+		token: "test-token",
+		fetchImpl: async (url) => {
+			requests.push(url);
+			if (url.endsWith(`/releases/tags/${identity.gitTag}`)) {
+				return new Response("not found", { status: 404 });
+			}
+			if (url.endsWith("/releases?per_page=100&page=1")) {
+				return Response.json([releaseRecord()]);
+			}
+			return new Response("unexpected request", { status: 500 });
+		},
+	});
+	const rediscoveredDraft = await draftLookup.getRelease(identity.gitTag);
+	assert.equal(rediscoveredDraft?.draft, true, "authenticated list lookup must rediscover a draft omitted by tag lookup");
+	assert.equal(requests.length, 2, "draft lookup must use one tag request and one bounded list page");
+
+	console.log("[release-hosting] OK: 11 creation, draft lookup, repair, verification, and immutability states");
 } finally {
 	rmSync(tempRoot, { recursive: true, force: true });
 }

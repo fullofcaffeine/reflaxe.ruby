@@ -40,6 +40,12 @@ everything to a draft, then publish. A failure before step 5 leaves a mutable
 draft that repair can safely resume. A completed release is never edited by
 RubyHx tooling.
 
+GitHub's release-by-tag endpoint omits drafts. The shared adapter therefore
+tries that narrow endpoint first for completed releases, then uses the
+authenticated, bounded release-list pagination required to rediscover the
+matching draft by its exact `tag_name`. Duplicate matches and pagination beyond
+the safety limit fail closed.
+
 ## Exact hosted asset set
 
 Only these custom assets are accepted:
@@ -63,9 +69,14 @@ automatically.
 input is an existing safe `v<SemVer>` tag. It validates the remote ref before
 checkout, checks out `refs/tags/<input>` with full history and
 `persist-credentials: false`, parses `V` from that exact input identity, and
-rebuilds from the tag commit. It never runs semantic-release, checks out
-`main`, selects a next version, or creates, moves, force-pushes, or deletes a
-tag. Repair and normal publication share the fixed
+rebuilds from the clean tag commit. Only after the four artifacts exist, the
+workflow overlays `scripts/release/**` from `github.workflow_sha`: the exact
+reviewed commit that supplied the dispatched workflow. This separates immutable
+artifact source from repair-tool provenance, allowing a repair bug to be fixed
+without checking out `main` or letting newer source enter the packages. The
+workflow rechecks `HEAD` and the tag after that tooling-only overlay. It never
+runs semantic-release, selects a next version, or creates, moves, force-pushes,
+or deletes a tag. Repair and normal publication share the fixed
 `release-${{ github.repository }}` concurrency group.
 
 Repair behavior is deliberately state-dependent:

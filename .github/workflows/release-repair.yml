@@ -19,6 +19,9 @@ env:
   NODE_VERSION: "22.14.0"
   NPM_VERSION: "10.9.2"
   HAXE_VERSION: "4.3.7"
+  # The workflow file and repair implementation share one reviewed commit. Artifact source remains
+  # the immutable input tag; only release reconciliation tooling is overlaid after the clean build.
+  REPAIR_TOOL_SHA: ${{ github.workflow_sha }}
 
 jobs:
   repair:
@@ -84,9 +87,8 @@ jobs:
           ./node_modules/.bin/lix use haxe "4.3.7"
           test "$(haxe -version)" = "4.3.7"
 
-      - name: Rebuild, reconcile the draft if needed, and verify immutability
+      - name: Rebuild exact artifacts from the immutable input tag
         env:
-          GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
@@ -94,4 +96,22 @@ jobs:
           SOURCE_SHA="$(git rev-parse HEAD)"
           test "$(git rev-parse "${TAG}^{commit}")" = "$SOURCE_SHA"
           node scripts/release/prepare-release-artifacts.js "$VERSION" "$TAG" "$SOURCE_SHA"
+
+      - name: Reconcile with reviewed repair tooling and verify immutability
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          [[ "$REPAIR_TOOL_SHA" =~ ^[0-9a-f]{40}$ ]]
+          if ! git cat-file -e "${REPAIR_TOOL_SHA}^{commit}"; then
+            git fetch --no-tags origin "$REPAIR_TOOL_SHA"
+          fi
+          # Build is already complete. Overlay only the workflow-owned release tooling so an old
+          # tag can benefit from reviewed repair fixes without checking out main or changing bytes.
+          git archive "$REPAIR_TOOL_SHA" scripts/release | tar -x -C "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse "${TAG}^{commit}")" = "$SOURCE_SHA"
           node scripts/release/release-hosting.mjs repair "$VERSION" "$TAG" "$SOURCE_SHA"

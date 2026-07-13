@@ -168,6 +168,7 @@ requireMatch(repair, /git\/ref\/tags\/\$\{TAG\}/, "repair must query the existin
 requireMatch(repair, /ref: refs\/tags\/\$\{\{ inputs\.tag \}\}/, "repair must check out only the input tag");
 requireMatch(repair, /persist-credentials: false/, "repair checkout must not retain Git tag push credentials");
 requireMatch(repair, /fetch-depth: 0/, "repair must fetch full tag history");
+requireMatch(repair, /REPAIR_TOOL_SHA: \$\{\{ github\.workflow_sha \}\}/, "repair tooling must bind to the reviewed workflow commit");
 assert(!/ref:\s+main\b/.test(repair), "repair must never check out main");
 assert(!repair.includes("semantic-release"), "repair must never derive a release version");
 assert(!/^\s*git tag(?:\s|$)/m.test(repair), "repair must never create, move, or delete a tag");
@@ -176,5 +177,10 @@ requireMatch(repair, /ruby-version: "3\.3\.11"/, "repair Ruby must be exact");
 requireMatch(repair, /rubygems: "3\.5\.22"/, "repair RubyGems must be exact");
 requireMatch(repair, /lix download haxe "4\.3\.7"/, "repair Haxe must be exact");
 requireMatch(repair, /release-hosting\.mjs repair/, "repair must use the shared hosted identity state machine");
+const repairBuild = repair.indexOf("prepare-release-artifacts.js");
+const repairToolOverlay = repair.indexOf('git archive "$REPAIR_TOOL_SHA" scripts/release');
+const repairReconcile = repair.indexOf("release-hosting.mjs repair");
+assert(repairBuild >= 0 && repairBuild < repairToolOverlay, "tag artifacts must be built before repair tooling is overlaid");
+assert(repairToolOverlay < repairReconcile, "reviewed repair tooling must be installed before reconciliation");
 
 console.log(`[release-workflow] OK: ${cases.length} publication event and gate cases`);
