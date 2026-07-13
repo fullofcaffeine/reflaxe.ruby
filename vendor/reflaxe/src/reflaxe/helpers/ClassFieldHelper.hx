@@ -19,6 +19,20 @@ using reflaxe.helpers.NullableMetaAccessHelper;
 	Quick static extensions to help with `ClassField`.
 **/
 class ClassFieldHelper {
+	/**
+		For types loaded late through macro APIs such as `Context.getType`, Haxe may
+		store a function field as one or more `TLazy` wrappers around its `TFun`.
+		Reflaxe must force only those delayed wrappers before inspecting function
+		arguments or return types. Following typedefs or abstracts here would change
+		the field's declared type identity and make overload cache keys less precise.
+	**/
+	static function resolveLazyType(type: Type): Type {
+		return switch(type) {
+			case TLazy(resolve): resolveLazyType(resolve());
+			case _: type;
+		}
+	}
+
 	public static function isVarKind(field: ClassField): Bool {
 		return switch(field.kind) {
 			case FVar(_, _): true;
@@ -51,7 +65,7 @@ class ClassFieldHelper {
 		} else {
 			var id = '${clsType.pack.join(".")} ${clsType.name} ${field.name}';
 			if(field.overloads.get().length != 0) {
-				id += switch(field.type) {
+				id += switch(resolveLazyType(field.type)) {
 					case TFun(args, ret): 
 						args.map(a -> a.name + " " + Std.string(a.t)) + ":" + Std.string(ret);
 					case _:
@@ -128,7 +142,7 @@ class ClassFieldHelper {
 			null;
 		}
 
-		return switch(field.type) {
+		return switch(resolveLazyType(field.type)) {
 			case TFun(args, ret): {
 				// Generate ClassFuncArg depending on whether TFunc is available.
 				var index = 0;

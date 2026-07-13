@@ -131,6 +131,21 @@ depend on a developer's global `haxelib dev reflaxe` state. This is especially
 important because the local environment can resolve `haxelib run reflaxe` to a
 different sibling checkout.
 
+The vendor currently includes the lazy function-field metadata fix proposed in
+[Reflaxe PR #52](https://github.com/SomeRanDev/reflaxe/pull/52), patch commit
+`024937acffd242f129265d969a840d3779f02bcd`. Haxe can represent a method loaded
+late through `Context.getType` as `TLazy(TFun(...))`; the patch forces only the
+lazy wrapper before Reflaxe extracts function metadata and constructs overload
+cache keys. It deliberately preserves typedef and abstract identity. Detailed
+provenance, the unsafe alternatives it avoids, and the removal rule live in
+`vendor/reflaxe/PATCHES.md`.
+
+`npm run test:reflaxe-lazy-function-field` executes that late-loaded type path
+through a real Reflaxe `filterTypes` callback. The release contract also
+requires the patched `ClassFieldHelper.hx` and `PATCHES.md` to be present in the
+haxelib archive. Once an official pinned Reflaxe release contains PR #52, keep
+the regression, update the baseline, and remove the redundant vendor delta.
+
 This vendoring is pragmatic, not a permanent design goal. A future cleanup may
 remove the vendored Reflaxe copy and depend on a normal released `reflaxe`
 haxelib once these conditions are true:

@@ -1,0 +1,9 @@
+-cp vendor/reflaxe/src
+-cp test/reflaxe_lazy_function_field
+
+--macro reflaxe.ReflectCompiler.Start()
+--macro ReflaxeLazyFunctionFieldProbe.Start()
+
+-D reflaxe_lazy_probe_output=test/.generated/reflaxe_lazy_function_field
+-main Main
+--interp

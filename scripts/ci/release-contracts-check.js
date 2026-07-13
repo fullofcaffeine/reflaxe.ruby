@@ -52,6 +52,9 @@ const releaseRepairWorkflow = readFileSync(".github/workflows/release-repair.yml
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const haxelibPackageCheckText = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
+const reflaxeLazyFunctionFieldCheck = readFileSync("scripts/ci/reflaxe-lazy-function-field-check.js", "utf8");
+const reflaxePatchDocs = readFileSync("vendor/reflaxe/PATCHES.md", "utf8");
+const reflaxeClassFieldHelper = readFileSync("vendor/reflaxe/src/reflaxe/helpers/ClassFieldHelper.hx", "utf8");
 const hxrubyGemspec = readFileSync("hxruby.gemspec", "utf8");
 const hxrubyTasks = readFileSync("lib/hxruby/tasks.rb", "utf8");
 const hxrubyAdoptGenerator = readFileSync("lib/hxruby/generators/adopt.rb", "utf8");
@@ -282,6 +285,8 @@ expectIncludes(packageJson.scripts["test:devisehx-core"] ?? "", "devisehx-core-s
 expectIncludes(packageJson.scripts["test:devisehx-controller"] ?? "", "devisehx-controller-smoke.js", "package.json scripts");
 expectIncludes(packageJson.scripts.test, "test:haxelib-package", "npm test");
 expectIncludes(packageJson.scripts.test, "test:gem-package", "npm test");
+expectIncludes(packageJson.scripts.test, "test:reflaxe-lazy-function-field", "npm test");
+expectIncludes(packageJson.scripts["test:reflaxe-lazy-function-field"] ?? "", "reflaxe-lazy-function-field-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:todoapp-playwright"] ?? "", "todoapp-playwright.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:todoapp-production"] ?? "", "production-smoke", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1", "package.json scripts");
@@ -329,6 +334,8 @@ expectIncludes(haxelibPackageCheckText, "src/Std.cross.hx", "Haxelib package che
 expectIncludes(haxelibPackageCheckText, "src/devisehx/Auth.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/routes/DeviseRoutes.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/test/IntegrationHelpers.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "vendor/reflaxe/PATCHES.md", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "vendor/reflaxe/src/reflaxe/helpers/ClassFieldHelper.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "packaged haxelib.json must be sanitized", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "\"haxe_libraries/\"", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "haxelib\", [\"newrepo\"]", "Haxelib package check");
@@ -337,6 +344,11 @@ expectIncludes(haxelibPackageCheck, "Hello from installed reflaxe.ruby", "Haxeli
 expectIncludes(haxelibPackageCheck, "TODO: lower", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "verifyArtifactManifest", "Haxelib exact content check");
 expectIncludes(haxelibPackageCheck, "sidecar.sha256", "Haxelib exact byte check");
+expectIncludes(reflaxeLazyFunctionFieldCheck, "test/reflaxe_lazy_function_field/compile.hxml", "lazy function-field runtime regression");
+expectIncludes(reflaxeLazyFunctionFieldCheck, "lazySwitchCount !== 2", "lazy function-field dual call-site contract");
+expectIncludes(reflaxeClassFieldHelper, "case TLazy(resolve): resolveLazyType(resolve());", "vendored Reflaxe lazy type resolver");
+expectIncludes(reflaxePatchDocs, "https://github.com/SomeRanDev/reflaxe/pull/52", "vendored Reflaxe patch provenance");
+expectIncludes(reflaxePatchDocs, "024937acffd242f129265d969a840d3779f02bcd", "vendored Reflaxe patch commit");
 expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");

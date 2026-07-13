@@ -496,6 +496,13 @@ script is only a thin wrapper that adds Ruby/Rails extras after Reflaxe builds
 gem/source layout, not the haxelib package's flattened Ruby-target
 `.cross.hx` sources. See [Haxelib Packaging](docs/haxelib-packaging.md).
 
+The package deliberately ships the vendored Reflaxe used by the compiler,
+including the narrowly scoped lazy function-field fix from
+[Reflaxe PR #52](https://github.com/SomeRanDev/reflaxe/pull/52). Its upstream
+commit, semantic boundary, replacement rule, and executable regression are
+recorded in [the vendored patch ledger](vendor/reflaxe/PATCHES.md) and enforced
+by `npm run test:reflaxe-lazy-function-field` plus the haxelib package gate.
+
 The incubated DeviseHx Haxe API currently ships inside this haxelib package
 under `std/devisehx/**`. Its release contract is documented in
 [DeviseHx Release Lane](docs/railshx-devisehx-release-lane.md): Rails apps keep

@@ -1,6 +1,8 @@
 # Reflaxe Framework Patches
 
-This directory contains a vendored copy of Reflaxe framework v4.0.0-beta with critical bug fixes applied by the reflaxe.elixir project.
+This directory contains a vendored copy of Reflaxe framework v4.0.0-beta. It
+retains the inherited reflaxe.elixir fixes documented below and carries the
+RubyHx-specific upstream patch whose provenance is recorded in patch 4.
 
 ## Applied Patches
 
@@ -346,9 +348,63 @@ class Test {
 - ✅ No impact on correct code generation
 - ✅ Follows defensive programming best practices
 
+### 4. Lazy Function Field Type Resolution
+
+**File Modified:**
+
+- `src/reflaxe/helpers/ClassFieldHelper.hx`
+
+**Upstream provenance:**
+
+- Pull request: [SomeRanDev/reflaxe#52](https://github.com/SomeRanDev/reflaxe/pull/52)
+- Patch commit: [`024937acffd242f129265d969a840d3779f02bcd`](https://github.com/fullofcaffeine/reflaxe/commit/024937acffd242f129265d969a840d3779f02bcd)
+- Upstream base at the time of the pull request:
+  `73a983112e039daad46b37912ab238df6bf0cf53`
+
+**Bug:**
+
+Haxe macro APIs can defer the type of a class field. In particular, a class
+loaded from `BaseCompiler.filterTypes` with `Context.getType` can expose a
+method as `TLazy(TFun(...))`. `ClassField.kind` still identifies the field as a
+method, but Reflaxe previously matched `field.type` directly against `TFun`.
+The match failed, `findFuncData` returned `null`, and the target compiler lost
+the method's typed arguments, return type, and body metadata.
+
+The same direct match was used when building cache identities for overloaded
+methods. A lazy function type could therefore omit its signature from the
+cache key and collide with another overload.
+
+**Fix and boundary:**
+
+`resolveLazyType` recursively forces only `TLazy` wrappers before the two
+function-type matches. It intentionally does not use `Context.follow` and does
+not unwrap typedefs or abstracts: those operations would erase declared type
+identity that callers and overload cache keys need to retain. No `Dynamic`,
+cast, or reflection escape is involved.
+
+**Regression ownership:**
+
+`npm run test:reflaxe-lazy-function-field` runs a minimal real Reflaxe compiler
+through `onAfterTyping` and `filterTypes`. Its otherwise-unreferenced fixture is
+loaded only with `Context.getType`; the test failed against the vendored
+predecessor with `Function information not found for lazily typed field` and
+passes with this patch. The companion source contract requires both guarded
+call sites so overload cache identity cannot silently regress.
+
+**Removal rule:**
+
+Keep this local patch while PR #52 is unmerged or absent from the released
+Reflaxe version pinned by RubyHx. After an upstream release contains the fix,
+update the vendored baseline (or switch to that deterministic haxelib release),
+rerun the regression and package gates, then remove only the redundant local
+delta; retain the regression.
+
 ---
 
-**Last Updated:** 2025-08-27  
-**Reflaxe Version:** 4.0.0-beta  
-**Commit:** 430b4187a6bf4813cf618fc3a73ccf494a2ab9f5  
-**Applied By:** reflaxe.elixir project
+**Last Updated:** 2026-07-13
+
+**Reflaxe Version:** 4.0.0-beta
+
+**Vendored Baseline Commit:** 430b4187a6bf4813cf618fc3a73ccf494a2ab9f5
+
+**Additional RubyHx Patch:** 024937acffd242f129265d969a840d3779f02bcd

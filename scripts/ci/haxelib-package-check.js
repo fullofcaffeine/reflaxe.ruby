@@ -218,8 +218,10 @@ for (const required of [
   "src/rails/macros/MailerMacro.hx",
   "src/rails/macros/ViewMacro.hx",
   "runtime/hxruby/core.rb",
+  "vendor/reflaxe/PATCHES.md",
   "vendor/reflaxe/Run.hx",
   "vendor/reflaxe/src/reflaxe/ReflectCompiler.hx",
+  "vendor/reflaxe/src/reflaxe/helpers/ClassFieldHelper.hx",
   "vendor/genes/src/genes/Generator.hx",
   "vendor/genes/haxelib.json",
 ]) {
