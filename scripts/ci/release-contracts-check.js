@@ -444,6 +444,8 @@ expectIncludes(packageJson.scripts.test, "test:reflaxe-lazy-function-field", "np
 expectIncludes(packageJson.scripts["test:reflaxe-lazy-function-field"] ?? "", "reflaxe-lazy-function-field-check.js", "package.json scripts");
 expectIncludes(packageJson.scripts.test, "test:yard-adopt-generator", "npm test");
 expectIncludes(packageJson.scripts["test:yard-adopt-generator"] ?? "", "yard-adopt-generator-smoke.js", "package.json scripts");
+expectIncludes(packageJson.scripts.test, "test:generator-common", "npm test");
+expectIncludes(packageJson.scripts["test:generator-common"] ?? "", "test/generators/common_test.rb", "package.json scripts");
 expectIncludes(packageJson.scripts["test:todoapp-playwright"] ?? "", "todoapp-playwright.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:todoapp-production"] ?? "", "production-smoke", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1", "package.json scripts");

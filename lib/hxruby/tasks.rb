@@ -374,17 +374,19 @@ module HXRuby
     def write_route_extern_atomically(output, content)
       path = File.expand_path(output)
       root = HXRuby::Generators::Routes.infer_output_root(path)
+      HXRuby::Generators::Common.read_manifest(root)
+      HXRuby::Generators::Common.prepare_output_path!(path, root)
       if File.exist?(path) && !HXRuby::Generators::Common.owned_file?(path, root)
         raise HXRuby::Generators::Error, "Refusing to overwrite non-RailsHx-owned file #{path}. Re-run with --force only if you intend to take ownership."
       end
 
-      FileUtils.mkdir_p(File.dirname(path))
-      tmp = File.join(File.dirname(path), ".#{File.basename(path)}.#{$$}.tmp")
-      File.write(tmp, content)
-      File.rename(tmp, path)
+      Tempfile.create([".#{File.basename(path)}.", ".tmp"], File.dirname(path)) do |tmp|
+        tmp.write(content)
+        tmp.flush
+        tmp.close
+        File.rename(tmp.path, path)
+      end
       HXRuby::Generators::Common.record_manifest_entry(root, path, content, kind: "route_extern", source: "hxruby:routes")
-    ensure
-      FileUtils.rm_f(tmp) if tmp
     end
 
     def compile_client_haxe(hxml)
@@ -512,7 +514,11 @@ module HXRuby
       root = File.expand_path(module_root)
       return unless Dir.exist?(root)
 
+      app_root = Dir.pwd
+      HXRuby::Generators::Common.assert_canonical_inside_root!(root, app_root, reject_leaf_symlink: true)
+
       Dir.glob(File.join(root, "**", "*.js")).each do |path|
+        HXRuby::Generators::Common.assert_canonical_inside_root!(path, app_root, reject_leaf_symlink: true)
         original = File.read(path)
         rewritten = original.gsub(/(from\s+["']|import\s+["']|import\s*\(\s*["'])(\.[^"']+\.js)(["'])/) do
           match = Regexp.last_match
@@ -523,7 +529,7 @@ module HXRuby
           relative_target = Pathname.new(target).relative_path_from(Pathname.new(root)).to_s.sub(/\.js\z/, "")
           "#{prefix}#{import_root}/#{relative_target}#{suffix}"
         end
-        File.write(path, rewritten) if rewritten != original
+        HXRuby::Generators::Common.write_without_following_symlinks(path, rewritten) if rewritten != original
       end
     end
 

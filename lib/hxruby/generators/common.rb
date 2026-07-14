@@ -15,16 +15,19 @@ module HXRuby
       def write_file(path, content, force: false, executable: false, root: nil, kind: "file", source: nil, header: false)
         absolute_path = File.expand_path(path)
         absolute_root = root ? File.expand_path(root) : nil
-        assert_inside_root!(absolute_path, absolute_root) if absolute_root
+        if absolute_root
+          read_manifest(absolute_root)
+          prepare_output_path!(absolute_path, absolute_root)
+        else
+          FileUtils.mkdir_p(File.dirname(absolute_path))
+        end
 
         body = header ? with_generated_header(content) : content
         if File.exist?(absolute_path) && !force && !owned_file?(absolute_path, absolute_root)
           raise Error, "Refusing to overwrite non-RailsHx-owned file #{absolute_path}. Re-run with --force only if you intend to take ownership."
         end
 
-        FileUtils.mkdir_p(File.dirname(absolute_path))
-        File.write(absolute_path, body)
-        FileUtils.chmod(0o755, absolute_path) if executable
+        write_without_following_symlinks(absolute_path, body, executable: executable)
         record_manifest_entry(absolute_root, absolute_path, body, kind: kind, source: source) if absolute_root
       end
 
@@ -36,6 +39,7 @@ module HXRuby
       end
 
       def owned_file?(path, root = nil)
+        assert_canonical_inside_root!(path, root, reject_leaf_symlink: true) if root
         generated_header?(path) || manifest_owned?(root, path)
       end
 
@@ -54,7 +58,8 @@ module HXRuby
 
       def read_manifest(root)
         path = manifest_path(root)
-        return { "version" => MANIFEST_VERSION, "outputs" => [] } unless File.file?(path)
+        assert_canonical_inside_root!(path, root, reject_leaf_symlink: true) if File.exist?(root) || File.symlink?(root)
+        return { "version" => MANIFEST_VERSION, "outputs" => [] } unless File.file?(path) || File.symlink?(path)
 
         parsed = JSON.parse(File.read(path))
         outputs = parsed["outputs"].is_a?(Array) ? parsed["outputs"] : []
@@ -71,6 +76,7 @@ module HXRuby
       end
 
       def record_manifest_entry(root, path, content, kind:, source:)
+        assert_canonical_inside_root!(path, root, reject_leaf_symlink: true)
         relative = relative_path(root, path)
         manifest = read_manifest(root)
         outputs = manifest.fetch("outputs").reject { |entry| entry["output"] == relative }
@@ -83,27 +89,28 @@ module HXRuby
         manifest["version"] = MANIFEST_VERSION
         manifest["outputs"] = outputs.sort_by { |entry| entry.fetch("output") }
 
-        path = manifest_path(root)
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, JSON.pretty_generate(manifest) + "\n")
+        write_manifest(root, manifest)
       end
 
       def clean_owned_outputs(root)
         absolute_root = File.expand_path(root)
         manifest = read_manifest(absolute_root)
-        manifest.fetch("outputs").each do |entry|
+        paths = manifest.fetch("outputs").filter_map do |entry|
           output = entry["output"].to_s
           next if output.empty?
 
           path = File.expand_path(output, absolute_root)
           assert_inside_root!(path, absolute_root)
+          assert_canonical_inside_root!(path, absolute_root, reject_leaf_symlink: true)
+          path
+        end
+
+        paths.each do |path|
           FileUtils.rm_f(path)
           prune_empty_dirs(File.dirname(path), absolute_root)
         end
         manifest["outputs"] = []
-        path = manifest_path(absolute_root)
-        FileUtils.mkdir_p(File.dirname(path))
-        File.write(path, JSON.pretty_generate(manifest) + "\n")
+        write_manifest(absolute_root, manifest)
       end
 
       def relative_path(root, path)
@@ -119,9 +126,79 @@ module HXRuby
         end
       end
 
+      # Prepares a generator output without allowing an existing symlink or a
+      # symlinked ancestor to redirect the write beyond the declared app root.
+      def prepare_output_path!(path, root)
+        expanded_path = File.expand_path(path)
+        expanded_root = File.expand_path(root)
+        assert_inside_root!(expanded_path, expanded_root)
+
+        FileUtils.mkdir_p(expanded_root)
+        assert_canonical_inside_root!(expanded_root, expanded_root)
+        assert_canonical_inside_root!(File.dirname(expanded_path), expanded_root)
+        FileUtils.mkdir_p(File.dirname(expanded_path))
+        assert_canonical_inside_root!(File.dirname(expanded_path), expanded_root)
+        assert_canonical_inside_root!(expanded_path, expanded_root, reject_leaf_symlink: true)
+        expanded_path
+      rescue SystemCallError => error
+        raise Error, "Unsafe RailsHx generated path #{expanded_path}: #{error.message}"
+      end
+
+      # Canonicalizing the nearest existing ancestor also protects a new output
+      # whose parent directory was replaced by a symlink.
+      def assert_canonical_inside_root!(path, root, reject_leaf_symlink: false)
+        expanded_path = File.expand_path(path)
+        expanded_root = File.expand_path(root)
+        assert_inside_root!(expanded_path, expanded_root)
+        return expanded_path unless File.exist?(expanded_root) || File.symlink?(expanded_root)
+
+        if reject_leaf_symlink && File.symlink?(expanded_path)
+          raise Error, "RailsHx generated path #{expanded_path} must not be a symlink"
+        end
+
+        probe = expanded_path
+        until File.exist?(probe) || File.symlink?(probe)
+          parent = File.dirname(probe)
+          break if parent == probe
+
+          probe = parent
+        end
+
+        canonical_root = File.realpath(expanded_root)
+        canonical_probe = File.realpath(probe)
+        unless canonical_probe == canonical_root || canonical_probe.start_with?("#{canonical_root}#{File::SEPARATOR}")
+          raise Error, "RailsHx generated path #{expanded_path} resolves outside #{expanded_root}"
+        end
+
+        expanded_path
+      rescue Errno::EACCES, Errno::ELOOP, Errno::ENOENT => error
+        raise Error, "Unsafe RailsHx generated path #{expanded_path}: #{error.message}"
+      end
+
+      def write_without_following_symlinks(path, content, executable: false)
+        if File.symlink?(path)
+          raise Error, "RailsHx generated path #{path} must not be a symlink"
+        end
+
+        flags = File::WRONLY | File::CREAT | File::TRUNC
+        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
+        File.open(path, flags, 0o666) do |file|
+          file.write(content)
+          file.chmod(0o755) if executable
+        end
+      rescue Errno::ELOOP => error
+        raise Error, "RailsHx generated path #{path} must not be a symlink: #{error.message}"
+      end
+
+      def write_manifest(root, manifest)
+        path = prepare_output_path!(manifest_path(root), root)
+        write_without_following_symlinks(path, JSON.pretty_generate(manifest) + "\n")
+      end
+
       def prune_empty_dirs(path, root)
         current = File.expand_path(path)
         while current != root && current.start_with?("#{root}#{File::SEPARATOR}") && Dir.exist?(current)
+          break if File.symlink?(current)
           break unless Dir.empty?(current)
 
           Dir.rmdir(current)

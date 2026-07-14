@@ -101,9 +101,10 @@ Gemfiles accept Rails `>= 7.0` and `< 8.0`, but that dependency range does not
 prove every Rails 7 minor. The committed lock and canonical beta evidence cover
 Rails `7.2.3.1`; Rails 8.1 remains planned and unverified.
 
-The maintainer reconciliation performed on 2026-07-13 also refined the eight P1
-findings against the live checkout, hosted repository settings, and published
-`v0.4.0` release:
+The maintainer reconciliation performed on 2026-07-13 also refined the initial
+eight P1 findings against the live checkout, hosted repository settings, and
+published `v0.4.0` release. It also reproduced one additional P1 that the
+independent review missed:
 
 | Finding | Reconciled evidence and remaining delta |
 | --- | --- |
@@ -115,6 +116,7 @@ findings against the live checkout, hosted repository settings, and published
 | RHX-1.0-006 | Narrowed. The callable ABI example is a substantive executable Ruby/Haxe interop fixture, and the package lane compiles a hello-world consumer from an isolated Haxelib repository. What is missing is one cohesive, maintained non-Rails product lifecycle rather than all pure-Ruby evidence. |
 | RHX-1.0-007 | Confirmed and strengthened by live settings. Locked Ruby advisories are not scanned, `SECURITY.md` points at a removed workflow, GitHub private vulnerability reporting is disabled, and Dependabot security updates are disabled. Pinned gitleaks CI remains real evidence and should not be double-counted as absent secret scanning. |
 | RHX-1.0-008 | Confirmed. No project-owned CODEOWNERS, CONTRIBUTING, GOVERNANCE, MAINTAINERS, or SUPPORT document exists. A truthful single-maintainer/best-effort policy is an acceptable outcome; a backup maintainer must not be invented. |
+| RHX-1.0-009 | Newly reproduced. Generator containment was lexical: a manifest-owned output replaced by a symlink could make the shared writer overwrite a writable sibling outside the declared app root. The same shared boundary also owns forced writes, manifest writes, route extern writes, and cleanup validation. |
 
 These refinements do not change the stable verdict. They make the implementation
 work smaller and more exact, and prevent existing evidence from being rebuilt
@@ -801,6 +803,40 @@ privileged operations.
 **Scope alternative:** Publish an honest single-maintainer, best-effort,
 community-supported contract with no response SLA.
 
+### P1: RHX-1.0-009 - Generator Output Symlink Containment
+
+**Tracked as:** <code>haxe_ruby-08b2</code>
+
+**Impact:** A malicious or stale local manifest/output pair can redirect a
+generator write outside the declared app root to any file writable by the
+generator process. This requires local repository state or filesystem control;
+no remote execution path was identified.
+
+**Evidence:** The shared writer checked only the expanded lexical prefix before
+following an existing output path with <code>File.write</code>. A temporary
+reproduction placed a manifest-owned symlink under the app root, ran
+<code>Common.write_file</code> without force, and observed the sibling target
+change from <code>before</code> to <code>after</code>. Existing docs claimed
+symlink escapes were rejected, so this is an implementation/claim mismatch the
+independent archive review did not catch.
+
+**Required outcome:** Canonicalize existing output ancestors against the
+declared root, reject symlink leaves even for manifest-owned and forced writes,
+use no-follow file creation where available, protect the manifest itself, and
+validate all cleanup targets before the first deletion. Apply the same boundary
+to atomic route extern generation.
+
+**Acceptance evidence:**
+
+1. Focused tests reproduce and reject manifest-owned and forced symlink leaves.
+2. A symlinked parent cannot redirect a new output outside the root.
+3. A symlinked ownership manifest cannot redirect manifest writes.
+4. Cleanup rejects unsafe paths before deleting any safe output.
+5. Normal in-root generation, rewrite, manifest recording, and cleanup pass.
+
+**Scope alternative:** None for stable. A generator advertised as fail-closed
+cannot knowingly permit outside-root writes.
+
 ### P2: RHX-1.0-101 - Continue RubyCompiler Decomposition
 
 **Tracked as:** <code>haxe_ruby-e2ba</code>
@@ -1017,6 +1053,7 @@ project migration.
 - close RHX-1.0-001 with exact matrix evidence;
 - close RHX-1.0-002 with no Devise package knowledge in core;
 - close RHX-1.0-005 with public registry, ABI, diagnostics, and migrations;
+- close RHX-1.0-009 with canonical output containment and regression tests;
 - retain all compiler, snapshot, runtime, browser, production, and package gates.
 
 ### Phase 2: Missing Stable Evidence
@@ -1088,6 +1125,7 @@ pass:
 | RHX-1.0-006 pure-Ruby project | haxe_ruby-1u1 |
 | RHX-1.0-007 security operations | haxe_ruby-qrt |
 | RHX-1.0-008 maintenance ownership | haxe_ruby-9xsp |
+| RHX-1.0-009 generator output containment | haxe_ruby-08b2 |
 | RHX-1.0-101 compiler decomposition | haxe_ruby-e2ba |
 | RHX-1.0-102 shared behavior claim | haxe_ruby-r0h0 |
 
