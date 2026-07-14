@@ -30,6 +30,8 @@ The exact supported versions live in the
   release jobs use Node `22.23.1` with npm `10.9.8`
 - MRI Ruby `3.3`, `3.4`, or `4.0`; Ruby `3.3` is transitional and the local
   development pin uses primary Ruby `3.4.10`
+- Rails `8.1` for RailsHx workflows; canonical CI locks Rails `8.1.3`, while
+  other Rails lines remain permitted but unverified
 
 The Rails examples also need the generated app bundles. The mandatory Rails
 runtime task installs them when needed.

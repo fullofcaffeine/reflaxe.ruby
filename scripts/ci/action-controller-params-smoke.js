@@ -724,7 +724,7 @@ function materializeRuntimeRailsApp() {
 
   writeFile("Gemfile", `source "https://rubygems.org"
 
-gem "rails", ">= 7.0", "< 8.0"
+gem "rails", ">= 7.0"
 `);
 
   writeFile("config/application.rb", `require "rails"

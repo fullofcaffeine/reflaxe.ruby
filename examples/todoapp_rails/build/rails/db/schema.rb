@@ -10,24 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_01_000004) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_01_000004) do
   create_table "chat_messages", force: :cascade do |t|
     t.text "body", null: false
-    t.integer "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
     t.index ["user_id", "id"], name: "index_chat_messages_on_user_id_and_id"
     t.index ["user_id"], name: "index_chat_messages_on_user_id"
   end
 
   create_table "todos", force: :cascade do |t|
-    t.string "title", null: false
-    t.text "notes", default: "", null: false
-    t.boolean "is_completed", default: false, null: false
-    t.integer "user_id", null: false
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.boolean "is_completed", default: false, null: false
+    t.text "notes", default: "", null: false
     t.integer "priority", default: 0, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
     t.index ["priority"], name: "index_todos_on_priority"
     t.index ["title"], name: "index_todos_on_title"
     t.index ["user_id", "priority"], name: "index_todos_priority_by_user"
@@ -36,12 +36,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_01_000004) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "name", null: false
     t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "email", default: "owner@example.test", null: false
-    t.string "role", default: "member", null: false
     t.string "encrypted_password", default: "", null: false
+    t.string "name", null: false
+    t.string "role", default: "member", null: false
+    t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["name"], name: "index_users_on_name"
     t.index ["role"], name: "index_users_on_role"

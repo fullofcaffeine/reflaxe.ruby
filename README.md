@@ -173,6 +173,8 @@ incrementally. See [Gradual Adoption](docs/railshx-gradual-adoption.md).
 - The supported baseline is Haxe `4.3.7`, Node.js `>= 22.14.0` and `< 23`,
   and MRI Ruby `3.3`, `3.4`, and `4.0`. Ruby `3.3` is transitional through
   2027-03-31; Ruby `3.4` and `4.0` are the primary branches.
+- RailsHx supports the Rails `8.1` line and exercises Rails `8.1.3` in canonical
+  CI. Other Rails lines may work and warn as unverified rather than being blocked.
 
 Read the [compiler correctness contract](docs/compiler-correctness.md),
 [testing strategy](docs/railshx-testing-strategy.md), and

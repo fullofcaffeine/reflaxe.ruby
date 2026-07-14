@@ -125,8 +125,9 @@ Why now
 Ruby + Rails have stable conventions (naming, file layout, autoloading, DSLs).
 Ruby 4.0 has shipped, while maintained Ruby 3.3 and 3.4 branches provide a
 practical compatibility window for adoption.
-Rails 8.1 is the intended future stable RailsHx target, but it is not current
-runtime evidence: the production-beta fixture is locked to Rails 7.2.3.1.
+Rails `8.1` is the verified RailsHx beta line, with the production fixture
+locked to Rails `8.1.3`. Generated fixtures retain a Rails `>= 7.0` floor without
+using the evidence lane as an artificial upper compatibility ceiling.
 The supported compiler/runtime matrix is MRI Ruby 3.3, 3.4, and 4.0, so the
 implementation can use modern Ruby features while retaining explicit runtime
 shims where a generated artifact needs broader behavior.
@@ -170,7 +171,7 @@ Full Sorbet/RBS integration (nice future add-on; not required).
 Ruby C-extension interop.
 3) Target versions / compatibility
 Ruby runtime: MRI Ruby `3.3`, `3.4`, and `4.0`; `3.3` is transitional and Ruby 3.2 is EOL/unsupported.
-Rails: RailsHx remains beta with exact runtime evidence on Rails 7.2.3.1; Rails 8.1 support is planned and must be proven before a combined stable 1.0 claim.
+Rails: Rails `8.1` is the supported beta line, exercised at Rails `8.1.3`; other Rails versions may work but are unverified rather than rejected.
 Haxe: exactly Haxe `4.3.7` for the current contract.
 Node build tooling: Node >= 22.14.0 and < 23, tested at the declared minimum and current pinned patch.
 
@@ -380,9 +381,10 @@ Typed Rails stdlib (std/rails/*) + macros (compile-time safety)
 Rails integration tooling (rake tasks / generator / gem packaging)
 10.1 Rails integration constraints
 Rails autoloading expects file paths that match constants.
-The current RailsHx beta runtime lane uses Rails 7.2.3.1 on the supported MRI
-Ruby branches. Rails 8.1 remains a planned compatibility target rather than an
-assumption in compiler or application code.
+The current RailsHx beta runtime lane uses Rails `8.1`, locked at `8.1.3`, on
+the supported MRI Ruby branches. Compatibility remains artifact-driven rather
+than implemented through Rails-version branches in compiler or application
+code.
 Generated code should live in a dedicated directory (recommended):
 app/haxe_gen/**
 Add to config.autoload_paths and config.eager_load_paths.

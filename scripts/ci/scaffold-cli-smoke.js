@@ -404,7 +404,7 @@ function materializeRuntimeScaffold() {
 
   writeRuntimeFile("Gemfile", `source "https://rubygems.org"
 
-gem "rails", ">= 7.0", "< 8.0"
+gem "rails", ">= 7.0"
 gem "sqlite3", "~> 2.9", ">= 2.9.5"
 `);
 

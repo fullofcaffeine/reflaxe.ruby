@@ -16,21 +16,21 @@ guide.
 | MRI Ruby | `3.4`, `4.0` | Primary | The full compiler/package suite and mandatory Rails runtime lane execute on both branches. |
 | MRI Ruby | `3.3` | Transitional | The same full gates execute on 3.3 through its project sunset on 2027-03-31. New local development uses Ruby `3.4.10`. |
 | Ruby 3.2 | EOL | Unsupported | Upstream support ended on 2026-04-01. The gem requires Ruby `>= 3.3`, and `hxruby:doctor` rejects this branch explicitly. |
-| Rails fixture dependency range | `>= 7.0`, `< 8.0` | Accepted by current fixtures | This Bundler range is not evidence that every Rails 7 minor is independently supported. |
-| Rails runtime evidence | `7.2.3.1` | Verified beta lane | The committed reference lock and canonical runtime lanes use Rails `7.2.3.1` with Ruby 3.3/3.4/4.0 and SQLite. Other Rails versions may work but are unverified. Upstream security support ends on 2026-08-09, and CI expires this evidence rather than silently carrying it forward. |
-| Rails 8.1 | Planned | Unverified | Rails 8.1 is the proposed runtime target for a combined RubyHx/RailsHx stable `1.0`. It must pass the reference/runtime matrix tracked by `haxe_ruby-nho0`; until then RailsHx warns rather than claiming either compatibility or incompatibility. |
+| Rails fixture dependency range | `>= 7.0` | Accepted by current fixtures | This permissive Bundler floor lets conventional generated Rails code move forward; it is not evidence that every Rails version is independently supported. |
+| Rails supported line | `8.1` | Supported beta | Canonical runtime tests cover Rails 8.1 across Ruby 3.3/3.4/4.0. Patch releases within the 8.1 line are accepted without a doctor warning. |
+| Rails runtime evidence | `8.1.3` | Exact locked lane | The committed reference lock and canonical runtime lanes exercise Rails `8.1.3` with SQLite. Rails 8.1 receives upstream security support through 2027-10-10. |
 | Canonical platform | Ubuntu 24.04, Linux `x86_64` | Verified | macOS, Windows, ARM, Alpine/musl, JRuby, and TruffleRuby are unverified rather than implied support. Doctor reports that distinction. |
 | Database runtime | SQLite | Verified | PostgreSQL and MySQL options have compile/snapshot evidence only. |
 | Browser/client | Chromium via Playwright; importmap-rails, Propshaft, Turbo, Genes | Verified beta lane | Other browsers and asset/bundler stacks are unverified. |
 | Distribution | GitHub Releases | Supported channel | The checksum-verified Haxelib ZIP and `hxruby` gem asset are not published to the Haxelib or RubyGems.org registries. |
 
-Rails-shaped APIs that resemble Rails 8 do not establish Rails 8 runtime
-compatibility. The generated fixtures accept `>= 7.0` and `< 8.0`, but the
-current evidence supports only the locked Rails `7.2.3.1` lane. Other Rails 7
-minors require their own runtime evidence before they become support claims.
-The Rails 7.2 evidence deadline intentionally forces a new decision before its
-upstream security window closes. Passing Ruby compilation on an EOL Rails line
-will not extend the public RailsHx support claim.
+Generated fixtures require Rails `>= 7.0` without an artificial upper bound.
+That accepted dependency range is deliberately broader than the support claim:
+the verified RailsHx beta line is Rails 8.1, exercised at the locked Rails
+`8.1.3` patch. Rails 7 and future Rails lines may work because RailsHx emits
+conventional Rails artifacts, but they remain unverified until an executable
+lane proves them. `hxruby:doctor` warns for those versions rather than rejecting
+them.
 
 Ruby lifecycle dates are checked against the official
 [Ruby branch table](https://www.ruby-lang.org/en/downloads/branches/), Node
@@ -42,8 +42,10 @@ and Rails against the
 
 `bundle exec rake hxruby:doctor` rejects Ruby below 3.3 and unsupported Haxe or
 Node versions. It warns for untested Ruby engines/branches, loaded Rails
-versions, and host platforms. A warning means the environment may work but is
-not covered by the support evidence; it is not an incompatibility claim.
+lines, and host platforms. A warning means the environment may work but is not
+covered by the support evidence; it is not an incompatibility claim. Rails 8.1
+patches are treated as one supported line while the lock records the exact patch
+used by canonical CI.
 
 The full compiler, snapshot, package-consumer, and Rails runtime matrices run on
 Ruby 3.3, 3.4, and 4.0. Browser and production sentinels remain representative
@@ -54,6 +56,9 @@ minimum and the current tested patch.
 The tested Ruby branches are an evidence and maintenance promise, not an upper
 compatibility ceiling. The gem requires Ruby `>= 3.3`; newer Ruby versions may
 work and produce an `hxruby:doctor` warning until a canonical lane verifies them.
+The Rails dependency follows the same policy: Rails `>= 7.0` is installable,
+Rails 8.1 is the maintained evidence line, and other lines warn without a hard
+compatibility verdict.
 
 ## Local Development Notes
 

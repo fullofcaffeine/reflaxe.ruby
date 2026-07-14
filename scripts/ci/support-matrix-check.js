@@ -31,6 +31,7 @@ function assertNotExpired(label, date) {
 }
 
 assert.equal(matrix.schemaVersion, 1, "support matrix schema version must be explicit");
+assert.deepEqual(matrix.railsHx.fixtureDependencyRequirements, [">= 7.0"]);
 assert.deepEqual(matrix.ruby.ciBranches, ["3.3", "3.4", "4.0"]);
 assert.deepEqual(ci.jobs.test.strategy.matrix.ruby_version, matrix.ruby.ciBranches);
 assert.deepEqual(ci.jobs["rails-runtime"].strategy.matrix.ruby_version, matrix.ruby.ciBranches);
@@ -93,25 +94,24 @@ assertNotExpired(
 assert(compatibilityDocs.includes(`\`${matrix.node.minimumVersion}\``));
 assert(compatibilityDocs.includes(`\`${matrix.node.currentTestedVersion}\``));
 assert(compatibilityDocs.includes(`\`${matrix.railsHx.verifiedRuntime.railsVersion}\``));
-assert(compatibilityDocs.includes(`Rails ${matrix.railsHx.plannedRuntime.railsLine}`));
-assert(compatibilityDocs.includes(matrix.railsHx.plannedRuntime.trackingIssue));
-assert(productionReadiness.includes(matrix.railsHx.plannedRuntime.trackingIssue));
+assert(compatibilityDocs.includes(`\`${matrix.railsHx.verifiedRuntime.railsLine}\``));
 assert(compatibilityDocs.includes("lib/hxruby/support_matrix.json"));
 for (const [name, document] of Object.entries({ readme, gettingStarted, productionReadiness, productRequirements })) {
   assert(document.includes(`Haxe \`${matrix.haxe.ciVersion}\``), `${name} missing exact Haxe support`);
   assert(document.includes("MRI Ruby `3.3`"), `${name} missing supported MRI branches`);
+  assert(
+    document.includes(`Rails \`${matrix.railsHx.verifiedRuntime.railsLine}\``),
+    `${name} missing supported Rails line`,
+  );
 }
 for (const [name, document] of Object.entries({ productionReadiness, productRequirements })) {
   assert(
     document.includes(matrix.railsHx.verifiedRuntime.railsVersion),
     `${name} missing verified Rails runtime`,
   );
-  assert(
-    document.includes(matrix.railsHx.plannedRuntime.railsLine) && document.toLowerCase().includes("planned"),
-    `${name} must keep planned Rails status explicit`,
-  );
 }
 assert(!productRequirements.includes("Rails: Rails 8.0+"), "PRD must not advertise unverified Rails 8 support");
+assert(!productRequirements.includes("Rails 8.1 support is planned"), "PRD must not describe verified Rails 8.1 as planned");
 assert(!productRequirements.includes("Ruby runtime: Ruby >= 3.2"), "PRD must not advertise EOL Ruby 3.2");
 for (const [name, entrypoint] of Object.entries({ todoPlaywright, todoProduction })) {
   assert(entrypoint.includes("support_matrix.json"), `${name} must enforce the machine support matrix`);

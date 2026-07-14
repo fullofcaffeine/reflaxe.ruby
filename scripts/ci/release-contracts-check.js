@@ -106,6 +106,12 @@ const railsRuntimeFixtures = [
   ["controller runtime materializer", readFileSync("scripts/ci/action-controller-params-smoke.js", "utf8")],
   ["scaffold runtime materializer", readFileSync("scripts/ci/scaffold-cli-smoke.js", "utf8")],
 ];
+const railsPinnedRuntimeFixtures = [
+  ["Active Storage materializer", readFileSync("scripts/ci/active-storage-smoke.js", "utf8")],
+  ["Active Job materializer", readFileSync("scripts/ci/active-job-smoke.js", "utf8")],
+  ["Action Cable materializer", readFileSync("scripts/ci/action-cable-smoke.js", "utf8")],
+  ["Action Mailer materializer", readFileSync("scripts/ci/action-mailer-smoke.js", "utf8")],
+];
 const sqliteRuntimeFixtures = [
   ["todoapp committed Gemfile", readFileSync("examples/todoapp_rails/build/rails/Gemfile", "utf8")],
   ["todoapp materializer", readFileSync("scripts/rails/todoapp.js", "utf8")],
@@ -245,30 +251,41 @@ expectIncludes(
 );
 expectIncludes(
   compatibilityMatrix,
-  "| Rails fixture dependency range | `>= 7.0`, `< 8.0` |",
+  "| Rails fixture dependency range | `>= 7.0` |",
   "current Rails fixture range"
 );
 expectIncludes(
   compatibilityMatrix,
-  "| Rails runtime evidence | `7.2.3.1` | Verified beta lane |",
-  "current Rails runtime evidence"
+  "| Rails supported line | `8.1` | Supported beta |",
+  "current Rails supported line"
 );
-expectIncludes(compatibilityMatrix, "| Rails 8.1 | Planned | Unverified |", "planned Rails 8.1 status");
 expectIncludes(
   compatibilityMatrix,
-  "not evidence that every Rails 7 minor is independently supported",
+  "| Rails runtime evidence | `8.1.3` | Exact locked lane |",
+  "current Rails runtime evidence"
+);
+expectIncludes(
+  compatibilityMatrix,
+  "not evidence that every Rails version is independently supported",
   "Rails range evidence boundary"
 );
 expectExcludes(compatibilityMatrix, "Rails 7+/8 style app shape", "Rails support wording");
-expectIncludes(productionReadiness, "8.1 support is planned under", "planned Rails stable target");
-expectIncludes(productionReadiness, "but it is unverified and not", "current Rails 8 status");
+expectIncludes(productionReadiness, "verified RailsHx beta line is Rails `8.1`", "verified Rails line");
+expectIncludes(productionReadiness, "exercised at Rails `8.1.3`", "exact Rails evidence");
 expectIncludes(
   stableReviewReport,
   "This report records an independent review, not an automatically accepted product",
   "stable review reconciliation rule"
 );
 for (const [label, source] of railsRuntimeFixtures) {
-  expectIncludes(source, 'gem "rails", ">= 7.0", "< 8.0"', `${label} current Rails runtime range`);
+  expectIncludes(source, 'gem "rails", ">= 7.0"', `${label} current Rails runtime range`);
+}
+for (const [label, source] of railsPinnedRuntimeFixtures) {
+  expectIncludes(
+    source,
+    `gem "rails", "${supportMatrix.railsHx.verifiedRuntime.railsVersion}"`,
+    `${label} exact Rails runtime evidence`,
+  );
 }
 for (const [label, source] of sqliteRuntimeFixtures) {
   expectIncludes(source, 'gem "sqlite3", "~> 2.9", ">= 2.9.5"', `${label} safe SQLite runtime range`);

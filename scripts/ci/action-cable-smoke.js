@@ -477,7 +477,7 @@ function materializeRuntimeRailsApp() {
 
   writeFile("Gemfile", `source "https://rubygems.org"
 
-gem "rails", "7.2.3.1"
+gem "rails", "8.1.3"
 `);
 
   writeFile("config/application.rb", `require "rails"
@@ -616,8 +616,8 @@ function stage(name, callback) {
 
 function assertRuntimeRubySupportsRails() {
   const rubyVersion = run("ruby", ["-e", "print RUBY_VERSION"], { allowFailure: true }).stdout.trim();
-  if (!rubyAtLeast(rubyVersion, "3.1.0")) {
-    console.error(`[action-cable] REQUIRE_RAILS=1 requires Ruby >= 3.1.0 for Rails 7.2.3.1; current ruby is ${rubyVersion || "unknown"}.`);
+  if (!rubyAtLeast(rubyVersion, "3.3.0")) {
+    console.error(`[action-cable] REQUIRE_RAILS=1 requires Ruby >= 3.3.0 for the supported RailsHx runtime; current ruby is ${rubyVersion || "unknown"}.`);
     console.error("[action-cable] Activate the repo .ruby-version Ruby before running npm run test:action-cable with REQUIRE_RAILS=1.");
     process.exit(1);
   }

@@ -53,11 +53,11 @@ module HXRuby
 
     def rails_warning(version)
       normalized = version.to_s.strip
+      verified_line = DATA.dig("railsHx", "verifiedRuntime", "railsLine")
       verified = DATA.dig("railsHx", "verifiedRuntime", "railsVersion")
-      return nil if normalized == verified
+      return nil if version_branch(normalized) == verified_line
 
-      planned = DATA.dig("railsHx", "plannedRuntime", "railsLine")
-      "Rails #{normalized} is outside the verified RailsHx beta lane (Rails #{verified}); it may work but is unverified. Rails #{planned} remains planned"
+      "Rails #{normalized} is outside the verified RailsHx beta line (Rails #{verified_line}, exercised at #{verified}); it may work but is unverified"
     end
 
     def platform_warning(host_os = RbConfig::CONFIG.fetch("host_os"), host_cpu = RbConfig::CONFIG.fetch("host_cpu"))

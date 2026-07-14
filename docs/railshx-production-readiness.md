@@ -62,12 +62,13 @@ gaps to become explicit beads before broad rollout.
 The current supported toolchain baseline is documented in
 [Compatibility Matrix](compatibility-matrix.md): Haxe `4.3.7`, Node `22.14.0`
 through the current tested `22.23.1` patch, and MRI Ruby `3.3`, `3.4`, and
-`4.0` in CI. Ruby `3.3` is transitional. Generated Rails fixtures accept
-`>= 7.0` and `< 8.0`, but that range is not a tested-minor support matrix.
-The current Rails runtime evidence is the locked Rails `7.2.3.1` lane. Rails
-8.1 support is planned under `haxe_ruby-nho0`, but it is unverified and not
-currently supported. A combined stable `1.0` requires that runtime lane to pass;
-otherwise RailsHx remains beta.
+`4.0` in CI. Ruby `3.3` is transitional. Generated Rails fixtures require only
+the real Rails `>= 7.0` floor and impose no speculative future-major ceiling.
+The verified RailsHx beta line is Rails `8.1`, exercised at Rails `8.1.3` across
+the supported Ruby branches. Other Rails lines may work and receive a doctor
+warning rather than an incompatibility error. Stable `1.0` remains gated by the
+other project-wide evidence in this document, not by expanding this into a
+combinatorial Rails version matrix.
 
 Support expectation for production-beta use:
 
