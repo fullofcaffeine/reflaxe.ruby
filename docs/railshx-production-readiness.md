@@ -56,8 +56,11 @@ gaps to become explicit beads before broad rollout.
 
 The current supported toolchain baseline is documented in
 [Compatibility Matrix](compatibility-matrix.md): Haxe `4.3.7`, Node `22.14.0`, and
-Ruby `3.2`, `3.3`, and `4.0` in CI. Rails output targets Rails 7+/8-style app
-shape unless a future compatibility row narrows or expands that contract.
+Ruby `3.2`, `3.3`, and `4.0` in CI. The current Rails runtime contract is
+`>= 7.0` and `< 8.0`, with reference fixtures locked to Rails `7.2.3.1`.
+Rails 8.1 support is planned under `haxe_ruby-huf`, but it is unverified and
+not currently supported. A combined stable `1.0` requires that runtime lane to
+pass; otherwise RailsHx remains beta.
 
 Support expectation for production-beta use:
 

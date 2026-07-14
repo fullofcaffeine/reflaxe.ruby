@@ -925,7 +925,9 @@ textual output.
 
 Before stable approval, pure-Ruby and Rails release-consumer fixtures should:
 
-1. install immutable v0.4.0 assets through public paths;
+1. install the exact checksum-verified v0.4.0 Haxelib ZIP and `hxruby` gem
+   from the public GitHub Release, without repository-relative dependencies or
+   locally rebuilt substitutes;
 2. compile, test, and run;
 3. upgrade to the exact RC package pair;
 4. dry-run ownership/schema migration;

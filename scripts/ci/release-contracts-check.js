@@ -94,6 +94,13 @@ const gradualAdoptionGuide = readFileSync("docs/railshx-gradual-adoption.md", "u
 const compatibilityMatrix = readFileSync("docs/compatibility-matrix.md", "utf8");
 const devisehxDesign = readFileSync("docs/railshx-devisehx-design.md", "utf8");
 const escapeHatchAudit = readFileSync("docs/railshx-escape-hatch-security-audit.md", "utf8");
+const railsRuntimeFixtures = [
+  ["todoapp committed Gemfile", readFileSync("examples/todoapp_rails/build/rails/Gemfile", "utf8")],
+  ["todoapp materializer", readFileSync("scripts/rails/todoapp.js", "utf8")],
+  ["Rails interop materializer", readFileSync("scripts/ci/rails-interop-smoke.js", "utf8")],
+  ["controller runtime materializer", readFileSync("scripts/ci/action-controller-params-smoke.js", "utf8")],
+  ["scaffold runtime materializer", readFileSync("scripts/ci/scaffold-cli-smoke.js", "utf8")],
+];
 
 if (packageJson.name !== "reflaxe-ruby") {
   fail(`package.json name must be reflaxe-ruby, got ${packageJson.name}`);
@@ -193,6 +200,15 @@ expectIncludes(
   "reviews/rubyhx-railshx-1.0-readiness-review.md",
   "docs index stable review report"
 );
+expectIncludes(compatibilityMatrix, "| Rails runtime | `>= 7.0`, `< 8.0` |", "current Rails runtime range");
+expectIncludes(compatibilityMatrix, "| Rails 8.1 | Planned | Not currently supported |", "planned Rails 8.1 status");
+expectIncludes(compatibilityMatrix, "lock currently resolves Rails `7.2.3.1`", "tested Rails lock");
+expectExcludes(compatibilityMatrix, "Rails 7+/8 style app shape", "Rails support wording");
+expectIncludes(productionReadiness, "Rails 8.1 support is planned", "planned Rails stable target");
+expectIncludes(productionReadiness, "not currently supported", "current Rails 8 status");
+for (const [label, source] of railsRuntimeFixtures) {
+  expectIncludes(source, 'gem "rails", ">= 7.0", "< 8.0"', `${label} current Rails runtime range`);
+}
 expectIncludes(docsIndex, "getting-started.md", "docs index getting started");
 expectIncludes(docsIndex, "packages-and-installation.md", "docs index package installation");
 expectIncludes(docsIndex, "development.md", "docs index repository development");
