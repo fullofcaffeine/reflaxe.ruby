@@ -66,7 +66,7 @@ compile one critical component from Haxe, wrap existing Ruby through typed
 contracts, and migrate only where the extra guarantees repay the build step.
 
 **Haxe-first authoring** starts with Haxe as the normal source language. A team
-can build a Ruby library, service, CLI, framework layer, or Rails application
+can build a Ruby library, CLI, or Rails application
 with nearly all owned code in Haxe/HHX, then use generated Ruby artifacts with
 the normal Ruby ecosystem. This is useful even for developers who do not enjoy
 writing Ruby but want access to Ruby runtimes, gems, Rails, or deployment
@@ -83,7 +83,7 @@ day-to-day authoring loop, not that the target ecosystem becomes invisible.
 | Need | RubyHx/RailsHx approach | What remains normal Ruby/Rails |
 | --- | --- | --- |
 | Add types where mistakes are expensive | Compile a selected service, domain module, library, or Rails feature from Haxe | Ruby callers invoke ordinary constants and methods |
-| Prefer Haxe as the main language | Keep nearly all owned source in Haxe/HHX and generate Ruby libraries, services, CLIs, or Rails artifacts | Ruby runtimes, gems, Bundler, Rails, deployment, and target-level operations |
+| Prefer Haxe as the main language | Keep nearly all owned source in Haxe/HHX and generate Ruby libraries, CLIs, or Rails artifacts | Ruby runtimes, gems, Bundler, Rails, deployment, and target-level operations |
 | Modernize gradually | Wrap existing Ruby, ERB, gems, RBS, YARD, routes, and schemas through checked contracts | Existing source stays Ruby-owned until deliberately migrated |
 | Catch framework drift earlier | Generate typed field, route, template, params, association, and helper references | Rails remains authoritative for runtime behavior and final artifacts |
 | Type server-rendered views | Author TSX-like HHX with typed locals, expressions, helpers, routes, fields, partials, and components | Rails still renders ordinary generated ERB through ActionView |
@@ -240,12 +240,13 @@ Own selected models, controllers, routes, migrations, and HHX views in Haxe.
 Generate Rails-native files under explicit ownership rules and let the rest of
 the application remain Rails-owned.
 
-### Haxe-first Ruby application or library
+### Haxe-first Ruby library or CLI
 
-Use Haxe as the source of truth for nearly all owned code in a library, service,
-CLI, framework layer, or application. Treat generated Ruby as the deployable
-artifact, consume Ruby libraries through typed contracts, and keep Ruby-specific
-adapters at explicit edges. Rails is optional in this mode.
+Use Haxe as the source of truth for nearly all owned library and CLI code. Treat
+generated Ruby as the deployable artifact, consume Ruby libraries through typed
+contracts, and keep Ruby-specific adapters at explicit edges. Services and other
+framework-independent application shapes can use the same compiler foundations,
+but are not yet maintained reference workflows. Rails is optional in this mode.
 
 ### Greenfield RailsHx application
 

@@ -202,7 +202,7 @@ expectIncludes(productPositioning, "Ruby/JavaScript applications commonly share"
 expectIncludes(productPositioning, "does not promise zero support code", "generated Ruby positioning boundary");
 expectIncludes(productPositioning, "a better way to write the Ruby-bound parts", "Ruby alternative positioning boundary");
 expectIncludes(productPositioning, "## Two First-Class Starting Points", "Haxe-first and Ruby-first positioning");
-expectIncludes(productPositioning, "### Haxe-first Ruby application or library", "framework-independent Haxe-first adoption mode");
+expectIncludes(productPositioning, "### Haxe-first Ruby library or CLI", "framework-independent Haxe-first adoption mode");
 expectIncludes(typedViews, "TSX-like typed authoring surface", "typed HHX product contract");
 expectIncludes(typedViews, "no virtual DOM, hydration pass", "typed HHX runtime boundary");
 expectIncludes(typedViews, "## Honest Limits", "typed HHX claim limits");
@@ -535,7 +535,7 @@ expectIncludes(haxelibPackageCheckText, "packaged haxelib.json must be sanitized
 expectIncludes(haxelibPackageCheckText, "\"haxe_libraries/\"", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "haxelib\", [\"newrepo\"]", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "\"-lib\"", "Haxelib package check");
-expectIncludes(haxelibPackageCheck, "Hello from installed reflaxe.ruby", "Haxelib package check");
+expectIncludes(haxelibPackageCheck, "installed haxelib CLI mismatch", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "TODO: lower", "Haxelib package check");
 expectIncludes(haxelibPackageCheck, "verifyArtifactManifest", "Haxelib exact content check");
 expectIncludes(haxelibPackageCheck, "sidecar.sha256", "Haxelib exact byte check");

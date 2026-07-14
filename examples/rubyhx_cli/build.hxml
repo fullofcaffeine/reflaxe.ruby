@@ -1,0 +1,5 @@
+-cp .
+-lib reflaxe.ruby
+-D ruby_output=out/ruby
+-D reflaxe_runtime
+-main Main

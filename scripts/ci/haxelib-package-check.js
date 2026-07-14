@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } = require("node:fs");
+const { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
@@ -271,10 +271,10 @@ try {
   const consumerSrc = join(consumerRoot, "src");
   const consumerOutputDir = join(consumerRoot, "out");
   mkdirSync(consumerSrc, { recursive: true });
-  writeFileSync(
-    join(consumerSrc, "Main.hx"),
-    'class Main { static function main():Void { Sys.println("Hello from installed reflaxe.ruby"); } }\n',
-  );
+  for (const file of ["Main.hx", "ReportCli.hx", "TextAnalyzer.hx", "TextReport.hx", "TextReportJson.hx"]) {
+    copyFileSync(join(root, "examples", "rubyhx_cli", file), join(consumerSrc, file));
+  }
+  copyFileSync(join(root, "test", "fixtures", "rubyhx_cli", "sample.txt"), join(consumerRoot, "sample.txt"));
 
   run("haxelib", ["newrepo"], { cwd: consumerRoot });
   run("haxelib", ["install", archivePath, "--skip-dependencies", "--quiet"], { cwd: consumerRoot });
@@ -293,9 +293,11 @@ try {
   ], { cwd: consumerRoot });
   assertNoTodoLowerRubyFiles(consumerOutputDir);
 
-  const installedStdout = run("ruby", [join(consumerOutputDir, "main.rb")], { cwd: consumerRoot }).stdout;
-  if (installedStdout !== "Hello from installed reflaxe.ruby\n") {
-    fail(`installed haxelib stdout mismatch: ${JSON.stringify(installedStdout)}`);
+  const installedStdout = run("ruby", [join(consumerOutputDir, "run.rb"), "sample.txt"], { cwd: consumerRoot }).stdout;
+  const installedReport = JSON.parse(installedStdout);
+  const expectedReport = { path: "sample.txt", lines: 2, words: 3, characters: 16 };
+  if (JSON.stringify(installedReport) !== JSON.stringify(expectedReport)) {
+    fail(`installed haxelib CLI mismatch: expected ${JSON.stringify(expectedReport)}, got ${JSON.stringify(installedReport)}`);
   }
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });

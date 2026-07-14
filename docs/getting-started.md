@@ -7,10 +7,11 @@ major-zero release line; packaged installation is covered in
 
 ## Choose An Adoption Direction
 
-- **Haxe-first:** use Haxe as the normal source language for a Ruby library,
-  service, CLI, framework layer, or Rails application. Start with the smallest
-  Ruby program and direct compiler setup below. For Rails, the todo application
-  shows nearly all owned app source in Haxe/HHX.
+- **Haxe-first:** use Haxe as the normal source language for a Ruby library or
+  CLI, or for a Rails application. Start with the smallest
+  Ruby program, then use the text-report library/CLI for a complete non-Rails
+  workflow. For Rails, the todo application shows nearly all owned app source in
+  Haxe/HHX.
 - **Ruby-first:** keep an existing Ruby or Rails system authoritative and add a
   typed component or boundary. Start with Ruby interop or the gradual-adoption
   example below.
@@ -45,6 +46,17 @@ npm run test:hello-world
 The command compiles [`examples/hello_world/Main.hx`](../examples/hello_world/Main.hx),
 runs the generated Ruby entrypoint, and compares real stdout with the committed
 fixture.
+
+For a multi-file Haxe-first library and CLI with filesystem input, typed JSON,
+failure exit codes, and a handwritten Ruby caller, run:
+
+```bash
+npm run test:rubyhx-cli
+```
+
+See [`examples/rubyhx_cli`](../examples/rubyhx_cli). The Haxelib package gate
+also installs the current candidate ZIP into an isolated repository and compiles
+that project through `-lib reflaxe.ruby`.
 
 Run the broad default suite with:
 

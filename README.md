@@ -42,7 +42,7 @@ When Haxe semantics need support, they use explicit, versioned `hxruby` helpers.
 
 - **Type the risky parts.** Start with one high-change service, domain module,
   Rails feature, or shared package; the rest can remain Ruby.
-- **Make Haxe the primary language.** Build libraries, services, CLIs, or Rails
+- **Make Haxe the primary language.** Build libraries, CLIs, or Rails
   apps almost entirely in Haxe/HHX when you want the Ruby ecosystem and runtime
   but prefer not to write much Ruby.
 - **Catch drift earlier.** Supported fields, params, routes, templates,
@@ -69,7 +69,7 @@ operations, and debugging even when most source is Haxe.
 | RubyHx | RailsHx |
 | --- | --- |
 | Pure Ruby target, Haxe std/runtime semantics, typed stdlib and gem interop, modules, concerns, blocks, keywords, and extension APIs. | Rails-native models, queries, controllers, params, routes, migrations, HHX views, Hotwire, jobs, mailers, storage, tests, and generators. |
-| Useful for libraries, services, CLIs, framework layers, or one typed island inside Ruby. | Built on RubyHx; Rails still owns migrations, tests, Zeitwerk, assets, jobs, gems, and app boot. |
+| Useful for pure Ruby programs, libraries, CLIs, or one typed island inside Ruby. | Built on RubyHx; Rails still owns migrations, tests, Zeitwerk, assets, jobs, gems, and app boot. |
 
 ```text
 server Haxe / HHX  →  reflaxe.ruby  →  Ruby + Rails + ERB       →  Ruby/Rails runtime
@@ -81,7 +81,7 @@ shared/client Haxe →  Haxe + Genes  →  Rails importmap modules  →  browser
 | Goal | Start here |
 | --- | --- |
 | See Haxe compile and run as Ruby | [`examples/hello_world`](examples/hello_world) |
-| Author a Ruby library, service, or CLI primarily in Haxe | [Getting Started](docs/getting-started.md) |
+| Author a Ruby library or CLI primarily in Haxe | [`examples/rubyhx_cli`](examples/rubyhx_cli) |
 | Expose native blocks, keywords, and methods to Ruby | [`examples/ruby_callable_abi`](examples/ruby_callable_abi) |
 | Add Haxe to an existing Ruby/ERB app | [`examples/rails_interop_app`](examples/rails_interop_app) |
 | Author a Rails app primarily in Haxe/HHX | [`examples/todoapp_rails`](examples/todoapp_rails) |

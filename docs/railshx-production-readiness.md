@@ -26,8 +26,10 @@ Tracking epic: `haxe.ruby-bjv` RailsHx production readiness.
 
 RailsHx now proves the main production shape:
 
-- Framework-independent RubyHx examples prove Haxe-first compilation, readable
-  generated Ruby, native Ruby callable boundaries, and runtime behavior.
+- The framework-independent RubyHx library/CLI proves a multi-file Haxe-first
+  workflow, installed-candidate compilation, typed file-to-JSON behavior,
+  failure handling, and handwritten Ruby calls into generated APIs. Focused
+  examples separately cover the native callable ABI and gem interop.
 - Haxe-authored Rails models, relations, controllers, params, migrations, routes,
   HHX templates, generators, and Rails interop can emit Rails-native artifacts.
 - The canonical todo app and mixed adoption fixtures cover compile-time output,
