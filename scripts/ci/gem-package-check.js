@@ -369,7 +369,8 @@ function smokeCleanTask(unpackedRoot) {
   const appRoot = join(tempRoot, "clean-smoke-app");
   mkdirSync(join(appRoot, ".railshx"), { recursive: true });
   mkdirSync(join(appRoot, "generated"), { recursive: true });
-  writeFileSync(join(appRoot, "generated", "owned.rb"), "class Owned; end\n");
+  const ownedPath = join(appRoot, "generated", "owned.rb");
+  writeFileSync(ownedPath, "class Owned; end\n");
   writeFileSync(join(appRoot, "generated", "rails_owned.rb"), "class RailsOwned; end\n");
   writeFileSync(join(appRoot, ".railshx", "manifest.json"), JSON.stringify({
     version: 1,
@@ -378,7 +379,7 @@ function smokeCleanTask(unpackedRoot) {
         output: "generated/owned.rb",
         kind: "ruby",
         source: "test",
-        sha256: "ignored-by-clean",
+        sha256: sha256File(ownedPath),
       },
     ],
   }, null, 2) + "\n");

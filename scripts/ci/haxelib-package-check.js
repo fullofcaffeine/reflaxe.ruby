@@ -97,6 +97,7 @@ for (const required of [
   "hxruby.gemspec",
   "extraParams.hxml",
   "docs/compiler-metadata.md",
+  "docs/public-contract.md",
   "docs/ruby-callable-abi.md",
   "lib/hxruby.rb",
   "lib/hxruby/support_matrix.json",

@@ -28,6 +28,7 @@
     "test:release-workflow": "node scripts/ci/release-workflow-check.js",
     "test:release-hosting": "node scripts/ci/release-hosting-check.mjs",
     "test:release-artifacts": "node scripts/ci/release-artifact-reproducibility-check.js",
+    "test:public-upgrade": "node scripts/ci/public-release-upgrade-check.js",
     "test:examples-compile": "node scripts/ci/examples-compile-smoke.js",
     "test:haxe-build-context": "haxe test/build_context_compile.hxml",
     "test:reflaxe-lazy-function-field": "node scripts/ci/reflaxe-lazy-function-field-check.js",

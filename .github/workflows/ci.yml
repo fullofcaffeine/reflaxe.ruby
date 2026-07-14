@@ -292,6 +292,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Setup Ruby for public upgrade rehearsal
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        with:
+          ruby-version: "3.4.10"
+          rubygems: "3.6.9"
+          bundler: none
+
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
 
@@ -312,6 +319,9 @@ jobs:
           node scripts/ci/version-sync-check.js
           npm run test:release-version-policy
           npm run ci:release-contracts
+
+      - name: Exercise public v0.4.0 upgrade and rollback
+        run: npm run test:public-upgrade
 
   release:
     name: Release exact CI-tested commit

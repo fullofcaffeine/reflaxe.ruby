@@ -17,7 +17,8 @@ same-run dependencies:
 - RailsHx browser Playwright;
 - mandatory Rails runtime integration on Ruby 3.3, 3.4, and 4.0;
 - RailsHx production dogfood;
-- release policy, workflow, and reproducible-artifact contracts.
+- release policy, workflow, reproducible-artifact contracts, and the single
+  checksum-verified public `v0.4.0` upgrade/rollback rehearsal.
 
 The job condition includes `!cancelled()` to replace GitHub's implicit status
 filter, then compares every named `needs.<job>.result` to `success`. A failed,
@@ -97,6 +98,7 @@ Run:
 ```bash
 npm run test:release-workflow
 npm run ci:release-contracts
+npm run test:public-upgrade
 npm audit
 ```
 

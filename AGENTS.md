@@ -29,6 +29,12 @@ When the hooks first run after a bd/tooling upgrade, `.beads/issues.jsonl` may b
   evidence. Do not turn an accepted dependency range, generated shape, passing
   snapshot, or prose claim into a broader support guarantee without the matching
   runtime or consumer evidence.
+- Treat compatibility matrices as tested support and maintenance promises, not
+  generated-code ceilings. Keep Ruby/Rails dependency ranges forward-permissive
+  when the emitted artifacts are conventional, warn on unverified newer lines,
+  and add a hard upper bound or version-specific branch only for a reproduced
+  incompatibility with a focused test. Do not multiply the CI version cross-product
+  without a concrete compatibility risk that the extra lane owns.
 - Use reviews to discover and bound work, then refine, split, downgrade, reject,
   or extend findings when stronger repository evidence warrants it. Record
   corrections and newly discovered gaps in the owning review document and bead

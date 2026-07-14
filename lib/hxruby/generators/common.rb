@@ -15,16 +15,23 @@ module HXRuby
       def write_file(path, content, force: false, executable: false, root: nil, kind: "file", source: nil, header: false)
         absolute_path = File.expand_path(path)
         absolute_root = root ? File.expand_path(root) : nil
+        manifest = nil
         if absolute_root
-          read_manifest(absolute_root)
+          manifest = read_manifest(absolute_root)
           prepare_output_path!(absolute_path, absolute_root)
         else
           FileUtils.mkdir_p(File.dirname(absolute_path))
         end
 
         body = header ? with_generated_header(content) : content
-        if File.exist?(absolute_path) && !force && !owned_file?(absolute_path, absolute_root)
-          raise Error, "Refusing to overwrite non-RailsHx-owned file #{absolute_path}. Re-run with --force only if you intend to take ownership."
+        if File.exist?(absolute_path) && !force
+          entry = manifest && manifest_entry(manifest, absolute_root, absolute_path)
+          if entry && !manifest_checksum_matches?(entry, absolute_path)
+            raise Error, "Refusing to overwrite modified RailsHx output #{absolute_path}. Re-run with --force to replace it, or remove its manifest entry and generated header to take Rails ownership."
+          end
+          unless generated_header?(absolute_path) || entry
+            raise Error, "Refusing to overwrite non-RailsHx-owned file #{absolute_path}. Re-run with --force only if you intend to take ownership."
+          end
         end
 
         write_without_following_symlinks(absolute_path, body, executable: executable)
@@ -56,14 +63,53 @@ module HXRuby
         File.join(root, ".railshx", "manifest.json")
       end
 
+      # Reads the sole v1 ownership schema so every mutating caller fails before
+      # it can guess how a missing, malformed, or future manifest should behave.
       def read_manifest(root)
         path = manifest_path(root)
         assert_canonical_inside_root!(path, root, reject_leaf_symlink: true) if File.exist?(root) || File.symlink?(root)
         return { "version" => MANIFEST_VERSION, "outputs" => [] } unless File.file?(path) || File.symlink?(path)
 
         parsed = JSON.parse(File.read(path))
-        outputs = parsed["outputs"].is_a?(Array) ? parsed["outputs"] : []
-        { "version" => parsed["version"] || MANIFEST_VERSION, "outputs" => outputs }
+        unless parsed.is_a?(Hash)
+          raise Error, "Invalid RailsHx manifest #{path}: root must be an object"
+        end
+        unless parsed["version"] == MANIFEST_VERSION
+          raise Error, "Unsupported RailsHx manifest version #{parsed["version"].inspect} in #{path}; this hxruby supports version #{MANIFEST_VERSION}"
+        end
+
+        outputs = parsed["outputs"]
+        unless outputs.is_a?(Array)
+          raise Error, "Invalid RailsHx manifest #{path}: outputs must be an array"
+        end
+
+        seen = {}
+        outputs.each_with_index do |entry, index|
+          unless entry.is_a?(Hash)
+            raise Error, "Invalid RailsHx manifest #{path}: output entry #{index} must be an object"
+          end
+
+          output = entry["output"]
+          unless output.is_a?(String)
+            raise Error, "Invalid RailsHx manifest #{path}: output entry #{index} must contain a string output"
+          end
+          begin
+            safe_relative_path(output, label: "manifest output")
+          rescue Error => error
+            raise Error, "Invalid RailsHx manifest #{path}: output entry #{index}: #{error.message}"
+          end
+          if seen[output]
+            raise Error, "Invalid RailsHx manifest #{path}: duplicate output #{output.inspect}"
+          end
+          seen[output] = true
+
+          sha256 = entry["sha256"]
+          unless sha256.is_a?(String) && sha256.match?(/\A[0-9a-f]{64}\z/)
+            raise Error, "Invalid RailsHx manifest #{path}: output entry #{index} must contain a lowercase SHA-256"
+          end
+        end
+
+        { "version" => MANIFEST_VERSION, "outputs" => outputs }
       rescue JSON::ParserError => error
         raise Error, "Invalid RailsHx manifest #{path}: #{error.message}"
       end
@@ -71,8 +117,18 @@ module HXRuby
       def manifest_owned?(root, path)
         return false unless root
 
+        manifest_entry(read_manifest(root), root, path) != nil
+      end
+
+      def manifest_entry(manifest, root, path)
         relative = relative_path(root, path)
-        read_manifest(root).fetch("outputs").any? { |entry| entry["output"] == relative }
+        manifest.fetch("outputs").find { |entry| entry.fetch("output") == relative }
+      end
+
+      # Checks the exact bytes RailsHx last wrote; a changed generated header is
+      # still preserved until the user explicitly forces replacement.
+      def manifest_checksum_matches?(entry, path)
+        File.file?(path) && Digest::SHA256.file(path).hexdigest == entry.fetch("sha256")
       end
 
       def record_manifest_entry(root, path, content, kind:, source:)
@@ -95,17 +151,24 @@ module HXRuby
       def clean_owned_outputs(root)
         absolute_root = File.expand_path(root)
         manifest = read_manifest(absolute_root)
-        paths = manifest.fetch("outputs").filter_map do |entry|
+        owned_outputs = manifest.fetch("outputs").filter_map do |entry|
           output = entry["output"].to_s
           next if output.empty?
 
           path = File.expand_path(output, absolute_root)
           assert_inside_root!(path, absolute_root)
           assert_canonical_inside_root!(path, absolute_root, reject_leaf_symlink: true)
-          path
+          [path, entry]
         end
 
-        paths.each do |path|
+        owned_outputs.each do |path, entry|
+          next unless File.exist?(path)
+          next if manifest_checksum_matches?(entry, path)
+
+          raise Error, "Refusing to clean modified RailsHx output #{path}. Restore its recorded content, or remove its manifest entry and generated header to keep it under Rails ownership."
+        end
+
+        owned_outputs.each do |path, _entry|
           FileUtils.rm_f(path)
           prune_empty_dirs(File.dirname(path), absolute_root)
         end

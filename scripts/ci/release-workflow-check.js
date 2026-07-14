@@ -76,8 +76,14 @@ requireMatch(ci, /gem install bundler-audit --version 0\.9\.3 --no-document/, "R
 requireMatch(ci, /npm run security:ruby-advisories/, "Ruby advisory audit must gate publication");
 requireMatch(ci, /gitleaks\/gitleaks-action@[0-9a-f]{40}/, "secret scanning action must be commit-pinned");
 
+const releaseContractsStart = ci.indexOf("\n  release-contracts:\n");
 const releaseStart = ci.indexOf("\n  release:\n");
+assert.notEqual(releaseContractsStart, -1, "CI must contain the release-contracts job");
 assert.notEqual(releaseStart, -1, "CI must contain the final release job");
+const releaseContracts = ci.slice(releaseContractsStart, releaseStart);
+requireMatch(releaseContracts, /ruby-version: "3\.4\.10"/, "public upgrade rehearsal Ruby must be exact");
+requireMatch(releaseContracts, /rubygems: "3\.6\.9"/, "public upgrade rehearsal RubyGems must be exact");
+requireMatch(releaseContracts, /npm run test:public-upgrade/, "release contracts must exercise the public v0.4.0 upgrade and rollback");
 const release = ci.slice(releaseStart);
 requireMatch(
   release,
@@ -138,6 +144,7 @@ const engineIndex = release.indexOf("./node_modules/.bin/semantic-release");
 assert(transitionIndex >= 0 && transitionIndex < engineIndex, "release must prepare the historical SemVer bridge before the locked engine");
 
 assert.equal(packageJson.packageManager, "npm@10.9.8", "package manager must pin release npm");
+assert.equal(packageJson.scripts?.["test:public-upgrade"], "node scripts/ci/public-release-upgrade-check.js", "public upgrade command must stay executable");
 assert.equal(packageJson.engines?.node, ">=22.14.0 <23", "package engine must bound the exact release Node major");
 assert.equal(packageJson.engines?.npm, ">=10.9.2 <11", "package engine must bound the tested npm range");
 for (const dependency of [

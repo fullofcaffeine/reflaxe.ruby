@@ -47,24 +47,40 @@ The `output` is always app-relative. The `kind` describes the artifact class
 `rails_config`, and so on). The `source` records the generator or compiler lane
 that produced the file. The checksum is over the written file content.
 
+Version `1` is the only ownership-manifest schema emitted by the public beta
+line, including `v0.4.0`. Readers require that exact version and validate every
+output path and checksum before mutation. A missing, malformed, or unknown
+version fails closed; RailsHx will add a migration only when a real future
+schema change creates something to migrate.
+
 ## Write Policy
 
 Normal generator writes follow this rule:
 
 1. If the output path is absent, write the file and record it in the manifest.
-2. If the output path exists and is manifest-owned, rewrite it and update the
-   checksum.
+2. If the output path exists, is manifest-owned, and still matches its recorded
+   checksum, rewrite it and update the checksum.
 3. If the output path exists and starts with a RailsHx generated header, rewrite
    it and record it.
 4. If the output path exists but is not RailsHx-owned, fail with an actionable
    overwrite diagnostic.
-5. If `--force` is explicit, overwrite and take RailsHx ownership.
+5. If a manifest-owned output has changed, preserve it and require an explicit
+   `--force` before replacement.
+6. If `--force` is explicit, overwrite and take RailsHx ownership.
 
 `--force` bypasses only the collision policy. It never bypasses app-root or
 symlink containment.
 
 `--force` is intentionally loud. It is for repair or deliberate ownership
 transfer, not the normal path.
+
+`hxruby:clean` uses the same checksum preflight across every manifest entry. If
+one existing output has changed, cleanup fails before deleting any output. To
+keep an edited generated file as Rails-owned source, remove its manifest entry
+and generated header in the same reviewed change. Haxe/HHX-owned generated
+files are otherwise disposable output: preserve changes in their Haxe/HHX
+source and regenerate rather than treating generated Ruby or ERB as a second
+source of truth.
 
 ## Rails-Owned Files
 
@@ -107,6 +123,8 @@ Generator smoke tests should cover:
 - Manifest-owned and forced symlink outputs cannot escape the app root.
 - A symlinked output parent cannot redirect a new file outside the app root.
 - Cleanup validates every manifest path before deleting any output.
+- Unknown manifest versions fail before write or cleanup.
+- Checksum drift blocks normal rewrite and all cleanup without partial deletion.
 - `--force` behavior only where the public generator exposes it.
 
 Compiler surfaces should keep snapshot tests for generated output shape and

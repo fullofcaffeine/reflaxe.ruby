@@ -40,6 +40,9 @@ const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const agentsGuide = readFileSync("AGENTS.md", "utf8");
 const debuggingGuide = readFileSync("docs/debugging.md", "utf8");
 const performanceGuide = readFileSync("docs/performance.md", "utf8");
+const stableBenchmark = readFileSync("scripts/benchmark/stable-viability.js", "utf8");
+const publicContract = readFileSync("docs/public-contract.md", "utf8");
+const generatedOwnership = readFileSync("docs/railshx-generated-artifact-ownership.md", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const changelog = readFileSync("CHANGELOG.md", "utf8");
 const rootRakefile = readFileSync("Rakefile", "utf8");
@@ -75,6 +78,7 @@ const releaseArtifactPrepare = readFileSync("scripts/release/prepare-release-art
 const releaseHosting = readFileSync("scripts/release/release-hosting.mjs", "utf8");
 const releaseHostingCheck = readFileSync("scripts/ci/release-hosting-check.mjs", "utf8");
 const releaseRepairWorkflow = readFileSync(".github/workflows/release-repair.yml", "utf8");
+const publicUpgradeCheck = readFileSync("scripts/ci/public-release-upgrade-check.js", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
 const haxelibPackageCheckText = readFileSync("scripts/ci/haxelib-package-check.js", "utf8");
@@ -141,6 +145,7 @@ expectIncludes(
   "Do not turn an accepted dependency range",
   "review support-claim boundary"
 );
+expectIncludes(agentsGuide, "compatibility matrices as tested support and maintenance promises", "forward compatibility agent policy");
 if (!rubyHxml.includes("-cp ${SCOPE_DIR}/std/")) {
   fail("haxe_libraries/reflaxe.ruby.hxml must include std/ classpath");
 }
@@ -167,6 +172,7 @@ expectIncludes(readme, "docs/getting-started.md", "README getting-started link")
 expectIncludes(readme, "docs/packages-and-installation.md", "README package docs link");
 expectIncludes(readme, "docs/railshx-typed-views.md", "README typed views link");
 expectIncludes(readme, "docs/railshx-client-javascript.md", "README Genes architecture link");
+expectIncludes(readme, "docs/public-contract.md", "README public contract link");
 expectIncludes(readme, "You can also go\nHaxe-first", "README Haxe-first product path");
 expectIncludes(readme, "without making Ruby your day-to-day authoring language", "README Haxe-first value");
 if (readme.split(/\r?\n/).length > 240) {
@@ -249,6 +255,7 @@ for (const finding of [
 }
 expectIncludes(docsIndex, "why-rubyhx.md", "docs index product thesis");
 expectIncludes(docsIndex, "rubyhx-railshx-gpt56-1.0-review.md", "docs index stable review prompt");
+expectIncludes(docsIndex, "public-contract.md", "docs index public contract");
 expectIncludes(
   docsIndex,
   "reviews/rubyhx-railshx-1.0-readiness-review.md",
@@ -259,6 +266,14 @@ expectIncludes(
   "| Rails fixture dependency range | `>= 7.0` |",
   "current Rails fixture range"
 );
+expectIncludes(publicContract, "The public inventory stays federated", "federated public surface policy");
+expectIncludes(publicContract, "Exact prose and compiler-private diagnostic implementation", "diagnostic compatibility boundary");
+expectIncludes(publicContract, "generic migration engine because no v2 exists", "bounded manifest migration policy");
+expectIncludes(publicContract, "npm run test:public-upgrade", "public upgrade command documentation");
+expectIncludes(generatedOwnership, "cleanup fails before deleting any output", "checksum-safe cleanup policy");
+expectIncludes(publicUpgradeCheck, "releases/download/${baseline.tag}", "public release asset path");
+expectIncludes(publicUpgradeCheck, "3de7a3133bc2c7032eceb64d03f52de9bdc9b50401690a9ab5912772faf189c3", "v0.4.0 Haxelib identity");
+expectIncludes(publicUpgradeCheck, "3b775ca2f869404e067c861b5f989204ca8aef59f233d6a5448c8a08d3725a65", "v0.4.0 gem identity");
 expectIncludes(
   compatibilityMatrix,
   "| Rails supported line | `8.1` | Supported beta |",
@@ -674,6 +689,7 @@ expectIncludes(ciWorkflow, 'rubygems: "3.6.9"', "CI release job");
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 expectIncludes(packageJson.scripts["benchmark:stable"] ?? "", "stable-viability.js", "stable benchmark command");
 expectIncludes(ciWorkflow, "npm run benchmark:stable -- --require-rails", "canonical stable benchmark lane");
+expectIncludes(stableBenchmark, "npm_config_user_agent", "invoking npm benchmark identity");
 expectIncludes(performanceGuide, "broad absolute caps", "performance regression policy");
 expectIncludes(performanceGuide, "does not claim", "performance claim boundary");
 

@@ -44,6 +44,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
   exact-commit evidence, stable-release verdict, bounded findings, support
   proposal, and the path from beta through independent RC approval.
 - [Release Version Policy](release-version-policy.md): conventional major-zero releases, tag-derived lineage, and independent stable-major approvals.
+- [RubyHx/RailsHx Public Contract](public-contract.md): federated 1.x API/ABI ownership, SemVer boundaries, deprecation, and public-release upgrade/rollback evidence.
 - [Reproducible Release Artifacts](release-artifacts.md): tested-commit staging, canonical ZIP/gem bytes, full content manifests, SHA-256 sidecars, and consumer gates.
 - [Tested-Commit Publication Workflow](release-publication-workflow.md): same-run release authorization, exact toolchain/action pins, minimal permissions, and trigger matrix.
 - [Hosted Release Identity And Repair](release-hosting-and-repair.md): draft verification, exact hosted bytes, immutable releases/tags, and existing-tag-only recovery.

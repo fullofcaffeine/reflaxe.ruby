@@ -606,12 +606,24 @@ module HXRuby
 
       errors = []
       warnings = []
+      unless manifest.is_a?(Hash)
+        return [["manifest #{path} root must be an object"], warnings]
+      end
+      unless manifest["version"] == HXRuby::Generators::Common::MANIFEST_VERSION
+        return [["manifest #{path} uses unsupported version #{manifest["version"].inspect}; expected #{HXRuby::Generators::Common::MANIFEST_VERSION}"], warnings]
+      end
+
       outputs = manifest["outputs"]
       unless outputs.is_a?(Array)
         return [["manifest #{path} must contain an outputs array"], warnings]
       end
 
-      outputs.each do |entry|
+      outputs.each_with_index do |entry, index|
+        unless entry.is_a?(Hash)
+          errors << "manifest output entry #{index} must be an object"
+          next
+        end
+
         output = entry["output"].to_s
         if unsafe_relative_output?(output)
           errors << "manifest output path is unsafe: #{output.inspect}"
@@ -625,11 +637,14 @@ module HXRuby
         end
 
         expected_sha = entry["sha256"].to_s
-        next if expected_sha.empty?
+        unless expected_sha.match?(/\A[0-9a-f]{64}\z/)
+          errors << "manifest output #{output} must contain a lowercase SHA-256"
+          next
+        end
 
         actual_sha = Digest::SHA256.file(absolute).hexdigest
         if actual_sha != expected_sha
-          warnings << "manifest output checksum drifted: #{output} (regenerate it or take Rails ownership intentionally)"
+          warnings << "manifest output checksum drifted: #{output} (use the owning generator's --force option to replace it, or remove its manifest entry and generated header to keep the edit under Rails ownership)"
         end
       end
 

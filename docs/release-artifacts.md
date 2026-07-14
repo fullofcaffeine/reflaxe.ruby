@@ -121,6 +121,7 @@ Run the focused reproducibility and package-consumer gates with:
 npm run test:release-artifacts
 npm run test:haxelib-package
 npm run test:gem-package
+npm run test:public-upgrade
 ```
 
 The reproducibility gate performs two complete builds under different time
@@ -131,3 +132,11 @@ test installs the exact ZIP into an isolated repository, compiles a consumer,
 and executes its Ruby output. The gem test unpacks and installs the exact gem,
 then exercises `hxruby` and its Rails task surface. Both validate the sidecar
 and embedded manifest before consumption.
+
+The public-upgrade gate is intentionally one representative baseline rather
+than a version cross-product. It downloads the immutable `v0.4.0` ZIP and gem
+from their public GitHub Release URLs, verifies their committed identities and
+SHA-256 sidecars, upgrades Haxelib and ownership-manifest consumers to packages
+built from the current Git tree, and rolls both back without changing
+handwritten source. See [Public Contract](public-contract.md) for the ownership
+and SemVer boundary this proves.

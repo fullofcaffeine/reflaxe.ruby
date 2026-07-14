@@ -43,6 +43,80 @@ class HXRubyGeneratorCommonTest < Minitest::Test
     refute_path_exists output
   end
 
+  def test_modified_manifest_output_requires_force_before_rewrite
+    output = File.join(@root, "generated", "owned.rb")
+    HXRuby::Generators::Common.write_file(output, "class Original; end\n", root: @root, kind: "ruby", source: "test")
+    File.write(output, "class HandEdited; end\n")
+
+    error = assert_raises(HXRuby::Generators::Error) do
+      HXRuby::Generators::Common.write_file(output, "class Replacement; end\n", root: @root, kind: "ruby", source: "test")
+    end
+
+    assert_match(/modified RailsHx output/, error.message)
+    assert_equal "class HandEdited; end\n", File.read(output)
+
+    HXRuby::Generators::Common.write_file(
+      output,
+      "class Replacement; end\n",
+      force: true,
+      root: @root,
+      kind: "ruby",
+      source: "test"
+    )
+    assert_equal "class Replacement; end\n", File.read(output)
+  end
+
+  def test_clean_refuses_checksum_drift_before_deleting_any_output
+    unchanged = File.join(@root, "generated", "unchanged.rb")
+    changed = File.join(@root, "generated", "changed.rb")
+    HXRuby::Generators::Common.write_file(unchanged, "unchanged\n", root: @root, source: "test")
+    HXRuby::Generators::Common.write_file(changed, "original\n", root: @root, source: "test")
+    File.write(changed, "hand edited\n")
+
+    error = assert_raises(HXRuby::Generators::Error) do
+      HXRuby::Generators::Common.clean_owned_outputs(@root)
+    end
+
+    assert_match(/modified RailsHx output/, error.message)
+    assert_equal "unchanged\n", File.read(unchanged)
+    assert_equal "hand edited\n", File.read(changed)
+    assert_equal 2, HXRuby::Generators::Common.read_manifest(@root).fetch("outputs").length
+  end
+
+  def test_unknown_manifest_version_fails_before_write_or_clean
+    output = File.join(@root, "generated", "owned.rb")
+    HXRuby::Generators::Common.write_file(output, "before\n", root: @root, source: "test")
+    manifest_path = File.join(@root, ".railshx", "manifest.json")
+    manifest = JSON.parse(File.read(manifest_path))
+    manifest["version"] = 2
+    File.write(manifest_path, JSON.pretty_generate(manifest) + "\n")
+    manifest_before = File.read(manifest_path)
+
+    write_error = assert_raises(HXRuby::Generators::Error) do
+      HXRuby::Generators::Common.write_file(output, "after\n", force: true, root: @root, source: "test")
+    end
+    clean_error = assert_raises(HXRuby::Generators::Error) do
+      HXRuby::Generators::Common.clean_owned_outputs(@root)
+    end
+
+    assert_match(/Unsupported RailsHx manifest version 2/, write_error.message)
+    assert_match(/Unsupported RailsHx manifest version 2/, clean_error.message)
+    assert_equal "before\n", File.read(output)
+    assert_equal manifest_before, File.read(manifest_path)
+  end
+
+  def test_missing_manifest_version_is_not_silently_assumed
+    manifest_path = File.join(@root, ".railshx", "manifest.json")
+    FileUtils.mkdir_p(File.dirname(manifest_path))
+    File.write(manifest_path, JSON.pretty_generate({ "outputs" => [] }) + "\n")
+
+    error = assert_raises(HXRuby::Generators::Error) do
+      HXRuby::Generators::Common.read_manifest(@root)
+    end
+
+    assert_match(/Unsupported RailsHx manifest version nil/, error.message)
+  end
+
   def test_rootless_writer_keeps_parent_creation_behavior
     output = File.join(@tmp, "rootless", "nested", "output.rb")
 
@@ -161,6 +235,19 @@ class HXRubyGeneratorCommonTest < Minitest::Test
     )
   end
 
+  def test_doctor_rejects_unknown_manifest_version
+    manifest_path = File.join(@root, ".railshx", "manifest.json")
+    FileUtils.mkdir_p(File.dirname(manifest_path))
+    File.write(manifest_path, JSON.pretty_generate({ "version" => 2, "outputs" => [] }) + "\n")
+
+    errors, warnings = Dir.chdir(@root) do
+      HXRuby::Tasks.diagnose_manifest_outputs(".railshx/manifest.json")
+    end
+
+    assert_empty warnings
+    assert_equal ["manifest .railshx/manifest.json uses unsupported version 2; expected 1"], errors
+  end
+
   def test_atomic_route_extern_write_rejects_symlink_output
     outside = write_outside("routes.hx", "before\n")
     output = symlink_output("src_haxe/routes/Routes.hx", outside)
@@ -193,7 +280,9 @@ class HXRubyGeneratorCommonTest < Minitest::Test
     manifest_path = File.join(@root, ".railshx", "manifest.json")
     FileUtils.mkdir_p(File.dirname(manifest_path))
     entries = outputs.map do |output|
-      { "output" => output, "kind" => "ruby", "source" => "test", "sha256" => "stale" }
+      output_path = File.join(@root, output)
+      sha256 = File.file?(output_path) ? Digest::SHA256.file(output_path).hexdigest : Digest::SHA256.hexdigest("")
+      { "output" => output, "kind" => "ruby", "source" => "test", "sha256" => sha256 }
     end
     File.write(manifest_path, JSON.pretty_generate({ "version" => 1, "outputs" => entries }) + "\n")
   end

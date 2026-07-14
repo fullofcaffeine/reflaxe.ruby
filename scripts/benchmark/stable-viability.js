@@ -96,7 +96,7 @@ const report = {
     githubImageOs: process.env.ImageOS ?? null,
     githubImageVersion: process.env.ImageVersion ?? null,
     node: process.version,
-    npm: outputOf("npm", ["--version"]),
+    npm: invokingNpmVersion(),
     haxe: outputOf("haxe", ["-version"]),
     ruby: outputOf("ruby", ["-e", "print RUBY_VERSION"]),
   },
@@ -234,6 +234,14 @@ function outputOf(command, args) {
   } catch {
     return "";
   }
+}
+
+function invokingNpmVersion() {
+  // `npm run` prepends node_modules/.bin, where semantic-release may expose a
+  // different transitive npm. The user agent identifies the CLI that actually
+  // launched this script.
+  const match = process.env.npm_config_user_agent?.match(/(?:^|\s)npm\/([^\s]+)/);
+  return match?.[1] ?? outputOf("npm", ["--version"]);
 }
 
 function commandSucceeds(command, args, options) {

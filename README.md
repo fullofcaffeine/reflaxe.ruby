@@ -178,8 +178,10 @@ incrementally. See [Gradual Adoption](docs/railshx-gradual-adoption.md).
 
 Read the [compiler correctness contract](docs/compiler-correctness.md),
 [testing strategy](docs/railshx-testing-strategy.md), and
-[compatibility matrix](docs/compatibility-matrix.md). Representative build,
-startup, memory, and output-size evidence is documented in the
+[compatibility matrix](docs/compatibility-matrix.md). The proposed stable
+[public contract](docs/public-contract.md) classifies SemVer and upgrade
+boundaries without turning tested versions into compatibility ceilings.
+Representative build, startup, memory, and output-size evidence is documented in the
 [performance viability contract](docs/performance.md).
 
 ## Maturity
