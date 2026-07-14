@@ -28,6 +28,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Debugging Generated Applications](debugging.md): compiler diagnostics,
   generated Ruby/ERB backtraces, ownership provenance, browser source maps,
   and the limits of server-side source correlation.
+- [Performance Viability](performance.md): representative compiler, generated
+  startup, peak-memory, output-size, and gross-regression evidence without
+  comparative speed claims.
 - [Support And Maintenance](../SUPPORT.md): public issue and security channels,
   single-maintainer scope, review cadence, release authority, and companion
   ownership.

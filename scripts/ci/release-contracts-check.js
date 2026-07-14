@@ -39,6 +39,7 @@ const haxerc = readJson(".haxerc");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const agentsGuide = readFileSync("AGENTS.md", "utf8");
 const debuggingGuide = readFileSync("docs/debugging.md", "utf8");
+const performanceGuide = readFileSync("docs/performance.md", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const changelog = readFileSync("CHANGELOG.md", "utf8");
 const rootRakefile = readFileSync("Rakefile", "utf8");
@@ -671,6 +672,10 @@ expectIncludes(ciWorkflow, "ref: ${{ github.sha }}", "CI release job");
 expectIncludes(ciWorkflow, 'ruby-version: "3.4.10"', "CI release job");
 expectIncludes(ciWorkflow, 'rubygems: "3.6.9"', "CI release job");
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
+expectIncludes(packageJson.scripts["benchmark:stable"] ?? "", "stable-viability.js", "stable benchmark command");
+expectIncludes(ciWorkflow, "npm run benchmark:stable -- --require-rails", "canonical stable benchmark lane");
+expectIncludes(performanceGuide, "broad absolute caps", "performance regression policy");
+expectIncludes(performanceGuide, "does not claim", "performance claim boundary");
 
 expectIncludes(devisehxReleaseLane, "std/devisehx/**", "DeviseHx release lane docs");
 expectIncludes(devisehxReleaseLane, "bin/rails generate hxruby:adopt --gem devise", "DeviseHx release lane docs");

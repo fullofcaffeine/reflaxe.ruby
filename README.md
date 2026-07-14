@@ -178,7 +178,9 @@ incrementally. See [Gradual Adoption](docs/railshx-gradual-adoption.md).
 
 Read the [compiler correctness contract](docs/compiler-correctness.md),
 [testing strategy](docs/railshx-testing-strategy.md), and
-[compatibility matrix](docs/compatibility-matrix.md).
+[compatibility matrix](docs/compatibility-matrix.md). Representative build,
+startup, memory, and output-size evidence is documented in the
+[performance viability contract](docs/performance.md).
 
 ## Maturity
 
@@ -208,6 +210,7 @@ See [Production Readiness](docs/railshx-production-readiness.md) and the
 | TSX-like typed Rails views and HHX | [Typed Views](docs/railshx-typed-views.md) |
 | Haxe-authored browser JS and Genes | [Client JavaScript](docs/railshx-client-javascript.md) |
 | Server backtraces, generated ownership, and browser source maps | [Debugging](docs/debugging.md) |
+| Representative compile/startup resource evidence | [Performance](docs/performance.md) |
 | Release ZIP, gem, and verified installation | [Packages And Installation](docs/packages-and-installation.md) |
 | Support, reporting, and maintenance ownership | [Support And Maintenance](SUPPORT.md) |
 | Contributor gates and repository map | [Repository Development](docs/development.md) |

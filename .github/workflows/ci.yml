@@ -276,6 +276,9 @@ jobs:
       - name: Run RailsHx production dogfood
         run: npm run test:todoapp-production
 
+      - name: Measure stable viability workloads
+        run: npm run benchmark:stable -- --require-rails
+
   release-contracts:
     name: Release contracts
     runs-on: ubuntu-24.04
