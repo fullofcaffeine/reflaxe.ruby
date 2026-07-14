@@ -31,6 +31,7 @@
       "4.0"
     ],
     "releaseVersion": "3.4.10",
+    "releaseRubyGemsVersion": "3.6.9",
     "branches": [
       {
         "version": "3.3",

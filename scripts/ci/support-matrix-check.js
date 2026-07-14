@@ -57,10 +57,18 @@ const release = ci.jobs.release;
 assert.equal(step(release, "Setup exact Node.js").with["node-version"], matrix.node.releaseVersion);
 assert.equal(step(release, "Setup exact Ruby and RubyGems").with["ruby-version"], matrix.ruby.releaseVersion);
 assert.equal(
+  step(release, "Setup exact Ruby and RubyGems").with.rubygems,
+  matrix.ruby.releaseRubyGemsVersion,
+);
+assert.equal(
   step(repair.jobs.repair, "Setup exact Node.js without executable cache restore").with["node-version"],
   matrix.node.releaseVersion,
 );
 assert.equal(step(repair.jobs.repair, "Setup exact Ruby and RubyGems").with["ruby-version"], matrix.ruby.releaseVersion);
+assert.equal(
+  step(repair.jobs.repair, "Setup exact Ruby and RubyGems").with.rubygems,
+  matrix.ruby.releaseRubyGemsVersion,
+);
 const representativeRuby = matrix.railsHx.verifiedRuntime.browserAndProductionRepresentativeRubyBranch;
 assert.equal(step(ci.jobs["rails-browser"], "Setup Ruby").with["ruby-version"], representativeRuby);
 assert.equal(step(ci.jobs["rails-production"], "Setup Ruby").with["ruby-version"], representativeRuby);

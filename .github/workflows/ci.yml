@@ -354,7 +354,7 @@ jobs:
         uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
         with:
           ruby-version: "3.4.10"
-          rubygems: "3.5.22"
+          rubygems: "3.6.9"
           bundler: none
 
       - name: Verify exact release toolchain
@@ -363,7 +363,7 @@ jobs:
           test "$(node --version)" = "v22.23.1"
           test "$(npm --version)" = "10.9.8"
           test "$(ruby --disable-gems -e 'print RUBY_VERSION')" = "3.4.10"
-          test "$(gem --version)" = "3.5.22"
+          test "$(gem --version)" = "3.6.9"
 
       - name: Install and audit locked npm dependencies
         run: |

@@ -128,7 +128,7 @@ assert(!/\bnpm install\b/.test(workflows), "workflow dependency installation mus
 requireMatch(release, /node-version: "22\.23\.1"/, "release Node must be exact");
 requireMatch(release, /test "\$\(npm --version\)" = "10\.9\.8"/, "release npm must be exact");
 requireMatch(release, /ruby-version: "3\.4\.10"/, "release Ruby must be exact");
-requireMatch(release, /rubygems: "3\.5\.22"/, "release RubyGems must be exact");
+requireMatch(release, /rubygems: "3\.6\.9"/, "release RubyGems must be exact");
 requireMatch(release, /lix download haxe "4\.3\.7"/, "release Haxe must be exact");
 requireMatch(release, /\.\/node_modules\/\.bin\/semantic-release/, "release must execute the locked semantic-release binary directly");
 const transitionIndex = release.indexOf("node scripts/release/prepare-semver-transition.mjs");
@@ -176,7 +176,7 @@ assert(!repair.includes("semantic-release"), "repair must never derive a release
 assert(!/^\s*git tag(?:\s|$)/m.test(repair), "repair must never create, move, or delete a tag");
 requireMatch(repair, /node-version: "22\.23\.1"/, "repair Node must be exact");
 requireMatch(repair, /ruby-version: "3\.4\.10"/, "repair Ruby must be exact");
-requireMatch(repair, /rubygems: "3\.5\.22"/, "repair RubyGems must be exact");
+requireMatch(repair, /rubygems: "3\.6\.9"/, "repair RubyGems must be exact");
 requireMatch(repair, /lix download haxe "4\.3\.7"/, "repair Haxe must be exact");
 requireMatch(repair, /release-hosting\.mjs repair/, "repair must use the shared hosted identity state machine");
 const repairBuild = repair.indexOf("prepare-release-artifacts.js");

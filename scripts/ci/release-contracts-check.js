@@ -614,7 +614,7 @@ expectIncludes(ciWorkflow, "./node_modules/.bin/semantic-release", "CI release j
 expectIncludes(ciWorkflow, "fetch-depth: 0", "CI release job");
 expectIncludes(ciWorkflow, "ref: ${{ github.sha }}", "CI release job");
 expectIncludes(ciWorkflow, 'ruby-version: "3.4.10"', "CI release job");
-expectIncludes(ciWorkflow, 'rubygems: "3.5.22"', "CI release job");
+expectIncludes(ciWorkflow, 'rubygems: "3.6.9"', "CI release job");
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 
 expectIncludes(devisehxReleaseLane, "std/devisehx/**", "DeviseHx release lane docs");

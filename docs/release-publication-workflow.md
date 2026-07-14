@@ -68,7 +68,7 @@ Release-affecting tools are reviewed inputs rather than moving aliases:
 | Node.js | `22.23.1` |
 | npm | `10.9.8` |
 | Ruby | `3.4.10` |
-| RubyGems | `3.5.22` |
+| RubyGems | `3.6.9` |
 | Haxe | `4.3.7` |
 | lix | `15.12.4` |
 | semantic-release | `25.0.5` |
