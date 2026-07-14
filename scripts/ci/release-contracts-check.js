@@ -56,6 +56,10 @@ const docsIndex = readFileSync("docs/README.md", "utf8");
 const productPositioning = readFileSync("docs/why-rubyhx.md", "utf8");
 const productionReadiness = readFileSync("docs/railshx-production-readiness.md", "utf8");
 const stableReviewPrompt = readFileSync("docs/rubyhx-railshx-gpt56-1.0-review.md", "utf8");
+const stableReviewReport = readFileSync(
+  "docs/reviews/rubyhx-railshx-1.0-readiness-review.md",
+  "utf8"
+);
 const typedViews = readFileSync("docs/railshx-typed-views.md", "utf8");
 const clientJavaScript = readFileSync("docs/railshx-client-javascript.md", "utf8");
 const rubyStdlibFacades = readFileSync("docs/ruby-stdlib-facades.md", "utf8");
@@ -168,8 +172,27 @@ expectIncludes(stableReviewPrompt, "claim-evidence matrix", "stable 1.0 claim au
 expectIncludes(stableReviewPrompt, "Test these as separate claims", "independent Haxe-first review contract");
 expectIncludes(stableReviewPrompt, "NOT READY: P1 STABLE-RELEASE BLOCKERS", "stable 1.0 verdict rubric");
 expectIncludes(stableReviewPrompt, "docs/reviews/rubyhx-railshx-1.0-readiness-review.md", "stable 1.0 review artifact");
+expectIncludes(stableReviewReport, "08faba040457165b883ae5327315581979ea07db", "stable 1.0 reviewed commit");
+expectIncludes(stableReviewReport, "NOT READY: P1 STABLE-RELEASE BLOCKERS", "stable 1.0 review verdict");
+for (const finding of [
+  "RHX-1.0-001",
+  "RHX-1.0-002",
+  "RHX-1.0-003",
+  "RHX-1.0-004",
+  "RHX-1.0-005",
+  "RHX-1.0-006",
+  "RHX-1.0-007",
+  "RHX-1.0-008",
+]) {
+  expectIncludes(stableReviewReport, finding, "stable 1.0 review finding");
+}
 expectIncludes(docsIndex, "why-rubyhx.md", "docs index product thesis");
 expectIncludes(docsIndex, "rubyhx-railshx-gpt56-1.0-review.md", "docs index stable review prompt");
+expectIncludes(
+  docsIndex,
+  "reviews/rubyhx-railshx-1.0-readiness-review.md",
+  "docs index stable review report"
+);
 expectIncludes(docsIndex, "getting-started.md", "docs index getting started");
 expectIncludes(docsIndex, "packages-and-installation.md", "docs index package installation");
 expectIncludes(docsIndex, "development.md", "docs index repository development");

@@ -31,6 +31,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
   production-ready beta evidence and the cross-dimensional stable `1.0` bar.
 - [GPT 5.6 Pro 1.0 Review Packet](rubyhx-railshx-gpt56-1.0-review.md):
   independent repository, architecture, product, and stable-release audit brief.
+- [RubyHx/RailsHx Stable 1.0 Readiness Review](reviews/rubyhx-railshx-1.0-readiness-review.md):
+  exact-commit evidence, stable-release verdict, bounded findings, support
+  proposal, and the path from beta through independent RC approval.
 - [Release Version Policy](release-version-policy.md): conventional major-zero releases, tag-derived lineage, and independent stable-major approvals.
 - [Reproducible Release Artifacts](release-artifacts.md): tested-commit staging, canonical ZIP/gem bytes, full content manifests, SHA-256 sidecars, and consumer gates.
 - [Tested-Commit Publication Workflow](release-publication-workflow.md): same-run release authorization, exact toolchain/action pins, minimal permissions, and trigger matrix.
