@@ -101,6 +101,25 @@ Gemfiles accept Rails `>= 7.0` and `< 8.0`, but that dependency range does not
 prove every Rails 7 minor. The committed lock and canonical beta evidence cover
 Rails `7.2.3.1`; Rails 8.1 remains planned and unverified.
 
+The maintainer reconciliation performed on 2026-07-13 also refined the eight P1
+findings against the live checkout, hosted repository settings, and published
+`v0.4.0` release:
+
+| Finding | Reconciled evidence and remaining delta |
+| --- | --- |
+| RHX-1.0-001 | Confirmed, with the Rails range correction above. The accepted Gemfile range is not a tested support matrix. |
+| RHX-1.0-002 | Confirmed for DeviseHx package paths, metadata schemas, helper owners, HHX tags, and diagnostics in core. Generic Rails route IR that can emit ordinary `devise_for` is a separate Rails capability and need not be prohibited if it no longer depends on DeviseHx vocabulary. |
+| RHX-1.0-003 | Confirmed. Typed ActiveSupport duration/allocation facades and CI job durations are useful measurement inputs, but there is still no repeatable product benchmark, baseline, variance record, or regression threshold. |
+| RHX-1.0-004 | Narrowed. JavaScript source maps, readable generated files, manifest output/source/SHA provenance, and `hxruby:doctor`/`check` diagnostics already exist. Manifest `source` values are generally generator-level rather than Haxe/HHX file-and-line correlation, `HxException` has no mapping layer, and the required failure journeys are not exercised. |
+| RHX-1.0-005 | Narrowed and extended. Current-package isolated Haxelib and gem consumer tests already exist, and the public `v0.4.0` assets are immutable with checksum sidecars. There is still no public-asset upgrade/rollback lane. The ownership reader accepts unknown schema versions; checksum drift is diagnosed, but manifest-owned files are deliberately overwritten or deleted without a tested ownership-handoff operation. |
+| RHX-1.0-006 | Narrowed. The callable ABI example is a substantive executable Ruby/Haxe interop fixture, and the package lane compiles a hello-world consumer from an isolated Haxelib repository. What is missing is one cohesive, maintained non-Rails product lifecycle rather than all pure-Ruby evidence. |
+| RHX-1.0-007 | Confirmed and strengthened by live settings. Locked Ruby advisories are not scanned, `SECURITY.md` points at a removed workflow, GitHub private vulnerability reporting is disabled, and Dependabot security updates are disabled. Pinned gitleaks CI remains real evidence and should not be double-counted as absent secret scanning. |
+| RHX-1.0-008 | Confirmed. No project-owned CODEOWNERS, CONTRIBUTING, GOVERNANCE, MAINTAINERS, or SUPPORT document exists. A truthful single-maintainer/best-effort policy is an acceptable outcome; a backup maintainer must not be invented. |
+
+These refinements do not change the stable verdict. They make the implementation
+work smaller and more exact, and prevent existing evidence from being rebuilt
+unnecessarily.
+
 ## 2. Executive Verdict
 
 ## NOT READY: P1 STABLE-RELEASE BLOCKERS
@@ -571,11 +590,15 @@ companions second class.
 **Required outcome:** Define a typed, versioned companion contract for metadata
 or IR contributions, helper lowering, HHX component expansion, inventory
 validation, diagnostics, package/runtime requirements, and test integration.
-Move all Devise-specific knowledge into the companion or generator layer.
+Move all DeviseHx package-specific knowledge into the companion or generator
+layer. Core may retain generic Rails routing concepts that emit `devise_for`
+only when their input contract no longer names or requires DeviseHx.
 
 **Acceptance evidence:**
 
-1. A core guard rejects DeviseHx names outside explicit architecture fixtures.
+1. A core guard rejects DeviseHx package names, type paths, schemas, and helper
+   owners outside explicit architecture fixtures; it does not confuse ordinary
+   Rails `devise_for` output with companion-package coupling.
 2. Existing Devise snapshots, negative diagnostics, runtime, HHX, routes,
    current-user flow, package, and todoapp gates pass.
 3. Public docs and a minimal fake companion prove genericity.
@@ -595,7 +618,9 @@ material regressions.
 **Evidence:** The stable criteria require compile time, runtime, startup, memory
 or allocation, artifact size, production behavior, and regression policy.
 Repository inspection found no benchmark command, baseline, threshold file,
-trend report, or CI performance lane.
+trend report, or CI performance lane. Typed ActiveSupport instrumentation exposes
+duration and allocation values, but no maintained workload currently turns
+those primitives into a RubyHx/RailsHx baseline.
 
 **Required outcome:** Add reproducible cold and warm/incremental compile,
 artifact-size, Rails boot, representative request/job, memory/allocation, and
@@ -620,9 +645,13 @@ baseline. The dimension itself cannot be omitted under current exit rules.
 browser error may not identify the owned Haxe/HHX source.
 
 **Evidence:** Compile diagnostics and generated source are strong. JavaScript
-has source maps. <code>HxException</code> does not map Ruby backtraces. The
-stdlib audit says Ruby CallStack mapping must be designed. No maintained failure
-journey covers generated Ruby, Rails, HHX/ERB, or production assets.
+has source maps. The ownership manifest records output paths, generator-level
+source labels, and SHA-256, while <code>hxruby:doctor</code> checks manifest
+drift plus route and migration state. Those are coarse provenance and diagnostic
+foundations, not Haxe/HHX line correlation. <code>HxException</code> does not map
+Ruby backtraces, the stdlib audit says Ruby CallStack mapping must be designed,
+and no maintained failure journey covers generated Ruby, Rails, HHX/ERB, or
+production assets.
 
 **Required outcome:** Choose either Haxe source maps, a generated-to-owned-source
 manifest, or an explicit deterministic generated-Ruby debugging contract, and
@@ -650,9 +679,13 @@ callable ABI, runtime helpers, commands, schemas, paths, and generated artifacts
 are stable, nor rehearse an upgrade or rollback.
 
 **Evidence:** Stable-major version approval is robust. Metadata and profiles are
-already described as public. No complete compatibility classification or
-deprecation window exists. No v0.4.0-to-RC project fixture exists. Unknown
-manifest versions are accepted.
+already described as public. Current-package tests build and install isolated
+Haxelib and gem consumers, and the hosted <code>v0.4.0</code> ZIP and gem are
+immutable with checksum sidecars. No complete compatibility classification,
+deprecation window, or public-v0.4.0-to-RC project fixture exists. Unknown
+manifest versions are accepted. Manifest checksums produce drift diagnostics,
+but documented manifest ownership still permits rewrite and clean without a
+defined, tested operation for transferring a changed file back to app ownership.
 
 **Required outcome:** Publish a machine-checked public-surface manifest and 1.x
 policy. Define source, callable/runtime ABI, artifact schema, diagnostics,
@@ -667,6 +700,10 @@ ownership, compiler/runtime compatibility, deprecation, migration, and rollback.
 5. Unknown-newer manifests fail before overwrite or deletion; old supported
    schemas migrate with backup and idempotence.
 6. Compiler/runtime mismatch fails clearly.
+7. Drifted generated files have an explicit contract: either mutations fail
+   closed until regeneration/force, or disposable output remains allowed with a
+   documented and tested command that safely removes manifest/header ownership
+   when a user takes the file back.
 
 **Scope alternative:** Exclude private formatting and helper internals while
 guaranteeing documented source APIs, callable/runtime ABI, paths, and ownership.
@@ -678,6 +715,13 @@ guaranteeing documented source APIs, callable/runtime ABI, paths, and ownership.
 **Impact:** A Haxe-first adopter may choose RubyHx for a library, service, or CLI
 without a maintained workflow for project layout, gems, tests, packaging,
 debugging, or upgrades outside Rails.
+
+**Existing foundation:** <code>examples/ruby_callable_abi</code> exercises a
+typed stdlib boundary and handwritten Ruby caller with snapshots and runtime
+tests. The Haxelib package check also installs the freshly built archive into an
+isolated repository, compiles an external hello-world consumer, and runs its
+Ruby output. These are valuable components, but not yet one realistic product
+lifecycle.
 
 **Required outcome:** Maintain one representative non-Rails product, preferably
 a small library plus CLI or service. Keep nearly all owned source in Haxe while
@@ -708,7 +752,10 @@ private reporting route. Stale security docs can misdirect reporters.
 actions, and exact-SHA release security are strong. No bundler-audit, Ruby
 Advisory Database, OSV, or equivalent locked-gem scan was found.
 <code>SECURITY.md</code> says only to report privately to the owner and names a
-workflow that no longer exists.
+workflow that no longer exists. Live repository settings on 2026-07-13 reported
+private vulnerability reporting and Dependabot security updates disabled. The
+custom full-history gitleaks lane remains valid secret-scanning evidence even
+though GitHub's hosted secret-scanning switches are disabled.
 
 **Required outcome:** Add mandatory advisory scanning for locked project and
 reference-app Ruby dependencies. Publish a usable private channel, supported
