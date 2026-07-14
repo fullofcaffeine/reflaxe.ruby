@@ -16,6 +16,7 @@
     "format:haxe:check": "bash scripts/lint/hx_format_guard.sh",
     "security:gitleaks": "bash scripts/security/run-gitleaks.sh",
     "security:gitleaks:staged": "bash scripts/security/run-gitleaks.sh --staged",
+    "security:ruby-advisories": "node scripts/ci/ruby-advisory-check.js",
     "hooks:install": "bash scripts/hooks/install.sh",
     "public:precommit": "npm run format:haxe:check && npm run security:gitleaks",
     "ci:support-matrix": "node scripts/ci/support-matrix-check.js",

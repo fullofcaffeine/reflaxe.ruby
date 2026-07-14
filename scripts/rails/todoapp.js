@@ -161,7 +161,7 @@ function materializeRailsApp() {
   writeFile("Gemfile", `source "https://rubygems.org"
 
 gem "rails", ">= 7.0", "< 8.0"
-gem "sqlite3", "~> 1.4"
+gem "sqlite3", "~> 2.9", ">= 2.9.5"
 gem "puma", ">= 5.0"
 gem "propshaft", ">= 0.9"
 gem "importmap-rails", ">= 2.0"

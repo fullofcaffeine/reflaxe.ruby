@@ -37,13 +37,24 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Audit locked release dependencies
+      - name: Setup exact Ruby and RubyGems for advisory scanning
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        with:
+          ruby-version: "3.4.10"
+          rubygems: "3.6.9"
+          bundler: none
+
+      - name: Audit locked Node and Ruby dependencies
         run: |
           set -euo pipefail
           test "$(node --version)" = "v${NODE_VERSION}"
           test "$(npm --version)" = "${NPM_VERSION}"
+          test "$(ruby --disable-gems -e 'print RUBY_VERSION')" = "3.4.10"
+          test "$(gem --version)" = "3.6.9"
           npm ci --ignore-scripts --no-audit --no-fund
           npm audit
+          gem install bundler-audit --version 0.9.3 --no-document
+          npm run security:ruby-advisories
 
       - name: Scan full Git history for secrets
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3

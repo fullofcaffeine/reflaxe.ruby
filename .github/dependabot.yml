@@ -8,3 +8,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+  - package-ecosystem: bundler
+    directory: /examples/todoapp_rails/build/rails
+    schedule:
+      interval: weekly

@@ -72,6 +72,8 @@ requireMatch(ci, /pull_request:\n\s+branches: \[main\]/, "CI must test pull requ
 requireMatch(ci, /cancel-in-progress: \$\{\{ github\.ref != 'refs\/heads\/main' \}\}/, "main publication runs must not cancel one another");
 requireMatch(ci, /\n  security:\n/, "security must be part of the same workflow graph");
 requireMatch(ci, /npm audit\n/, "locked dependency audit must gate publication");
+requireMatch(ci, /gem install bundler-audit --version 0\.9\.3 --no-document/, "Ruby advisory scanner must be exact");
+requireMatch(ci, /npm run security:ruby-advisories/, "Ruby advisory audit must gate publication");
 requireMatch(ci, /gitleaks\/gitleaks-action@[0-9a-f]{40}/, "secret scanning action must be commit-pinned");
 
 const releaseStart = ci.indexOf("\n  release:\n");
