@@ -139,7 +139,7 @@
     "fflate": "0.8.3",
     "js-yaml": "5.2.1",
     "lix": "15.12.4",
-    "semantic-release": "25.0.5",
+    "semantic-release": "25.0.7",
     "semver": "7.8.4"
   },
   "repository": {
