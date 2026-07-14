@@ -404,7 +404,9 @@ module HXRuby
       errors = []
       warnings = []
 
-      errors << HXRuby::SupportMatrix.ruby_error
+      ruby_error = HXRuby::SupportMatrix.ruby_error
+      errors << ruby_error
+      warnings << HXRuby::SupportMatrix.ruby_warning unless ruby_error
       warnings << HXRuby::SupportMatrix.platform_warning
 
       if executable_available?("haxe")
@@ -421,7 +423,7 @@ module HXRuby
       end
 
       rails_version = Gem.loaded_specs["rails"]&.version&.to_s
-      errors << HXRuby::SupportMatrix.rails_error(rails_version) if rails_version
+      warnings << HXRuby::SupportMatrix.rails_warning(rails_version) if rails_version
       errors << "server Haxe build file is missing: #{hxml}" unless File.file?(hxml)
       warnings << "client Haxe build file is missing: #{client_hxml}" unless File.file?(client_hxml)
       warnings << "Rails command is missing: #{rails_command}" unless File.executable?(rails_command) || executable_available?(rails_command)

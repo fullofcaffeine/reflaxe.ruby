@@ -46,8 +46,9 @@ const activeRake = run(activeRuby, [
 const activeRubyVersion = run(activeRuby, ["-e", "print RUBY_VERSION"]).stdout.trim();
 
 function rubySupportsGemInstallCheck() {
-  const branch = activeRubyVersion.split(".").slice(0, 2).join(".");
-  return supportMatrix.ruby.ciBranches.includes(branch);
+  const current = activeRubyVersion.split(".").slice(0, 2).map(Number);
+  const minimum = supportMatrix.ruby.minimumVersion.split(".").map(Number);
+  return current[0] > minimum[0] || (current[0] === minimum[0] && current[1] >= minimum[1]);
 }
 
 const trackedDiffBefore = `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;

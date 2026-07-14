@@ -13,16 +13,23 @@ module HXRuby
 
     module_function
 
-    def ruby_error(version = RUBY_VERSION, engine = RUBY_ENGINE)
-      expected_engine = DATA.dig("ruby", "engine")
-      return "RubyHx supports MRI Ruby; current engine is #{engine.inspect}" unless engine == expected_engine
+    def ruby_error(version = RUBY_VERSION)
+      minimum = DATA.dig("ruby", "minimumVersion")
+      return nil if Gem::Version.new(version) >= Gem::Version.new(minimum)
 
       branch = version_branch(version)
-      return nil if supported_ruby_branches.include?(branch)
-
       known = DATA.fetch("ruby").fetch("knownUnsupported").find { |entry| entry.fetch("version") == branch }
       detail = known ? " #{known.fetch("reason")}" : ""
-      "Ruby #{version} is outside the supported MRI branches #{supported_ruby_branches.join(", ")}.#{detail}"
+      "Ruby #{version} is below the required minimum #{minimum}.#{detail}"
+    rescue ArgumentError
+      "Ruby version #{version.inspect} could not be parsed; expected Ruby >= #{minimum}"
+    end
+
+    def ruby_warning(version = RUBY_VERSION, engine = RUBY_ENGINE)
+      branch = version_branch(version)
+      return nil if engine == DATA.dig("ruby", "engine") && supported_ruby_branches.include?(branch)
+
+      "Ruby #{version} (#{engine}) is outside the tested MRI branches #{supported_ruby_branches.join(", ")}; it may work but is unverified"
     end
 
     def node_error(version)
@@ -44,13 +51,13 @@ module HXRuby
       "Haxe #{normalized} is unsupported; install Haxe #{supported.join(" or ")}"
     end
 
-    def rails_error(version)
+    def rails_warning(version)
       normalized = version.to_s.strip
       verified = DATA.dig("railsHx", "verifiedRuntime", "railsVersion")
       return nil if normalized == verified
 
       planned = DATA.dig("railsHx", "plannedRuntime", "railsLine")
-      "Rails #{normalized} is not a verified RailsHx runtime; the beta lane uses Rails #{verified}. Rails #{planned} is planned but not supported yet"
+      "Rails #{normalized} is outside the verified RailsHx beta lane (Rails #{verified}); it may work but is unverified. Rails #{planned} remains planned"
     end
 
     def platform_warning(host_os = RbConfig::CONFIG.fetch("host_os"), host_cpu = RbConfig::CONFIG.fetch("host_cpu"))

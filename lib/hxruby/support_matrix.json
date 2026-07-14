@@ -25,7 +25,6 @@
     "engine": "ruby",
     "implementation": "MRI",
     "minimumVersion": "3.3",
-    "maximumExclusiveVersion": "4.1",
     "ciBranches": [
       "3.3",
       "3.4",

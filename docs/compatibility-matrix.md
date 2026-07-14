@@ -17,8 +17,8 @@ guide.
 | MRI Ruby | `3.3` | Transitional | The same full gates execute on 3.3 through its project sunset on 2027-03-31. New local development uses Ruby `3.4.10`. |
 | Ruby 3.2 | EOL | Unsupported | Upstream support ended on 2026-04-01. The gem requires Ruby `>= 3.3`, and `hxruby:doctor` rejects this branch explicitly. |
 | Rails fixture dependency range | `>= 7.0`, `< 8.0` | Accepted by current fixtures | This Bundler range is not evidence that every Rails 7 minor is independently supported. |
-| Rails runtime evidence | `7.2.3.1` | Verified beta lane | The committed reference lock and canonical runtime lanes use Rails `7.2.3.1` with Ruby 3.3/3.4/4.0 and SQLite. Upstream security support ends on 2026-08-09, and CI expires this evidence rather than silently carrying it forward. |
-| Rails 8.1 | Planned | Not currently supported | Rails 8.1 is the proposed runtime target for a combined RubyHx/RailsHx stable `1.0`. It must pass the reference/runtime matrix tracked by `haxe_ruby-nho0`; otherwise RailsHx remains beta. |
+| Rails runtime evidence | `7.2.3.1` | Verified beta lane | The committed reference lock and canonical runtime lanes use Rails `7.2.3.1` with Ruby 3.3/3.4/4.0 and SQLite. Other Rails versions may work but are unverified. Upstream security support ends on 2026-08-09, and CI expires this evidence rather than silently carrying it forward. |
+| Rails 8.1 | Planned | Unverified | Rails 8.1 is the proposed runtime target for a combined RubyHx/RailsHx stable `1.0`. It must pass the reference/runtime matrix tracked by `haxe_ruby-nho0`; until then RailsHx warns rather than claiming either compatibility or incompatibility. |
 | Canonical platform | Ubuntu 24.04, Linux `x86_64` | Verified | macOS, Windows, ARM, Alpine/musl, JRuby, and TruffleRuby are unverified rather than implied support. Doctor reports that distinction. |
 | Database runtime | SQLite | Verified | PostgreSQL and MySQL options have compile/snapshot evidence only. |
 | Browser/client | Chromium via Playwright; importmap-rails, Propshaft, Turbo, Genes | Verified beta lane | Other browsers and asset/bundler stacks are unverified. |
@@ -40,17 +40,20 @@ and Rails against the
 
 ## Diagnostics And Evidence Shape
 
-`bundle exec rake hxruby:doctor` rejects unsupported MRI, Haxe, Node, and loaded
-Rails versions with the verified alternatives. It warns when the host platform
-is outside the canonical Ubuntu/Linux x86_64 lane. A warning means the
-environment may work but is not covered by the stable support evidence; it is
-not silently upgraded into a guarantee.
+`bundle exec rake hxruby:doctor` rejects Ruby below 3.3 and unsupported Haxe or
+Node versions. It warns for untested Ruby engines/branches, loaded Rails
+versions, and host platforms. A warning means the environment may work but is
+not covered by the support evidence; it is not an incompatibility claim.
 
 The full compiler, snapshot, package-consumer, and Rails runtime matrices run on
 Ruby 3.3, 3.4, and 4.0. Browser and production sentinels remain representative
 lanes on the oldest supported Ruby 3.3 branch, while the full and runtime gates
 cover both primary branches. Node compatibility gates exercise both the declared
 minimum and the current tested patch.
+
+The tested Ruby branches are an evidence and maintenance promise, not an upper
+compatibility ceiling. The gem requires Ruby `>= 3.3`; newer Ruby versions may
+work and produce an `hxruby:doctor` warning until a canonical lane verifies them.
 
 ## Local Development Notes
 

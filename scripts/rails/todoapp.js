@@ -512,10 +512,10 @@ function ensureSupportedRuby() {
     process.exit(result.status ?? 1);
   }
   const version = result.stdout.trim();
-  const branch = version.split(".").slice(0, 2).join(".");
-  const supported = supportMatrix.ruby.ciBranches;
-  if (!supported.includes(branch)) {
-    console.error(`[todoapp] Production smoke requires MRI Ruby ${supported.join(", ")}; current Ruby is ${version}.`);
+  const current = version.split(".").slice(0, 2).map(Number);
+  const minimum = supportMatrix.ruby.minimumVersion.split(".").map(Number);
+  if (current.some(Number.isNaN) || current[0] < minimum[0] || (current[0] === minimum[0] && current[1] < minimum[1])) {
+    console.error(`[todoapp] Production smoke requires Ruby >= ${supportMatrix.ruby.minimumVersion}; current Ruby is ${version}.`);
     process.exit(1);
   }
 }

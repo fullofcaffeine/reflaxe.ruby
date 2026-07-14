@@ -222,7 +222,7 @@ expectIncludes(
   "| Rails runtime evidence | `7.2.3.1` | Verified beta lane |",
   "current Rails runtime evidence"
 );
-expectIncludes(compatibilityMatrix, "| Rails 8.1 | Planned | Not currently supported |", "planned Rails 8.1 status");
+expectIncludes(compatibilityMatrix, "| Rails 8.1 | Planned | Unverified |", "planned Rails 8.1 status");
 expectIncludes(
   compatibilityMatrix,
   "not evidence that every Rails 7 minor is independently supported",
@@ -522,15 +522,16 @@ expectIncludes(gemPackageCheck, "sidecar.sha256", "gem exact byte check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'std/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'vendor/genes/src/**/*.hx', "hxruby.gemspec");
-expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.3", "< 4.1"', "hxruby.gemspec");
+expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.3"', "hxruby.gemspec");
 if (supportMatrix.schemaVersion !== 1) {
   fail("support matrix schema version must remain explicit");
 }
 expectIncludes(hxrubyTasks, 'require "hxruby/support_matrix"', "hxruby support diagnostics");
 expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.ruby_error", "hxruby Ruby support diagnostics");
+expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.ruby_warning", "hxruby Ruby support warnings");
 expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.node_error", "hxruby Node support diagnostics");
 expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.haxe_error", "hxruby Haxe support diagnostics");
-expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.rails_error", "hxruby Rails support diagnostics");
+expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.rails_warning", "hxruby Rails support warnings");
 expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");
 expectExcludes(hxrubyGemspec, "devise", "hxruby.gemspec");
 expectIncludes(hxrubyAdoptGenerator, "--devise-hhx-views", "hxruby adopt generator");

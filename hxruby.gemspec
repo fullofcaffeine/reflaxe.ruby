@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.authors = metadata.fetch("contributors")
   spec.homepage = metadata.fetch("url")
   spec.license = metadata.fetch("license")
-  spec.required_ruby_version = ">= 3.3", "< 4.1"
+  spec.required_ruby_version = ">= 3.3"
 
   spec.files = [
     "haxelib.json",

@@ -14,25 +14,28 @@ class SupportMatrixTest < Minitest::Test
     assert_equal "haxe_ruby-nho0", HXRuby::SupportMatrix::DATA.dig("railsHx", "plannedRuntime", "trackingIssue")
   end
 
-  def test_ruby_diagnostics_accept_only_supported_mri_branches
-    assert_nil HXRuby::SupportMatrix.ruby_error("3.3.11", "ruby")
-    assert_nil HXRuby::SupportMatrix.ruby_error("3.4.10", "ruby")
-    assert_nil HXRuby::SupportMatrix.ruby_error("4.0.5", "ruby")
+  def test_ruby_diagnostics_enforce_the_minimum_and_warn_outside_tested_branches
+    assert_nil HXRuby::SupportMatrix.ruby_error("3.3.11")
+    assert_nil HXRuby::SupportMatrix.ruby_error("3.4.10")
+    assert_nil HXRuby::SupportMatrix.ruby_error("4.0.5")
 
-    eol = HXRuby::SupportMatrix.ruby_error("3.2.11", "ruby")
-    assert_includes eol, "outside the supported MRI branches"
+    eol = HXRuby::SupportMatrix.ruby_error("3.2.11")
+    assert_includes eol, "below the required minimum"
     assert_includes eol, "reached end of life"
-    assert_includes HXRuby::SupportMatrix.ruby_error("4.1.0", "ruby"), "outside the supported MRI branches"
-    assert_includes HXRuby::SupportMatrix.ruby_error("3.4.10", "jruby"), "supports MRI Ruby"
+
+    assert_nil HXRuby::SupportMatrix.ruby_error("4.1.0")
+    assert_nil HXRuby::SupportMatrix.ruby_warning("3.4.10", "ruby")
+    assert_includes HXRuby::SupportMatrix.ruby_warning("4.1.0", "ruby"), "may work but is unverified"
+    assert_includes HXRuby::SupportMatrix.ruby_warning("3.4.10", "jruby"), "may work but is unverified"
   end
 
-  def test_gem_installation_rejects_known_unsupported_ruby_versions
+  def test_gem_installation_enforces_only_the_ruby_minimum
     specification = Gem::Specification.load(File.expand_path("../hxruby.gemspec", __dir__))
     refute specification.required_ruby_version.satisfied_by?(Gem::Version.new("3.2.11"))
     assert specification.required_ruby_version.satisfied_by?(Gem::Version.new("3.3.11"))
     assert specification.required_ruby_version.satisfied_by?(Gem::Version.new("3.4.10"))
     assert specification.required_ruby_version.satisfied_by?(Gem::Version.new("4.0.5"))
-    refute specification.required_ruby_version.satisfied_by?(Gem::Version.new("4.1.0"))
+    assert specification.required_ruby_version.satisfied_by?(Gem::Version.new("4.1.0"))
   end
 
   def test_node_diagnostics_enforce_the_declared_major_range
@@ -46,8 +49,8 @@ class SupportMatrixTest < Minitest::Test
   def test_haxe_and_rails_diagnostics_match_actual_evidence
     assert_nil HXRuby::SupportMatrix.haxe_error("4.3.7")
     assert_includes HXRuby::SupportMatrix.haxe_error("4.4.0"), "unsupported"
-    assert_nil HXRuby::SupportMatrix.rails_error("7.2.3.1")
-    assert_includes HXRuby::SupportMatrix.rails_error("8.1.2.1"), "planned but not supported"
+    assert_nil HXRuby::SupportMatrix.rails_warning("7.2.3.1")
+    assert_includes HXRuby::SupportMatrix.rails_warning("8.1.2.1"), "may work but is unverified"
   end
 
   def test_noncanonical_platform_is_reported_as_unverified

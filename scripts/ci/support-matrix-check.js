@@ -70,7 +70,7 @@ assert.equal(packageJson.packageManager, `npm@${matrix.node.releaseNpmVersion}`)
 assert.equal(packageJson.engines.node, matrix.node.supportedRange);
 assert.equal(packageJson.engines.npm, matrix.node.npmSupportedRange);
 assert.equal(rubyVersion, matrix.ruby.releaseVersion);
-assert(gemspec.includes(`spec.required_ruby_version = ">= ${matrix.ruby.minimumVersion}", "< ${matrix.ruby.maximumExclusiveVersion}"`));
+assert(gemspec.includes(`spec.required_ruby_version = ">= ${matrix.ruby.minimumVersion}"`));
 
 for (const branch of matrix.ruby.branches) {
   assertNotExpired(`Ruby ${branch.version} support`, branch.supportEndsOn);
@@ -107,7 +107,7 @@ assert(!productRequirements.includes("Rails: Rails 8.0+"), "PRD must not adverti
 assert(!productRequirements.includes("Ruby runtime: Ruby >= 3.2"), "PRD must not advertise EOL Ruby 3.2");
 for (const [name, entrypoint] of Object.entries({ todoPlaywright, todoProduction })) {
   assert(entrypoint.includes("support_matrix.json"), `${name} must enforce the machine support matrix`);
-  assert(entrypoint.includes("supportMatrix.ruby.ciBranches"), `${name} must enforce exact supported Ruby branches`);
+  assert(entrypoint.includes("supportMatrix.ruby.minimumVersion"), `${name} must enforce the Ruby minimum`);
 }
 assert(todoLock.includes(`rails (${matrix.railsHx.verifiedRuntime.railsVersion})`));
 assert(todoLock.includes("sqlite3 ("), "reference runtime lock must retain the verified SQLite adapter");
