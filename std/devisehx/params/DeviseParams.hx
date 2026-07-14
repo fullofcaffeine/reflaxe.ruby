@@ -1,7 +1,9 @@
 package devisehx.params;
 
-import devisehx.DeviseScope;
-import rails.active_record.Field;
+#if macro
+import devisehx.macros.ContractTools;
+import haxe.macro.Expr;
+#end
 
 /**
 	Typed facade for Devise's `devise_parameter_sanitizer.permit(...)`.
@@ -16,7 +18,20 @@ import rails.active_record.Field;
 **/
 @:rubyNoEmit
 class DeviseParams {
-	public static function permit<TModel>(scope:DeviseScope<TModel>, action:SanitizerAction, keys:Array<Field<TModel, Dynamic>>):Void {}
+	public static macro function permit(scope:Expr, action:Expr, keys:Expr):Expr {
+		#if macro
+		var contract = ContractTools.routeContract(scope, "DeviseParams.permit");
+		var actionName = ContractTools.sanitizerAction(action);
+		var keyNames = ContractTools.sanitizerKeys(keys, false, contract);
+		var code = "devise_parameter_sanitizer.permit("
+			+ ContractTools.rubySymbol(actionName)
+			+ ", keys: ["
+			+ [for (key in keyNames) ContractTools.rubySymbol(key)].join(", ") + "])";
+		return macro @:pos(scope.pos) devisehx.macros.RubyFragments.void0($v{code});
+		#else
+		return macro null;
+		#end
+	}
 
 	/**
 		Explicit escape hatch for custom Devise sanitizer keys that are not known
@@ -24,5 +39,18 @@ class DeviseParams {
 		still emits normal Devise Ruby. Prefer `permit(...)` whenever schema/model
 		metadata can generate a field ref.
 	**/
-	public static function unsafePermit<TModel>(scope:DeviseScope<TModel>, action:SanitizerAction, keys:Array<String>):Void {}
+	public static macro function unsafePermit(scope:Expr, action:Expr, keys:Expr):Expr {
+		#if macro
+		var contract = ContractTools.routeContract(scope, "DeviseParams.unsafePermit");
+		var actionName = ContractTools.sanitizerAction(action);
+		var keyNames = ContractTools.sanitizerKeys(keys, true, contract);
+		var code = "devise_parameter_sanitizer.permit("
+			+ ContractTools.rubySymbol(actionName)
+			+ ", keys: ["
+			+ [for (key in keyNames) ContractTools.rubySymbol(key)].join(", ") + "])";
+		return macro @:pos(scope.pos) devisehx.macros.RubyFragments.void0($v{code});
+		#else
+		return macro null;
+		#end
+	}
 }

@@ -324,18 +324,18 @@ page, signed-in users see the board, and logout is a standard Rails `button_to`.
 Haxe adds typed route helpers, typed current-user access, and checked HHX without
 making Devise a RailsHx runtime.
 
-For auth navigation, prefer the DeviseHx HHX tags when they fit:
+For auth navigation, compose the typed DeviseHx path facade with ordinary Rails
+HHX tags:
 
 ```haxe
-<devise_sign_out_button scope=${UserAuth.scope} class="topbar-logout">
+<button_to url=${AuthLinks.signOutPath(UserAuth.scope)} method="delete" class="topbar-logout">
 	Log out
-</devise_sign_out_button>
+</button_to>
 ```
 
-The tag lowers to Rails' ordinary `button_to "Log out",
-destroy_user_session_path(), method: "delete"`. Use `AuthLinks.sessionPath(...)`
-or `AuthLinks.signOutPath(...)` inside lower-level `<form_with>`/`<button_to>`
-when a custom form shape needs explicit control.
+This lowers to Rails' ordinary `button_to "Log out",
+destroy_user_session_path(), method: "delete"`. `AuthLinks` validates the
+Devise scope; the HHX surface remains the standard typed Rails helper.
 
 ### Server-Owned User Assignment
 

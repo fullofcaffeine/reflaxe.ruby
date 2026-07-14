@@ -69,8 +69,8 @@ DeviseHx unsafe boundaries are auditable and opt-in:
 - `DeviseParams.unsafePermit(...)` is for literal extra sanitizer keys that are
   intentionally outside typed model field refs.
 - `WardenAccess.unsafeWarden(...)` is a lower-level Warden escape.
-- `DeviseRoutes.uncheckedRuby(...)` is for unsupported route shapes and must
-  stay out of canonical examples.
+- Unsupported/dynamic Devise route shapes stay Rails-owned and are consumed
+  through generated route externs; DeviseHx does not expose a raw route API.
 - Existing Devise ERB remains Rails-owned unless `--devise-hhx-views` or a
   future manifest-backed force/repair flow explicitly transfers ownership.
 

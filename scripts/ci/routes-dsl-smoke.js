@@ -557,7 +557,7 @@ expectInvalidRouteDslFailure("deferred direct helper", [
   "",
 ], "does not support direct route helpers yet");
 
-expectInvalidRouteDslFailure("deferred gem route macro", [
+expectInvalidRouteDslFailure("unimported companion route macro", [
   "package routes;",
   "",
   "import rails.macros.RoutesDsl.*;",
@@ -569,7 +569,7 @@ expectInvalidRouteDslFailure("deferred gem route macro", [
   "\t};",
   "}",
   "",
-], "does not support gem route macros yet");
+], "Unknown identifier : deviseFor");
 
 expectInvalidRouteDslFailure("DeviseHx literal route resource", [
   "package routes;",
@@ -601,7 +601,7 @@ expectInvalidRouteDslFailure("DeviseHx constructed scope", [
   "\t};",
   "}",
   "",
-], "runtime DeviseScope values, locals, function calls, and constructed scopes cannot be inspected safely");
+], "runtime values, locals, function calls, and constructed scopes cannot be inspected safely");
 
 expectInvalidRouteDslFailure("DeviseHx unsupported option", [
   "package routes;",
@@ -695,7 +695,7 @@ expectInvalidRouteDslFailure("DeviseHx nested route", [
   "\t};",
   "}",
   "",
-], "DeviseRoutes.deviseFor(...) is top-level only in this MVP");
+], "Devise route must be declared at the top level");
 
 expectInvalidRouteDslFailure("DeviseHx duplicate mapping", [
   "package routes;",
@@ -711,7 +711,7 @@ expectInvalidRouteDslFailure("DeviseHx duplicate mapping", [
   "\t};",
   "}",
   "",
-], "duplicate Devise mapping scope");
+], "duplicate Devise route group \"user\" requires every declaration to opt into splitting");
 
 expectInvalidRouteDslFailure("DeviseHx duplicate split group", [
   "package routes;",
@@ -728,7 +728,7 @@ expectInvalidRouteDslFailure("DeviseHx duplicate split group", [
   "\t};",
   "}",
   "",
-], "repeats the same only/skip route groups");
+], "duplicate Devise route group \"user\" repeats the same declaration");
 
 expectRouteOutputCollisionFailure();
 expectDuplicateRoutesOutputFailure();
@@ -1055,6 +1055,7 @@ function writeCommonTypes(baseDir) {
     "// Generated DeviseHx contracts carry compiler-readable route metadata.",
     "// DeviseRoutes.deviseFor reads this field identity at macro time and emits",
     "// normal Rails `devise_for :users` without evaluating runtime scope values.",
+    "@:rubyNoEmit",
     "final class UserAuth {",
     "\t@:deviseHxRoute({schema: 1, routeAuthorable: true, resource: \"users\", mappingScope: \"user\", rubyClass: \"User\", haxeModel: \"models.User\"})",
     "\tpublic static final scope:DeviseScope<User> = DeviseScope.of(ScopeName.named(\"user\"), RouteResource.named(\"users\"), User);",
@@ -1071,6 +1072,7 @@ function writeCommonTypes(baseDir) {
     "",
     "// This intentionally lacks @:deviseHxRoute metadata so the negative route",
     "// smoke proves arbitrary DeviseScope fields cannot authorize Haxe-owned routes.",
+    "@:rubyNoEmit",
     "final class PlainAuth {",
     "\tpublic static final scope:DeviseScope<User> = DeviseScope.of(ScopeName.named(\"user\"), RouteResource.named(\"users\"), User);",
     "}",
@@ -1086,6 +1088,7 @@ function writeCommonTypes(baseDir) {
     "",
     "// Adopted complex Devise routes still get typed auth helpers, but the",
     "// route metadata records why Haxe-owned route emission must stay disabled.",
+    "@:rubyNoEmit",
     "final class NonAuthorableAuth {",
     "\t@:deviseHxRoute({schema: 1, routeAuthorable: false, resource: \"users\", mappingScope: \"user\", rubyClass: \"User\", haxeModel: \"models.User\", reason: \"existing devise_for uses unsupported options; keep this route Rails-owned\"})",
     "\tpublic static final scope:DeviseScope<User> = DeviseScope.of(ScopeName.named(\"user\"), RouteResource.named(\"users\"), User);",
@@ -1101,6 +1104,7 @@ function writeCommonTypes(baseDir) {
     "import models.Admin;",
     "",
     "// Generated DeviseHx route metadata also supports typed split mappings.",
+    "@:rubyNoEmit",
     "final class AdminAuth {",
     "\t@:deviseHxRoute({schema: 1, routeAuthorable: true, resource: \"admins\", mappingScope: \"admin\", rubyClass: \"Admin\", haxeModel: \"models.Admin\"})",
     "\tpublic static final scope:DeviseScope<Admin> = DeviseScope.of(ScopeName.named(\"admin\"), RouteResource.named(\"admins\"), Admin);",

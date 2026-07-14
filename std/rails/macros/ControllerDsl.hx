@@ -180,39 +180,23 @@ class ControllerDsl {
 		if (field == null) {
 			return null;
 		}
-		var entries = field.meta.extract(":deviseHxAuthFilter");
+		var entries = field.meta.extract(":railsFilterMethod");
 		if (entries.length == 0) {
 			return null;
 		}
-		if (entries[0].params == null || entries[0].params.length != 1) {
-			Context.error("@:deviseHxAuthFilter expects one object-literal metadata argument.", expr.pos);
+		if (entries.length > 1 || entries[0].params == null || entries[0].params.length != 1) {
+			Context.error("@:railsFilterMethod expects one Ruby method-name String literal.", expr.pos);
 		}
-		var scope = metadataString(entries[0].params[0], "mappingScope", expr.pos);
-		if (!~/^[a-z][a-z0-9_]*$/.match(scope)) {
-			Context.error("DeviseHx auth filter mappingScope must be a safe snake_case Devise scope.", expr.pos);
-		}
-		return "authenticate_" + scope + "!";
-	}
-
-	static function metadataString(expr:Expr, key:String, pos:Position):String {
-		return switch (unwrap(expr).expr) {
-			case EObjectDecl(fields):
-				for (field in fields) {
-					if (field.field == key) {
-						return switch (field.expr.expr) {
-							case EConst(CString(value, _)): value;
-							case _:
-								Context.error('DeviseHx metadata "$key" must be a string literal.', field.expr.pos);
-								"";
-						}
-					}
-				}
-				Context.error('DeviseHx metadata is missing "$key".', pos);
-				"";
+		var method = switch (unwrap(entries[0].params[0]).expr) {
+			case EConst(CString(value, _)): value;
 			case _:
-				Context.error("DeviseHx auth filter metadata must be an object literal.", pos);
+				Context.error("@:railsFilterMethod expects a Ruby method-name String literal.", entries[0].params[0].pos);
 				"";
 		}
+		if (!~/^[a-z_][A-Za-z0-9_]*[!?=]?$/.match(method)) {
+			Context.error("@:railsFilterMethod must be a safe Ruby method name.", expr.pos);
+		}
+		return method;
 	}
 
 	static function methodArgCount(field:ClassField):Null<Int> {

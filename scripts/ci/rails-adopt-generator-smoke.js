@@ -760,7 +760,7 @@ assertIncludes("src_haxe/views/devise/users/SessionsNewView.hx", [
   "<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
   "import devisehx.hhx.DeviseFormFields;",
   "<password_field name=${DeviseFormFields.password} autocomplete=\"current-password\" required />",
-  "<devise_sign_up_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Create an account</devise_sign_up_link>",
+  "<link_to url=${AuthLinks.signUpPath(UserAuth.scope)} class=\"devisehx-secondary-link\">Create an account</link_to>",
 ]);
 assertIncludes("src_haxe/views/devise/users/RegistrationsNewView.hx", [
   "package views.devise.users;",
@@ -778,7 +778,7 @@ assertIncludes("src_haxe/views/devise/users/PasswordsNewView.hx", [
   "class PasswordsNewView",
   "<form_with url=${AuthLinks.passwordPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
   "<email_field name=${DeviseFormFields.email} autocomplete=\"email\" required />",
-  "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
+  "<link_to url=${AuthLinks.signInPath(UserAuth.scope)} class=\"devisehx-secondary-link\">Back to sign in</link_to>",
 ]);
 assertIncludes("src_haxe/views/devise/users/PasswordsEditView.hx", [
   "package views.devise.users;",
@@ -796,7 +796,7 @@ assertIncludes("src_haxe/views/devise/users/ConfirmationsNewView.hx", [
   "class ConfirmationsNewView",
   "<form_with url=${AuthLinks.confirmationPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
   "<email_field name=${DeviseFormFields.email} autocomplete=\"email\" required />",
-  "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
+  "<link_to url=${AuthLinks.signInPath(UserAuth.scope)} class=\"devisehx-secondary-link\">Back to sign in</link_to>",
 ]);
 assertIncludes("src_haxe/views/devise/users/UnlocksNewView.hx", [
   "package views.devise.users;",
@@ -805,7 +805,7 @@ assertIncludes("src_haxe/views/devise/users/UnlocksNewView.hx", [
   "class UnlocksNewView",
   "<form_with url=${AuthLinks.unlockPath(UserAuth.scope)} scope=\"user\" local class=\"devisehx-auth-form\">",
   "<email_field name=${DeviseFormFields.email} autocomplete=\"email\" required />",
-  "<devise_sign_in_link scope=${UserAuth.scope} class=\"devisehx-secondary-link\">Back to sign in</devise_sign_in_link>",
+  "<link_to url=${AuthLinks.signInPath(UserAuth.scope)} class=\"devisehx-secondary-link\">Back to sign in</link_to>",
 ]);
 assertIncludes(".railshx/gems/devise/inventory.json", [
   '"kind": "devise_inventory"',

@@ -48,7 +48,7 @@ class RegistrationsNewView {
 					</div>
 					<submit type="submit">Create account</submit>
 				</form_with>
-				<devise_sign_in_link scope=${UserAuth.scope} class="devisehx-secondary-link">Already have an account?</devise_sign_in_link>
+				<link_to url=${AuthLinks.signInPath(UserAuth.scope)} class="devisehx-secondary-link">Already have an account?</link_to>
 			</section>
 		</main>;
 	}

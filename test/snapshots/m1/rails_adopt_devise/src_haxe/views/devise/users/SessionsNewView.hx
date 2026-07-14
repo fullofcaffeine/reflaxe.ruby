@@ -43,7 +43,7 @@ class SessionsNewView {
 					</div>
 					<submit type="submit">Sign in</submit>
 				</form_with>
-				<devise_sign_up_link scope=${UserAuth.scope} class="devisehx-secondary-link">Create an account</devise_sign_up_link>
+				<link_to url=${AuthLinks.signUpPath(UserAuth.scope)} class="devisehx-secondary-link">Create an account</link_to>
 			</section>
 		</main>;
 	}

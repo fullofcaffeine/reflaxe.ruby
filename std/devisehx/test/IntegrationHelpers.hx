@@ -1,6 +1,9 @@
 package devisehx.test;
 
-import devisehx.DeviseScope;
+#if macro
+import devisehx.macros.ContractTools;
+import haxe.macro.Expr;
+#end
 
 /**
 	Typed Devise test helpers for Haxe-authored Rails tests.
@@ -16,7 +19,26 @@ import devisehx.DeviseScope;
 **/
 @:rubyNoEmit
 class IntegrationHelpers {
-	public static function signIn<TModel>(scope:DeviseScope<TModel>, resource:TModel):Void {}
+	public static macro function signIn(scope:Expr, resource:Expr):Expr {
+		#if macro
+		var contract = ContractTools.routeContract(scope, "IntegrationHelpers.signIn");
+		ContractTools.requireModel(resource, contract, "IntegrationHelpers.signIn");
+		return macro @:pos(scope.pos) devisehx.macros.RubyFragments.testVoid1($v{
+			"sign_in(" + ContractTools.rubySymbol(contract.mappingScope) + ", {0})"
+		}, $resource);
+		#else
+		return macro null;
+		#end
+	}
 
-	public static function signOut<TModel>(scope:DeviseScope<TModel>):Void {}
+	public static macro function signOut(scope:Expr):Expr {
+		#if macro
+		var contract = ContractTools.routeContract(scope, "IntegrationHelpers.signOut");
+		return macro @:pos(scope.pos) devisehx.macros.RubyFragments.testVoid0($v{
+			"sign_out(" + ContractTools.rubySymbol(contract.mappingScope) + ")"
+		});
+		#else
+		return macro null;
+		#end
+	}
 }

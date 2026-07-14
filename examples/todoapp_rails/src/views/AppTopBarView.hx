@@ -2,6 +2,7 @@ package views;
 
 import models.User;
 import app.auth.UserAuth;
+import devisehx.hhx.AuthLinks;
 import rails.action_view.HtmlNode;
 import routes.Routes;
 import shared.TodoHooks;
@@ -17,8 +18,8 @@ typedef AppTopBarLocals = {
 // standard Rails `button_to` logout form.
 // Type safety: `currentUser` is non-null because `TodosController` is protected
 // by `UserAuth.authenticate`; `Routes.*` helpers are generated from Rails route
-// output; `<devise_sign_out_button scope=${UserAuth.scope}>` validates the
-// generated Devise scope before emitting Rails' ordinary `button_to` with
+// output; `AuthLinks.signOutPath(UserAuth.scope)` validates the generated
+// Devise scope before ordinary `button_to` emits
 // `destroy_user_session_path`;
 // The Users link performs a normal visit to `/users` so the admin panel is a
 // real deep link: the browser URL changes and refresh opens the same page.
@@ -54,9 +55,9 @@ class AppTopBarView {
 					<strong>${locals.currentUser.name}</strong>
 					<em>${locals.currentUser.roleLabel()} · ${locals.currentUser.email}</em>
 				</span>
-				<devise_sign_out_button scope=${UserAuth.scope} class="session-clear-form topbar-logout" data-railshx-session>
+				<button_to url=${AuthLinks.signOutPath(UserAuth.scope)} method="delete" class="session-clear-form topbar-logout" data-railshx-session>
 					Log out
-				</devise_sign_out_button>
+				</button_to>
 			</div>
 		</header>;
 	}

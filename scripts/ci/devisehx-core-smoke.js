@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
@@ -65,6 +65,8 @@ if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
   process.exit(1);
 }
 
+assertCoreHasNoCompanionCoupling();
+
 writePositiveSources(sourceDir);
 compile(sourceDir, outputDir);
 assertGeneratedShape(outputDir);
@@ -89,7 +91,7 @@ expectCompileFailure(invalidScopeDir, invalidScopeOut, "models.User should be mo
 writePositiveSources(invalidAuthLinksLocalDir, {
   authLinksUseLocalScope: true,
 });
-expectCompileFailure(invalidAuthLinksLocalDir, invalidAuthLinksLocalOut, "DeviseHx auth helpers expect a direct generated Devise scope field");
+expectCompileFailure(invalidAuthLinksLocalDir, invalidAuthLinksLocalOut, "expects a direct generated Devise scope field");
 
 writePositiveSources(invalidTestHelpersLocalDir, {
   extraMainLines: [
@@ -97,14 +99,14 @@ writePositiveSources(invalidTestHelpersLocalDir, {
     "\t\tIntegrationHelpers.signIn(localUserScope, user);",
   ],
 });
-expectCompileFailure(invalidTestHelpersLocalDir, invalidTestHelpersLocalOut, "DeviseHx auth helpers expect a direct generated Devise scope field");
+expectCompileFailure(invalidTestHelpersLocalDir, invalidTestHelpersLocalOut, "expects a direct generated Devise scope field");
 
 writePositiveSources(invalidSanitizerStringDir, {
   extraMainLines: [
     "\t\tDeviseParams.permit(UserAuth.scope, SanitizerAction.signUp, [\"email\"]);",
   ],
 });
-expectCompileFailure(invalidSanitizerStringDir, invalidSanitizerStringOut, "String should be rails.active_record.Field<models.User, Dynamic>");
+expectCompileFailure(invalidSanitizerStringDir, invalidSanitizerStringOut, "must use generated RailsHx model field refs");
 
 writePositiveSources(invalidSanitizerDynamicDir, {
   extraMainLines: [
@@ -217,28 +219,25 @@ function writePositiveSources(dir, options = {}) {
     "",
     "// Generated app-local contract shape: scope/model/resource are coupled once,",
     "// then reused by controllers, HHX, tests, and future generators.",
+    "@:rubyNoEmit",
     "final class UserAuth {",
     "\t@:deviseHxRoute({schema: 1, routeAuthorable: true, resource: \"users\", mappingScope: \"user\", rubyClass: \"User\", haxeModel: \"models.User\"})",
     "\tpublic static final scope:DeviseScope<User> = DeviseScope.of(ScopeName.named(\"user\"), RouteResource.named(\"users\"), User);",
-    "\t@:deviseHxAuthFilter({schema: 1, mappingScope: \"user\"})",
+    "\t@:railsFilterMethod(\"authenticate_user!\")",
     "\tpublic static final authenticate:AuthFilter<User> = Auth.require(scope);",
-    "\t@:deviseHxHelper({schema: 1, kind: \"current\", mappingScope: \"user\"})",
     "\tpublic static inline function current(controller:rails.action_controller.Base):Null<User> {",
     "\t\treturn Auth.current(controller, scope);",
     "\t}",
-    "\t@:deviseHxHelper({schema: 1, kind: \"currentRequired\", mappingScope: \"user\"})",
+    "\t@:railsRequiresFilter(\"authenticate_user!\")",
     "\tpublic static inline function currentRequired(controller:rails.action_controller.Base):User {",
     "\t\treturn Auth.currentRequired(controller, scope);",
     "\t}",
-    "\t@:deviseHxHelper({schema: 1, kind: \"signedIn\", mappingScope: \"user\"})",
     "\tpublic static inline function signedIn(controller:rails.action_controller.Base):Bool {",
     "\t\treturn Auth.signedIn(controller, scope);",
     "\t}",
-    "\t@:deviseHxHelper({schema: 1, kind: \"signIn\", mappingScope: \"user\"})",
     "\tpublic static inline function signIn(controller:rails.action_controller.Base, resource:User):Void {",
     "\t\tAuth.signIn(controller, scope, resource);",
     "\t}",
-    "\t@:deviseHxHelper({schema: 1, kind: \"signOut\", mappingScope: \"user\"})",
     "\tpublic static inline function signOut(controller:rails.action_controller.Base):Void {",
     "\t\tAuth.signOut(controller, scope);",
     "\t}",
@@ -254,6 +253,7 @@ function writePositiveSources(dir, options = {}) {
     "import devisehx.ScopeName;",
     "import models.Admin;",
     "",
+    "@:rubyNoEmit",
     "final class AdminAuth {",
     "\t@:deviseHxRoute({schema: 1, routeAuthorable: true, resource: \"admins\", mappingScope: \"admin\", rubyClass: \"Admin\", haxeModel: \"models.Admin\"})",
     "\tpublic static final scope:DeviseScope<Admin> = DeviseScope.of(ScopeName.named(\"admin\"), RouteResource.named(\"admins\"), Admin);",
@@ -311,10 +311,10 @@ function writePositiveSources(dir, options = {}) {
   ] : [
     "\tpublic static function render():HtmlNode {",
     "\t\treturn <nav>",
-    "\t\t\t<devise_sign_in_link scope=${UserAuth.scope} class=\"login-link\">Sign in</devise_sign_in_link>",
-    "\t\t\t<devise_sign_up_link scope=${UserAuth.scope} class=\"signup-link\">Sign up</devise_sign_up_link>",
-    "\t\t\t<devise_edit_registration_link scope=${UserAuth.scope} class=\"settings-link\">Settings</devise_edit_registration_link>",
-    "\t\t\t<devise_sign_out_button scope=${UserAuth.scope} class=\"logout-button\">Sign out</devise_sign_out_button>",
+    "\t\t\t<link_to url=${AuthLinks.signInPath(UserAuth.scope)} class=\"login-link\">Sign in</link_to>",
+    "\t\t\t<link_to url=${AuthLinks.signUpPath(UserAuth.scope)} class=\"signup-link\">Sign up</link_to>",
+    "\t\t\t<link_to url=${AuthLinks.editRegistrationPath(UserAuth.scope)} class=\"settings-link\">Settings</link_to>",
+    "\t\t\t<button_to url=${AuthLinks.signOutPath(UserAuth.scope)} method=\"delete\" class=\"logout-button\">Sign out</button_to>",
     "\t\t\t<form_with url=${AuthLinks.sessionPath(UserAuth.scope)} scope=\"user\" local class=\"login-form\">",
     "\t\t\t\t<field_label name=${DeviseFormFields.email}>Email</field_label>",
     "\t\t\t\t<email_field name=${DeviseFormFields.email} />",
@@ -426,6 +426,7 @@ function writePositiveSources(dir, options = {}) {
     "\t\tvar authLinks:HtmlNode = AuthLinksView.render({resource: user});",
     "\t\tvar deviseMailer = new UserDeviseMailer();",
     "\t\tAuth.signIn(controller, UserAuth.scope, user);",
+    "\t\tAuth.signIn(controller, UserAuth.scope, user, {force: true, store: false});",
     "\t\tAuth.bypassSignIn(controller, UserAuth.scope, user);",
     "\t\tAuth.signOut(controller, UserAuth.scope);",
     "\t\tAuth.signOutAll(controller);",
@@ -536,6 +537,10 @@ function assertGeneratedShape(out) {
     console.error("DeviseHx test helper output missing expected Rails helper shape: sign_in(:user, user)");
     process.exit(1);
   }
+  if (!/sign_in\(:user,\s*user(?:__hx\d+)?, force: true, store: false\)/.test(main)) {
+    console.error("DeviseHx signIn options did not lower to checked Devise keywords.");
+    process.exit(1);
+  }
   if (!main.includes("sign_out(:user)")) {
     console.error("DeviseHx test helper output missing expected Rails helper shape: sign_out(:user)");
     process.exit(1);
@@ -613,6 +618,43 @@ function assertNoAppFacingDynamic() {
       process.exit(1);
     }
   }
+}
+
+function assertCoreHasNoCompanionCoupling() {
+  const forbidden = [
+    /devisehx/i,
+    /devise_(?:sign|edit_registration)/i,
+    /\bDevise(?:Auth|Errors|Helper|Links|Mapping|Model|Params|Route|Test)/,
+    /\b(?:compile|emit|extract|is|parse|rails|validate)[A-Za-z0-9_]*Devise/i,
+  ];
+  if (forbidden.some((pattern) => pattern.test("devise_for :users"))) {
+    throw new Error("Companion source guard must allow ordinary Rails devise_for syntax.");
+  }
+  const violations = [];
+  for (const base of [join(root, "src", "reflaxe", "ruby"), join(root, "std", "rails")]) {
+    for (const file of haxeFiles(base)) {
+      const content = readFileSync(file, "utf8");
+      if (forbidden.some((pattern) => pattern.test(content))) {
+        violations.push(file.slice(root.length + 1));
+      }
+    }
+  }
+  if (violations.length > 0) {
+    throw new Error(`Ruby/Rails compiler core contains companion-specific vocabulary:\n${violations.join("\n")}`);
+  }
+}
+
+function haxeFiles(dir) {
+  const files = [];
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) {
+      files.push(...haxeFiles(path));
+    } else if (name.endsWith(".hx")) {
+      files.push(path);
+    }
+  }
+  return files;
 }
 
 function run(command, args, options = {}) {

@@ -1,17 +1,38 @@
 package devisehx.hhx;
 
-import devisehx.model.DeviseResource;
+#if macro
+import devisehx.macros.ContractTools;
+import haxe.macro.Expr;
+#end
 
-/**
-	Typed Devise/Rails validation-error facade for HHX templates.
+/** Typed Devise/ActiveModel error reads for HHX templates. **/
+@:rubyNoEmit
+class DeviseErrors {
+	public static macro function hasAny(resource:Expr):Expr {
+		#if macro
+		ContractTools.requireDeviseResource(resource);
+		return ContractTools.checked(macro @:pos(resource.pos) devisehx.macros.RubyFragments.value1("{0}.errors.any?", $resource), macro :Bool);
+		#else
+		return macro null;
+		#end
+	}
 
-	This is a compiler-erased helper: Haxe verifies that the value is a Devise
-	resource, then the Ruby compiler emits ordinary Rails calls such as
-	`resource.errors.full_messages`. Devise and ActiveModel still own runtime
-	error collection semantics.
-**/
-extern class DeviseErrors {
-	public static function hasAny<TModel>(resource:DeviseResource<TModel>):Bool;
-	public static function count<TModel>(resource:DeviseResource<TModel>):Int;
-	public static function fullMessages<TModel>(resource:DeviseResource<TModel>):Array<String>;
+	public static macro function count(resource:Expr):Expr {
+		#if macro
+		ContractTools.requireDeviseResource(resource);
+		return ContractTools.checked(macro @:pos(resource.pos) devisehx.macros.RubyFragments.value1("{0}.errors.count", $resource), macro :Int);
+		#else
+		return macro null;
+		#end
+	}
+
+	public static macro function fullMessages(resource:Expr):Expr {
+		#if macro
+		ContractTools.requireDeviseResource(resource);
+		return ContractTools.checked(macro @:pos(resource.pos) devisehx.macros.RubyFragments.value1("{0}.errors.full_messages", $resource),
+			macro :Array<String>);
+		#else
+		return macro null;
+		#end
+	}
 }

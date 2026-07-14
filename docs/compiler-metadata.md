@@ -96,7 +96,7 @@ live in [Ruby extension interop](ruby-extension-interop.md).
 | Metadata | Valid on / arguments | Compiler contract | Boundary and diagnostics |
 | --- | --- | --- | --- |
 | `@:rubyNoEmit` | A type with no arguments. | Keeps the Haxe type available to macros/type checking but emits no Ruby artifact for it. | It cannot also own Rails artifact metadata such as model/controller/template/migration. Calls must be erased or specially lowered; otherwise app code would reference a nonexistent Ruby constant. |
-| `@:rubyAllowRaw` | The smallest class/module/abstract implementation that must contain `untyped __ruby__(...)`; no arguments. | Grants the strict-boundary scanner authority for raw Ruby only within that source module. | Raw calls still require constant source strings. This is an audited escape hatch, not permission for app-level dynamic code. Prefer typed externs/compiler lowerings. |
+| `@:rubyAllowRaw` | The smallest class/module/abstract implementation that must contain `untyped __ruby__(...)`, or an internal `@:rubyNoEmit` companion facade carrying `@:rubyExtensionExpr`; no arguments. | Grants narrowly scoped raw-Ruby authority to that source module or checked compiler-erased carrier. | Raw calls still require constant source strings; extension carriers require literal/constant templates and checked placeholders. This is an audited escape hatch, not permission for generated app contracts or app-level dynamic code. Prefer typed externs/compiler lowerings. |
 
 ## Rails Artifact Metadata
 
@@ -148,10 +148,15 @@ documentation coverage gate remains complete.
 | --- | --- |
 | `@:rubyExternStub` | Extension/Rails build macros mark injected compile-time stubs so the Ruby compiler does not emit fake method bodies. |
 | `@:rubyInjectedExtension` | The Ruby extension build macro marks members it injected, preventing duplicate collision diagnostics during repeated macro passes. |
+| `@:rubyExtensionExpr({...})` | A companion/generator handoff on a static method owned by a type marked with both `@:rubyNoEmit` and `@:rubyAllowRaw`. Schema 1 accepts exactly one literal `template` or constant-string `templateArg`, an optional integer `valueStart`, and indexed placeholders such as `{0}`. The compiler substitutes normally lowered typed arguments and rejects unknown keys, nonconstant templates, missing placeholders, and out-of-range indexes. App code should call the typed companion facade, not author this raw carrier directly. |
 | `@:railsAssociation` | Model macro handoff carrying the resolved association name for compiler lowering. |
 | `@:railsAttachment` / `@:railsAttachmentKind` | Model macro handoff carrying generated ActiveStorage attachment name/kind. |
+| `@:railsClassMacro("method", ["symbols"])` | Companion model macro handoff for a validated Rails class macro. The compiler accepts only a safe Ruby method name and safe symbol literals; companion code remains responsible for domain validation before adding it. |
 | `@:railsField` | HHX/model macro handoff carrying a checked Rails field name derived from typed schema metadata. |
 | `@:railsFilter` | Controller lifecycle handoff for already-validated filter declarations. |
+| `@:railsFilterMethod("ruby_method!")` | Generated companion field handoff that lets the controller lifecycle DSL consume a safe Ruby filter method without knowing the companion package. |
+| `@:railsRequiresFilter("ruby_method!")` / `@:railsRequiresFilterArg(index)` | Generated companion call handoff for the optional `railshx_strict_required_filters` flow check. The direct form carries a safe filter name; the argument form reads a constant string from the checked call. |
+| `@:railsTestInclude("Ruby::Module")` | Companion test-helper handoff that requests a validated Ruby module include when the marked helper is used by a generated Rails test. |
 | `@:railsActionCableParam` | Channel macro handoff for a checked ActionCable param accessor. |
 | `@:railsActionCableConnectionParam` | Connection macro handoff for a checked connection param accessor. |
 | `@:railsActionCableConnectionAssign` | Connection macro handoff for a typed connection assignment. |

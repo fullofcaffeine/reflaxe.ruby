@@ -155,8 +155,9 @@ Devise as the runtime owner for Warden, encrypted passwords, routes, sessions,
 and sign-out semantics, while Haxe owns `UserAuth`, typed `@:devise(...)` model
 metadata, `beforeAction(UserAuth.authenticate)`, typed current-user helpers,
 `DeviseRoutes.deviseFor(UserAuth.scope, {only: [Sessions]})`, a Haxe-owned
-guest sign-in route, `AuthLinks.sessionPath(UserAuth.scope)` plus
-`<devise_sign_out_button>`/`DeviseErrors`/`DeviseFormFields` in HHX, and auth
+guest sign-in route, `AuthLinks.sessionPath(UserAuth.scope)` composed with
+ordinary typed `<link_to>`/`<button_to>` plus `DeviseErrors`/`DeviseFormFields`
+in HHX, and auth
 composition around normal Rails helpers. `DeviseFormFields` is the companion
 layer pattern for framework-owned transient params: expose a tiny typed Haxe ref
 such as `DeviseFormFields.passwordConfirmation`, then lower it to the normal

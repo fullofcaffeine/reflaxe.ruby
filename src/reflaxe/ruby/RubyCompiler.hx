@@ -1298,9 +1298,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (isCompilerOwnedSupportType(classType.pack, classType.name)) {
 			return true;
 		}
-		if (isDeviseHxMetadataContract(varFields)) {
-			return true;
-		}
 		return isRailsInlineOnlySupportType(varFields, funcFields);
 	}
 
@@ -1358,15 +1355,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		// handles must survive as objects; Ruby's top-level Sys class can legally
 		// own the nested Sys::Io carrier constants without a parallel runtime DSL.
 		return pack.join(".") != "sys.io" || ["FileInput", "FileOutput", "FileSeek"].indexOf(name) == -1;
-	}
-
-	static function isDeviseHxMetadataContract(varFields:Array<ClassVarData>):Bool {
-		for (field in varFields) {
-			if (hasMeta(field.field.meta, ":deviseHxRoute")) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	static function isRailsInlineOnlySupportType(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Bool {
@@ -1543,7 +1531,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	function compileRailsControllerImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>,
 			moduleRequires:RequireRegistry):RubyFile {
 		var hxrubyCallsBefore = hxrubyCallCount;
-		validateDeviseCurrentRequiredFlow(varFields, funcFields);
+		validateRequiredControllerFilters(varFields, funcFields);
 		var body:Array<String> = [];
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
 		body = body.concat(railsControllerLifecycleLines(classType, varFields));
@@ -2253,27 +2241,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return options.join(", ");
 	}
 
-	static function validateDeviseCurrentRequiredFlow(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Void {
-		if (!Context.defined("railshx_devise_strict_current_required")) {
+	static function validateRequiredControllerFilters(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Void {
+		if (!Context.defined("railshx_strict_required_filters")) {
 			return;
 		}
-		var protectedScopesByAction = deviseProtectedScopesByAction(varFields, funcFields);
+		var protectedFiltersByAction = protectedControllerFiltersByAction(varFields, funcFields);
 		for (field in funcFields) {
 			if (field.isStatic || field.expr == null || hasMeta(field.field.meta, ":rubyExternStub")) {
 				continue;
 			}
 			var action = field.field.name;
-			var scopes = protectedScopesByAction.get(action);
-			if (scopes == null) {
-				scopes = new Map();
+			var filters = protectedFiltersByAction.get(action);
+			if (filters == null) {
+				filters = new Map();
 			}
 			iterTypedExprRecursive(field.expr, function(expr:TypedExpr) {
-				var requiredScope = deviseCurrentRequiredScope(expr);
-				if (requiredScope == null) {
+				var requiredFilter = requiredControllerFilter(expr);
+				if (requiredFilter == null) {
 					return;
 				}
-				if (!scopes.exists(requiredScope)) {
-					Context.error('DeviseHx currentRequired for scope "$requiredScope" in action "$action" requires a matching beforeAction(UserAuth.authenticate) guard. Add the guard, narrow the lifecycle only/except options, or use current(...) and handle Null explicitly.',
+				if (!filters.exists(requiredFilter)) {
+					Context.error('Controller action "$action" calls a value requiring filter "$requiredFilter" and requires a matching beforeAction guard, but none covers the action. Add the guard, narrow the lifecycle only/except options, or use the nullable companion API.',
 						expr.pos);
 				}
 			});
@@ -2287,7 +2275,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		});
 	}
 
-	static function deviseProtectedScopesByAction(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Map<String, Map<String, Bool>> {
+	static function protectedControllerFiltersByAction(varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Map<String, Map<String, Bool>> {
 		var out:Map<String, Map<String, Bool>> = new Map();
 		var actions = [
 			for (field in funcFields)
@@ -2301,33 +2289,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			var decl = railsControllerLifecycleDecl(entry);
 			switch (decl.kind) {
 				case "before_action":
-					var scope = deviseAuthenticateScope(decl.method);
-					if (scope == null) {
-						continue;
-					}
 					for (action in actions) {
 						if (!railsLifecycleCoversAction(decl.only, decl.except, action)) {
 							continue;
 						}
-						var scopes = out.get(action);
-						if (scopes == null) {
-							scopes = new Map();
-							out.set(action, scopes);
+						var filters = out.get(action);
+						if (filters == null) {
+							filters = new Map();
+							out.set(action, filters);
 						}
-						scopes.set(scope, true);
+						filters.set(decl.method, true);
 					}
 				case "skip_before_action":
-					var scope = deviseAuthenticateScope(decl.method);
-					if (scope == null) {
-						continue;
-					}
 					for (action in actions) {
 						if (!railsLifecycleCoversAction(decl.only, decl.except, action)) {
 							continue;
 						}
-						var scopes = out.get(action);
-						if (scopes != null) {
-							scopes.remove(scope);
+						var filters = out.get(action);
+						if (filters != null) {
+							filters.remove(decl.method);
 						}
 					}
 				case _:
@@ -2347,35 +2327,39 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return true;
 	}
 
-	static function deviseAuthenticateScope(method:String):Null<String> {
-		var prefix = "authenticate_";
-		var suffix = "!";
-		if (!StringTools.startsWith(method, prefix) || !StringTools.endsWith(method, suffix)) {
-			return null;
-		}
-		var scope = method.substr(prefix.length, method.length - prefix.length - suffix.length);
-		return ~/^[a-z][a-z0-9_]*$/.match(scope) ? scope : null;
-	}
-
-	static function deviseCurrentRequiredScope(expr:TypedExpr):Null<String> {
+	static function requiredControllerFilter(expr:TypedExpr):Null<String> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall(callee, params):
 				var info = staticFieldInfo(callee);
-				if (info != null) {
-					var meta = metadataObject(info.field.meta, ":deviseHxHelper");
-					if (meta != null && metadataObjectString(meta, "kind", info.field.pos) == "currentRequired") {
-						var scope = metadataObjectString(meta, "mappingScope", info.field.pos);
-						validateDeviseMappingScope(scope, info.field.pos);
-						return scope;
+				if (info == null) {
+					null;
+				} else {
+					var direct = metaStringParam(info.field.meta, ":railsRequiresFilter", 0);
+					if (direct != null) {
+						validateRubyMethodName(direct, info.field.pos, "@:railsRequiresFilter");
+						direct;
+					} else {
+						var argIndex = metaIntParam(info.field.meta, ":railsRequiresFilterArg", 0);
+						if (argIndex == null) {
+							null;
+						} else if (argIndex < 0 || argIndex >= params.length) {
+							Context.error("@:railsRequiresFilterArg points outside the call arguments.", info.field.pos);
+							null;
+						} else {
+							var value = extensionStringLiteral(params[argIndex], "Required controller filter must be a constant String.");
+							validateRubyMethodName(value, params[argIndex].pos, "required controller filter");
+							value;
+						}
 					}
 				}
-				var call = staticCallInfo(callee);
-				if (call != null && call.owner == "devisehx.Auth" && call.name == "currentRequired" && params.length == 2) {
-					return deviseMappingScopeFromArg(params[1]);
-				}
-				null;
 			case _:
 				null;
+		}
+	}
+
+	static function validateRubyMethodName(value:String, pos:Position, context:String):Void {
+		if (!~/^[a-z_][A-Za-z0-9_]*[!?=]?$/.match(value)) {
+			Context.error('$context must be a safe Ruby method name.', pos);
 		}
 	}
 
@@ -2544,7 +2528,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			body.push("self.table_name = " + quoteRubyStringForCode(tableName));
 		}
 		body = body.concat(rubyExtensionLines(classType.meta, classType));
-		body = body.concat(railsDeviseModelLines(classType, varFields));
+		body = body.concat(railsClassMacroLines(classType));
 		for (field in varFields) {
 			if (hasMeta(field.field.meta, ":belongsTo")) {
 				body.push("belongs_to :" + RubyNaming.toMethodName(field.field.name) + railsAssociationOptionsSuffix(field.field.meta, ":belongsTo"));
@@ -2626,134 +2610,45 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		};
 	}
 
-	static function railsDeviseModelLines(classType:ClassType, varFields:Array<ClassVarData>):Array<String> {
-		var entries = classType.meta.extract(":devise");
-		if (entries.length == 0) {
-			return [];
-		}
-		if (entries.length > 1) {
-			Context.error("@:devise can only be declared once per Rails model.", classType.pos);
-		}
-		var entry = entries[0];
-		if (entry.params.length != 2) {
-			Context.error("@:devise expects a generated Devise scope and an array of Devise module tokens.", entry.pos);
-		}
-		var modules = railsDeviseModuleSymbols(entry.params[1]);
-		if (modules.length == 0) {
-			Context.error("@:devise requires at least one Devise module token.", entry.pos);
-		}
-		validateRailsDeviseSchema(classType, varFields, modules, entry.pos);
-		return ["devise " + [for (name in modules) rubySymbolLiteral(name)].join(", ")];
-	}
-
-	static function railsDeviseModuleSymbols(expr:haxe.macro.Expr):Array<String> {
-		return switch expr.expr {
-			case EArrayDecl(items):
-				[for (item in items) railsDeviseModuleSymbol(item)];
-			case _:
-				Context.error("@:devise module list must be an array literal so RailsHx can emit deterministic `devise :...` Ruby.", expr.pos);
-				[];
-		}
-	}
-
-	static function railsDeviseModuleSymbol(expr:haxe.macro.Expr):String {
-		return switch expr.expr {
-			case EConst(CIdent(name)):
-				railsDeviseKnownModule(name, expr.pos);
-			case EField(_, name):
-				railsDeviseKnownModule(name, expr.pos);
-			case ECall(callee, args):
-				railsDeviseCalledModuleSymbol(callee, args, expr.pos);
-			case _:
-				Context.error("@:devise module entries must be known DeviseHx module tokens imported from devisehx.model.DeviseModule.", expr.pos);
-				"database_authenticatable";
-		}
-	}
-
-	static function railsDeviseCalledModuleSymbol(callee:haxe.macro.Expr, args:Array<haxe.macro.Expr>, pos:haxe.macro.Expr.Position):String {
-		return switch callee.expr {
-			case EConst(CIdent("omniauthable")) | EField(_, "omniauthable"):
-				if (args.length != 1) {
-					Context.error("@:devise omniauthable(...) expects one providers array argument.", pos);
-				}
-				"omniauthable";
-			case EConst(CIdent("unsafeCustom")) | EField(_, "unsafeCustom"):
-				if (args.length != 1) {
-					Context.error("@:devise unsafeCustom(...) expects one custom module name literal.", pos);
-				}
-				switch args[0].expr {
-					case EConst(CString(name, _)) if (isSafeRubyIdentifier(name)):
-						RubyNaming.toMethodName(name);
-					case _:
-						Context.error("@:devise unsafeCustom(...) requires a safe snake_case custom module name literal.", args[0].pos);
-						"database_authenticatable";
-				}
-			case _:
-				Context.error("@:devise module calls must be supported DeviseHx tokens such as omniauthable([...]) or unsafeCustom(\"magic_auth\").", pos);
-				"database_authenticatable";
-		}
-	}
-
-	static function railsDeviseKnownModule(name:String, pos:haxe.macro.Expr.Position):String {
-		return switch name {
-			case "databaseAuthenticatable": "database_authenticatable";
-			case "registerable": "registerable";
-			case "recoverable": "recoverable";
-			case "rememberable": "rememberable";
-			case "validatable": "validatable";
-			case "confirmable": "confirmable";
-			case "lockable": "lockable";
-			case "trackable": "trackable";
-			case "timeoutable": "timeoutable";
-			case _:
-				Context.error('Unsupported @:devise module token "$name". Use a known devisehx.model.DeviseModule token, unsafeCustom("..."), or keep the model Rails-owned.',
-					pos);
-				"database_authenticatable";
-		}
-	}
-
-	static function validateRailsDeviseSchema(classType:ClassType, varFields:Array<ClassVarData>, modules:Array<String>, pos:Position):Void {
-		var columns:Map<String, Position> = [];
-		for (field in varFields) {
-			if (hasMeta(field.field.meta, ":railsColumn")) {
-				columns.set(railsColumnInfo(field).rubyName, field.field.pos);
+	static function railsClassMacroLines(classType:ClassType):Array<String> {
+		var lines:Array<String> = [];
+		for (entry in classType.meta.extract(":railsClassMacro")) {
+			if (entry.params == null || entry.params.length != 2) {
+				Context.error("@:railsClassMacro expects a Ruby method name and an array of symbol names.", entry.pos);
+				continue;
+			}
+			var method = switch (entry.params[0].expr) {
+				case EConst(CString(value, _)):
+					validateRubyMethodName(value, entry.params[0].pos, "@:railsClassMacro method");
+					value;
+				case _:
+					Context.error("@:railsClassMacro method must be a String literal.", entry.params[0].pos);
+					"";
+			}
+			var symbols = switch (entry.params[1].expr) {
+				case EArrayDecl(values):
+					[
+						for (value in values)
+							switch (value.expr) {
+								case EConst(CString(name, _)):
+									if (!isSafeRubyIdentifier(name)) {
+										Context.error("@:railsClassMacro symbol names must be safe Ruby identifiers.", value.pos);
+									}
+									name;
+								case _:
+									Context.error("@:railsClassMacro symbols must be String literals.", value.pos);
+									"";
+							}
+					];
+				case _:
+					Context.error("@:railsClassMacro second argument must be an Array<String> literal.", entry.params[1].pos);
+					[];
+			}
+			if (method != "" && symbols.length > 0) {
+				lines.push(method + " " + [for (symbol in symbols) rubySymbolLiteral(symbol)].join(", "));
 			}
 		}
-		var required:Array<String> = [];
-		for (moduleName in modules) {
-			for (column in railsDeviseRequiredColumns(moduleName)) {
-				if (required.indexOf(column) < 0) {
-					required.push(column);
-				}
-			}
-		}
-		var missing = [for (column in required) if (!columns.exists(column)) column];
-		if (missing.length > 0) {
-			Context.error("@:devise on "
-				+ classType.name
-				+ " requires typed @:railsColumn field(s) for Devise module schema: "
-				+ missing.join(", ")
-				+ ". Add the fields to the Haxe model or keep this model Rails-owned through a generated extern/adoption contract.",
-				pos);
-		}
-	}
-
-	static function railsDeviseRequiredColumns(moduleName:String):Array<String> {
-		return switch moduleName {
-			case "database_authenticatable": ["email", "encrypted_password"];
-			case "recoverable": ["reset_password_token", "reset_password_sent_at"];
-			case "rememberable": ["remember_created_at"];
-			case "confirmable": ["confirmation_token", "confirmed_at", "confirmation_sent_at"];
-			case "lockable": ["failed_attempts", "unlock_token", "locked_at"];
-			case "trackable": [
-					"sign_in_count",
-					"current_sign_in_at",
-					"last_sign_in_at",
-					"current_sign_in_ip",
-					"last_sign_in_ip"
-				];
-			case _: [];
-		}
+		return lines;
 	}
 
 	static function railsColumnInfo(field:ClassVarData):RailsColumnInfo {
@@ -3506,6 +3401,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (injected != null) {
 			return injected;
 		}
+		var extensionExpr = compileRubyExtensionExpr(callee, params);
+		if (extensionExpr != null) {
+			return extensionExpr;
+		}
 		var rubyPatchCall = compileRubyPatchCall(callee, params);
 		if (rubyPatchCall != null) {
 			return rubyPatchCall;
@@ -3584,22 +3483,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var railsTestRequestParams = compileRailsTestRequestParamsCall(info, params);
 		if (railsTestRequestParams != null) {
 			return railsTestRequestParams;
-		}
-		var deviseTestHelperCall = compileDeviseTestHelperCall(info, params);
-		if (deviseTestHelperCall != null) {
-			return deviseTestHelperCall;
-		}
-		var deviseParamsCall = compileDeviseParamsCall(info, params);
-		if (deviseParamsCall != null) {
-			return deviseParamsCall;
-		}
-		var generatedDeviseHelperCall = compileGeneratedDeviseHelperCall(callee, params);
-		if (generatedDeviseHelperCall != null) {
-			return generatedDeviseHelperCall;
-		}
-		var deviseAuthCall = compileDeviseAuthCall(info, params);
-		if (deviseAuthCall != null) {
-			return deviseAuthCall;
 		}
 		if (info.owner == "rails.test.Dsl" && (info.name == "test" || info.name == "setup" || info.name == "teardown")) {
 			Context.error('rails.test.Dsl.${info.name} is a compiler-erased RailsHx test declaration and can only be used at top level inside @:railsTests.',
@@ -3740,258 +3623,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			+ ", "
 			+ digits
 			+ ")");
-	}
-
-	static function compileGeneratedDeviseHelperCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
-		var info = staticFieldInfo(callee);
-		if (info == null) {
-			return null;
-		}
-		var meta = metadataObject(info.field.meta, ":deviseHxHelper");
-		if (meta == null) {
-			return null;
-		}
-		var schema = metadataObjectInt(meta, "schema", info.field.pos);
-		if (schema != 1) {
-			Context.error("Unsupported DeviseHx helper schema " + schema + " on " + info.typeName + "." + info.fieldName
-				+ ". Regenerate the DeviseHx contract.",
-				info.field.pos);
-		}
-		var kind = metadataObjectString(meta, "kind", info.field.pos);
-		var scope = metadataObjectString(meta, "mappingScope", info.field.pos);
-		validateDeviseMappingScope(scope, info.field.pos);
-		return switch kind {
-			case "current" if (params.length == 1):
-				RubyCall(null, "current_" + scope, []);
-			case "currentRequired" if (params.length == 1):
-				RubyCall(null, "current_" + scope, []);
-			case "signedIn" if (params.length == 1):
-				RubyCall(null, scope + "_signed_in?", []);
-			case "signIn" if (params.length == 2):
-				RubyCall(null, "sign_in", [RubyRawExpr(rubySymbolLiteral(scope)), compileExpr(params[1])]);
-			case "signOut" if (params.length == 1):
-				RubyCall(null, "sign_out", [RubyRawExpr(rubySymbolLiteral(scope))]);
-			case _:
-				Context.error('Unsupported DeviseHx helper "$kind" on ${info.typeName}.${info.fieldName}. Regenerate the DeviseHx contract.', info.field.pos);
-				RubyNil;
-		}
-	}
-
-	static function compileDeviseAuthCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
-		if (info.owner != "devisehx.Auth") {
-			return null;
-		}
-		return switch info.name {
-			case "current" if (params.length == 2):
-				var scope = deviseMappingScopeFromArg(params[1]);
-				RubyCall(null, "current_" + scope, []);
-			case "currentRequired" if (params.length == 2):
-				var scope = deviseMappingScopeFromArg(params[1]);
-				RubyCall(null, "current_" + scope, []);
-			case "signedIn" if (params.length == 2):
-				var scope = deviseMappingScopeFromArg(params[1]);
-				RubyCall(null, scope + "_signed_in?", []);
-			case "signIn" if (params.length == 3 || params.length == 4):
-				var scope = deviseMappingScopeFromArg(params[1]);
-				RubyCall(null, "sign_in", [RubyRawExpr(rubySymbolLiteral(scope)), compileExpr(params[2])]);
-			case "bypassSignIn" if (params.length == 3):
-				var scope = deviseMappingScopeFromArg(params[1]);
-				RubyRawExpr("bypass_sign_in(" + printInlineExpr(params[2]) + ", scope: " + rubySymbolLiteral(scope) + ")");
-			case "signOut" if (params.length == 2):
-				var scope = deviseMappingScopeFromArg(params[1]);
-				RubyCall(null, "sign_out", [RubyRawExpr(rubySymbolLiteral(scope))]);
-			case "signOutAll" if (params.length == 1):
-				RubyCall(null, "sign_out_all_scopes", []);
-			case _:
-				null;
-		}
-	}
-
-	static function deviseMappingScopeFromArg(expr:TypedExpr):String {
-		var info = staticFieldInfo(expr);
-		if (info == null) {
-			Context.error("DeviseHx auth helpers expect a direct generated Devise scope field such as UserAuth.scope; runtime DeviseScope values, locals, and function calls cannot be inspected safely.",
-				expr.pos);
-			return "user";
-		}
-		var meta = metadataObject(info.field.meta, ":deviseHxRoute");
-		if (meta == null) {
-			Context.error("DeviseHx auth helpers expected a generated DeviseHx route contract on "
-				+ info.typeName
-				+ "."
-				+ info.fieldName
-				+ ". Regenerate the DeviseHx contract.",
-				expr.pos);
-			return "user";
-		}
-		var schema = metadataObjectInt(meta, "schema", expr.pos);
-		if (schema != 1) {
-			Context.error("Unsupported DeviseHx route contract schema "
-				+ schema
-				+ " on "
-				+ info.typeName
-				+ "."
-				+ info.fieldName
-				+ ". Regenerate the DeviseHx contract with the current toolchain.",
-				expr.pos);
-		}
-		var scope = metadataObjectString(meta, "mappingScope", expr.pos);
-		validateDeviseMappingScope(scope, expr.pos);
-		return scope;
-	}
-
-	static function compileDeviseTestHelperCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
-		if (info.owner != "devisehx.test.IntegrationHelpers") {
-			return null;
-		}
-		return switch info.name {
-			case "signIn" if (params.length == 2):
-				var scope = deviseMappingScopeFromArg(params[0]);
-				RubyCall(null, "sign_in", [RubyRawExpr(rubySymbolLiteral(scope)), compileExpr(params[1])]);
-			case "signOut" if (params.length == 1):
-				var scope = deviseMappingScopeFromArg(params[0]);
-				RubyCall(null, "sign_out", [RubyRawExpr(rubySymbolLiteral(scope))]);
-			case _:
-				Context.error('Unsupported DeviseHx test helper devisehx.test.IntegrationHelpers.${info.name}.',
-					params.length > 0 ? params[0].pos : Context.currentPos());
-				RubyNil;
-		}
-	}
-
-	static function compileDeviseParamsCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
-		if (info.owner != "devisehx.params.DeviseParams") {
-			return null;
-		}
-		return switch info.name {
-			case "permit" if (params.length == 3):
-				deviseMappingScopeFromArg(params[0]);
-				var scopeModel = deviseScopeModelNameFromType(params[0].t);
-				var action = deviseSanitizerActionFromArg(params[1]);
-				var keys = deviseSanitizerKeys(params[2], false, scopeModel);
-				RubyRawExpr("devise_parameter_sanitizer.permit("
-					+ rubySymbolLiteral(action)
-					+ ", keys: ["
-					+ [for (key in keys) rubySymbolLiteral(key)].join(", ") + "])");
-			case "unsafePermit" if (params.length == 3):
-				deviseMappingScopeFromArg(params[0]);
-				var action = deviseSanitizerActionFromArg(params[1]);
-				var keys = deviseSanitizerKeys(params[2], true, null);
-				RubyRawExpr("devise_parameter_sanitizer.permit("
-					+ rubySymbolLiteral(action)
-					+ ", keys: ["
-					+ [for (key in keys) rubySymbolLiteral(key)].join(", ") + "])");
-			case _:
-				Context.error('Unsupported DeviseHx params helper devisehx.params.DeviseParams.${info.name}.',
-					params.length > 0 ? params[0].pos : Context.currentPos());
-				RubyNil;
-		}
-	}
-
-	static function deviseSanitizerActionFromArg(expr:TypedExpr):String {
-		return switch (unwrapTypedExpr(expr).expr) {
-			case TField(_, access):
-				var action = fieldAccessDeviseSanitizerAction(access);
-				if (action == null) {
-					Context.error("DeviseParams.permit expects a typed SanitizerAction such as SanitizerAction.signUp.", expr.pos);
-					"sign_up";
-				} else {
-					validateDeviseMappingScope(action, expr.pos);
-					action;
-				}
-			case _:
-				Context.error("DeviseParams.permit expects a typed SanitizerAction such as SanitizerAction.signUp.", expr.pos);
-				"sign_up";
-		}
-	}
-
-	static function deviseSanitizerKeys(expr:TypedExpr, allowStrings:Bool, expectedModel:Null<String>):Array<String> {
-		return switch (unwrapTypedExpr(expr).expr) {
-			case TArrayDecl(values):
-				[for (value in values) deviseSanitizerKey(value, allowStrings, expectedModel)];
-			case _:
-				Context.error("DeviseParams.permit keys must be an array literal of generated model field refs.", expr.pos);
-				[];
-		}
-	}
-
-	static function deviseSanitizerKey(expr:TypedExpr, allowStrings:Bool, expectedModel:Null<String>):String {
-		return switch (unwrapTypedExpr(expr).expr) {
-			case TField(_, access):
-				var name = fieldAccessRailsFieldName(access);
-				if (name == null) {
-					Context.error("DeviseParams.permit keys must use generated RailsHx model field refs such as User.f.name.", expr.pos);
-					"";
-				} else {
-					var fieldModel = activeRecordFieldModelNameFromType(expr.t);
-					if (expectedModel != null && fieldModel != null && !sameHaxeModelName(expectedModel, fieldModel)) {
-						Context.error("DeviseParams.permit field refs must belong to the same model as the generated Devise scope.", expr.pos);
-					}
-					RubyNaming.toMethodName(name);
-				}
-			case TConst(TString(value)) if (allowStrings):
-				RubyNaming.toMethodName(value);
-			case TConst(TString(_)):
-				Context.error("DeviseParams.permit keys must use generated RailsHx model field refs; use unsafePermit(...) for reviewed custom string keys.",
-					expr.pos);
-				"";
-			case _:
-				Context.error(allowStrings ? "DeviseParams.unsafePermit keys must be literal strings." : "DeviseParams.permit keys must use generated RailsHx model field refs such as User.f.name.",
-					expr.pos);
-				"";
-		}
-	}
-
-	static function fieldAccessDeviseSanitizerAction(access:haxe.macro.Type.FieldAccess):Null<String> {
-		var meta = switch (access) {
-			case FInstance(_, _, field) | FStatic(_, field): field.get().meta;
-			case FAnon(fieldRef) | FClosure(_, fieldRef): fieldRef.get().meta;
-			case FEnum(_, field): field.meta;
-			case FDynamic(_): null;
-		}
-		return metaStringParam(meta, ":deviseHxSanitizerAction", 0);
-	}
-
-	static function deviseScopeModelNameFromType(type:haxe.macro.Type):Null<String> {
-		return switch (TypeTools.follow(type)) {
-			case TInst(ref, params):
-				var classType = ref.get();
-				if (fullTypeName(classType.pack, classType.name) == "devisehx.DeviseScope" && params.length > 0) {
-					haxeModelNameFromType(params[0]);
-				} else {
-					null;
-				}
-			case _:
-				null;
-		}
-	}
-
-	static function activeRecordFieldModelNameFromType(type:haxe.macro.Type):Null<String> {
-		return switch (TypeTools.follow(type)) {
-			case TAbstract(ref, params):
-				var abstractType = ref.get();
-				var name = fullTypeName(abstractType.pack, abstractType.name);
-				if ((name == "rails.active_record.Field" || name == "rails.active_record.NullableField") && params.length > 0) {
-					haxeModelNameFromType(params[0]);
-				} else {
-					null;
-				}
-			case _:
-				null;
-		}
-	}
-
-	static function haxeModelNameFromType(type:haxe.macro.Type):Null<String> {
-		return switch (TypeTools.follow(type)) {
-			case TInst(ref, _):
-				var classType = ref.get();
-				fullTypeName(classType.pack, classType.name);
-			case _:
-				null;
-		}
-	}
-
-	static function sameHaxeModelName(left:String, right:String):Bool {
-		return left == right || left.split(".").pop() == right.split(".").pop();
 	}
 
 	static function compileRailsTestAssertionCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -6196,6 +5827,84 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			markCoreRuntimeUse();
 		}
 		return RubyRawExpr(code);
+	}
+
+	/**
+		Lowers a compiler-erased extension expression after its owning facade has
+		validated and frozen the Ruby template. Requiring both `@:rubyNoEmit` and
+		`@:rubyAllowRaw` keeps this handoff explicit; application code remains
+		subject to the normal raw-injection policy.
+	**/
+	static function compileRubyExtensionExpr(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
+		var code = rubyExtensionExprCode(callee, params, printInlineExpr);
+		if (code == null) {
+			return null;
+		}
+		if (hasHXRubyRuntimeReference(code)) {
+			markCoreRuntimeUse();
+		}
+		return RubyRawExpr(code);
+	}
+
+	static function rubyExtensionExprCode(callee:TypedExpr, params:Array<TypedExpr>, render:TypedExpr->String):Null<String> {
+		return switch (unwrapTypedExpr(callee).expr) {
+			case TField(_, FStatic(classRef, fieldRef)):
+				var owner = classRef.get();
+				var field = fieldRef.get();
+				var contract = metadataObject(field.meta, ":rubyExtensionExpr");
+				if (contract == null) {
+					null;
+				} else {
+					if (!hasRubyNoEmit(owner.meta) || !hasMeta(owner.meta, ":rubyAllowRaw")) {
+						Context.error("@:rubyExtensionExpr requires an owning compile-time facade marked with both @:rubyNoEmit and @:rubyAllowRaw.",
+							field.pos);
+					}
+					validateMetadataObjectKeys(contract, ["schema", "template", "templateArg", "valueStart"], ":rubyExtensionExpr", field.pos);
+					var schema = metadataObjectInt(contract, "schema", field.pos, ":rubyExtensionExpr");
+					if (schema != 1) {
+						Context.error('@:rubyExtensionExpr unsupported schema $schema; expected schema 1.', field.pos);
+					}
+					var literalTemplate = metadataObjectOptionalString(contract, "template", field.pos, ":rubyExtensionExpr");
+					var templateArg = metadataObjectOptionalInt(contract, "templateArg", field.pos, ":rubyExtensionExpr");
+					if ((literalTemplate == null) == (templateArg == null)) {
+						Context.error("@:rubyExtensionExpr requires exactly one of template or templateArg.", field.pos);
+					}
+					var template = literalTemplate;
+					if (templateArg != null) {
+						if (templateArg < 0 || templateArg >= params.length) {
+							Context.error("@:rubyExtensionExpr templateArg is outside the call arguments.", field.pos);
+						}
+						template = extensionStringLiteral(params[templateArg], "@:rubyExtensionExpr template argument must be a constant String.");
+					}
+					var valueStart = metadataObjectOptionalInt(contract, "valueStart", field.pos, ":rubyExtensionExpr");
+					if (valueStart == null) {
+						valueStart = templateArg == null ? 0 : templateArg + 1;
+					}
+					if (valueStart < 0 || valueStart > params.length) {
+						Context.error("@:rubyExtensionExpr valueStart is outside the call arguments.", field.pos);
+					}
+					~/{(\d+)}/g.map(template, ereg -> {
+						var index = Std.parseInt(ereg.matched(1));
+						var paramIndex = index == null ? -1 : valueStart + index;
+						if (paramIndex < valueStart || paramIndex >= params.length) {
+							Context.error('@:rubyExtensionExpr placeholder ${ereg.matched(0)} has no matching value argument.', field.pos);
+							return "nil";
+						}
+						return render(params[paramIndex]);
+					});
+				}
+			case _:
+				null;
+		}
+	}
+
+	static function extensionStringLiteral(expr:TypedExpr, message:String):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TConst(TString(value)): value;
+			case _:
+				Context.error(message, expr.pos);
+				"";
+		}
 	}
 
 	static function isRubyInjectionCallee(callee:TypedExpr):Bool {
@@ -10589,7 +10298,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "root",
 								target: railsRouteTarget(params[0]),
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10607,7 +10316,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "verb",
 								target: railsRouteTarget(params[2]),
-								devise: null,
+								extension: null,
 								verb: railsRouteString(params[0], "route verb"),
 								verbs: [],
 								path: railsRouteString(params[1], "route path"),
@@ -10625,7 +10334,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "match",
 								target: railsRouteTarget(params[1]),
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: railsRouteStringArray(params[2], "match verbs"),
 								path: railsRouteString(params[0], "match path"),
@@ -10643,7 +10352,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "resources",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10661,7 +10370,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "resource",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10679,7 +10388,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "collection",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10697,7 +10406,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "member",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10715,7 +10424,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "namespace",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10733,7 +10442,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "scope",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: railsRouteString(params[0], "scope path"),
@@ -10751,7 +10460,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "controller",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10769,7 +10478,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "defaults",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10787,7 +10496,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "constraints",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10805,7 +10514,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "mount",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: railsRouteString(params[1], "mount path"),
@@ -10819,19 +10528,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 								children: [],
 								pos: expr.pos
 							};
-						case "deviseFor" if (params.length == 8):
+						case "extension" if (params.length == 7):
 							{
-								kind: "deviseFor",
+								kind: "extension",
 								target: null,
-								devise: {
-									resource: railsRouteString(params[0], "Devise resource"),
-									mappingScope: railsRouteString(params[1], "Devise mapping scope"),
-									rubyClass: railsRouteString(params[2], "Devise Ruby class"),
-									contractType: railsRouteString(params[3], "Devise contract type"),
-									contractField: railsRouteString(params[4], "Devise contract field"),
-									contractSchema: railsRouteInt(params[5], "Devise contract schema"),
-									only: railsRouteStringArray(params[6], "Devise only route groups"),
-									skip: railsRouteStringArray(params[7], "Devise skip route groups")
+								extension: {
+									label: railsRouteString(params[0], "extension label"),
+									line: railsRouteLine(params[1]),
+									manifestJson: railsRouteString(params[2], "extension manifest"),
+									topLevelOnly: railsRouteBool(params[3], "extension top-level flag"),
+									group: railsRouteStringAllowEmpty(params[4], "extension group"),
+									signature: railsRouteStringAllowEmpty(params[5], "extension signature"),
+									split: railsRouteBool(params[6], "extension split flag")
 								},
 								verb: "",
 								verbs: [],
@@ -10850,7 +10558,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							{
 								kind: "rawRuby",
 								target: null,
-								devise: null,
+								extension: null,
 								verb: "",
 								verbs: [],
 								path: "",
@@ -10882,7 +10590,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return {
 			kind: "",
 			target: null,
-			devise: null,
+			extension: null,
 			verb: "",
 			verbs: [],
 			path: "",
@@ -10947,13 +10655,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsRouteInt(expr:TypedExpr, label:String):Int {
+	static function railsRouteLine(expr:TypedExpr):String {
+		var value = railsRouteString(expr, "extension Ruby line");
+		if (value.indexOf("\n") != -1 || value.indexOf("\r") != -1) {
+			Context.error("@:railsRoutes extension Ruby line must be a single line.", expr.pos);
+		}
+		return value;
+	}
+
+	static function railsRouteBool(expr:TypedExpr, label:String):Bool {
 		return switch (unwrapTypedExpr(expr).expr) {
-			case TConst(TInt(value)):
+			case TConst(TBool(value)):
 				value;
 			case _:
-				Context.error('@:railsRoutes $label must be an Int literal marker value.', expr.pos);
-				0;
+				Context.error('@:railsRoutes $label must be a Bool literal marker value.', expr.pos);
+				false;
 		}
 	}
 
@@ -11027,8 +10743,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return;
 		}
 
-		var renderedBody = body.join("\n");
-		var lines = railsTestArtifactLines(classType, adapter, body, renderedBody);
+		var lines = railsTestArtifactLines(classType, adapter, body, railsTestIncludes(funcFields));
 		setRailsExtraFile(outputPath, normalizeGeneratedText(lines.join("\n")), classType.pos);
 	}
 
@@ -11045,7 +10760,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function railsTestArtifactLines(classType:ClassType, adapter:RailsTestAdapter, body:Array<String>, renderedBody:String):Array<String> {
+	static function railsTestArtifactLines(classType:ClassType, adapter:RailsTestAdapter, body:Array<String>, includes:Array<String>):Array<String> {
 		return switch (adapter) {
 			case RailsMinitest:
 				var lines = ["# Generated by RailsHx from @:railsTest.",
@@ -11055,8 +10770,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					+ RubyNaming.toConstantName(classType.name)
 					+ " < "
 					+ railsTestSuperclass(classType)];
-				if (railsTestUsesDeviseIntegrationHelpers(renderedBody)) {
-					lines.push("  include Devise::Test::IntegrationHelpers");
+				for (moduleName in includes) {
+					lines.push("  include " + moduleName);
 				}
 				for (line in body) {
 					lines.push("  " + line);
@@ -11072,8 +10787,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					+ ", type: :"
 					+ railsTestRSpecType(classType)
 					+ " do"];
-				if (railsTestUsesDeviseIntegrationHelpers(renderedBody)) {
-					lines.push("  include Devise::Test::IntegrationHelpers");
+				for (moduleName in includes) {
+					lines.push("  include " + moduleName);
 				}
 				for (line in body) {
 					lines.push("  " + line);
@@ -11157,8 +10872,32 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return false;
 	}
 
-	static function railsTestUsesDeviseIntegrationHelpers(renderedBody:String):Bool {
-		return renderedBody.indexOf("sign_in(") != -1 || renderedBody.indexOf("sign_out(") != -1;
+	static function railsTestIncludes(funcFields:Array<ClassFuncData>):Array<String> {
+		var includes:Array<String> = [];
+		for (field in funcFields) {
+			if (field.expr == null) {
+				continue;
+			}
+			iterTypedExprRecursive(field.expr, function(expr:TypedExpr) {
+				switch (unwrapTypedExpr(expr).expr) {
+					case TCall(callee, _):
+						var info = staticFieldInfo(callee);
+						if (info != null) {
+							var moduleName = metaStringParam(info.field.meta, ":railsTestInclude", 0);
+							if (moduleName != null) {
+								if (!isSafeRubyConstantPath(moduleName)) {
+									Context.error("@:railsTestInclude must name a safe Ruby constant path.", info.field.pos);
+								}
+								if (includes.indexOf(moduleName) == -1) {
+									includes.push(moduleName);
+								}
+							}
+						}
+					case _:
+				}
+			});
+		}
+		return includes;
 	}
 
 	function setRailsExtraFile(outputPath:String, content:String, pos:Position):Void {
@@ -13621,10 +13360,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				printTemplateExpr(value, scope) + ".to_s";
 			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionViewFlashExpr(classRef.get(), fieldRef.get()) != null):
 				actionViewFlashExpr(classRef.get(), fieldRef.get());
-			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params) if (deviseAuthLinkPathExpr(classRef.get(), fieldRef.get(), params) != null):
-				deviseAuthLinkPathExpr(classRef.get(), fieldRef.get(), params);
-			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params) if (deviseErrorsExpr(classRef.get(), fieldRef.get(), params, scope) != null):
-				deviseErrorsExpr(classRef.get(), fieldRef.get(), params, scope);
 			case TField(_, FStatic(_, fieldRef)):
 				var staticValue = templateStaticFieldString(fieldRef.get());
 				if (staticValue != null) {
@@ -13639,16 +13374,21 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField({expr: TLocal(v)}, access) if (scope.localObjectNames.exists(v.id)):
 				fieldAccessName(access);
 			case TField(target, access): printTemplateExpr(target, scope) + "." + fieldAccessName(access);
-			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, params):
-				var helperExpr = templateViewHelperExpr(classRef.get(), fieldRef.get(), params, scope);
-				if (helperExpr != null) {
-					helperExpr;
+			case TCall(callee = {expr: TField(_, FStatic(classRef, fieldRef))}, params):
+				var extensionExpr = rubyExtensionExprCode(callee, params, expr -> printTemplateExpr(expr, scope));
+				if (extensionExpr != null) {
+					extensionExpr;
 				} else {
-					var classType = classRef.get();
-					var receiver = rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType);
-					var method = rubyFieldName(fieldRef.get().name, fieldRef.get().meta);
-					var args = [for (param in params) printTemplateExpr(param, scope)].join(", ");
-					(receiver == "self" ? method : receiver + "." + method) + "(" + args + ")";
+					var helperExpr = templateViewHelperExpr(classRef.get(), fieldRef.get(), params, scope);
+					if (helperExpr != null) {
+						helperExpr;
+					} else {
+						var classType = classRef.get();
+						var receiver = rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType);
+						var method = rubyFieldName(fieldRef.get().name, fieldRef.get().meta);
+						var args = [for (param in params) printTemplateExpr(param, scope)].join(", ");
+						(receiver == "self" ? method : receiver + "." + method) + "(" + args + ")";
+					}
 				}
 			case TCall({expr: TField(target, access)}, params):
 				printTemplateExpr(target, scope)
@@ -13851,70 +13591,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case "hasMessage": "flash[:alert].present? || flash[:notice].present?";
 			case "kind": "(flash[:alert].present? ? \"alert\" : \"notice\")";
 			case _: null;
-		}
-	}
-
-	static function deviseAuthLinkPathExpr(classType:ClassType, field:haxe.macro.Type.ClassField, params:Array<TypedExpr>):Null<String> {
-		if (classType.pack.join(".") != "devisehx.hhx" || classType.name != "AuthLinks") {
-			return null;
-		}
-		if (params.length != 1) {
-			Context.error("DeviseHx HHX auth route helpers expect one generated Devise scope argument, such as UserAuth.scope.", field.pos);
-			return "nil";
-		}
-		var scope = deviseMappingScopeFromArg(params[0]);
-		return switch (field.name) {
-			case "newSessionPath" | "signInPath":
-				"new_" + scope + "_session_path()";
-			case "sessionPath":
-				scope + "_session_path()";
-			case "destroySessionPath" | "signOutPath":
-				"destroy_" + scope + "_session_path()";
-			case "newRegistrationPath" | "signUpPath":
-				"new_" + scope + "_registration_path()";
-			case "editRegistrationPath":
-				"edit_" + scope + "_registration_path()";
-			case "registrationPath":
-				scope + "_registration_path()";
-			case "cancelRegistrationPath":
-				"cancel_" + scope + "_registration_path()";
-			case "newPasswordPath":
-				"new_" + scope + "_password_path()";
-			case "editPasswordPath":
-				"edit_" + scope + "_password_path()";
-			case "passwordPath":
-				scope + "_password_path()";
-			case "newConfirmationPath":
-				"new_" + scope + "_confirmation_path()";
-			case "confirmationPath":
-				scope + "_confirmation_path()";
-			case "newUnlockPath":
-				"new_" + scope + "_unlock_path()";
-			case "unlockPath":
-				scope + "_unlock_path()";
-			case _:
-				null;
-		}
-	}
-
-	static function deviseErrorsExpr(classType:ClassType, field:haxe.macro.Type.ClassField, params:Array<TypedExpr>, scope:RailsTemplateScope):Null<String> {
-		if (classType.pack.join(".") != "devisehx.hhx" || classType.name != "DeviseErrors") {
-			return null;
-		}
-		if (params.length != 1) {
-			Context.error("DeviseErrors helpers expect one typed Devise resource argument.", field.pos);
-			return "nil";
-		}
-		var target = printTemplateExpr(params[0], scope) + ".errors";
-		return switch (field.name) {
-			case "hasAny":
-				target + ".any?";
-			case "count":
-				target + ".count";
-			case "fullMessages":
-				target + ".full_messages";
-			case _:
-				null;
 		}
 	}
 
@@ -14297,6 +13973,20 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
+	static function metaIntParam(meta:Null<haxe.macro.Type.MetaAccess>, name:String, index:Int):Null<Int> {
+		if (meta == null || meta.extract == null) {
+			return null;
+		}
+		var entries = meta.extract(name);
+		if (entries.length == 0 || entries[0].params == null || entries[0].params.length <= index) {
+			return null;
+		}
+		return switch (entries[0].params[index].expr) {
+			case EConst(CInt(value, _)): Std.parseInt(value);
+			case _: null;
+		}
+	}
+
 	static function metadataObject(meta:Null<haxe.macro.Type.MetaAccess>, name:String):Null<Array<RubyMetadataField>> {
 		if (meta == null || meta.extract == null) {
 			return null;
@@ -14313,7 +14003,15 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function metadataObjectString(fields:Array<RubyMetadataField>, key:String, pos:Position):String {
+	static function validateMetadataObjectKeys(fields:Array<RubyMetadataField>, allowed:Array<String>, metadataName:String, pos:Position):Void {
+		for (field in fields) {
+			if (allowed.indexOf(field.field) == -1) {
+				Context.error('$metadataName does not support field "${field.field}".', field.expr.pos);
+			}
+		}
+	}
+
+	static function metadataObjectString(fields:Array<RubyMetadataField>, key:String, pos:Position, metadataName:String = "Target metadata"):String {
 		for (field in fields) {
 			if (field.field != key) {
 				continue;
@@ -14321,15 +14019,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return switch (field.expr.expr) {
 				case EConst(CString(value, _)): value;
 				case _:
-					Context.error('DeviseHx metadata field "$key" must be a string literal.', field.expr.pos);
+					Context.error('$metadataName field "$key" must be a string literal.', field.expr.pos);
 					"";
 			}
 		}
-		Context.error('DeviseHx metadata is missing required field "$key".', pos);
+		Context.error('$metadataName is missing required field "$key".', pos);
 		return "";
 	}
 
-	static function metadataObjectInt(fields:Array<RubyMetadataField>, key:String, pos:Position):Int {
+	static function metadataObjectOptionalString(fields:Array<RubyMetadataField>, key:String, pos:Position,
+			metadataName:String = "Target metadata"):Null<String> {
+		for (field in fields) {
+			if (field.field != key) {
+				continue;
+			}
+			return switch (field.expr.expr) {
+				case EConst(CString(value, _)): value;
+				case _:
+					Context.error('$metadataName field "$key" must be a string literal.', field.expr.pos);
+					null;
+			}
+		}
+		return null;
+	}
+
+	static function metadataObjectInt(fields:Array<RubyMetadataField>, key:String, pos:Position, metadataName:String = "Target metadata"):Int {
 		for (field in fields) {
 			if (field.field != key) {
 				continue;
@@ -14337,18 +14051,27 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			return switch (field.expr.expr) {
 				case EConst(CInt(value, _)): Std.parseInt(value);
 				case _:
-					Context.error('DeviseHx metadata field "$key" must be an integer literal.', field.expr.pos);
+					Context.error('$metadataName field "$key" must be an integer literal.', field.expr.pos);
 					0;
 			}
 		}
-		Context.error('DeviseHx metadata is missing required field "$key".', pos);
+		Context.error('$metadataName is missing required field "$key".', pos);
 		return 0;
 	}
 
-	static function validateDeviseMappingScope(scope:String, pos:Position):Void {
-		if (!~/^[a-z][a-z0-9_]*$/.match(scope)) {
-			Context.error("DeviseHx mappingScope must be a safe snake_case Devise scope.", pos);
+	static function metadataObjectOptionalInt(fields:Array<RubyMetadataField>, key:String, pos:Position, metadataName:String = "Target metadata"):Null<Int> {
+		for (field in fields) {
+			if (field.field != key) {
+				continue;
+			}
+			return switch (field.expr.expr) {
+				case EConst(CInt(value, _)): Std.parseInt(value);
+				case _:
+					Context.error('$metadataName field "$key" must be an integer literal.', field.expr.pos);
+					null;
+			}
 		}
+		return null;
 	}
 
 	static function validationTargetName(field:ClassVarData):String {

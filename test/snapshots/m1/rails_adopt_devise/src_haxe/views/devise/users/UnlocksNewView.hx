@@ -40,7 +40,7 @@ class UnlocksNewView {
 					</div>
 					<submit type="submit">Resend unlock instructions</submit>
 				</form_with>
-				<devise_sign_in_link scope=${UserAuth.scope} class="devisehx-secondary-link">Back to sign in</devise_sign_in_link>
+				<link_to url=${AuthLinks.signInPath(UserAuth.scope)} class="devisehx-secondary-link">Back to sign in</link_to>
 			</section>
 		</main>;
 	}

@@ -112,7 +112,7 @@ independent review missed:
 | Finding | Reconciled evidence and remaining delta |
 | --- | --- |
 | RHX-1.0-001 | Resolved with one machine-readable evidence contract shared by docs, package requirements, doctor diagnostics, fixture materializers, and CI. RailsHx verifies Rails 8.1.3 while retaining a permissive Rails `>= 7.0` dependency floor; Ruby versions beyond the tested branches are warned rather than rejected when they satisfy the runtime floor. |
-| RHX-1.0-002 | Confirmed for DeviseHx package paths, metadata schemas, helper owners, HHX tags, and diagnostics in core. Generic Rails route IR that can emit ordinary `devise_for` is a separate Rails capability and need not be prohibited if it no longer depends on DeviseHx vocabulary. |
+| RHX-1.0-002 | Confirmed and refined. The route IR was also Devise-shaped, so the bounded fix uses an opaque generic route extension rather than merely renaming package checks. DeviseHx now owns its schemas, helper validation, model macro, HHX paths, and route manifest payload; core owns only generic checked expression, filter, class-macro, test-include, and route carriers. A registry/plugin lifecycle was rejected as unnecessary. |
 | RHX-1.0-003 | Resolved with a deliberately small viability contract. `npm run benchmark:stable` repeats RubyHx CLI, RailsHx server/HHX, RailsHx client, generated CLI startup, and prepared Rails production-boot workloads; records wall time, peak RSS, output bytes/files, runner identity, and variance as JSON; and runs in the pinned production job. Broad absolute caps catch runaway regressions. Tight relative timing gates, a benchmark service, duplicated request/job correctness workloads, and comparative speed claims were rejected as noisy or unsupported scope. |
 | RHX-1.0-004 | Resolved through the bounded scope alternative. Haxe/HHX compile errors retain owned source positions; generated Ruby/ERB is the supported server line-level debugging source; browser output keeps Haxe source maps. `hxruby:doctor` reports installed/tool versions, generated roots, manifest version, and generator-level provenance. Executable tests preserve uncaught generated-Ruby frames plus `HxException` cause/backtrace behavior. No Ruby source-map subsystem or `haxe.CallStack` parity is claimed. |
 | RHX-1.0-005 | Resolved with a federated public contract rather than a duplicate monolithic registry. Existing machine-checked metadata, std, profile, package, task, ABI, compatibility, and schema inventories remain authoritative. Ownership manifest v1 now rejects missing/malformed/unknown versions before mutation, and checksum drift blocks normal rewrite or all cleanup without partial deletion. One canonical lane installs checksum-verified public `v0.4.0` ZIP/gem assets, upgrades representative consumers to current Git-tree artifacts, and rolls them back without changing handwritten source. A generic migrator was rejected until a real v2 schema exists. |
@@ -434,8 +434,8 @@ Public-in-effect compiler and build defines include:
 - <code>reflaxe_ruby_rails_output_root</code>;
 - <code>reflaxe_ruby_strict</code>;
 - <code>railshx_allow_unchecked_routes</code>;
-- <code>railshx_devise_strict_current_required</code>, currently architecturally
-  misplaced;
+- <code>railshx_strict_required_filters</code>, the reconciled generic
+  companion-filter flow check;
 - <code>rails_hxx_no_inline_markup</code>, which needs explicit classification.
 
 Repository-only policy defines such as
@@ -592,12 +592,16 @@ beta until Rails 8.1 passes.
 helper vocabulary, tags, and diagnostics, coupling cadence and making other
 companions second class.
 
-**Required outcome:** Define a typed, versioned companion contract for metadata
-or IR contributions, helper lowering, HHX component expansion, inventory
-validation, diagnostics, package/runtime requirements, and test integration.
-Move all DeviseHx package-specific knowledge into the companion or generator
-layer. Core may retain generic Rails routing concepts that emit `devise_for`
-only when their input contract no longer names or requires DeviseHx.
+**Reconciled required outcome:** Move all DeviseHx package-specific knowledge
+into the companion or generator layer. Generalize only the handoffs exercised by
+the existing implementation: checked compiler-erased expressions, Rails filter
+and required-filter flow, safe Rails class macros, test-module includes, and an
+opaque route extension. Keep HHX on ordinary typed Rails tags plus
+companion-owned path macros. The review's broader registry, package discovery,
+inventory, runtime-requirement, and plugin lifecycle proposal is not justified
+without a concrete second lifecycle. The original route IR was itself
+Devise-shaped, so it must become opaque/generic rather than merely stop checking
+a package path.
 
 **Acceptance evidence:**
 

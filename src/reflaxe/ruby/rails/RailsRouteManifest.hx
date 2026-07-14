@@ -15,11 +15,8 @@ private typedef RouteManifestPayload = {
 private typedef RouteManifestDeclPayload = {
 	final kind:String;
 	final position:String;
+	@:optional var extensionJson:String;
 	@:optional var target:String;
-	@:optional var resource:String;
-	@:optional var expectedMapping:RouteManifestExpectedMapping;
-	@:optional var contract:RouteManifestContract;
-	@:optional var deviseOptions:RouteManifestDeviseOptions;
 	@:optional var verb:String;
 	@:optional var verbs:Array<String>;
 	@:optional var path:String;
@@ -33,23 +30,6 @@ private typedef RouteManifestDeclPayload = {
 	@:optional var opaque:Bool;
 	@:optional var lineSha256:String;
 	@:optional var children:Array<RouteManifestDeclPayload>;
-}
-
-private typedef RouteManifestExpectedMapping = {
-	final name:String;
-	final className:String;
-	final path:String;
-}
-
-private typedef RouteManifestContract = {
-	final type:String;
-	final field:String;
-	final schema:Int;
-}
-
-private typedef RouteManifestDeviseOptions = {
-	@:optional var only:Array<String>;
-	@:optional var skip:Array<String>;
 }
 
 /**
@@ -77,26 +57,8 @@ class RailsRouteManifest {
 		if (decl.target != null) {
 			out.target = decl.target.controller + "#" + decl.target.action;
 		}
-		if (decl.kind == "deviseFor" && decl.devise != null) {
-			out.resource = decl.devise.resource;
-			out.expectedMapping = {
-				name: decl.devise.mappingScope,
-				className: decl.devise.rubyClass,
-				path: decl.devise.resource
-			};
-			out.contract = {
-				type: decl.devise.contractType,
-				field: decl.devise.contractField,
-				schema: decl.devise.contractSchema
-			};
-			var deviseOptions:RouteManifestDeviseOptions = {};
-			if (decl.devise.only.length > 0) {
-				deviseOptions.only = decl.devise.only;
-			}
-			if (decl.devise.skip.length > 0) {
-				deviseOptions.skip = decl.devise.skip;
-			}
-			out.deviseOptions = deviseOptions;
+		if (decl.extension != null) {
+			out.extensionJson = extensionManifestJson(decl.extension.manifestJson, decl.pos);
 		}
 		if (decl.verb != "") {
 			out.verb = decl.verb;
@@ -152,14 +114,15 @@ class RailsRouteManifest {
 	}
 
 	static function routeDeclJson(decl:RouteManifestDeclPayload, indent:Int):String {
+		if (decl.extensionJson != null) {
+			return indentMultilineJson(decl.extensionJson, indent);
+		}
 		var fieldIndent = indent + 2;
 		var fields:Array<String> = [];
 		if (decl.name != null) {
 			fields.push(jsonField("name", stringJson(decl.name), fieldIndent));
 		}
-		if (decl.deviseOptions != null) {
-			fields.push(jsonField("options", deviseOptionsJson(decl.deviseOptions, fieldIndent), fieldIndent));
-		} else if (decl.options != null) {
+		if (decl.options != null) {
 			fields.push(jsonField("options", stringArrayJson(decl.options, fieldIndent), fieldIndent));
 		}
 		if (decl.only != null) {
@@ -172,12 +135,6 @@ class RailsRouteManifest {
 			fields.push(jsonField("moduleName", stringJson(decl.moduleName), fieldIndent));
 		}
 		fields.push(jsonField("position", stringJson(decl.position), fieldIndent));
-		if (decl.contract != null) {
-			fields.push(jsonField("contract", contractJson(decl.contract, fieldIndent), fieldIndent));
-		}
-		if (decl.expectedMapping != null) {
-			fields.push(jsonField("expectedMapping", expectedMappingJson(decl.expectedMapping, fieldIndent), fieldIndent));
-		}
 		if (decl.target != null) {
 			fields.push(jsonField("target", stringJson(decl.target), fieldIndent));
 		}
@@ -191,9 +148,6 @@ class RailsRouteManifest {
 			fields.push(jsonField("controller", stringJson(decl.controller), fieldIndent));
 		}
 		fields.push(jsonField("kind", stringJson(decl.kind), fieldIndent));
-		if (decl.resource != null) {
-			fields.push(jsonField("resource", stringJson(decl.resource), fieldIndent));
-		}
 		if (decl.verb != null) {
 			fields.push(jsonField("verb", stringJson(decl.verb), fieldIndent));
 		}
@@ -212,31 +166,35 @@ class RailsRouteManifest {
 		return objectJson(fields, indent);
 	}
 
-	static function expectedMappingJson(mapping:RouteManifestExpectedMapping, indent:Int):String {
-		return objectJson([
-			jsonField("name", stringJson(mapping.name), indent + 2),
-			jsonField("path", stringJson(mapping.path), indent + 2),
-			jsonField("className", stringJson(mapping.className), indent + 2)
-		], indent);
+	static function extensionManifestJson(manifestJson:String, pos:Position):String {
+		var marker = "__railshx_position__";
+		if (manifestJson.indexOf(marker) == -1 || manifestJson.indexOf(marker) != manifestJson.lastIndexOf(marker)) {
+			Context.error("Route extension manifest must contain exactly one RailsHx position marker.", pos);
+		}
+		var encodedPosition = haxe.Json.stringify(positionString(pos));
+		var withPosition = StringTools.replace(manifestJson, marker, encodedPosition.substr(1, encodedPosition.length - 2));
+		try {
+			// Extension manifests are an explicit structured interop boundary. Parse
+			// the opaque object only to reject malformed/non-object payloads; the
+			// companion owns its versioned fields and downstream interpretation.
+			var parsed:Dynamic = haxe.Json.parse(withPosition);
+			if (parsed == null || !Reflect.isObject(parsed) || Std.isOfType(parsed, Array)) {
+				Context.error("Route extension manifest must be a JSON object.", pos);
+			}
+			var kind = Reflect.field(parsed, "kind");
+			if (!Std.isOfType(kind, String) || Std.string(kind).length == 0) {
+				Context.error('Route extension manifest requires a non-empty "kind" String.', pos);
+			}
+			return haxe.Json.stringify(parsed, null, "  ");
+		} catch (error:Dynamic) {
+			Context.error("Route extension manifest is invalid JSON: " + Std.string(error), pos);
+			return "{}";
+		}
 	}
 
-	static function contractJson(contract:RouteManifestContract, indent:Int):String {
-		return objectJson([
-			jsonField("schema", intJson(contract.schema), indent + 2),
-			jsonField("field", stringJson(contract.field), indent + 2),
-			jsonField("type", stringJson(contract.type), indent + 2)
-		], indent);
-	}
-
-	static function deviseOptionsJson(options:RouteManifestDeviseOptions, indent:Int):String {
-		var fields:Array<String> = [];
-		if (options.only != null) {
-			fields.push(jsonField("only", stringArrayJson(options.only, indent + 2), indent + 2));
-		}
-		if (options.skip != null) {
-			fields.push(jsonField("skip", stringArrayJson(options.skip, indent + 2), indent + 2));
-		}
-		return objectJson(fields, indent);
+	static function indentMultilineJson(value:String, indent:Int):String {
+		var prefix = indentString(indent);
+		return value.split("\n").join("\n" + prefix);
 	}
 
 	static function stringArrayJson(values:Array<String>, indent:Int):String {

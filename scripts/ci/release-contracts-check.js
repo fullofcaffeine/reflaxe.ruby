@@ -564,6 +564,9 @@ expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package build
 expectExcludes(haxelibPackageBuilder, `"haxe_libraries/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageCheckText, "src/Std.cross.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/Auth.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/ContractTools.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/DeviseModelMacro.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/RubyFragments.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/routes/DeviseRoutes.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/test/IntegrationHelpers.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "vendor/reflaxe/PATCHES.md", "Haxelib package check");

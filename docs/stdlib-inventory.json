@@ -300,7 +300,7 @@
       "status": "implemented",
       "path": "std/devisehx/SignInOptions.hx",
       "surface": "devisehx.SignInOptions",
-      "reason": "Typed options boundary for Devise sign_in calls."
+      "reason": "Checked force/store option boundary shared by supported Devise sign_in implementations."
     },
     {
       "id": "std.devisehx.hhx_auth_links",
@@ -308,7 +308,7 @@
       "status": "implemented",
       "path": "std/devisehx/hhx/AuthLinks.hx",
       "surface": "devisehx.hhx.AuthLinks",
-      "reason": "Compiler-erased HHX facade for typed Devise session and registration route helpers used by Rails HHX auth tags."
+      "reason": "Compiler-erased facade for typed Devise session and registration paths composed with ordinary Rails HHX helpers."
     },
     {
       "id": "std.devisehx.hhx_errors",
@@ -365,6 +365,30 @@
       "path": "std/devisehx/mapping/DeviseMapping.hx",
       "surface": "devisehx.mapping.DeviseMapping",
       "reason": "Typed Devise mapping extern for app-local generated auth contracts and mapping validation seams."
+    },
+    {
+      "id": "std.devisehx.macros.contract_tools",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/macros/ContractTools.hx",
+      "surface": "devisehx.macros.ContractTools",
+      "reason": "Companion-internal parser and validator for generated Devise scope, sanitizer, model, and option contracts."
+    },
+    {
+      "id": "std.devisehx.macros.model",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/macros/DeviseModelMacro.hx",
+      "surface": "devisehx.macros.DeviseModelMacro",
+      "reason": "Companion-owned Devise module and schema validation that emits only a generic Rails class-macro handoff."
+    },
+    {
+      "id": "std.devisehx.macros.ruby_fragments",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/devisehx/macros/RubyFragments.hx",
+      "surface": "devisehx.macros.RubyFragments",
+      "reason": "Compiler-erased internal carrier for DeviseHx-validated Ruby expressions, required filters, and test includes."
     },
     {
       "id": "std.devisehx.model_module",

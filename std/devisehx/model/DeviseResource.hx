@@ -10,5 +10,6 @@ package devisehx.model;
 	`@:rubyNoEmit` avoids an empty Ruby marker module while preserving the Haxe
 	type bound used by generated DeviseHx contracts.
 **/
+@:autoBuild(devisehx.macros.DeviseModelMacro.build())
 @:rubyNoEmit
 interface DeviseResource<TSelf> {}
