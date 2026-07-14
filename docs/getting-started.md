@@ -184,6 +184,11 @@ RAILS_ENV=production bundle exec rake hxruby:production
 The complete command and ownership contract lives in
 [RailsHx Generator Workflows](railshx-generator-workflows.md).
 
+For failures, use Haxe/HHX locations from compile diagnostics and generated
+Ruby/ERB paths from server backtraces. [Debugging Generated Applications](debugging.md)
+documents the ownership lookup, browser source maps, and current source-correlation
+limits.
+
 ## Where To Go Next
 
 - [Why RubyHx](why-rubyhx.md) for the product model and tradeoffs.

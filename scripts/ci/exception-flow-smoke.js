@@ -52,6 +52,20 @@ if (actual !== expected) {
   process.exit(1);
 }
 
+const uncaught = run("ruby", [
+  `-I${outputDir}`,
+  "-e",
+  'require "hxruby/core"; require "hxruby/hx_exception"; require "main"; Main.fail',
+], { allowFailure: true });
+const uncaughtOutput = `${uncaught.stdout}\n${uncaught.stderr}`;
+const generatedMain = join(outputDir, "main.rb");
+if (uncaught.status === 0 || !uncaughtOutput.includes(`${generatedMain}:`) || !uncaughtOutput.includes("HxException") || !uncaughtOutput.includes("boom")) {
+  process.stdout.write(uncaught.stdout);
+  process.stderr.write(uncaught.stderr);
+  console.error("Uncaught Haxe exception did not retain a useful generated-Ruby backtrace.");
+  process.exit(1);
+}
+
 function compileWithFirstAvailableReflaxe() {
   for (const reflaxeSrc of reflaxeCandidates) {
     if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {

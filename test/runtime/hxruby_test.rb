@@ -240,6 +240,20 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal "{\"message\"=>\"boom\"}", error.message
   end
 
+  def test_hx_exception_preserves_ruby_cause_and_raise_site
+    native_error = ArgumentError.new("native failure")
+    error = assert_raises(HxException) do
+      begin
+        raise native_error
+      rescue ArgumentError
+        raise HxException.new("typed failure")
+      end
+    end
+
+    assert_same native_error, error.cause
+    assert_match(/hxruby_test\.rb:\d+/, error.backtrace.first)
+  end
+
   def test_is_of_type_matches_core_haxe_shapes
     assert HXRuby.is_of_type(1, Int)
     assert HXRuby.is_of_type(1, Float_)

@@ -25,6 +25,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
   ZIP/gem consumption, Haxelib and Ruby package contracts, and client/DeviseHx
   packaging boundaries.
 - [Compatibility Matrix](compatibility-matrix.md): supported Haxe, Node, and Ruby versions.
+- [Debugging Generated Applications](debugging.md): compiler diagnostics,
+  generated Ruby/ERB backtraces, ownership provenance, browser source maps,
+  and the limits of server-side source correlation.
 - [Support And Maintenance](../SUPPORT.md): public issue and security channels,
   single-maintainer scope, review cadence, release authority, and companion
   ownership.

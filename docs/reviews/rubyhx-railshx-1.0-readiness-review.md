@@ -96,10 +96,13 @@ settings, canonical CI logs, and published release bytes before implementation
 or closure. Maintainers should amend a finding when stronger local evidence
 narrows, contradicts, or extends it.
 
-The first reconciliation corrects an important support distinction: the fixture
-Gemfiles accept Rails `>= 7.0` and `< 8.0`, but that dependency range does not
-prove every Rails 7 minor. The committed lock and canonical beta evidence cover
-Rails `7.2.3.1`; Rails 8.1 remains planned and unverified.
+The first reconciliation corrected an important support distinction: a Gemfile
+dependency range is not a tested support matrix. That gap has since closed. The
+generated fixtures retain a permissive Rails `>= 7.0` floor without an artificial
+upper bound, while the maintained beta support line is Rails `8.1` and canonical
+CI pins `8.1.3`. Other Rails lines may work and receive a doctor warning instead
+of an installation rejection. The matrix records verified evidence, not a claim
+that generated Ruby must stop working on later Ruby or Rails releases.
 
 The maintainer reconciliation performed on 2026-07-13 also refined the initial
 eight P1 findings against the live checkout, hosted repository settings, and
@@ -108,15 +111,15 @@ independent review missed:
 
 | Finding | Reconciled evidence and remaining delta |
 | --- | --- |
-| RHX-1.0-001 | Confirmed, with the Rails range correction above. The accepted Gemfile range is not a tested support matrix. |
+| RHX-1.0-001 | Resolved with one machine-readable evidence contract shared by docs, package requirements, doctor diagnostics, fixture materializers, and CI. RailsHx verifies Rails 8.1.3 while retaining a permissive Rails `>= 7.0` dependency floor; Ruby versions beyond the tested branches are warned rather than rejected when they satisfy the runtime floor. |
 | RHX-1.0-002 | Confirmed for DeviseHx package paths, metadata schemas, helper owners, HHX tags, and diagnostics in core. Generic Rails route IR that can emit ordinary `devise_for` is a separate Rails capability and need not be prohibited if it no longer depends on DeviseHx vocabulary. |
 | RHX-1.0-003 | Confirmed. Typed ActiveSupport duration/allocation facades and CI job durations are useful measurement inputs, but there is still no repeatable product benchmark, baseline, variance record, or regression threshold. |
-| RHX-1.0-004 | Narrowed. JavaScript source maps, readable generated files, manifest output/source/SHA provenance, and `hxruby:doctor`/`check` diagnostics already exist. Manifest `source` values are generally generator-level rather than Haxe/HHX file-and-line correlation, `HxException` has no mapping layer, and the required failure journeys are not exercised. |
+| RHX-1.0-004 | Resolved through the bounded scope alternative. Haxe/HHX compile errors retain owned source positions; generated Ruby/ERB is the supported server line-level debugging source; browser output keeps Haxe source maps. `hxruby:doctor` reports installed/tool versions, generated roots, manifest version, and generator-level provenance. Executable tests preserve uncaught generated-Ruby frames plus `HxException` cause/backtrace behavior. No Ruby source-map subsystem or `haxe.CallStack` parity is claimed. |
 | RHX-1.0-005 | Narrowed and extended. Current-package isolated Haxelib and gem consumer tests already exist, and the public `v0.4.0` assets are immutable with checksum sidecars. There is still no public-asset upgrade/rollback lane. The ownership reader accepts unknown schema versions; checksum drift is diagnosed, but manifest-owned files are deliberately overwritten or deleted without a tested ownership-handoff operation. |
-| RHX-1.0-006 | Narrowed. The callable ABI example is a substantive executable Ruby/Haxe interop fixture, and the package lane compiles a hello-world consumer from an isolated Haxelib repository. What is missing is one cohesive, maintained non-Rails product lifecycle rather than all pure-Ruby evidence. |
-| RHX-1.0-007 | Confirmed and strengthened by live settings. Locked Ruby advisories are not scanned, `SECURITY.md` points at a removed workflow, GitHub private vulnerability reporting is disabled, and Dependabot security updates are disabled. Pinned gitleaks CI remains real evidence and should not be double-counted as absent secret scanning. |
-| RHX-1.0-008 | Confirmed. No project-owned CODEOWNERS, CONTRIBUTING, GOVERNANCE, MAINTAINERS, or SUPPORT document exists. A truthful single-maintainer/best-effort policy is an acceptable outcome; a backup maintainer must not be invented. |
-| RHX-1.0-009 | Newly reproduced. Generator containment was lexical: a manifest-owned output replaced by a symlink could make the shared writer overwrite a writable sibling outside the declared app root. The same shared boundary also owns forced writes, manifest writes, route extern writes, and cleanup validation. |
+| RHX-1.0-006 | Resolved by the maintained `examples/rubyhx_cli` release-consumer workflow: multi-file Haxe-owned domain/CLI source, typed JSON and filesystem behavior, failure paths, tests, a handwritten Ruby consumer, and isolated public-package compilation. |
+| RHX-1.0-007 | Resolved with mandatory locked Ruby advisory scanning, a detection fixture, current security workflow references, supported-version guidance, and a usable private reporting path. |
+| RHX-1.0-008 | Resolved with a truthful public single-maintainer, best-effort support model, named channels and authority, compatibility/security review cadence, and core/companion routing. No fictional backup maintainer or SLA was added. |
+| RHX-1.0-009 | Resolved by canonical path containment and no-follow writes across ordinary/forced output, manifest writes, route extern writes, client rewrites, and cleanup, with focused symlink-escape regression tests. |
 
 These refinements do not change the stable verdict. They make the implementation
 work smaller and more exact, and prevent existing evidence from being rebuilt
@@ -671,6 +674,16 @@ exercise it end to end.
 
 **Scope alternative:** State that generated Ruby/ERB is the supported debug
 source, provided paths and lines are deterministic and the workflow is tested.
+
+**Maintainer resolution (2026-07-14):** The project chose this scope
+alternative. `docs/debugging.md` defines generated Ruby/ERB as the server
+line-level debugging source and Haxe source maps as the browser contract.
+`hxruby:doctor` exposes installed/tool identity plus manifest provenance, the
+exception-flow smoke asserts an uncaught frame in generated Ruby, and runtime
+tests preserve native causes and Ruby raise-site backtraces. The broader request
+for a new Ruby mapping layer and one synthetic fixture per Rails failure class
+was rejected as unnecessary duplication of existing request, job, view,
+Playwright, and production lanes.
 
 ### P1: RHX-1.0-005 - Public Contract, Deprecation, Upgrade, Rollback
 

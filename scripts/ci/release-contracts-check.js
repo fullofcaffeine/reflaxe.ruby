@@ -38,6 +38,7 @@ const haxelibJson = readJson("haxelib.json");
 const haxerc = readJson(".haxerc");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const agentsGuide = readFileSync("AGENTS.md", "utf8");
+const debuggingGuide = readFileSync("docs/debugging.md", "utf8");
 const readme = readFileSync("README.md", "utf8");
 const changelog = readFileSync("CHANGELOG.md", "utf8");
 const rootRakefile = readFileSync("Rakefile", "utf8");
@@ -222,6 +223,9 @@ expectIncludes(productionReadiness, "Stable 1.0 Exit Rules", "stable 1.0 readine
 expectIncludes(productionReadiness, "Performance and resource behavior", "stable 1.0 performance gate");
 expectIncludes(productionReadiness, "Debugging and observability", "stable 1.0 debugging gate");
 expectIncludes(productionReadiness, "Maintenance and support", "stable 1.0 maintenance gate");
+expectIncludes(debuggingGuide, "supported line-level debugging source", "server debugging source contract");
+expectIncludes(debuggingGuide, "not a Haxe file-and-line mapping", "manifest provenance boundary");
+expectIncludes(debuggingGuide, "source map emitted by the Haxe client build", "browser debugging source contract");
 expectIncludes(stableReviewPrompt, "Do not answer from the README alone", "stable 1.0 independent review prompt");
 expectIncludes(stableReviewPrompt, "claim-evidence matrix", "stable 1.0 claim audit");
 expectIncludes(stableReviewPrompt, "Test these as separate claims", "independent Haxe-first review contract");

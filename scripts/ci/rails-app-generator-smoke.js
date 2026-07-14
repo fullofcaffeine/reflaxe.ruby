@@ -72,6 +72,7 @@ try {
     "--macro genes.Generator.use()",
     "-main client.Boot",
     "-js app/javascript/railshx/app.js",
+    "-D source-map",
     "-D js-unflatten",
   ]);
   expectFile(".haxerc", [
@@ -133,6 +134,8 @@ try {
     "request.format().json()",
     "response.status()",
     "Target-shaped Haxe is valid when intentional",
+    "generated Ruby or ERB path and line",
+    "Browser builds use Haxe source maps",
   ]);
   expectFile("Procfile.railshx.dev", [
     "rails: bundle exec rails server",

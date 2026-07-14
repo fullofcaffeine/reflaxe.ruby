@@ -20,6 +20,7 @@ require "hxruby/generators/template"
 require "hxruby/generators/test"
 require "hxruby/generators/test_adapter"
 require "hxruby/support_matrix"
+require "hxruby/version"
 
 module HXRuby
   module Tasks
@@ -403,6 +404,7 @@ module HXRuby
       client_hxml = ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml")
       errors = []
       warnings = []
+      info = ["hxruby #{HXRuby::VERSION}; Ruby #{RUBY_VERSION} (#{RUBY_ENGINE})"]
 
       ruby_error = HXRuby::SupportMatrix.ruby_error
       errors << ruby_error
@@ -412,18 +414,21 @@ module HXRuby
       if executable_available?("haxe")
         haxe_version, haxe_version_error = command_version("haxe", "-version")
         errors << (haxe_version_error || HXRuby::SupportMatrix.haxe_error(haxe_version))
+        info << "Haxe #{haxe_version}" if haxe_version_error.nil?
       else
         errors << "haxe executable is not available on PATH"
       end
       if executable_available?("node")
         node_version, node_version_error = command_version("node", "--version")
         errors << (node_version_error || HXRuby::SupportMatrix.node_error(node_version))
+        info << "Node.js #{node_version}" if node_version_error.nil?
       else
         errors << "node executable is not available on PATH"
       end
 
       rails_version = Gem.loaded_specs["rails"]&.version&.to_s
       warnings << HXRuby::SupportMatrix.rails_warning(rails_version) if rails_version
+      info << "Rails #{rails_version}" if rails_version
       errors << "server Haxe build file is missing: #{hxml}" unless File.file?(hxml)
       warnings << "client Haxe build file is missing: #{client_hxml}" unless File.file?(client_hxml)
       warnings << "Rails command is missing: #{rails_command}" unless File.executable?(rails_command) || executable_available?(rails_command)
@@ -442,7 +447,12 @@ module HXRuby
       errors.compact!
       warnings.compact!
 
-      generated_ruby_roots(hxml).each do |root|
+      generated_roots = generated_ruby_roots(hxml)
+      info << "generated Ruby roots from #{hxml}: #{generated_roots.join(', ')}" unless generated_roots.empty?
+      manifest_info = describe_manifest_provenance(".railshx/manifest.json")
+      info << manifest_info if manifest_info
+
+      generated_roots.each do |root|
         if unsafe_output_root?(root)
           errors << "unsafe generated Ruby output root: #{root.inspect}"
         elsif !File.exist?(root)
@@ -450,6 +460,7 @@ module HXRuby
         end
       end
 
+      info.each { |message| puts "[hxruby:doctor] INFO: #{message}" }
       warnings.each { |message| puts "[hxruby:doctor] WARN: #{message}" }
       if errors.empty?
         puts "[hxruby:doctor] OK"
@@ -625,6 +636,22 @@ module HXRuby
       [errors, warnings]
     rescue JSON::ParserError => error
       [["invalid JSON in #{path}: #{error.message}"], []]
+    end
+
+    # Summarizes generator-level ownership without pretending the manifest is
+    # a Haxe-to-Ruby line map. Invalid manifests are reported by the validator.
+    def describe_manifest_provenance(path)
+      manifest = read_optional_json(path)
+      return "generated ownership manifest #{path} is not present yet" unless manifest
+
+      outputs = manifest["outputs"]
+      return nil unless outputs.is_a?(Array)
+
+      sources = outputs.filter_map { |entry| entry["source"].to_s unless entry["source"].to_s.empty? }.uniq.sort
+      source_summary = sources.empty? ? "no recorded generator sources" : "generator sources #{JSON.generate(sources)}"
+      "generated ownership manifest #{path} version #{manifest.fetch('version', 'missing')} tracks #{outputs.length} outputs; #{source_summary}"
+    rescue JSON::ParserError
+      nil
     end
 
     def unsafe_relative_output?(path)

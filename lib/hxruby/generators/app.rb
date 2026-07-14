@@ -208,6 +208,8 @@ module HXRuby
           "- Use `bundle exec rake hxruby:rails TASK=zeitwerk:check` for less common Rails tasks that should run after Haxe-owned artifacts are refreshed.",
           "- Run `bundle exec rake hxruby:compile`, `bundle exec rake hxruby:compile:client`, `bundle exec rake hxruby:gen:routes`, and Rails tests before landing changes that affect generated artifacts.",
           "- Generated Rails files are build output unless they are explicitly Rails-owned adoption files. Do not hand-edit generated `app/haxe_gen/**`, generated HHX ERB, generated importmap client modules, or RailsHx-owned migration artifacts.",
+          "- For server failures, use the generated Ruby or ERB path and line from the Ruby/Rails backtrace as the supported line-level debugging source. Use `.railshx/manifest.json` and generated headers to confirm ownership, then fix the owning Haxe/HHX and regenerate.",
+          "- Browser builds use Haxe source maps. Server-side Ruby does not currently map backtrace lines directly to Haxe/HHX, so keep Ruby/Rails debugging knowledge in the loop.",
           "",
           "## RailsHx Authoring Rules",
           "",

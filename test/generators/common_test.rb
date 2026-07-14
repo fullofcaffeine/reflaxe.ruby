@@ -141,6 +141,26 @@ class HXRubyGeneratorCommonTest < Minitest::Test
     assert_equal 'import value from "./value.js";\n', File.read(outside)
   end
 
+  def test_doctor_provenance_summary_names_manifest_sources
+    output = File.join(@root, "generated", "owned.rb")
+    HXRuby::Generators::Common.write_file(
+      output,
+      "class Owned; end\n",
+      root: @root,
+      kind: "ruby",
+      source: "hxruby:generator"
+    )
+
+    summary = Dir.chdir(@root) do
+      HXRuby::Tasks.describe_manifest_provenance(".railshx/manifest.json")
+    end
+
+    assert_equal(
+      'generated ownership manifest .railshx/manifest.json version 1 tracks 1 outputs; generator sources ["hxruby:generator"]',
+      summary
+    )
+  end
+
   def test_atomic_route_extern_write_rejects_symlink_output
     outside = write_outside("routes.hx", "before\n")
     output = symlink_output("src_haxe/routes/Routes.hx", outside)

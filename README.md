@@ -185,8 +185,9 @@ Read the [compiler correctness contract](docs/compiler-correctness.md),
 The current claim is **production-ready beta for the documented and tested
 surface**. It is not yet a stable `1.x` compatibility promise.
 
-Teams using it today should pin a release, stay inside the supported matrix,
-and run the documented compiler, Rails, browser, production, and package gates.
+Teams using it today should pin a release, use the tested matrix as the
+maintained guarantee, and run the documented compiler, Rails, browser,
+production, and package gates when validating newer combinations.
 
 Stable `1.0` requires a cross-dimensional evidence review covering compiler and
 runtime correctness, Ruby/Rails interop, UX/API stability, gradual adoption,
@@ -206,6 +207,7 @@ See [Production Readiness](docs/railshx-production-readiness.md) and the
 | Rails APIs and workflows | [RailsHx Docs](docs/README.md#railshx-guides) |
 | TSX-like typed Rails views and HHX | [Typed Views](docs/railshx-typed-views.md) |
 | Haxe-authored browser JS and Genes | [Client JavaScript](docs/railshx-client-javascript.md) |
+| Server backtraces, generated ownership, and browser source maps | [Debugging](docs/debugging.md) |
 | Release ZIP, gem, and verified installation | [Packages And Installation](docs/packages-and-installation.md) |
 | Support, reporting, and maintenance ownership | [Support And Maintenance](SUPPORT.md) |
 | Contributor gates and repository map | [Repository Development](docs/development.md) |
