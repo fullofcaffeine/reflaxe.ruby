@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.authors = metadata.fetch("contributors")
   spec.homepage = metadata.fetch("url")
   spec.license = metadata.fetch("license")
-  spec.required_ruby_version = ">= 3.2"
+  spec.required_ruby_version = ">= 3.3", "< 4.1"
 
   spec.files = [
     "haxelib.json",
@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
     *Dir["release-provenance.json"],
     *Dir["artifact-manifest.json"],
     *Dir["lib/**/*.rb"],
+    "lib/hxruby/support_matrix.json",
     *Dir["runtime/hxruby/**/*.rb"],
     *Dir["scripts/rails/*.rb"],
     *Dir["std/**/*.hx"],

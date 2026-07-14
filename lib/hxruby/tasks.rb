@@ -19,6 +19,7 @@ require "hxruby/generators/scaffold"
 require "hxruby/generators/template"
 require "hxruby/generators/test"
 require "hxruby/generators/test_adapter"
+require "hxruby/support_matrix"
 
 module HXRuby
   module Tasks
@@ -403,7 +404,24 @@ module HXRuby
       errors = []
       warnings = []
 
-      errors << "haxe executable is not available on PATH" unless executable_available?("haxe")
+      errors << HXRuby::SupportMatrix.ruby_error
+      warnings << HXRuby::SupportMatrix.platform_warning
+
+      if executable_available?("haxe")
+        haxe_version, haxe_version_error = command_version("haxe", "-version")
+        errors << (haxe_version_error || HXRuby::SupportMatrix.haxe_error(haxe_version))
+      else
+        errors << "haxe executable is not available on PATH"
+      end
+      if executable_available?("node")
+        node_version, node_version_error = command_version("node", "--version")
+        errors << (node_version_error || HXRuby::SupportMatrix.node_error(node_version))
+      else
+        errors << "node executable is not available on PATH"
+      end
+
+      rails_version = Gem.loaded_specs["rails"]&.version&.to_s
+      errors << HXRuby::SupportMatrix.rails_error(rails_version) if rails_version
       errors << "server Haxe build file is missing: #{hxml}" unless File.file?(hxml)
       warnings << "client Haxe build file is missing: #{client_hxml}" unless File.file?(client_hxml)
       warnings << "Rails command is missing: #{rails_command}" unless File.executable?(rails_command) || executable_available?(rails_command)
@@ -419,6 +437,8 @@ module HXRuby
       errors.concat(migration_errors)
       warnings.concat(migration_warnings)
       warnings.concat(diagnose_client_importmap(client_hxml))
+      errors.compact!
+      warnings.compact!
 
       generated_ruby_roots(hxml).each do |root|
         if unsafe_output_root?(root)
@@ -539,6 +559,15 @@ module HXRuby
       ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |dir|
         File.executable?(File.join(dir, command))
       end
+    end
+
+    def command_version(command, *arguments)
+      stdout, stderr, status = Open3.capture3(command, *arguments)
+      value = [stdout, stderr].map(&:strip).find { |candidate| !candidate.empty? }
+      return [value, nil] if status.success? && value
+
+      detail = [stderr, stdout].map(&:strip).find { |candidate| !candidate.empty? }
+      [nil, "could not determine #{command} version#{detail ? ": #{detail}" : ""}"]
     end
 
     def validate_json_file(path, required:)

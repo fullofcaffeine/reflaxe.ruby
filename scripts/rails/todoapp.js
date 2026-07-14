@@ -15,6 +15,7 @@ const { dirname, join, relative, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
+const supportMatrix = JSON.parse(readFileSync(join(root, "lib", "hxruby", "support_matrix.json"), "utf8"));
 const exampleDir = join(root, "examples", "todoapp_rails");
 const sourceDir = join(exampleDir, "src");
 const buildDir = join(exampleDir, "build");
@@ -511,9 +512,10 @@ function ensureSupportedRuby() {
     process.exit(result.status ?? 1);
   }
   const version = result.stdout.trim();
-  const [major, minor] = version.split(".").map((part) => Number(part));
-  if (Number.isNaN(major) || Number.isNaN(minor) || major < 3 || (major === 3 && minor < 2)) {
-    console.error(`[todoapp] Production smoke requires Ruby >= 3.2; current Ruby is ${version}.`);
+  const branch = version.split(".").slice(0, 2).join(".");
+  const supported = supportMatrix.ruby.ciBranches;
+  if (!supported.includes(branch)) {
+    console.error(`[todoapp] Production smoke requires MRI Ruby ${supported.join(", ")}; current Ruby is ${version}.`);
     process.exit(1);
   }
 }

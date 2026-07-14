@@ -440,7 +440,7 @@ Every callable-ABI change must cover the applicable parts of this matrix:
 - Ruby-origin callers, generated snapshots, `ruby -c`, runtime behavior, and
   negative compiler diagnostics.
 - All examples, todoapp QA, Playwright browser E2E, packages, and the supported
-  Ruby 3.2/3.3/4.0 CI matrix.
+  Ruby 3.3/3.4/4.0 CI matrix.
 
 The focused executable gates are `npm run test:ruby-owned-blocks`,
 `npm run test:ruby-keyword-rest`,

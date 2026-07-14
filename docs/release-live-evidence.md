@@ -80,7 +80,7 @@ contract assertions only.
 | --- | --- |
 | Same-run CI workflow | [`29225406658`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29225406658), `success` |
 | Privileged release job | [`86742889294`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29225406658/job/86742889294), `success` |
-| Required gate graph | Security/Gitleaks, formatter, release contracts, browser, production, Ruby compiler/package 3.2/3.3/4.0, and Rails runtime 3.2/3.3/4.0 all `success` |
+| Required gate graph | Security/Gitleaks, formatter, release contracts, browser, production, and the historical Ruby compiler/package plus Rails runtime 3.2/3.3/4.0 matrix all `success`. The current matrix is defined separately in `lib/hxruby/support_matrix.json`. |
 | Analyzer result | Found `v0.1.2`, analyzed exactly one commit, reported `no release`, and logged `There are no relevant changes, so no new version is released.` |
 | Hosted result | No tag, GitHub Release, draft, asset, or release notes were created |
 

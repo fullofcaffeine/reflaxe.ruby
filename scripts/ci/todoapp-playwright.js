@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-const { existsSync, readdirSync, writeFileSync } = require("node:fs");
+const { existsSync, readFileSync, readdirSync, writeFileSync } = require("node:fs");
 const net = require("node:net");
 const { join, resolve } = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
+const supportMatrix = JSON.parse(readFileSync(join(root, "lib", "hxruby", "support_matrix.json"), "utf8"));
 const appDir = join(root, "examples", "todoapp_rails", "build", "rails");
 // Use the lockfile-installed binary directly. Nested `npx` inherits npm-exec configuration from
 // exact-toolchain wrappers and can reinterpret the call under npm 10.9; the local binary is both
@@ -147,9 +148,10 @@ function ensureSupportedRuby() {
   }
 
   const version = (result.stdout ?? "").trim();
-  const [major, minor] = version.split(".").map((part) => Number(part));
-  if (Number.isNaN(major) || Number.isNaN(minor) || major < 3 || (major === 3 && minor < 2)) {
-    throw new Error(`RailsHx Playwright requires Ruby >= 3.2 for the generated Rails app; current Ruby is ${version}.`);
+  const branch = version.split(".").slice(0, 2).join(".");
+  const supported = supportMatrix.ruby.ciBranches;
+  if (!supported.includes(branch)) {
+    throw new Error(`RailsHx Playwright requires MRI Ruby ${supported.join(", ")}; current Ruby is ${version}.`);
   }
 }
 

@@ -13,9 +13,9 @@ same-run dependencies:
 
 - locked dependency audit plus full-history Gitleaks scanning;
 - Haxe formatting;
-- the full compiler/examples/snapshots/package suite on Ruby 3.2, 3.3, and 4.0;
+- the full compiler/examples/snapshots/package suite on Ruby 3.3, 3.4, and 4.0;
 - RailsHx browser Playwright;
-- mandatory Rails runtime integration on Ruby 3.2, 3.3, and 4.0;
+- mandatory Rails runtime integration on Ruby 3.3, 3.4, and 4.0;
 - RailsHx production dogfood;
 - release policy, workflow, and reproducible-artifact contracts.
 
@@ -65,9 +65,9 @@ Release-affecting tools are reviewed inputs rather than moving aliases:
 | Input | Exact release value |
 | --- | --- |
 | Runner | `ubuntu-24.04` |
-| Node.js | `22.14.0` |
-| npm | `10.9.2` |
-| Ruby | `3.3.11` |
+| Node.js | `22.23.1` |
+| npm | `10.9.8` |
+| Ruby | `3.4.10` |
 | RubyGems | `3.5.22` |
 | Haxe | `4.3.7` |
 | lix | `15.12.4` |

@@ -123,10 +123,13 @@ Build reflaxe.ruby, a Reflaxe-based Haxe compilation target that outputs idiomat
 
 Why now
 Ruby + Rails have stable conventions (naming, file layout, autoloading, DSLs).
-Ruby 4.0 shipped recently (Ruby 4.0.0 on 2025‑12‑25; 4.0.1 on 2026‑01‑13).
-Rails is on 8.1.x (Rails 8.1.2 released Jan 2026).
-Rails 8.0/8.1 require Ruby ≥ 3.2.0.
-So the baseline runtime can assume modern Ruby features like pattern matching (introduced 2.7, stabilized 3.0) and Data.define (Ruby 3.2).
+Ruby 4.0 has shipped, while maintained Ruby 3.3 and 3.4 branches provide a
+practical compatibility window for adoption.
+Rails 8.1 is the intended future stable RailsHx target, but it is not current
+runtime evidence: the production-beta fixture is locked to Rails 7.2.3.1.
+The supported compiler/runtime matrix is MRI Ruby 3.3, 3.4, and 4.0, so the
+implementation can use modern Ruby features while retaining explicit runtime
+shims where a generated artifact needs broader behavior.
 1) Goals
 G1: Ruby output is idiomatic by default
 
@@ -166,10 +169,14 @@ Full Rails surface area on day 1 (ActionCable, ActionMailer, ActiveJob, etc. can
 Full Sorbet/RBS integration (nice future add-on; not required).
 Ruby C-extension interop.
 3) Target versions / compatibility
-Ruby runtime: Ruby ≥ 3.2 (to align with Rails 8+)
-Ensure compatibility with Ruby 4.0 as well.
-Rails: Rails 8.0+ (example todoapp on 8.1.x).
-Haxe: Haxe 5.x primary (support Haxe 4.x only if Reflaxe + ReflectCompiler path allows; otherwise document Haxe 5 requirement).
+Ruby runtime: MRI Ruby `3.3`, `3.4`, and `4.0`; `3.3` is transitional and Ruby 3.2 is EOL/unsupported.
+Rails: RailsHx remains beta with exact runtime evidence on Rails 7.2.3.1; Rails 8.1 support is planned and must be proven before a combined stable 1.0 claim.
+Haxe: exactly Haxe `4.3.7` for the current contract.
+Node build tooling: Node >= 22.14.0 and < 23, tested at the declared minimum and current pinned patch.
+
+The machine-readable source of truth is `lib/hxruby/support_matrix.json`; the
+public interpretation and explicit exclusions live in
+`docs/compatibility-matrix.md`.
 4) Product shape
 4.1 Deliverables (what ships)
 reflaxe.ruby haxelib package (compiler + std)
@@ -373,7 +380,9 @@ Typed Rails stdlib (std/rails/*) + macros (compile-time safety)
 Rails integration tooling (rake tasks / generator / gem packaging)
 10.1 Rails integration constraints
 Rails autoloading expects file paths that match constants.
-Rails 8+ assumes Ruby ≥ 3.2.
+The current RailsHx beta runtime lane uses Rails 7.2.3.1 on the supported MRI
+Ruby branches. Rails 8.1 remains a planned compatibility target rather than an
+assumption in compiler or application code.
 Generated code should live in a dedicated directory (recommended):
 app/haxe_gen/**
 Add to config.autoload_paths and config.eager_load_paths.
@@ -564,7 +573,7 @@ in todoapp example:
 rails test (or request specs)
 compile step in CI before running tests
 13.4 CI matrix
-Ruby: 3.2, 3.3, 4.0 (at least)
+MRI Ruby: 3.3 (transitional), 3.4, and 4.0
 Haxe: pinned (like other repos)
 OS: ubuntu-latest first; add mac/windows later
 14) Repo skeleton for reflaxe.ruby (concrete)

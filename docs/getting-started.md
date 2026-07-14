@@ -25,8 +25,10 @@ The exact supported versions live in the
 [Compatibility Matrix](compatibility-matrix.md). The current CI baseline is:
 
 - Haxe `4.3.7`
-- Node.js `22.14.0` with npm `10.9.2`
-- Ruby `3.2`, `3.3`, or `4.0`
+- Node.js `>= 22.14.0` and `< 23` with npm `>= 10.9.2` and `< 11`; canonical
+  release jobs use Node `22.23.1` with npm `10.9.8`
+- MRI Ruby `3.3`, `3.4`, or `4.0`; Ruby `3.3` is transitional and the local
+  development pin uses primary Ruby `3.4.10`
 
 The Rails examples also need the generated app bundles. The mandatory Rails
 runtime task installs them when needed.

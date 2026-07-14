@@ -49,7 +49,7 @@ DeviseHx release confidence comes from these existing gates:
   `npm run test:todoapp-production` keep the dogfood Rails app, browser flow,
   and deployable boot lane honest.
 - `npm run test:rails-runtime` runs the Rails runtime seam tests across Ruby
-  `3.2`, `3.3`, and `4.0` in CI. The todoapp Gemfile fixture uses
+  `3.3`, `3.4`, and `4.0` in CI. The todoapp Gemfile fixture uses
   `gem "devise", ">= 4.9"` so Bundler, not RailsHx, selects the concrete
   Devise runtime version for the supported Rails/Ruby lane.
 - `npm run test:haxelib-package`, `npm run test:gem-package`, and

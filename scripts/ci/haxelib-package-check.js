@@ -99,6 +99,8 @@ for (const required of [
   "docs/compiler-metadata.md",
   "docs/ruby-callable-abi.md",
   "lib/hxruby.rb",
+  "lib/hxruby/support_matrix.json",
+  "lib/hxruby/support_matrix.rb",
   "lib/hxruby/version.rb",
   "src/reflaxe/ruby/RubyCompiler.hx",
   "src/reflaxe/ruby/CompilerBootstrap.hx",

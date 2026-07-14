@@ -9,7 +9,7 @@
   <a href="https://github.com/fullofcaffeine/reflaxe.ruby/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/fullofcaffeine/reflaxe.ruby/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <img alt="Maturity: production-ready beta" src="https://img.shields.io/badge/maturity-production--ready_beta-7c3aed">
   <img alt="Haxe 4.3.7" src="https://img.shields.io/badge/Haxe-4.3.7-ea8220?logo=haxe&logoColor=white">
-  <img alt="Ruby 3.2, 3.3, and 4.0" src="https://img.shields.io/badge/Ruby-3.2_%7C_3.3_%7C_4.0-cc342d?logo=ruby&logoColor=white">
+  <img alt="Ruby 3.3, 3.4, and 4.0" src="https://img.shields.io/badge/Ruby-3.3_%7C_3.4_%7C_4.0-cc342d?logo=ruby&logoColor=white">
   <a href="LICENSE"><img alt="GPL-3.0 license" src="https://img.shields.io/badge/license-GPL--3.0-2563eb"></a>
 </p>
 
@@ -170,8 +170,9 @@ incrementally. See [Gradual Adoption](docs/railshx-gradual-adoption.md).
   runtime, or browser contract.
 - Ruby runtime, Rails runtime, Playwright, production-build, security, package,
   and reproducible-release lanes cover what snapshots cannot prove.
-- The supported baseline is Haxe `4.3.7`, Node.js `22.14.0`, and Ruby `3.2`,
-  `3.3`, and `4.0`.
+- The supported baseline is Haxe `4.3.7`, Node.js `>= 22.14.0` and `< 23`,
+  and MRI Ruby `3.3`, `3.4`, and `4.0`. Ruby `3.3` is transitional through
+  2027-03-31; Ruby `3.4` and `4.0` are the primary branches.
 
 Read the [compiler correctness contract](docs/compiler-correctness.md),
 [testing strategy](docs/railshx-testing-strategy.md), and

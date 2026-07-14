@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-07-13",
+  "maturity": {
+    "rubyhx": "production-ready beta",
+    "railshx": "production-ready beta"
+  },
+  "haxe": {
+    "supportedVersions": [
+      "4.3.7"
+    ],
+    "ciVersion": "4.3.7"
+  },
+  "node": {
+    "supportedRange": ">=22.14.0 <23",
+    "minimumVersion": "22.14.0",
+    "maximumExclusiveVersion": "23.0.0",
+    "currentTestedVersion": "22.23.1",
+    "releaseVersion": "22.23.1",
+    "npmSupportedRange": ">=10.9.2 <11",
+    "releaseNpmVersion": "10.9.8",
+    "supportEndsOn": "2027-04-30"
+  },
+  "ruby": {
+    "engine": "ruby",
+    "implementation": "MRI",
+    "minimumVersion": "3.3",
+    "maximumExclusiveVersion": "4.1",
+    "ciBranches": [
+      "3.3",
+      "3.4",
+      "4.0"
+    ],
+    "releaseVersion": "3.4.10",
+    "branches": [
+      {
+        "version": "3.3",
+        "status": "transitional",
+        "supportEndsOn": "2027-03-31"
+      },
+      {
+        "version": "3.4",
+        "status": "primary",
+        "supportEndsOn": "2028-03-31"
+      },
+      {
+        "version": "4.0",
+        "status": "primary",
+        "supportEndsOn": "2029-03-31"
+      }
+    ],
+    "knownUnsupported": [
+      {
+        "version": "3.2",
+        "reason": "Upstream Ruby 3.2 reached end of life on 2026-04-01."
+      }
+    ]
+  },
+  "railsHx": {
+    "status": "beta",
+    "fixtureDependencyRequirements": [
+      ">= 7.0",
+      "< 8.0"
+    ],
+    "verifiedRuntime": {
+      "railsVersion": "7.2.3.1",
+      "rubyBranches": [
+        "3.3",
+        "3.4",
+        "4.0"
+      ],
+      "database": "sqlite3",
+      "assetStack": [
+        "importmap-rails",
+        "Propshaft",
+        "Turbo",
+        "Genes"
+      ],
+      "browser": "Chromium via Playwright",
+      "browserAndProductionRepresentativeRubyBranch": "3.3",
+      "upstreamSecuritySupportEndsOn": "2026-08-09"
+    },
+    "plannedRuntime": {
+      "railsLine": "8.1",
+      "supported": false
+    }
+  },
+  "canonicalPlatform": {
+    "runner": "ubuntu-24.04",
+    "os": "linux",
+    "architecture": "x86_64"
+  },
+  "runtimeEvidence": {
+    "databases": {
+      "verified": [
+        "sqlite3"
+      ],
+      "compileOnly": [
+        "postgresql",
+        "mysql"
+      ]
+    },
+    "browsers": {
+      "verified": [
+        "Chromium via Playwright"
+      ],
+      "otherBrowsers": "unverified"
+    },
+    "distribution": {
+      "channel": "GitHub Releases",
+      "haxelibRegistry": false,
+      "rubygemsOrg": false
+    }
+  },
+  "upstreamSources": {
+    "rubyBranches": "https://www.ruby-lang.org/en/downloads/branches/",
+    "nodeReleases": "https://nodejs.org/en/about/previous-releases",
+    "railsSupport": "https://rubyonrails.org/2025/10/29/new-rails-releases-and-end-of-support-announcement"
+  }
+}

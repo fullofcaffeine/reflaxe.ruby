@@ -1,32 +1,73 @@
 # Compatibility Matrix
 
 This document records the supported tool/runtime contract for `reflaxe.ruby`.
+The source of truth is the packaged
+[`lib/hxruby/support_matrix.json`](../lib/hxruby/support_matrix.json) manifest;
+CI rejects drift between that manifest, workflows, package metadata, and this
+guide.
 
 ## CI Baseline
 
 | Surface | Versions | Status | Notes |
 | --- | --- | --- | --- |
 | Haxe | `4.3.7` | Supported | Pinned by `.haxerc` and `.github/workflows/ci.yml`. |
-| Node.js | `22.14.0` | Supported | Exact CI/release runtime; npm is pinned to `10.9.2`. Rails-facing generators remain Ruby-native. |
-| Ruby | `3.2`, `3.3`, `4.0` | Supported | CI matrix validates runtime smoke tests against these versions. |
+| Node.js | `>= 22.14.0`, `< 23` | Supported build-tool line | CI exercises the minimum `22.14.0` patch and current tested `22.23.1` patch. Release and repair jobs pin `22.23.1` with npm `10.9.8`. Node 22 reaches upstream EOL on 2027-04-30. |
+| npm | `>= 10.9.2`, `< 11` | Supported with Node 22 | The release package-manager pin is `10.9.8`; the minimum Node lane retains its bundled npm `10.9.2`. |
+| MRI Ruby | `3.4`, `4.0` | Primary | The full compiler/package suite and mandatory Rails runtime lane execute on both branches. |
+| MRI Ruby | `3.3` | Transitional | The same full gates execute on 3.3 through its project sunset on 2027-03-31. New local development uses Ruby `3.4.10`. |
+| Ruby 3.2 | EOL | Unsupported | Upstream support ended on 2026-04-01. The gem requires Ruby `>= 3.3`, and `hxruby:doctor` rejects this branch explicitly. |
 | Rails fixture dependency range | `>= 7.0`, `< 8.0` | Accepted by current fixtures | This Bundler range is not evidence that every Rails 7 minor is independently supported. |
-| Rails runtime evidence | `7.2.3.1` | Verified beta lane | The committed reference lock and current canonical runtime lanes use Rails `7.2.3.1`. |
+| Rails runtime evidence | `7.2.3.1` | Verified beta lane | The committed reference lock and canonical runtime lanes use Rails `7.2.3.1` with Ruby 3.3/3.4/4.0 and SQLite. Upstream security support ends on 2026-08-09, and CI expires this evidence rather than silently carrying it forward. |
 | Rails 8.1 | Planned | Not currently supported | Rails 8.1 is the proposed runtime target for a combined RubyHx/RailsHx stable `1.0`. It must pass the reference/runtime matrix tracked by `haxe_ruby-huf`; otherwise RailsHx remains beta. |
+| Canonical platform | Ubuntu 24.04, Linux `x86_64` | Verified | macOS, Windows, ARM, Alpine/musl, JRuby, and TruffleRuby are unverified rather than implied support. Doctor reports that distinction. |
+| Database runtime | SQLite | Verified | PostgreSQL and MySQL options have compile/snapshot evidence only. |
+| Browser/client | Chromium via Playwright; importmap-rails, Propshaft, Turbo, Genes | Verified beta lane | Other browsers and asset/bundler stacks are unverified. |
+| Distribution | GitHub Releases | Supported channel | The checksum-verified Haxelib ZIP and `hxruby` gem asset are not published to the Haxelib or RubyGems.org registries. |
 
 Rails-shaped APIs that resemble Rails 8 do not establish Rails 8 runtime
 compatibility. The generated fixtures accept `>= 7.0` and `< 8.0`, but the
 current evidence supports only the locked Rails `7.2.3.1` lane. Other Rails 7
 minors require their own runtime evidence before they become support claims.
+The Rails 7.2 evidence deadline intentionally forces a new decision before its
+upstream security window closes. Passing Ruby compilation on an EOL Rails line
+will not extend the public RailsHx support claim.
+
+Ruby lifecycle dates are checked against the official
+[Ruby branch table](https://www.ruby-lang.org/en/downloads/branches/), Node
+against the [Node release table](https://nodejs.org/en/about/previous-releases),
+and Rails against the
+[Rails support announcement](https://rubyonrails.org/2025/10/29/new-rails-releases-and-end-of-support-announcement).
+
+## Diagnostics And Evidence Shape
+
+`bundle exec rake hxruby:doctor` rejects unsupported MRI, Haxe, Node, and loaded
+Rails versions with the verified alternatives. It warns when the host platform
+is outside the canonical Ubuntu/Linux x86_64 lane. A warning means the
+environment may work but is not covered by the stable support evidence; it is
+not silently upgraded into a guarantee.
+
+The full compiler, snapshot, package-consumer, and Rails runtime matrices run on
+Ruby 3.3, 3.4, and 4.0. Browser and production sentinels remain representative
+lanes on the oldest supported Ruby 3.3 branch, while the full and runtime gates
+cover both primary branches. Node compatibility gates exercise both the declared
+minimum and the current tested patch.
 
 ## Local Development Notes
 
-The repo pins local Ruby with `.ruby-version`; `rbenv install` from the repo root installs the currently recommended local lane. Use Ruby `3.3.x` for day-to-day development because it matches the middle CI lane while keeping Rails and gem-package checks on the supported baseline.
+The repo pins local Ruby `3.4.10` with `.ruby-version`; `rbenv install` from the
+repo root installs the primary local lane. Ruby 3.3 remains useful for checking
+the oldest supported branch but is no longer the day-to-day default.
 
 Some lightweight Ruby smoke tests can pass on older system Rubies, including Ruby `2.6`, but that is a convenience only. Rails-first output assumes modern Ruby and Rails baselines from the PRD.
 
 The runtime file `runtime/hxruby/data_define.rb` includes compatibility behavior for older Rubies that do not provide `Data.define`; this is why Ruby `2.6` may emit `Data` deprecation warnings in local minitest output. Those warnings are expected locally and are not part of the supported Rails baseline.
 
-Run `rake test:rails:runtime` from the pinned Ruby to install generated app bundles and execute the mandatory Rails runtime integration and mixed-interop tests locally. CI runs the underlying npm command across Ruby `3.2`, `3.3`, and `4.0`. The plain `rake test`/`npm test` command remains friendly for fast compiler work: it syntax-checks generated Rails artifacts and runs Rails runtime tests only when the local bundles are already available.
+Run `rake test:rails:runtime` from the pinned Ruby to install generated app
+bundles and execute the mandatory Rails runtime integration and mixed-interop
+tests locally. CI runs the underlying npm command across Ruby `3.3`, `3.4`, and
+`4.0`. The plain `rake test`/`npm test` command remains friendly for fast
+compiler work: it syntax-checks generated Rails artifacts and runs Rails runtime
+tests only when the local bundles are already available.
 
 ## Profiles
 

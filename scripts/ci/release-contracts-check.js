@@ -92,6 +92,7 @@ const devisehxReleaseLane = readFileSync("docs/railshx-devisehx-release-lane.md"
 const gemLayersGuide = readFileSync("docs/railshx-gem-layers.md", "utf8");
 const gradualAdoptionGuide = readFileSync("docs/railshx-gradual-adoption.md", "utf8");
 const compatibilityMatrix = readFileSync("docs/compatibility-matrix.md", "utf8");
+const supportMatrix = readJson("lib/hxruby/support_matrix.json");
 const devisehxDesign = readFileSync("docs/railshx-devisehx-design.md", "utf8");
 const escapeHatchAudit = readFileSync("docs/railshx-escape-hatch-security-audit.md", "utf8");
 const railsRuntimeFixtures = [
@@ -200,6 +201,7 @@ for (const finding of [
   "RHX-1.0-006",
   "RHX-1.0-007",
   "RHX-1.0-008",
+  "RHX-1.0-009",
 ]) {
   expectIncludes(stableReviewReport, finding, "stable 1.0 review finding");
 }
@@ -386,7 +388,7 @@ for (const evidence of [
 }
 expectIncludes(releaseWorkflowDocs, "final job", "tested-commit publication docs");
 expectIncludes(releaseWorkflowDocs, "contents: write", "publication permission docs");
-expectIncludes(releaseWorkflowDocs, "22.14.0", "publication toolchain docs");
+expectIncludes(releaseWorkflowDocs, "22.23.1", "publication toolchain docs");
 expectIncludes(releaseWorkflowDocs, "failed, cancelled, skipped", "publication trigger matrix docs");
 expectIncludes(deterministicZip, 'require("fflate")', "deterministic ZIP builder");
 expectIncludes(deterministicZip, "FIXED_MTIME", "deterministic ZIP builder");
@@ -414,7 +416,7 @@ expectExcludes(agentsGuide, "until the package is ready for stable `1.x`", "AGEN
 
 expectIncludes(ciWorkflow, `HAXE_VERSION: "${haxerc.version}"`, "CI workflow");
 expectIncludes(ciWorkflow, "ruby-version:", "CI workflow");
-for (const rubyVersion of ['"3.2"', '"3.3"', '"4.0"']) {
+for (const rubyVersion of ['"3.3"', '"3.4"', '"4.0"']) {
   expectIncludes(ciWorkflow, rubyVersion, "CI Ruby matrix");
 }
 expectIncludes(ciWorkflow, "npx lix download haxe", "CI Haxe setup");
@@ -520,7 +522,15 @@ expectIncludes(gemPackageCheck, "sidecar.sha256", "gem exact byte check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'std/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'vendor/genes/src/**/*.hx', "hxruby.gemspec");
-expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.2"', "hxruby.gemspec");
+expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.3", "< 4.1"', "hxruby.gemspec");
+if (supportMatrix.schemaVersion !== 1) {
+  fail("support matrix schema version must remain explicit");
+}
+expectIncludes(hxrubyTasks, 'require "hxruby/support_matrix"', "hxruby support diagnostics");
+expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.ruby_error", "hxruby Ruby support diagnostics");
+expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.node_error", "hxruby Node support diagnostics");
+expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.haxe_error", "hxruby Haxe support diagnostics");
+expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.rails_error", "hxruby Rails support diagnostics");
 expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");
 expectExcludes(hxrubyGemspec, "devise", "hxruby.gemspec");
 expectIncludes(hxrubyAdoptGenerator, "--devise-hhx-views", "hxruby adopt generator");
@@ -602,7 +612,7 @@ expectIncludes(ciWorkflow, "Release exact CI-tested commit", "CI release job");
 expectIncludes(ciWorkflow, "./node_modules/.bin/semantic-release", "CI release job");
 expectIncludes(ciWorkflow, "fetch-depth: 0", "CI release job");
 expectIncludes(ciWorkflow, "ref: ${{ github.sha }}", "CI release job");
-expectIncludes(ciWorkflow, 'ruby-version: "3.3.11"', "CI release job");
+expectIncludes(ciWorkflow, 'ruby-version: "3.4.10"', "CI release job");
 expectIncludes(ciWorkflow, 'rubygems: "3.5.22"', "CI release job");
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 

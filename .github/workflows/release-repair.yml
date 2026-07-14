@@ -16,8 +16,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  NODE_VERSION: "22.14.0"
-  NPM_VERSION: "10.9.2"
+  NODE_VERSION: "22.23.1"
+  NPM_VERSION: "10.9.8"
   HAXE_VERSION: "4.3.7"
   # The workflow file and repair implementation share one reviewed commit. Artifact source remains
   # the immutable input tag; only release reconciliation tooling is overlaid after the clean build.
@@ -52,22 +52,22 @@ jobs:
       - name: Setup exact Node.js without executable cache restore
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: "22.14.0"
+          node-version: "22.23.1"
           package-manager-cache: false
 
       - name: Setup exact Ruby and RubyGems
         uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
         with:
-          ruby-version: "3.3.11"
+          ruby-version: "3.4.10"
           rubygems: "3.5.22"
           bundler: none
 
       - name: Verify exact repair toolchain
         run: |
           set -euo pipefail
-          test "$(node --version)" = "v22.14.0"
-          test "$(npm --version)" = "10.9.2"
-          test "$(ruby --disable-gems -e 'print RUBY_VERSION')" = "3.3.11"
+          test "$(node --version)" = "v22.23.1"
+          test "$(npm --version)" = "10.9.8"
+          test "$(ruby --disable-gems -e 'print RUBY_VERSION')" = "3.4.10"
           test "$(gem --version)" = "3.5.22"
 
       - name: Install and audit locked npm dependencies

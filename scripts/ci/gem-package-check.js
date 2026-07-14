@@ -7,6 +7,7 @@ const { tmpdir } = require("node:os");
 const { sha256File, verifyArtifactManifest } = require("../release/artifact-utils");
 
 const root = resolve(__dirname, "..", "..");
+const supportMatrix = JSON.parse(readFileSync(join(root, "lib", "hxruby", "support_matrix.json"), "utf8"));
 const stagedVersion = "0.2.3";
 const stagedTag = `v${stagedVersion}`;
 const sourceSha = run("git", ["rev-parse", "HEAD"]).stdout.trim();
@@ -34,10 +35,19 @@ function run(command, args, options = {}) {
   return result;
 }
 
+// Consumer fixtures live outside the repo's .ruby-version ancestry, so retain
+// the selected interpreter instead of letting an rbenv shim choose system Ruby.
+const activeRuby = run("ruby", ["-rrbconfig", "-e", "print RbConfig.ruby"]).stdout.trim();
+const activeRake = run(activeRuby, [
+  "-rrubygems",
+  "-e",
+  'print Gem.bin_path("rake", "rake")',
+]).stdout.trim();
+const activeRubyVersion = run(activeRuby, ["-e", "print RUBY_VERSION"]).stdout.trim();
+
 function rubySupportsGemInstallCheck() {
-  const version = run("ruby", ["-e", "print RUBY_VERSION"]).stdout.trim();
-  const [major, minor] = version.split(".").map((part) => Number(part));
-  return major > 3 || (major === 3 && minor >= 2);
+  const branch = activeRubyVersion.split(".").slice(0, 2).join(".");
+  return supportMatrix.ruby.ciBranches.includes(branch);
 }
 
 const trackedDiffBefore = `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;
@@ -71,6 +81,8 @@ try {
     "release-provenance.json",
     "hxruby.gemspec",
     "lib/hxruby.rb",
+    "lib/hxruby/support_matrix.json",
+    "lib/hxruby/support_matrix.rb",
     "lib/hxruby/tasks.rb",
     "lib/generators/hxruby/adopt/adopt_generator.rb",
     "lib/generators/hxruby/install/install_generator.rb",
@@ -116,7 +128,7 @@ try {
     "raise HxException.new({ 'message' => 'boom' }) rescue (ex = $!)",
     "abort 'exception mismatch' unless ex.message == '{\"message\"=>\"boom\"}'",
   ].join("; ");
-  run("ruby", ["-I", join(unpackedRoot, "lib"), "-e", runtimeCheck]);
+  run(activeRuby, ["-I", join(unpackedRoot, "lib"), "-e", runtimeCheck]);
 
   const tasksCheck = [
     "require 'rake'",
@@ -126,7 +138,7 @@ try {
     "missing = expected - names",
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
   ].join("; ");
-  run("ruby", ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
+  run(activeRuby, ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
   smokeDoctorTask(unpackedRoot);
   smokeDoctorFailureTask(unpackedRoot);
   smokeClientLibrary(unpackedRoot);
@@ -152,11 +164,11 @@ try {
       GEM_PATH: gemHome,
       PATH: `${gemBin}:${process.env.PATH}`,
     };
-    run("ruby", ["-e", installCheck], {
+    run(activeRuby, ["-e", installCheck], {
       env: installEnv,
     });
 
-    const rubyDefaultGemPath = run("ruby", ["-rrubygems", "-e", "print Gem.path.join(File::PATH_SEPARATOR)"]).stdout.trim();
+    const rubyDefaultGemPath = run(activeRuby, ["-rrubygems", "-e", "print Gem.path.join(File::PATH_SEPARATOR)"]).stdout.trim();
     const installedTasksEnv = {
       ...installEnv,
       GEM_PATH: [gemHome, rubyDefaultGemPath].filter(Boolean).join(delimiter),
@@ -170,11 +182,11 @@ try {
       "missing = expected - names",
       "abort \"installed gem missing tasks: #{missing.join(', ')}\" unless missing.empty?",
     ].join("; ");
-    run("ruby", ["-e", installedTasksCheck], {
+    run(activeRuby, ["-e", installedTasksCheck], {
       env: installedTasksEnv,
     });
   } else {
-    process.stdout.write("[gem-package] Skipped gem install smoke on local Ruby < 3.2\n");
+    process.stdout.write(`[gem-package] Skipped gem install smoke on unsupported local Ruby ${activeRubyVersion}\n`);
   }
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });
@@ -196,11 +208,11 @@ function smokeDoctorTask(unpackedRoot) {
   writeFileSync(join(appRoot, ".railshx", "manifest.json"), '{"version":1,"outputs":[]}\n');
   writeExecutable(join(fakeBin, "haxe"), [
     "#!/usr/bin/env ruby",
-    "exit 0",
+    'puts "4.3.7"',
   ]);
   writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
 
-  run("rake", ["hxruby:doctor"], {
+  run(activeRuby, [activeRake, "hxruby:doctor"], {
     cwd: appRoot,
     env: {
       ...process.env,
@@ -221,11 +233,11 @@ function smokeDoctorFailureTask(unpackedRoot) {
   writeFileSync(join(appRoot, "db", "migrate", "20260101000000_create_members.rb"), "class CreateUsers < ActiveRecord::Migration[7.1]\nend\n");
   writeExecutable(join(fakeBin, "haxe"), [
     "#!/usr/bin/env ruby",
-    "exit 0",
+    'puts "4.3.7"',
   ]);
   writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
 
-  const result = run("rake", ["hxruby:doctor"], {
+  const result = run(activeRuby, [activeRake, "hxruby:doctor"], {
     cwd: appRoot,
     allowFailure: true,
     env: {
@@ -308,7 +320,7 @@ function smokeCheckTask(unpackedRoot) {
   ]);
   writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
 
-  run("rake", ["hxruby:check"], {
+  run(activeRuby, [activeRake, "hxruby:check"], {
     cwd: appRoot,
     env: {
       ...process.env,
@@ -343,7 +355,7 @@ function smokeCleanTask(unpackedRoot) {
   }, null, 2) + "\n");
   writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
 
-  run("rake", ["hxruby:clean"], {
+  run(activeRuby, [activeRake, "hxruby:clean"], {
     cwd: appRoot,
     env: {
       ...process.env,
@@ -378,7 +390,7 @@ function smokeProductionTask(unpackedRoot) {
   ]);
   writeFileSync(join(appRoot, "Rakefile"), 'require "hxruby/tasks"\n');
 
-  run("rake", ["hxruby:production"], {
+  run(activeRuby, [activeRake, "hxruby:production"], {
     cwd: appRoot,
     env: {
       ...process.env,

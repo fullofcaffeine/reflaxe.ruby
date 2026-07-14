@@ -12,6 +12,7 @@ const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
 const requiredNeeds = [
   "security",
   "haxe-format",
+  "node-compatibility",
   "test",
   "rails-browser",
   "rails-runtime",
@@ -124,9 +125,9 @@ for (const { 1: action } of workflows.matchAll(/^\s*uses:\s*([^\s#]+)/gm)) {
 }
 assert(!workflows.includes("ubuntu-latest"), "runner images must be explicit");
 assert(!/\bnpm install\b/.test(workflows), "workflow dependency installation must use npm ci exclusively");
-requireMatch(release, /node-version: "22\.14\.0"/, "release Node must be exact");
-requireMatch(release, /test "\$\(npm --version\)" = "10\.9\.2"/, "release npm must be exact");
-requireMatch(release, /ruby-version: "3\.3\.11"/, "release Ruby must be exact");
+requireMatch(release, /node-version: "22\.23\.1"/, "release Node must be exact");
+requireMatch(release, /test "\$\(npm --version\)" = "10\.9\.8"/, "release npm must be exact");
+requireMatch(release, /ruby-version: "3\.4\.10"/, "release Ruby must be exact");
 requireMatch(release, /rubygems: "3\.5\.22"/, "release RubyGems must be exact");
 requireMatch(release, /lix download haxe "4\.3\.7"/, "release Haxe must be exact");
 requireMatch(release, /\.\/node_modules\/\.bin\/semantic-release/, "release must execute the locked semantic-release binary directly");
@@ -134,15 +135,16 @@ const transitionIndex = release.indexOf("node scripts/release/prepare-semver-tra
 const engineIndex = release.indexOf("./node_modules/.bin/semantic-release");
 assert(transitionIndex >= 0 && transitionIndex < engineIndex, "release must prepare the historical SemVer bridge before the locked engine");
 
-assert.equal(packageJson.packageManager, "npm@10.9.2", "package manager must pin release npm");
+assert.equal(packageJson.packageManager, "npm@10.9.8", "package manager must pin release npm");
 assert.equal(packageJson.engines?.node, ">=22.14.0 <23", "package engine must bound the exact release Node major");
-assert.equal(packageJson.engines?.npm, "10.9.2", "package engine must pin release npm");
+assert.equal(packageJson.engines?.npm, ">=10.9.2 <11", "package engine must bound the tested npm range");
 for (const dependency of [
   "@semantic-release/commit-analyzer",
   "@semantic-release/exec",
   "@semantic-release/github",
   "@semantic-release/release-notes-generator",
   "fflate",
+  "js-yaml",
   "lix",
   "semantic-release",
   "semver",
@@ -172,8 +174,8 @@ requireMatch(repair, /REPAIR_TOOL_SHA: \$\{\{ github\.workflow_sha \}\}/, "repai
 assert(!/ref:\s+main\b/.test(repair), "repair must never check out main");
 assert(!repair.includes("semantic-release"), "repair must never derive a release version");
 assert(!/^\s*git tag(?:\s|$)/m.test(repair), "repair must never create, move, or delete a tag");
-requireMatch(repair, /node-version: "22\.14\.0"/, "repair Node must be exact");
-requireMatch(repair, /ruby-version: "3\.3\.11"/, "repair Ruby must be exact");
+requireMatch(repair, /node-version: "22\.23\.1"/, "repair Node must be exact");
+requireMatch(repair, /ruby-version: "3\.4\.10"/, "repair Ruby must be exact");
 requireMatch(repair, /rubygems: "3\.5\.22"/, "repair RubyGems must be exact");
 requireMatch(repair, /lix download haxe "4\.3\.7"/, "repair Haxe must be exact");
 requireMatch(repair, /release-hosting\.mjs repair/, "repair must use the shared hosted identity state machine");

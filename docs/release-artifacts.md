@@ -56,7 +56,7 @@ The gem is built from its isolated Git-derived staging directory with sorted
 gemspec files, normalized modes, the source commit timestamp in
 `SOURCE_DATE_EPOCH`, `TZ=UTC`, the C locale, and umask `022`. This removes
 ambient timestamp, locale, timezone, staging-directory, and umask variation.
-The release workflow pins Ruby `3.3.11` and RubyGems `3.5.22` alongside the
+The release workflow pins Ruby `3.4.10` and RubyGems `3.5.22` alongside the
 exact Node/npm/Haxe release toolchain.
 
 Each artifact contains `artifact-manifest.json`. The manifest is the full

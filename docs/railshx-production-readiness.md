@@ -55,8 +55,9 @@ keep generated artifacts in CI, run the gates below, and expect unsupported API
 gaps to become explicit beads before broad rollout.
 
 The current supported toolchain baseline is documented in
-[Compatibility Matrix](compatibility-matrix.md): Haxe `4.3.7`, Node `22.14.0`, and
-Ruby `3.2`, `3.3`, and `4.0` in CI. Generated Rails fixtures accept
+[Compatibility Matrix](compatibility-matrix.md): Haxe `4.3.7`, Node `22.14.0`
+through the current tested `22.23.1` patch, and MRI Ruby `3.3`, `3.4`, and
+`4.0` in CI. Ruby `3.3` is transitional. Generated Rails fixtures accept
 `>= 7.0` and `< 8.0`, but that range is not a tested-minor support matrix.
 The current Rails runtime evidence is the locked Rails `7.2.3.1` lane. Rails
 8.1 support is planned under `haxe_ruby-huf`, but it is unverified and not
@@ -207,7 +208,7 @@ rake ci:release_contracts
 ```
 
 The dedicated CI Rails runtime job runs the underlying `npm run test:rails-runtime` across the
-supported Ruby matrix (`3.2`, `3.3`, `4.0`). The local `npm test` path may skip
+supported Ruby matrix (`3.3`, `3.4`, `4.0`). The local `npm test` path may skip
 Rails runtime execution when generated-app bundles are absent, but the dedicated
 runtime command and CI lane install those bundles and fail closed when Rails
 cannot boot. Runtime smoke logs must identify the failing boundary with staged
