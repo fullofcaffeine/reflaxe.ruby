@@ -18,6 +18,22 @@ The repo includes shared bd hook shims in `.beads-hooks/`. After cloning, run `b
 
 When the hooks first run after a bd/tooling upgrade, `.beads/issues.jsonl` may be normalized to bd's current JSONL shape, including `_type:"issue"` records. Treat that as a schema/export migration only after verifying the issue ID set and `bd ready`; do not assume tasks were lost just because the JSON shape or ordering changed.
 
+## External Review Evidence
+
+- Treat external, LLM, GPT, and "Oracle" reviews as evidence-backed hypotheses,
+  not repository authority. Reproduce every material claim against the live
+  tree, current canonical CI, hosted repository settings, published release
+  bytes, and current primary upstream sources where the fact is time-sensitive.
+- Preserve the distinction between what the reviewer inspected, what it actually
+  executed, what canonical CI proved, and what remains inference or missing
+  evidence. Do not turn an accepted dependency range, generated shape, passing
+  snapshot, or prose claim into a broader support guarantee without the matching
+  runtime or consumer evidence.
+- Use reviews to discover and bound work, then refine, split, downgrade, reject,
+  or extend findings when stronger repository evidence warrants it. Record
+  corrections and newly discovered gaps in the owning review document and bead
+  so later agents do not repeat the original assumption.
+
 ## Ruby Profile Contract
 
 The compiler has two public profile contracts: `ruby_first` and `portable`.

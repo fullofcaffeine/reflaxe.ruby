@@ -9,13 +9,14 @@ This document records the supported tool/runtime contract for `reflaxe.ruby`.
 | Haxe | `4.3.7` | Supported | Pinned by `.haxerc` and `.github/workflows/ci.yml`. |
 | Node.js | `22.14.0` | Supported | Exact CI/release runtime; npm is pinned to `10.9.2`. Rails-facing generators remain Ruby-native. |
 | Ruby | `3.2`, `3.3`, `4.0` | Supported | CI matrix validates runtime smoke tests against these versions. |
-| Rails runtime | `>= 7.0`, `< 8.0` | Supported beta baseline | Runtime fixtures lock Rails `7.2.3.1`; `rake test:rails:runtime` and CI make Rails integration/interop runtime execution mandatory. |
+| Rails fixture dependency range | `>= 7.0`, `< 8.0` | Accepted by current fixtures | This Bundler range is not evidence that every Rails 7 minor is independently supported. |
+| Rails runtime evidence | `7.2.3.1` | Verified beta lane | The committed reference lock and current canonical runtime lanes use Rails `7.2.3.1`. |
 | Rails 8.1 | Planned | Not currently supported | Rails 8.1 is the proposed runtime target for a combined RubyHx/RailsHx stable `1.0`. It must pass the reference/runtime matrix tracked by `haxe_ruby-huf`; otherwise RailsHx remains beta. |
 
 Rails-shaped APIs that resemble Rails 8 do not establish Rails 8 runtime
-compatibility. Until the planned lane passes, applications should keep the
-generated Rails bundle within `>= 7.0` and `< 8.0`; the committed reference
-lock currently resolves Rails `7.2.3.1`.
+compatibility. The generated fixtures accept `>= 7.0` and `< 8.0`, but the
+current evidence supports only the locked Rails `7.2.3.1` lane. Other Rails 7
+minors require their own runtime evidence before they become support claims.
 
 ## Local Development Notes
 

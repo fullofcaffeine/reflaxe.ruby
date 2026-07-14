@@ -88,6 +88,19 @@ project test failure.
    prove dimensions the workflow does not measure: performance, Ruby-to-Haxe
    source correlation, upgrades, rollback, and long-term maintenance ownership.
 
+### 1.5 Maintainer Reconciliation
+
+This report records an independent review, not an automatically accepted product
+plan. Each finding must be checked against the live repository, current hosted
+settings, canonical CI logs, and published release bytes before implementation
+or closure. Maintainers should amend a finding when stronger local evidence
+narrows, contradicts, or extends it.
+
+The first reconciliation corrects an important support distinction: the fixture
+Gemfiles accept Rails `>= 7.0` and `< 8.0`, but that dependency range does not
+prove every Rails 7 minor. The committed lock and canonical beta evidence cover
+Rails `7.2.3.1`; Rails 8.1 remains planned and unverified.
+
 ## 2. Executive Verdict
 
 ## NOT READY: P1 STABLE-RELEASE BLOCKERS

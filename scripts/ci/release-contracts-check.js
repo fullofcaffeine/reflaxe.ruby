@@ -111,6 +111,16 @@ if (haxelibJson.name !== "reflaxe.ruby") {
 if (haxelibJson.classPath !== "src") {
   fail(`haxelib.json classPath must be src, got ${haxelibJson.classPath}`);
 }
+expectIncludes(
+  agentsGuide,
+  'Treat external, LLM, GPT, and "Oracle" reviews as evidence-backed hypotheses',
+  "external review evidence policy"
+);
+expectIncludes(
+  agentsGuide,
+  "Do not turn an accepted dependency range",
+  "review support-claim boundary"
+);
 if (!rubyHxml.includes("-cp ${SCOPE_DIR}/std/")) {
   fail("haxe_libraries/reflaxe.ruby.hxml must include std/ classpath");
 }
@@ -200,12 +210,30 @@ expectIncludes(
   "reviews/rubyhx-railshx-1.0-readiness-review.md",
   "docs index stable review report"
 );
-expectIncludes(compatibilityMatrix, "| Rails runtime | `>= 7.0`, `< 8.0` |", "current Rails runtime range");
+expectIncludes(
+  compatibilityMatrix,
+  "| Rails fixture dependency range | `>= 7.0`, `< 8.0` |",
+  "current Rails fixture range"
+);
+expectIncludes(
+  compatibilityMatrix,
+  "| Rails runtime evidence | `7.2.3.1` | Verified beta lane |",
+  "current Rails runtime evidence"
+);
 expectIncludes(compatibilityMatrix, "| Rails 8.1 | Planned | Not currently supported |", "planned Rails 8.1 status");
-expectIncludes(compatibilityMatrix, "lock currently resolves Rails `7.2.3.1`", "tested Rails lock");
+expectIncludes(
+  compatibilityMatrix,
+  "not evidence that every Rails 7 minor is independently supported",
+  "Rails range evidence boundary"
+);
 expectExcludes(compatibilityMatrix, "Rails 7+/8 style app shape", "Rails support wording");
-expectIncludes(productionReadiness, "Rails 8.1 support is planned", "planned Rails stable target");
-expectIncludes(productionReadiness, "not currently supported", "current Rails 8 status");
+expectIncludes(productionReadiness, "8.1 support is planned under", "planned Rails stable target");
+expectIncludes(productionReadiness, "but it is unverified and not", "current Rails 8 status");
+expectIncludes(
+  stableReviewReport,
+  "This report records an independent review, not an automatically accepted product",
+  "stable review reconciliation rule"
+);
 for (const [label, source] of railsRuntimeFixtures) {
   expectIncludes(source, 'gem "rails", ">= 7.0", "< 8.0"', `${label} current Rails runtime range`);
 }
