@@ -60,7 +60,7 @@ through the current tested `22.23.1` patch, and MRI Ruby `3.3`, `3.4`, and
 `4.0` in CI. Ruby `3.3` is transitional. Generated Rails fixtures accept
 `>= 7.0` and `< 8.0`, but that range is not a tested-minor support matrix.
 The current Rails runtime evidence is the locked Rails `7.2.3.1` lane. Rails
-8.1 support is planned under `haxe_ruby-huf`, but it is unverified and not
+8.1 support is planned under `haxe_ruby-nho0`, but it is unverified and not
 currently supported. A combined stable `1.0` requires that runtime lane to pass;
 otherwise RailsHx remains beta.
 

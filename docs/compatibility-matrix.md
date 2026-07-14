@@ -18,7 +18,7 @@ guide.
 | Ruby 3.2 | EOL | Unsupported | Upstream support ended on 2026-04-01. The gem requires Ruby `>= 3.3`, and `hxruby:doctor` rejects this branch explicitly. |
 | Rails fixture dependency range | `>= 7.0`, `< 8.0` | Accepted by current fixtures | This Bundler range is not evidence that every Rails 7 minor is independently supported. |
 | Rails runtime evidence | `7.2.3.1` | Verified beta lane | The committed reference lock and canonical runtime lanes use Rails `7.2.3.1` with Ruby 3.3/3.4/4.0 and SQLite. Upstream security support ends on 2026-08-09, and CI expires this evidence rather than silently carrying it forward. |
-| Rails 8.1 | Planned | Not currently supported | Rails 8.1 is the proposed runtime target for a combined RubyHx/RailsHx stable `1.0`. It must pass the reference/runtime matrix tracked by `haxe_ruby-huf`; otherwise RailsHx remains beta. |
+| Rails 8.1 | Planned | Not currently supported | Rails 8.1 is the proposed runtime target for a combined RubyHx/RailsHx stable `1.0`. It must pass the reference/runtime matrix tracked by `haxe_ruby-nho0`; otherwise RailsHx remains beta. |
 | Canonical platform | Ubuntu 24.04, Linux `x86_64` | Verified | macOS, Windows, ARM, Alpine/musl, JRuby, and TruffleRuby are unverified rather than implied support. Doctor reports that distinction. |
 | Database runtime | SQLite | Verified | PostgreSQL and MySQL options have compile/snapshot evidence only. |
 | Browser/client | Chromium via Playwright; importmap-rails, Propshaft, Turbo, Genes | Verified beta lane | Other browsers and asset/bundler stacks are unverified. |

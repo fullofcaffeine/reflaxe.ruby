@@ -86,6 +86,8 @@ assert(compatibilityDocs.includes(`\`${matrix.node.minimumVersion}\``));
 assert(compatibilityDocs.includes(`\`${matrix.node.currentTestedVersion}\``));
 assert(compatibilityDocs.includes(`\`${matrix.railsHx.verifiedRuntime.railsVersion}\``));
 assert(compatibilityDocs.includes(`Rails ${matrix.railsHx.plannedRuntime.railsLine}`));
+assert(compatibilityDocs.includes(matrix.railsHx.plannedRuntime.trackingIssue));
+assert(productionReadiness.includes(matrix.railsHx.plannedRuntime.trackingIssue));
 assert(compatibilityDocs.includes("lib/hxruby/support_matrix.json"));
 for (const [name, document] of Object.entries({ readme, gettingStarted, productionReadiness, productRequirements })) {
   assert(document.includes(`Haxe \`${matrix.haxe.ciVersion}\``), `${name} missing exact Haxe support`);

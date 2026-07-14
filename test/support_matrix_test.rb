@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+ENV["MT_NO_PLUGINS"] = "1"
+
 require "minitest/autorun"
 require "hxruby/support_matrix"
 
@@ -9,6 +11,7 @@ class SupportMatrixTest < Minitest::Test
     assert_equal ["3.3", "3.4", "4.0"], HXRuby::SupportMatrix.supported_ruby_branches
     assert_equal "7.2.3.1", HXRuby::SupportMatrix::DATA.dig("railsHx", "verifiedRuntime", "railsVersion")
     refute HXRuby::SupportMatrix::DATA.dig("railsHx", "plannedRuntime", "supported")
+    assert_equal "haxe_ruby-nho0", HXRuby::SupportMatrix::DATA.dig("railsHx", "plannedRuntime", "trackingIssue")
   end
 
   def test_ruby_diagnostics_accept_only_supported_mri_branches

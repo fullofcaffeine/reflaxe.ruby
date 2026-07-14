@@ -82,7 +82,8 @@
     },
     "plannedRuntime": {
       "railsLine": "8.1",
-      "supported": false
+      "supported": false,
+      "trackingIssue": "haxe_ruby-nho0"
     }
   },
   "canonicalPlatform": {
