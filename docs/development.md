@@ -87,6 +87,10 @@ Upstream behavioral parity is tracked independently by
 
 ## Issue And Git Workflow
 
+Public bug reports, compatibility questions, and feature proposals enter through
+[GitHub Issues](https://github.com/fullofcaffeine/reflaxe.ruby/issues). See
+[Support And Maintenance](../SUPPORT.md) for routing and response expectations.
+
 This repository uses `bd` beads. Run `bd prime` for the current workflow and
 project memories, then use `bd ready`, `bd show`, `bd update --claim`, and
 `bd close` around a bounded slice. The tracked `.beads/issues.jsonl` export is

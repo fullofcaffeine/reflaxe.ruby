@@ -25,6 +25,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
   ZIP/gem consumption, Haxelib and Ruby package contracts, and client/DeviseHx
   packaging boundaries.
 - [Compatibility Matrix](compatibility-matrix.md): supported Haxe, Node, and Ruby versions.
+- [Support And Maintenance](../SUPPORT.md): public issue and security channels,
+  single-maintainer scope, review cadence, release authority, and companion
+  ownership.
 - [Ruby Callable And Method ABI](ruby-callable-abi.md): typed blocks, keyword/rest arguments, method values, forwarding, definitions, and diagnostics.
 - [Ruby Compiler Correctness](compiler-correctness.md): exhaustive typed-expression ownership and fail-closed diagnostics.
 - [RubyHx And RailsHx Production Readiness](railshx-production-readiness.md):

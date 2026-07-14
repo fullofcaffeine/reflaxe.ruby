@@ -205,6 +205,7 @@ See [Production Readiness](docs/railshx-production-readiness.md) and the
 | TSX-like typed Rails views and HHX | [Typed Views](docs/railshx-typed-views.md) |
 | Haxe-authored browser JS and Genes | [Client JavaScript](docs/railshx-client-javascript.md) |
 | Release ZIP, gem, and verified installation | [Packages And Installation](docs/packages-and-installation.md) |
+| Support, reporting, and maintenance ownership | [Support And Maintenance](SUPPORT.md) |
 | Contributor gates and repository map | [Repository Development](docs/development.md) |
 | Everything else | [Documentation Index](docs/README.md) |
 

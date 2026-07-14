@@ -11,6 +11,9 @@ response-time SLA. Reports and coordinated disclosure are handled on a
 best-effort basis; the maintainer will keep the reporter informed as the issue
 is reproduced, scoped, fixed, and prepared for disclosure.
 
+General issue routing, maintenance ownership, and support expectations are in
+[Support And Maintenance](SUPPORT.md).
+
 ## Supported Versions
 
 Before stable `1.x`, security fixes target the latest published `0.x` release

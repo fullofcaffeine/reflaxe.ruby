@@ -46,6 +46,9 @@ Stable `1.0` has **not** been declared. It requires an independent evidence
 review, closure of every resulting stable-release blocker, a public API and
 compatibility commitment, and explicit release-policy approval. The review
 packet is [RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
+The current best-effort single-maintainer ownership, intake channels, cadence,
+and core/companion routing are published in
+[Support And Maintenance](../SUPPORT.md).
 
 ## Supported Baseline And Adoption Guidance
 
