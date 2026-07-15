@@ -1,18 +1,40 @@
 # RubyHx/RailsHx Stable 1.0 Readiness Review
 
-> **Current post-closure verdict: READY TO REQUEST STABLE-MAJOR APPROVAL**
+> **Current governance verdict: STABLE MAJOR 1 APPROVED**
 >
 > A fresh independent GPT-5.6 Pro review of the exact post-blocker source archive,
 > hosted CI, and immutable `v0.9.0` release found no remaining P0/P1 issue. This
 > review remains valid evidence, and the maintainer's subsequent requirement to
 > prove the dependency closure of every marketed RailsHx component is now closed
 > by RHX-1.0-010. Local gates and exact-SHA canonical CI run `29393793697` passed.
-> This verdict permits a separate recorded maintainer approval request; it does
-> not grant that approval. `approvedStableMajors` remains empty.
+> RHX-1.0-011 records the maintainer's separate 2026-07-15 approval of stable
+> major 1. The release policy now records `approvedStableMajors: [1]`; normal
+> exact-tested-SHA CI exclusively owns `v1.0.0` publication.
 
-The original readiness review is retained below as the historical finding record.
-Its `NOT READY` verdict and implementation plan are superseded by this addendum;
-the original evidence and findings remain useful provenance.
+The original readiness review is retained below as the historical finding
+record. Its `NOT READY` verdict and implementation plan are superseded by the
+post-blocker and approval addenda; the original evidence and findings remain
+useful provenance.
+
+## Stable-Major Approval
+
+The maintainer approved one combined stable `1.x` contract for RubyHx and
+RailsHx under RHX-1.0-011 after reviewing the post-blocker result and the final
+dependency-closure evidence. Exact-SHA canonical runs `29393793697` at the
+implementation commit and `29395800676` at the documentation/closure commit
+both passed all required jobs. No P0/P1 bead or blocked issue remained.
+
+Approval does not widen the documented support matrix. It covers the public
+surfaces classified in `docs/public-contract.md` on Haxe 4.3.7, Node 22, MRI
+Ruby 3.3/3.4/4.0, and the Rails 8.1 evidence line, with the explicit platform,
+database, browser, distribution, and unsupported-surface limits already
+recorded. Residual compiler decomposition and broader cross-target sharing stay
+P2 follow-ups outside the stable gate.
+
+The reviewed release-policy change moves `approvedStableMajors` from `[]` to
+`[1]`. A deliberate breaking graduation commit is therefore eligible to select
+`1.0.0`, but only the canonical main workflow may tag, build, verify, and
+publish it after every same-run gate succeeds.
 
 ## Post-Blocker Addendum
 
@@ -32,7 +54,7 @@ the original evidence and findings remain useful provenance.
 | Exact code-bearing CI | Run `29363805879`, SHA `fceb8d3`, all jobs successful; published `v0.9.0` |
 | Final handoff corroboration | Run `29367890473`, SHA `f2932e670aab43adb53cac004ede0c5ed39880ac`, all jobs successful; semantic-release reported no relevant changes |
 | Latest public release | `v0.9.0`, tag resolves to `fceb8d3`; immutable ZIP/gem plus their SHA-256 sidecars |
-| Current product maturity wording | RubyHx and RailsHx remain `production-ready beta` until stable approval and publication |
+| Product maturity at review time | RubyHx and RailsHx remained `production-ready beta` pending the later approval decision |
 
 The complete source ZIP, not the Repomix navigation contexts, was authoritative.
 The independent reviewer inspected source, tests, workflows, public contracts,
@@ -157,10 +179,10 @@ the distributed repository command and CI contract are already correct.
 
 The independent evidence gate was complete at its reviewed baseline. The later
 maintainer clarification opened RHX-1.0-010; its dependency-closure guard and
-mandatory Rails component runtime are now confirmed by exact-SHA canonical CI.
-The project is ready to request approval, but stable major 1 still requires a
-separate explicit maintainer decision to change `approvedStableMajors` from
-`[]` to `[1]`; public wording remains beta.
+mandatory Rails component runtime were confirmed by exact-SHA canonical CI.
+The maintainer then granted the separate explicit stable-major decision under
+RHX-1.0-011, changing `approvedStableMajors` from `[]` to `[1]` without
+reclassifying either residual P2 as a release blocker.
 
 ## 1. Review Baseline
 

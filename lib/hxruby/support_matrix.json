@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-07-14",
+  "asOf": "2026-07-15",
   "maturity": {
-    "rubyhx": "production-ready beta",
-    "railshx": "production-ready beta"
+    "rubyhx": "stable 1.x",
+    "railshx": "stable 1.x"
   },
   "haxe": {
     "supportedVersions": [
@@ -57,7 +57,7 @@
     ]
   },
   "railsHx": {
-    "status": "beta",
+    "status": "stable",
     "fixtureDependencyRequirements": [
       ">= 7.0"
     ],

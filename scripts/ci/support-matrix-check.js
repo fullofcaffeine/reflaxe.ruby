@@ -31,6 +31,9 @@ function assertNotExpired(label, date) {
 }
 
 assert.equal(matrix.schemaVersion, 1, "support matrix schema version must be explicit");
+assert.equal(matrix.maturity.rubyhx, "stable 1.x", "RubyHx maturity must match the approved stable contract");
+assert.equal(matrix.maturity.railshx, "stable 1.x", "RailsHx maturity must match the approved stable contract");
+assert.equal(matrix.railsHx.status, "stable", "RailsHx status must match the approved stable contract");
 assert.deepEqual(matrix.railsHx.fixtureDependencyRequirements, [">= 7.0"]);
 assert.deepEqual(matrix.ruby.ciBranches, ["3.3", "3.4", "4.0"]);
 assert.deepEqual(ci.jobs.test.strategy.matrix.ruby_version, matrix.ruby.ciBranches);
@@ -87,7 +90,7 @@ for (const branch of matrix.ruby.branches) {
 }
 assertNotExpired("Node.js support", matrix.node.supportEndsOn);
 assertNotExpired(
-  `Rails ${matrix.railsHx.verifiedRuntime.railsVersion} beta evidence`,
+  `Rails ${matrix.railsHx.verifiedRuntime.railsVersion} stable evidence`,
   matrix.railsHx.verifiedRuntime.upstreamSecuritySupportEndsOn,
 );
 

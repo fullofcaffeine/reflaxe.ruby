@@ -294,4 +294,4 @@ await expectPolicyFailure(
 await proveSemanticReleaseIntegration();
 await proveHistoricalPrereleaseTransition();
 
-console.log("[release-version-policy] OK: conventional 0.x and independently approved stable majors");
+console.log("[release-version-policy] OK: conventional releases and independently approved stable majors");

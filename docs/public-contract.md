@@ -1,8 +1,10 @@
 # RubyHx/RailsHx Public Contract
 
-This is the proposed compatibility contract for stable `1.x`. Until stable
-major approval, releases remain `0.x`, but changes should already be evaluated
-against these boundaries so `1.0` does not freeze accidental internals.
+This is the compatibility contract for stable `1.x`. Stable major 1 was
+approved only after the public surfaces, maintenance boundaries, upgrade path,
+and exact-SHA evidence below were reviewed. Changes to the stable line are
+evaluated against these boundaries so public contracts do not drift into
+accidental internals.
 
 ## Contract Principles
 

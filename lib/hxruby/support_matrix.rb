@@ -57,7 +57,7 @@ module HXRuby
       verified = DATA.dig("railsHx", "verifiedRuntime", "railsVersion")
       return nil if version_branch(normalized) == verified_line
 
-      "Rails #{normalized} is outside the verified RailsHx beta line (Rails #{verified_line}, exercised at #{verified}); it may work but is unverified"
+      "Rails #{normalized} is outside the verified RailsHx stable line (Rails #{verified_line}, exercised at #{verified}); it may work but is unverified"
     end
 
     def platform_warning(host_os = RbConfig::CONFIG.fetch("host_os"), host_cpu = RbConfig::CONFIG.fetch("host_cpu"))

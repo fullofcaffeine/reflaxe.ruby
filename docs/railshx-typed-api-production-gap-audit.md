@@ -71,9 +71,10 @@ casual raw query strings such as `.where("...")` or `.order("...")`.
 
 ## Current Readiness Summary
 
-RailsHx has a production-ready beta typed CRUD spine and production dogfood
-lane. The production-blocking API gaps covered by this audit have been closed or
-reclassified with typed escape hatches. Remaining work is breadth and hardening:
+RailsHx has a stable typed CRUD spine and production dogfood lane within the
+documented `1.x` scope. The production-blocking API gaps covered by this audit
+have been closed or reclassified with typed escape hatches. Remaining work is
+breadth and hardening:
 adding more Rails surface area without making app authors fall back to
 `Dynamic`, unchecked strings, raw SQL, or `__ruby__` for ordinary work.
 

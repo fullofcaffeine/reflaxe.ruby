@@ -125,7 +125,7 @@ Why now
 Ruby + Rails have stable conventions (naming, file layout, autoloading, DSLs).
 Ruby 4.0 has shipped, while maintained Ruby 3.3 and 3.4 branches provide a
 practical compatibility window for adoption.
-Rails `8.1` is the verified RailsHx beta line, with the production fixture
+Rails `8.1` is the verified RailsHx stable line, with the production fixture
 locked to Rails `8.1.3`. Generated fixtures retain a Rails `>= 7.0` floor without
 using the evidence lane as an artificial upper compatibility ceiling.
 The supported compiler/runtime matrix is MRI Ruby 3.3, 3.4, and 4.0, so the
@@ -171,7 +171,7 @@ Full Sorbet/RBS integration (nice future add-on; not required).
 Ruby C-extension interop.
 3) Target versions / compatibility
 Ruby runtime: MRI Ruby `3.3`, `3.4`, and `4.0`; `3.3` is transitional and Ruby 3.2 is EOL/unsupported.
-Rails: Rails `8.1` is the supported beta line, exercised at Rails `8.1.3`; other Rails versions may work but are unverified rather than rejected.
+Rails: Rails `8.1` is the supported stable line, exercised at Rails `8.1.3`; other Rails versions may work but are unverified rather than rejected.
 Haxe: exactly Haxe `4.3.7` for the current contract.
 Node build tooling: Node >= 22.14.0 and < 23, tested at the declared minimum and current pinned patch.
 
@@ -381,7 +381,7 @@ Typed Rails stdlib (std/rails/*) + macros (compile-time safety)
 Rails integration tooling (rake tasks / generator / gem packaging)
 10.1 Rails integration constraints
 Rails autoloading expects file paths that match constants.
-The current RailsHx beta runtime lane uses Rails `8.1`, locked at `8.1.3`, on
+The current RailsHx stable runtime lane uses Rails `8.1`, locked at `8.1.3`, on
 the supported MRI Ruby branches. Compatibility remains artifact-driven rather
 than implemented through Rails-version branches in compiler or application
 code.

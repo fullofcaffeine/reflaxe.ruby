@@ -1,10 +1,11 @@
 # Release Version Policy
 
-RubyHx uses normal `0.x` releases from `main`. Major zero already communicates
-that the API is in initial development, so normal releases do not carry an
-automatic `-beta` suffix. The existing `v0.1.0-beta.2` tag remains immutable
-history and was the valid tag-derived baseline; the first qualifying main
-release promoted that lineage to the ordinary `v0.1.0` version.
+RubyHx uses normal releases from `main`. Stable major 1 is explicitly approved;
+before that approval, major zero communicated that the API was in initial
+development, so normal `0.x` releases did not carry an automatic `-beta`
+suffix. The existing `v0.1.0-beta.2` tag remains immutable history and was the
+valid tag-derived baseline; the first qualifying main release promoted that
+lineage to the ordinary `v0.1.0` version.
 
 These are separate SemVer concepts. A `0.y.z` version communicates initial
 development and may make breaking changes according to the major-zero bump
@@ -63,15 +64,17 @@ Stable majors are approved explicitly in the semantic-release plugin entry:
 
 ```json
 {
-  "approvedStableMajors": []
+  "approvedStableMajors": [1]
 }
 ```
 
-The list must be the contiguous sequence `1..N`. Graduation to `1.0.0`
-requires changing it to `[1]` in a reviewed commit with matching regression
-evidence. A later breaking `1.x` release requires `[1, 2]`; approval for 1 never
-implicitly approves 2. Stable lineage whose current major is absent, skipped,
-duplicated, or otherwise unknown fails before a version can be selected.
+The list must be the contiguous sequence `1..N`. Major 1 was approved under
+RHX-1.0-011 after the independent readiness review, dependency-closure gate,
+and exact-SHA regression evidence. A later breaking `1.x` release requires
+changing the list to `[1, 2]` through its own reviewed approval; approval for 1
+never implicitly approves 2. Stable lineage whose current major is absent,
+skipped, duplicated, or otherwise unknown fails before a version can be
+selected.
 
 ## Tag-owned lineage
 

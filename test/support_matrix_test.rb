@@ -8,6 +8,9 @@ require "hxruby/support_matrix"
 class SupportMatrixTest < Minitest::Test
   def test_packaged_schema_and_current_runtime_contract
     assert_equal 1, HXRuby::SupportMatrix::DATA.fetch("schemaVersion")
+    assert_equal "stable 1.x", HXRuby::SupportMatrix::DATA.dig("maturity", "rubyhx")
+    assert_equal "stable 1.x", HXRuby::SupportMatrix::DATA.dig("maturity", "railshx")
+    assert_equal "stable", HXRuby::SupportMatrix::DATA.dig("railsHx", "status")
     assert_equal ["3.3", "3.4", "4.0"], HXRuby::SupportMatrix.supported_ruby_branches
     assert_equal [">= 7.0"], HXRuby::SupportMatrix::DATA.dig("railsHx", "fixtureDependencyRequirements")
     assert_equal "8.1", HXRuby::SupportMatrix::DATA.dig("railsHx", "verifiedRuntime", "railsLine")
@@ -51,6 +54,7 @@ class SupportMatrixTest < Minitest::Test
     assert_includes HXRuby::SupportMatrix.haxe_error("4.4.0"), "unsupported"
     assert_nil HXRuby::SupportMatrix.rails_warning("8.1.3")
     assert_nil HXRuby::SupportMatrix.rails_warning("8.1.4")
+    assert_includes HXRuby::SupportMatrix.rails_warning("7.2.3.1"), "verified RailsHx stable line"
     assert_includes HXRuby::SupportMatrix.rails_warning("7.2.3.1"), "may work but is unverified"
     assert_includes HXRuby::SupportMatrix.rails_warning("8.2.0"), "may work but is unverified"
   end

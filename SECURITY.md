@@ -16,10 +16,11 @@ General issue routing, maintenance ownership, and support expectations are in
 
 ## Supported Versions
 
-Before stable `1.x`, security fixes target the latest published `0.x` release
-and current `main`. Older `0.x` users may need to upgrade. Runtime and toolchain
-coverage follows the [compatibility matrix](docs/compatibility-matrix.md); an
-unverified environment is not automatically known vulnerable or incompatible.
+Security fixes target the latest published stable `1.x` release and current
+`main`. The `0.x` lines are historical and users should upgrade to the stable
+line. Runtime and toolchain coverage follows the
+[compatibility matrix](docs/compatibility-matrix.md); an unverified environment
+is not automatically known vulnerable or incompatible.
 
 Emergency fixes use the same exact-SHA release workflow and immutable artifact
 checks as ordinary releases. Existing-tag repair can restore or verify expected

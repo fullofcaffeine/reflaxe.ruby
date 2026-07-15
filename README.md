@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/fullofcaffeine/reflaxe.ruby/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/fullofcaffeine/reflaxe.ruby/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <img alt="Maturity: production-ready beta" src="https://img.shields.io/badge/maturity-production--ready_beta-7c3aed">
+  <img alt="Maturity: stable 1.x" src="https://img.shields.io/badge/maturity-stable_1.x-2ea44f">
   <img alt="Haxe 4.3.7" src="https://img.shields.io/badge/Haxe-4.3.7-ea8220?logo=haxe&logoColor=white">
   <img alt="Ruby 3.3, 3.4, and 4.0" src="https://img.shields.io/badge/Ruby-3.3_%7C_3.4_%7C_4.0-cc342d?logo=ruby&logoColor=white">
   <a href="LICENSE"><img alt="GPL-3.0 license" src="https://img.shields.io/badge/license-GPL--3.0-2563eb"></a>
@@ -178,7 +178,7 @@ incrementally. See [Gradual Adoption](docs/railshx-gradual-adoption.md).
 
 Read the [compiler correctness contract](docs/compiler-correctness.md),
 [testing strategy](docs/railshx-testing-strategy.md), and
-[compatibility matrix](docs/compatibility-matrix.md). The proposed stable
+[compatibility matrix](docs/compatibility-matrix.md). The stable
 [public contract](docs/public-contract.md) classifies SemVer and upgrade
 boundaries without turning tested versions into compatibility ceilings.
 Representative build, startup, memory, and output-size evidence is documented in the
@@ -186,19 +186,21 @@ Representative build, startup, memory, and output-size evidence is documented in
 
 ## Maturity
 
-The current claim is **production-ready beta for the documented and tested
-surface**. It is not yet a stable `1.x` compatibility promise.
+The current claim is **stable `1.x` for the documented and tested surface**.
+Stable major 1 governs the public source, callable/runtime ABI, command,
+diagnostic, and versioned-data boundaries classified in the public contract.
+It does not imply every Ruby gem, Rails API, database, browser, or platform is
+supported.
 
 Teams using it today should pin a release, use the tested matrix as the
 maintained guarantee, and run the documented compiler, Rails, browser,
 production, and package gates when validating newer combinations.
 
-Stable `1.0` requires a cross-dimensional evidence review covering compiler and
-runtime correctness, Ruby/Rails interop, UX/API stability, gradual adoption,
-security, performance, debugging, upgrades, packaging, docs, and maintenance.
-
-See [Production Readiness](docs/railshx-production-readiness.md) and the
-[independent GPT 5.6 Pro review packet](docs/rubyhx-railshx-gpt56-1.0-review.md).
+The stable-major approval follows a cross-dimensional evidence review covering
+compiler and runtime correctness, Ruby/Rails interop, UX/API stability, gradual
+adoption, security, performance, debugging, upgrades, packaging, docs, and
+maintenance. See [Production Readiness](docs/railshx-production-readiness.md)
+and the [independent review record](docs/reviews/rubyhx-railshx-1.0-readiness-review.md).
 
 ## Explore
 

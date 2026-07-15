@@ -37,12 +37,12 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Ruby Callable And Method ABI](ruby-callable-abi.md): typed blocks, keyword/rest arguments, method values, forwarding, definitions, and diagnostics.
 - [Ruby Compiler Correctness](compiler-correctness.md): exhaustive typed-expression ownership and fail-closed diagnostics.
 - [RubyHx And RailsHx Production Readiness](railshx-production-readiness.md):
-  production-ready beta evidence and the cross-dimensional stable `1.0` bar.
+  stable `1.x` evidence, scope, and the cross-dimensional `1.0` approval bar.
 - [GPT 5.6 Pro 1.0 Review Packet](rubyhx-railshx-gpt56-1.0-review.md):
   independent repository, architecture, product, and stable-release audit brief.
 - [RubyHx/RailsHx Stable 1.0 Readiness Review](reviews/rubyhx-railshx-1.0-readiness-review.md):
-  exact-commit evidence, stable-release verdict, bounded findings, support
-  proposal, and the path from beta through independent RC approval.
+  exact-commit evidence, stable-major approval, bounded findings, support
+  contract, and the path from independent review to `1.0`.
 - [Release Version Policy](release-version-policy.md): conventional major-zero releases, tag-derived lineage, and independent stable-major approvals.
 - [RubyHx/RailsHx Public Contract](public-contract.md): federated 1.x API/ABI ownership, SemVer boundaries, deprecation, and public-release upgrade/rollback evidence.
 - [Reproducible Release Artifacts](release-artifacts.md): tested-commit staging, canonical ZIP/gem bytes, full content manifests, SHA-256 sidecars, and consumer gates.

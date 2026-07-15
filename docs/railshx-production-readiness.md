@@ -2,9 +2,9 @@
 
 RubyHx and RailsHx are intended for real Ruby and Rails applications, not only
 compiler demonstrations. The production-readiness gate for the documented
-`0.x` beta contract is satisfied when the checks and ownership rules in this
-document stay green. This is still a beta contract: supported surfaces are
-production ready, but new Rails/Ruby surfaces must be added through explicit
+stable `1.x` contract is satisfied when the checks and ownership rules in this
+document stay green. Supported surfaces are production ready and
+SemVer-governed, but new Rails/Ruby surfaces must be added through explicit
 beads, tests, and compatibility notes before users should rely on them.
 
 The contract covers two distinct starting points. Ruby-first teams can add
@@ -13,12 +13,11 @@ all owned library or application source in Haxe/HHX and use Ruby primarily as
 the generated runtime target. Evidence for one path does not automatically
 prove the other.
 
-A stable `1.0` claim is a separate, stronger project-wide commitment. RailsHx
-cannot be stable if the RubyHx compiler, runtime, interop, packaging, debugging,
-or upgrade story underneath it is not stable. Conversely, compiler correctness
-alone cannot establish that RailsHx is ready for production teams. The stable
-gate therefore evaluates the whole authoring-to-deployment system across the
-dimensions below.
+The stable `1.0` claim is a project-wide commitment. RailsHx cannot be stable if
+the RubyHx compiler, runtime, interop, packaging, debugging, or upgrade story
+underneath it is not stable. Conversely, compiler correctness alone cannot
+establish that RailsHx is ready for production teams. The stable gate therefore
+evaluates the whole authoring-to-deployment system across the dimensions below.
 
 Stable scope is dependency-closed. Every RailsHx component slice described as
 supported must have evidence for the Haxe/std behavior, compiler/runtime seams,
@@ -46,59 +45,59 @@ RailsHx now proves the main production shape:
 - Strict examples reject raw `__ruby__`; raw ERB and external templates are
   explicit migration/interop paths rather than the default authoring style.
 
-The production-readiness gate is closed for the documented beta surface:
+The production-readiness gate is closed for the documented stable surface:
 mandatory runtime coverage, deploy evidence, API completeness audits, safe
 escape-hatch policy, and Rails-native app/generator workflows are tracked and
-covered. Future breadth remains normal beta evolution, not an implicit blocker
-for the closed readiness gate.
+covered. Future breadth remains normal `1.x` evolution, not an implicit blocker
+for the closed readiness gate or an implicit expansion of the support promise.
 
-Stable `1.0` has **not** been declared. The independent post-blocker evidence
-review found no P0/P1, and the maintainer's subsequent dependency-closure
-clarification is now implemented and confirmed by exact-SHA canonical CI in
-RHX-1.0-010. The project is therefore ready to request a separate explicit
-release-policy approval. See the current addendum in
+Stable major 1 is approved under RHX-1.0-011. The independent post-blocker
+evidence review found no P0/P1, and the maintainer's subsequent
+dependency-closure clarification was implemented and confirmed by exact-SHA
+canonical CI in RHX-1.0-010. See the current addendum in
 [RubyHx/RailsHx Stable 1.0 Readiness Review](reviews/rubyhx-railshx-1.0-readiness-review.md)
 and its reproducible prompt in
 [RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
-This evidence result does not itself approve or publish major 1;
-`approvedStableMajors` remains empty.
+The release policy records `approvedStableMajors: [1]`; later stable majors
+still require separate approval and regression evidence. Publication remains
+owned exclusively by the exact-tested-SHA canonical workflow.
 The current best-effort single-maintainer ownership, intake channels, cadence,
 and core/companion routing are published in
 [Support And Maintenance](../SUPPORT.md).
 
 ## Supported Baseline And Adoption Guidance
 
-RailsHx should be described as production-ready for the documented beta
-contract, not as a stable `1.x` API. Teams should pin compiler/runtime versions,
-keep generated artifacts in CI, run the gates below, and expect unsupported API
-gaps to become explicit beads before broad rollout.
+RailsHx should be described as stable `1.x` for the documented and tested
+contract. Teams should pin compiler/runtime versions, keep generated artifacts
+in CI, run the gates below, and expect unsupported API gaps to become explicit
+beads before broad rollout.
 
 The current supported toolchain baseline is documented in
 [Compatibility Matrix](compatibility-matrix.md): Haxe `4.3.7`, Node `22.14.0`
 through the current tested `22.23.1` patch, and MRI Ruby `3.3`, `3.4`, and
 `4.0` in CI. Ruby `3.3` is transitional. Generated Rails fixtures require only
 the real Rails `>= 7.0` floor and impose no speculative future-major ceiling.
-The verified RailsHx beta line is Rails `8.1`, exercised at Rails `8.1.3` across
-the supported Ruby branches. Other Rails lines may work and receive a doctor
-warning rather than an incompatibility error. Stable `1.0` remains gated by the
-separate explicit approval decision, not by expanding this into a combinatorial
-Rails version matrix or speculating that later compatible Ruby/Rails versions
-must fail.
+The verified RailsHx stable line is Rails `8.1`, exercised at Rails `8.1.3`
+across the supported Ruby branches. Other Rails lines may work and receive a
+doctor warning rather than an incompatibility error. Stable status does not
+expand this into a combinatorial Rails version matrix or imply that later
+compatible Ruby/Rails versions must fail.
 
-Support expectation for production-beta use:
+Support expectation for stable production use:
 
 - No silent production blockers: file or link a bead under `haxe.ruby-bjv`.
 - No untracked unsafe shortcuts: raw Ruby/ERB/SQL/Dynamic paths must be explicit
   and documented.
 - No unsupported-version promises: users should stay on the documented matrix.
-- No stable `1.x` compatibility promise while public versioning remains `0.x`.
+- Public `1.x` boundaries follow the deprecation and SemVer rules in
+  [RubyHx/RailsHx Public Contract](public-contract.md).
 
 Haxe-first users should treat Haxe/HHX as the source of truth, generated Ruby as
 a checked build artifact, and Ruby-level integration, operations, and debugging
 as part of using the target ecosystem. Ruby-first adopters should keep ownership
 boundaries explicit so generated workflows never overwrite Rails-owned source.
 
-## Production-Ready Beta Definition
+## Stable Production Definition
 
 RailsHx can be called production-ready when all of these are true:
 
@@ -134,8 +133,8 @@ Rails API, database adapter, or deployment platform is implemented. Unsupported
 surfaces may remain outside the contract when they are explicit, diagnostically
 clear, and do not undermine a marketed core workflow.
 
-The following dimensions form one release decision. Existing beta evidence is
-an input, not automatic proof that a dimension is complete.
+The following dimensions formed one release decision. Existing production
+evidence was an input, not automatic proof that a dimension was complete.
 
 | Dimension | Stable `1.0` evidence required |
 | --- | --- |
@@ -157,8 +156,8 @@ an input, not automatic proof that a dimension is complete.
 
 ### Stable 1.0 Exit Rules
 
-The project may request `1.0.0` approval only when all of the following are
-true:
+The project was eligible to request `1.0.0` approval only when all of the
+following were true:
 
 - an evidence review covers every dimension above and records file, test,
   workflow, release, or runtime evidence rather than confidence alone;
@@ -188,10 +187,10 @@ severity tied to the documented supported scope.
 The original 2026-07-14 post-blocker review satisfied these exits and closed the
 stable-blocker epic `haxe_ruby-1sd`. The later dependency-closure clarification
 is closed as RHX-1.0-010 (`haxe_ruby-a13d`) with local and exact-SHA canonical
-evidence. Stable major 1 still requires the separately recorded maintainer
-decision described above. Residual
-compiler decomposition (`haxe_ruby-e2ba`) and broader cross-target sharing
-(`haxe_ruby-r0h0`) remain bounded P2 follow-ups outside the release gate.
+evidence. RHX-1.0-011 records the separately granted maintainer decision and
+the policy change to `[1]`. Residual compiler decomposition
+(`haxe_ruby-e2ba`) and broader cross-target sharing (`haxe_ruby-r0h0`) remain
+bounded P2 follow-ups outside the release gate.
 
 ## Tracked Work
 
@@ -210,7 +209,7 @@ contract.
 | `haxe.ruby-bjv.7` | Public readiness checklist | User-facing docs state maturity, commands, versions, support expectations, known blockers, and release criteria. |
 | `haxe.ruby-bjv.13` | Upstream Haxe std parity lane | Curated Haxe `unitstd` fixtures compile through the Ruby target and run on Ruby via `npm run test:unitstd-ruby`, giving RubyHx std/runtime parity evidence underneath RailsHx. |
 | `haxe_ruby-a13d` | Supported RailsHx component dependency closure | The machine audit maps each marketed component family to required foundations and mandatory evidence, rejects unfinished Haxe std imports, and requires implemented direct Ruby facades. |
-| `haxe_ruby-hjm` | Typed Ruby core and stdlib catalog | A versioned inventory distinguishes core, stdlib, default gems, bundled gems, and platform-specific APIs; deterministic RBS-backed contracts grow precise `ruby.*` coverage without collapsing Ruby semantics into Haxe std. This is post-beta breadth unless a narrower marketed 1.0 workflow depends on a missing API. |
+| `haxe_ruby-hjm` | Typed Ruby core and stdlib catalog | A versioned inventory distinguishes core, stdlib, default gems, bundled gems, and platform-specific APIs; deterministic RBS-backed contracts grow precise `ruby.*` coverage without collapsing Ruby semantics into Haxe std. This is post-1.0 breadth unless a narrower marketed workflow depends on a missing API. |
 
 Generator/task ownership details are tracked in
 [RailsHx Generators And Rails Tasks Design](railshx-generators-and-tasks-design.md).
@@ -223,7 +222,7 @@ generator hardening, schema adoption, migration-history collision checks, and
 
 ## Graduation Gates
 
-To maintain the production-ready beta contract, run and record:
+To maintain the stable documented contract, run and record:
 
 ```bash
 npm test

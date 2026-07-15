@@ -17,16 +17,16 @@ guide.
 | MRI Ruby | `3.3` | Transitional | The same full gates execute on 3.3 through its project sunset on 2027-03-31. New local development uses Ruby `3.4.10`. |
 | Ruby 3.2 | EOL | Unsupported | Upstream support ended on 2026-04-01. The gem requires Ruby `>= 3.3`, and `hxruby:doctor` rejects this branch explicitly. |
 | Rails fixture dependency range | `>= 7.0` | Accepted by current fixtures | This permissive Bundler floor lets conventional generated Rails code move forward; it is not evidence that every Rails version is independently supported. |
-| Rails supported line | `8.1` | Supported beta | Canonical runtime tests cover Rails 8.1 across Ruby 3.3/3.4/4.0. Patch releases within the 8.1 line are accepted without a doctor warning. |
+| Rails supported line | `8.1` | Supported stable line | Canonical runtime tests cover Rails 8.1 across Ruby 3.3/3.4/4.0. Patch releases within the 8.1 line are accepted without a doctor warning. |
 | Rails runtime evidence | `8.1.3` | Exact locked lane | The committed reference lock and canonical runtime lanes exercise Rails `8.1.3` with SQLite. Rails 8.1 receives upstream security support through 2027-10-10. |
 | Canonical platform | Ubuntu 24.04, Linux `x86_64` | Verified | macOS, Windows, ARM, Alpine/musl, JRuby, and TruffleRuby are unverified rather than implied support. Doctor reports that distinction. |
 | Database runtime | SQLite | Verified | PostgreSQL and MySQL options have compile/snapshot evidence only. |
-| Browser/client | Chromium via Playwright; importmap-rails, Propshaft, Turbo, Genes | Verified beta lane | Other browsers and asset/bundler stacks are unverified. |
+| Browser/client | Chromium via Playwright; importmap-rails, Propshaft, Turbo, Genes | Verified stable lane | Other browsers and asset/bundler stacks are unverified. |
 | Distribution | GitHub Releases | Supported channel | The checksum-verified Haxelib ZIP and `hxruby` gem asset are not published to the Haxelib or RubyGems.org registries. |
 
 Generated fixtures require Rails `>= 7.0` without an artificial upper bound.
 That accepted dependency range is deliberately broader than the support claim:
-the verified RailsHx beta line is Rails 8.1, exercised at the locked Rails
+the verified RailsHx stable line is Rails 8.1, exercised at the locked Rails
 `8.1.3` patch. Rails 7 and future Rails lines may work because RailsHx emits
 conventional Rails artifacts, but they remain unverified until an executable
 lane proves them. `hxruby:doctor` warns for those versions rather than rejecting
@@ -109,7 +109,7 @@ not generated `nil` placeholders; see [Ruby Compiler Correctness](compiler-corre
 
 ## Rails Mode
 
-RailsHx satisfies the production-readiness gate for the documented `0.x` beta
+RailsHx satisfies the production-readiness gate for the documented stable `1.x`
 contract. The supported surfaces below are tested and documented; see
 [RailsHx Production Readiness](railshx-production-readiness.md) for the
 mandatory runtime, deploy, security, API-completeness, generator, and support

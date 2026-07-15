@@ -166,7 +166,7 @@ if ((haxelibJson.reflaxe?.stdPaths ?? []).join("\n") !== "std\nstd/ruby/_std") {
 expectExcludes(readme, "pre-1.0", "README release status");
 expectIncludes(readme, "Write typed Haxe. Ship ordinary Ruby.", "README product thesis");
 expectIncludes(readme, "Start Where It Pays", "README entrypoint design");
-expectIncludes(readme, "production-ready beta", "README maturity contract");
+expectIncludes(readme, "stable `1.x` for the documented and tested surface", "README maturity contract");
 expectIncludes(readme, "docs/why-rubyhx.md", "README product thesis link");
 expectIncludes(readme, "docs/getting-started.md", "README getting-started link");
 expectIncludes(readme, "docs/packages-and-installation.md", "README package docs link");
@@ -276,7 +276,7 @@ expectIncludes(publicUpgradeCheck, "3de7a3133bc2c7032eceb64d03f52de9bdc9b5040169
 expectIncludes(publicUpgradeCheck, "3b775ca2f869404e067c861b5f989204ca8aef59f233d6a5448c8a08d3725a65", "v0.4.0 gem identity");
 expectIncludes(
   compatibilityMatrix,
-  "| Rails supported line | `8.1` | Supported beta |",
+  "| Rails supported line | `8.1` | Supported stable line |",
   "current Rails supported line"
 );
 expectIncludes(
@@ -290,7 +290,7 @@ expectIncludes(
   "Rails range evidence boundary"
 );
 expectExcludes(compatibilityMatrix, "Rails 7+/8 style app shape", "Rails support wording");
-expectIncludes(productionReadiness, "verified RailsHx beta line is Rails `8.1`", "verified Rails line");
+expectIncludes(productionReadiness, "verified RailsHx stable line is Rails `8.1`", "verified Rails line");
 expectIncludes(productionReadiness, "exercised at Rails `8.1.3`", "exact Rails evidence");
 expectIncludes(
   stableReviewReport,
@@ -346,8 +346,8 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   const policyPlugin = releaseConfig.plugins.find(
     (entry) => Array.isArray(entry) && entry[0] === "./scripts/release/analyze-commits.mjs"
   );
-  if (!policyPlugin || JSON.stringify(policyPlugin[1]?.approvedStableMajors) !== "[]") {
-    fail("release policy must keep stable majors unapproved until an explicit reviewed policy change");
+  if (!policyPlugin || JSON.stringify(policyPlugin[1]?.approvedStableMajors) !== "[1]") {
+    fail("release policy must record the reviewed approval of stable major 1 only");
   }
   if (policyPlugin?.[1]?.historicalPrereleaseBaseline !== "v0.1.0-beta.2" || policyPlugin?.[1]?.transitionAliasTag !== "v0.0.0") {
     fail("release policy must pin the public beta baseline and reserved local-only transition alias");
@@ -407,7 +407,7 @@ expectIncludes(releaseTransition, "git push --tags", "release transition safety 
 expectIncludes(releaseTransition, "newest merged prerelease", "release transition baseline guard");
 expectIncludes(releaseVersionPolicyCheck, 'from "semantic-release"', "release version policy check");
 expectIncludes(releaseVersionPolicyCheck, '"99.99.99"', "release version policy package-independence fixture");
-expectIncludes(releaseVersionPolicyDocs, "normal `0.x` releases from `main`", "release version policy docs");
+expectIncludes(releaseVersionPolicyDocs, "normal releases from `main`", "release version policy docs");
 expectIncludes(releaseVersionPolicyDocs, "v0.1.0-beta.2", "release version policy transition docs");
 expectIncludes(releaseVersionPolicyDocs, "separate SemVer concepts", "release version policy prerelease distinction");
 expectIncludes(releaseVersionPolicyDocs, "## v<SemVer>", "release notes format documentation");
@@ -479,7 +479,7 @@ expectIncludes(releaseArtifactPrepare, '"reflaxe.ruby-release.zip.sha256.json"',
 expectIncludes(versionSyncCheck, "DEVELOPMENT_VERSION", "version sentinel check");
 expectExcludes(readme, "dist/reflaxe.ruby-*.zip", "README stale Haxelib glob");
 expectExcludes(readme, "dist/hxruby-*.gem", "README stale gem glob");
-expectIncludes(agentsGuide, "normal `0.x` releases from `main`", "AGENTS release policy");
+expectIncludes(agentsGuide, "normal releases from `main`", "AGENTS release policy");
 expectIncludes(agentsGuide, "approvedStableMajors", "AGENTS stable-major policy");
 expectIncludes(agentsGuide, "`0.0.0` development sentinel", "AGENTS staging policy");
 expectIncludes(agentsGuide, "upload only fixed exact local artifact paths rather than globs", "AGENTS artifact path policy");
@@ -600,6 +600,12 @@ expectIncludes(hxrubyGemspec, 'vendor/genes/src/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.3"', "hxruby.gemspec");
 if (supportMatrix.schemaVersion !== 1) {
   fail("support matrix schema version must remain explicit");
+}
+if (supportMatrix.maturity?.rubyhx !== "stable 1.x" || supportMatrix.maturity?.railshx !== "stable 1.x") {
+  fail("support matrix must record the approved stable 1.x maturity for RubyHx and RailsHx");
+}
+if (supportMatrix.railsHx?.status !== "stable") {
+  fail("support matrix must record RailsHx as stable within the documented support scope");
 }
 expectIncludes(hxrubyTasks, 'require "hxruby/support_matrix"', "hxruby support diagnostics");
 expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.ruby_error", "hxruby Ruby support diagnostics");

@@ -161,7 +161,9 @@
       [
         "./scripts/release/analyze-commits.mjs",
         {
-          "approvedStableMajors": [],
+          "approvedStableMajors": [
+            1
+          ],
           "historicalPrereleaseBaseline": "v0.1.0-beta.2",
           "transitionAliasTag": "v0.0.0"
         }

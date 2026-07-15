@@ -34,10 +34,11 @@ artificial compatibility ceiling: newer or otherwise unverified Ruby and Rails
 versions may work and are warned about rather than rejected unless they violate
 a real minimum requirement.
 
-Before stable `1.x`, compatibility changes follow the major-zero policy and
-must appear in release notes and the support matrix. Stable-major approval and
-the future `1.x` deprecation contract remain separate evidence-gated decisions;
-see [Release Version Policy](docs/release-version-policy.md).
+Stable `1.x` compatibility changes follow the public SemVer and deprecation
+contract and must appear in release notes and the support matrix. A future
+stable major requires its own evidence-gated approval; approval for major 1
+does not authorize major 2. See [Public Contract](docs/public-contract.md) and
+[Release Version Policy](docs/release-version-policy.md).
 
 ## Maintenance Rhythm
 

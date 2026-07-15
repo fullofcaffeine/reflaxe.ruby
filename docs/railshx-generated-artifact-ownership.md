@@ -47,11 +47,11 @@ The `output` is always app-relative. The `kind` describes the artifact class
 `rails_config`, and so on). The `source` records the generator or compiler lane
 that produced the file. The checksum is over the written file content.
 
-Version `1` is the only ownership-manifest schema emitted by the public beta
-line, including `v0.4.0`. Readers require that exact version and validate every
-output path and checksum before mutation. A missing, malformed, or unknown
-version fails closed; RailsHx will add a migration only when a real future
-schema change creates something to migrate.
+Version `1` is the only ownership-manifest schema emitted across the public
+`0.x` history and stable `1.x` line, including `v0.4.0`. Readers require that
+exact version and validate every output path and checksum before mutation. A
+missing, malformed, or unknown version fails closed; RailsHx will add a
+migration only when a real future schema change creates something to migrate.
 
 ## Write Policy
 

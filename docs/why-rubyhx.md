@@ -288,11 +288,12 @@ the documented contract.
 
 ## Maturity And Claim Policy
 
-The current public claim is **production-ready beta for the documented and
-tested surface**. It means supported workflows have compiler, snapshot,
-runtime, browser, production, packaging, and security evidence. It does not mean
-the public API has a stable `1.x` compatibility guarantee or that every
-production dimension has completed an independent stable-release audit.
+The current public claim is **stable `1.x` for the documented and tested
+surface**. It means supported workflows have compiler, snapshot, runtime,
+browser, production, packaging, security, and independent-review evidence, and
+the classified public boundaries carry the `1.x` compatibility guarantee. It
+does not mean every Ruby gem, Rails API, Haxe library, database, browser, or
+deployment platform is supported.
 
 Use these wording rules:
 
@@ -304,14 +305,14 @@ Use these wording rules:
   “Ruby and JavaScript cannot share anything today.”
 - Say **“a better authoring option where its guarantees pay off”**, not “a
   universal replacement for Ruby.”
-- Say **“production-ready beta for the documented surface”** until the stable
-  `1.0` evidence gates are independently reviewed and closed.
+- Say **“stable `1.x` for the documented and tested surface”** and keep the
+  support-matrix limits adjacent to broader production claims.
 
 Stable `1.0` is a compatibility and operating commitment, not a synonym for
-“many features.” Its cross-dimensional gate is defined in
-[RailsHx Production Readiness](railshx-production-readiness.md), and the
-independent review packet lives in
-[RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
+“many features.” Major 1 was approved only after the cross-dimensional gate in
+[RailsHx Production Readiness](railshx-production-readiness.md) and the
+[independent readiness review](reviews/rubyhx-railshx-1.0-readiness-review.md)
+were reconciled with exact-SHA evidence.
 
 ## Reusable Pitch
 
