@@ -1,12 +1,158 @@
 # RubyHx/RailsHx Stable 1.0 Readiness Review
 
-> **Final verdict: NOT READY: P1 STABLE-RELEASE BLOCKERS**
+> **Current post-blocker verdict: READY TO REQUEST STABLE-MAJOR APPROVAL**
 >
-> The exact reviewed commit has strong production-ready-beta evidence and a
-> successful canonical CI run. No P0 stop-ship defect was found in the currently
-> documented beta surface. Stable-major approval must wait until the P1 findings
-> in this report are closed or removed from the public stable scope with accurate
-> wording, diagnostics, and tests.
+> A fresh independent GPT-5.6 Pro review of the exact post-blocker source archive,
+> hosted CI, and immutable `v0.9.0` release found no remaining P0/P1 issue. This
+> verdict permits a separate recorded maintainer approval request. It does not
+> itself approve major 1, change the current beta wording, or authorize a release.
+> `approvedStableMajors` remains empty until that separate decision.
+
+The original readiness review is retained below as the historical finding record.
+Its `NOT READY` verdict and implementation plan are superseded by this addendum;
+the original evidence and findings remain useful provenance.
+
+## Post-Blocker Addendum
+
+### Reviewed Baseline
+
+| Item | Post-blocker reviewed value |
+| --- | --- |
+| Repository | https://github.com/fullofcaffeine/reflaxe.ruby |
+| Independent review commit | `a798e833d3d33e4fd9f5098abb25755cbd88f3ee` (`a798e83`), bead-only closure commit |
+| Latest product-source commit in that archive | `fceb8d35767d711ba3d7fd86c504e69d4b23d1b4` (`fceb8d3`), `refactor!: extract DeviseHx from compiler core` |
+| Authoritative source archive | `reflaxe-ruby-a798e83-source.zip` |
+| Source archive SHA-256 | `5bd72f16dec5ef260ba367dd48cf8c8974070c68bd428aa7ded44116f213820a` |
+| Reviewer/model | OpenAI GPT-5.6 Pro, fresh manual upload review |
+| Review time | 2026-07-14 18:16-18:48 in America/Mexico_City |
+| Review environment | Debian 13 Linux x86_64; Node 22.16.0/npm 10.9.2; Ruby 3.3.8/RubyGems 3.6.7; Haxe, Bundler, Rails, and browser execution unavailable locally |
+| Exact independent-review CI | Run `29366269417`, SHA `a798e83`, all jobs successful |
+| Exact code-bearing CI | Run `29363805879`, SHA `fceb8d3`, all jobs successful; published `v0.9.0` |
+| Final handoff corroboration | Run `29367890473`, SHA `f2932e670aab43adb53cac004ede0c5ed39880ac`, all jobs successful; semantic-release reported no relevant changes |
+| Latest public release | `v0.9.0`, tag resolves to `fceb8d3`; immutable ZIP/gem plus their SHA-256 sidecars |
+| Current product maturity wording | RubyHx and RailsHx remain `production-ready beta` until stable approval and publication |
+
+The complete source ZIP, not the Repomix navigation contexts, was authoritative.
+The independent reviewer inspected source, tests, workflows, public contracts,
+runtime and generator code, release tooling, and hosted evidence. Local static and
+Ruby/Node gates were classified separately from canonical Haxe/Rails/browser
+evidence. Closed beads and prior readiness prose were treated as claims, not proof.
+
+The exact review run's publication job did not publish because `main` advanced to
+the later bead-only handoff commit while it was running. That is valid no-release
+evidence but is not the cleanest semantic no-op proof by itself. The final handoff
+run removes the ambiguity: its release job analyzed both post-`v0.9.0` commits,
+reported that neither should trigger a release, and concluded `no release` and
+`There are no relevant changes, so no new version is released.`
+
+### Maintainer Reconciliation
+
+The maintainer rechecked the independent result against the live tree and hosted
+state rather than accepting the verdict verbatim. The following corrections and
+scope boundaries are part of the accepted record:
+
+1. The manual prompt named `npm run test:ruby-advisories`; the actual maintained
+   command is `npm run security:ruby-advisories`. The repository command and
+   canonical workflow are correct.
+2. The support matrix records verified evidence and support policy. It does not
+   impose a speculative maximum Ruby or Rails version. Generated Rails fixtures
+   keep the permissive `rails >= 7.0` dependency floor; Rails 8.1.3 is the exact
+   runtime line proven in canonical CI. Other satisfying versions warn as
+   unverified unless a concrete incompatibility is known.
+3. Performance evidence is a representative viability/runaway-regression
+   contract, not a speed comparison, latency SLA, or promise for every workload.
+4. Server debugging intentionally uses deterministic generated Ruby/ERB as the
+   line-level source. Ruby-to-Haxe server source maps and normalized
+   `haxe.CallStack` parity are not claimed.
+5. The public `v0.4.0` upgrade/rollback lane proves representative checksum-bound
+   package consumers and handwritten-source preservation. It does not claim an
+   automatic migration for every application or a schema version that does not
+   yet exist.
+6. The private vulnerability-reporting URL and policy were inspected, but the
+   independent reviewer correctly did not submit a live confidential report.
+7. Haxe/Rails/browser/package lanes that the reviewer could not execute locally
+   are supported by exact-SHA canonical CI, not recorded as local passes.
+
+Primary upstream sources were also rechecked. Ruby 3.2 is EOL, Ruby 3.3 is in
+security maintenance, Ruby 3.4/4.0 are in normal maintenance, Node 22 remains LTS,
+Haxe 4.3.7 is an official release, and Rails 8.1.3 is a published release. Those
+checks corroborate the committed matrix without expanding it.
+
+The maintainer also reran the focused closure gates at the final tracking-only
+head `f2932e6`, whose product source is byte-equivalent to the reviewed archive:
+
+- release version policy;
+- support-matrix unit and cross-surface synchronization checks;
+- generator containment tests: 15 runs, 52 assertions;
+- Ruby advisory scan plus known-vulnerable detection fixture;
+- DeviseHx core vocabulary guard and generic companion smoke;
+- exception flow and Ruby cause/backtrace smoke;
+- checksum-verified public `v0.4.0` upgrade and rollback;
+- representative CLI/server/client compile and CLI-startup viability benchmark
+  with no policy violations.
+
+All passed. Canonical runs `29366269417` and `29367890473` supply the complete
+Ruby 3.3/3.4/4.0 compiler suites, Rails 8.1.3 runtime matrix, browser, production,
+Rails production-boot benchmark, security, package, upgrade, and release-contract
+evidence.
+
+### P1 Closure Result
+
+| Finding | Independent disposition | Accepted closure basis |
+| --- | --- | --- |
+| RHX-1.0-001 support matrix | Confirmed closed | One machine contract aligns docs, gem requirements, generated fixtures, doctor behavior, and CI; verified versions are evidence, not false ceilings. |
+| RHX-1.0-002 DeviseHx boundary | Confirmed closed | Core compiler/macro vocabulary scan is clean; bounded generic filters, class macros, checked extensions, route payloads, test includes, and no-emit handoffs are exercised by DeviseHx and a fake companion. |
+| RHX-1.0-003 performance/resources | Confirmed closed | Canonical production CI records repeated compile/startup/production-boot duration, RSS, and artifact size under broad runaway caps with no comparative claim. |
+| RHX-1.0-004 debugging | Confirmed closed | Owned Haxe/HHX diagnostics, generated server source, browser maps, doctor provenance, Ruby frames, causes, and explicit limits form a truthful bounded contract. |
+| RHX-1.0-005 public contract/upgrades | Confirmed closed | Public/internal SemVer tiers, fail-closed manifest ownership, compiler/runtime identity, and checksum-bound `v0.4.0` upgrade/rollback are documented and executable. |
+| RHX-1.0-006 pure RubyHx workflow | Confirmed closed | Maintained multi-file library/CLI covers typed JSON/filesystem/errors/tests, Haxe and handwritten Ruby callers, public package installation, and negative diagnostics. |
+| RHX-1.0-007 security operations | Confirmed closed | Mandatory npm/Ruby advisory and vulnerable-fixture checks, full-history secret scanning, pinned actions, updates, private intake, and emergency ownership are present and green. |
+| RHX-1.0-008 support ownership | Confirmed closed | Named single-maintainer best-effort ownership, channels, cadences, sunsets, routing, and explicit no-SLA/no-LTS limits are public. |
+| RHX-1.0-009 generator containment | Confirmed closed | Lexical and canonical containment, symlink rejection, no-follow writes, manifest checks, preflight cleanup, and adjacent public mutation paths are covered. |
+
+No new P0 or P1 finding was accepted.
+
+### Readiness Delta
+
+| Dimension | Post-blocker status | Release consequence |
+| --- | --- | --- |
+| Product | PROVEN | Separate pure RubyHx, Haxe-first RailsHx, mixed adoption, HHX, Ruby caller, and package workflows support the scoped thesis. |
+| Architecture | PROVEN | Core is companion-neutral and DeviseHx uses bounded generic handoffs. |
+| Compiler semantics | PROVEN | Exact Ruby matrix runs the full compiler, negative, snapshot, deterministic, std, and package suite. |
+| Generated runtime | PROVEN | Runtime ABI, package consumers, exception behavior, and Ruby-shaped output are checked. |
+| Ruby interop | PROVEN | Callable ABI, native mappings, gem boundaries, exceptions, and handwritten callers are executable. |
+| Rails depth | PROVEN | Rails 8.1.3 runtime matrix plus browser and production dogfood passed. |
+| Public API/DX | PROVEN | Profiles, metadata, std inventory, commands, diagnostics, doctor, package layout, and policy agree. |
+| Authoring/adoption | PROVEN | Pure Ruby, Rails, mixed adoption, and Ruby-origin consumption have distinct maintained evidence. |
+| Full-stack sharing | PARTIAL, bounded | Selected portable types, constants, hooks, payloads, selectors, and pure logic are proven; broader isomorphic behavior is not claimed. |
+| Testing/release | PROVEN | Exact-SHA CI, immutable artifact verification, public upgrade/rollback, and clean no-release behavior passed. |
+| Security | PROVEN | Dependency, vulnerable-fixture, secret, update, reporting, and ownership controls are present and green. |
+| Performance | PROVEN | Representative viability evidence runs under broad caps; no comparative speed claim is made. |
+| Debugging | PROVEN | The generated-source server contract and browser source maps are explicit and exercised. |
+| Compatibility/upgrades | PROVEN | One permissive evidence matrix and representative public package upgrade/rollback contract agree. |
+| Documentation/support | PROVEN | Scoped claims, ownership, channels, cadence, sunsets, and single-maintainer limits are public. |
+
+### Residual P2 Work
+
+Two non-blocking risks remain deliberately tracked:
+
+- `haxe_ruby-e2ba` / RHX-1.0-101: continue decomposing the approximately
+  14.8-KLOC `RubyCompiler.hx` behind typed services;
+- `haxe_ruby-r0h0` / RHX-1.0-102: deepen the Ruby/JavaScript shared-behavior
+  evidence or preserve the current narrow claim permanently.
+
+Neither is P1 because the current documented stable scope does not depend on the
+missing breadth. No new bead is needed for the stale manual-prompt command name;
+the distributed repository command and CI contract are already correct.
+
+### Governance Result
+
+The evidence gate is complete, and the stable-blocker epic closes with this
+addendum and its tracking changes. Stable major 1 still requires a separate
+explicit maintainer decision to change
+`approvedStableMajors` from `[]` to `[1]`. Until that happens, public wording
+correctly remains beta and ordinary release analysis must continue to fail closed
+for an unapproved stable-major transition.
 
 ## 1. Review Baseline
 
@@ -121,11 +267,11 @@ independent review missed:
 | RHX-1.0-008 | Resolved with a truthful public single-maintainer, best-effort support model, named channels and authority, compatibility/security review cadence, and core/companion routing. No fictional backup maintainer or SLA was added. |
 | RHX-1.0-009 | Resolved by canonical path containment and no-follow writes across ordinary/forced output, manifest writes, route extern writes, client rewrites, and cleanup, with focused symlink-escape regression tests. |
 
-These refinements do not change the stable verdict. They make the implementation
-work smaller and more exact, and prevent existing evidence from being rebuilt
-unnecessarily.
+At the time of the original review, these refinements did not change its stable
+verdict. The post-blocker addendum above now supersedes that verdict after all
+findings closed and a fresh independent review found no P0/P1.
 
-## 2. Executive Verdict
+## 2. Original Executive Verdict (Superseded)
 
 ## NOT READY: P1 STABLE-RELEASE BLOCKERS
 
@@ -1153,9 +1299,10 @@ pass:
 | RHX-1.0-101 compiler decomposition | haxe_ruby-e2ba |
 | RHX-1.0-102 shared behavior claim | haxe_ruby-r0h0 |
 
-Do not close the stable-blocker epic merely because implementation changes
-merge. Close each finding only with its named acceptance evidence, then rerun
-the independent review against the exact RC.
+This was the original closure rule. It has now been satisfied: every P1 finding
+closed with its named evidence and the post-blocker independent review found no
+new P0/P1. The stable-blocker epic can close while the separate stable-major
+approval setting remains unchanged.
 
 ## 15. External Primary Sources Used by the Review
 
@@ -1176,7 +1323,7 @@ the independent review against the exact RC.
 - Node 22 patch context:
   https://nodejs.org/en/blog/release/v22.22.1
 
-## 16. Owner Summary
+## 16. Original Owner Summary (Superseded)
 
 The reviewed commit is a strong production-ready beta with broad exact-SHA CI,
 real Rails runtime/browser/production evidence, fail-closed compiler tests, and

@@ -44,10 +44,15 @@ escape-hatch policy, and Rails-native app/generator workflows are tracked and
 covered. Future breadth remains normal beta evolution, not an implicit blocker
 for the closed readiness gate.
 
-Stable `1.0` has **not** been declared. It requires an independent evidence
-review, closure of every resulting stable-release blocker, a public API and
-compatibility commitment, and explicit release-policy approval. The review
-packet is [RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
+Stable `1.0` has **not** been declared. The independent post-blocker evidence
+review and maintainer reconciliation are complete, every resulting P1 blocker is
+closed, and no new P0/P1 was found. The project is therefore ready to request a
+separate explicit release-policy approval. See the current addendum in
+[RubyHx/RailsHx Stable 1.0 Readiness Review](reviews/rubyhx-railshx-1.0-readiness-review.md)
+and its reproducible prompt in
+[RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
+This evidence result does not itself approve or publish major 1;
+`approvedStableMajors` remains empty.
 The current best-effort single-maintainer ownership, intake channels, cadence,
 and core/companion routing are published in
 [Support And Maintenance](../SUPPORT.md).
@@ -67,8 +72,9 @@ the real Rails `>= 7.0` floor and impose no speculative future-major ceiling.
 The verified RailsHx beta line is Rails `8.1`, exercised at Rails `8.1.3` across
 the supported Ruby branches. Other Rails lines may work and receive a doctor
 warning rather than an incompatibility error. Stable `1.0` remains gated by the
-other project-wide evidence in this document, not by expanding this into a
-combinatorial Rails version matrix.
+separate explicit approval decision, not by expanding this into a combinatorial
+Rails version matrix or speculating that later compatible Ruby/Rails versions
+must fail.
 
 Support expectation for production-beta use:
 
@@ -167,6 +173,12 @@ The review should create or update beads for concrete gaps. “Needs more
 confidence,” “support everything,” or “improve quality” are not actionable exit
 criteria; each finding needs an owner, bounded outcome, evidence gate, and
 severity tied to the documented supported scope.
+
+As of the 2026-07-14 post-blocker review, these evidence exits are satisfied and
+the stable-blocker epic `haxe_ruby-1sd` is closed. Stable major 1 still requires
+the separately recorded maintainer decision described above. Residual compiler
+decomposition (`haxe_ruby-e2ba`) and broader cross-target sharing
+(`haxe_ruby-r0h0`) remain bounded P2 follow-ups outside the current release gate.
 
 ## Tracked Work
 
