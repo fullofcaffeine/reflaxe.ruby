@@ -1,14 +1,14 @@
 # RubyHx/RailsHx Stable 1.0 Readiness Review
 
-> **Current follow-up verdict: NOT READY: EXACT-SHA DEPENDENCY-CLOSURE CONFIRMATION PENDING**
+> **Current post-closure verdict: READY TO REQUEST STABLE-MAJOR APPROVAL**
 >
 > A fresh independent GPT-5.6 Pro review of the exact post-blocker source archive,
 > hosted CI, and immutable `v0.9.0` release found no remaining P0/P1 issue. This
-> review remains valid evidence, but the maintainer subsequently clarified that
-> stable RailsHx must prove the dependency closure of every marketed component
-> slice. RHX-1.0-010 implements that audit and passes locally; stable approval is
-> paused until the implementation passes exact-SHA canonical CI.
-> `approvedStableMajors` remains empty.
+> review remains valid evidence, and the maintainer's subsequent requirement to
+> prove the dependency closure of every marketed RailsHx component is now closed
+> by RHX-1.0-010. Local gates and exact-SHA canonical CI run `29393793697` passed.
+> This verdict permits a separate recorded maintainer approval request; it does
+> not grant that approval. `approvedStableMajors` remains empty.
 
 The original readiness review is retained below as the historical finding record.
 Its `NOT READY` verdict and implementation plan are superseded by this addendum;
@@ -115,11 +115,10 @@ evidence.
 | RHX-1.0-007 security operations | Confirmed closed | Mandatory npm/Ruby advisory and vulnerable-fixture checks, full-history secret scanning, pinned actions, updates, private intake, and emergency ownership are present and green. |
 | RHX-1.0-008 support ownership | Confirmed closed | Named single-maintainer best-effort ownership, channels, cadences, sunsets, routing, and explicit no-SLA/no-LTS limits are public. |
 | RHX-1.0-009 generator containment | Confirmed closed | Lexical and canonical containment, symlink rejection, no-follow writes, manifest checks, preflight cleanup, and adjacent public mutation paths are covered. |
-| RHX-1.0-010 component dependency closure | Implemented; exact-SHA confirmation pending | A machine audit maps 13 marketed component families to compile, negative, and target evidence; scans maintained RailsHx/DeviseHx sources against the Haxe std parity ledger and Ruby facade inventory; and adds mandatory exact-Rails runtime for ActiveSupport, instrumentation, concerns, and real generator loading. Local `npm test` and `npm run test:rails-runtime` pass. |
+| RHX-1.0-010 component dependency closure | Confirmed closed | A machine audit maps 13 marketed component families to compile, negative, and target evidence; scans 487 maintained RailsHx/DeviseHx sources against the Haxe std parity ledger and Ruby facade inventory; and adds mandatory exact-Rails runtime for ActiveSupport, instrumentation, concerns, and real generator loading. Local gates and exact-SHA canonical CI run `29393793697` passed across Ruby 3.3/3.4/4.0. |
 
-No new P0 was found. RHX-1.0-010 is the bounded P1 created from the maintainer's
-post-review product-scope clarification; it remains open until canonical CI
-confirms the implementation.
+No new P0 was found. RHX-1.0-010 was the bounded P1 created from the maintainer's
+post-review product-scope clarification and is now confirmed closed.
 
 ### Readiness Delta
 
@@ -127,10 +126,10 @@ confirms the implementation.
 | --- | --- | --- |
 | Product | PROVEN | Separate pure RubyHx, Haxe-first RailsHx, mixed adoption, HHX, Ruby caller, and package workflows support the scoped thesis. |
 | Architecture | PROVEN | Core is companion-neutral and DeviseHx uses bounded generic handoffs. |
-| Compiler semantics | PROVEN, follow-up confirmation pending | The dependency audit additionally requires every Haxe/std module directly used by supported RailsHx sources to be covered; exact-SHA CI must confirm the new guard. |
+| Compiler semantics | PROVEN | The dependency audit requires every Haxe/std module directly used by supported RailsHx sources to be covered; the new guard passed locally and at the exact canonical SHA. |
 | Generated runtime | PROVEN | Runtime ABI, package consumers, exception behavior, and Ruby-shaped output are checked. |
 | Ruby interop | PROVEN | Callable ABI, native mappings, gem boundaries, exceptions, and handwritten callers are executable. |
-| Rails depth | PROVEN, follow-up confirmation pending | Rails 8.1.3 runtime matrix plus browser and production dogfood passed; the new exact-Rails component runtime must pass at the candidate SHA. |
+| Rails depth | PROVEN | Rails 8.1.3 runtime matrix, exact-Rails component runtime, browser, and production dogfood passed at the candidate SHA. |
 | Public API/DX | PROVEN | Profiles, metadata, std inventory, commands, diagnostics, doctor, package layout, and policy agree. |
 | Authoring/adoption | PROVEN | Pure Ruby, Rails, mixed adoption, and Ruby-origin consumption have distinct maintained evidence. |
 | Full-stack sharing | PARTIAL, bounded | Selected portable types, constants, hooks, payloads, selectors, and pure logic are proven; broader isomorphic behavior is not claimed. |
@@ -157,9 +156,9 @@ the distributed repository command and CI contract are already correct.
 ### Governance Result
 
 The independent evidence gate was complete at its reviewed baseline. The later
-maintainer clarification opened RHX-1.0-010 and temporarily pauses the stable
-approval request until exact-SHA canonical CI confirms its dependency-closure
-guard and mandatory Rails component runtime. Stable major 1 still requires a
+maintainer clarification opened RHX-1.0-010; its dependency-closure guard and
+mandatory Rails component runtime are now confirmed by exact-SHA canonical CI.
+The project is ready to request approval, but stable major 1 still requires a
 separate explicit maintainer decision to change `approvedStableMajors` from
 `[]` to `[1]`; public wording remains beta.
 

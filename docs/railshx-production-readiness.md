@@ -53,10 +53,10 @@ covered. Future breadth remains normal beta evolution, not an implicit blocker
 for the closed readiness gate.
 
 Stable `1.0` has **not** been declared. The independent post-blocker evidence
-review found no P0/P1, but the maintainer subsequently clarified that every
-marketed RailsHx component must prove its dependency closure. RHX-1.0-010 now
-implements that audit and passes locally; the separate release-policy approval
-request is paused until exact-SHA canonical CI confirms it. See the current addendum in
+review found no P0/P1, and the maintainer's subsequent dependency-closure
+clarification is now implemented and confirmed by exact-SHA canonical CI in
+RHX-1.0-010. The project is therefore ready to request a separate explicit
+release-policy approval. See the current addendum in
 [RubyHx/RailsHx Stable 1.0 Readiness Review](reviews/rubyhx-railshx-1.0-readiness-review.md)
 and its reproducible prompt in
 [RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
@@ -187,9 +187,9 @@ severity tied to the documented supported scope.
 
 The original 2026-07-14 post-blocker review satisfied these exits and closed the
 stable-blocker epic `haxe_ruby-1sd`. The later dependency-closure clarification
-is tracked as RHX-1.0-010 (`haxe_ruby-a13d`); its implementation is locally green
-and awaits exact-SHA canonical CI before closure. Stable major 1 then still
-requires the separately recorded maintainer decision described above. Residual
+is closed as RHX-1.0-010 (`haxe_ruby-a13d`) with local and exact-SHA canonical
+evidence. Stable major 1 still requires the separately recorded maintainer
+decision described above. Residual
 compiler decomposition (`haxe_ruby-e2ba`) and broader cross-target sharing
 (`haxe_ruby-r0h0`) remain bounded P2 follow-ups outside the release gate.
 

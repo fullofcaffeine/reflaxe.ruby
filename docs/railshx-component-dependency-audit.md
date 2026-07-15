@@ -75,7 +75,10 @@ At the 2026-07-14 stable-candidate audit, the supported roots directly use only
 Haxe/sys modules classified as covered. The two direct Ruby facade imports are
 `ruby.File` and `ruby.StandardError`; both are implemented and exercised by
 their owning ActiveStorage and ActiveJob paths. No supported component imports
-one of the unfinished Haxe parity candidates.
+one of the unfinished Haxe parity candidates. Exact-SHA canonical CI run
+`29393793697` passed this guard and the mandatory Rails 8.1.3 runtime matrix on
+Ruby 3.3, 3.4, and 4.0 for commit
+`39a53120c57405115ddd3c68df720fad724e6333`.
 
 This result does not make a whole-Haxe-stdlib or whole-Ruby-stdlib claim. The
 remaining parity candidates stay unavailable to the stable contract unless a
