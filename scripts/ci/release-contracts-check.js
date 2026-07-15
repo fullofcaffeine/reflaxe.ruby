@@ -445,6 +445,21 @@ expectIncludes(releaseEvidenceDocs, "`prerelease=true`", "historical prerelease 
 expectIncludes(releaseEvidenceDocs, "`prerelease=false`", "normal major-zero channel evidence");
 expectIncludes(releaseEvidenceDocs, "`immutable=false`", "historical host immutability evidence");
 expectIncludes(releaseEvidenceDocs, "`v0.0.0` alias is absent", "transition alias absence evidence");
+for (const evidence of [
+  "## Stable 1.0 publication",
+  "82f7b09d807bd468febd98bf540a391d3484857a",
+  "29452140844",
+  "87483615576",
+  "`draft=false`, `prerelease=false`, and `immutable=true`",
+  "hxruby-1.0.0.gem",
+  "13d09d13347dff13c4fa8969fdecd6196a9392d29373edbbca7935d172a12ec9",
+  "reflaxe.ruby-1.0.0.zip",
+  "cb9c1fb6d97c4e1c7f2016915c28ba99eb1c70ddd19b480ef8300119e2d787d4",
+  "all 663 ZIP entries",
+  "all 303 gem entries",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "stable 1.0 hosted release evidence");
+}
 expectIncludes(releaseEvidenceDocs, "## No-release continuity proof", "hosted no-release evidence section");
 for (const evidence of [
   "e485d098056cc3b1377a8b52928a302963570538",

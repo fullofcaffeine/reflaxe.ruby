@@ -9,7 +9,9 @@
 > by RHX-1.0-010. Local gates and exact-SHA canonical CI run `29393793697` passed.
 > RHX-1.0-011 records the maintainer's separate 2026-07-15 approval of stable
 > major 1. The release policy now records `approvedStableMajors: [1]`; normal
-> exact-tested-SHA CI exclusively owns `v1.0.0` publication.
+> exact-tested-SHA CI published immutable `v1.0.0` from
+> `82f7b09d807bd468febd98bf540a391d3484857a` after all required jobs passed in
+> canonical run `29452140844`.
 
 The original readiness review is retained below as the historical finding
 record. Its `NOT READY` verdict and implementation plan are superseded by the
@@ -35,6 +37,18 @@ The reviewed release-policy change moves `approvedStableMajors` from `[]` to
 `[1]`. A deliberate breaking graduation commit is therefore eligible to select
 `1.0.0`, but only the canonical main workflow may tag, build, verify, and
 publish it after every same-run gate succeeds.
+
+That controlled publication completed on 2026-07-15. Canonical workflow
+[`29452140844`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29452140844)
+passed all 13 prerequisite jobs at exact SHA
+`82f7b09d807bd468febd98bf540a391d3484857a`; its final privileged release job
+[`87483615576`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29452140844/job/87483615576)
+published immutable
+[`v1.0.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.0.0).
+The tag, four expected hosted assets and sidecars, downloaded SHA-256 values,
+embedded provenance, and full manifests all bind to that source SHA. Exact
+asset identities are recorded in
+[Live Release Protocol Evidence](../release-live-evidence.md).
 
 ## Post-Blocker Addendum
 

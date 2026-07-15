@@ -5,6 +5,45 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.0 publication
+
+The maintainer approved stable major 1 under RHX-1.0-011, and the normal
+tested-commit workflow published
+[`v1.0.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.0.0)
+on 2026-07-15. This was the first release under the combined stable `1.x`
+RubyHx and RailsHx compatibility contract.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `82f7b09d807bd468febd98bf540a391d3484857a` |
+| Release intent | `feat: graduate RubyHx and RailsHx to stable 1.0`, with an explicit `BREAKING CHANGE` establishing the documented stable `1.x` contract |
+| Canonical release tag | `v1.0.0`, a lightweight tag whose local ref, fetched origin ref, and remote ref all resolve directly to the tested source SHA |
+| Same-run CI workflow | [`29452140844`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29452140844), `success`; all 13 security, formatter, release-contract, browser, production, Ruby compiler/package, and Rails 8.1.3 runtime prerequisite jobs passed |
+| Privileged release job | [`87483615576`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29452140844/job/87483615576), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-15T22:06:03Z` |
+| Release notes | Version heading, `v0.9.0...v1.0.0` compare link, categorized feature bullet with the exact commit link, and an explicit breaking-changes section |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.0.0.gem` | `hxruby 1.0.0 Ruby gem` | 247296 | `13d09d13347dff13c4fa8969fdecd6196a9392d29373edbbca7935d172a12ec9` |
+| `hxruby-1.0.0.gem.sha256.json` | `hxruby 1.0.0 SHA-256 metadata` | 301 | `56274eda7fa8feef915e57e63821fb67ab8d1e9aaae9b003e1ae3aa0e06d3cde` |
+| `reflaxe.ruby-1.0.0.zip` | `reflaxe.ruby 1.0.0 haxelib package` | 1186388 | `cb9c1fb6d97c4e1c7f2016915c28ba99eb1c70ddd19b480ef8300119e2d787d4` |
+| `reflaxe.ruby-1.0.0.zip.sha256.json` | `reflaxe.ruby 1.0.0 SHA-256 metadata` | 314 | `2440e4f1f518040e598332206a4c171fec319e609eaeadaba957f742ab4b285f` |
+
+Each sidecar records version `1.0.0`, tag `v1.0.0`, the tested source SHA,
+the hosted filename, byte count, and matching consumer-artifact digest. The
+extracted ZIP and gem both embed the same release provenance, `1.0.0` package
+and runtime version metadata, and complete format-1 manifests. The maintained
+manifest verifier accepted all 663 ZIP entries and all 303 gem entries with no
+missing, altered, duplicate, or extra content. Native immutable releases remain
+enabled, and active tag ruleset `18851281` still protects `refs/tags/v*` from
+deletion and non-fast-forward changes with no bypass actor. GitHub Releases is
+the only distribution host claimed for these bytes.
+
 ## First protocol publication
 
 The first live publication was
@@ -98,7 +137,9 @@ Actions APIs plus downloaded sidecars. Recheck them with read-only commands:
 
 ```bash
 git ls-remote --tags origin
+gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.0.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v0.1.2
+gh run view 29452140844 --json headSha,conclusion,jobs,url
 gh run view 29221893930 --json headSha,conclusion,jobs,url
 gh run view 29221904625 --json headSha,conclusion,jobs,url
 gh run view 29225406658 --json headSha,conclusion,jobs,url

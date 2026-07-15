@@ -59,8 +59,14 @@ canonical CI in RHX-1.0-010. See the current addendum in
 and its reproducible prompt in
 [RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
 The release policy records `approvedStableMajors: [1]`; later stable majors
-still require separate approval and regression evidence. Publication remains
-owned exclusively by the exact-tested-SHA canonical workflow.
+still require separate approval and regression evidence. The exact-tested-SHA
+canonical workflow passed all required jobs and published immutable
+[`v1.0.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.0.0)
+from `82f7b09d807bd468febd98bf540a391d3484857a` in
+[run `29452140844`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29452140844).
+The tag, assets, sidecars, embedded provenance, and manifest verification are
+recorded in [Live Release Protocol Evidence](release-live-evidence.md). Future
+publication remains owned exclusively by that canonical workflow.
 The current best-effort single-maintainer ownership, intake channels, cadence,
 and core/companion routing are published in
 [Support And Maintenance](../SUPPORT.md).
