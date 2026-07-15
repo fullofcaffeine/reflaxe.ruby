@@ -20,6 +20,14 @@ alone cannot establish that RailsHx is ready for production teams. The stable
 gate therefore evaluates the whole authoring-to-deployment system across the
 dimensions below.
 
+Stable scope is dependency-closed. Every RailsHx component slice described as
+supported must have evidence for the Haxe/std behavior, compiler/runtime seams,
+direct Ruby facades, Rails/gem contracts, generated artifacts, and target
+execution it actually requires. This is a stricter rule than showing that an
+unrelated reference-app path is green, but it is not a requirement to implement
+the complete Haxe or Ruby standard library. See
+[RailsHx Component Dependency Closure](railshx-component-dependency-audit.md).
+
 Tracking epic: `haxe.ruby-bjv` RailsHx production readiness.
 
 ## Current Status
@@ -45,9 +53,10 @@ covered. Future breadth remains normal beta evolution, not an implicit blocker
 for the closed readiness gate.
 
 Stable `1.0` has **not** been declared. The independent post-blocker evidence
-review and maintainer reconciliation are complete, every resulting P1 blocker is
-closed, and no new P0/P1 was found. The project is therefore ready to request a
-separate explicit release-policy approval. See the current addendum in
+review found no P0/P1, but the maintainer subsequently clarified that every
+marketed RailsHx component must prove its dependency closure. RHX-1.0-010 now
+implements that audit and passes locally; the separate release-policy approval
+request is paused until exact-SHA canonical CI confirms it. See the current addendum in
 [RubyHx/RailsHx Stable 1.0 Readiness Review](reviews/rubyhx-railshx-1.0-readiness-review.md)
 and its reproducible prompt in
 [RubyHx/RailsHx GPT 5.6 Pro 1.0 Review](rubyhx-railshx-gpt56-1.0-review.md).
@@ -131,10 +140,10 @@ an input, not automatic proof that a dimension is complete.
 | Dimension | Stable `1.0` evidence required |
 | --- | --- |
 | Product scope and claims | RubyHx, RailsHx, `hxruby`, profiles, Haxe-first authoring, Ruby-first adoption, supported use cases, and non-goals are named consistently. Every material public claim has a repository proof or narrower wording. |
-| Compiler and Haxe semantics | Supported typed expressions, control flow, classes, modules, functions, enums, exceptions, numeric/string/collection behavior, and both profile contracts are fail-closed and covered by snapshots plus runtime parity tests. Unsupported lowering never silently changes behavior. |
+| Compiler and Haxe semantics | Supported typed expressions, control flow, classes, modules, functions, enums, exceptions, numeric/string/collection behavior, and both profile contracts are fail-closed and covered by snapshots plus runtime parity tests. Every Haxe/std dependency required by a supported RailsHx component is covered; unsupported lowering never silently changes behavior. This does not imply whole-Haxe-stdlib parity. |
 | Generated Ruby and runtime helpers | Output is deterministic, readable, syntax-valid, and Ruby-native where behavior permits. Every helper has documented ownership, compatibility, loading, versioning, and security policy; runtime-free claims are made only for fixtures that prove them. |
-| Ruby stdlib and ecosystem interop | The supported std inventory is explicit. Blocks, keywords, rest/forwarding, constants, modules, mixins, monkey patches, gems, RBS, YARD, native extensions, and dynamic boundaries have typed contracts, diagnostics, examples, and honest unsupported cases. |
-| Rails framework contract | The marketed Haxe-first and gradual-adoption paths across ActiveRecord, migrations, controllers, params, routing, ActionView/HHX, Hotwire, jobs, mailers, storage, tests, generators, and engines are Rails-native and tested. The TSX-like typed-view claim distinguishes compile-time guarantees from HTML/accessibility/browser behavior and proves normal ERB output without a client view runtime. Breadth gaps are classified as blocker, documented unsupported surface, or post-1.0 enhancement. |
+| Ruby stdlib and ecosystem interop | The supported std inventory is explicit. Every direct `ruby.*` facade required by a supported RailsHx component is implemented and covered. Blocks, keywords, rest/forwarding, constants, modules, mixins, monkey patches, gems, RBS, YARD, native extensions, and dynamic boundaries have typed contracts, diagnostics, examples, and honest unsupported cases. This does not imply a typed facade for the whole Ruby stdlib. |
+| Rails framework contract | The marketed Haxe-first and gradual-adoption paths across ActiveRecord, migrations, controllers, params, routing, ActionView/HHX, Hotwire, jobs, mailers, storage, tests, generators, and engines are Rails-native, dependency-closed, and tested. The TSX-like typed-view claim distinguishes compile-time guarantees from HTML/accessibility/browser behavior and proves normal ERB output without a client view runtime. Breadth gaps are classified as blocker, documented unsupported surface, or post-1.0 enhancement. |
 | Authoring UX and API stability | Canonical Haxe APIs are typed, ergonomic, documented, discoverable in editors, and free of accidental compiler plumbing. A Haxe-first user can complete normal workflows without editing generated Ruby. Public packages, metadata, defines, generated manifests, diagnostics, and compatibility aliases have an inventory and deprecation policy. |
 | Haxe-first authoring, gradual adoption, and ownership | Haxe-owned, Ruby-owned, and partial-ownership modes are each proven and fail closed on unsafe paths or unowned content. Existing Ruby can call generated code and typed Haxe can consume existing code without requiring a rewrite or leaking broad `Dynamic` contracts. Haxe-first evidence is not inferred from mixed-adoption evidence. |
 | Full-stack Ruby/JavaScript sharing | At least one maintained reference flow proves selected shared types or behavior on both targets, with target-specific boundaries, serialization compatibility, client build integration, and two-target tests. The Genes custom-emitter, importmap rewrite, vendoring, stock-emitter alternative, and upgrade ownership are explicit. Docs do not imply that all application code should be isomorphic. |
@@ -158,6 +167,8 @@ true:
   scope with accurate diagnostics and docs;
 - the supported API/metadata/define/generated-artifact inventory and SemVer
   boundary are reviewed, with deprecation and migration policy in place;
+- the machine component-dependency audit passes, and every supported component
+  has mandatory compile, negative, and applicable target-runtime evidence;
 - the compatibility matrix and reference workflows pass on the exact release
   candidate, including Ruby compiler/runtime, Rails runtime, browser, production,
   and package-consumer lanes;
@@ -174,11 +185,13 @@ confidence,” “support everything,” or “improve quality” are not action
 criteria; each finding needs an owner, bounded outcome, evidence gate, and
 severity tied to the documented supported scope.
 
-As of the 2026-07-14 post-blocker review, these evidence exits are satisfied and
-the stable-blocker epic `haxe_ruby-1sd` is closed. Stable major 1 still requires
-the separately recorded maintainer decision described above. Residual compiler
-decomposition (`haxe_ruby-e2ba`) and broader cross-target sharing
-(`haxe_ruby-r0h0`) remain bounded P2 follow-ups outside the current release gate.
+The original 2026-07-14 post-blocker review satisfied these exits and closed the
+stable-blocker epic `haxe_ruby-1sd`. The later dependency-closure clarification
+is tracked as RHX-1.0-010 (`haxe_ruby-a13d`); its implementation is locally green
+and awaits exact-SHA canonical CI before closure. Stable major 1 then still
+requires the separately recorded maintainer decision described above. Residual
+compiler decomposition (`haxe_ruby-e2ba`) and broader cross-target sharing
+(`haxe_ruby-r0h0`) remain bounded P2 follow-ups outside the release gate.
 
 ## Tracked Work
 
@@ -196,6 +209,7 @@ contract.
 | `haxe.ruby-bjv.6` | Gradual adoption hardening | Existing Ruby/ERB/Rails code can consume Haxe output and Haxe can consume existing app code through typed, checked contracts. |
 | `haxe.ruby-bjv.7` | Public readiness checklist | User-facing docs state maturity, commands, versions, support expectations, known blockers, and release criteria. |
 | `haxe.ruby-bjv.13` | Upstream Haxe std parity lane | Curated Haxe `unitstd` fixtures compile through the Ruby target and run on Ruby via `npm run test:unitstd-ruby`, giving RubyHx std/runtime parity evidence underneath RailsHx. |
+| `haxe_ruby-a13d` | Supported RailsHx component dependency closure | The machine audit maps each marketed component family to required foundations and mandatory evidence, rejects unfinished Haxe std imports, and requires implemented direct Ruby facades. |
 | `haxe_ruby-hjm` | Typed Ruby core and stdlib catalog | A versioned inventory distinguishes core, stdlib, default gems, bundled gems, and platform-specific APIs; deterministic RBS-backed contracts grow precise `ruby.*` coverage without collapsing Ruby semantics into Haxe std. This is post-beta breadth unless a narrower marketed 1.0 workflow depends on a missing API. |
 
 Generator/task ownership details are tracked in

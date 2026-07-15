@@ -6,6 +6,7 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "active_support_facades");
+const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -94,6 +95,10 @@ const activeSupportCheck = run("ruby", [
 ], { allowFailure: true });
 
 if (activeSupportCheck.status !== 0) {
+  if (requireRails) {
+    console.error("[active-support-facades] REQUIRE_RAILS=1 but ActiveSupport could not be loaded.");
+    process.exit(1);
+  }
   console.log("[active-support-facades] ActiveSupport is unavailable; skipped runtime facade pass.");
   console.log("[active-support-facades] Static compile and generated Ruby shape checks passed.");
   process.exit(0);

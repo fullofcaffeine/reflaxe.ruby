@@ -1,0 +1,456 @@
+{
+  "schemaVersion": 1,
+  "scope": "The documented RailsHx component slices and the RubyHx foundations they actually require; not the complete Haxe or Ruby standard libraries.",
+  "scanRoots": [
+    "std/rails",
+    "std/devisehx",
+    "examples/action_cable",
+    "examples/action_controller_params",
+    "examples/action_mailer",
+    "examples/active_job",
+    "examples/active_record_model",
+    "examples/active_storage",
+    "examples/active_support_facades",
+    "examples/components",
+    "examples/engine_plugin",
+    "examples/instrumentation",
+    "examples/rails_autoload",
+    "examples/rails_interop_app",
+    "examples/rails_routes_dsl",
+    "examples/rails_test_adapters",
+    "examples/todoapp_rails",
+    "examples/turbo_streams"
+  ],
+  "foundations": {
+    "coveredHaxeStdModules": [
+      "Array",
+      "Date",
+      "EReg",
+      "Float",
+      "IntIterator",
+      "Lambda",
+      "Map",
+      "Math",
+      "Reflect",
+      "Std",
+      "String",
+      "StringBuf",
+      "StringTools",
+      "Type",
+      "haxe.Int32",
+      "haxe.Json",
+      "haxe.ds.IntMap",
+      "haxe.ds.ObjectMap",
+      "haxe.ds.StringMap",
+      "haxe.extern.EitherType",
+      "sys.FileSystem",
+      "sys.io.File"
+    ],
+    "runtimePaths": [
+      "runtime/hxruby/core.rb",
+      "runtime/hxruby/data_define.rb",
+      "runtime/hxruby/hx_exception.rb"
+    ],
+    "evidence": [
+      "test:core-subset",
+      "test:exception-flow",
+      "test:runtime-usage",
+      "test:runtime-minitest",
+      "test:stdlib-mvp",
+      "test:json-parity",
+      "test:filesystem-parity",
+      "test:unitstd-ruby",
+      "test:ruby-stdlib-parity-audit",
+      "test:stdlib-inventory",
+      "test:haxelib-package",
+      "test:gem-package"
+    ]
+  },
+  "components": [
+    {
+      "id": "action-cable",
+      "scope": "Typed channels, connection identifiers, subscription params and payloads, streams, perform actions, and the documented client facade slice.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Typed ActionCable channels/subscriptions"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/action_cable",
+        "std/rails/ActionCable.hx",
+        "examples/action_cable"
+      ],
+      "targetDependencies": [
+        "Rails ActionCable 8.1",
+        "hxruby runtime",
+        "Chromium client sentinel"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:action-cable", "lane": "full" },
+        { "kind": "negative", "command": "test:action-cable", "lane": "full" },
+        { "kind": "runtime", "command": "test:action-cable", "lane": "rails-runtime" },
+        { "kind": "browser", "command": "test:todoapp-playwright", "lane": "browser" }
+      ]
+    },
+    {
+      "id": "action-controller-and-routing",
+      "scope": "Typed controllers, request/response and lifecycle APIs, strong params, generated route refs, and the documented Haxe-owned route DSL slice.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "ActionController surface"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/action_controller",
+        "std/rails/routing",
+        "std/rails/ActionController.hx",
+        "std/rails/macros/ControllerDsl.hx",
+        "std/rails/macros/ParamsMacro.hx",
+        "std/rails/macros/RoutesDsl.hx",
+        "examples/action_controller_params",
+        "examples/rails_routes_dsl"
+      ],
+      "targetDependencies": [
+        "Rails ActionController 8.1",
+        "Rails route set",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:action-controller-params", "lane": "full" },
+        { "kind": "compile", "command": "test:routes-dsl", "lane": "full" },
+        { "kind": "negative", "command": "test:action-controller-params", "lane": "full" },
+        { "kind": "negative", "command": "test:routes-generator", "lane": "full" },
+        { "kind": "runtime", "command": "test:action-controller-params", "lane": "rails-runtime" },
+        { "kind": "runtime", "command": "test:rails-integration", "lane": "rails-runtime" }
+      ]
+    },
+    {
+      "id": "action-mailer",
+      "scope": "Typed mailers, parameterized mailers, multipart templates, attachments, previews, delivery, and documented ActiveJob handoff.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Typed ActionMailer mailers"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/action_mailer",
+        "std/rails/ActionMailer.hx",
+        "std/rails/macros/MailerMacro.hx",
+        "examples/action_mailer"
+      ],
+      "targetDependencies": [
+        "Rails ActionMailer 8.1",
+        "Rails ActiveJob 8.1",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:action-mailer", "lane": "full" },
+        { "kind": "negative", "command": "test:action-mailer", "lane": "full" },
+        { "kind": "runtime", "command": "test:action-mailer", "lane": "rails-runtime" }
+      ]
+    },
+    {
+      "id": "action-view-hhx-and-components",
+      "scope": "Typed HHX templates, locals, helpers, forms, layouts, partials, captured slots, and the documented component slice emitting ordinary ERB.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Typed RailsHx components"
+        },
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Rails HHX inline templates"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/action_view",
+        "std/rails/dom",
+        "std/rails/macros/ViewMacro.hx",
+        "examples/components",
+        "examples/todoapp_rails/src/views"
+      ],
+      "targetDependencies": [
+        "Rails ActionView 8.1",
+        "ERB",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:components", "lane": "full" },
+        { "kind": "compile", "command": "test:todoapp-rails", "lane": "full" },
+        { "kind": "negative", "command": "test:components", "lane": "full" },
+        { "kind": "runtime", "command": "test:rails-integration", "lane": "rails-runtime" },
+        { "kind": "browser", "command": "test:todoapp-playwright", "lane": "browser" },
+        { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
+      ]
+    },
+    {
+      "id": "active-job",
+      "scope": "Typed jobs, queue/enqueue/perform helpers, argument serialization, retry/discard lifecycle, and the Rails test adapter path.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "ActiveJob lifecycle/runtime"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/active_job",
+        "std/rails/ActiveJob.hx",
+        "std/rails/macros/JobDsl.hx",
+        "std/rails/macros/JobMacro.hx",
+        "examples/active_job"
+      ],
+      "targetDependencies": [
+        "Rails ActiveJob 8.1",
+        "Rails test adapter",
+        "ruby.StandardError",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:active-job", "lane": "full" },
+        { "kind": "negative", "command": "test:active-job", "lane": "full" },
+        { "kind": "runtime", "command": "test:active-job", "lane": "rails-runtime" }
+      ]
+    },
+    {
+      "id": "active-record-and-migrations",
+      "scope": "The documented typed model, association, validation, relation/query, projection, scope, callback, migration, and SQLite-backed runtime slices.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "ActiveRecord model surface"
+        },
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Typed Rails migrations"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/active_record",
+        "std/rails/migration",
+        "std/rails/ActiveRecord.hx",
+        "std/rails/macros/ModelMacro.hx",
+        "examples/active_record_model",
+        "examples/todoapp_rails/src/migrations"
+      ],
+      "targetDependencies": [
+        "Rails ActiveRecord 8.1",
+        "SQLite3 runtime",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:active-record-model", "lane": "full" },
+        { "kind": "compile", "command": "test:migration-generator", "lane": "full" },
+        { "kind": "negative", "command": "test:active-record-model", "lane": "full" },
+        { "kind": "negative", "command": "test:migration-generator", "lane": "full" },
+        { "kind": "runtime", "command": "test:rails-integration", "lane": "rails-runtime" },
+        { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
+      ]
+    },
+    {
+      "id": "active-storage",
+      "scope": "Typed one/many attachments, attachables, signed IDs, blob metadata and direct upload helpers, file fields, reads, downloads, and purge.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Typed ActiveStorage attachments"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/active_storage",
+        "std/rails/ActiveStorage.hx",
+        "examples/active_storage"
+      ],
+      "targetDependencies": [
+        "Rails ActiveStorage 8.1",
+        "SQLite3 runtime",
+        "test disk service",
+        "ruby.File",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:active-storage", "lane": "full" },
+        { "kind": "negative", "command": "test:active-storage", "lane": "full" },
+        { "kind": "runtime", "command": "test:active-storage", "lane": "rails-runtime" }
+      ]
+    },
+    {
+      "id": "active-support-and-instrumentation",
+      "scope": "The documented ActiveSupport receiver facades and typed Notifications event, payload, subscription, and unsubscribe slice.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Typed ActiveSupport instrumentation"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/active_support",
+        "examples/active_support_facades",
+        "examples/instrumentation"
+      ],
+      "targetDependencies": [
+        "Rails ActiveSupport 8.1",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:active-support-facades", "lane": "full" },
+        { "kind": "compile", "command": "test:instrumentation", "lane": "full" },
+        { "kind": "negative", "command": "test:instrumentation", "lane": "full" },
+        { "kind": "runtime", "command": "test:rails-component-runtime", "lane": "rails-runtime" }
+      ]
+    },
+    {
+      "id": "devisehx-companion",
+      "scope": "The documented DeviseHx typed model, scope, filter, params, route, HHX, test-helper, and current-user contracts used by the reference app.",
+      "claimMarkers": [
+        {
+          "path": "README.md",
+          "contains": "instrumentation, and DeviseHx"
+        }
+      ],
+      "sourceRoots": [
+        "std/devisehx",
+        "examples/todoapp_rails/src/controllers",
+        "examples/todoapp_rails/src/models",
+        "examples/todoapp_rails/src/views"
+      ],
+      "targetDependencies": [
+        "Devise and Warden from the reference bundle",
+        "Rails 8.1",
+        "generic RailsHx companion handoffs",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:devisehx-core", "lane": "full" },
+        { "kind": "compile", "command": "test:devisehx-controller", "lane": "full" },
+        { "kind": "negative", "command": "test:devisehx-core", "lane": "full" },
+        { "kind": "negative", "command": "test:devisehx-controller", "lane": "full" },
+        { "kind": "browser", "command": "test:todoapp-playwright", "lane": "browser" },
+        { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
+      ]
+    },
+    {
+      "id": "engines-autoload-and-concerns",
+      "scope": "Engine-local output roots, generated autoload integration, Ruby-shaped concerns, and host consumption for the documented initial slice.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Rails engine/plugin affordances"
+        }
+      ],
+      "sourceRoots": [
+        "examples/engine_plugin",
+        "examples/rails_autoload"
+      ],
+      "targetDependencies": [
+        "Rails ActiveSupport concerns 8.1",
+        "Rails autoload paths",
+        "safe generated output roots",
+        "hxruby runtime"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:rails-engine", "lane": "full" },
+        { "kind": "compile", "command": "test:rails-autoload", "lane": "full" },
+        { "kind": "negative", "command": "test:rails-engine", "lane": "full" },
+        { "kind": "runtime", "command": "test:rails-component-runtime", "lane": "rails-runtime" }
+      ]
+    },
+    {
+      "id": "generators-adoption-and-tests",
+      "scope": "Install, model, migration, routes, controller, mailer, template, test, scaffold, adoption, ownership, and real Rails generator-loading paths.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Existing Rails boundary adoption generator"
+        },
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Haxe-authored test generator"
+        }
+      ],
+      "sourceRoots": [
+        "lib/hxruby/generators",
+        "std/rails/test",
+        "examples/rails_interop_app",
+        "examples/rails_test_adapters"
+      ],
+      "targetDependencies": [
+        "Rails generators 8.1",
+        "Bundler-owned gem inventory",
+        "RBS/YARD/Ruby source adoption inputs",
+        "manifest-backed generated ownership"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:rails-app-generator", "lane": "full" },
+        { "kind": "compile", "command": "test:rails-adopt-generator", "lane": "full" },
+        { "kind": "negative", "command": "test:generator-common", "lane": "full" },
+        { "kind": "negative", "command": "test:strict-boundaries", "lane": "full" },
+        { "kind": "runtime", "command": "test:rails-component-runtime", "lane": "rails-runtime" },
+        { "kind": "runtime", "command": "test:rails-interop", "lane": "rails-runtime" }
+      ]
+    },
+    {
+      "id": "reference-application",
+      "scope": "The combined RailsHx reference workflow across compile, Rails runtime, SQLite migrations, browser behavior, assets, production boot, and packaging.",
+      "claimMarkers": [
+        {
+          "path": "docs/railshx-production-readiness.md",
+          "contains": "canonical todo app and mixed adoption fixtures"
+        }
+      ],
+      "sourceRoots": [
+        "examples/todoapp_rails",
+        "examples/rails_interop_app"
+      ],
+      "targetDependencies": [
+        "Rails 8.1.3",
+        "SQLite3",
+        "Turbo",
+        "importmap-rails",
+        "Propshaft",
+        "Genes",
+        "Chromium via Playwright"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:todoapp-rails", "lane": "full" },
+        { "kind": "negative", "command": "test:strict-boundaries", "lane": "full" },
+        { "kind": "runtime", "command": "test:rails-integration", "lane": "rails-runtime" },
+        { "kind": "runtime", "command": "test:rails-interop", "lane": "rails-runtime" },
+        { "kind": "browser", "command": "test:todoapp-playwright", "lane": "browser" },
+        { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
+      ]
+    },
+    {
+      "id": "turbo-and-hotwire",
+      "scope": "The documented typed Turbo client hooks/frame helpers and server Turbo Stream target, template, render, and broadcast slice.",
+      "claimMarkers": [
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Typed Turbo client helpers"
+        }
+      ],
+      "sourceRoots": [
+        "std/rails/hotwire",
+        "std/rails/turbo",
+        "examples/turbo_streams",
+        "examples/todoapp_rails/src/client",
+        "examples/todoapp_rails/src/shared"
+      ],
+      "targetDependencies": [
+        "Turbo from the reference bundle",
+        "Rails ActionView 8.1",
+        "Genes JavaScript emitter",
+        "Chromium via Playwright"
+      ],
+      "evidence": [
+        { "kind": "compile", "command": "test:turbo", "lane": "full" },
+        { "kind": "compile", "command": "test:turbo-streams", "lane": "full" },
+        { "kind": "negative", "command": "test:turbo-streams", "lane": "full" },
+        { "kind": "browser", "command": "test:todoapp-playwright", "lane": "browser" },
+        { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
+      ]
+    }
+  ]
+}

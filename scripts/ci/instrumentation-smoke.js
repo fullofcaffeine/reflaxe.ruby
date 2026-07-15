@@ -6,6 +6,7 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "instrumentation");
+const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
 const invalidSourceDir = join(root, "test", ".generated", "instrumentation_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "instrumentation_invalid_out");
 const invalidSubscriptionSourceDir = join(root, "test", ".generated", "instrumentation_invalid_subscription_src");
@@ -100,6 +101,10 @@ if (!/rails\.active_support\.Subscription|Subscription|Cannot unify/.test(invali
 
 const activeSupportCheck = run("ruby", ["-e", 'require "active_support/notifications"'], { allowFailure: true });
 if (activeSupportCheck.status !== 0) {
+  if (requireRails) {
+    console.error("[instrumentation] REQUIRE_RAILS=1 but ActiveSupport::Notifications could not be loaded.");
+    process.exit(1);
+  }
   console.log("[instrumentation] ActiveSupport is unavailable; skipped runtime notification pass.");
   console.log("[instrumentation] Static compile, Ruby syntax, and negative type checks passed.");
   process.exit(0);

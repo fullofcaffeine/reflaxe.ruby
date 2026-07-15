@@ -9,18 +9,10 @@ const root = resolve(__dirname, "..", "..");
 
 run("ruby", ["-I", join(root, "lib"), "-e", noRailsSmokeSource()]);
 
-const railsCheck = spawnSync("ruby", ["-e", "require 'rails/generators'; print 'ok'"], {
-  cwd: root,
-  encoding: "utf8",
-  stdio: ["ignore", "pipe", "pipe"],
-});
-if (railsCheck.status === 0) {
+if (process.env.REQUIRE_RAILS === "1") {
   run("ruby", ["-I", join(root, "lib"), "-e", realRailsLoadSmokeSource()]);
-} else if (process.env.REQUIRE_RAILS === "1") {
-  process.stderr.write(railsCheck.stderr);
-  fail("REQUIRE_RAILS=1 but railties is not available");
 } else {
-  process.stdout.write("[rails-generators] Skipped real Rails generator load smoke; railties unavailable.\n");
+  process.stdout.write("[rails-generators] Real Rails loading is owned by test:rails-component-runtime.\n");
 }
 
 generatedMailerCompileSmoke();

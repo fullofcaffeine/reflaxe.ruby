@@ -522,6 +522,7 @@ expectIncludes(packageJson.scripts["test:generator-common"] ?? "", "test/generat
 expectIncludes(packageJson.scripts["test:todoapp-playwright"] ?? "", "todoapp-playwright.js", "package.json scripts");
 expectIncludes(packageJson.scripts["test:todoapp-production"] ?? "", "production-smoke", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1", "package.json scripts");
+expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:rails-component-runtime", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:action-controller-params", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:action-mailer", "package.json scripts");
 expectIncludes(packageJson.scripts["test:rails-runtime"] ?? "", "REQUIRE_RAILS=1 npm run test:active-job", "package.json scripts");

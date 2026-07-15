@@ -39,6 +39,14 @@ When the hooks first run after a bd/tooling upgrade, `.beads/issues.jsonl` may b
   or extend findings when stronger repository evidence warrants it. Record
   corrections and newly discovered gaps in the owning review document and bead
   so later agents do not repeat the original assumption.
+- Stable RailsHx support requires the complete dependency closure of every
+  component slice the project markets as supported: required Haxe/std behavior,
+  compiler lowering, `hxruby` helpers, direct `ruby.*` facades, Rails/gem APIs,
+  generated artifacts, and target execution must have mandatory evidence. This
+  is not a requirement to implement the whole Haxe or Ruby stdlib. If a missing
+  dependency is required by a supported slice, implement and test it, narrow the
+  slice, or fail closed; update `docs/railshx-component-dependency-audit.md` and
+  its machine inventory whenever that closure changes.
 
 ## Ruby Profile Contract
 
