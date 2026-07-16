@@ -522,6 +522,22 @@ for (const evidence of [
   expectIncludes(releaseEvidenceDocs, evidence, "stable 1.0 hosted release evidence");
 }
 for (const evidence of [
+  "## Stable 1.3 typed CSV publication",
+  "26d65f1f5d46ebe0e6a4b98ffc412986dbe3bcb5",
+  "29516435128",
+  "87690920663",
+  "hxruby-1.3.0.gem",
+  "1665f3880486886cdc655c1e79cfb0138779951959cc595901b289a166d45cb0",
+  "reflaxe.ruby-1.3.0.zip",
+  "866d7d9a56baffa2fb3395385a93fbff13cd5dc845e786aeb2e6423f02f63103",
+  "686 ZIP payload entries",
+  "316 gem payload entries",
+  "Both contain `ruby.CSV`",
+  "converters, arbitrary field objects",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "stable 1.3 hosted release evidence");
+}
+for (const evidence of [
   "## Stable 1.2 deterministic RBS publication",
   "ffec2b5993e557bc72ea6fe9a18dd3a4623db9fa",
   "29485362922",
