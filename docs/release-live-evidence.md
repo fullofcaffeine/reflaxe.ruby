@@ -5,6 +5,44 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.2 deterministic RBS publication
+
+The normal tested-commit workflow published
+[`v1.2.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.2.0)
+on 2026-07-16 for the packaged strict deterministic RBS-to-Haxe extern
+generator foundation.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `ffec2b5993e557bc72ea6fe9a18dd3a4623db9fa` |
+| Release intent | `feat: add deterministic RBS extern generation` |
+| Canonical release tag | `v1.2.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29485362922`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29485362922), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`87585643211`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29485362922/job/87585643211), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-16T09:34:08Z` |
+| Release notes | Version heading, `v1.1.0...v1.2.0` compare link, categorized feature bullet, and exact commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.2.0.gem` | `hxruby 1.2.0 Ruby gem` | 256512 | `91ad1664cac4da435cbaad1d6e1eb2003c6da76cbdcc8201bde650f5ce888e80` |
+| `hxruby-1.2.0.gem.sha256.json` | `hxruby 1.2.0 SHA-256 metadata` | 301 | `7d51c200f24d46d4fc8cefb80c5ef8deca3d3de05d583aab529c28ea80daa1ac` |
+| `reflaxe.ruby-1.2.0.zip` | `reflaxe.ruby 1.2.0 haxelib package` | 1219799 | `c09207cb849f6c56b4f029a81a0672f5e3ffd3c227854943e952b798a06de205` |
+| `reflaxe.ruby-1.2.0.zip.sha256.json` | `reflaxe.ruby 1.2.0 SHA-256 metadata` | 314 | `130a9d1b68f65c6b5e0dbfbab5a1529daca0c1d271a154f72f7f1b7b4f9cf83b` |
+
+Each downloaded sidecar binds its artifact to version `1.2.0`, tag `v1.2.0`,
+the tested source SHA, hosted filename, byte count, and independently matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+format-1 manifests verify 682 ZIP payload entries and 312 gem payload entries.
+Both contain the shared `HXRuby::Rbs` parser, canonical renderer, checked source
+selector, and CLI library. The gem additionally contains the maintainer wrapper;
+the Haxelib ZIP retains its reviewed no-`scripts/` layout. `CSV`, `Open3`, and
+`Set` remain planned rather than acquiring support by generator inference.
+GitHub reports the completed release as natively immutable.
+
 ## Stable 1.1 typed stdlib publication
 
 The normal tested-commit workflow published
@@ -173,10 +211,12 @@ Actions APIs plus downloaded sidecars. Recheck them with read-only commands:
 
 ```bash
 git ls-remote --tags origin
+gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.2.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.1.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.0.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v0.1.2
 gh run view 29452140844 --json headSha,conclusion,jobs,url
+gh run view 29485362922 --json headSha,conclusion,jobs,url
 gh run view 29474882954 --json headSha,conclusion,jobs,url
 gh run view 29221893930 --json headSha,conclusion,jobs,url
 gh run view 29221904625 --json headSha,conclusion,jobs,url

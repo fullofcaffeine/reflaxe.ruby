@@ -520,6 +520,21 @@ for (const evidence of [
   expectIncludes(releaseEvidenceDocs, evidence, "stable 1.0 hosted release evidence");
 }
 for (const evidence of [
+  "## Stable 1.2 deterministic RBS publication",
+  "ffec2b5993e557bc72ea6fe9a18dd3a4623db9fa",
+  "29485362922",
+  "87585643211",
+  "hxruby-1.2.0.gem",
+  "91ad1664cac4da435cbaad1d6e1eb2003c6da76cbdcc8201bde650f5ce888e80",
+  "reflaxe.ruby-1.2.0.zip",
+  "c09207cb849f6c56b4f029a81a0672f5e3ffd3c227854943e952b798a06de205",
+  "682 ZIP payload entries",
+  "312 gem payload entries",
+  "Haxelib ZIP retains its reviewed no-`scripts/` layout",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "stable 1.2 hosted release evidence");
+}
+for (const evidence of [
   "## Stable 1.1 typed stdlib publication",
   "9404b5e5f71f268153c59e1943e615e5d2eb6eaf",
   "29474882954",
