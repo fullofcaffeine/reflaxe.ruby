@@ -258,6 +258,27 @@ if (!/WelcomeMailerParams|has no field message|requires field message|String|Can
   process.exit(1);
 }
 
+for (const [main, expectedError] of [
+  ["InvalidPreviewStaticMain", "@:railsMailerPreview methods must be instance methods so Rails can expose them as previews."],
+  ["InvalidPreviewArgsMain", "@:railsMailerPreview methods must not declare parameters; build preview inputs inside the method body."],
+  ["InvalidPreviewPathMain", "@:railsMailerPreview path must be a safe Rails preview path relative to test/mailers/previews."],
+  ["EmptyPreviewMain", "@:railsMailerPreview classes must define at least one instance preview method."],
+  ["DuplicatePreviewMain", "@:railsMailerPreview emits duplicate preview file test/mailers/previews/duplicate_preview.rb"],
+]) {
+  const invalidPreview = compileActionMailer(invalidOutputDir, {
+    classPath: invalidSourceDir,
+    main,
+    allowFailure: true,
+  });
+  const output = invalidPreview.stderr + invalidPreview.stdout;
+  if (invalidPreview.status === 0 || !output.includes(expectedError)) {
+    process.stdout.write(invalidPreview.stdout);
+    process.stderr.write(invalidPreview.stderr);
+    console.error(`Invalid ActionMailer preview ${main} did not report: ${expectedError}`);
+    process.exit(1);
+  }
+}
+
 stage("runtime materialization", materializeRuntimeRailsApp);
 stage("runtime ruby syntax", () => syntaxCheck([
   "app/mailers/user_mailer.rb",
@@ -392,6 +413,90 @@ function writeInvalidFixture() {
       "class InvalidMailerParamsMain {",
       "\tstatic function main():Void {",
       "\t\tUserMailer.withParams({email: \"reader@example.test\", name: \"Ada\"}).welcomeFromParams();",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(invalidSourceDir, "InvalidPreviewStaticMain.hx"),
+    [
+      '@:railsMailerPreview("invalid_static_preview")',
+      "class InvalidStaticPreview {",
+      "\tpublic static function welcome():Void {}",
+      "}",
+      "",
+      "class InvalidPreviewStaticMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar preview:Class<InvalidStaticPreview> = InvalidStaticPreview;",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(invalidSourceDir, "InvalidPreviewArgsMain.hx"),
+    [
+      '@:railsMailerPreview("invalid_args_preview")',
+      "class InvalidArgsPreview {",
+      "\tpublic function welcome(id:Int):Void {}",
+      "}",
+      "",
+      "class InvalidPreviewArgsMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar preview:Class<InvalidArgsPreview> = InvalidArgsPreview;",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(invalidSourceDir, "InvalidPreviewPathMain.hx"),
+    [
+      '@:railsMailerPreview("../invalid_preview")',
+      "class InvalidPathPreview {",
+      "\tpublic function welcome():Void {}",
+      "}",
+      "",
+      "class InvalidPreviewPathMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar preview:Class<InvalidPathPreview> = InvalidPathPreview;",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(invalidSourceDir, "EmptyPreviewMain.hx"),
+    [
+      '@:railsMailerPreview("empty_preview")',
+      "class EmptyPreview {}",
+      "",
+      "class EmptyPreviewMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar preview:Class<EmptyPreview> = EmptyPreview;",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(invalidSourceDir, "DuplicatePreviewMain.hx"),
+    [
+      '@:railsMailerPreview("duplicate_preview")',
+      "class FirstDuplicatePreview {",
+      "\tpublic function welcome():Void {}",
+      "}",
+      "",
+      '@:railsMailerPreview("duplicate_preview")',
+      "class SecondDuplicatePreview {",
+      "\tpublic function welcome():Void {}",
+      "}",
+      "",
+      "class DuplicatePreviewMain {",
+      "\tstatic function main():Void {",
+      "\t\tvar first:Class<FirstDuplicatePreview> = FirstDuplicatePreview;",
+      "\t\tvar second:Class<SecondDuplicatePreview> = SecondDuplicatePreview;",
       "\t}",
       "}",
       "",

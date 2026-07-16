@@ -224,6 +224,34 @@ try {
     "}",
     "",
   ].join("\n"), "path must end with _spec or _spec.rb");
+  compileNegative("DuplicateRailsTestPath", [
+    "import rails.test.Assert.*;",
+    "import rails.test.ModelTestCase;",
+    "",
+    "class DuplicateRailsTestPath {",
+    "\tstatic function main():Void {",
+    "\t\tvar first:Class<FirstDuplicateRailsTest> = FirstDuplicateRailsTest;",
+    "\t\tvar second:Class<SecondDuplicateRailsTest> = SecondDuplicateRailsTest;",
+    "\t}",
+    "}",
+    "",
+    '@:railsTest("models/duplicate_haxe_test")',
+    "class FirstDuplicateRailsTest extends ModelTestCase {",
+    '\t@:test("first duplicate")',
+    "\tpublic function first():Void {",
+    "\t\ttruthy(true);",
+    "\t}",
+    "}",
+    "",
+    '@:railsTest("models/duplicate_haxe_test")',
+    "class SecondDuplicateRailsTest extends ModelTestCase {",
+    '\t@:test("second duplicate")',
+    "\tpublic function second():Void {",
+    "\t\ttruthy(true);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"), "@:railsTest emits duplicate test/spec file test/generated/models/duplicate_haxe_test.rb");
 } finally {
   rmSync(outputDir, { force: true, recursive: true });
 }
