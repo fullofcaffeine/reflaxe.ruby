@@ -501,6 +501,21 @@ for (const evidence of [
 ]) {
   expectIncludes(releaseEvidenceDocs, evidence, "stable 1.0 hosted release evidence");
 }
+for (const evidence of [
+  "## Stable 1.1 typed stdlib publication",
+  "9404b5e5f71f268153c59e1943e615e5d2eb6eaf",
+  "29474882954",
+  "87551001411",
+  "hxruby-1.1.0.gem",
+  "a854c8357c76a2831e5be04d9eb7726b124b7b335679286257204365c1898c41",
+  "reflaxe.ruby-1.1.0.zip",
+  "048afed2aead8a4933813d157b3f4a530183e3a646cd91d7485711daf0312b22",
+  "676 ZIP payload entries",
+  "306 gem payload entries",
+  "catalog contains 20 bounded domains",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "stable 1.1 hosted release evidence");
+}
 expectIncludes(releaseEvidenceDocs, "## No-release continuity proof", "hosted no-release evidence section");
 for (const evidence of [
   "e485d098056cc3b1377a8b52928a302963570538",
