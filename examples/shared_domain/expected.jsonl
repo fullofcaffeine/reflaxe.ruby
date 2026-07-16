@@ -1,0 +1,7 @@
+{"case":"normalizes whitespace","result":{"status":"accepted","draft":{"title":"Ship RailsHx safely","priority":2}}}
+{"case":"preserves unicode","result":{"status":"accepted","draft":{"title":"Café 👽","priority":3}}}
+{"case":"escapes serialized title","result":{"status":"accepted","draft":{"title":"Say \"hi\" \\ now","priority":1}}}
+{"case":"requires title","result":{"status":"rejected","errors":[{"field":"title","code":"required"}]}}
+{"case":"limits utf16 title units","result":{"status":"rejected","errors":[{"field":"title","code":"too_long","actual":82,"maximum":80}]}}
+{"case":"bounds priority","result":{"status":"rejected","errors":[{"field":"priority","code":"out_of_range","actual":4,"minimum":1,"maximum":3}]}}
+{"case":"orders multiple errors","result":{"status":"rejected","errors":[{"field":"title","code":"required"},{"field":"priority","code":"out_of_range","actual":0,"minimum":1,"maximum":3}]}}

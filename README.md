@@ -54,8 +54,8 @@ When Haxe semantics need support, they use explicit, versioned `hxruby` helpers.
   can consume existing Ruby, gems, RBS, YARD, routes, schemas, and ERB.
 - **Type native Ruby APIs.** Supported Ruby core and stdlib contracts remain
   direct Ruby calls while Haxe supplies completion and compile-time checking.
-- **Share behavior, not just schemas.** Suitable types and pure logic can compile
-  to both Ruby and JavaScript; target-specific code stays at the edges.
+- **Share selected behavior, not just schemas.** [`shared_domain`](examples/shared_domain)
+  runs one typed validation/serialization contract on Ruby and JavaScript; target-specific framework code stays at the edges.
 - **Keep the output recognizable.** Ruby blocks, keywords, modules, mixins,
   exceptions, Rails declarations, and native library calls stay Ruby-shaped.
 

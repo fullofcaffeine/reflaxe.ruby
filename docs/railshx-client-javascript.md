@@ -130,6 +130,12 @@ rewrite, async helpers, examples, and production evidence specifically test the
 Genes path. A different emitter or bundler needs its own build and runtime
 tests rather than being treated as equivalent automatically.
 
+The focused [`shared_domain`](../examples/shared_domain) example deliberately
+owns one such separate test: it uses the stock emitter under Node only to compare
+portable domain semantics with generated Ruby. It is not evidence that stock
+emitter output is the RailsHx importmap asset contract; the todoapp's Genes,
+browser, and production lanes continue to own that contract.
+
 ## Runtime Shape And Boundaries
 
 Genes runs during compilation. Its output can include generated support modules
@@ -158,6 +164,7 @@ lane before the pinned version changes.
 
 ```bash
 npm run test:examples-compile
+npm run test:full-stack-shared-behavior
 npm run test:todoapp-rails
 npm run test:haxe-playwright
 npm run test:rails-app-generator

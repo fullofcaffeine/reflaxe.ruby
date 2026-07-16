@@ -65,6 +65,7 @@ const coverageContracts = new Map([
   ["ruby_call_shapes", { kind: "snapshot+smoke", script: "test:ruby-call-shapes" }],
   ["ruby_extensions", { kind: "snapshot+smoke", script: "test:ruby-extensions" }],
   ["ruby_interop", { kind: "snapshot+smoke", script: "test:ruby-interop" }],
+  ["shared_domain", { kind: "ruby+javascript+runtime+common-vectors", script: "test:full-stack-shared-behavior" }],
   ["stdlib_mvp", { kind: "snapshot+smoke", script: "test:stdlib-mvp" }],
   ["switch_cases", { kind: "snapshot+smoke", script: "test:switch-cases" }],
   ["todoapp_rails", { kind: "snapshot+rails+browser+production", script: "test:todoapp-rails" }],

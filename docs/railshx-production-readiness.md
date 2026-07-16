@@ -190,13 +190,19 @@ confidence,” “support everything,” or “improve quality” are not action
 criteria; each finding needs an owner, bounded outcome, evidence gate, and
 severity tied to the documented supported scope.
 
+The full-stack dimension is now backed by `examples/shared_domain`: one closed
+typed validation and serialization model plus seven common vectors execute as
+generated Ruby and JavaScript with byte-identical expected output. Its stock-JS
+parity lane is explicitly separate from the todoapp's Genes/importmap browser
+and production evidence, and framework effects remain target-owned.
+
 The original 2026-07-14 post-blocker review satisfied these exits and closed the
 stable-blocker epic `haxe_ruby-1sd`. The later dependency-closure clarification
 is closed as RHX-1.0-010 (`haxe_ruby-a13d`) with local and exact-SHA canonical
 evidence. RHX-1.0-011 records the separately granted maintainer decision and
-the policy change to `[1]`. Residual compiler decomposition
-(`haxe_ruby-e2ba`) and broader cross-target sharing (`haxe_ruby-r0h0`) remain
-bounded P2 follow-ups outside the release gate.
+the policy change to `[1]`. The bounded P2 compiler-decomposition
+(`haxe_ruby-e2ba`) and cross-target-sharing (`haxe_ruby-r0h0`) follow-ups then
+landed with their own mandatory evidence without widening the stable gate.
 
 ## Tracked Work
 

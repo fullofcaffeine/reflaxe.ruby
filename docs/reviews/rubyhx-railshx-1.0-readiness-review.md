@@ -30,8 +30,9 @@ Approval does not widen the documented support matrix. It covers the public
 surfaces classified in `docs/public-contract.md` on Haxe 4.3.7, Node 22, MRI
 Ruby 3.3/3.4/4.0, and the Rails 8.1 evidence line, with the explicit platform,
 database, browser, distribution, and unsupported-surface limits already
-recorded. Residual compiler decomposition and broader cross-target sharing stay
-P2 follow-ups outside the stable gate.
+recorded. Compiler decomposition and bounded cross-target sharing were retained
+as P2 follow-ups outside the stable gate and later landed with their own
+mandatory evidence.
 
 The reviewed release-policy change moves `approvedStableMajors` from `[]` to
 `[1]`. A deliberate breaking graduation commit is therefore eligible to select
@@ -168,7 +169,7 @@ post-review product-scope clarification and is now confirmed closed.
 | Rails depth | PROVEN | Rails 8.1.3 runtime matrix, exact-Rails component runtime, browser, and production dogfood passed at the candidate SHA. |
 | Public API/DX | PROVEN | Profiles, metadata, std inventory, commands, diagnostics, doctor, package layout, and policy agree. |
 | Authoring/adoption | PROVEN | Pure Ruby, Rails, mixed adoption, and Ruby-origin consumption have distinct maintained evidence. |
-| Full-stack sharing | PARTIAL, bounded | Selected portable types, constants, hooks, payloads, selectors, and pure logic are proven; broader isomorphic behavior is not claimed. |
+| Full-stack sharing | PROVEN, bounded | Hooks and client integration remain covered, and `shared_domain` now executes typed normalization, validation, ordered errors, and deterministic serialization against seven common Ruby/JavaScript vectors. Broader isomorphic behavior is not claimed. |
 | Testing/release | PROVEN | Exact-SHA CI, immutable artifact verification, public upgrade/rollback, and clean no-release behavior passed. |
 | Security | PROVEN | Dependency, vulnerable-fixture, secret, update, reporting, and ownership controls are present and green. |
 | Performance | PROVEN | Representative viability evidence runs under broad caps; no comparative speed claim is made. |
@@ -176,18 +177,20 @@ post-review product-scope clarification and is now confirmed closed.
 | Compatibility/upgrades | PROVEN | One permissive evidence matrix and representative public package upgrade/rollback contract agree. |
 | Documentation/support | PROVEN | Scoped claims, ownership, channels, cadence, sunsets, and single-maintainer limits are public. |
 
-### Residual P2 Work
+### Completed P2 Follow-Ups
 
-Two non-blocking risks remain deliberately tracked:
+Two non-blocking risks were deliberately tracked and are now resolved:
 
-- `haxe_ruby-e2ba` / RHX-1.0-101: continue decomposing the approximately
-  14.8-KLOC `RubyCompiler.hx` behind typed services;
-- `haxe_ruby-r0h0` / RHX-1.0-102: deepen the Ruby/JavaScript shared-behavior
-  evidence or preserve the current narrow claim permanently.
+- `haxe_ruby-e2ba` / RHX-1.0-101: extracted coherent Rails artifact services
+  behind typed one-way APIs and added a non-increasing root-growth guard;
+- `haxe_ruby-r0h0` / RHX-1.0-102: added a typed todo-draft validation and
+  serialization module with seven byte-identical Ruby/JavaScript vectors and
+  explicit target-edge limits.
 
-Neither is P1 because the current documented stable scope does not depend on the
-missing breadth. No new bead is needed for the stale manual-prompt command name;
-the distributed repository command and CI contract are already correct.
+Neither was P1 because the documented stable scope did not depend on the missing
+breadth. Both now have focused characterization plus mandatory repository gates.
+No new bead is needed for the stale manual-prompt command name; the distributed
+repository command and CI contract are already correct.
 
 ### Governance Result
 
@@ -437,12 +440,15 @@ Recommended stable wording:
 ### 3.6 Ruby and JavaScript Sharing
 
 The reference app proves shared typed hook names, selectors, stream contracts,
-and selected pure helpers. It does not yet prove broad shared domain behavior.
-Recommended wording:
+and client build integration. The focused `shared_domain` example adds one
+substantive pure-domain proof: generated Ruby and JavaScript execute the same
+normalization, validation, closed errors, deterministic writer, and seven
+committed vectors byte-for-byte. This remains a bounded proof, not broad
+isomorphic application behavior. Recommended wording:
 
-> Share selected pure helpers, typed event and stream contracts, and generated
-> hook and selector constants between Ruby and JavaScript while keeping
-> target-specific framework code at the edges.
+> Share selected deterministic domain behavior and typed contracts between
+> Ruby and JavaScript when both generated targets have common runtime vectors;
+> keep target-specific framework code at the edges.
 
 ### 3.7 Ruby-Developer Credibility
 
@@ -469,7 +475,7 @@ The same developer is likely to challenge:
 | --- | --- |
 | Write typed Haxe. Ship ordinary Ruby. | Write typed Haxe. Generate readable Ruby, with explicit versioned hxruby helpers where Haxe semantics require them. |
 | Build libraries, services, CLIs, or Rails apps almost entirely in Haxe/HHX. | Keep the Rails claim after matrix closure. Limit pure Ruby wording to compiler and ABI foundations until a realistic project exists. |
-| Share behavior, not just schemas. | Share selected pure helpers and typed contracts across Ruby and JavaScript; keep target-specific framework code at the edges. |
+| Share behavior, not just schemas. | Share selected deterministic behavior only where common Ruby/JavaScript runtime vectors prove it; keep target-specific framework code at the edges. |
 | Rails 7+/8 style app shape. | Publish exact tested versions and dated support policy. Do not use a plus sign as a support promise. |
 | Ruby 3.2, 3.3, and 4.0. | Remove Ruby 3.2, add 3.4, and give 3.3 an explicit sunset if retained. |
 | Production-ready without qualifier. | Keep production-ready beta for the documented and tested surface until all P1s close. |
@@ -694,7 +700,7 @@ Exact snapshot bytes should not make incidental formatting public API. Stable
 | Rails app can be Haxe-first | Todo app static, runtime, browser, production | Rails 7.2, SQLite, importmap, Propshaft, Genes, Chromium only | High for that stack | Haxe/HHX can own most source on the documented reference stack | Exact matrix or RailsHx remains beta |
 | Library, service, or CLI can be Haxe-first | Hello and ABI examples | No realistic lifecycle fixture | Low | RubyHx provides compiler and ABI foundations | Add project or narrow marketing |
 | HHX gives TSX-like server views | Typed markup, locals, helpers, refs, snapshots, negatives | Runtime HTML, accessibility, auth, and browser behavior | High | Use the bounded wording in section 3.5 | Keep claim matrix and RC tests |
-| Ruby/JavaScript behavior can be shared | Hooks, selectors, contracts, selected helpers, client build | No substantial domain parity proof | Medium | Share selected pure helpers and contracts | Add two-target domain fixture or narrow |
+| Ruby/JavaScript behavior can be shared | Hooks, selectors, client build, plus `shared_domain` validation/serialization and seven byte-identical vectors | One bounded draft contract; Rails and browser effects stay target-owned | High for the documented bounded claim | Share selected deterministic behavior with common runtime vectors | Maintain the two-target gate; widen only with new evidence |
 | Rails 7+/8 supported | Compatibility prose | Gemfiles require Rails below 8; no Rails 8 lane | Low | Current beta fixtures run Rails 7.2.3.1 | Exact supported Rails line |
 | Ruby 3.2/3.3/4.0 supported | Exact CI passes those branches | 3.2 EOL; 3.4 absent | Medium historically, low as stable support | Reviewed beta CI ran this matrix | Remove 3.2, add 3.4, sunset 3.3 |
 | Releases bind exact SHA | Version, artifact, workflow, immutable v0.4.0 evidence | Archive could not rerun Git-dependent reproduction | High | Current protocol binds assets to tested commit | RC exact-SHA rerun |
@@ -715,7 +721,7 @@ Exact snapshot bytes should not make incidental formatting public API. Stable
 | 6 | Rails depth and native semantics | PARTIAL | High | Exact Rails and adapter matrix required |
 | 7 | Public API and developer experience | PARTIAL | High | API tiers, diagnostics, deprecation missing |
 | 8 | Haxe-first, adoption, ecosystem integration | PARTIAL | High | Pure-Ruby workflow missing |
-| 9 | Ruby/JavaScript sharing | PARTIAL | Medium-high | Deepen or narrow wording |
+| 9 | Ruby/JavaScript sharing | PROVEN, bounded | High for the maintained contract | Keep common vectors mandatory; do not imply broad isomorphism |
 | 10 | Testing and release evidence | PARTIAL | High | Performance, debug, and upgrade lanes missing |
 | 11 | Security and supply chain | PARTIAL | High | Ruby advisories and disclosure required |
 | 12 | Performance and resource behavior | MISSING | High | P1 stable blocker |
@@ -1060,6 +1066,10 @@ lifecycle, test, companion, and artifact services behind typed interfaces.
 Add architecture guards and characterization tests. The Devise-specific portion
 is owned by RHX-1.0-002 and must not be duplicated here.
 
+**Resolved:** the Rails test and mailer-preview artifact services now sit behind
+typed APIs, root line/function ceilings can only move downward without reviewed
+rationale, and focused diagnostics plus the complete regression matrix passed.
+
 ### P2: RHX-1.0-102 - Deepen or Narrow Shared Behavior
 
 **Tracked as:** <code>haxe_ruby-r0h0</code>
@@ -1068,6 +1078,14 @@ Either add a substantive shared pure-domain validation, state-transition, or
 serialization module with identical Ruby and JavaScript vectors, or permanently
 narrow wording to contracts, constants, hooks, selectors, and small pure
 helpers.
+
+**Resolved:** `examples/shared_domain/domain/TodoDraftContract.hx` now owns
+typed normalization, validation, closed ordered errors, and deterministic
+serialization. `npm run test:full-stack-shared-behavior` compiles the same
+contract and seven vectors to Ruby and JavaScript, executes both, requires
+byte-identical committed JSONL, and rejects target APIs or unsafe Haxe escapes
+inside the shared modules. README and design wording name the exact proof and
+retain Rails, database, DOM, emitter, and arbitrary-isomorphism limits.
 
 ## 9. Test and Evidence Map
 

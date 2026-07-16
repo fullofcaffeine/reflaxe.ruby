@@ -172,11 +172,18 @@ generated client contracts. Those approaches are useful and remain valid with
 RailsHx. They primarily share a protocol; they do not normally let ordinary
 Ruby implementation source become browser JavaScript.
 
-Haxe can share selected source across the Ruby and JavaScript targets, including
-domain enums, serializable payload types, pure validation rules, formatting,
-constants, state transitions, test fixtures, and typed DOM/route hooks. The
-canonical todo application also proves that Haxe-authored server and browser
-code can coexist in a normal Rails production build.
+Haxe can share selected source across the Ruby and JavaScript targets. The
+maintained [`shared_domain`](../examples/shared_domain) example is the current
+substantive proof: one typed todo-draft module owns normalization, validation,
+closed error data, and deterministic serialization, and seven common vectors
+must produce byte-identical generated Ruby and JavaScript output. The canonical
+todo application separately proves that Haxe-authored server and browser code
+can coexist in a normal Rails production build.
+
+That evidence supports selected deterministic behavior; it does not prove that
+arbitrary application code, Rails persistence, or browser behavior is
+isomorphic. Additional domain enums, payloads, state transitions, or formatting
+rules need their own two-target vectors before they widen the maintained claim.
 
 The canonical RailsHx browser lane uses the Haxe JavaScript target with Genes
 installed as its custom emitter. Genes produces readable ES modules for Rails
@@ -186,7 +193,8 @@ See [Client JavaScript And Genes](railshx-client-javascript.md).
 
 The boundary should stay deliberate:
 
-- share deterministic domain behavior with a real two-target contract;
+- share deterministic domain behavior with a real two-target contract such as
+  [`shared_domain`](../examples/shared_domain);
 - keep database, Rails lifecycle, filesystem, secrets, and other server-only
   concerns in Ruby-target modules;
 - keep DOM, browser lifecycle, and client-library concerns in JavaScript-target

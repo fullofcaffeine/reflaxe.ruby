@@ -37,6 +37,12 @@ canvas/charts, and other non-DOM or deliberately client-owned behavior, but a
 basic Rails list/panel update should not need more code than a classic Hotwire
 app.
 
+The separate maintained [`shared_domain`](../examples/shared_domain) example
+owns the deeper pure-domain proof. It executes one typed normalization,
+validation, error, and serialization module against seven identical vectors on
+generated Ruby and JavaScript. Keeping that proof separate prevents Rails,
+Turbo, DOM, or stdout APIs from leaking into the shared module.
+
 ## Principles
 
 - Rails owns runtime behavior. ActionCable transports, Turbo mutates the DOM,
@@ -66,7 +72,23 @@ app.
 | ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. | Useful for custom payload protocols, but not the canonical DOM update path when Turbo Streams can render a partial. |
 | Haxe JS Turbo client | `Turbo.on*`, `Turbo.renderStreamMessage`, `Turbo.stream`, and Genes ES modules work with importmap. | Client-rendered stream HTML should be generated/typed when deliberately chosen; canonical Hotwire examples should not hand-build DOM fragments. |
 | Shared hooks | `TodoHooks` centralizes app-wide ids, attrs, classes, selectors, storage keys, and Playwright exports. `ChatRoomHooks` adds a focused browser-safe Hotwire hook layer for the chat room. | Needs a reusable generator/macro pattern, not only hand-written samples. |
+| Shared pure domain behavior | `shared_domain` compiles one typed todo-draft contract and common vectors to Ruby and JavaScript, then requires byte-identical validation, ordered errors, and serialization output. | One bounded contract is proven; new domain claims need their own vectors and target-edge documentation. |
 | Browser tests | Playwright imports generated hook constants and verifies two-session updates. | Needs typed Haxe-authored browser test layer later, but TS Playwright can remain first-class. |
+
+## Maintained Two-Target Domain Proof
+
+`npm run test:full-stack-shared-behavior` compiles the exact same contract and
+vector module through Reflaxe.Ruby's `portable` profile and Haxe's JavaScript
+target. It executes both generated artifacts under Ruby and Node and compares
+their JSONL bytes with a committed expectation. The vectors cover whitespace
+normalization, Unicode preservation, JSON escaping, required and length errors,
+priority bounds, and deterministic multi-error ordering.
+
+Only the pure middle is shared. Tiny target entrypoints own stdout; Rails owns
+params, persistence, transactions, and presentation; JavaScript owns DOM,
+storage, and network effects. The title limit explicitly follows Haxe UTF-16
+units, and the writer is one-way over a closed typed result. These edges are part
+of the contract rather than portability assumptions.
 
 ## Rendering Strategy Comparison
 

@@ -59,6 +59,9 @@ const releaseHostingDocs = readFileSync("docs/release-hosting-and-repair.md", "u
 const releaseEvidenceDocs = readFileSync("docs/release-live-evidence.md", "utf8");
 const docsIndex = readFileSync("docs/README.md", "utf8");
 const productPositioning = readFileSync("docs/why-rubyhx.md", "utf8");
+const fullStackDesign = readFileSync("docs/railshx-full-stack-hotwire-design.md", "utf8");
+const sharedDomainReadme = readFileSync("examples/shared_domain/README.md", "utf8");
+const sharedBehaviorCheck = readFileSync("scripts/ci/full-stack-shared-behavior-smoke.js", "utf8");
 const productionReadiness = readFileSync("docs/railshx-production-readiness.md", "utf8");
 const stableReviewPrompt = readFileSync("docs/rubyhx-railshx-gpt56-1.0-review.md", "utf8");
 const stableReviewReport = readFileSync(
@@ -213,6 +216,12 @@ expectIncludes(rubyAdvisoryCheck, '"*Gemfile.lock"', "Ruby advisory lock invento
 expectIncludes(rubyAdvisoryCheck, "test/fixtures/security/vulnerable.lock", "Ruby advisory detection fixture");
 expectIncludes(productPositioning, "RubyHx is a typed way to author software for the Ruby ecosystem", "product positioning");
 expectIncludes(productPositioning, "Ruby/JavaScript applications commonly share", "full-stack positioning boundary");
+expectIncludes(readme, "examples/shared_domain", "README bounded shared-domain proof");
+expectIncludes(productPositioning, "seven common vectors", "two-target shared behavior evidence");
+expectIncludes(fullStackDesign, "## Maintained Two-Target Domain Proof", "full-stack shared behavior boundary");
+expectIncludes(sharedDomainReadme, "does not claim arbitrary", "shared-domain example non-goal");
+expectIncludes(packageJson.scripts.test, "test:full-stack-shared-behavior", "mandatory shared behavior gate");
+expectIncludes(sharedBehaviorCheck, "Ruby and JavaScript outputs are not byte-identical", "two-target byte parity guard");
 expectIncludes(productPositioning, "does not promise zero support code", "generated Ruby positioning boundary");
 expectIncludes(productPositioning, "a better way to write the Ruby-bound parts", "Ruby alternative positioning boundary");
 expectIncludes(productPositioning, "## Two First-Class Starting Points", "Haxe-first and Ruby-first positioning");
