@@ -207,6 +207,14 @@ field objects, and unchecked options remain omitted. The catalog records CSV's
 Ruby 3.3 default-gem to Ruby 3.4/4.0 bundled-gem transition without turning
 tested distribution availability into a minimal-Ruby guarantee.
 
+`ruby.Open3` adds a capture-only, direct-exec process boundary with typed
+stdout, stderr, and completed status. `ruby.Set<T>` adds the next generic
+Ruby-semantic collection slice: typed membership and mutation, same-element
+algebra and relations, explicit native blocks, precise changed-result
+nullability, and Array conversion. It deliberately preserves Ruby `eql?`/`hash`
+ownership and does not imitate a portable Haxe collection or accept open
+Enumerable values.
+
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
 an adapter. See `docs/ruby-stdlib-facades.md` for package naming, API shape,
@@ -362,14 +370,14 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
 1. `haxe_ruby-hjm` owns the broad versioned Ruby
    core/stdlib/default-gem coverage inventory and deterministic RBS-to-Haxe
-   contract pipeline. The first curated inventory, reviewed URI, CSV, and
-   capture-only Open3 facades, and strict precise-or-omitted generator
-   foundation are complete.
+   contract pipeline. The first curated inventory, reviewed URI, CSV,
+   capture-only Open3, and generic Ruby-semantic Set facades, plus the strict
+   precise-or-omitted generator foundation, are complete.
    Broader RBS shapes and each later library facade remain separate work;
    generated contracts remain conservative, reviewed, compiled, and
    runtime-tested.
-2. Add Ruby stdlib facades separately under `std/ruby/**` next for `ruby.Set`
-   and other bounded library domains.
+2. Add later Ruby stdlib facades separately under `std/ruby/**` as bounded
+   library domains with their own evidence.
 3. Audit existing `_std` raw-native seams and replace them with shared typed
    Ruby contracts where reuse improves safety without changing generated Ruby
    or Haxe semantics.

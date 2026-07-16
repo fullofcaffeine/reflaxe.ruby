@@ -104,6 +104,7 @@ const requiredFiles = [
   "std/ruby/Open3Capture.hx",
   "std/ruby/Open3Executable.hx",
   "std/ruby/Open3Status.hx",
+  "std/ruby/Set.hx",
   "std/ruby/StandardError.hx",
   "std/ruby/URI.hx",
   "std/ruby/URIValue.hx",

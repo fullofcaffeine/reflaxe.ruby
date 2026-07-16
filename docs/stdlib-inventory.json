@@ -247,6 +247,14 @@
       "reason": "Read-only Process::Status contract for success, exit, signal, and process identifiers from completed Open3 captures."
     },
     {
+      "id": "std.ruby.set",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Set.hx",
+      "surface": "ruby.Set<T>",
+      "reason": "Generic Ruby-semantic Set facade for typed membership, mutation, algebra, relations, native block filtering/iteration, and explicit Array conversion without portable haxe.ds claims."
+    },
+    {
       "id": "std.ruby.json",
       "owner": "std",
       "status": "implemented",

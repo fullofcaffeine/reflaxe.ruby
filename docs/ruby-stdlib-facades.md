@@ -9,8 +9,8 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 
 - Put Ruby-owned library surfaces under the `ruby` package:
   `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
-  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, `ruby.CSV`, and `ruby.Open3`
-  facades.
+  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, `ruby.CSV`, `ruby.Open3`, and
+  `ruby.Set<T>` facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
   for example `@:native("JSON") extern class Json`.
@@ -350,6 +350,49 @@ environment and process-option hashes, stdin/binmode keywords, duplicate
 capture variants, live streams, and pipelines rather than weakening them into
 unchecked bags or leaking lifecycle obligations. Use a separate future typed
 stream/lifecycle contract when interactive IO is genuinely required.
+
+### Set
+
+`ruby.Set<T>` is a generic facade over Ruby's native `Set`, not a portable
+`haxe.ds` collection. Haxe-authored code keeps one precise element type while
+Ruby owns membership and duplicate elimination through `eql?` and `hash`:
+
+```haxe
+var permissions = new ruby.Set<String>(["read", "write", "read"]);
+permissions.add("publish");
+
+var elevated = permissions.union(new ruby.Set<String>(["admin"]));
+if (elevated.contains("admin")) {
+	elevated.forEach(permission -> ruby.Kernel.puts(permission));
+}
+```
+
+The generated Ruby is an ordinary Set allocation plus receiver calls and a
+native block:
+
+```ruby
+require "set"
+
+permissions = Set.new(["read", "write", "read"])
+permissions.add("publish")
+elevated = permissions.union(Set.new(["admin"]))
+elevated.each { |permission| Kernel.puts(permission) }
+```
+
+`addIfAbsent(...)` and `deleteIfPresent(...)` preserve Ruby's nullable
+changed-result contract. `union`, `intersection`, and `difference` return new
+sets; `merge`, `replace`, `subtract`, filters, and element add/delete methods
+mutate the receiver. Call `toArray()` when an Array is required. The facade does
+not expose `iterator()`, so a Ruby-semantic set cannot silently masquerade as a
+portable Haxe iterable.
+
+Ruby assumes an element's `eql?`/`hash` identity remains stable while stored and
+may store a frozen copy of a mutable String. Open Enumerable inputs, variadic
+construction/merge, type-changing transforms, classification/division,
+flattening, identity-comparison mode, mutable-element reset, subclass/CoreSet
+behavior, raw operators, and unchecked values remain outside this bounded
+contract. `require "set"` is retained for Ruby 3.3/3.4; Ruby 4.0 promotes Set
+to a core class while preserving the tested common surface.
 
 ### Dir
 

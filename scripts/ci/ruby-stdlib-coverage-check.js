@@ -101,6 +101,11 @@ assert(
     packageJson.scripts?.["test:open3-facade"]?.includes("open3-facade-smoke.js"),
   "Open3 facade evidence must be mandatory in npm test",
 );
+assert(
+  packageJson.scripts?.test?.includes("test:set-facade") &&
+    packageJson.scripts?.["test:set-facade"]?.includes("set-facade-smoke.js"),
+  "Set facade evidence must be mandatory in npm test",
+);
 assert(Array.isArray(coverage.domains) && coverage.domains.length > 0, "domains must be a non-empty array");
 assert(
   JSON.stringify(coverage.rubyBranches) === JSON.stringify(supportMatrix.ruby.ciBranches),
@@ -249,10 +254,31 @@ for (const source of [
 }
 assert(isNonEmptyString(open3.contractProvenance?.curation), "Open3 provenance must describe signature curation");
 
-for (const id of ["library.set"]) {
-  const domain = coverage.domains.find((candidate) => candidate.id === id);
-  assert(domain?.coverageStatus === "planned", `${id} must remain planned until its own facade bead lands`);
+const set = coverage.domains.find((domain) => domain.id === "library.set");
+assert(set?.coverageStatus === "implemented-public", "library.set must be an implemented public contract");
+assert(set.contractProvenance?.kind === "reviewed-rbs-plus-supported-ruby-sources", "Set provenance kind mismatch");
+assert(set.contractProvenance?.repository === "https://github.com/ruby/rbs", "Set provenance must use official ruby/rbs");
+assert(set.contractProvenance?.release === "v4.0.3", "Set provenance must pin the reviewed RBS release");
+assert(set.contractProvenance?.library === "core/set", "Set provenance must name the reviewed RBS library");
+assert(
+  JSON.stringify(set.facadePaths) === JSON.stringify(["std/ruby/Set.hx"])
+    && set.evidence?.includes("npm run test:set-facade"),
+  "Set facade and evidence contract mismatch",
+);
+assert(Array.isArray(set.contractProvenance?.sources) && set.contractProvenance.sources.length === 1, "Set RBS source required");
+assert(
+  Array.isArray(set.contractProvenance?.implementationSources)
+    && set.contractProvenance.implementationSources.length === 3,
+  "Set supported implementation sources required",
+);
+for (const source of [
+  ...(set.contractProvenance?.sources ?? []),
+  ...(set.contractProvenance?.implementationSources ?? []),
+]) {
+  assert(isNonEmptyString(source.path), "Set provenance source path required");
+  assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `Set provenance SHA-256 is invalid: ${source.path}`);
 }
+assert(isNonEmptyString(set.contractProvenance?.curation), "Set provenance must describe signature curation");
 
 const version = spawnSync("ruby", ["-e", "print RUBY_VERSION"], { cwd: root, encoding: "utf8" });
 if (version.status !== 0) {

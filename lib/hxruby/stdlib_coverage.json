@@ -477,10 +477,16 @@
         "3.4": "default-gem",
         "4.0": "core"
       },
-      "coverageStatus": "planned",
-      "surfaces": [],
-      "facadePaths": [],
-      "evidence": [],
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Set<T>"
+      ],
+      "facadePaths": [
+        "std/ruby/Set.hx"
+      ],
+      "evidence": [
+        "npm run test:set-facade"
+      ],
       "runtimeProbe": {
         "require": "set",
         "gem": "set",
@@ -488,7 +494,40 @@
           "Set"
         ]
       },
-      "notes": "A future facade must define element typing and Ruby equality semantics without pretending to be portable haxe.ds behavior; Ruby 4.0 promotes Set to a core class."
+      "contractProvenance": {
+        "kind": "reviewed-rbs-plus-supported-ruby-sources",
+        "repository": "https://github.com/ruby/rbs",
+        "release": "v4.0.3",
+        "library": "core/set",
+        "sources": [
+          {
+            "path": "core/set.rbs",
+            "sha256": "afd74d61411991a0691e892152565593debbee304b3a25b792f208c4673dd79b"
+          }
+        ],
+        "implementationSources": [
+          {
+            "repository": "https://github.com/ruby/set",
+            "release": "v1.1.0",
+            "path": "lib/set.rb",
+            "sha256": "c77fd2da96b4556a5b6de722a829228df0eae9f87c2de3c972124593dd5956aa"
+          },
+          {
+            "repository": "https://github.com/ruby/set",
+            "release": "v1.1.1",
+            "path": "lib/set.rb",
+            "sha256": "bb376256e24b623381fa0098e4c3e6f46da9255244aca0d0076a0cded1d5b0b9"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v4.0.0",
+            "path": "set.c",
+            "sha256": "21b153cdf5b87facefadd8639fd10d5eb5c75652fa2dfb7f4f455a2fc77ff97f"
+          }
+        ],
+        "curation": "The generic facade narrows construction to Array<T>, open Enumerable operands to same-element Set<T>, truthy filters to Bool callbacks, and iteration to an explicit native block. It exposes precise nullable add?/delete? results plus common algebra and relation methods. Variadic calls, type-changing transforms, classify/divide/flatten, identity mode, mutable-element reset, subclass/CoreSet contracts, implicit Haxe iteration, raw operators, and unchecked values are omitted."
+      },
+      "notes": "The bounded generic facade preserves Ruby eql?/hash membership semantics and direct native collection behavior without claiming portable haxe.ds equivalence. Ruby 4.0 promotes Set from a default gem to a core class."
     },
     {
       "id": "library.tempfile",

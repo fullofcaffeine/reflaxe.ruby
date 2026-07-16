@@ -184,6 +184,45 @@ pipelines, and unchecked argument bags remain omitted. This is a precise
 capture contract, not a claim that every Open3 process or lifecycle API is
 typed.
 
+## Fourth Reviewed Slice: Set
+
+`ruby.Set<T>` provides a generic Ruby-semantic collection without claiming
+portable `haxe.ds` behavior. Construction is deliberately limited to a typed
+Array, all multi-value operands are same-element `Set<T>` values, and blocks are
+explicitly typed and lowered natively:
+
+```haxe
+var left = new ruby.Set<String>(["alpha", "beta", "alpha"]);
+var right = new ruby.Set<String>(["beta", "gamma"]);
+
+var common = left.intersection(right);
+left.forEach(value -> ruby.Kernel.puts(value));
+```
+
+```ruby
+require "set"
+
+left = Set.new(["alpha", "beta", "alpha"])
+right = Set.new(["beta", "gamma"])
+common = left.intersection(right)
+left.each { |value| Kernel.puts(value) }
+```
+
+The facade covers size/empty/membership queries, precise nullable `add?` and
+`delete?` results, direct mutation, non-mutating algebra, subset/superset and
+intersection relations, Bool-narrowed native filters, block iteration, and
+explicit `Array<T>` conversion. Ruby still determines membership through
+`eql?` and `hash`; callers must not mutate a stored element's identity, and
+Ruby may store a frozen copy of a mutable String.
+
+The checked contract pins official `ruby/rbs` `v4.0.3` `core/set.rbs`, official
+`ruby/set` `v1.1.0` and `v1.1.1` implementations for Ruby 3.3/3.4, and the
+official `ruby/ruby` `v4.0.0` `set.c` core implementation. Open Enumerable and
+variadic inputs, type-changing transforms, classify/divide/flatten, identity
+mode, reset, subclass/CoreSet behavior, implicit Haxe iteration, raw operators,
+and unchecked values are omitted. The catalog records the Ruby 4.0 promotion
+from default gem to core without widening the common tested API.
+
 ## Updating The Catalog
 
 For each new domain:
@@ -200,6 +239,3 @@ For each new domain:
 5. Add compile, generated-shape, and MRI runtime evidence, then run the catalog,
    ownership, package, full example, Rails runtime, browser, and production
    gates required by the repository regression contract.
-
-`Set` remains recorded as the next planned domain. Its presence in the catalog
-is prioritization and availability evidence, not public API support.
