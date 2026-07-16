@@ -1,0 +1,543 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-07-15",
+  "supportMatrix": "lib/hxruby/support_matrix.json",
+  "rubyBranches": [
+    "3.3",
+    "3.4",
+    "4.0"
+  ],
+  "scope": {
+    "unit": "Ruby library domain",
+    "completeness": "curated-not-whole-stdlib",
+    "statement": "Implemented means the listed RubyHx facade and evidence exist for a bounded domain; it never means every API in the Ruby library is typed."
+  },
+  "distributionKinds": {
+    "core": "Constants and methods available without a require or separate gem contract.",
+    "standard-library": "Libraries shipped with Ruby but not represented by a RubyGems default or bundled gem specification.",
+    "default-gem": "Libraries shipped as default gems that may be upgraded independently.",
+    "bundled-gem": "Libraries installed with Ruby as ordinary gems and not guaranteed by a minimal Ruby installation outside the tested distribution.",
+    "platform-specific": "Libraries whose availability depends on the operating system or architecture and is outside the canonical cross-platform facade promise."
+  },
+  "coverageStatuses": {
+    "implemented-public": "A supported app-facing ruby.* facade exists with focused generated-shape and runtime evidence.",
+    "implemented-internal": "A typed target primitive exists for RubyHx internals but is not marketed as an app-facing library facade.",
+    "implemented-convenience": "A Haxe-owned opt-in convenience exists while the underlying Ruby contract remains separately available.",
+    "planned": "The domain is prioritized but no supported facade is claimed yet.",
+    "deferred": "The domain is deliberately outside the current portable or canonical-platform contract."
+  },
+  "domains": [
+    {
+      "id": "core.array-binary",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-internal",
+      "surfaces": [
+        "ruby.ArrayPacking",
+        "ruby.BinaryFormat"
+      ],
+      "facadePaths": [
+        "std/ruby/ArrayPacking.hx",
+        "std/ruby/BinaryFormat.hx"
+      ],
+      "evidence": [
+        "npm run test:unitstd-ruby",
+        "npm run test:stdlib-mvp"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "Array"
+        ]
+      },
+      "notes": "Typed pack directives and receiver contracts support Bytes, FPHelper, and compression without becoming a general Array facade."
+    },
+    {
+      "id": "core.array-iteration",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-internal",
+      "surfaces": [
+        "ruby.NativeIterator"
+      ],
+      "facadePaths": [
+        "std/ruby/NativeIterator.hx"
+      ],
+      "evidence": [
+        "npm run test:unitstd-ruby"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "Array"
+        ]
+      },
+      "notes": "The target-local iterator bridges Ruby arrays into Haxe iterator contracts and is not an app-facing Enumerable promise."
+    },
+    {
+      "id": "core.directory",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Dir"
+      ],
+      "facadePaths": [
+        "std/ruby/Dir.hx"
+      ],
+      "evidence": [
+        "npm run test:dir-facade"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "Dir"
+        ]
+      },
+      "notes": "The public facade covers a precise non-block, single-pattern subset of core Dir."
+    },
+    {
+      "id": "core.exception",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.StandardError"
+      ],
+      "facadePaths": [
+        "std/ruby/StandardError.hx"
+      ],
+      "evidence": [
+        "npm run test:exception-flow",
+        "npm run test:components"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "StandardError"
+        ]
+      },
+      "notes": "The nominal constant supports typed exception references; it does not claim the full Ruby exception hierarchy."
+    },
+    {
+      "id": "core.file-io",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.File"
+      ],
+      "facadePaths": [
+        "std/ruby/File.hx"
+      ],
+      "evidence": [
+        "npm run test:filesystem-parity",
+        "npm run test:tempfile-facade"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "File"
+        ]
+      },
+      "notes": "The public facade exposes bounded class and nominal instance IO while portable sys.io.File remains Haxe-owned."
+    },
+    {
+      "id": "core.hash",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-internal",
+      "surfaces": [
+        "ruby.NativeHash",
+        "ruby.NativeHashData",
+        "ruby.NativeHashEntry"
+      ],
+      "facadePaths": [
+        "std/ruby/NativeHash.hx",
+        "std/ruby/NativeHashData.hx",
+        "std/ruby/NativeHashEntry.hx"
+      ],
+      "evidence": [
+        "npm run test:unitstd-ruby",
+        "npm run test:stdlib-mvp"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "Hash"
+        ]
+      },
+      "notes": "Typed Hash storage backs Haxe maps; raw operations remain local target seams rather than an app-facing Hash API."
+    },
+    {
+      "id": "core.output",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-convenience",
+      "surfaces": [
+        "ruby.Kernel",
+        "ruby.Prelude"
+      ],
+      "facadePaths": [
+        "std/ruby/Kernel.hx",
+        "std/ruby/Prelude.hx"
+      ],
+      "evidence": [
+        "npm run test:hello-world",
+        "npm run test:ruby-interop"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "Kernel"
+        ]
+      },
+      "notes": "Kernel preserves Ruby conversion while Prelude is an explicit Haxe-stringification convenience; their semantics stay distinct."
+    },
+    {
+      "id": "core.string-binary",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-internal",
+      "surfaces": [
+        "ruby.BinaryString"
+      ],
+      "facadePaths": [
+        "std/ruby/BinaryString.hx"
+      ],
+      "evidence": [
+        "npm run test:unitstd-ruby",
+        "npm run test:stdlib-mvp"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "String"
+        ]
+      },
+      "notes": "Result-specific binary receiver contracts support exact bit and byte operations without exposing open unpack results."
+    },
+    {
+      "id": "core.symbol",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Symbol"
+      ],
+      "facadePaths": [
+        "std/ruby/Symbol.hx"
+      ],
+      "evidence": [
+        "npm run test:ruby-interop"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "Symbol"
+        ]
+      },
+      "notes": "The nominal abstract models Ruby symbol values used by typed interop calls."
+    },
+    {
+      "id": "library.csv",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "bundled-gem",
+        "4.0": "bundled-gem"
+      },
+      "coverageStatus": "planned",
+      "surfaces": [],
+      "facadePaths": [],
+      "evidence": [],
+      "runtimeProbe": {
+        "require": "csv",
+        "gem": "csv",
+        "constants": [
+          "CSV"
+        ]
+      },
+      "notes": "CSV is deliberately recorded as a distribution transition; a future facade must not confuse bundled availability with a minimal-Ruby guarantee."
+    },
+    {
+      "id": "library.fileutils",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "default-gem"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.FileUtils"
+      ],
+      "facadePaths": [
+        "std/ruby/FileUtils.hx"
+      ],
+      "evidence": [
+        "npm run test:fileutils-facade"
+      ],
+      "runtimeProbe": {
+        "require": "fileutils",
+        "gem": "fileutils",
+        "constants": [
+          "FileUtils"
+        ]
+      },
+      "notes": "The bounded mutation facade uses direct FileUtils calls and security-explicit recursive removal."
+    },
+    {
+      "id": "library.json",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "default-gem"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Json"
+      ],
+      "facadePaths": [
+        "std/ruby/Json.hx"
+      ],
+      "evidence": [
+        "npm run test:json-parity",
+        "npm run test:ruby-interop"
+      ],
+      "runtimeProbe": {
+        "require": "json",
+        "gem": "json",
+        "constants": [
+          "JSON"
+        ]
+      },
+      "notes": "The current facade is an explicit open JSON interop boundary; app code must narrow values before field access."
+    },
+    {
+      "id": "library.open3",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "default-gem"
+      },
+      "coverageStatus": "planned",
+      "surfaces": [],
+      "facadePaths": [],
+      "evidence": [],
+      "runtimeProbe": {
+        "require": "open3",
+        "gem": "open3",
+        "constants": [
+          "Open3"
+        ]
+      },
+      "notes": "Process helpers need separate typed success, stream, status, and lifecycle contracts before a facade is claimed."
+    },
+    {
+      "id": "library.pathname",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Pathname"
+      ],
+      "facadePaths": [
+        "std/ruby/Pathname.hx"
+      ],
+      "evidence": [
+        "npm run test:pathname-facade"
+      ],
+      "runtimeProbe": {
+        "require": "pathname",
+        "gem": "pathname",
+        "constants": [
+          "Pathname"
+        ]
+      },
+      "notes": "The public value facade covers typed path composition, decomposition, normalization, predicates, and bounded reads; Ruby 4.0 promotes Pathname from a default gem to a core class."
+    },
+    {
+      "id": "library.rbconfig",
+      "distributionByRuby": {
+        "3.3": "standard-library",
+        "3.4": "standard-library",
+        "4.0": "standard-library"
+      },
+      "coverageStatus": "deferred",
+      "surfaces": [],
+      "facadePaths": [],
+      "evidence": [],
+      "runtimeProbe": {
+        "require": "rbconfig",
+        "constants": [
+          "RbConfig"
+        ]
+      },
+      "notes": "Build and installation metadata is available but has no current app-facing facade requirement."
+    },
+    {
+      "id": "library.set",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "core"
+      },
+      "coverageStatus": "planned",
+      "surfaces": [],
+      "facadePaths": [],
+      "evidence": [],
+      "runtimeProbe": {
+        "require": "set",
+        "gem": "set",
+        "constants": [
+          "Set"
+        ]
+      },
+      "notes": "A future facade must define element typing and Ruby equality semantics without pretending to be portable haxe.ds behavior; Ruby 4.0 promotes Set to a core class."
+    },
+    {
+      "id": "library.tempfile",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "default-gem"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Tempfile"
+      ],
+      "facadePaths": [
+        "std/ruby/Tempfile.hx"
+      ],
+      "evidence": [
+        "npm run test:tempfile-facade"
+      ],
+      "runtimeProbe": {
+        "require": "tempfile",
+        "gem": "tempfile",
+        "constants": [
+          "Tempfile"
+        ]
+      },
+      "notes": "The public lifecycle facade prioritizes native block cleanup and explicit deterministic cleanup for retained values."
+    },
+    {
+      "id": "library.uri",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "default-gem"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.URI",
+        "ruby.URIValue"
+      ],
+      "facadePaths": [
+        "std/ruby/URI.hx",
+        "std/ruby/URIValue.hx"
+      ],
+      "evidence": [
+        "npm run test:uri-facade"
+      ],
+      "runtimeProbe": {
+        "require": "uri",
+        "gem": "uri",
+        "constants": [
+          "URI",
+          "URI::Generic"
+        ]
+      },
+      "contractProvenance": {
+        "kind": "reviewed-rbs",
+        "repository": "https://github.com/ruby/rbs",
+        "release": "v4.0.3",
+        "library": "stdlib/uri/0",
+        "sources": [
+          {
+            "path": "common.rbs",
+            "sha256": "22fbbf40b6a65d7bd13bc14515aa57119b2f28dbe958ebe19956fccd0097fd6e"
+          },
+          {
+            "path": "generic.rbs",
+            "sha256": "75981b325699034d86d6ad4a529ea9dde187a0aaf216639b5ea3ac10dcaa803b"
+          }
+        ],
+        "curation": "Open _ToS/_ToStr, encoding, enumerable, variadic, mutation, and scheme-specific signatures are omitted or narrowed to String; URI.parse's subclass union is represented by the sound URI::Generic base contract."
+      },
+      "notes": "The public facade covers parsing, two-part joining, component encoding, immutable composition, common nullable components, normalization, and relative routing without claiming every URI scheme API."
+    },
+    {
+      "id": "library.zlib",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "default-gem"
+      },
+      "coverageStatus": "implemented-internal",
+      "surfaces": [
+        "ruby.Deflate",
+        "ruby.Inflate"
+      ],
+      "facadePaths": [
+        "std/ruby/Zlib.hx"
+      ],
+      "evidence": [
+        "npm run test:unitstd-ruby",
+        "npm run test:stdlib-mvp"
+      ],
+      "runtimeProbe": {
+        "require": "zlib",
+        "gem": "zlib",
+        "constants": [
+          "Zlib::Deflate",
+          "Zlib::Inflate"
+        ]
+      },
+      "notes": "Typed one-shot compression primitives support Haxe zip semantics; a general Ruby Zlib facade is not claimed."
+    },
+    {
+      "id": "platform.win32ole",
+      "distributionByRuby": {
+        "3.3": "platform-specific",
+        "3.4": "platform-specific",
+        "4.0": "platform-specific"
+      },
+      "coverageStatus": "deferred",
+      "surfaces": [],
+      "facadePaths": [],
+      "evidence": [],
+      "runtimeProbe": {
+        "require": "win32ole",
+        "gem": "win32ole",
+        "constants": [
+          "WIN32OLE"
+        ],
+        "platforms": [
+          "win32"
+        ]
+      },
+      "notes": "Windows COM is outside the canonical Ubuntu evidence lane and cannot be inferred from cross-platform Ruby availability."
+    }
+  ]
+}

@@ -221,7 +221,7 @@ contract.
 | `haxe.ruby-bjv.7` | Public readiness checklist | User-facing docs state maturity, commands, versions, support expectations, known blockers, and release criteria. |
 | `haxe.ruby-bjv.13` | Upstream Haxe std parity lane | Curated Haxe `unitstd` fixtures compile through the Ruby target and run on Ruby via `npm run test:unitstd-ruby`, giving RubyHx std/runtime parity evidence underneath RailsHx. |
 | `haxe_ruby-a13d` | Supported RailsHx component dependency closure | The machine audit maps each marketed component family to required foundations and mandatory evidence, rejects unfinished Haxe std imports, and requires implemented direct Ruby facades. |
-| `haxe_ruby-hjm` | Typed Ruby core and stdlib catalog | A versioned inventory distinguishes core, stdlib, default gems, bundled gems, and platform-specific APIs; deterministic RBS-backed contracts grow precise `ruby.*` coverage without collapsing Ruby semantics into Haxe std. This is post-1.0 breadth unless a narrower marketed workflow depends on a missing API. |
+| `haxe_ruby-hjm` | Typed Ruby core and stdlib catalog | The packaged initial inventory distinguishes core, stdlib, default gems, bundled gems, and platform-specific APIs, accounts for every maintained `ruby.*` facade, and adds the first reviewed-RBS URI slice. The general deterministic RBS-to-Haxe pipeline and later library domains remain post-1.0 breadth unless a narrower marketed workflow depends on them. |
 
 Generator/task ownership details are tracked in
 [RailsHx Generators And Rails Tasks Design](railshx-generators-and-tasks-design.md).

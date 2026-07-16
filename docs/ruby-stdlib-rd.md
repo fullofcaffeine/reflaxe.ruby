@@ -2,8 +2,8 @@
 
 This document turns the current stdlib/runtime audit into a staged plan for
 RubyHx. It complements `docs/stdlib-ownership.md`,
-`docs/ruby-stdlib-facades.md`, `docs/gap-report-guidance.md`, and
-`docs/stdlib-inventory.json`.
+`docs/ruby-stdlib-facades.md`, `docs/ruby-stdlib-coverage.md`,
+`docs/gap-report-guidance.md`, and `docs/stdlib-inventory.json`.
 
 ## Goal
 
@@ -55,7 +55,8 @@ Current implemented domains:
   `haxe.Int32`, `haxe.io.Bytes`/`FPHelper`, `haxe.rtti.*`, `haxe.zip.*`,
   `sys.FileSystem`, and `sys.io.File`.
 - Ruby interop: `ruby.Symbol`, `ruby.Kernel`, `ruby.File`, `ruby.Json`,
-  `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`,
+  `ruby.Pathname`, `ruby.Dir`, `ruby.FileUtils`, `ruby.Tempfile`, `ruby.URI`,
+  `ruby.URIValue`,
   `ruby.Prelude`, `ruby.StandardError`, `ruby.ArrayPacking`,
   `ruby.BinaryFormat`, `ruby.BinaryString`, `ruby.Zlib`, `NativeHash`, and
   `NativeIterator`.
@@ -95,6 +96,18 @@ Broader upstream candidate accounting lives in
 ```bash
 npm run test:ruby-stdlib-parity-audit
 ```
+
+Ruby-library domain coverage is separately packaged in
+`lib/hxruby/stdlib_coverage.json` and validated by:
+
+```bash
+npm run test:ruby-stdlib-coverage
+```
+
+That catalog consumes the machine support matrix, distinguishes core,
+standard-library, default-gem, bundled-gem, and platform-specific availability,
+and accounts for every maintained `std/ruby` facade. It is curated domain
+coverage, not a claim that RubyHx types the whole Ruby standard library.
 
 ## Coverage Tiers
 
@@ -175,6 +188,15 @@ a strengthened nominal `ruby.File` instance contract; `File.open(...)` no
 longer returns `Dynamic`. Constructor-created `Tempfile` values remain
 available with nullable paths and an explicit `closeAndUnlink()` obligation,
 while GC-finalizer cleanup is documented as non-deterministic fallback only.
+
+`ruby.URI` and `ruby.URIValue` are the first catalog-backed, RBS-reviewed
+facade slice. They use direct `URI` module and `URI::Generic` receiver calls for
+parsing, bounded joining, component codecs, nullable common components,
+predicates, composition, normalization, and relative routing. The coverage
+catalog pins the reviewed official `ruby/rbs` `v4.0.3` source hashes and records
+which open, variadic, mutable, encoding-specific, and scheme-specific
+signatures were omitted. This is reviewed curation, not yet the general
+deterministic RBS-to-Haxe pipeline.
 
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
@@ -295,6 +317,8 @@ Every std/runtime change should choose the smallest useful gate set:
 - `npm run test:unitstd-ruby` for Haxe std semantics.
 - `npm run test:ruby-stdlib-parity-audit` when changing upstream stdlib
   candidate accounting or the unitstd manifest.
+- `npm run test:ruby-stdlib-coverage` when changing Ruby facade ownership,
+  distribution classifications, supported branches, or catalog evidence.
 - `UPDATE_SNAPSHOTS=1 npm run test:snapshots && npm run test:snapshots` for
   generated Ruby shape changes.
 - `npm run test:stdlib-mvp` for broad std smoke coverage.
@@ -329,10 +353,11 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
 1. `haxe_ruby-hjm` owns the broad versioned Ruby
    core/stdlib/default-gem coverage inventory and deterministic RBS-to-Haxe
-   contract pipeline. Generated contracts remain conservative, reviewed,
-   compiled, and runtime-tested.
-2. Add Ruby stdlib facades separately under `std/ruby/**` for `ruby.URI`, and
-   later `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
+   contract pipeline. The first curated inventory and reviewed URI facade are
+   complete; general signature generation remains future work. Generated
+   contracts remain conservative, reviewed, compiled, and runtime-tested.
+2. Add Ruby stdlib facades separately under `std/ruby/**` next for
+   `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 3. Audit existing `_std` raw-native seams and replace them with shared typed
    Ruby contracts where reuse improves safety without changing generated Ruby
    or Haxe semantics.

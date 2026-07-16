@@ -53,6 +53,13 @@ lanes on the oldest supported Ruby 3.3 branch, while the full and runtime gates
 cover both primary branches. Node compatibility gates exercise both the declared
 minimum and the current tested patch.
 
+The packaged
+[`lib/hxruby/stdlib_coverage.json`](../lib/hxruby/stdlib_coverage.json) catalog
+uses those exact Ruby branches to classify selected core, standard-library,
+default-gem, bundled-gem, and platform-specific domains. Its runtime gate checks
+availability on each matrix job; an implemented entry covers only its listed
+typed facade, not every API in that Ruby library or the whole stdlib.
+
 The tested Ruby branches are an evidence and maintenance promise, not an upper
 compatibility ceiling. The gem requires Ruby `>= 3.3`; newer Ruby versions may
 work and produce an `hxruby:doctor` warning until a canonical lane verifies them.

@@ -9,7 +9,7 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 
 - Put Ruby-owned library surfaces under the `ruby` package:
   `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
-  `ruby.Pathname`, `ruby.Tempfile`, and future `ruby.CSV` or `ruby.URI`
+  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, and future `ruby.CSV`
   facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
@@ -70,6 +70,14 @@ The complete inventory is a useful long-term goal. Stable releases should state
 which domains and Ruby versions are covered instead of making an unqualified
 "whole stdlib" claim. A smaller precise facade is more valuable than a large
 surface whose types do not describe Ruby's actual behavior.
+
+The packaged
+[`lib/hxruby/stdlib_coverage.json`](../lib/hxruby/stdlib_coverage.json)
+catalog is the current domain-level contract. It distinguishes core,
+standard-library, default-gem, bundled-gem, and platform-specific availability
+for every supported MRI branch and accounts for every maintained `std/ruby`
+facade. See [Ruby Stdlib Coverage Catalog](ruby-stdlib-coverage.md) for its
+schema, runtime checks, and deliberately bounded claims.
 
 ## Relationship To Haxe Std
 
@@ -216,6 +224,43 @@ completion and diagnostics precise and avoids introducing `Dynamic`, casts, raw
 Ruby, splat lowering, or a wrapper solely to mirror an open Ruby argument list.
 `ruby.Pathname` is Ruby-shaped interop; it does not replace portable
 `haxe.io.Path`, whose parsing/normalization contract remains Haxe-owned.
+
+### URI
+
+`ruby.URI` and `ruby.URIValue` form a bounded typed facade over Ruby's `URI`
+module and the shared `URI::Generic` value contract. Parsing, two-reference
+joining, form/URI component encoding, common nullable components, predicates,
+merging, relative routing, normalization, and string conversion remain nominal
+and chainable:
+
+```haxe
+var base = ruby.URI.parse("https://example.com/app/");
+var endpoint = base.merge("api/items?q=typed");
+
+ruby.Kernel.puts(endpoint.host());
+ruby.Kernel.puts(endpoint.toString());
+ruby.Kernel.puts(ruby.URI.encodeComponent("a b/c"));
+```
+
+Generated output requires and calls the real Ruby library directly:
+
+```ruby
+require "uri"
+
+base = URI.parse("https://example.com/app/")
+endpoint = base.merge("api/items?q=typed")
+Kernel.puts(endpoint.host)
+Kernel.puts(endpoint.to_s)
+Kernel.puts(URI.encode_uri_component("a b/c"))
+```
+
+The facade was reviewed against official `ruby/rbs` `v4.0.3` URI signatures;
+the exact source hashes and curation statement live in the packaged coverage
+catalog. Ruby's open conversion protocols, enumerable form encoding, optional
+encoding parameters, variadic joins, mutation, and scheme-specific APIs remain
+excluded rather than represented loosely. `URI.parse` returns scheme-specific
+subclasses at runtime, and `ruby.URIValue` models their sound shared base rather
+than pretending every parsed value is HTTP-specific.
 
 ### Dir
 
@@ -382,7 +427,8 @@ through `Dynamic`, casts, raw Ruby, or a wrapper runtime.
    convenience names, and keep exact Ruby interop under the `ruby.*` package.
 6. Add or update inventory when adding new std/runtime files:
    `docs/stdlib-inventory.json` must represent new `std/**` and
-   `runtime/hxruby/**` ownership.
+   `runtime/hxruby/**` ownership. Add every `std/ruby` facade to
+   `lib/hxruby/stdlib_coverage.json` with its per-Ruby distribution and evidence.
 
 ## Testing Expectations
 
@@ -398,6 +444,8 @@ Choose the smallest gate set that proves both authoring and emitted shape:
 - `npm run test:runtime-minitest` when `runtime/hxruby/**` changes.
 - `npm run test:stdlib-inventory && npm run test:gap-report` when inventory or
   std ownership changes.
+- `npm run test:ruby-stdlib-coverage` when a Ruby facade, supported branch,
+  distribution classification, or catalog claim changes.
 - `npm run public:precommit` and GitHub CI before considering the slice done.
 
 If a facade starts as a deliberately loose boundary, add a follow-up bead for

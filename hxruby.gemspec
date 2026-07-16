@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
     *Dir["artifact-manifest.json"],
     *Dir["lib/**/*.rb"],
     "lib/hxruby/support_matrix.json",
+    "lib/hxruby/stdlib_coverage.json",
     *Dir["runtime/hxruby/**/*.rb"],
     *Dir["scripts/rails/*.rb"],
     *Dir["std/**/*.hx"],

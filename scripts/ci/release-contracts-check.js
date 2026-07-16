@@ -71,6 +71,9 @@ const stableReviewReport = readFileSync(
 const typedViews = readFileSync("docs/railshx-typed-views.md", "utf8");
 const clientJavaScript = readFileSync("docs/railshx-client-javascript.md", "utf8");
 const rubyStdlibFacades = readFileSync("docs/ruby-stdlib-facades.md", "utf8");
+const rubyStdlibCoverageDocs = readFileSync("docs/ruby-stdlib-coverage.md", "utf8");
+const rubyStdlibCoverage = readJson("lib/hxruby/stdlib_coverage.json");
+const rubyStdlibCoverageCheck = readFileSync("scripts/ci/ruby-stdlib-coverage-check.js", "utf8");
 const packageInstallation = readFileSync("docs/packages-and-installation.md", "utf8");
 const gettingStarted = readFileSync("docs/getting-started.md", "utf8");
 const developmentDocs = readFileSync("docs/development.md", "utf8");
@@ -235,6 +238,35 @@ expectIncludes(clientJavaScript, "canonical generated RailsHx client contract to
 expectIncludes(rubyStdlibFacades, "## Coverage Goal", "Ruby stdlib facade coverage contract");
 expectIncludes(rubyStdlibFacades, "## Relationship To Haxe Std", "Ruby and Haxe std layering contract");
 expectIncludes(rubyStdlibFacades, '"what does Ruby do?"', "Ruby std semantic ownership");
+expectIncludes(rubyStdlibFacades, "### URI", "typed URI facade docs");
+expectIncludes(rubyStdlibCoverageDocs, "curated", "Ruby stdlib catalog claim boundary");
+expectIncludes(rubyStdlibCoverageDocs, "not a general RBS-to-Haxe generator", "RBS generator scope boundary");
+expectIncludes(docsIndex, "ruby-stdlib-coverage.md", "docs index Ruby stdlib catalog");
+expectIncludes(packageJson.scripts.test, "test:ruby-stdlib-coverage", "mandatory Ruby stdlib catalog gate");
+expectIncludes(packageJson.scripts.test, "test:uri-facade", "mandatory typed URI gate");
+expectIncludes(rubyStdlibCoverageCheck, "support_matrix.json", "Ruby stdlib catalog support-matrix lock");
+expectIncludes(rubyStdlibCoverageCheck, "committed ruby facade is missing", "Ruby stdlib complete facade accounting");
+if (rubyStdlibCoverage.schemaVersion !== 1) {
+  fail("Ruby stdlib coverage schema version must remain explicit");
+}
+if (rubyStdlibCoverage.supportMatrix !== "lib/hxruby/support_matrix.json") {
+  fail("Ruby stdlib coverage must consume the canonical support matrix");
+}
+if (rubyStdlibCoverage.scope?.completeness !== "curated-not-whole-stdlib") {
+  fail("Ruby stdlib coverage must retain its bounded completeness claim");
+}
+if (JSON.stringify(rubyStdlibCoverage.rubyBranches) !== JSON.stringify(supportMatrix.ruby.ciBranches)) {
+  fail("Ruby stdlib coverage branches must match canonical Ruby CI branches");
+}
+const uriCoverage = rubyStdlibCoverage.domains?.find((domain) => domain.id === "library.uri");
+if (
+  uriCoverage?.coverageStatus !== "implemented-public" ||
+  JSON.stringify(uriCoverage.facadePaths) !== JSON.stringify(["std/ruby/URI.hx", "std/ruby/URIValue.hx"]) ||
+  !uriCoverage.evidence?.includes("npm run test:uri-facade") ||
+  uriCoverage.contractProvenance?.kind !== "reviewed-rbs"
+) {
+  fail("Ruby stdlib coverage must retain the bounded reviewed-RBS URI contract");
+}
 expectIncludes(productionReadiness, "Stable 1.0 Exit Rules", "stable 1.0 readiness contract");
 expectIncludes(productionReadiness, "Performance and resource behavior", "stable 1.0 performance gate");
 expectIncludes(productionReadiness, "Debugging and observability", "stable 1.0 debugging gate");
@@ -588,6 +620,9 @@ expectIncludes(haxelibPackageBuilder, `"vendor/genes/src/"`, "Haxelib package bu
 expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
 expectExcludes(haxelibPackageBuilder, `"haxe_libraries/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageCheckText, "src/Std.cross.hx", "Haxelib package check");
+expectIncludes(haxelibPackageCheckText, "lib/hxruby/stdlib_coverage.json", "Haxelib stdlib catalog package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/URI.hx", "Haxelib typed URI package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/URIValue.hx", "Haxelib typed URI value package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/Auth.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/ContractTools.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/DeviseModelMacro.hx", "Haxelib package check");
@@ -613,6 +648,9 @@ expectIncludes(gemPackageBuilder, "gem", "Ruby gem package builder");
 expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "std/rails/turbo/Turbo.hx", "Ruby gem package check");
+expectIncludes(gemPackageCheck, "lib/hxruby/stdlib_coverage.json", "Ruby gem stdlib catalog package check");
+expectIncludes(gemPackageCheck, "std/ruby/URI.hx", "Ruby gem typed URI package check");
+expectIncludes(gemPackageCheck, "std/ruby/URIValue.hx", "Ruby gem typed URI value package check");
 expectIncludes(gemPackageCheck, "railshx.client gem smoke", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "vendor/genes/src/genes/Generator.hx", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "hxruby:production", "Ruby gem package check");
@@ -620,6 +658,7 @@ expectIncludes(gemPackageCheck, "verifyArtifactManifest", "gem exact content che
 expectIncludes(gemPackageCheck, "sidecar.sha256", "gem exact byte check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'std/**/*.hx', "hxruby.gemspec");
+expectIncludes(hxrubyGemspec, 'lib/hxruby/stdlib_coverage.json', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'vendor/genes/src/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.3"', "hxruby.gemspec");
 if (supportMatrix.schemaVersion !== 1) {

@@ -167,6 +167,22 @@
       "reason": "Precisely typed facade for Ruby's Pathname value covering path composition, decomposition, normalization, relative paths, read-only filesystem predicates, children, and bounded reads with direct native calls."
     },
     {
+      "id": "std.ruby.uri",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/URI.hx",
+      "surface": "ruby.URI",
+      "reason": "Precisely typed module facade for Ruby URI parsing, two-reference joining, and form/URI component codecs with direct native calls."
+    },
+    {
+      "id": "std.ruby.uri_value",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/URIValue.hx",
+      "surface": "ruby.URIValue",
+      "reason": "Nominal URI::Generic base contract for common nullable components, predicates, immutable composition, normalization, routing, and string conversion."
+    },
+    {
       "id": "std.ruby.json",
       "owner": "std",
       "status": "implemented",
