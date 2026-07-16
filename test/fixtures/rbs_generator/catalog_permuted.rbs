@@ -1,0 +1,9 @@
+# The same reviewed contract in another source order must render identically.
+class FixtureCatalog
+  def self.normalize: (String class) -> String
+  def maybe_label: (String? key) -> String?
+  def empty?: () -> bool
+  def nested_rows: (Array[Array[String]] rows) -> Array[Array[String]]
+  def initialize: (?String prefix) -> void
+  def label_for: (String key, ?Integer count) -> String
+end

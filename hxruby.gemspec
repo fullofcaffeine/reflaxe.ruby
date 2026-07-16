@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
     "lib/hxruby/stdlib_coverage.json",
     *Dir["runtime/hxruby/**/*.rb"],
     *Dir["scripts/rails/*.rb"],
+    *Dir["scripts/rbs/*.rb"],
     *Dir["std/**/*.hx"],
     *Dir["vendor/genes/src/**/*.hx"],
     "vendor/genes/haxelib.json",

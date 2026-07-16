@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-07-15",
+  "asOf": "2026-07-16",
   "supportMatrix": "lib/hxruby/support_matrix.json",
   "rubyBranches": [
     "3.3",
@@ -11,6 +11,18 @@
     "unit": "Ruby library domain",
     "completeness": "curated-not-whole-stdlib",
     "statement": "Implemented means the listed RubyHx facade and evidence exist for a bounded domain; it never means every API in the Ruby library is typed."
+  },
+  "rbsGeneration": {
+    "scope": "strict-precise-or-omitted-subset",
+    "implementation": [
+      "lib/hxruby/rbs/source_parser.rb",
+      "lib/hxruby/rbs/haxe_extern_renderer.rb",
+      "lib/hxruby/rbs/extern_generator.rb",
+      "lib/hxruby/rbs/cli.rb"
+    ],
+    "command": "ruby -Ilib scripts/rbs/generate-extern.rb",
+    "evidence": "npm run test:rbs-generator",
+    "claim": "generator-infrastructure-not-library-coverage"
   },
   "distributionKinds": {
     "core": "Constants and methods available without a require or separate gem contract.",

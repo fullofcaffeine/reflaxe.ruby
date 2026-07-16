@@ -74,6 +74,11 @@ const rubyStdlibFacades = readFileSync("docs/ruby-stdlib-facades.md", "utf8");
 const rubyStdlibCoverageDocs = readFileSync("docs/ruby-stdlib-coverage.md", "utf8");
 const rubyStdlibCoverage = readJson("lib/hxruby/stdlib_coverage.json");
 const rubyStdlibCoverageCheck = readFileSync("scripts/ci/ruby-stdlib-coverage-check.js", "utf8");
+const rbsGeneratorDocs = readFileSync("docs/rbs-to-haxe-generator.md", "utf8");
+const rbsSourceParser = readFileSync("lib/hxruby/rbs/source_parser.rb", "utf8");
+const rbsExternRenderer = readFileSync("lib/hxruby/rbs/haxe_extern_renderer.rb", "utf8");
+const rbsExternGenerator = readFileSync("lib/hxruby/rbs/extern_generator.rb", "utf8");
+const rbsGeneratorCheck = readFileSync("scripts/ci/rbs-generator-smoke.js", "utf8");
 const packageInstallation = readFileSync("docs/packages-and-installation.md", "utf8");
 const gettingStarted = readFileSync("docs/getting-started.md", "utf8");
 const developmentDocs = readFileSync("docs/development.md", "utf8");
@@ -240,9 +245,15 @@ expectIncludes(rubyStdlibFacades, "## Relationship To Haxe Std", "Ruby and Haxe 
 expectIncludes(rubyStdlibFacades, '"what does Ruby do?"', "Ruby std semantic ownership");
 expectIncludes(rubyStdlibFacades, "### URI", "typed URI facade docs");
 expectIncludes(rubyStdlibCoverageDocs, "curated", "Ruby stdlib catalog claim boundary");
-expectIncludes(rubyStdlibCoverageDocs, "not a general RBS-to-Haxe generator", "RBS generator scope boundary");
+expectIncludes(rubyStdlibCoverageDocs, "strict deterministic foundation", "RBS generator scope boundary");
+expectIncludes(rbsGeneratorDocs, "Precise-Or-Omitted Subset", "RBS generator supported subset");
+expectIncludes(rbsGeneratorDocs, "does not claim whole-RBS or", "RBS generator claim boundary");
 expectIncludes(docsIndex, "ruby-stdlib-coverage.md", "docs index Ruby stdlib catalog");
+expectIncludes(docsIndex, "rbs-to-haxe-generator.md", "docs index RBS generator");
 expectIncludes(packageJson.scripts.test, "test:ruby-stdlib-coverage", "mandatory Ruby stdlib catalog gate");
+expectIncludes(packageJson.scripts.test, "test:rbs-generator", "mandatory RBS generator gate");
+expectIncludes(packageJson.scripts["test:rbs-generator"] ?? "", "rbs_generator_test.rb", "RBS generator unit gate");
+expectIncludes(packageJson.scripts["test:rbs-generator"] ?? "", "rbs-generator-smoke.js", "RBS generator smoke gate");
 expectIncludes(packageJson.scripts.test, "test:uri-facade", "mandatory typed URI gate");
 expectIncludes(rubyStdlibCoverageCheck, "support_matrix.json", "Ruby stdlib catalog support-matrix lock");
 expectIncludes(rubyStdlibCoverageCheck, "committed ruby facade is missing", "Ruby stdlib complete facade accounting");
@@ -254,6 +265,13 @@ if (rubyStdlibCoverage.supportMatrix !== "lib/hxruby/support_matrix.json") {
 }
 if (rubyStdlibCoverage.scope?.completeness !== "curated-not-whole-stdlib") {
   fail("Ruby stdlib coverage must retain its bounded completeness claim");
+}
+if (
+  rubyStdlibCoverage.rbsGeneration?.scope !== "strict-precise-or-omitted-subset" ||
+  rubyStdlibCoverage.rbsGeneration?.evidence !== "npm run test:rbs-generator" ||
+  rubyStdlibCoverage.rbsGeneration?.claim !== "generator-infrastructure-not-library-coverage"
+) {
+  fail("Ruby stdlib coverage must retain its bounded deterministic RBS generation contract");
 }
 if (JSON.stringify(rubyStdlibCoverage.rubyBranches) !== JSON.stringify(supportMatrix.ruby.ciBranches)) {
   fail("Ruby stdlib coverage branches must match canonical Ruby CI branches");
@@ -636,6 +654,9 @@ expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package build
 expectExcludes(haxelibPackageBuilder, `"haxe_libraries/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageCheckText, "src/Std.cross.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "lib/hxruby/stdlib_coverage.json", "Haxelib stdlib catalog package check");
+expectIncludes(haxelibPackageCheckText, "lib/hxruby/rbs/source_parser.rb", "Haxelib RBS parser package check");
+expectIncludes(haxelibPackageCheckText, "lib/hxruby/rbs/haxe_extern_renderer.rb", "Haxelib RBS renderer package check");
+expectIncludes(haxelibPackageCheckText, "packaged RBS generator mismatch", "Haxelib RBS library package smoke");
 expectIncludes(haxelibPackageCheckText, "src/ruby/URI.hx", "Haxelib typed URI package check");
 expectIncludes(haxelibPackageCheckText, "src/ruby/URIValue.hx", "Haxelib typed URI value package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/Auth.hx", "Haxelib package check");
@@ -664,6 +685,10 @@ expectIncludes(gemPackageCheck, "installed gem missing tasks", "Ruby gem package
 expectIncludes(gemPackageCheck, "rubyDefaultGemPath", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "std/rails/turbo/Turbo.hx", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "lib/hxruby/stdlib_coverage.json", "Ruby gem stdlib catalog package check");
+expectIncludes(gemPackageCheck, "lib/hxruby/rbs/source_parser.rb", "Ruby gem RBS parser package check");
+expectIncludes(gemPackageCheck, "lib/hxruby/rbs/haxe_extern_renderer.rb", "Ruby gem RBS renderer package check");
+expectIncludes(gemPackageCheck, "scripts/rbs/generate-extern.rb", "Ruby gem RBS command package check");
+expectIncludes(gemPackageCheck, "packaged gem RBS generator mismatch", "Ruby gem RBS command package smoke");
 expectIncludes(gemPackageCheck, "std/ruby/URI.hx", "Ruby gem typed URI package check");
 expectIncludes(gemPackageCheck, "std/ruby/URIValue.hx", "Ruby gem typed URI value package check");
 expectIncludes(gemPackageCheck, "railshx.client gem smoke", "Ruby gem package check");
@@ -674,6 +699,7 @@ expectIncludes(gemPackageCheck, "sidecar.sha256", "gem exact byte check");
 expectIncludes(hxrubyGemspec, 'spec.name = "hxruby"', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'std/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'lib/hxruby/stdlib_coverage.json', "hxruby.gemspec");
+expectIncludes(hxrubyGemspec, 'scripts/rbs/*.rb', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'vendor/genes/src/**/*.hx', "hxruby.gemspec");
 expectIncludes(hxrubyGemspec, 'spec.required_ruby_version = ">= 3.3"', "hxruby.gemspec");
 if (supportMatrix.schemaVersion !== 1) {
@@ -697,9 +723,16 @@ expectIncludes(hxrubyAdoptGenerator, "--devise-hhx-views", "hxruby adopt generat
 expectIncludes(hxrubyAdoptGenerator, "--yard PATH", "hxruby adopt generator");
 expectIncludes(hxrubyAdoptGenerator, "class YardSourceParser", "hxruby adopt generator");
 expectIncludes(hxrubyAdoptGenerator, "no broad fallback type is synthesized", "hxruby adopt generator");
-expectIncludes(hxrubyAdoptGenerator, "class RbsSourceParser", "strict RBS adoption");
+expectIncludes(hxrubyAdoptGenerator, "HXRuby::Rbs::SourceParser", "shared strict RBS adoption parser");
+expectIncludes(hxrubyAdoptGenerator, "HXRuby::Rbs::HaxeExternRenderer", "shared strict RBS adoption renderer");
+expectIncludes(rbsSourceParser, "class SourceParser", "packaged strict RBS parser");
+expectIncludes(rbsSourceParser, "strict: false", "RBS adoption compatibility mode");
+expectIncludes(rbsExternRenderer, "canonical: true", "canonical RBS extern renderer");
+expectIncludes(rbsExternRenderer, "Inferred from strict deterministic RBS metadata", "strict RBS output contract");
+expectIncludes(rbsExternGenerator, "File.realpath", "RBS canonical path boundary");
+expectIncludes(rbsGeneratorCheck, "byte-identical canonical output", "RBS deterministic smoke");
+expectIncludes(rbsGeneratorCheck, "must resolve to a file inside", "RBS symlink-escape smoke");
 expectIncludes(hxrubyAdoptGenerator, "--rbs must resolve to a file inside", "strict RBS path boundary");
-expectIncludes(hxrubyAdoptGenerator, "Inferred from strict deterministic RBS metadata", "strict RBS output contract");
 expectIncludes(hxrubyAdoptGenerator, "checked_gem_ruby_files", "automatic gem YARD adoption");
 expectIncludes(hxrubyAdoptGenerator, "yard_signature_tags", "automatic gem YARD adoption");
 expectIncludes(hxrubyAdoptGenerator, "merge_gem_service_contracts", "automatic gem YARD adoption");

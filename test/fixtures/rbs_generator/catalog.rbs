@@ -1,0 +1,10 @@
+# The non-alphabetic method order proves the standalone renderer canonicalizes
+# reviewed signatures instead of leaking source traversal order into snapshots.
+class FixtureCatalog
+  def label_for: (String key, ?Integer count) -> String
+  def initialize: (?String prefix) -> void
+  def nested_rows: (Array[Array[String]] rows) -> Array[Array[String]]
+  def empty?: () -> bool
+  def maybe_label: (String? key) -> String?
+  def self.normalize: (String class) -> String
+end

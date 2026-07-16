@@ -195,8 +195,9 @@ parsing, bounded joining, component codecs, nullable common components,
 predicates, composition, normalization, and relative routing. The coverage
 catalog pins the reviewed official `ruby/rbs` `v4.0.3` source hashes and records
 which open, variadic, mutable, encoding-specific, and scheme-specific
-signatures were omitted. This is reviewed curation, not yet the general
-deterministic RBS-to-Haxe pipeline.
+signatures were omitted. The reusable strict RBS parser and canonical extern
+renderer now exist, while URI remains reviewed curation rather than a claim
+that every upstream signature can be generated safely.
 
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
@@ -353,9 +354,10 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
 1. `haxe_ruby-hjm` owns the broad versioned Ruby
    core/stdlib/default-gem coverage inventory and deterministic RBS-to-Haxe
-   contract pipeline. The first curated inventory and reviewed URI facade are
-   complete; general signature generation remains future work. Generated
-   contracts remain conservative, reviewed, compiled, and runtime-tested.
+   contract pipeline. The first curated inventory, reviewed URI facade, and
+   strict precise-or-omitted generator foundation are complete. Broader RBS
+   shapes and each library facade remain separate work; generated contracts
+   remain conservative, reviewed, compiled, and runtime-tested.
 2. Add Ruby stdlib facades separately under `std/ruby/**` next for
    `ruby.CSV`/`ruby.Open3`/`ruby.Set` style packages.
 3. Audit existing `_std` raw-native seams and replace them with shared typed

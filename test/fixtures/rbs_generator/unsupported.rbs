@@ -1,0 +1,8 @@
+# Unsupported shapes are retained only as review markers, never widened.
+class UnsupportedCatalog
+  def open_input: (untyped payload) -> String
+  def open_return: (String value) -> Object
+  def keyword_shape: (name: String) -> String
+  def block_shape: (String value) { (String) -> void } -> String
+  def overloaded: (String value) -> String | (Integer value) -> String
+end

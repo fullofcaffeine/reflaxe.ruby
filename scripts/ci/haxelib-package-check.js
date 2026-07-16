@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } = require("node:fs");
+const { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
@@ -103,6 +103,11 @@ for (const required of [
   "lib/hxruby/support_matrix.json",
   "lib/hxruby/support_matrix.rb",
   "lib/hxruby/stdlib_coverage.json",
+  "lib/hxruby/rbs.rb",
+  "lib/hxruby/rbs/source_parser.rb",
+  "lib/hxruby/rbs/haxe_extern_renderer.rb",
+  "lib/hxruby/rbs/extern_generator.rb",
+  "lib/hxruby/rbs/cli.rb",
   "lib/hxruby/version.rb",
   "src/reflaxe/ruby/RubyCompiler.hx",
   "src/reflaxe/ruby/CompilerBootstrap.hx",
@@ -255,6 +260,15 @@ const tempRoot = mkdtempSync(join(tmpdir(), "reflaxe-ruby-package."));
 try {
   run("unzip", ["-q", archivePath, "-d", tempRoot]);
   verifyArtifactManifest(tempRoot, "reflaxe.ruby-haxelib");
+  const rbsFixtureRoot = join(tempRoot, "rbs-fixture");
+  mkdirSync(rbsFixtureRoot, { recursive: true });
+  writeFileSync(join(rbsFixtureRoot, "catalog.rbs"), "class PackagedCatalog\n  def label: (String value) -> String\nend\n");
+  const packagedRbsCheck = [
+    "require 'hxruby/rbs'",
+    "output = HXRuby::Rbs::ExternGenerator.new(root: ARGV.fetch(0), input: 'catalog.rbs', constant_name: 'PackagedCatalog', package_name: 'packaged.rbs').render",
+    "abort 'packaged RBS generator mismatch' unless output.include?('extern class PackagedCatalog') && output.include?('public function label(value:String):String;')",
+  ].join("; ");
+  run("ruby", ["-I", join(tempRoot, "lib"), "-e", packagedRbsCheck, rbsFixtureRoot]);
   const outputDir = join(tempRoot, "out");
   run("haxe", [
     "-D",

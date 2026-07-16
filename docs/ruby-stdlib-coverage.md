@@ -93,11 +93,15 @@ variadic calls, mutation, and scheme-specific APIs are omitted rather than
 widened. `URI.parse` returns scheme-specific subclasses at runtime;
 `ruby.URIValue` truthfully models their shared `URI::Generic` base.
 
-This reviewed facade is not a general RBS-to-Haxe generator. Deterministic RBS
-parsing and conservative contract generation remain later work under the
-parent stdlib-catalog epic. Generated contracts will still require compilation,
-review, runtime evidence, and explicit handling of signatures that Haxe cannot
-model precisely.
+The URI facade remains a reviewed, curated contract rather than an unchecked
+generated dump. RubyHx now packages the strict deterministic foundation
+documented in [Deterministic RBS-To-Haxe Generation](rbs-to-haxe-generator.md):
+it can parse the precise scalar/nilable/array subset, emit a canonical nominal
+extern, and mark or reject unsupported shapes without a broad fallback type.
+That infrastructure does not retroactively claim every URI signature, make
+generated text public without review, or add coverage for another library.
+Generated contracts still require compilation, curation, MRI runtime evidence,
+and explicit handling of signatures that Haxe cannot model precisely.
 
 ## Updating The Catalog
 

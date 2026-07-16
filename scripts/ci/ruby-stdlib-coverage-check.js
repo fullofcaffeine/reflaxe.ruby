@@ -7,6 +7,7 @@ const { spawnSync } = require("node:child_process");
 const root = resolve(__dirname, "..", "..");
 const coveragePath = join(root, "lib", "hxruby", "stdlib_coverage.json");
 const coverage = JSON.parse(readFileSync(coveragePath, "utf8"));
+const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 const supportMatrixPath = join(root, coverage.supportMatrix ?? "");
 const supportMatrix = JSON.parse(readFileSync(supportMatrixPath, "utf8"));
 const allowedDistributionKinds = new Set([
@@ -61,6 +62,35 @@ assert(
   "scope must fail closed against a whole-stdlib support claim",
 );
 assert(isNonEmptyString(coverage.scope?.statement), "scope.statement is required");
+assert(
+  coverage.rbsGeneration?.scope === "strict-precise-or-omitted-subset",
+  "RBS generation must retain its conservative supported subset",
+);
+assert(
+  coverage.rbsGeneration?.claim === "generator-infrastructure-not-library-coverage",
+  "RBS generation must not imply new library coverage",
+);
+assert(
+  coverage.rbsGeneration?.command === "ruby -Ilib scripts/rbs/generate-extern.rb",
+  "RBS generation command must remain explicit",
+);
+assert(
+  coverage.rbsGeneration?.evidence === "npm run test:rbs-generator",
+  "RBS generation must name its mandatory evidence",
+);
+assert(
+  Array.isArray(coverage.rbsGeneration?.implementation) && coverage.rbsGeneration.implementation.length > 0,
+  "RBS generation implementation paths are required",
+);
+for (const path of coverage.rbsGeneration.implementation) {
+  assert(isNonEmptyString(path) && existsSync(join(root, path)), `RBS generation implementation is missing: ${path}`);
+}
+assert(existsSync(join(root, "scripts", "rbs", "generate-extern.rb")), "RBS generator command is missing");
+assert(
+  packageJson.scripts?.test?.includes("test:rbs-generator") &&
+    packageJson.scripts?.["test:rbs-generator"]?.includes("rbs-generator-smoke.js"),
+  "RBS generator evidence must be mandatory in npm test",
+);
 assert(Array.isArray(coverage.domains) && coverage.domains.length > 0, "domains must be a non-empty array");
 assert(
   JSON.stringify(coverage.rubyBranches) === JSON.stringify(supportMatrix.ruby.ciBranches),
@@ -171,6 +201,11 @@ for (const source of uri.contractProvenance.sources) {
   assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `URI provenance SHA-256 is invalid: ${source.path}`);
 }
 assert(isNonEmptyString(uri.contractProvenance?.curation), "URI provenance must describe signature curation");
+
+for (const id of ["library.csv", "library.open3", "library.set"]) {
+  const domain = coverage.domains.find((candidate) => candidate.id === id);
+  assert(domain?.coverageStatus === "planned", `${id} must remain planned until its own facade bead lands`);
+}
 
 const version = spawnSync("ruby", ["-e", "print RUBY_VERSION"], { cwd: root, encoding: "utf8" });
 if (version.status !== 0) {

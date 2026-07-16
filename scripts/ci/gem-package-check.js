@@ -85,6 +85,11 @@ try {
     "lib/hxruby/support_matrix.json",
     "lib/hxruby/support_matrix.rb",
     "lib/hxruby/stdlib_coverage.json",
+    "lib/hxruby/rbs.rb",
+    "lib/hxruby/rbs/source_parser.rb",
+    "lib/hxruby/rbs/haxe_extern_renderer.rb",
+    "lib/hxruby/rbs/extern_generator.rb",
+    "lib/hxruby/rbs/cli.rb",
     "lib/hxruby/tasks.rb",
     "lib/generators/hxruby/adopt/adopt_generator.rb",
     "lib/generators/hxruby/install/install_generator.rb",
@@ -107,6 +112,7 @@ try {
     "scripts/rails/test.rb",
     "scripts/rails/generate-routes.rb",
     "scripts/rails/scaffold.rb",
+    "scripts/rbs/generate-extern.rb",
     "std/ruby/URI.hx",
     "std/ruby/URIValue.hx",
     "std/reflaxe/js/Async.hx",
@@ -143,6 +149,7 @@ try {
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
   ].join("; ");
   run(activeRuby, ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
+  smokeRbsGenerator(unpackedRoot);
   smokeDoctorTask(unpackedRoot);
   smokeDoctorFailureTask(unpackedRoot);
   smokeClientLibrary(unpackedRoot);
@@ -194,6 +201,28 @@ try {
   }
 } finally {
   rmSync(tempRoot, { force: true, recursive: true });
+}
+
+function smokeRbsGenerator(unpackedRoot) {
+  const fixtureRoot = join(tempRoot, "rbs-generator-smoke");
+  mkdirSync(fixtureRoot, { recursive: true });
+  writeFileSync(join(fixtureRoot, "catalog.rbs"), "class PackagedCatalog\n  def label: (String value) -> String\nend\n");
+  const result = run(activeRuby, [
+    "-I",
+    join(unpackedRoot, "lib"),
+    join(unpackedRoot, "scripts", "rbs", "generate-extern.rb"),
+    "--root",
+    fixtureRoot,
+    "--input",
+    "catalog.rbs",
+    "--constant",
+    "PackagedCatalog",
+    "--package",
+    "packaged.rbs",
+  ]);
+  if (!result.stdout.includes("extern class PackagedCatalog") || !result.stdout.includes("public function label(value:String):String;")) {
+    fail("packaged gem RBS generator mismatch");
+  }
 }
 
 const trackedDiffAfter = `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;

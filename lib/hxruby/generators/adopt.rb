@@ -3,6 +3,7 @@
 require "optparse"
 require "ripper"
 require_relative "common"
+require_relative "../rbs"
 
 module HXRuby
   module Generators
@@ -250,6 +251,10 @@ module HXRuby
       end
 
       def render_service(package, haxe_class, native_name, contract = nil)
+        if contract && contract.fetch(:source_kind, "ruby_source") == "rbs"
+          return render_rbs_service(package, haxe_class, native_name, contract)
+        end
+
         lines = [
           "package #{package};",
           "",
@@ -294,6 +299,27 @@ module HXRuby
         lines.join("\n")
       end
 
+      # RBS-backed adoption uses the RubyHx-wide renderer in source-order mode
+      # so extracting the reusable pipeline cannot reorder an established app
+      # contract or change its generated snapshot.
+      def render_rbs_service(package, haxe_class, native_name, contract)
+        HXRuby::Rbs::HaxeExternRenderer.new(
+          contract: contract,
+          package_name: package,
+          native_name: native_name,
+          haxe_class: haxe_class,
+          canonical: false,
+          header_lines: [
+            "// Rails-owned Ruby constant adopted through a typed Haxe extern.",
+            "// Generated from #{contract.fetch(:source_label)}.",
+            "// Generated from deterministic RBS metadata.",
+            "// Unsupported or incomplete signatures are omitted with review markers; no broad fallback type is synthesized.",
+          ]
+        ).render
+      rescue HXRuby::Rbs::Error => error
+        raise Error, error.message
+      end
+
       def service_contract(native_name)
         return nil if @service_sources.empty? && @rbs_sources.empty? && @yard_sources.empty?
 
@@ -330,7 +356,11 @@ module HXRuby
             raise Error, "--rbs must resolve to a file inside the generator output/app root"
           end
 
-          RbsSourceParser.new(real_source, relative_output_path(source_path)).contracts
+          begin
+            HXRuby::Rbs::SourceParser.new(real_source, relative_output_path(source_path)).contracts
+          rescue HXRuby::Rbs::Error => error
+            raise Error, error.message
+          end
         end
       end
 
@@ -2411,225 +2441,6 @@ module HXRuby
 
           out << token.strip
           out.reject(&:empty?)
-        end
-      end
-
-      # Parses the deliberately small deterministic RBS subset used by service
-      # adoption. A formal signature either maps completely to safe Haxe types
-      # or is omitted as one review-marked method; unsupported pieces never
-      # widen an otherwise typed extern to Dynamic.
-      class RbsSourceParser
-        TYPE_MAP = {
-          "String" => "String",
-          "Integer" => "Int",
-          "int" => "Int",
-          "Float" => "Float",
-          "float" => "Float",
-          "bool" => "Bool",
-          "boolish" => "Bool",
-          "Boolean" => "Bool",
-          "Symbol" => "ruby.Symbol",
-        }.freeze
-
-        def initialize(path, source_label)
-          @path = path
-          @source_label = source_label
-          @source = File.read(path)
-        end
-
-        def contracts
-          out = []
-          current = nil
-          @source.each_line.with_index(1) do |line, line_number|
-            stripped = line.strip
-            next if stripped.empty? || stripped.start_with?("#")
-
-            if (match = stripped.match(/\A(?:class|module)\s+([A-Z][A-Za-z0-9_:]*)\b/))
-              if current
-                raise Error, "Nested RBS declarations are outside the strict adoption subset in #{@path}:#{line_number}"
-              end
-              current = {
-                constant_name: match[1],
-                source_label: @source_label,
-                source_kind: "rbs",
-                constructors: [],
-                instance: [],
-                class_methods: [],
-              }
-              out << current
-              next
-            end
-            if stripped == "end"
-              raise Error, "Unmatched RBS end in #{@path}:#{line_number}" unless current
-
-              current = nil
-              next
-            end
-            next unless current
-
-            method = parse_method(stripped, line_number)
-            if stripped.start_with?("def ") && !method
-              raise Error, "Unsupported RBS method declaration in #{@path}:#{line_number}"
-            end
-            next unless method
-
-            class_method = method.delete(:class_method)
-            if method.fetch(:ruby_name) == "initialize" && !class_method
-              current[:constructors] << method
-            elsif class_method
-              current[:class_methods] << method
-            else
-              current[:instance] << method
-            end
-          end
-          raise Error, "Unterminated RBS declaration in #{@path}" if current
-
-          out
-        end
-
-        private
-
-        def parse_method(line, line_number)
-          header = line.match(/\Adef\s+(?:(self)\.)?([A-Za-z_][A-Za-z0-9_!?=]*)\s*:\s*(.*)\z/)
-          return nil unless header
-
-          ruby_name = header[2]
-          class_method = !header[1].nil?
-          signature = header[3]
-          if signature.match?(/\)\s*->.*\|\s*\(/)
-            return skipped_method(
-              ruby_name,
-              class_method,
-              "overloaded RBS signatures at line #{line_number} are outside the strict subset; expose one reviewed signature in a hand-maintained contract."
-            )
-          end
-          match = signature.match(/\A\((.*)\)\s*->\s*(.+)\z/)
-          unless match
-            return skipped_method(
-              ruby_name,
-              class_method,
-              "signature at line #{line_number} is outside the strict positional RBS subset; use one `(args) -> return` signature."
-            )
-          end
-
-          args, arg_issue = parse_args(match[1])
-          if arg_issue
-            return skipped_method(ruby_name, class_method, "#{arg_issue} (line #{line_number}).")
-          end
-
-          return_type = haxe_type(match[2], role: :return)
-          unless return_type
-            return skipped_method(
-              ruby_name,
-              class_method,
-              "unsupported RBS return type at line #{line_number}; use a supported scalar, nilable scalar, Symbol, Array<T>, or void contract."
-            )
-          end
-          if ruby_name == "initialize" && !class_method && return_type != "Void"
-            return skipped_method(
-              ruby_name,
-              class_method,
-              "constructor return type at line #{line_number} must be void."
-            )
-          end
-
-          {
-            ruby_name: ruby_name,
-            class_method: class_method,
-            args: args,
-            complex: false,
-            return_type: return_type,
-            comment: "Inferred from strict deterministic RBS metadata.",
-          }
-        end
-
-        def parse_args(raw)
-          return [[], nil] if raw.strip.empty?
-
-          parts = split_top_level(raw)
-          return [nil, "unbalanced or complex RBS arguments"] unless parts
-
-          args = []
-          parts.each do |arg|
-            token = arg.strip
-            optional = token.start_with?("?")
-            token = token.delete_prefix("?").strip
-            match = token.match(/\A(.+?)\s+([A-Za-z_][A-Za-z0-9_]*)\z/)
-            return [nil, "unsupported RBS positional argument"] unless match
-
-            type = haxe_type(match[1], role: :parameter)
-            unless type
-              return [
-                nil,
-                "unsupported RBS parameter type for #{match[2]}; use a supported scalar, nilable scalar, Symbol, or Array<T> contract"
-              ]
-            end
-
-            args << { name: match[2], optional: optional, type: type }
-          end
-          [args, nil]
-        end
-
-        def haxe_type(rbs_type, role:)
-          raw = rbs_type.to_s.strip
-          nilable = raw.end_with?("?")
-          normalized = (nilable ? raw.delete_suffix("?") : raw).strip
-
-          if role == :return && %w[void nil].include?(normalized)
-            return nil if nilable
-            return "Void"
-          end
-
-          mapped = TYPE_MAP[normalized]
-          unless mapped
-            array_match = normalized.match(/\AArray\[(.+)\]\z/)
-            if array_match
-              member_type = haxe_type(array_match[1], role: :value)
-              mapped = "Array<#{member_type}>" if member_type && member_type != "Void"
-            end
-          end
-          return nil unless mapped
-          return mapped unless nilable
-
-          "Null<#{mapped}>"
-        end
-
-        def skipped_method(ruby_name, class_method, reason)
-          {
-            ruby_name: ruby_name,
-            class_method: class_method,
-            skip_reason: reason,
-          }
-        end
-
-        # RBS container types can nest. Split arguments only at the outermost
-        # comma so a future supported generic cannot be misread as two method
-        # parameters; unbalanced syntax is rejected as a whole method.
-        def split_top_level(raw)
-          out = []
-          token = +""
-          stack = []
-          pairs = { "[" => "]", "(" => ")", "{" => "}", "<" => ">" }
-          raw.each_char do |char|
-            if pairs.key?(char)
-              stack << pairs.fetch(char)
-              token << char
-            elsif pairs.value?(char)
-              return nil unless stack.pop == char
-              token << char
-            elsif char == "," && stack.empty?
-              out << token.strip
-              token = +""
-            else
-              token << char
-            end
-          end
-          return nil unless stack.empty?
-
-          out << token.strip
-          return nil if out.any?(&:empty?)
-
-          out
         end
       end
 

@@ -54,6 +54,8 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Std Ownership](stdlib-ownership.md): how Ruby/Haxe std coverage is tracked.
 - [Ruby Stdlib Parity Audit](ruby-stdlib-parity-audit.md): upstream Haxe std candidate accounting for Ruby.
 - [Ruby Stdlib Coverage Catalog](ruby-stdlib-coverage.md): packaged Ruby core/default/bundled/platform inventory and bounded facade evidence.
+- [Deterministic RBS-To-Haxe Generation](rbs-to-haxe-generator.md): checked
+  precise-or-omitted extern generation, deterministic output, and review limits.
 - [Ruby Stdlib R&D Plan](ruby-stdlib-rd.md): staged typed stdlib coverage, runtime-helper policy, and follow-up beads.
 - [Ruby Stdlib Facades](ruby-stdlib-facades.md): authoring typed `ruby.*` facades over Ruby stdlib APIs.
 - [Gap Report Guidance](gap-report-guidance.md): updating std/runtime coverage inventory.
