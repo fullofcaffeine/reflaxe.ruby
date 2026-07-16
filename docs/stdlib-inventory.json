@@ -215,6 +215,38 @@
       "reason": "Header-free CSV row type that preserves Ruby's distinction between null unquoted fields and quoted empty strings."
     },
     {
+      "id": "std.ruby.open3",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Open3.hx",
+      "surface": "ruby.Open3",
+      "reason": "Capture-only direct facade over Open3.capture3 with a typed executable identity, native argv splat, and property-only result."
+    },
+    {
+      "id": "std.ruby.open3_capture",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Open3Capture.hx",
+      "surface": "ruby.Open3Capture",
+      "reason": "Opaque typed view of Open3 stdout, stderr, and completed process status without exposing the heterogeneous native Array."
+    },
+    {
+      "id": "std.ruby.open3_executable",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Open3Executable.hx",
+      "surface": "ruby.Open3Executable",
+      "reason": "Shell-free executable identity that privately emits Ruby's direct-exec [path, argv0] process form."
+    },
+    {
+      "id": "std.ruby.open3_status",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Open3Status.hx",
+      "surface": "ruby.Open3Status",
+      "reason": "Read-only Process::Status contract for success, exit, signal, and process identifiers from completed Open3 captures."
+    },
+    {
       "id": "std.ruby.json",
       "owner": "std",
       "status": "implemented",

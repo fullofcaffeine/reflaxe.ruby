@@ -96,6 +96,11 @@ assert(
     packageJson.scripts?.["test:csv-facade"]?.includes("csv-facade-smoke.js"),
   "CSV facade evidence must be mandatory in npm test",
 );
+assert(
+  packageJson.scripts?.test?.includes("test:open3-facade") &&
+    packageJson.scripts?.["test:open3-facade"]?.includes("open3-facade-smoke.js"),
+  "Open3 facade evidence must be mandatory in npm test",
+);
 assert(Array.isArray(coverage.domains) && coverage.domains.length > 0, "domains must be a non-empty array");
 assert(
   JSON.stringify(coverage.rubyBranches) === JSON.stringify(supportMatrix.ruby.ciBranches),
@@ -224,7 +229,27 @@ for (const source of csv.contractProvenance.sources) {
 }
 assert(isNonEmptyString(csv.contractProvenance?.curation), "CSV provenance must describe signature curation");
 
-for (const id of ["library.open3", "library.set"]) {
+const open3 = coverage.domains.find((domain) => domain.id === "library.open3");
+assert(open3?.coverageStatus === "implemented-public", "library.open3 must be an implemented public contract");
+assert(open3.contractProvenance?.kind === "reviewed-rbs-plus-official-gem-source", "Open3 provenance kind mismatch");
+assert(open3.contractProvenance?.repository === "https://github.com/ruby/rbs", "Open3 provenance must use official ruby/rbs");
+assert(open3.contractProvenance?.release === "v4.0.3", "Open3 provenance must pin the reviewed RBS release");
+assert(open3.contractProvenance?.library === "stdlib/open3/0", "Open3 provenance must name the reviewed library");
+assert(
+  open3.contractProvenance?.implementationRepository === "https://github.com/ruby/open3" &&
+    open3.contractProvenance?.implementationRelease === "v0.2.1",
+  "Open3 provenance must pin the official implementation release",
+);
+for (const source of [
+  ...(open3.contractProvenance?.sources ?? []),
+  ...(open3.contractProvenance?.implementationSources ?? []),
+]) {
+  assert(isNonEmptyString(source.path), "Open3 provenance source path required");
+  assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `Open3 provenance SHA-256 is invalid: ${source.path}`);
+}
+assert(isNonEmptyString(open3.contractProvenance?.curation), "Open3 provenance must describe signature curation");
+
+for (const id of ["library.set"]) {
   const domain = coverage.domains.find((candidate) => candidate.id === id);
   assert(domain?.coverageStatus === "planned", `${id} must remain planned until its own facade bead lands`);
 }

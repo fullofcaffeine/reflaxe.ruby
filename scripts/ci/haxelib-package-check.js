@@ -120,6 +120,10 @@ for (const required of [
   "src/ruby/CSVRow.hx",
   "src/ruby/Dir.hx",
   "src/ruby/FileUtils.hx",
+  "src/ruby/Open3.hx",
+  "src/ruby/Open3Capture.hx",
+  "src/ruby/Open3Executable.hx",
+  "src/ruby/Open3Status.hx",
   "src/ruby/Pathname.hx",
   "src/ruby/Tempfile.hx",
   "src/ruby/URI.hx",
@@ -303,12 +307,17 @@ try {
     join(root, "test", "csv_facade", "package_consumer", "CsvPackageContract.hx"),
     join(consumerSrc, "CsvPackageContract.hx"),
   );
+  copyFileSync(
+    join(root, "test", "open3_facade", "package_consumer", "Open3PackageContract.hx"),
+    join(consumerSrc, "Open3PackageContract.hx"),
+  );
   writeFileSync(
     join(consumerSrc, "Main.hx"),
     [
       "class Main {",
       "\tstatic function main():Void {",
       "\t\tCsvPackageContract.verify();",
+      "\t\tOpen3PackageContract.verify();",
       "\t\tReportCli.execute(Sys.args());",
       "\t}",
       "}",

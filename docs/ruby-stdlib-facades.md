@@ -9,7 +9,8 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 
 - Put Ruby-owned library surfaces under the `ruby` package:
   `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
-  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, and `ruby.CSV` facades.
+  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, `ruby.CSV`, and `ruby.Open3`
+  facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
   for example `@:native("JSON") extern class Json`.
@@ -306,6 +307,49 @@ widening the facade. Applications parsing untrusted input should set
 Ruby 3.3 and a bundled gem on Ruby 3.4/4.0, so the facade contract applies to
 the tested distributions and does not claim availability in every minimal Ruby
 installation.
+
+### Open3
+
+`ruby.Open3` is the canonical typed capture surface for child processes whose
+executable and arguments are already known separately. `Open3Executable`
+encodes Ruby's `[path, argv0]` process form, which selects the executable
+directly even when the argument list is empty. A Haxe rest argument becomes a
+native Ruby splat:
+
+```haxe
+var arguments = ["-e", "STDOUT.write(ARGV.fetch(0))", "literal;$(not-run)"];
+var capture = ruby.Open3.capture(ruby.Open3Executable.of("ruby"), ...arguments);
+
+if (!capture.status.succeeded()) {
+	throw capture.standardError;
+}
+ruby.Kernel.puts(capture.standardOutput);
+```
+
+Generated Ruby calls the real default gem directly. The argument containing
+shell metacharacters remains one literal child argument:
+
+```ruby
+require "open3"
+
+capture = Open3.capture3(["ruby", "ruby"], *arguments)
+unless capture.last.success?
+  raise capture.fetch(1)
+end
+Kernel.puts(capture.first)
+```
+
+`Open3Capture` is deliberately property-only. Its private target adapter reads
+the official fixed `[String, String, Process::Status]` tuple through native
+`first`, `fetch(1)`, and `last` calls, while Haxe callers see only
+`standardOutput`, `standardError`, and `status`. `Open3Status` exposes the
+completed process result without collapsing nullable exit and signal codes.
+
+The facade does not accept a shell command-line string. It also omits
+environment and process-option hashes, stdin/binmode keywords, duplicate
+capture variants, live streams, and pipelines rather than weakening them into
+unchecked bags or leaking lifecycle obligations. Use a separate future typed
+stream/lifecycle contract when interactive IO is genuinely required.
 
 ### Dir
 

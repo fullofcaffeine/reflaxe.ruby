@@ -245,7 +245,9 @@ expectIncludes(rubyStdlibFacades, "## Relationship To Haxe Std", "Ruby and Haxe 
 expectIncludes(rubyStdlibFacades, '"what does Ruby do?"', "Ruby std semantic ownership");
 expectIncludes(rubyStdlibFacades, "### URI", "typed URI facade docs");
 expectIncludes(rubyStdlibFacades, "### CSV", "typed CSV facade docs");
+expectIncludes(rubyStdlibFacades, "### Open3", "typed Open3 facade docs");
 expectIncludes(rubyStdlibCoverageDocs, "curated", "Ruby stdlib catalog claim boundary");
+expectIncludes(rubyStdlibCoverageDocs, "## Third Reviewed Slice: Open3", "reviewed Open3 catalog slice");
 expectIncludes(rubyStdlibCoverageDocs, "strict deterministic foundation", "RBS generator scope boundary");
 expectIncludes(rbsGeneratorDocs, "Precise-Or-Omitted Subset", "RBS generator supported subset");
 expectIncludes(rbsGeneratorDocs, "does not claim whole-RBS or", "RBS generator claim boundary");
@@ -257,6 +259,7 @@ expectIncludes(packageJson.scripts["test:rbs-generator"] ?? "", "rbs_generator_t
 expectIncludes(packageJson.scripts["test:rbs-generator"] ?? "", "rbs-generator-smoke.js", "RBS generator smoke gate");
 expectIncludes(packageJson.scripts.test, "test:uri-facade", "mandatory typed URI gate");
 expectIncludes(packageJson.scripts.test, "test:csv-facade", "mandatory typed CSV gate");
+expectIncludes(packageJson.scripts.test, "test:open3-facade", "mandatory typed Open3 gate");
 expectIncludes(rubyStdlibCoverageCheck, "support_matrix.json", "Ruby stdlib catalog support-matrix lock");
 expectIncludes(rubyStdlibCoverageCheck, "committed ruby facade is missing", "Ruby stdlib complete facade accounting");
 if (rubyStdlibCoverage.schemaVersion !== 1) {
@@ -286,6 +289,21 @@ if (
   uriCoverage.contractProvenance?.kind !== "reviewed-rbs"
 ) {
   fail("Ruby stdlib coverage must retain the bounded reviewed-RBS URI contract");
+}
+const open3Coverage = rubyStdlibCoverage.domains?.find((domain) => domain.id === "library.open3");
+if (
+  open3Coverage?.coverageStatus !== "implemented-public" ||
+  JSON.stringify(open3Coverage.facadePaths) !==
+    JSON.stringify([
+      "std/ruby/Open3.hx",
+      "std/ruby/Open3Capture.hx",
+      "std/ruby/Open3Executable.hx",
+      "std/ruby/Open3Status.hx",
+    ]) ||
+  !open3Coverage.evidence?.includes("npm run test:open3-facade") ||
+  open3Coverage.contractProvenance?.kind !== "reviewed-rbs-plus-official-gem-source"
+) {
+  fail("Ruby stdlib coverage must retain the bounded reviewed Open3 capture contract");
 }
 expectIncludes(productionReadiness, "Stable 1.0 Exit Rules", "stable 1.0 readiness contract");
 expectIncludes(productionReadiness, "Performance and resource behavior", "stable 1.0 performance gate");
@@ -684,6 +702,10 @@ expectIncludes(haxelibPackageBuilder, `"vendor", "reflaxe"`, "Haxelib package bu
 expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"vendor/genes/src/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
+expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3.hx"`, "Haxelib Open3 package builder source lock");
+expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3Capture.hx"`, "Haxelib Open3 capture package builder source lock");
+expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3Executable.hx"`, "Haxelib Open3 executable package builder source lock");
+expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3Status.hx"`, "Haxelib Open3 status package builder source lock");
 expectExcludes(haxelibPackageBuilder, `"haxe_libraries/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageCheckText, "src/Std.cross.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "lib/hxruby/stdlib_coverage.json", "Haxelib stdlib catalog package check");
@@ -697,6 +719,11 @@ expectIncludes(haxelibPackageCheckText, "src/ruby/CSVGenerateOptions.hx", "Haxel
 expectIncludes(haxelibPackageCheckText, "src/ruby/CSVParseOptions.hx", "Haxelib typed CSV parse options package check");
 expectIncludes(haxelibPackageCheckText, "src/ruby/CSVRow.hx", "Haxelib typed CSV row package check");
 expectIncludes(haxelibPackageCheckText, "CsvPackageContract.hx", "Haxelib packaged CSV runtime check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/Open3.hx", "Haxelib typed Open3 package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/Open3Capture.hx", "Haxelib typed Open3 capture package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/Open3Executable.hx", "Haxelib typed Open3 executable package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/Open3Status.hx", "Haxelib typed Open3 status package check");
+expectIncludes(haxelibPackageCheckText, "Open3PackageContract.hx", "Haxelib packaged Open3 runtime check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/Auth.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/ContractTools.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/DeviseModelMacro.hx", "Haxelib package check");
@@ -733,6 +760,10 @@ expectIncludes(gemPackageCheck, "std/ruby/CSV.hx", "Ruby gem typed CSV package c
 expectIncludes(gemPackageCheck, "std/ruby/CSVGenerateOptions.hx", "Ruby gem typed CSV generation options package check");
 expectIncludes(gemPackageCheck, "std/ruby/CSVParseOptions.hx", "Ruby gem typed CSV parse options package check");
 expectIncludes(gemPackageCheck, "std/ruby/CSVRow.hx", "Ruby gem typed CSV row package check");
+expectIncludes(gemPackageCheck, "std/ruby/Open3.hx", "Ruby gem typed Open3 package check");
+expectIncludes(gemPackageCheck, "std/ruby/Open3Capture.hx", "Ruby gem typed Open3 capture package check");
+expectIncludes(gemPackageCheck, "std/ruby/Open3Executable.hx", "Ruby gem typed Open3 executable package check");
+expectIncludes(gemPackageCheck, "std/ruby/Open3Status.hx", "Ruby gem typed Open3 status package check");
 expectIncludes(gemPackageCheck, "railshx.client gem smoke", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "vendor/genes/src/genes/Generator.hx", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "hxruby:production", "Ruby gem package check");

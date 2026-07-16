@@ -146,6 +146,44 @@ CSV documentation plus direct MRI runtime evidence. The facade remains a
 curated subset, not a claim that all CSV headers, tables, converters, or IO
 forms are typed.
 
+## Third Reviewed Slice: Open3
+
+`ruby.Open3` provides capture-only child-process execution without accepting a
+shell command line. `Open3Executable.of(path)` privately creates Ruby's
+`[path, argv0]` direct-exec form, and Haxe rest arguments lower to a native Ruby
+splat. A stored argument list therefore remains concise and shell-free:
+
+```haxe
+var arguments = ["-e", "STDOUT.write(ARGV.fetch(0))", "literal;$(not-run)"];
+var capture = ruby.Open3.capture(ruby.Open3Executable.of("ruby"), ...arguments);
+
+ruby.Kernel.puts(capture.standardOutput);
+ruby.Kernel.puts(capture.status.succeeded());
+```
+
+```ruby
+require "open3"
+
+capture = Open3.capture3(["ruby", "ruby"], *arguments)
+Kernel.puts(capture.first)
+Kernel.puts(capture.last.success?)
+```
+
+Ruby returns `[String, String, Process::Status]`, a fixed heterogeneous Array.
+`Open3Capture` keeps that representation private and permits only the three
+reviewed native reads exposed as `standardOutput`, `standardError`, and
+`status`. `Open3Status` then provides typed success, exit code, process ID, and
+signal information with Ruby's real nullability. Callers cannot index, convert,
+or mutate the tuple.
+
+The checked contract pins official `ruby/rbs` `v4.0.3`
+`stdlib/open3/0/open3.rbs` and the official `ruby/open3` `v0.2.1` implementation
+sources. Shell command strings, environment/process option hashes,
+`stdin_data`/`binmode` keywords, `capture2`/`capture2e`, live `popen` streams,
+pipelines, and unchecked argument bags remain omitted. This is a precise
+capture contract, not a claim that every Open3 process or lifecycle API is
+typed.
+
 ## Updating The Catalog
 
 For each new domain:
@@ -163,5 +201,5 @@ For each new domain:
    ownership, package, full example, Rails runtime, browser, and production
    gates required by the repository regression contract.
 
-`Open3` and `Set` remain recorded as planned next domains. Their presence in
-the catalog is prioritization and availability evidence, not public API support.
+`Set` remains recorded as the next planned domain. Its presence in the catalog
+is prioritization and availability evidence, not public API support.

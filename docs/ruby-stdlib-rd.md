@@ -362,13 +362,14 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 
 1. `haxe_ruby-hjm` owns the broad versioned Ruby
    core/stdlib/default-gem coverage inventory and deterministic RBS-to-Haxe
-   contract pipeline. The first curated inventory, reviewed URI and CSV
-   facades, and strict precise-or-omitted generator foundation are complete.
+   contract pipeline. The first curated inventory, reviewed URI, CSV, and
+   capture-only Open3 facades, and strict precise-or-omitted generator
+   foundation are complete.
    Broader RBS shapes and each later library facade remain separate work;
    generated contracts remain conservative, reviewed, compiled, and
    runtime-tested.
-2. Add Ruby stdlib facades separately under `std/ruby/**` next for
-   `ruby.Open3`/`ruby.Set` style packages.
+2. Add Ruby stdlib facades separately under `std/ruby/**` next for `ruby.Set`
+   and other bounded library domains.
 3. Audit existing `_std` raw-native seams and replace them with shared typed
    Ruby contracts where reuse improves safety without changing generated Ruby
    or Haxe semantics.

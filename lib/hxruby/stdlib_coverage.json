@@ -375,10 +375,22 @@
         "3.4": "default-gem",
         "4.0": "default-gem"
       },
-      "coverageStatus": "planned",
-      "surfaces": [],
-      "facadePaths": [],
-      "evidence": [],
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Open3",
+        "ruby.Open3Capture",
+        "ruby.Open3Executable",
+        "ruby.Open3Status"
+      ],
+      "facadePaths": [
+        "std/ruby/Open3.hx",
+        "std/ruby/Open3Capture.hx",
+        "std/ruby/Open3Executable.hx",
+        "std/ruby/Open3Status.hx"
+      ],
+      "evidence": [
+        "npm run test:open3-facade"
+      ],
       "runtimeProbe": {
         "require": "open3",
         "gem": "open3",
@@ -386,7 +398,32 @@
           "Open3"
         ]
       },
-      "notes": "Process helpers need separate typed success, stream, status, and lifecycle contracts before a facade is claimed."
+      "contractProvenance": {
+        "kind": "reviewed-rbs-plus-official-gem-source",
+        "repository": "https://github.com/ruby/rbs",
+        "release": "v4.0.3",
+        "library": "stdlib/open3/0",
+        "sources": [
+          {
+            "path": "open3.rbs",
+            "sha256": "66457894b07516cf0df9f8abbc3ec5b0bd9d61f3ffc3f6c8f5c073aba16400c2"
+          }
+        ],
+        "implementationRepository": "https://github.com/ruby/open3",
+        "implementationRelease": "v0.2.1",
+        "implementationSources": [
+          {
+            "path": "lib/open3.rb",
+            "sha256": "551b8a2bc027d004fa38e4a8915e7ecffd80c8ab223ce79eb6335d8b91b8f27b"
+          },
+          {
+            "path": "lib/open3/version.rb",
+            "sha256": "1d225c4d3e005b543a9d2a3ea7c3dea2a18bdc06c9c649acae848a0cb3dc86cd"
+          }
+        ],
+        "curation": "Only capture3 direct-exec argv is exposed. Ruby's fixed [String, String, Process::Status] tuple narrows to property-only Open3Capture through three private native Array reads. Shell command lines, environment/process option hashes, stdin_data/binmode keywords, capture2/capture2e, popen streams, pipelines, and unchecked argument bags are omitted."
+      },
+      "notes": "The bounded public facade captures stdout, stderr, and completed process status through Ruby's shell-free [path, argv0] executable form and native String rest arguments. Open3 remains a default gem on all tested Ruby branches; live stream and pipeline lifecycle APIs are not claimed."
     },
     {
       "id": "library.pathname",

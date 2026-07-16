@@ -83,9 +83,10 @@ Before a generated stdlib contract becomes public, maintainers must still:
 6. run the complete example, Rails runtime, browser, production, package, and
    canonical CI gates.
 
-`CSV`, `Open3`, and `Set` remain planned catalog entries until separate facade
-slices satisfy those requirements. The generator does not claim whole-RBS or
-whole-stdlib support.
+`CSV` and `Open3` now have separate reviewed facade slices; neither acquired
+support merely because this generator exists. `Set` remains planned until its
+own slice satisfies the same requirements.
+The generator does not claim whole-RBS or whole-stdlib support.
 
 ## Mandatory Evidence
 
