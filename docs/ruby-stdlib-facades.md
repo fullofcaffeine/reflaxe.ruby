@@ -9,8 +9,7 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 
 - Put Ruby-owned library surfaces under the `ruby` package:
   `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
-  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, and future `ruby.CSV`
-  facades.
+  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, and `ruby.CSV` facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
   for example `@:native("JSON") extern class Json`.
@@ -261,6 +260,52 @@ encoding parameters, variadic joins, mutation, and scheme-specific APIs remain
 excluded rather than represented loosely. `URI.parse` returns scheme-specific
 subclasses at runtime, and `ruby.URIValue` models their sound shared base rather
 than pretending every parsed value is HTTP-specific.
+
+### CSV
+
+`ruby.CSV` is the canonical typed facade for Ruby's header-free CSV singleton
+API. `ruby.CSVRow` keeps fields as `Null<String>` so unquoted missing fields do
+not collapse into quoted empty strings. The concise methods use Ruby defaults;
+the `With` variants accept typed option carriers with completion and emit native
+keyword arguments:
+
+```haxe
+var rows = ruby.CSV.parseRowsWith(" name ; value \n alpha ; 1 \n", {
+	columnSeparator: ";",
+	stripFields: true,
+	maxFieldSize: 4096
+});
+
+ruby.CSV.forEachRow("imports/users.csv", row -> {
+	ruby.Kernel.puts(row[0]);
+});
+
+var output = ruby.CSV.generateRowsWith(rows, {
+	columnSeparator: ";",
+	rowSeparator: "\n"
+});
+```
+
+Generated Ruby requires and calls the real library, preserving native keyword
+and block syntax:
+
+```ruby
+require "csv"
+
+rows = CSV.parse(input, col_sep: ";", strip: true, max_field_size: 4096)
+CSV.foreach("imports/users.csv") { |row| Kernel.puts(row[0]) }
+output = CSV.generate_lines(rows, col_sep: ";", row_sep: "\n")
+```
+
+Header/table modes and converters are deliberately absent because they return
+`CSV::Row`/`CSV::Table` or arbitrary converter values rather than `CSVRow`.
+Open IO, file modes, encodings, arbitrary output objects, custom nil/empty
+replacements, and unchecked keyword bags are likewise omitted instead of
+widening the facade. Applications parsing untrusted input should set
+`maxFieldSize`; Ruby otherwise has no field-size limit. CSV is a default gem on
+Ruby 3.3 and a bundled gem on Ruby 3.4/4.0, so the facade contract applies to
+the tested distributions and does not claim availability in every minimal Ruby
+installation.
 
 ### Dir
 

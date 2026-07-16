@@ -114,6 +114,10 @@ for (const required of [
   "src/reflaxe/ruby/macros/RailsInlineMarkup.hx",
   "src/reflaxe/ruby/macros/RubyExtensionMacro.hx",
   "src/Std.cross.hx",
+  "src/ruby/CSV.hx",
+  "src/ruby/CSVGenerateOptions.hx",
+  "src/ruby/CSVParseOptions.hx",
+  "src/ruby/CSVRow.hx",
   "src/ruby/Dir.hx",
   "src/ruby/FileUtils.hx",
   "src/ruby/Pathname.hx",
@@ -295,6 +299,22 @@ try {
   for (const file of ["Main.hx", "ReportCli.hx", "TextAnalyzer.hx", "TextReport.hx", "TextReportJson.hx"]) {
     copyFileSync(join(root, "examples", "rubyhx_cli", file), join(consumerSrc, file));
   }
+  copyFileSync(
+    join(root, "test", "csv_facade", "package_consumer", "CsvPackageContract.hx"),
+    join(consumerSrc, "CsvPackageContract.hx"),
+  );
+  writeFileSync(
+    join(consumerSrc, "Main.hx"),
+    [
+      "class Main {",
+      "\tstatic function main():Void {",
+      "\t\tCsvPackageContract.verify();",
+      "\t\tReportCli.execute(Sys.args());",
+      "\t}",
+      "}",
+      "",
+    ].join("\n"),
+  );
   copyFileSync(join(root, "test", "fixtures", "rubyhx_cli", "sample.txt"), join(consumerRoot, "sample.txt"));
 
   run("haxelib", ["newrepo"], { cwd: consumerRoot });

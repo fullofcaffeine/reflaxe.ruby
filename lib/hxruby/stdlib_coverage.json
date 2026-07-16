@@ -276,10 +276,22 @@
         "3.4": "bundled-gem",
         "4.0": "bundled-gem"
       },
-      "coverageStatus": "planned",
-      "surfaces": [],
-      "facadePaths": [],
-      "evidence": [],
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.CSV",
+        "ruby.CSVGenerateOptions",
+        "ruby.CSVParseOptions",
+        "ruby.CSVRow"
+      ],
+      "facadePaths": [
+        "std/ruby/CSV.hx",
+        "std/ruby/CSVGenerateOptions.hx",
+        "std/ruby/CSVParseOptions.hx",
+        "std/ruby/CSVRow.hx"
+      ],
+      "evidence": [
+        "npm run test:csv-facade"
+      ],
       "runtimeProbe": {
         "require": "csv",
         "gem": "csv",
@@ -287,7 +299,21 @@
           "CSV"
         ]
       },
-      "notes": "CSV is deliberately recorded as a distribution transition; a future facade must not confuse bundled availability with a minimal-Ruby guarantee."
+      "contractProvenance": {
+        "kind": "reviewed-rbs-plus-official-ruby-api",
+        "repository": "https://github.com/ruby/rbs",
+        "release": "v4.0.3",
+        "library": "stdlib/csv/0",
+        "sources": [
+          {
+            "path": "csv.rbs",
+            "sha256": "2fbb9994a76341f58a075115c060e960156db2a8dacc575608741d701e398fcb"
+          }
+        ],
+        "rubyDocumentation": "https://docs.ruby-lang.org/en/3.3/CSV.html",
+        "curation": "Header and converter modes, IO inputs, open modes, encodings, arbitrary field objects, replacement values, and unchecked keyword splats are omitted. Header-free no-converter rows narrow to Array<Null<String>>. RBS v4.0.3 owns parse/read/foreach row types and documents generation; official Ruby CSV singleton documentation plus MRI runtime evidence owns generate_line/generate_lines, whose singleton signatures are absent from that RBS release."
+      },
+      "notes": "The bounded public facade covers nullable string rows, whole-string and file parsing, streaming file iteration, generation, and string-preserving typed options. CSV remains a default gem on Ruby 3.3 and a bundled gem on Ruby 3.4/4.0, so support does not imply availability in arbitrary minimal Ruby installations."
     },
     {
       "id": "library.fileutils",

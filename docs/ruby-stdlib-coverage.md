@@ -30,7 +30,9 @@ Coverage status is independent of distribution. `implemented-public`,
 `implemented-internal`, and `implemented-convenience` entries own real facade
 files and mandatory evidence. `planned` and `deferred` entries claim neither.
 This separation records transitions such as `csv`: it is a default gem on MRI
-3.3 and a bundled gem on MRI 3.4/4.0, while its typed facade remains planned.
+3.3 and a bundled gem on MRI 3.4/4.0. Its typed facade is implemented for the
+tested distributions, but that does not promise a bundled gem in arbitrary
+minimal Ruby installations.
 It also records Ruby 4.0's promotion of `Pathname` and `Set` from default gems
 to core classes instead of freezing their Ruby 3.x ownership model.
 
@@ -103,6 +105,47 @@ generated text public without review, or add coverage for another library.
 Generated contracts still require compilation, curation, MRI runtime evidence,
 and explicit handling of signatures that Haxe cannot model precisely.
 
+## Second Reviewed Slice: CSV
+
+`ruby.CSV` provides a bounded header-free CSV contract over nullable string
+rows. `ruby.CSVRow` is `Array<Null<String>>`, preserving Ruby's important
+distinction between an unquoted missing field (`null`) and a quoted empty field
+(`""`). The facade covers single-line and whole-string parsing, file reads,
+native block iteration, and single/multi-row generation:
+
+```haxe
+var rows = ruby.CSV.parseRows("name,value\nalpha,1\n");
+ruby.CSV.forEachRow("imports/users.csv", row -> {
+	ruby.Kernel.puts(row[0]);
+});
+
+var output = ruby.CSV.generateRows([["alpha", "1"], ["beta", null]]);
+```
+
+```ruby
+require "csv"
+
+rows = CSV.parse("name,value\nalpha,1\n")
+CSV.foreach("imports/users.csv") { |row| Kernel.puts(row[0]) }
+output = CSV.generate_lines([["alpha", "1"], ["beta", nil]])
+```
+
+Typed `CSVParseOptions` and `CSVGenerateOptions` expose only
+string-preserving separators, quoting controls, parser field limits, blank-row
+handling, stripping, and liberal parsing. `maxFieldSize` maps to Ruby's
+`max_field_size` and lets applications bound look-ahead for unterminated quoted
+fields. Header/table modes, converters, open IO, file modes, encodings,
+arbitrary field objects, replacement objects, and unchecked keyword bags are
+omitted because they change the result type or widen the boundary.
+
+The checked contract pins official `ruby/rbs` `v4.0.3`
+`stdlib/csv/0/csv.rbs`. That RBS owns the nullable no-header parse/read/foreach
+row types and documents the generation API; its missing singleton definitions
+for `generate_line` and `generate_lines` are supplemented by the official Ruby
+CSV documentation plus direct MRI runtime evidence. The facade remains a
+curated subset, not a claim that all CSV headers, tables, converters, or IO
+forms are typed.
+
 ## Updating The Catalog
 
 For each new domain:
@@ -120,6 +163,5 @@ For each new domain:
    ownership, package, full example, Rails runtime, browser, and production
    gates required by the repository regression contract.
 
-`CSV`, `Open3`, and `Set` are recorded as planned next domains. Their presence
-in the catalog is prioritization and availability evidence, not public API
-support.
+`Open3` and `Set` remain recorded as planned next domains. Their presence in
+the catalog is prioritization and availability evidence, not public API support.

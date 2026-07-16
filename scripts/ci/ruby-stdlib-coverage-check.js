@@ -91,6 +91,11 @@ assert(
     packageJson.scripts?.["test:rbs-generator"]?.includes("rbs-generator-smoke.js"),
   "RBS generator evidence must be mandatory in npm test",
 );
+assert(
+  packageJson.scripts?.test?.includes("test:csv-facade") &&
+    packageJson.scripts?.["test:csv-facade"]?.includes("csv-facade-smoke.js"),
+  "CSV facade evidence must be mandatory in npm test",
+);
 assert(Array.isArray(coverage.domains) && coverage.domains.length > 0, "domains must be a non-empty array");
 assert(
   JSON.stringify(coverage.rubyBranches) === JSON.stringify(supportMatrix.ruby.ciBranches),
@@ -202,7 +207,24 @@ for (const source of uri.contractProvenance.sources) {
 }
 assert(isNonEmptyString(uri.contractProvenance?.curation), "URI provenance must describe signature curation");
 
-for (const id of ["library.csv", "library.open3", "library.set"]) {
+const csv = coverage.domains.find((domain) => domain.id === "library.csv");
+assert(csv?.coverageStatus === "implemented-public", "library.csv must be an implemented public contract");
+assert(csv.contractProvenance?.kind === "reviewed-rbs-plus-official-ruby-api", "CSV contract provenance kind mismatch");
+assert(csv.contractProvenance?.repository === "https://github.com/ruby/rbs", "CSV provenance must use official ruby/rbs");
+assert(csv.contractProvenance?.release === "v4.0.3", "CSV provenance must pin the reviewed RBS release");
+assert(csv.contractProvenance?.library === "stdlib/csv/0", "CSV provenance must name the reviewed library");
+assert(
+  csv.contractProvenance?.rubyDocumentation === "https://docs.ruby-lang.org/en/3.3/CSV.html",
+  "CSV provenance must name official Ruby documentation",
+);
+assert(Array.isArray(csv.contractProvenance?.sources) && csv.contractProvenance.sources.length > 0, "CSV provenance sources required");
+for (const source of csv.contractProvenance.sources) {
+  assert(isNonEmptyString(source.path), "CSV provenance source path required");
+  assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `CSV provenance SHA-256 is invalid: ${source.path}`);
+}
+assert(isNonEmptyString(csv.contractProvenance?.curation), "CSV provenance must describe signature curation");
+
+for (const id of ["library.open3", "library.set"]) {
   const domain = coverage.domains.find((candidate) => candidate.id === id);
   assert(domain?.coverageStatus === "planned", `${id} must remain planned until its own facade bead lands`);
 }

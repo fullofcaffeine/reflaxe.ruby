@@ -183,6 +183,38 @@
       "reason": "Nominal URI::Generic base contract for common nullable components, predicates, immutable composition, normalization, routing, and string conversion."
     },
     {
+      "id": "std.ruby.csv",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/CSV.hx",
+      "surface": "ruby.CSV",
+      "reason": "Bounded direct facade for header-free CSV parsing, file iteration, and generation with typed keyword and block lowering."
+    },
+    {
+      "id": "std.ruby.csv_generate_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/CSVGenerateOptions.hx",
+      "surface": "ruby.CSVGenerateOptions",
+      "reason": "String-preserving CSV separator and quoting keyword schema without converters, encodings, headers, or arbitrary replacement objects."
+    },
+    {
+      "id": "std.ruby.csv_parse_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/CSVParseOptions.hx",
+      "surface": "ruby.CSVParseOptions",
+      "reason": "String-preserving CSV parsing keyword schema with field-size, blank-row, stripping, separator, quote, and liberal parsing controls."
+    },
+    {
+      "id": "std.ruby.csv_row",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/CSVRow.hx",
+      "surface": "ruby.CSVRow",
+      "reason": "Header-free CSV row type that preserves Ruby's distinction between null unquoted fields and quoted empty strings."
+    },
+    {
       "id": "std.ruby.json",
       "owner": "std",
       "status": "implemented",

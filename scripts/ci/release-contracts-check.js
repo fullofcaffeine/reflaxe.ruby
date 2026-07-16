@@ -244,6 +244,7 @@ expectIncludes(rubyStdlibFacades, "## Coverage Goal", "Ruby stdlib facade covera
 expectIncludes(rubyStdlibFacades, "## Relationship To Haxe Std", "Ruby and Haxe std layering contract");
 expectIncludes(rubyStdlibFacades, '"what does Ruby do?"', "Ruby std semantic ownership");
 expectIncludes(rubyStdlibFacades, "### URI", "typed URI facade docs");
+expectIncludes(rubyStdlibFacades, "### CSV", "typed CSV facade docs");
 expectIncludes(rubyStdlibCoverageDocs, "curated", "Ruby stdlib catalog claim boundary");
 expectIncludes(rubyStdlibCoverageDocs, "strict deterministic foundation", "RBS generator scope boundary");
 expectIncludes(rbsGeneratorDocs, "Precise-Or-Omitted Subset", "RBS generator supported subset");
@@ -255,6 +256,7 @@ expectIncludes(packageJson.scripts.test, "test:rbs-generator", "mandatory RBS ge
 expectIncludes(packageJson.scripts["test:rbs-generator"] ?? "", "rbs_generator_test.rb", "RBS generator unit gate");
 expectIncludes(packageJson.scripts["test:rbs-generator"] ?? "", "rbs-generator-smoke.js", "RBS generator smoke gate");
 expectIncludes(packageJson.scripts.test, "test:uri-facade", "mandatory typed URI gate");
+expectIncludes(packageJson.scripts.test, "test:csv-facade", "mandatory typed CSV gate");
 expectIncludes(rubyStdlibCoverageCheck, "support_matrix.json", "Ruby stdlib catalog support-matrix lock");
 expectIncludes(rubyStdlibCoverageCheck, "committed ruby facade is missing", "Ruby stdlib complete facade accounting");
 if (rubyStdlibCoverage.schemaVersion !== 1) {
@@ -674,6 +676,11 @@ expectIncludes(haxelibPackageCheckText, "lib/hxruby/rbs/haxe_extern_renderer.rb"
 expectIncludes(haxelibPackageCheckText, "packaged RBS generator mismatch", "Haxelib RBS library package smoke");
 expectIncludes(haxelibPackageCheckText, "src/ruby/URI.hx", "Haxelib typed URI package check");
 expectIncludes(haxelibPackageCheckText, "src/ruby/URIValue.hx", "Haxelib typed URI value package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/CSV.hx", "Haxelib typed CSV package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/CSVGenerateOptions.hx", "Haxelib typed CSV generation options package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/CSVParseOptions.hx", "Haxelib typed CSV parse options package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/CSVRow.hx", "Haxelib typed CSV row package check");
+expectIncludes(haxelibPackageCheckText, "CsvPackageContract.hx", "Haxelib packaged CSV runtime check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/Auth.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/ContractTools.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/DeviseModelMacro.hx", "Haxelib package check");
@@ -706,6 +713,10 @@ expectIncludes(gemPackageCheck, "scripts/rbs/generate-extern.rb", "Ruby gem RBS 
 expectIncludes(gemPackageCheck, "packaged gem RBS generator mismatch", "Ruby gem RBS command package smoke");
 expectIncludes(gemPackageCheck, "std/ruby/URI.hx", "Ruby gem typed URI package check");
 expectIncludes(gemPackageCheck, "std/ruby/URIValue.hx", "Ruby gem typed URI value package check");
+expectIncludes(gemPackageCheck, "std/ruby/CSV.hx", "Ruby gem typed CSV package check");
+expectIncludes(gemPackageCheck, "std/ruby/CSVGenerateOptions.hx", "Ruby gem typed CSV generation options package check");
+expectIncludes(gemPackageCheck, "std/ruby/CSVParseOptions.hx", "Ruby gem typed CSV parse options package check");
+expectIncludes(gemPackageCheck, "std/ruby/CSVRow.hx", "Ruby gem typed CSV row package check");
 expectIncludes(gemPackageCheck, "railshx.client gem smoke", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "vendor/genes/src/genes/Generator.hx", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "hxruby:production", "Ruby gem package check");
