@@ -540,6 +540,23 @@ for (const evidence of [
   expectIncludes(releaseEvidenceDocs, evidence, "stable 1.0 hosted release evidence");
 }
 for (const evidence of [
+  "## Stable 1.4 typed Open3 publication",
+  "7cfc67c49485c7993404cb5347371984891b2de3",
+  "29527916051",
+  "87728835448",
+  "hxruby-1.4.0.gem",
+  "d35e419f60d5e4caaac19980fd7a68679bc6b66793e51269c2f413c4deb46820",
+  "reflaxe.ruby-1.4.0.zip",
+  "46922a0f586344ac41f14dc28e4154ba01762deb19fd3060d6ff4b2486c91476",
+  "690 ZIP payload entries",
+  "320 gem payload entries",
+  "Both contain `ruby.Open3`",
+  "shell command strings",
+  "pipelines, and unchecked argument bags",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "stable 1.4 hosted release evidence");
+}
+for (const evidence of [
   "## Stable 1.3 typed CSV publication",
   "26d65f1f5d46ebe0e6a4b98ffc412986dbe3bcb5",
   "29516435128",
