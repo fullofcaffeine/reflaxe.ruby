@@ -5,6 +5,44 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.5 typed Set publication
+
+The normal tested-commit workflow published
+[`v1.5.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.5.0)
+on 2026-07-17 for the bounded typed native Ruby Set facade.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `4fb3bfef55f6c5382fddfb569f8fa21527078bd2` |
+| Release intent | `feat: add typed Ruby Set facade` |
+| Canonical release tag | `v1.5.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29542618466`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29542618466), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`87772812982`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29542618466/job/87772812982), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-17T00:15:13Z` |
+| Release notes | Version heading, `v1.4.0...v1.5.0` compare link, categorized feature bullet, and exact commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.5.0.gem` | `hxruby 1.5.0 Ruby gem` | 261632 | `5dff6d1f868b6f5790b347b81be1e743c6a18172f14067456bae2d9849fad7ff` |
+| `hxruby-1.5.0.gem.sha256.json` | `hxruby 1.5.0 SHA-256 metadata` | 301 | `2a89f12c16892a352b26c30922423d3a10b3fe34d00fe8c26e4b6f0af8d43b86` |
+| `reflaxe.ruby-1.5.0.zip` | `reflaxe.ruby 1.5.0 haxelib package` | 1233888 | `1ca13027cdbb2c8c2976a6f43da7272f8623ca25c7e05f2a827687736347bb7c` |
+| `reflaxe.ruby-1.5.0.zip.sha256.json` | `reflaxe.ruby 1.5.0 SHA-256 metadata` | 314 | `e4864df593b6a4c84cd0ae05c6bbac86d6c0730e319aef26c77c6246e2785273` |
+
+Each downloaded sidecar binds its artifact to version `1.5.0`, tag `v1.5.0`,
+the tested source SHA, hosted filename, byte count, and independently matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+complete format-1 manifests verify 691 ZIP payload entries and 321 gem payload entries.
+Both contain `ruby.Set`; the facade deliberately keeps open
+Enumerable inputs, variadic construction and merge, type-changing transforms,
+classify/divide/flatten, identity-comparison mode, mutable-element reset,
+subclass/CoreSet contracts, implicit Haxe iteration, raw operators, and
+unchecked values outside this bounded same-element native Set contract. GitHub
+reports the completed release as natively immutable.
+
 ## Stable 1.4 typed Open3 publication
 
 The normal tested-commit workflow published

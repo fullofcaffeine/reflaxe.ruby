@@ -562,6 +562,23 @@ for (const evidence of [
   expectIncludes(releaseEvidenceDocs, evidence, "stable 1.0 hosted release evidence");
 }
 for (const evidence of [
+  "## Stable 1.5 typed Set publication",
+  "4fb3bfef55f6c5382fddfb569f8fa21527078bd2",
+  "29542618466",
+  "87772812982",
+  "hxruby-1.5.0.gem",
+  "5dff6d1f868b6f5790b347b81be1e743c6a18172f14067456bae2d9849fad7ff",
+  "reflaxe.ruby-1.5.0.zip",
+  "1ca13027cdbb2c8c2976a6f43da7272f8623ca25c7e05f2a827687736347bb7c",
+  "691 ZIP payload entries",
+  "321 gem payload entries",
+  "Both contain `ruby.Set`",
+  "identity-comparison mode",
+  "implicit Haxe iteration, raw operators",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "stable 1.5 hosted release evidence");
+}
+for (const evidence of [
   "## Stable 1.4 typed Open3 publication",
   "7cfc67c49485c7993404cb5347371984891b2de3",
   "29527916051",
