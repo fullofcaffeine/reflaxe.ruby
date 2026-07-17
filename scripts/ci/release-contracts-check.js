@@ -590,6 +590,26 @@ for (const evidence of [
   expectIncludes(releaseEvidenceDocs, evidence, "stable 1.0 hosted release evidence");
 }
 for (const evidence of [
+  "## Stable 1.6 typed Time and Date publication",
+  "449770dcee471fc349db69149f8b48ffa43e3644",
+  "29564630637",
+  "87841193089",
+  "hxruby-1.6.0.gem",
+  "a56e5a1d214f741fb67f650f01762752a1b6ec11816be49cac8cf3f66546e86d",
+  "reflaxe.ruby-1.6.0.zip",
+  "1a38381de339f8c428043b1b8acdc08e702afc8b4b8d8d9aa5afe419c5bc83ea",
+  "694 ZIP payload entries",
+  "323 gem payload entries",
+  "Both contain `ruby.Time` and `ruby.Date`",
+  "`HxDate` from",
+  "`hx_date.rb`",
+  "29560749968",
+  "publication job was never created",
+  "`ruby.DateTime`",
+]) {
+  expectIncludes(releaseEvidenceDocs, evidence, "stable 1.6 hosted release evidence");
+}
+for (const evidence of [
   "## Stable 1.5 typed Set publication",
   "4fb3bfef55f6c5382fddfb569f8fa21527078bd2",
   "29542618466",

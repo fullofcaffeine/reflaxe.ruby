@@ -5,6 +5,54 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.6 typed Time and Date publication
+
+The normal tested-commit workflow published
+[`v1.6.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.6.0)
+on 2026-07-17 for the bounded native Ruby Time and Date facades.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `449770dcee471fc349db69149f8b48ffa43e3644` |
+| Release intent | `feat: add typed Ruby Time and Date facades`, followed by `fix: preserve generated feature resolution` on the published tested SHA |
+| Canonical release tag | `v1.6.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29564630637`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29564630637), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`87841193089`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29564630637/job/87841193089), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-17T08:33:48Z` |
+| Release notes | Version heading, `v1.5.0...v1.6.0` compare link, categorized feature and bug-fix bullets, and exact links to both commits |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.6.0.gem` | `hxruby 1.6.0 Ruby gem` | 264192 | `a56e5a1d214f741fb67f650f01762752a1b6ec11816be49cac8cf3f66546e86d` |
+| `hxruby-1.6.0.gem.sha256.json` | `hxruby 1.6.0 SHA-256 metadata` | 301 | `adc7dcad2c44a61024a6c834530dd9db23a94f6a17e2ced9d70d667627fc052f` |
+| `reflaxe.ruby-1.6.0.zip` | `reflaxe.ruby 1.6.0 haxelib package` | 1241445 | `1a38381de339f8c428043b1b8acdc08e702afc8b4b8d8d9aa5afe419c5bc83ea` |
+| `reflaxe.ruby-1.6.0.zip.sha256.json` | `reflaxe.ruby 1.6.0 SHA-256 metadata` | 314 | `5e5beb13c0c754fb19379d1c78345aef1ee16613bbe7f494ea2659045e63ea57` |
+
+Each downloaded sidecar binds its artifact to version `1.6.0`, tag `v1.6.0`,
+the tested source SHA, hosted filename, byte count, and independently matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+complete format-1 manifests verify 694 ZIP payload entries and
+323 gem payload entries. Both contain `ruby.Time` and `ruby.Date`; the Haxelib
+artifact also contains the collision policy that emits portable Haxe `Date` as `HxDate` from
+`hx_date.rb`, leaving native `ruby.Date` bound to Ruby's `Date` and
+`require "date"`.
+
+The first implementation push at `6c41fdd307529a546b501d4e4234c4aebfda2014`
+failed closed in workflow
+[`29560749968`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29560749968):
+the Ruby 3.3/3.4/4.0 compiler jobs reproduced an over-broad require-order
+change, the publication job was never created, and no tag or draft was
+published. The tested fix restored load-path-first feature resolution while
+retaining the narrower `HxDate`/`hx_date.rb` collision boundary. Open Numeric
+and timezone protocols, subsecond units, Rational values, permissive parsing,
+timezone databases, mutating conversion, calendar-reform controls,
+enumerators, unchecked option bags, and `ruby.DateTime` remain outside the
+bounded contract. GitHub reports the completed release as natively immutable.
+
 ## Stable 1.5 typed Set publication
 
 The normal tested-commit workflow published
@@ -326,12 +374,17 @@ Actions APIs plus downloaded sidecars. Recheck them with read-only commands:
 
 ```bash
 git ls-remote --tags origin
+gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.6.0
+gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.5.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.4.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.3.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.2.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.1.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.0.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v0.1.2
+gh run view 29564630637 --json headSha,conclusion,jobs,url
+gh run view 29560749968 --json headSha,conclusion,jobs,url
+gh run view 29542618466 --json headSha,conclusion,jobs,url
 gh run view 29527916051 --json headSha,conclusion,jobs,url
 gh run view 29452140844 --json headSha,conclusion,jobs,url
 gh run view 29516435128 --json headSha,conclusion,jobs,url
