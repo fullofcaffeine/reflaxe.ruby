@@ -5,6 +5,59 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.7 modern temporal publication
+
+The normal tested-commit workflow published
+[`v1.7.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.7.0)
+on 2026-07-17 for the modern Ruby and Rails temporal facades.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `cdb9080c4ea4bbd8d95b682cd196dce314f237da` |
+| Release intent | `feat: add modern Ruby and Rails temporal facades`, followed by `fix: update sanitizer dependencies for advisories` on the published tested SHA |
+| Canonical release tag | `v1.7.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29619029159`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29619029159), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`88015099224`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29619029159/job/88015099224), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-17T23:27:55Z` |
+| Release notes | Version heading, `v1.6.0...v1.7.0` compare link, categorized feature and bug-fix bullets, and exact links to both commits |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.7.0.gem` | `hxruby 1.7.0 Ruby gem` | 266752 | `ed9df6dcd22a53e11063f9da7038c5e1eea28b2db9db75de6384518ae33dbf8c` |
+| `hxruby-1.7.0.gem.sha256.json` | `hxruby 1.7.0 SHA-256 metadata` | 301 | `be7323dc320c408acfd91e1c41f0f005931f11336056c086d7b075f57befaaf0` |
+| `reflaxe.ruby-1.7.0.zip` | `reflaxe.ruby 1.7.0 haxelib package` | 1251873 | `05dfa672f21e123def58737e934b33083f1144ad8ec35165f934c257f9e53864` |
+| `reflaxe.ruby-1.7.0.zip.sha256.json` | `reflaxe.ruby 1.7.0 SHA-256 metadata` | 314 | `62c4414f0ca103e7afe38668887e003f429d703aed640e013a5318900b01bced` |
+
+Each downloaded sidecar binds its artifact to version `1.7.0`, tag `v1.7.0`,
+the tested source SHA, hosted filename, byte count, and independently matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+complete format-1 manifests verify 699 ZIP payload entries and 327 gem payload
+entries, including `ruby.TimeParsing`, `rails.active_support.RailsTime`,
+`rails.active_support.TimeZone`, and
+`rails.active_support.TimeWithZone`. The Haxelib artifact also contains the
+modern temporal API guide.
+
+The facade keeps core `ruby.Time` require-free, loads Ruby's `time` default gem
+only for strict `Time.iso8601` and `Time.strptime` parsing, and loads both
+`active_support` and `active_support/time` for Rails zoned values. The base
+ActiveSupport load is required outside a fully booted Rails application because
+`TimeWithZone#to_time` reads ActiveSupport configuration initialized there.
+Canonical Rails application code uses `Time.current`, `Time.zone`, and
+`ActiveSupport::TimeWithZone`; a Rails `datetime` database column does not imply
+Ruby's legacy `DateTime` class. `DateTime`, heuristic parsing, mutable global
+zone configuration, open duration/calendar arithmetic, ambiguous-local-time
+controls, and raw TZInfo contracts remain outside this bounded surface.
+
+The tested source also updates `loofah` to `2.25.2` and
+`rails-html-sanitizer` to `1.7.1`. The fresh ruby-advisory-db audit at
+`5fdc4fb65d1fbc08c9ba5346d45dd619f6668c1e` found no vulnerable dependencies,
+while its vulnerable control fixture was still detected. GitHub reports the
+completed release as natively immutable.
+
 ## Stable 1.6 typed Time and Date publication
 
 The normal tested-commit workflow published
