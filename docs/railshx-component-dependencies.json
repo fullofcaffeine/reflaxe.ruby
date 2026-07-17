@@ -278,11 +278,15 @@
     },
     {
       "id": "active-support-and-instrumentation",
-      "scope": "The documented ActiveSupport receiver facades and typed Notifications event, payload, subscription, and unsubscribe slice.",
+      "scope": "The documented ActiveSupport receiver facades, modern Rails application-zone TimeZone/TimeWithZone path, and typed Notifications event, payload, subscription, and unsubscribe slice.",
       "claimMarkers": [
         {
           "path": "docs/compatibility-matrix.md",
           "contains": "Typed ActiveSupport instrumentation"
+        },
+        {
+          "path": "docs/compatibility-matrix.md",
+          "contains": "Typed Rails temporal APIs"
         }
       ],
       "sourceRoots": [
@@ -292,11 +296,15 @@
       ],
       "targetDependencies": [
         "Rails ActiveSupport 8.1",
+        "Rails ActiveSupport TimeZone and TimeWithZone 8.1",
+        "ruby.Date",
+        "ruby.Time",
         "hxruby runtime"
       ],
       "evidence": [
         { "kind": "compile", "command": "test:active-support-facades", "lane": "full" },
         { "kind": "compile", "command": "test:instrumentation", "lane": "full" },
+        { "kind": "negative", "command": "test:active-support-facades", "lane": "full" },
         { "kind": "negative", "command": "test:instrumentation", "lane": "full" },
         { "kind": "runtime", "command": "test:rails-component-runtime", "lane": "rails-runtime" }
       ]

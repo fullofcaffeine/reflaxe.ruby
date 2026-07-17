@@ -114,7 +114,8 @@ RailsHx can be called production-ready when all of these are true:
   Zeitwerk, assets, and release artifact shape.
 - Typed Rails APIs cover the common production path for models, migrations,
   controllers, params, routes, templates, jobs, mailers, storage, Turbo,
-  ActionCable, instrumentation, and gradual adoption.
+  ActionCable, modern application-zone time, instrumentation, and gradual
+  adoption.
 - Unsafe boundaries are explicit: raw Ruby, raw ERB, raw SQL/string clauses,
   unchecked file paths, `Dynamic`, and generated adoption contracts are either
   typed, fail-closed, or clearly opt-in with tests. SQL/string-bearing APIs

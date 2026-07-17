@@ -672,6 +672,65 @@
       "notes": "The public lifecycle facade prioritizes native block cleanup and explicit deterministic cleanup for retained values."
     },
     {
+      "id": "library.time",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "default-gem"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.TimeParsing"
+      ],
+      "facadePaths": [
+        "std/ruby/TimeParsing.hx"
+      ],
+      "evidence": [
+        "npm run test:time-date-facade"
+      ],
+      "runtimeProbe": {
+        "require": "time",
+        "gem": "time",
+        "constants": [
+          "Time"
+        ]
+      },
+      "contractProvenance": {
+        "kind": "reviewed-rbs-plus-supported-ruby-sources",
+        "repository": "https://github.com/ruby/rbs",
+        "release": "v4.0.3",
+        "library": "stdlib/time/0",
+        "sources": [
+          {
+            "path": "stdlib/time/0/time.rbs",
+            "sha256": "0d2d420624c57c34f9ecd3cb57b95fe2d80884edd3f281470d6f64619557667e"
+          }
+        ],
+        "implementationSources": [
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v3_3_11",
+            "path": "lib/time.rb",
+            "sha256": "5ddbc34d3c06e73605708f7ecb2697791d9cb35d5090361b0499285013ce30f0"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v3_4_10",
+            "path": "lib/time.rb",
+            "sha256": "94e4c25b76c4b15fa86e9202365eb2bb9ffdeed956a76c4866c1c1f15d33d3e5"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v4.0.0",
+            "path": "lib/time.rb",
+            "sha256": "524e910df9d670cc0e60a4122b00a4c70dd27b6dd07bee406806d172a667570c"
+          }
+        ],
+        "curation": "The require-backed native view exposes restricted ISO 8601/XML Schema parsing and explicit-format strptime with concrete String inputs. Heuristic Time.parse, parser blocks, open _TimeLike/Numeric inputs, HTTP/mail parsing, DateTime conversion, and unchecked options remain omitted."
+      },
+      "notes": "The public parsing facade opts into the time default gem without making core ruby.Time require-backed; it emits direct Time.iso8601 and Time.strptime calls and preserves the modern Time-over-DateTime recommendation."
+    },
+    {
       "id": "library.uri",
       "distributionByRuby": {
         "3.3": "default-gem",

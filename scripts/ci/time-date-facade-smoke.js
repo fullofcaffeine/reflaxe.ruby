@@ -35,7 +35,7 @@ function run(command, args, options = {}) {
   return result;
 }
 
-for (const facadePath of ["std/ruby/Time.hx", "std/ruby/Date.hx"]) {
+for (const facadePath of ["std/ruby/Time.hx", "std/ruby/TimeParsing.hx", "std/ruby/Date.hx"]) {
   const facadeSource = readFileSync(join(root, facadePath), "utf8");
   const facadeCode = facadeSource.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
   for (const forbidden of [/\bDynamic\b/, /\bAny\b/, /\buntyped\b/, /\bcast\b/, /__ruby__/, /#if\s+ruby/]) {
@@ -44,11 +44,15 @@ for (const facadePath of ["std/ruby/Time.hx", "std/ruby/Date.hx"]) {
 }
 
 const timeSource = readFileSync(join(root, "std", "ruby", "Time.hx"), "utf8");
+const timeParsingSource = readFileSync(join(root, "std", "ruby", "TimeParsing.hx"), "utf8");
 const dateSource = readFileSync(join(root, "std", "ruby", "Date.hx"), "utf8");
 if (!timeSource.includes('@:native("Time")') || !timeSource.includes("extern class Time")) {
   fail("ruby.Time must remain a direct core native extern");
 }
 if (timeSource.includes("@:rubyRequire")) fail("core ruby.Time must remain require-free");
+if (!timeParsingSource.includes('@:rubyRequire("time")') || !timeParsingSource.includes('@:native("Time")')) {
+  fail('ruby.TimeParsing must remain a direct native Time view behind require "time"');
+}
 if (!dateSource.includes('@:rubyRequire("date")') || !dateSource.includes("extern class Date")) {
   fail('ruby.Date must remain a direct native extern behind require "date"');
 }
@@ -107,7 +111,9 @@ for (const generatedFile of ["main.rb", "run.rb"]) {
   if ((generated.match(/require "date"/g) ?? []).length !== 1) {
     fail(`${generatedFile} must contain exactly one deduplicated require "date"`);
   }
-  if (/require "time"/.test(generated)) fail(`${generatedFile} must not widen core Time into the default-gem time parser`);
+  if ((generated.match(/require "time"/g) ?? []).length !== 1) {
+    fail(`${generatedFile} must contain exactly one opt-in require "time" for TimeParsing`);
+  }
 }
 
 const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
@@ -124,6 +130,8 @@ for (const expectedShape of [
   /Time\.utc\(2024, 2, 29, 12, 34, 56\)/,
   /Time\.at\(1709210096\.0\)/,
   /Time\.local\(2024, 2, 29, 12, 34, 56\)/,
+  /Time\.iso8601\("2026-07-17T12:30:00-06:00"\)/,
+  /Time\.strptime\("2026\/07\/17 12:30 -0600", "%Y\/%m\/%d %H:%M %z"\)/,
   /Time\.now\(\)\.year\(\)/,
   /utc(?:__hx\d+)?\.utc\?\(\)/,
   /utc(?:__hx\d+)?\.dst\?\(\)/,
@@ -158,6 +166,7 @@ if (/class (?:Time|Date)\b|Ruby::(?:Time|Date)|HXRuby\.(?:time|date|Time|Date)/.
 
 assertCompileFailure("InvalidTimeInput", "String should be Int");
 assertCompileFailure("InvalidTimeArithmetic", "String should be Float");
+assertCompileFailure("InvalidTimeParsing", "Int should be String");
 assertCompileFailure("InvalidDateInput", "String should be Null<Int>");
 assertCompileFailure("InvalidDateFormat", "Int should be String");
 assertCompileFailure("InvalidDateTime", "Type not found : ruby.DateTime");
@@ -187,6 +196,8 @@ const expected = [
   "2024-02-29 12:34:56",
   "false",
   "true",
+  "2026-07-17 18:30:00 +0000",
+  "2026-07-17 18:30:00 +0000",
   "2024-02-29",
   "2024",
   "2",
@@ -221,10 +232,11 @@ if (timeOnlyActual !== "2024-W09-4\n") fail("require-free core Time runtime cont
 
 const versions = run("ruby", [
   "-rdate",
+  "-rtime",
   "-e",
-  'spec = Gem.loaded_specs["date"]; print RUBY_VERSION, " / date ", (spec ? spec.version : "stdlib")',
+  'date = Gem.loaded_specs["date"]; time = Gem.loaded_specs["time"]; print RUBY_VERSION, " / date ", (date ? date.version : "stdlib"), " / time ", (time ? time.version : "stdlib")',
 ]).stdout;
-console.log(`[time-date-facade] OK: direct core Time and strict Date behavior pass MRI ${versions}`);
+console.log(`[time-date-facade] OK: require-free core Time, strict Time parsing, and Date behavior pass MRI ${versions}`);
 
 function assertCompileFailure(mainClass, expectedDiagnostic) {
   const result = run(

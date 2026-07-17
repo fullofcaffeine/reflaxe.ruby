@@ -10,7 +10,7 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 - Put Ruby-owned library surfaces under the `ruby` package:
   `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
   `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, `ruby.CSV`, `ruby.Open3`,
-  `ruby.Set<T>`, `ruby.Time`, and `ruby.Date` facades.
+  `ruby.Set<T>`, `ruby.Time`, `ruby.TimeParsing`, and `ruby.Date` facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
   for example `@:native("JSON") extern class Json`.
@@ -403,25 +403,32 @@ changing the portable Haxe `Date` contract. Ruby months remain one-based,
 ```haxe
 import ruby.Date as RubyDate;
 import ruby.Time as RubyTime;
+import ruby.TimeParsing;
 
 var publishedAt = RubyTime.utc(2024, 2, 29, 12, 0, 0);
 var expiresAt = publishedAt.addSeconds(3600);
+var importedAt = TimeParsing.parseIso8601("2024-02-29T12:00:00Z");
 var billingDay = RubyDate.parseIso8601("2024-02-29").nextMonth();
 
 ruby.Kernel.puts(expiresAt.strftime("%Y-%m-%d %H:%M:%S %z"));
+ruby.Kernel.puts(importedAt.strftime("%Y-%m-%d %H:%M:%S %z"));
 ruby.Kernel.puts(billingDay.toIso8601());
 ```
 
 The generated Ruby uses the core `Time` constant directly, renders native
-arithmetic in infix form, and requires `date` only because `Date` is used:
+arithmetic in infix form, requires `time` only for parsing, and requires `date`
+only because `Date` is used:
 
 ```ruby
 require "date"
+require "time"
 
 published_at = Time.utc(2024, 2, 29, 12, 0, 0)
 expires_at = published_at + 3600
+imported_at = Time.iso8601("2024-02-29T12:00:00Z")
 billing_day = Date.iso8601("2024-02-29").next_month
 Kernel.puts(expires_at.strftime("%Y-%m-%d %H:%M:%S %z"))
+Kernel.puts(imported_at.strftime("%Y-%m-%d %H:%M:%S %z"))
 Kernel.puts(billing_day.iso8601)
 ```
 
@@ -429,6 +436,11 @@ Kernel.puts(billing_day.iso8601)
 daylight-saving and fixed-offset reads, non-mutating local/UTC/offset copies,
 epoch conversion, formatting, and precisely typed seconds arithmetic and
 difference. A program that uses only this facade adds no `require`.
+
+`ruby.TimeParsing` is a separate native view of the same `Time` constant. It
+adds restricted ISO 8601 and explicit-format parsing behind one deduplicated
+`require "time"`, without making every core Time consumer load the parser.
+Heuristic `Time.parse` and parser blocks remain omitted.
 
 `ruby.Date` covers civil construction, `today`, strict ISO 8601 and
 explicit-format parsing, calendar and ISO-week components, leap-year queries,
@@ -444,7 +456,12 @@ coercions, subsecond units and Rational values,
 permissive parsing, named timezone objects/databases, mutating zone conversion,
 calendar-reform starts, enumerators, and unchecked options remain omitted.
 Ruby documents `DateTime` as deprecated in favor of `Time`; no `ruby.DateTime`
-surface is claimed by this bounded slice.
+surface is claimed by this bounded slice. Rails applications should use
+`RailsTime.current()`, `RailsTime.zone()`, `TimeZone`, and `TimeWithZone` for
+application-zone behavior. A Rails migration `datetime` column is a storage
+type, not a request to use Ruby `DateTime`. See
+[Modern RubyHx And RailsHx Temporal APIs](temporal-apis.md) for the complete
+selection and load-ownership contract.
 
 ### Dir
 

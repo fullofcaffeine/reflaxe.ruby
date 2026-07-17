@@ -99,6 +99,7 @@ for (const required of [
   "docs/compiler-metadata.md",
   "docs/public-contract.md",
   "docs/ruby-callable-abi.md",
+  "docs/temporal-apis.md",
   "lib/hxruby.rb",
   "lib/hxruby/support_matrix.json",
   "lib/hxruby/support_matrix.rb",
@@ -127,6 +128,7 @@ for (const required of [
   "src/ruby/Open3Status.hx",
   "src/ruby/Set.hx",
   "src/ruby/Time.hx",
+  "src/ruby/TimeParsing.hx",
   "src/ruby/Pathname.hx",
   "src/ruby/Tempfile.hx",
   "src/ruby/URI.hx",
@@ -187,7 +189,10 @@ for (const required of [
   "src/rails/active_support/EventName.hx",
   "src/rails/active_support/NotificationEvent.hx",
   "src/rails/active_support/Notifications.hx",
+  "src/rails/active_support/RailsTime.hx",
   "src/rails/active_support/Subscription.hx",
+  "src/rails/active_support/TimeWithZone.hx",
+  "src/rails/active_support/TimeZone.hx",
   "src/rails/action_mailer/AttachmentValue.hx",
   "src/rails/action_mailer/Attachments.hx",
   "src/rails/action_mailer/Base.hx",
@@ -302,6 +307,7 @@ try {
   const consumerRoot = join(tempRoot, "consumer");
   const consumerSrc = join(consumerRoot, "src");
   const consumerOutputDir = join(consumerRoot, "out");
+  const railsTemporalOutputDir = join(consumerRoot, "rails-temporal-out");
   mkdirSync(consumerSrc, { recursive: true });
   for (const file of ["Main.hx", "ReportCli.hx", "TextAnalyzer.hx", "TextReport.hx", "TextReportJson.hx"]) {
     copyFileSync(join(root, "examples", "rubyhx_cli", file), join(consumerSrc, file));
@@ -321,6 +327,10 @@ try {
   copyFileSync(
     join(root, "test", "time_date_facade", "package_consumer", "TimeDatePackageContract.hx"),
     join(consumerSrc, "TimeDatePackageContract.hx"),
+  );
+  copyFileSync(
+    join(root, "test", "active_support_facades", "package_consumer", "RailsTimePackageContract.hx"),
+    join(consumerSrc, "RailsTimePackageContract.hx"),
   );
   writeFileSync(
     join(consumerSrc, "Main.hx"),
@@ -355,6 +365,31 @@ try {
     "Main",
   ], { cwd: consumerRoot });
   assertNoTodoLowerRubyFiles(consumerOutputDir);
+
+  run("haxe", [
+    "-D",
+    `ruby_output=${railsTemporalOutputDir}`,
+    "-D",
+    "reflaxe_runtime",
+    "-cp",
+    "src",
+    "-lib",
+    "reflaxe.ruby",
+    "-main",
+    "RailsTimePackageContract",
+  ], { cwd: consumerRoot });
+  assertNoTodoLowerRubyFiles(railsTemporalOutputDir);
+  const packagedRailsTemporalRuby = readFileSync(join(railsTemporalOutputDir, "rails_time_package_contract.rb"), "utf8");
+  for (const expected of [
+    'require "active_support"',
+    'require "active_support/time"',
+    'Time.find_zone!("UTC")',
+    'zone.iso8601("2026-07-17T12:30:00Z")',
+  ]) {
+    if (!packagedRailsTemporalRuby.includes(expected)) {
+      fail(`installed Haxelib Rails temporal contract is missing direct output: ${expected}`);
+    }
+  }
 
   const installedStdout = run("ruby", [join(consumerOutputDir, "run.rb"), "sample.txt"], { cwd: consumerRoot }).stdout;
   const installedReport = JSON.parse(installedStdout);

@@ -58,6 +58,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
   precise-or-omitted extern generation, deterministic output, and review limits.
 - [Ruby Stdlib R&D Plan](ruby-stdlib-rd.md): staged typed stdlib coverage, runtime-helper policy, and follow-up beads.
 - [Ruby Stdlib Facades](ruby-stdlib-facades.md): authoring typed `ruby.*` facades over Ruby stdlib APIs.
+- [Modern Temporal APIs](temporal-apis.md): choosing `Time`, `Date`, strict
+  parsing, and Rails `TimeZone`/`TimeWithZone` while keeping legacy `DateTime`
+  outside the canonical path.
 - [Gap Report Guidance](gap-report-guidance.md): updating std/runtime coverage inventory.
 - [Repository Development](development.md): contributor gates, example/test
   ownership, hooks, bead workflow, inventory commands, and repository map.

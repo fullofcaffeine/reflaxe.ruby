@@ -173,6 +173,7 @@ Unsafe boundary policy is tracked in
 | Typed ActiveStorage attachments | `@:hasOneAttached`, `@:hasManyAttached`, `Model.attachments.*`, `Attachable`, `Attachables`, `Blob`, `SignedId`, `<file_field direct_upload>` | Initial typed refs plus generated Rails runtime lane for signed-ID attach, typed hash attachables, blob metadata/direct-upload helpers, direct-upload file field rendering, download/read, and purge on one/many attachments |
 | Typed ActionCable channels/subscriptions | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, `SubscriptionParam<T>` | Channel/client static smoke plus generated Rails `ActionCable::Channel::TestCase` runtime lane |
 | Typed ActiveSupport instrumentation | `EventName<TPayload>`, `Notifications.instrument/subscribe`, `NotificationEvent<TPayload>` | Initial ActiveSupport::Notifications slice with mandatory exact-Rails runtime evidence |
+| Typed Rails temporal APIs | `RailsTime.current()`, `RailsTime.zone()`, `TimeZone`, `TimeWithZone` | Modern application-zone slice with strict ISO/RFC3339 construction, native Time conversion, and exact-Rails runtime evidence; deprecated Ruby `DateTime` is not the canonical value type |
 | Raw ERB template escape hatch | `@:railsAllowRawErb` | Implemented for migration/interop only |
 | Mixed Rails/RailsHx adoption sample | `examples/rails_interop_app` + `npm run test:rails-interop` | Initial compile/static smoke |
 | Existing Rails boundary adoption generator | `bin/rails generate hxruby:adopt` / `rake hxruby:gen:adopt` | Explicit service/template wrappers, source-backed service signature inference, source-backed extension contracts, Bundler gem inventory, and automatic strict YARD selection for gem constants |
@@ -211,7 +212,7 @@ generator-inference policy.
 | Haxe-owned Ruby module authoring | `@:rubyModule("RubyModuleName")` | Initial implementation |
 | Haxe-owned ActiveSupport::Concern authoring | `@:rubyConcern("RubyModuleName")` | Initial static output implementation |
 | Typed monkey-patch/`using` contracts | `@:rubyPatch(ReceiverType)` plus Haxe `using` | Initial implementation |
-| Typed ActiveSupport receiver facades | `rails.active_support.ObjectPresence`, `rails.active_support.StringFilters` | Initial facade slice |
+| Typed ActiveSupport receiver facades | `rails.active_support.ObjectPresence`, `rails.active_support.StringFilters`, `rails.active_support.RailsTime`, `rails.active_support.TimeZone`, `rails.active_support.TimeWithZone` | Receiver extensions plus the bounded modern Rails zoned-time slice; see [Modern Temporal APIs](temporal-apis.md) |
 | Generator-assisted contracts from Ruby source metadata | `hxruby:adopt --extension-source ... --extension-module ...` | Initial Ripper-backed implementation |
 | Generator-assisted contracts from RBS | `hxruby:adopt --service Foo --rbs sig/foo.rbs` | Strict non-executing precise-or-omitted subset with scalar/nilable/Symbol/Array typing, canonical path checks, malformed-file failures, and no broad fallback types |
 | Generator-assisted service contracts from YARD | `hxruby:adopt --service Foo --yard app/services/foo.rb` | Initial deterministic, no-execution, precise-or-omitted subset implemented |

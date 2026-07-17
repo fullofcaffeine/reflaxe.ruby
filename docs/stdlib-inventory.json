@@ -263,6 +263,14 @@
       "reason": "Require-free core Ruby Time facade for typed construction, calendar and zone reads, local/UTC copies, epoch conversion, formatting, and seconds arithmetic without Haxe Date semantics."
     },
     {
+      "id": "std.ruby.time_parsing",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/TimeParsing.hx",
+      "surface": "ruby.TimeParsing",
+      "reason": "Require-backed native Time view for restricted ISO 8601 and explicit-format parsing without widening core ruby.Time or exposing heuristic Time.parse."
+    },
+    {
       "id": "std.ruby.date",
       "owner": "std",
       "status": "implemented",
@@ -1733,6 +1741,30 @@
       "path": "std/rails/active_support/StringFilters.hx",
       "surface": "rails.active_support.StringFilters",
       "reason": "Typed ActiveSupport String#squish receiver extension facade using @:rubyPatch and Haxe using."
+    },
+    {
+      "id": "std.rails.active_support_rails_time",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/RailsTime.hx",
+      "surface": "rails.active_support.RailsTime",
+      "reason": "Rails-owned native Time entrypoint for application-zone current time and checked nullable/raising zone lookup without global zone mutation."
+    },
+    {
+      "id": "std.rails.active_support_time_zone",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/TimeZone.hx",
+      "surface": "rails.active_support.TimeZone",
+      "reason": "Bounded ActiveSupport::TimeZone facade for local/epoch/strict ISO/RFC3339 construction, current time, civil date, and zone identity."
+    },
+    {
+      "id": "std.rails.active_support_time_with_zone",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/active_support/TimeWithZone.hx",
+      "surface": "rails.active_support.TimeWithZone",
+      "reason": "Read-only zoned-time result contract for calendar/zone reads, formatting, native Time conversion, and seconds arithmetic without direct construction or DateTime."
     },
     {
       "id": "std.rails.active_support_event_name",

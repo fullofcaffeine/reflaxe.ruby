@@ -268,6 +268,36 @@ than by these Ruby-shaped facades. Its generated `HxDate` constant and
 `hx_date.rb` filename keep the portable wrapper collision-free when native
 Ruby `Date` is loaded in the same program.
 
+## Sixth Reviewed Slice: Strict Time Parsing
+
+`ruby.TimeParsing` is a require-backed native view of the same core `Time`
+constant. It maps restricted ISO 8601 and explicit-format parsing directly
+while preserving the require-free `ruby.Time` contract:
+
+```haxe
+var iso = ruby.TimeParsing.parseIso8601("2026-07-17T12:30:00-06:00");
+var formatted = ruby.TimeParsing.parseWithFormat(
+  "2026/07/17 12:30 -0600",
+  "%Y/%m/%d %H:%M %z"
+);
+```
+
+```ruby
+require "time"
+
+iso = Time.iso8601("2026-07-17T12:30:00-06:00")
+formatted = Time.strptime("2026/07/17 12:30 -0600", "%Y/%m/%d %H:%M %z")
+```
+
+The catalog records `time` as a default gem on Ruby 3.3, 3.4, and 4.0 and pins
+official `ruby/rbs` `v4.0.3` plus the exact supported `ruby/ruby` `lib/time.rb`
+sources. Heuristic `Time.parse`, parser blocks, HTTP/mail parsing, DateTime
+conversion, open Numeric inputs, and unchecked options remain omitted.
+
+Rails named-zone behavior is not part of this Ruby-library catalog. It lives
+in the separate RailsHx layer through `RailsTime`, `TimeZone`, and
+`TimeWithZone`; see [Modern Temporal APIs](temporal-apis.md).
+
 ## Updating The Catalog
 
 For each new domain:

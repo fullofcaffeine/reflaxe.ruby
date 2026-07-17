@@ -133,7 +133,7 @@ RailsHx authors Haxe and HHX, then emits ordinary Rails-shaped artifacts:
 - ActiveRecord models, typed relations, associations, validations, and scopes;
 - controllers, lifecycle hooks, strong params, statuses, and route helpers;
 - migrations, Haxe-owned routes, HHX-to-ERB views, layouts, and components;
-- Turbo, ActionCable, jobs, mailers, storage, instrumentation, and DeviseHx;
+- Turbo, ActionCable, jobs, mailers, storage, zoned time, instrumentation, and DeviseHx;
 - Haxe-authored browser code emitted by Genes as readable ES modules, plus
   Rails tests, Playwright, and production assets.
 

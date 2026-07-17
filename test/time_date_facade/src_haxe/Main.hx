@@ -1,5 +1,6 @@
 import ruby.Date as RubyDate;
 import ruby.Time as RubyTime;
+import ruby.TimeParsing;
 
 /**
 	Executable contract for the native Ruby-semantic Time and Date facades.
@@ -37,6 +38,8 @@ class Main {
 		Sys.println(RubyTime.at(1709210096.0).toUtc().strftime("%Y-%m-%d %H:%M:%S"));
 		Sys.println(RubyTime.local(2024, 2, 29, 12, 34, 56).isUtc());
 		Sys.println(RubyTime.now().year() > 0);
+		Sys.println(TimeParsing.parseIso8601("2026-07-17T12:30:00-06:00").toUtc().strftime("%Y-%m-%d %H:%M:%S %z"));
+		Sys.println(TimeParsing.parseWithFormat("2026/07/17 12:30 -0600", "%Y/%m/%d %H:%M %z").toUtc().strftime("%Y-%m-%d %H:%M:%S %z"));
 
 		var leap = new RubyDate(2024, 2, 29);
 		Sys.println(leap.toIso8601());

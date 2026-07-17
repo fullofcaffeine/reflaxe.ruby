@@ -312,6 +312,37 @@ for (const source of [
 }
 assert(isNonEmptyString(time.contractProvenance?.curation), "Time provenance must describe signature curation");
 
+const timeParsing = coverage.domains.find((domain) => domain.id === "library.time");
+assert(timeParsing?.coverageStatus === "implemented-public", "library.time must be an implemented public contract");
+assert(timeParsing.contractProvenance?.kind === "reviewed-rbs-plus-supported-ruby-sources", "Time parsing provenance kind mismatch");
+assert(timeParsing.contractProvenance?.repository === "https://github.com/ruby/rbs", "Time parsing provenance must use official ruby/rbs");
+assert(timeParsing.contractProvenance?.release === "v4.0.3", "Time parsing provenance must pin the reviewed RBS release");
+assert(timeParsing.contractProvenance?.library === "stdlib/time/0", "Time parsing provenance must name the reviewed RBS library");
+assert(
+  JSON.stringify(timeParsing.facadePaths) === JSON.stringify(["std/ruby/TimeParsing.hx"])
+    && timeParsing.evidence?.includes("npm run test:time-date-facade")
+    && timeParsing.runtimeProbe?.require === "time"
+    && timeParsing.runtimeProbe?.gem === "time",
+  "Time parsing facade, evidence, or default-gem contract mismatch",
+);
+assert(
+  Array.isArray(timeParsing.contractProvenance?.sources) && timeParsing.contractProvenance.sources.length === 1,
+  "Time parsing RBS source required",
+);
+assert(
+  Array.isArray(timeParsing.contractProvenance?.implementationSources)
+    && timeParsing.contractProvenance.implementationSources.length === 3,
+  "Time parsing supported implementation sources required",
+);
+for (const source of [
+  ...(timeParsing.contractProvenance?.sources ?? []),
+  ...(timeParsing.contractProvenance?.implementationSources ?? []),
+]) {
+  assert(isNonEmptyString(source.path), "Time parsing provenance source path required");
+  assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `Time parsing provenance SHA-256 is invalid: ${source.path}`);
+}
+assert(isNonEmptyString(timeParsing.contractProvenance?.curation), "Time parsing provenance must describe signature curation");
+
 const date = coverage.domains.find((domain) => domain.id === "library.date");
 assert(date?.coverageStatus === "implemented-public", "library.date must be an implemented public contract");
 assert(date.contractProvenance?.kind === "reviewed-rbs-plus-supported-ruby-sources", "Date provenance kind mismatch");

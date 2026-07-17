@@ -221,9 +221,14 @@ conversion, formatting, and seconds arithmetic. Date emits `require "date"`
 and covers civil construction, strict parsing, calendar/ISO-week components,
 formatting, and integer date movement. Both retain Ruby's one-based month and
 target semantics; the Haxe `Date` override remains a separate zero-based,
-millisecond-epoch portability contract. DateTime, Rational values, open Numeric
-coercions, permissive parsing, timezone databases, and calendar-reform controls
-remain outside the reviewed slice.
+millisecond-epoch portability contract. Rational values, open Numeric
+coercions, timezone databases, and calendar-reform controls remain outside the
+core/civil slice. `ruby.TimeParsing` separately opts into the `time` default gem
+for restricted ISO 8601 and explicit-format parsing while continuing to omit
+heuristic `Time.parse`. Modern Rails named-zone behavior belongs to the
+RailsHx-owned `RailsTime`, `TimeZone`, and `TimeWithZone` facades rather than
+the Ruby stdlib catalog. Ruby `DateTime` remains a legacy interop concern, not
+the canonical modern application API.
 
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
@@ -381,8 +386,9 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 1. `haxe_ruby-hjm` owns the broad versioned Ruby
    core/stdlib/default-gem coverage inventory and deterministic RBS-to-Haxe
    contract pipeline. The first curated inventory, reviewed URI, CSV,
-   capture-only Open3, generic Ruby-semantic Set, and native Time/Date facades,
-   plus the strict precise-or-omitted generator foundation, are complete.
+   capture-only Open3, generic Ruby-semantic Set, native Time/Date facades, and
+   strict require-backed Time parsing, plus the strict precise-or-omitted
+   generator foundation, are complete.
    Broader RBS shapes and each later library facade remain separate work;
    generated contracts remain conservative, reviewed, compiled, and
    runtime-tested.

@@ -95,6 +95,20 @@ constructor-created `ruby.Tempfile` values expose nullable paths and
 guarantee. Open option bags and delegated IO remain excluded rather than
 leaking an unsafe type boundary.
 
+`ruby.Time` is the require-free Ruby-owned instant facade.
+`ruby.TimeParsing` is a separate native view that owns `require "time"` and
+strict string parsing, so parser loading does not silently become part of every
+Time use. `ruby.Date` remains the separate require-backed civil-date facade,
+and the Haxe-semantic `Date` override remains `std/ruby/_std/Date.hx` with its
+zero-based-month and millisecond contracts. Ruby `DateTime` is deliberately not
+the canonical shared type because upstream deprecates it in favor of `Time`.
+
+Rails named zones belong one layer above those Ruby facades. The
+`rails.active_support.RailsTime`, `TimeZone`, and `TimeWithZone` externs map
+directly to Rails' Time extensions and ActiveSupport constants. They do not
+change `ruby.Time`, leak into portable Haxe `Date`, or introduce a target
+runtime wrapper. See [Modern Temporal APIs](temporal-apis.md).
+
 ## Shared RailsHx Types
 
 Shared RailsHx value types belong in `std/` as a single source of truth when
