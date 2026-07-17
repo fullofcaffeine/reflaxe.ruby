@@ -223,6 +223,51 @@ mode, reset, subclass/CoreSet behavior, implicit Haxe iteration, raw operators,
 and unchecked values are omitted. The catalog records the Ruby 4.0 promotion
 from default gem to core without widening the common tested API.
 
+## Fifth Reviewed Slice: Time and Date
+
+`ruby.Time` is a require-free facade over Ruby's core instant type, while
+`ruby.Date` is a separate civil-date facade that emits `require "date"`. Their
+shared Haxe authoring style does not erase the native semantic split:
+
+```haxe
+import ruby.Date as RubyDate;
+import ruby.Time as RubyTime;
+
+var instant = RubyTime.utc(2024, 2, 29, 12, 0, 0).addSeconds(90.5);
+var date = RubyDate.parseWithFormat("29/02/2024", "%d/%m/%Y").nextDay();
+```
+
+```ruby
+require "date"
+
+instant = Time.utc(2024, 2, 29, 12, 0, 0) + 90.5
+date = Date.strptime("29/02/2024", "%d/%m/%Y").next_day
+```
+
+The Time contract covers concrete epoch/local/UTC construction, one-based
+calendar components, zone/offset and daylight-saving reads, non-mutating zone
+copies, epoch conversion, `strftime`, and Float seconds arithmetic/difference.
+The Date contract covers concrete civil construction, `today`, strict ISO 8601
+and explicit-format parsing, calendar/ISO-week components, leap-year queries,
+formatting, and integer day/month/year movement. A focused Time-only fixture
+proves that core Time does not acquire `require "date"` or `require "time"`.
+
+Both contracts pin official `ruby/rbs` `v4.0.3`: `core/time.rbs` and
+`stdlib/date/0/date.rbs`. The catalog also pins the official `ruby/ruby`
+implementation sources at `v3_3_11`, `v3_4_10`, and `v4.0.0`, matching the
+supported Ruby branches. Open Numeric and timezone protocols, subsecond units,
+Rational values, permissive parsing, timezone databases, mutating conversion,
+calendar-reform controls, enumerators, and unchecked option bags remain
+omitted. `DateTime` is not claimed: upstream documents it as deprecated, and
+its useful offset/subsecond contracts require a separate Rational-aware design.
+
+The existing Haxe `Date` override remains a separate Haxe-semantics wrapper
+over Ruby Time. Its zero-based months, millisecond epoch, accepted parse forms,
+and output formatting are still owned by the Date/DateTools parity suite rather
+than by these Ruby-shaped facades. Its generated `HxDate` constant and
+`hx_date.rb` filename keep the portable wrapper collision-free when native
+Ruby `Date` is loaded in the same program.
+
 ## Updating The Catalog
 
 For each new domain:

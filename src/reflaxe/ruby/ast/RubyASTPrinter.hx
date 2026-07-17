@@ -8,6 +8,10 @@ import reflaxe.ruby.ast.RubyAST.RubyMethodParameter;
 import reflaxe.ruby.ast.RubyAST.RubyStatement;
 
 class RubyASTPrinter {
+	static final RUBY_BINARY_OPERATOR_METHODS = [
+		"<=>", "==", "===", "!=", "=~", "!~", "+", "-", "*", "/", "%", "**", "<<", ">>", "&", "|", "^", "<", "<=", ">", ">="
+	];
+
 	public static function printFile(file:RubyFile):String {
 		var lines = new Array<String>();
 		for (statement in file.statements) {
@@ -123,7 +127,9 @@ class RubyASTPrinter {
 			case RubyCallableLambda(args, body): printCallableLambda(args, body);
 			case RubyCall(receiver, name, args):
 				var printedArgs = args == null ? "" : [for (arg in args) printExpr(arg)].join(", ");
-				if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1) {
+				if (receiver != null && isRubyBinaryOperatorName(name) && args != null && args.length == 1) {
+					printBinaryOperatorCall(receiver, name, args[0]);
+				} else if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1) {
 					"(" + printWriterAssignment(receiver, name, args[0]) + ")";
 				} else {
 					receiver == null ? name + "(" + printedArgs + ")" : printExpr(receiver) + "." + name + "(" + printedArgs + ")";
@@ -170,6 +176,13 @@ class RubyASTPrinter {
 	}
 
 	static function printCallableCall(receiver:Null<RubyExpr>, name:String, args:Array<RubyCallArgument>, block:Null<RubyBlock>):String {
+		if (receiver != null && block == null && isRubyBinaryOperatorName(name) && args != null && args.length == 1) {
+			switch (args[0]) {
+				case RubyPositionalArgument(value):
+					return printBinaryOperatorCall(receiver, name, value);
+				case _:
+			}
+		}
 		var printedArgs = args == null ? "" : [for (arg in args) printCallArgument(arg)].join(", ");
 		var callable = receiver == null ? name : printExpr(receiver) + "." + name;
 		// Rubyists conventionally omit empty parentheses when a native block is
@@ -194,6 +207,15 @@ class RubyASTPrinter {
 		writeBody(lines, block.body, 1);
 		lines.push("end");
 		return lines.join("\n");
+	}
+
+	/** Prints validated native binary methods in normal Ruby infix form. **/
+	static function printBinaryOperatorCall(receiver:RubyExpr, name:String, argument:RubyExpr):String {
+		return "(" + printExpr(receiver) + " " + name + " " + printExpr(argument) + ")";
+	}
+
+	static function isRubyBinaryOperatorName(name:String):Bool {
+		return RUBY_BINARY_OPERATOR_METHODS.indexOf(name) != -1;
 	}
 
 	static function writeBody(lines:Array<String>, body:Array<RubyStatement>, indentLevel:Int):Void {

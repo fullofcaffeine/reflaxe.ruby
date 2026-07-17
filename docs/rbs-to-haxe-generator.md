@@ -83,10 +83,10 @@ Before a generated stdlib contract becomes public, maintainers must still:
 6. run the complete example, Rails runtime, browser, production, package, and
    canonical CI gates.
 
-`CSV`, `Open3`, and `Set` now have separate reviewed facade slices; none
-acquired support merely because this generator exists. Each remains owned by
-its own curation, compilation, generated-shape, runtime, package, and matrix
-gates.
+`CSV`, `Open3`, `Set`, `Time`, and `Date` now have separate reviewed facade
+slices; none acquired support merely because this generator exists. Each
+remains owned by its own curation, compilation, generated-shape, runtime,
+package, and matrix gates.
 The generator does not claim whole-RBS or whole-stdlib support.
 
 ## Mandatory Evidence

@@ -76,10 +76,10 @@ until a separate target contract exists.
 
 Prefer these small follow-up slices over broad stdlib rewrites:
 
-1. Grow Ruby-native facades separately under `std/ruby/**`, starting with
-   `URI`. Those facades are not
-   substitutes for Haxe std parity unless Haxe semantics explicitly consume
-   them.
+1. Grow Ruby-native facades separately under `std/ruby/**` through bounded
+   catalog slices. URI, CSV, Open3, Set, Time, and Date now have focused
+   contracts; none substitutes for Haxe std parity unless Haxe semantics can
+   consume it without changing behavior or generated output.
 
 ## Policy
 

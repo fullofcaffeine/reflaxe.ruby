@@ -26,6 +26,7 @@ const cases = [
     sourceRoot: "test/filesystem_parity/src_haxe",
     strictExamples: false,
     files: [
+      "hx_date.rb",
       "main.rb",
       "main/filesystem_parity_assert.rb",
       "run.rb",

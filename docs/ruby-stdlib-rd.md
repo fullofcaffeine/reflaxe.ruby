@@ -215,6 +215,16 @@ nullability, and Array conversion. It deliberately preserves Ruby `eql?`/`hash`
 ownership and does not imitate a portable Haxe collection or accept open
 Enumerable values.
 
+`ruby.Time` and `ruby.Date` add the bounded native temporal slice. Core Time is
+require-free and covers concrete construction, components, zones, epoch
+conversion, formatting, and seconds arithmetic. Date emits `require "date"`
+and covers civil construction, strict parsing, calendar/ISO-week components,
+formatting, and integer date movement. Both retain Ruby's one-based month and
+target semantics; the Haxe `Date` override remains a separate zero-based,
+millisecond-epoch portability contract. DateTime, Rational values, open Numeric
+coercions, permissive parsing, timezone databases, and calendar-reform controls
+remain outside the reviewed slice.
+
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
 an adapter. See `docs/ruby-stdlib-facades.md` for package naming, API shape,
@@ -371,8 +381,8 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
 1. `haxe_ruby-hjm` owns the broad versioned Ruby
    core/stdlib/default-gem coverage inventory and deterministic RBS-to-Haxe
    contract pipeline. The first curated inventory, reviewed URI, CSV,
-   capture-only Open3, and generic Ruby-semantic Set facades, plus the strict
-   precise-or-omitted generator foundation, are complete.
+   capture-only Open3, generic Ruby-semantic Set, and native Time/Date facades,
+   plus the strict precise-or-omitted generator foundation, are complete.
    Broader RBS shapes and each later library facade remain separate work;
    generated contracts remain conservative, reviewed, compiled, and
    runtime-tested.

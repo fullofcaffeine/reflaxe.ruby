@@ -6,7 +6,8 @@ package;
 	Haxe `Date` constructors/components are local-time oriented, while UTC
 	accessors read the same instant through Ruby `Time#getutc`. `fromString()`
 	uses a compact generated Ruby parser because Ruby's broader date parsing
-	accepts input that Haxe does not promise.
+	accepts input that Haxe does not promise. The compiler emits this owned type
+	as `HxDate` in `hx_date.rb` so it can coexist with Ruby's `Date` library.
 **/
 class Date {
 	public function new(year:Int, month:Int, day:Int, hours:Int, minutes:Int, seconds:Int) {

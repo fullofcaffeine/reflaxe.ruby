@@ -24,13 +24,13 @@ class Main
       stat = ::File.stat("/")
       {"gid" => stat.gid, "uid" => stat.uid, "atime" => begin
       value = stat.atime
-      Date.new(value.year, value.month - 1, value.day, value.hour, value.min, value.sec)
+      HxDate.new(value.year, value.month - 1, value.day, value.hour, value.min, value.sec)
     end, "mtime" => begin
       value__hx1 = stat.mtime
-      Date.new(value__hx1.year, value__hx1.month - 1, value__hx1.day, value__hx1.hour, value__hx1.min, value__hx1.sec)
+      HxDate.new(value__hx1.year, value__hx1.month - 1, value__hx1.day, value__hx1.hour, value__hx1.min, value__hx1.sec)
     end, "ctime" => begin
       value__hx2 = stat.ctime
-      Date.new(value__hx2.year, value__hx2.month - 1, value__hx2.day, value__hx2.hour, value__hx2.min, value__hx2.sec)
+      HxDate.new(value__hx2.year, value__hx2.month - 1, value__hx2.day, value__hx2.hour, value__hx2.min, value__hx2.sec)
     end, "size" => stat.size, "dev" => stat.dev, "ino" => stat.ino, "nlink" => stat.nlink, "rdev" => stat.rdev, "mode" => stat.mode}
     end != nil), "root stat")
     names = (raise Errno::ENOENT, Main.root unless ::File.directory?(Main.root); ::Dir.children(Main.root))
@@ -55,15 +55,15 @@ class Main
     text_stat_uid = stat__hx1.uid
     text_stat_atime = begin
       value__hx3 = stat__hx1.atime
-      Date.new(value__hx3.year, value__hx3.month - 1, value__hx3.day, value__hx3.hour, value__hx3.min, value__hx3.sec)
+      HxDate.new(value__hx3.year, value__hx3.month - 1, value__hx3.day, value__hx3.hour, value__hx3.min, value__hx3.sec)
     end
     text_stat_mtime = begin
       value__hx4 = stat__hx1.mtime
-      Date.new(value__hx4.year, value__hx4.month - 1, value__hx4.day, value__hx4.hour, value__hx4.min, value__hx4.sec)
+      HxDate.new(value__hx4.year, value__hx4.month - 1, value__hx4.day, value__hx4.hour, value__hx4.min, value__hx4.sec)
     end
     text_stat_ctime = begin
       value__hx5 = stat__hx1.ctime
-      Date.new(value__hx5.year, value__hx5.month - 1, value__hx5.day, value__hx5.hour, value__hx5.min, value__hx5.sec)
+      HxDate.new(value__hx5.year, value__hx5.month - 1, value__hx5.day, value__hx5.hour, value__hx5.min, value__hx5.sec)
     end
     text_stat_size = stat__hx1.size
     text_stat_dev = stat__hx1.dev
@@ -156,15 +156,15 @@ class Main
       inlobj_uid = stat__hx2.uid
       inlobj_atime = begin
         value__hx7 = stat__hx2.atime
-        Date.new(value__hx7.year, value__hx7.month - 1, value__hx7.day, value__hx7.hour, value__hx7.min, value__hx7.sec)
+        HxDate.new(value__hx7.year, value__hx7.month - 1, value__hx7.day, value__hx7.hour, value__hx7.min, value__hx7.sec)
       end
       inlobj_mtime = begin
         value__hx8 = stat__hx2.mtime
-        Date.new(value__hx8.year, value__hx8.month - 1, value__hx8.day, value__hx8.hour, value__hx8.min, value__hx8.sec)
+        HxDate.new(value__hx8.year, value__hx8.month - 1, value__hx8.day, value__hx8.hour, value__hx8.min, value__hx8.sec)
       end
       inlobj_ctime = begin
         value__hx9 = stat__hx2.ctime
-        Date.new(value__hx9.year, value__hx9.month - 1, value__hx9.day, value__hx9.hour, value__hx9.min, value__hx9.sec)
+        HxDate.new(value__hx9.year, value__hx9.month - 1, value__hx9.day, value__hx9.hour, value__hx9.min, value__hx9.sec)
       end
       inlobj_size = stat__hx2.size
       inlobj_dev = stat__hx2.dev

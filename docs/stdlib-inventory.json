@@ -255,6 +255,22 @@
       "reason": "Generic Ruby-semantic Set facade for typed membership, mutation, algebra, relations, native block filtering/iteration, and explicit Array conversion without portable haxe.ds claims."
     },
     {
+      "id": "std.ruby.time",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Time.hx",
+      "surface": "ruby.Time",
+      "reason": "Require-free core Ruby Time facade for typed construction, calendar and zone reads, local/UTC copies, epoch conversion, formatting, and seconds arithmetic without Haxe Date semantics."
+    },
+    {
+      "id": "std.ruby.date",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Date.hx",
+      "surface": "ruby.Date",
+      "reason": "Require-backed Ruby civil Date facade for strict parsing, calendar components, formatting, and integer day/month/year movement without DateTime or Rational claims."
+    },
+    {
       "id": "std.ruby.json",
       "owner": "std",
       "status": "implemented",

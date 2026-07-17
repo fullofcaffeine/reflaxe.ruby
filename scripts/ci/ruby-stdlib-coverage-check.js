@@ -106,6 +106,11 @@ assert(
     packageJson.scripts?.["test:set-facade"]?.includes("set-facade-smoke.js"),
   "Set facade evidence must be mandatory in npm test",
 );
+assert(
+  packageJson.scripts?.test?.includes("test:time-date-facade") &&
+    packageJson.scripts?.["test:time-date-facade"]?.includes("time-date-facade-smoke.js"),
+  "Time/Date facade evidence must be mandatory in npm test",
+);
 assert(Array.isArray(coverage.domains) && coverage.domains.length > 0, "domains must be a non-empty array");
 assert(
   JSON.stringify(coverage.rubyBranches) === JSON.stringify(supportMatrix.ruby.ciBranches),
@@ -279,6 +284,61 @@ for (const source of [
   assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `Set provenance SHA-256 is invalid: ${source.path}`);
 }
 assert(isNonEmptyString(set.contractProvenance?.curation), "Set provenance must describe signature curation");
+
+const time = coverage.domains.find((domain) => domain.id === "core.time");
+assert(time?.coverageStatus === "implemented-public", "core.time must be an implemented public contract");
+assert(time.contractProvenance?.kind === "reviewed-rbs-plus-supported-ruby-sources", "Time provenance kind mismatch");
+assert(time.contractProvenance?.repository === "https://github.com/ruby/rbs", "Time provenance must use official ruby/rbs");
+assert(time.contractProvenance?.release === "v4.0.3", "Time provenance must pin the reviewed RBS release");
+assert(time.contractProvenance?.library === "core/time", "Time provenance must name the reviewed RBS library");
+assert(
+  JSON.stringify(time.facadePaths) === JSON.stringify(["std/ruby/Time.hx"])
+    && time.evidence?.includes("npm run test:time-date-facade")
+    && time.runtimeProbe?.require === undefined,
+  "Time facade, evidence, or require-free contract mismatch",
+);
+assert(Array.isArray(time.contractProvenance?.sources) && time.contractProvenance.sources.length === 1, "Time RBS source required");
+assert(
+  Array.isArray(time.contractProvenance?.implementationSources)
+    && time.contractProvenance.implementationSources.length === 3,
+  "Time supported implementation sources required",
+);
+for (const source of [
+  ...(time.contractProvenance?.sources ?? []),
+  ...(time.contractProvenance?.implementationSources ?? []),
+]) {
+  assert(isNonEmptyString(source.path), "Time provenance source path required");
+  assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `Time provenance SHA-256 is invalid: ${source.path}`);
+}
+assert(isNonEmptyString(time.contractProvenance?.curation), "Time provenance must describe signature curation");
+
+const date = coverage.domains.find((domain) => domain.id === "library.date");
+assert(date?.coverageStatus === "implemented-public", "library.date must be an implemented public contract");
+assert(date.contractProvenance?.kind === "reviewed-rbs-plus-supported-ruby-sources", "Date provenance kind mismatch");
+assert(date.contractProvenance?.repository === "https://github.com/ruby/rbs", "Date provenance must use official ruby/rbs");
+assert(date.contractProvenance?.release === "v4.0.3", "Date provenance must pin the reviewed RBS release");
+assert(date.contractProvenance?.library === "stdlib/date/0", "Date provenance must name the reviewed RBS library");
+assert(
+  JSON.stringify(date.facadePaths) === JSON.stringify(["std/ruby/Date.hx"])
+    && date.evidence?.includes("npm run test:time-date-facade")
+    && date.runtimeProbe?.require === "date"
+    && date.runtimeProbe?.gem === "date",
+  "Date facade, evidence, or default-gem contract mismatch",
+);
+assert(Array.isArray(date.contractProvenance?.sources) && date.contractProvenance.sources.length === 1, "Date RBS source required");
+assert(
+  Array.isArray(date.contractProvenance?.implementationSources)
+    && date.contractProvenance.implementationSources.length === 3,
+  "Date supported implementation sources required",
+);
+for (const source of [
+  ...(date.contractProvenance?.sources ?? []),
+  ...(date.contractProvenance?.implementationSources ?? []),
+]) {
+  assert(isNonEmptyString(source.path), "Date provenance source path required");
+  assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `Date provenance SHA-256 is invalid: ${source.path}`);
+}
+assert(isNonEmptyString(date.contractProvenance?.curation), "Date provenance must describe signature curation");
 
 const version = spawnSync("ruby", ["-e", "print RUBY_VERSION"], { cwd: root, encoding: "utf8" });
 if (version.status !== 0) {

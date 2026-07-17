@@ -63,6 +63,9 @@ class RubyASTPrinterTestMain {
 		eq("writer statement", printStatement(RubyExprStatement(RubyCall(RubyLocal("target"), "value=", [RubyInt("1")]))), "target.value = 1\n");
 		eq("writer expression precedence", RubyASTPrinter.printExpr(RubyBinary("+", RubyCall(RubyLocal("target"), "value=", [RubyInt("1")]), RubyInt("2"))),
 			"((target.value = 1) + 2)");
+		eq("native binary operator", RubyASTPrinter.printExpr(RubyCall(RubyLocal("instant"), "+", [RubyFloat("60.0")])), "(instant + 60.0)");
+		eq("structured native binary operator",
+			RubyASTPrinter.printExpr(RubyCallableCall(RubyLocal("instant"), "-", [RubyPositionalArgument(RubyLocal("earlier"))])), "(instant - earlier)");
 
 		var block:RubyBlock = {
 			args: ["item"],

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-07-16",
+  "asOf": "2026-07-17",
   "supportMatrix": "lib/hxruby/support_matrix.json",
   "rubyBranches": [
     "3.3",
@@ -270,6 +270,63 @@
       "notes": "The nominal abstract models Ruby symbol values used by typed interop calls."
     },
     {
+      "id": "core.time",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Time"
+      ],
+      "facadePaths": [
+        "std/ruby/Time.hx"
+      ],
+      "evidence": [
+        "npm run test:time-date-facade"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "Time"
+        ]
+      },
+      "contractProvenance": {
+        "kind": "reviewed-rbs-plus-supported-ruby-sources",
+        "repository": "https://github.com/ruby/rbs",
+        "release": "v4.0.3",
+        "library": "core/time",
+        "sources": [
+          {
+            "path": "core/time.rbs",
+            "sha256": "9d92a72807f77b3e99dc6a2cc81af626020134a0502bc7ab2af73cb62932a448"
+          }
+        ],
+        "implementationSources": [
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v3_3_11",
+            "path": "time.c",
+            "sha256": "93fb89a9ee88ad5c75ce3961e10c88cf5b7263d7fde1fa75a17327bd743c17e9"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v3_4_10",
+            "path": "time.c",
+            "sha256": "ddda824b9064bbd9369920c87fb16e3d3098409c982ec512b1af5159adce22fe"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v4.0.0",
+            "path": "time.c",
+            "sha256": "c873177ab42db9198e68b8fa84bdb14c718f8de1e6ec5934fb311f8697308558"
+          }
+        ],
+        "curation": "Factories narrow open Numeric/month-name/timezone overloads to concrete Haxe Int and Float values. The facade exposes one-based calendar components, fixed-offset and local/UTC non-mutating copies, epoch conversion, formatting, and typed seconds arithmetic/difference. Subsecond-unit overloads, named timezone objects, mutation, parsing extensions, heterogeneous arrays, open coercions, and unchecked keywords are omitted."
+      },
+      "notes": "The public require-free core facade preserves native Ruby Time semantics and direct operator output; it is deliberately distinct from the Haxe-semantic std/ruby/_std/Date.hx wrapper."
+    },
+    {
       "id": "library.csv",
       "distributionByRuby": {
         "3.3": "default-gem",
@@ -314,6 +371,65 @@
         "curation": "Header and converter modes, IO inputs, open modes, encodings, arbitrary field objects, replacement values, and unchecked keyword splats are omitted. Header-free no-converter rows narrow to Array<Null<String>>. RBS v4.0.3 owns parse/read/foreach row types and documents generation; official Ruby CSV singleton documentation plus MRI runtime evidence owns generate_line/generate_lines, whose singleton signatures are absent from that RBS release."
       },
       "notes": "The bounded public facade covers nullable string rows, whole-string and file parsing, streaming file iteration, generation, and string-preserving typed options. CSV remains a default gem on Ruby 3.3 and a bundled gem on Ruby 3.4/4.0, so support does not imply availability in arbitrary minimal Ruby installations."
+    },
+    {
+      "id": "library.date",
+      "distributionByRuby": {
+        "3.3": "default-gem",
+        "3.4": "default-gem",
+        "4.0": "default-gem"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.Date"
+      ],
+      "facadePaths": [
+        "std/ruby/Date.hx"
+      ],
+      "evidence": [
+        "npm run test:time-date-facade"
+      ],
+      "runtimeProbe": {
+        "require": "date",
+        "gem": "date",
+        "constants": [
+          "Date"
+        ]
+      },
+      "contractProvenance": {
+        "kind": "reviewed-rbs-plus-supported-ruby-sources",
+        "repository": "https://github.com/ruby/rbs",
+        "release": "v4.0.3",
+        "library": "stdlib/date/0",
+        "sources": [
+          {
+            "path": "stdlib/date/0/date.rbs",
+            "sha256": "76fda61f0f8930f799b597cbf6fb91c39e5df3cb9bca7ceed8ee20a55edc8cf6"
+          }
+        ],
+        "implementationSources": [
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v3_3_11",
+            "path": "ext/date/date_core.c",
+            "sha256": "10448f4a2748f806a11b1587c6c5a0ffcda4badd852a923eaa48977958f7f8bd"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v3_4_10",
+            "path": "ext/date/date_core.c",
+            "sha256": "5a8850b04651721187810a0676a6203c0317aec483f6cff7dcdd7bcbd8ad6400"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v4.0.0",
+            "path": "ext/date/date_core.c",
+            "sha256": "c924c97b67cbe87cb1d1f48197547bfd5d0ecc2007bab5788505908a6b744aa5"
+          }
+        ],
+        "curation": "Civil construction requires a concrete year and narrows optional month/day values to Int. Parsing is limited to strict iso8601 and explicit-format strptime. Calendar components, leap-year queries, formatting, and integer day/month/year movement remain direct. Permissive parse, reform-start arguments, Rational arithmetic and values, DateTime, conversion families, enumerators/blocks, and unchecked numerics are omitted."
+      },
+      "notes": "The public require-backed facade preserves Ruby civil-date and one-based-month semantics without claiming Haxe Date equivalence or the deprecated DateTime surface. Portable Haxe Date emits as HxDate in hx_date.rb so both contracts can coexist without shadowing Ruby's date feature."
     },
     {
       "id": "library.fileutils",

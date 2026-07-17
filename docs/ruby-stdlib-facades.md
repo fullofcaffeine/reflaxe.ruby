@@ -9,8 +9,8 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 
 - Put Ruby-owned library surfaces under the `ruby` package:
   `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
-  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, `ruby.CSV`, `ruby.Open3`, and
-  `ruby.Set<T>` facades.
+  `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, `ruby.CSV`, `ruby.Open3`,
+  `ruby.Set<T>`, `ruby.Time`, and `ruby.Date` facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
   for example `@:native("JSON") extern class Json`.
@@ -393,6 +393,58 @@ flattening, identity-comparison mode, mutable-element reset, subclass/CoreSet
 behavior, raw operators, and unchecked values remain outside this bounded
 contract. `require "set"` is retained for Ruby 3.3/3.4; Ruby 4.0 promotes Set
 to a core class while preserving the tested common surface.
+
+### Time and Date
+
+`ruby.Time` and `ruby.Date` expose Ruby's native temporal semantics without
+changing the portable Haxe `Date` contract. Ruby months remain one-based,
+`Time` measures Unix time in seconds, and `Date` remains a civil calendar value:
+
+```haxe
+import ruby.Date as RubyDate;
+import ruby.Time as RubyTime;
+
+var publishedAt = RubyTime.utc(2024, 2, 29, 12, 0, 0);
+var expiresAt = publishedAt.addSeconds(3600);
+var billingDay = RubyDate.parseIso8601("2024-02-29").nextMonth();
+
+ruby.Kernel.puts(expiresAt.strftime("%Y-%m-%d %H:%M:%S %z"));
+ruby.Kernel.puts(billingDay.toIso8601());
+```
+
+The generated Ruby uses the core `Time` constant directly, renders native
+arithmetic in infix form, and requires `date` only because `Date` is used:
+
+```ruby
+require "date"
+
+published_at = Time.utc(2024, 2, 29, 12, 0, 0)
+expires_at = published_at + 3600
+billing_day = Date.iso8601("2024-02-29").next_month
+Kernel.puts(expires_at.strftime("%Y-%m-%d %H:%M:%S %z"))
+Kernel.puts(billing_day.iso8601)
+```
+
+`ruby.Time` covers `now`, epoch/local/UTC construction, calendar components,
+daylight-saving and fixed-offset reads, non-mutating local/UTC/offset copies,
+epoch conversion, formatting, and precisely typed seconds arithmetic and
+difference. A program that uses only this facade adds no `require`.
+
+`ruby.Date` covers civil construction, `today`, strict ISO 8601 and
+explicit-format parsing, calendar and ISO-week components, leap-year queries,
+formatting, and integer day/month/year movement. It emits one deduplicated
+`require "date"`.
+
+These facades are intentionally distinct from `std/ruby/_std/Date.hx`, which
+owns Haxe's zero-based-month, millisecond-epoch, parsing, and string-format
+semantics. The compiler emits that portable owned type as `HxDate` from
+`hx_date.rb`, and loads external Ruby features before generated files enter
+`$LOAD_PATH`, so it can coexist with `require "date"` without replacing or
+shadowing Ruby's `Date`. Open Numeric coercions, subsecond units and Rational values,
+permissive parsing, named timezone objects/databases, mutating zone conversion,
+calendar-reform starts, enumerators, and unchecked options remain omitted.
+Ruby documents `DateTime` as deprecated in favor of `Time`; no `ruby.DateTime`
+surface is claimed by this bounded slice.
 
 ### Dir
 

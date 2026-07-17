@@ -247,9 +247,11 @@ expectIncludes(rubyStdlibFacades, "### URI", "typed URI facade docs");
 expectIncludes(rubyStdlibFacades, "### CSV", "typed CSV facade docs");
 expectIncludes(rubyStdlibFacades, "### Open3", "typed Open3 facade docs");
 expectIncludes(rubyStdlibFacades, "### Set", "typed Set facade docs");
+expectIncludes(rubyStdlibFacades, "### Time and Date", "typed Time/Date facade docs");
 expectIncludes(rubyStdlibCoverageDocs, "curated", "Ruby stdlib catalog claim boundary");
 expectIncludes(rubyStdlibCoverageDocs, "## Third Reviewed Slice: Open3", "reviewed Open3 catalog slice");
 expectIncludes(rubyStdlibCoverageDocs, "## Fourth Reviewed Slice: Set", "reviewed Set catalog slice");
+expectIncludes(rubyStdlibCoverageDocs, "## Fifth Reviewed Slice: Time and Date", "reviewed Time/Date catalog slice");
 expectIncludes(rubyStdlibCoverageDocs, "strict deterministic foundation", "RBS generator scope boundary");
 expectIncludes(rbsGeneratorDocs, "Precise-Or-Omitted Subset", "RBS generator supported subset");
 expectIncludes(rbsGeneratorDocs, "does not claim whole-RBS or", "RBS generator claim boundary");
@@ -263,6 +265,7 @@ expectIncludes(packageJson.scripts.test, "test:uri-facade", "mandatory typed URI
 expectIncludes(packageJson.scripts.test, "test:csv-facade", "mandatory typed CSV gate");
 expectIncludes(packageJson.scripts.test, "test:open3-facade", "mandatory typed Open3 gate");
 expectIncludes(packageJson.scripts.test, "test:set-facade", "mandatory typed Set gate");
+expectIncludes(packageJson.scripts.test, "test:time-date-facade", "mandatory typed Time/Date gate");
 expectIncludes(rubyStdlibCoverageCheck, "support_matrix.json", "Ruby stdlib catalog support-matrix lock");
 expectIncludes(rubyStdlibCoverageCheck, "committed ruby facade is missing", "Ruby stdlib complete facade accounting");
 if (rubyStdlibCoverage.schemaVersion !== 1) {
@@ -326,6 +329,31 @@ if (
   ])
 ) {
   fail("Ruby stdlib coverage must retain the bounded reviewed Set contract");
+}
+const timeCoverage = rubyStdlibCoverage.domains?.find((domain) => domain.id === "core.time");
+if (
+  timeCoverage?.coverageStatus !== "implemented-public" ||
+  JSON.stringify(timeCoverage.facadePaths) !== JSON.stringify(["std/ruby/Time.hx"]) ||
+  !timeCoverage.evidence?.includes("npm run test:time-date-facade") ||
+  timeCoverage.runtimeProbe?.require !== undefined ||
+  timeCoverage.contractProvenance?.kind !== "reviewed-rbs-plus-supported-ruby-sources" ||
+  timeCoverage.contractProvenance?.release !== "v4.0.3" ||
+  timeCoverage.contractProvenance?.library !== "core/time"
+) {
+  fail("Ruby stdlib coverage must retain the bounded reviewed core Time contract");
+}
+const dateCoverage = rubyStdlibCoverage.domains?.find((domain) => domain.id === "library.date");
+if (
+  dateCoverage?.coverageStatus !== "implemented-public" ||
+  JSON.stringify(dateCoverage.facadePaths) !== JSON.stringify(["std/ruby/Date.hx"]) ||
+  !dateCoverage.evidence?.includes("npm run test:time-date-facade") ||
+  dateCoverage.runtimeProbe?.require !== "date" ||
+  dateCoverage.runtimeProbe?.gem !== "date" ||
+  dateCoverage.contractProvenance?.kind !== "reviewed-rbs-plus-supported-ruby-sources" ||
+  dateCoverage.contractProvenance?.release !== "v4.0.3" ||
+  dateCoverage.contractProvenance?.library !== "stdlib/date/0"
+) {
+  fail("Ruby stdlib coverage must retain the bounded reviewed Date contract");
 }
 expectIncludes(productionReadiness, "Stable 1.0 Exit Rules", "stable 1.0 readiness contract");
 expectIncludes(productionReadiness, "Performance and resource behavior", "stable 1.0 performance gate");
@@ -763,6 +791,8 @@ expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3Capture.hx"`, "Haxelib Ope
 expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3Executable.hx"`, "Haxelib Open3 executable package builder source lock");
 expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3Status.hx"`, "Haxelib Open3 status package builder source lock");
 expectIncludes(haxelibPackageBuilder, `"std/ruby/Set.hx"`, "Haxelib Set package builder source lock");
+expectIncludes(haxelibPackageBuilder, `"std/ruby/Time.hx"`, "Haxelib Time package builder source lock");
+expectIncludes(haxelibPackageBuilder, `"std/ruby/Date.hx"`, "Haxelib Date package builder source lock");
 expectExcludes(haxelibPackageBuilder, `"haxe_libraries/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageCheckText, "src/Std.cross.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "lib/hxruby/stdlib_coverage.json", "Haxelib stdlib catalog package check");
@@ -783,6 +813,9 @@ expectIncludes(haxelibPackageCheckText, "src/ruby/Open3Status.hx", "Haxelib type
 expectIncludes(haxelibPackageCheckText, "Open3PackageContract.hx", "Haxelib packaged Open3 runtime check");
 expectIncludes(haxelibPackageCheckText, "src/ruby/Set.hx", "Haxelib typed Set package check");
 expectIncludes(haxelibPackageCheckText, "SetPackageContract.hx", "Haxelib packaged Set runtime check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/Time.hx", "Haxelib typed Time package check");
+expectIncludes(haxelibPackageCheckText, "src/ruby/Date.hx", "Haxelib typed Date package check");
+expectIncludes(haxelibPackageCheckText, "TimeDatePackageContract.hx", "Haxelib packaged Time/Date runtime check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/Auth.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/ContractTools.hx", "Haxelib package check");
 expectIncludes(haxelibPackageCheckText, "src/devisehx/macros/DeviseModelMacro.hx", "Haxelib package check");
@@ -824,6 +857,8 @@ expectIncludes(gemPackageCheck, "std/ruby/Open3Capture.hx", "Ruby gem typed Open
 expectIncludes(gemPackageCheck, "std/ruby/Open3Executable.hx", "Ruby gem typed Open3 executable package check");
 expectIncludes(gemPackageCheck, "std/ruby/Open3Status.hx", "Ruby gem typed Open3 status package check");
 expectIncludes(gemPackageCheck, "std/ruby/Set.hx", "Ruby gem typed Set package check");
+expectIncludes(gemPackageCheck, "std/ruby/Time.hx", "Ruby gem typed Time package check");
+expectIncludes(gemPackageCheck, "std/ruby/Date.hx", "Ruby gem typed Date package check");
 expectIncludes(gemPackageCheck, "railshx.client gem smoke", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "vendor/genes/src/genes/Generator.hx", "Ruby gem package check");
 expectIncludes(gemPackageCheck, "hxruby:production", "Ruby gem package check");
