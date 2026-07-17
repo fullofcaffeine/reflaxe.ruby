@@ -111,8 +111,8 @@ for (const generatedFile of ["main.rb", "run.rb"]) {
 }
 
 const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
-if (runRuby.indexOf('require "date"') > runRuby.indexOf("$LOAD_PATH.unshift(__dir__)")) {
-  fail('run.rb must load Ruby\'s date feature before adding generated files to $LOAD_PATH');
+if (runRuby.indexOf("$LOAD_PATH.unshift(__dir__)") > runRuby.indexOf('require "date"')) {
+  fail("run.rb must preserve load-path-first require semantics; hx_date.rb owns Date collision safety");
 }
 for (const generatedFile of ["time_only.rb"]) {
   const generated = readFileSync(join(timeOnlyOutputDir, generatedFile), "utf8");

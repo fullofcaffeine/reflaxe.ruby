@@ -438,9 +438,9 @@ formatting, and integer day/month/year movement. It emits one deduplicated
 These facades are intentionally distinct from `std/ruby/_std/Date.hx`, which
 owns Haxe's zero-based-month, millisecond-epoch, parsing, and string-format
 semantics. The compiler emits that portable owned type as `HxDate` from
-`hx_date.rb`, and loads external Ruby features before generated files enter
-`$LOAD_PATH`, so it can coexist with `require "date"` without replacing or
-shadowing Ruby's `Date`. Open Numeric coercions, subsecond units and Rational values,
+`hx_date.rb`, so the normal load-path-first runner can coexist with
+`require "date"` without replacing or shadowing Ruby's `Date`. Open Numeric
+coercions, subsecond units and Rational values,
 permissive parsing, named timezone objects/databases, mutating zone conversion,
 calendar-reform starts, enumerators, and unchecked options remain omitted.
 Ruby documents `DateTime` as deprecated in favor of `Time`; no `ruby.DateTime`

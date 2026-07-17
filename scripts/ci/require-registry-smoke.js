@@ -51,10 +51,10 @@ for (const file of ["native_json.rb", "native_date.rb"]) {
 
 const runRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
 assertOrdered(runRuby, [
+  "$LOAD_PATH.unshift(__dir__)",
   'require "date"',
   'require "json"',
   'require "set"',
-  "$LOAD_PATH.unshift(__dir__)",
   'require_relative "./support/native_date"',
   'require_relative "./support/native_time"',
   'require_relative "hxruby/core"',
