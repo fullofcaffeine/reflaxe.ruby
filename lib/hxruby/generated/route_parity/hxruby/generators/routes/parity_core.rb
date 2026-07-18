@@ -335,14 +335,14 @@ module Hxruby
             named = begin
               g = []
               g1 = 0
-            g2 = routes
-            while (g1 < g2.length)
-              v = g2[g1]
-              g1 = (g1 + 1)
-              if (v.prefix == expected.name)
-                g.push(v).length()
+              g2 = routes
+              while (g1 < g2.length)
+                v = g2[g1]
+                g1 = (g1 + 1)
+                if (v.prefix == expected.name)
+                  g.push(v).length()
+                end
               end
-            end
               g
             end
             if ((named.length > 0) && (!Hxruby::Generators::Routes::ParityCore.any(named, ->(route__hx1) { (route__hx1.verb == expected.verb) })))
@@ -355,14 +355,14 @@ module Hxruby
           same_path_verb = begin
             g__hx1 = []
             g1__hx1 = 0
-          g2__hx1 = routes
-          while (g1__hx1 < g2__hx1.length)
-            v__hx1 = g2__hx1[g1__hx1]
-            g1__hx1 = (g1__hx1 + 1)
-            if ((v__hx1.path == expected.path) && (v__hx1.verb == expected.verb))
-              g__hx1.push(v__hx1).length()
+            g2__hx1 = routes
+            while (g1__hx1 < g2__hx1.length)
+              v__hx1 = g2__hx1[g1__hx1]
+              g1__hx1 = (g1__hx1 + 1)
+              if ((v__hx1.path == expected.path) && (v__hx1.verb == expected.verb))
+                g__hx1.push(v__hx1).length()
+              end
             end
-          end
             g__hx1
           end
           if (((expected.target != nil) && (same_path_verb.length > 0)) && (!Hxruby::Generators::Routes::ParityCore.any(same_path_verb, ->(route__hx4) { (route__hx4.target == expected.target) })))
@@ -380,12 +380,12 @@ module Hxruby
           return ((((("wrong verb for route " + HXRuby.stringify(expected.name)) + ": expected ") + Hxruby::Generators::Routes::ParityCore.upper(expected.verb)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
             g = []
             g1 = 0
-          g2 = routes
-          while (g1 < g2.length)
-            v = g2[g1]
-            g1 = (g1 + 1)
-            g.push(Hxruby::Generators::Routes::ParityCore.upper(v.verb)).length()
-          end
+            g2 = routes
+            while (g1 < g2.length)
+              v = g2[g1]
+              g1 = (g1 + 1)
+              g.push(Hxruby::Generators::Routes::ParityCore.upper(v.verb)).length()
+            end
             g
           end).join(", "))
         end
@@ -393,12 +393,12 @@ module Hxruby
           return ((((("wrong path for route " + HXRuby.stringify(expected.name)) + ": expected ") + expected.path) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
             g = []
             g1 = 0
-          g2 = routes
-          while (g1 < g2.length)
-            v = g2[g1]
-            g1 = (g1 + 1)
-            g.push(v.path).length()
-          end
+            g2 = routes
+            while (g1 < g2.length)
+              v = g2[g1]
+              g1 = (g1 + 1)
+              g.push(v.path).length()
+            end
             g
           end).join(", "))
         end
@@ -406,12 +406,12 @@ module Hxruby
           return ((((((("wrong target for route " + expected.path) + " ") + Hxruby::Generators::Routes::ParityCore.upper(expected.verb)) + ": expected ") + HXRuby.stringify(expected.target)) + ", saw ") + Hxruby::Generators::Routes::ParityCore.unique(begin
             g = []
             g1 = 0
-          g2 = routes
-          while (g1 < g2.length)
-            v = g2[g1]
-            g1 = (g1 + 1)
-            g.push(((v.target == nil) ? "" : v.target)).length()
-          end
+            g2 = routes
+            while (g1 < g2.length)
+              v = g2[g1]
+              g1 = (g1 + 1)
+              g.push(((v.target == nil) ? "" : v.target)).length()
+            end
             g
           end).join(", "))
         end
@@ -419,16 +419,16 @@ module Hxruby
           return begin
             this = [expected.name, Hxruby::Generators::Routes::ParityCore.upper(expected.verb), expected.path, expected.target]
             g = []
-          g1 = 0
-          g2 = this
-          while (g1 < g2.length)
-            v = g2[g1]
-            g1 = (g1 + 1)
-            if ((v != nil) && (v != ""))
-              g.push(v).length()
+            g1 = 0
+            g2 = this
+            while (g1 < g2.length)
+              v = g2[g1]
+              g1 = (g1 + 1)
+              if ((v != nil) && (v != ""))
+                g.push(v).length()
+              end
             end
-          end
-          g
+            g
           end.join(" ")
         end
         def self.upper(value)
