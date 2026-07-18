@@ -5,6 +5,50 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.8 typed Regexp and MatchData publication
+
+The normal tested-commit workflow published
+[`v1.8.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.8.0)
+on 2026-07-18 for the bounded typed native Ruby Regexp and MatchData facades.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `2cca60633bbff57a175f93524131547ef5cab3c9` |
+| Release intent | `feat: add typed Ruby Regexp facades` |
+| Canonical release tag | `v1.8.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29630132266`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29630132266), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`88044807989`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29630132266/job/88044807989), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-18T04:48:11Z` |
+| Release notes | Version heading, `v1.7.0...v1.8.0` compare link, categorized feature bullet, and exact commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.8.0.gem` | `hxruby 1.8.0 Ruby gem` | 269824 | `bbaab3b97a9061319211a8ceaf2a926ff75b8b35a75d19d3faa3d032bef6943c` |
+| `hxruby-1.8.0.gem.sha256.json` | `hxruby 1.8.0 SHA-256 metadata` | 301 | `2e48a3cf9b444bfd8f8db3c2620c5c4a9e2a9d5210f795b53089635de86045c0` |
+| `reflaxe.ruby-1.8.0.zip` | `reflaxe.ruby 1.8.0 haxelib package` | 1260704 | `ead6f6130491162bafd8d9472822e9bb7c64e37f8a932bd5294239f1c2248f54` |
+| `reflaxe.ruby-1.8.0.zip.sha256.json` | `reflaxe.ruby 1.8.0 SHA-256 metadata` | 314 | `9939cc982e27417acf683f90428c3cab492caf81c8dcf282d5ae4376f8de688e` |
+
+Each downloaded sidecar binds its artifact to version `1.8.0`, tag `v1.8.0`,
+the tested source SHA, hosted filename, byte count, and independently matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+complete format-1 manifests verify 704 ZIP payload entries and 332 gem payload
+entries, including `ruby.Regexp`, `ruby.MatchData`, `ruby.RegexpOptions`,
+`ruby.RegexpCompileOptions`, and `ruby.MatchOffset`.
+
+The facade exposes Ruby's native regexp and match objects without a wrapper
+runtime, limits flags and per-instance timeout configuration to typed closed
+contracts, and deliberately leaves global last-match state, arbitrary integer
+or encoding flags, byte offsets, unchecked named capture lookup, open ranges,
+heterogeneous match unions, block overloads, and mutable class-wide timeout
+configuration outside the bounded surface. Haxe `EReg` remains the separate
+Haxe-semantics adapter; it reuses the native typed `Regexp.escape` and
+`MatchData` contracts only where their semantics align. GitHub reports the
+completed release as natively immutable.
+
 ## Stable 1.7 modern temporal publication
 
 The normal tested-commit workflow published
@@ -427,6 +471,8 @@ Actions APIs plus downloaded sidecars. Recheck them with read-only commands:
 
 ```bash
 git ls-remote --tags origin
+gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.8.0
+gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.7.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.6.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.5.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.4.0
@@ -435,6 +481,8 @@ gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.2.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.1.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.0.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v0.1.2
+gh run view 29630132266 --json headSha,conclusion,jobs,url
+gh run view 29619029159 --json headSha,conclusion,jobs,url
 gh run view 29564630637 --json headSha,conclusion,jobs,url
 gh run view 29560749968 --json headSha,conclusion,jobs,url
 gh run view 29542618466 --json headSha,conclusion,jobs,url
