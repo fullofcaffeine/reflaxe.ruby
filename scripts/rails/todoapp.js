@@ -445,19 +445,31 @@ function productionSmoke() {
 }
 
 function watch() {
-  compileAndMaterialize();
-  console.log("[todoapp] Watching Haxe/RailsHx sources. Run `rake todoapp:server` in another terminal, or use `rake todoapp:start:watch` to run both.");
+  if (process.env.HXRUBY_WATCH_SKIP_INITIAL !== "1") {
+    compileAndMaterialize();
+  }
+  const intervalMs = watchMilliseconds("HXRUBY_WATCH_INTERVAL_MS", 200, false);
+  const debounceMs = watchMilliseconds("HXRUBY_WATCH_DEBOUNCE_MS", 100, true);
+  console.log(`[todoapp] Watching Haxe/RailsHx sources every ${intervalMs}ms with ${debounceMs}ms debounce. Use \`rake todoapp:dev\` to run Rails and this watcher together.`);
 
   let lastSnapshot = snapshot();
   let compiling = false;
+  let pending = false;
+  let deadline = 0;
   setInterval(() => {
     const nextSnapshot = snapshot();
-    if (nextSnapshot === lastSnapshot || compiling) {
+    if (nextSnapshot !== lastSnapshot) {
+      lastSnapshot = nextSnapshot;
+      pending = true;
+      deadline = Date.now() + debounceMs;
+      console.log("[todoapp] Change detected; waiting for the edit burst to settle.");
+    }
+    if (!pending || compiling || Date.now() < deadline) {
       return;
     }
-    lastSnapshot = nextSnapshot;
+    pending = false;
     compiling = true;
-    console.log("[todoapp] Change detected; recompiling Haxe and refreshing generated Rails files.");
+    console.log("[todoapp] Recompiling Haxe and refreshing generated Rails files.");
     try {
       compileAndMaterialize();
     } catch (error) {
@@ -465,7 +477,15 @@ function watch() {
     } finally {
       compiling = false;
     }
-  }, Number(process.env.HXRUBY_WATCH_INTERVAL ?? "1000"));
+  }, intervalMs);
+}
+
+function watchMilliseconds(name, fallback, allowZero) {
+  const value = Number(process.env[name] ?? fallback);
+  if (!Number.isFinite(value) || (allowZero ? value < 0 : value <= 0)) {
+    throw new Error(`${name} must be a finite ${allowZero ? "non-negative" : "positive"} number of milliseconds.`);
+  }
+  return value;
 }
 
 function snapshot() {
@@ -661,6 +681,11 @@ function run(commandName, args, options = {}) {
   if (result.status !== 0 && !options.allowFailure) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
+    if (command === "watch") {
+      const error = new Error(`${commandName} ${args.join(" ")} failed with status ${result.status ?? 1}`);
+      error.status = result.status ?? 1;
+      throw error;
+    }
     process.exit(result.status ?? 1);
   }
   return result;
@@ -682,7 +707,7 @@ function printReady() {
   console.log("[todoapp] Ready.");
   console.log(`[todoapp] Run: rake todoapp:start`);
   console.log(`[todoapp] Visit: http://${bind}:${port}/`);
-  console.log("[todoapp] Watch mode: rake todoapp:start:watch");
+  console.log("[todoapp] Development mode: rake todoapp:dev");
 }
 
 function usage() {
@@ -692,12 +717,12 @@ Commands:
   compile   Compile Haxe/HHX and refresh generated Rails files.
   prepare   Compile, bundle, prepare the SQLite DB, and seed demo data.
   server    Start Rails at http://${bind}:${port}/.
-  watch     Recompile Haxe/HHX when source files change.
+  watch     Build once, then debounce Haxe/HHX rebuilds when sources change.
   test      Compile, materialize, and run the Rails test suite.
   production-smoke
            Compile, test, zeitwerk-check, precompile assets, and archive.
 
 Environment:
-  PORT=3001 BIND=0.0.0.0 HXRUBY_WATCH_INTERVAL=750 rake todoapp:server
+  PORT=3001 BIND=0.0.0.0 HXRUBY_WATCH_INTERVAL_MS=250 HXRUBY_WATCH_DEBOUNCE_MS=100 rake todoapp:dev
 `);
 }

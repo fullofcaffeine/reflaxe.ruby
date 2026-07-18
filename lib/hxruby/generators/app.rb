@@ -73,12 +73,12 @@ module HXRuby
         puts "[rails:app] Generated RailsHx app files in #{@output_dir}"
         puts "[rails:app] Next:"
         puts "  bundle exec rake hxruby:start"
-        puts "  bundle exec rake hxruby:start:watch"
+        puts "  bin/railshx-dev"
+        puts "  bundle exec rake hxruby:dev"
         puts "  bundle exec rake hxruby:doctor"
         puts "  bundle exec rake hxruby:check"
         puts "  bundle exec rake hxruby:clean"
         puts "  bundle exec rake hxruby:gen:routes"
-        puts "  bin/railshx-dev"
         puts "  bin/railshx-prod"
       end
 
@@ -199,7 +199,7 @@ module HXRuby
           "## Development Loop",
           "",
           "- Prefer `bundle exec rake hxruby:start` for a one-command compile-and-run loop.",
-          "- Prefer `bundle exec rake hxruby:start:watch` while editing Haxe/HHX/Haxe JS.",
+          "- Prefer `bin/railshx-dev` (or `bundle exec rake hxruby:dev`) while editing Haxe/HHX/Haxe JS. It builds server/client once, starts Rails, debounces edit bursts, and rebuilds only affected HXML targets. `hxruby:start:watch` remains a compatibility alias.",
           "- Use `bundle exec rake hxruby:doctor` for non-mutating Haxe/build-file/manifest/output-root diagnostics while onboarding or debugging.",
           "- Use `bundle exec rake hxruby:check` for a fast compile plus generated Ruby `ruby -c` gate; add `CLIENT=1`, `ROUTES=1`, or `ZEITWERK=1` when that lane should cover more RailsHx/Rails seams.",
           "- Use `bundle exec rake hxruby:clean` only when you want to remove manifest-owned RailsHx generated artifacts; it must not delete Rails-owned files.",
@@ -423,7 +423,7 @@ module HXRuby
           "\t\t\t\t<h1>${locals.appName} is running from typed Haxe.</h1>",
           "\t\t\t\t<p>",
           "\t\t\t\t\tEdit <code>src_haxe/views/HomeIndexView.hx</code>, keep",
-          "\t\t\t\t\t<code>bundle exec rake hxruby:start:watch</code> running, and refresh Rails.",
+          "\t\t\t\t\t<code>bin/railshx-dev</code> running, and refresh Rails.",
           "\t\t\t\t</p>",
           "\t\t\t</section>",
           "\t\t</main>;",
@@ -682,9 +682,7 @@ module HXRuby
 
       def render_procfile
         [
-          "rails: bundle exec rails server",
-          "haxe: bundle exec rake hxruby:watch",
-          "haxe_client: bundle exec rake hxruby:watch:client",
+          "dev: bundle exec rake hxruby:dev",
           "",
         ].join("\n")
       end
@@ -694,17 +692,7 @@ module HXRuby
           "#!/usr/bin/env bash",
           "set -euo pipefail",
           "",
-          "if command -v foreman >/dev/null 2>&1; then",
-          "  exec foreman start -f Procfile.railshx.dev",
-          "fi",
-          "",
-          "if command -v overmind >/dev/null 2>&1; then",
-          "  exec overmind start -f Procfile.railshx.dev",
-          "fi",
-          "",
-          "echo \"No foreman/overmind found.\"",
-          "echo \"Falling back to the built-in RailsHx dev loop.\"",
-          "exec bundle exec rake hxruby:start:watch",
+          "exec bundle exec rake hxruby:dev",
           "",
         ].join("\n")
       end

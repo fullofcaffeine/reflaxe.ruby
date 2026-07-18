@@ -88,7 +88,7 @@ Generated Rails apps use normal entrypoints such as:
 bin/rails generate hxruby:install MyApp
 bin/rails generate hxruby:routes
 bin/rails generate hxruby:scaffold Todo title:String --controller
-bundle exec rake hxruby:start:watch
+bin/railshx-dev # or: bundle exec rake hxruby:dev
 bundle exec rake hxruby:doctor
 bundle exec rake hxruby:check
 RAILS_ENV=production bundle exec rake hxruby:production

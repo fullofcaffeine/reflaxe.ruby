@@ -90,13 +90,15 @@ In a generated RailsHx app, the one-command developer loop is:
 bundle exec rake hxruby:start
 ```
 
-For active editing, run Rails and the Haxe watchers together:
+For active editing, run Rails and the coordinated Haxe watcher together:
 
 ```bash
+bin/railshx-dev
+# or:
+bundle exec rake hxruby:dev
+# compatibility aliases:
 bundle exec rake hxruby:start:watch
-# or:
 WATCH=1 bundle exec rake hxruby:start
-# or:
 bundle exec rake 'hxruby:start[watch]'
 ```
 
@@ -104,12 +106,13 @@ The repository dogfood app has the same shape:
 
 ```bash
 rake todoapp:start
-rake todoapp:start:watch
+rake todoapp:dev
 ```
 
-The watcher recompiles Haxe/HHX and Haxe-authored JavaScript, then refreshes the
-generated Rails app. Rails keeps serving normal Rails files, so most controller
-and template changes need only a browser refresh.
+The watcher stays idle on unchanged checked inputs, debounces edit bursts, and
+recompiles the affected HXML targets before refreshing the generated Rails app.
+Rails keeps serving normal Rails files, so most controller and template changes
+need only a browser refresh.
 
 When a Rails task consumes generated artifacts, prefer the RailsHx-prefixed
 compile-then-delegate wrappers:
@@ -124,7 +127,7 @@ bundle exec rake hxruby:rails TASK=zeitwerk:check
 These tasks compile Haxe-owned Ruby, HHX/ERB, migrations, routes, and client JS
 where needed before handing control back to ordinary Rails. Raw `bin/rails`
 commands are still valid when generated artifacts are already current; the
-wrappers are the safer daily workflow. `hxruby:start:watch` keeps target
+wrappers are the safer daily workflow. `hxruby:dev` keeps target
 artifacts current while you edit, so a separate manual compile is usually not
 needed during the dev loop.
 
@@ -285,7 +288,7 @@ tests, Playwright, and production smoke.
 Run it locally:
 
 ```bash
-rake todoapp:start:watch
+rake todoapp:dev
 ```
 
 Then open `http://127.0.0.1:3000/`.

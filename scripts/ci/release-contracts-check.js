@@ -82,6 +82,7 @@ const rbsGeneratorCheck = readFileSync("scripts/ci/rbs-generator-smoke.js", "utf
 const packageInstallation = readFileSync("docs/packages-and-installation.md", "utf8");
 const gettingStarted = readFileSync("docs/getting-started.md", "utf8");
 const developmentDocs = readFileSync("docs/development.md", "utf8");
+const developmentLoop = readFileSync("docs/railshx-development-loop.md", "utf8");
 const artifactUtils = readFileSync("scripts/release/artifact-utils.js", "utf8");
 const deterministicZip = readFileSync("scripts/release/deterministic-zip.js", "utf8");
 const artifactReproducibilityCheck = readFileSync("scripts/ci/release-artifact-reproducibility-check.js", "utf8");
@@ -98,6 +99,7 @@ const reflaxePatchDocs = readFileSync("vendor/reflaxe/PATCHES.md", "utf8");
 const reflaxeClassFieldHelper = readFileSync("vendor/reflaxe/src/reflaxe/helpers/ClassFieldHelper.hx", "utf8");
 const hxrubyGemspec = readFileSync("hxruby.gemspec", "utf8");
 const hxrubyTasks = readFileSync("lib/hxruby/tasks.rb", "utf8");
+const developmentWatcher = readFileSync("lib/hxruby/development_watcher.rb", "utf8");
 const hxrubyAdoptGenerator = readFileSync("lib/hxruby/generators/adopt.rb", "utf8");
 const railsHxrubyAdoptGenerator = readFileSync("lib/generators/hxruby/adopt/adopt_generator.rb", "utf8");
 const railsAdoptGeneratorCheck = readFileSync("scripts/ci/rails-adopt-generator-smoke.js", "utf8");
@@ -447,6 +449,9 @@ expectIncludes(docsIndex, "development.md", "docs index repository development")
 expectIncludes(docsIndex, "ruby-ast-and-semantic-lowering.md", "docs index Ruby AST architecture");
 expectIncludes(docsIndex, "railshx-typed-views.md", "docs index typed views");
 expectIncludes(docsIndex, "railshx-client-javascript.md", "docs index Genes architecture");
+expectIncludes(docsIndex, "railshx-development-loop.md", "docs index development loop");
+expectIncludes(developmentLoop, "Stay idle while", "RailsHx change-aware development contract");
+expectIncludes(developmentLoop, "does not claim a persistent `haxe --wait`", "RailsHx watcher performance boundary");
 
 // Public prose uses compact punctuation consistently. Keeping this automated
 // prevents the README and detailed guides from drifting back to em dashes.
@@ -963,7 +968,15 @@ expectIncludes(escapeHatchAudit, "explicit RBS is canonicalized", "RBS security 
 expectIncludes(hxrubyTasks, 'require "rake"', "hxruby tasks");
 expectIncludes(hxrubyTasks, '["--yard", ENV["YARD"]]', "hxruby tasks");
 expectIncludes(hxrubyTasks, "task :start", "hxruby tasks");
+expectIncludes(hxrubyTasks, "task :dev", "hxruby tasks");
 expectIncludes(hxrubyTasks, "start_with_watch", "hxruby tasks");
+expectIncludes(hxrubyTasks, "HXRUBY_WATCH_SKIP_INITIAL=1", "single-build RailsHx dev runner");
+expectIncludes(hxrubyTasks, "hxruby:watch:all", "coordinated RailsHx watcher");
+expectExcludes(hxrubyTasks, "def watch_task", "change-aware RailsHx watcher tasks");
+expectIncludes(developmentWatcher, "discover_build_inputs", "RailsHx development watcher");
+expectIncludes(developmentWatcher, "waiting for the edit burst to settle", "RailsHx watcher debounce");
+expectIncludes(developmentWatcher, "rebuild failed", "recoverable RailsHx watcher failures");
+expectIncludes(packageJson.scripts["test:development-watcher"] ?? "", "development_watcher_test.rb", "RailsHx watcher test command");
 expectIncludes(hxrubyTasks, "task :routes", "hxruby tasks");
 expectIncludes(hxrubyTasks, "task :doctor", "hxruby tasks");
 expectIncludes(hxrubyTasks, "task :check", "hxruby tasks");
@@ -980,13 +993,18 @@ expectIncludes(railsAppGenerator, "-lib railshx.client", "RailsHx app generator"
 expectIncludes(railsAppGenerator, "HomeController", "RailsHx app generator");
 expectIncludes(railsAppGenerator, "HomeIndexView", "RailsHx app generator");
 expectIncludes(railsAppGenerator, "@:railsRoutes", "RailsHx app generator");
+expectIncludes(railsAppGenerator, "hxruby:dev", "RailsHx app generator development runner");
 expectIncludes(railsAppGenerator, "hxruby:start:watch", "RailsHx app generator");
 expectIncludes(railsAppGenerator, "hxruby:production", "RailsHx app generator");
 expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "assets:precompile", "todoapp production smoke");
 expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "zeitwerk:check", "todoapp production smoke");
 expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "todoapp_rails_release.tgz", "todoapp production smoke");
+expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), "HXRUBY_WATCH_DEBOUNCE_MS", "todoapp debounced watcher");
+expectIncludes(readFileSync("scripts/rails/todoapp.js", "utf8"), 'command === "watch"', "todoapp recoverable watcher compile failure");
 expectIncludes(rootRakefile, "namespace :todoapp", "root Rakefile");
 expectIncludes(rootRakefile, "task :start", "root Rakefile todoapp tasks");
+expectIncludes(rootRakefile, "task :dev", "root Rakefile todoapp development task");
+expectIncludes(rootRakefile, '"HXRUBY_WATCH_SKIP_INITIAL=1"', "todoapp single-build development runner");
 expectIncludes(rootRakefile, "start_todoapp_with_watch", "root Rakefile todoapp tasks");
 expectIncludes(rootRakefile, "task :production", "root Rakefile todoapp tasks");
 expectIncludes(rootRakefile, "namespace :rails", "root Rakefile");

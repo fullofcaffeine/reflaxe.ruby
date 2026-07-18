@@ -53,6 +53,16 @@ Runtime tests prove behavior that output inspection cannot, such as Rails
 autoloading, rendering, migrations, jobs, mail, storage, ActionCable, browser
 flows, and production assets.
 
+The packaged RailsHx development scheduler has a deterministic no-sleep gate:
+
+```bash
+npm run test:development-watcher
+```
+
+It owns HXML/classpath discovery, idle polls, target selection, debounce,
+failure recovery, and duplicate-initial-build suppression. See
+[RailsHx Development Loop](railshx-development-loop.md).
+
 Do not broadly retest Ruby or Rails behavior unless RubyHx/RailsHx introduces a
 custom semantic boundary.
 
@@ -141,5 +151,6 @@ workflow policy for agent-assisted changes.
 - [Compiler Metadata](compiler-metadata.md)
 - [Ruby Callable And Method ABI](ruby-callable-abi.md)
 - [Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md)
+- [RailsHx Development Loop](railshx-development-loop.md)
 - [RailsHx Production Readiness](railshx-production-readiness.md)
 - [Packages And Installation](packages-and-installation.md)

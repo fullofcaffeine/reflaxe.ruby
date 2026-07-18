@@ -19,14 +19,19 @@ Open [http://127.0.0.1:3000/](http://127.0.0.1:3000/). The generated Rails app i
 For the RailsHx edit loop, start the app with the integrated watcher:
 
 ```bash
+rake todoapp:dev
+# compatibility aliases:
 rake todoapp:start:watch
-# or:
 WATCH=1 rake todoapp:start
-# or:
 rake 'todoapp:start[watch]'
 ```
 
-That prepares the app once, then runs Rails and the watcher together. The watcher recompiles Haxe/HHX and refreshes generated Rails files when sources change. Rails serves those files through normal ActionController/ActionView, so a browser refresh is enough for most template/controller changes.
+That prepares the app once, then runs Rails and one change-aware watcher
+together. The child watcher skips a duplicate initial compile, stays idle while
+the checked inputs are unchanged, and debounces an edit burst before refreshing
+generated Rails files. Rails serves those files through normal
+ActionController/ActionView, so a browser refresh is enough for most
+template/controller changes.
 
 ## What The Sample Proves
 
@@ -96,14 +101,13 @@ rake todoapp:start
 Compiles Haxe/HHX, materializes the Rails app, prepares the development database, seeds demo data, and starts Rails. This is the normal one-command local start path.
 
 ```bash
-WATCH=1 rake todoapp:start
-# or:
-rake todoapp:start:watch
-# or:
-rake 'todoapp:start[watch]'
+rake todoapp:dev
 ```
 
 Runs the same preparation step, then starts both Rails and the RailsHx watcher. Press Ctrl-C to stop both processes.
+
+The older `rake todoapp:start:watch`, `WATCH=1 rake todoapp:start`, and
+`rake 'todoapp:start[watch]'` forms remain aliases.
 
 ```bash
 rake todoapp:compile
@@ -131,7 +135,15 @@ PORT=3001 BIND=0.0.0.0 rake todoapp:server
 rake todoapp:watch
 ```
 
-Runs a lightweight watcher for repo `src/**`, repo `std/**`, and `examples/todoapp_rails/src/**`. The recommended RailsHx dev workflow is Rails server in one terminal and this watcher in another; it refreshes generated Ruby/ERB plus the Haxe-authored JS client while Rails keeps serving the app.
+Runs a lightweight standalone watcher for repo `src/**`, repo `std/**`, and
+`examples/todoapp_rails/src/**`. Use it when Rails is already running or when
+you deliberately want separate terminals; `rake todoapp:dev` is the preferred
+coordinated loop. The watcher refreshes generated Ruby/ERB plus the
+Haxe-authored JS client while Rails keeps serving the app.
+
+The standalone watcher builds once by default. Set
+`HXRUBY_WATCH_INTERVAL_MS` and `HXRUBY_WATCH_DEBOUNCE_MS` to tune its source
+scan and edit-burst windows.
 
 ```bash
 rake todoapp:test
@@ -205,7 +217,7 @@ The generated app is intentionally not an empty Haxe project. It starts with a
 typed `HomeController`, typed HHX `ApplicationLayoutView`, typed HHX
 `HomeIndexView`, Haxe-owned `AppRoutes`, `Routes.hx` route-helper extern
 placeholder, Haxe-authored client boot file, starter CSS/importmap wiring, and
-the app-local `hxruby:start` / `hxruby:start:watch` Rake tasks. That mirrors the
+the app-local `hxruby:start` / `hxruby:dev` Rake tasks. That mirrors the
 shape exercised by this todoapp on a smaller scale: Haxe/HHX is the greenfield
 source of truth, Rails receives normal generated Ruby/ERB/routes/assets, and
 Rails-owned routes/templates/services can still be adopted later through typed

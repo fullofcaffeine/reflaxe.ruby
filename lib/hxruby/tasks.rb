@@ -8,6 +8,7 @@ require "shellwords"
 require "pathname"
 require "tempfile"
 require "digest"
+require "hxruby/development_watcher"
 require "hxruby/generators/adopt"
 require "hxruby/generators/app"
 require "hxruby/generators/common"
@@ -44,16 +45,26 @@ module HXRuby
           end
         end
 
-        desc "Repeatedly run hxruby:compile every HXRUBY_WATCH_INTERVAL seconds"
+        desc "Compile once, then rebuild server Haxe only when checked inputs change"
         task :watch do
-          watch_task("hxruby:compile")
+          watch_projects([:server])
         end
 
         namespace :watch do
-          desc "Repeatedly run hxruby:compile:client every HXRUBY_WATCH_INTERVAL seconds"
+          desc "Compile once, then rebuild client Haxe only when checked inputs change"
           task :client do
-            watch_task("hxruby:compile:client")
+            watch_projects([:client])
           end
+
+          desc "Compile once, then coordinate change-aware server and client rebuilds"
+          task :all do
+            watch_projects(%i[server client])
+          end
+        end
+
+        desc "Build RailsHx server/client once, then run Rails with one coordinated watcher"
+        task :dev do
+          start_with_watch
         end
 
         desc "Compile RailsHx server artifacts, then run a Rails task. Use TASK=db:migrate ARGS='...'"
@@ -96,7 +107,7 @@ module HXRuby
           end
         end
 
-        desc "Compile RailsHx server/client artifacts and start Rails. Use WATCH=1 for server + watchers"
+        desc "Compile RailsHx server/client artifacts and start Rails. Use WATCH=1 for the development watcher"
         task :start, [:mode] do |_task, args|
           if truthy?(ENV["WATCH"]) || args[:mode] == "watch"
             start_with_watch
@@ -108,7 +119,7 @@ module HXRuby
         end
 
         namespace :start do
-          desc "Compile RailsHx server/client artifacts, then run Rails and Haxe watchers together"
+          desc "Compile RailsHx once, then run Rails and one coordinated Haxe watcher"
           task :watch do
             start_with_watch
           end
@@ -500,18 +511,60 @@ module HXRuby
     end
 
     def start_with_watch
+      previous_term_handler = Signal.trap("TERM") { raise Interrupt }
       compile_haxe(ENV.fetch("HXRUBY_HXML", "build.hxml"))
       compile_client_haxe(ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml"))
-      puts "[hxruby] Starting Rails server and RailsHx watchers. Press Ctrl-C to stop all processes."
+      puts "[hxruby] Starting Rails and the change-aware RailsHx watcher. Press Ctrl-C to stop both."
       pids = [
         spawn_shell([rails_command, "server"].map(&:shellescape).join(" ")),
-        spawn_shell("#{rake_command} hxruby:watch"),
-        spawn_shell("#{rake_command} hxruby:watch:client"),
+        spawn_shell("HXRUBY_WATCH_SKIP_INITIAL=1 #{rake_command} hxruby:watch:all"),
       ]
       wait_for_processes(pids)
     rescue Interrupt
-      puts "\n[hxruby] Stopping Rails server and RailsHx watchers."
+      puts "\n[hxruby] Stopping Rails and the RailsHx watcher."
       pids&.each { |pid| stop_process_group(pid) }
+    ensure
+      Signal.trap("TERM", previous_term_handler) if previous_term_handler
+    end
+
+    def watch_projects(names)
+      targets = names.map { |name| development_watch_target(name) }
+      watcher = HXRuby::DevelopmentWatcher.new(
+        targets: targets,
+        interval: ENV.fetch("HXRUBY_WATCH_INTERVAL", HXRuby::DevelopmentWatcher::DEFAULT_INTERVAL),
+        debounce: ENV.fetch("HXRUBY_WATCH_DEBOUNCE", HXRuby::DevelopmentWatcher::DEFAULT_DEBOUNCE)
+      )
+      watcher.run(initial_compile: !truthy?(ENV["HXRUBY_WATCH_SKIP_INITIAL"]))
+    rescue HXRuby::DevelopmentWatcher::Error => error
+      abort("[hxruby:watch] #{error.message}")
+    end
+
+    def development_watch_target(name)
+      case name
+      when :server
+        hxml = ENV.fetch("HXRUBY_HXML", "build.hxml")
+        compile = -> { compile_haxe(hxml) }
+      when :client
+        hxml = ENV.fetch("HXRUBY_CLIENT_HXML", "build-client.hxml")
+        compile = -> { compile_client_haxe(hxml) }
+      else
+        raise HXRuby::DevelopmentWatcher::Error, "unknown Haxe watch target #{name.inspect}"
+      end
+
+      HXRuby::DevelopmentWatcher.target(
+        name: name,
+        hxml: hxml,
+        compile: compile,
+        root: Dir.pwd,
+        extra_paths: development_watch_paths(name),
+        environment: ENV.to_h.merge("HXRUBY_GEM_ROOT" => gem_root)
+      )
+    end
+
+    def development_watch_paths(name)
+      common = split_paths(ENV.fetch("HXRUBY_WATCH_PATHS", ""))
+      target = split_paths(ENV.fetch("HXRUBY_#{name.to_s.upcase}_WATCH_PATHS", ""))
+      common.concat(target).uniq
     end
 
     def spawn_shell(command)
@@ -804,15 +857,6 @@ module HXRuby
 
       problems.each { |message| warn "[hxruby:check] ERROR: #{message}" }
       abort("[hxruby:check] generated artifact validation failed")
-    end
-
-    def watch_task(task_name)
-      interval = ENV.fetch("HXRUBY_WATCH_INTERVAL", "1").to_f
-      loop do
-        Rake::Task[task_name].reenable
-        Rake::Task[task_name].invoke
-        sleep interval
-      end
     end
 
     def truthy?(value)

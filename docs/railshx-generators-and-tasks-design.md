@@ -17,12 +17,19 @@ bundle exec rake hxruby:start
 For local editing, use the integrated Rails + Haxe watcher loop:
 
 ```bash
+bin/railshx-dev
+# or:
+bundle exec rake hxruby:dev
+# compatibility aliases:
 bundle exec rake hxruby:start:watch
-# or:
 WATCH=1 bundle exec rake hxruby:start
-# or:
 bundle exec rake 'hxruby:start[watch]'
 ```
+
+The runner builds server/client once before Rails starts, then delegates to one
+change-aware, debounced watcher. See
+[RailsHx Development Loop](railshx-development-loop.md) for input discovery,
+failure recovery, and tuning.
 
 After the starter, RailsHx generators should continue to compose with normal
 Rails tasks through compile-then-delegate Rake wrappers:
@@ -161,7 +168,9 @@ RailsHx build files, app-local Rake entrypoints, and a small typed app graph:
   or checkout.
 - `lib/tasks/hxruby.rake`: app-local task bridge that loads `hxruby/tasks`.
 - `bin/railshx-dev` and `bin/railshx-prod`: developer and production wrappers.
-- `Procfile.railshx.dev`: optional `foreman`/`overmind` process file.
+- `Procfile.railshx.dev`: optional process-manager entrypoint that delegates to
+  the same canonical `hxruby:dev` runner; the built-in loop does not require a
+  process-manager dependency.
 
 The starter defaults to Haxe-owned source of truth for the generated
 controller, HHX layout/page, client JS, and root route because it is greenfield
@@ -187,7 +196,8 @@ The generated app-level Rake UX is:
 
 ```bash
 bundle exec rake hxruby:start         # compile server/client, then run Rails
-bundle exec rake hxruby:start:watch   # compile once, then run Rails + watchers
+bundle exec rake hxruby:dev           # compile once, then Rails + one watcher
+bundle exec rake hxruby:start:watch   # compatibility alias for hxruby:dev
 bundle exec rake hxruby:compile       # lower-level server compile
 bundle exec rake hxruby:compile:client
 bundle exec rake hxruby:db:migrate    # compile server/migrations, then rails db:migrate
@@ -201,9 +211,10 @@ bundle exec rake hxruby:clean         # remove manifest-owned generated artifact
 bundle exec rake hxruby:production    # compile, zeitwerk:check, assets
 ```
 
-`bin/railshx-dev` should use `foreman` or `overmind` when available and fall
-back to `bundle exec rake hxruby:start:watch`, so a generated app remains usable
-without extra process-manager dependencies.
+`bin/railshx-dev` delegates directly to `bundle exec rake hxruby:dev`, so the
+generated app has the same deterministic process and build ordering without a
+Foreman, Overmind, or native file-watcher dependency. The optional generated
+Procfile exposes that same built-in runner as one `dev` process.
 
 ## Model Generator Contract
 
@@ -401,9 +412,11 @@ Keep RailsHx tasks as composition and validation helpers:
 - `hxruby:compile:client`: compile Haxe-authored JS into Rails asset/importmap
   friendly output.
 - `hxruby:start`: compile server/client Haxe and start Rails.
-- `hxruby:start:watch`: compile once, then run Rails, the server Haxe watcher,
-  and the client Haxe watcher together.
-- `hxruby:watch` and `hxruby:watch:client`: developer loops.
+- `hxruby:dev`: compile server/client once, then run Rails and one coordinated,
+  change-aware watcher. `hxruby:start:watch` remains an alias.
+- `hxruby:watch`, `hxruby:watch:client`, and `hxruby:watch:all`: standalone
+  server, client, and coordinated developer loops. They compile once, stay idle
+  while checked HXML inputs are unchanged, and debounce edit bursts.
 - `hxruby:db:migrate`, `hxruby:db:prepare`, and `hxruby:db:rollback`: compile
   RailsHx server/migration artifacts, then delegate to the corresponding Rails
   database task. Rails still performs the database operation.

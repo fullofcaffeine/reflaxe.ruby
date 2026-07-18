@@ -37,6 +37,11 @@ CPU, available memory, CI image metadata, and Node/npm/Haxe/Ruby versions.
 still clean their outputs but may benefit from operating-system caches. RubyHx
 does not currently promise a persistent incremental compiler server, so this
 contract does not relabel repeated clean builds as incremental compilation.
+The RailsHx development watcher still improves the edit loop materially by
+staying idle on unchanged inputs, removing duplicate initial compiles, and
+debouncing each affected HXML target. Those rebuilds remain direct Haxe
+invocations; a future managed `haxe --wait` claim needs separate lifecycle and
+performance evidence.
 
 ## Regression Policy
 

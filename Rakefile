@@ -64,16 +64,19 @@ ensure
 end
 
 def start_todoapp_with_watch
+  previous_term_handler = Signal.trap("TERM") { raise Interrupt }
   node_script("scripts/rails/todoapp.js", "prepare")
-  puts "[todoapp] Starting Rails server and RailsHx watcher. Press Ctrl-C to stop both."
+  puts "[todoapp] Starting Rails and the change-aware RailsHx watcher. Press Ctrl-C to stop both."
   pids = [
     spawn_command("node", "scripts/rails/todoapp.js", "server"),
-    spawn_command("node", "scripts/rails/todoapp.js", "watch")
+    spawn_command("env", "HXRUBY_WATCH_SKIP_INITIAL=1", "node", "scripts/rails/todoapp.js", "watch")
   ]
   wait_for_processes(pids)
 rescue Interrupt
   puts "\n[todoapp] Stopping Rails server and watcher."
   pids&.each { |pid| stop_process_group(pid) }
+ensure
+  Signal.trap("TERM", previous_term_handler) if previous_term_handler
 end
 
 desc "Run the full repository test suite"
@@ -82,6 +85,11 @@ task :test do
 end
 
 namespace :todoapp do
+  desc "Prepare once, then run Rails with the debounced RailsHx development watcher"
+  task :dev do
+    start_todoapp_with_watch
+  end
+
   desc "Prepare and start the RailsHx todoapp server. Use WATCH=1 for server + watcher"
   task :start, [:mode] do |_task, args|
     if truthy_env?("WATCH") || args[:mode] == "watch"

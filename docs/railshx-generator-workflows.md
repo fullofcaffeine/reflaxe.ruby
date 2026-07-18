@@ -23,11 +23,14 @@ bundle exec rake hxruby:start
 For active development:
 
 ```bash
-bundle exec rake hxruby:start:watch
+bin/railshx-dev
+# or: bundle exec rake hxruby:dev
 ```
 
 That compiles server Haxe/HHX, compiles Haxe-authored client JS, starts Rails,
-and keeps generated target artifacts current. Raw Rails commands still work
+and keeps generated target artifacts current through one change-aware,
+debounced watcher. It stays idle when checked HXML inputs have not changed and
+does not repeat the initial server/client builds. Raw Rails commands still work
 after artifacts are current, but the RailsHx wrappers are safer because they
 compile first and then delegate:
 

@@ -73,6 +73,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [RailsHx Roadmap](railshx-roadmap.md): current Rails plan and sequencing.
 - [Generator Workflows](railshx-generator-workflows.md): app-facing generator commands, generated artifacts, runtime handoff, diagnostics, and CI gates.
 - [Generators And Tasks](railshx-generators-and-tasks-design.md): Rails-native generator/task ownership, generated starter skeleton, and `hxruby:start` workflows.
+- [Development Loop](railshx-development-loop.md): one-command Rails startup,
+  checked HXML input discovery, change-aware server/client rebuilds, debounce,
+  and watcher tuning.
 - [Generated Artifact Ownership](railshx-generated-artifact-ownership.md): manifest/header safety and overwrite policy.
 - [Typed Views And HHX](railshx-typed-views.md): TSX-like Haxe view
   authoring, compile-time checks, Rails-native ERB output, advantages, and

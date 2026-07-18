@@ -59,7 +59,7 @@ try {
     '@:railsTemplate("controllers/home/index")',
     '@:railsTemplateAst("render")',
     "${locals.appName}",
-    "bundle exec rake hxruby:start:watch",
+    "bin/railshx-dev",
   ]);
   expectFile("app_haxe/routes/AppRoutes.hx", [
     "package routes;",
@@ -127,6 +127,8 @@ try {
     'require "hxruby/tasks"',
   ]);
   expectFile("AGENTS.md", [
+    "bundle exec rake hxruby:dev",
+    "builds server/client once",
     "hxruby:db:migrate",
     "hxruby:db:prepare",
     "hxruby:test",
@@ -138,13 +140,10 @@ try {
     "Browser builds use Haxe source maps",
   ]);
   expectFile("Procfile.railshx.dev", [
-    "rails: bundle exec rails server",
-    "haxe: bundle exec rake hxruby:watch",
-    "haxe_client: bundle exec rake hxruby:watch:client",
+    "dev: bundle exec rake hxruby:dev",
   ]);
   expectFile("bin/railshx-dev", [
-    "foreman start -f Procfile.railshx.dev",
-    "bundle exec rake hxruby:start:watch",
+    "exec bundle exec rake hxruby:dev",
   ]);
   expectFile("bin/railshx-prod", [
     'export RAILS_ENV="${RAILS_ENV:-production}"',

@@ -152,6 +152,8 @@ Run the canonical app:
 rake todoapp:start
 ```
 
+For the build-once, change-aware RailsHx edit loop, run `rake todoapp:dev`.
+
 The app proves a protected Devise-backed board, scoped data, typed Rails APIs,
 HHX views, Turbo Streams chat, browser code, runtime tests, and a production
 build. See the [todoapp tutorial](docs/railshx-skeleton-and-todoapp-tutorial.md)

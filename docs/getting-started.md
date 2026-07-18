@@ -138,7 +138,7 @@ rake todoapp:start
 For the integrated edit loop:
 
 ```bash
-rake todoapp:start:watch
+rake todoapp:dev
 ```
 
 The reference app demonstrates a workflow where nearly all owned application
@@ -175,7 +175,7 @@ entrypoints are:
 bin/rails generate hxruby:install MyApp
 bin/rails generate hxruby:scaffold Todo title:String isCompleted:Bool --controller
 bin/rails generate hxruby:adopt --service LegacyPriceFormatter
-bundle exec rake hxruby:start:watch
+bin/railshx-dev # or: bundle exec rake hxruby:dev
 bundle exec rake hxruby:doctor
 bundle exec rake hxruby:check
 RAILS_ENV=production bundle exec rake hxruby:production
