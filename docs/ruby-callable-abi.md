@@ -168,6 +168,14 @@ Authors do not choose between `yield` and `&block`. Both are generated forms of
 the same typed Haxe parameter. The compiler may refine its analysis without
 changing source APIs, provided observable behavior remains the same.
 
+The definition-side choice is made once by `RubyCallablePlan` before
+`RubyAST` construction. The closed plan combines the validated callable
+contract with block escape and keyword-carrier use analysis, records the Haxe
+source position and reason, and then scopes one context across recursive body
+lowering. This replaces separate direct-yield and keyword-carrier ambient
+states; later lowering applies the plan but does not rediscover it. See
+[Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md).
+
 For example, direct use stays as small as handwritten Ruby:
 
 ```haxe

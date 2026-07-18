@@ -2,6 +2,7 @@ package reflaxe.ruby.ast;
 
 import reflaxe.ruby.ast.RubyAST.RubyFile;
 import reflaxe.ruby.ast.RubyAST.RubyBlock;
+import reflaxe.ruby.ast.RubyAST.RubyCaseBranch;
 import reflaxe.ruby.ast.RubyAST.RubyCallArgument;
 import reflaxe.ruby.ast.RubyAST.RubyExpr;
 import reflaxe.ruby.ast.RubyAST.RubyMethodParameter;
@@ -13,6 +14,7 @@ class RubyASTPrinter {
 	];
 
 	public static function printFile(file:RubyFile):String {
+		RubyASTValidator.validateFile(file);
 		var lines = new Array<String>();
 		for (statement in file.statements) {
 			writeStatement(lines, statement, 0);
@@ -33,6 +35,10 @@ class RubyASTPrinter {
 			case RubyRawStatement(code):
 				for (line in splitCodeLines(code)) {
 					lines.push(indent + line);
+				}
+			case RubyStatementSequence(body):
+				for (child in body) {
+					writeStatement(lines, child, indentLevel);
 				}
 			case RubyModuleDecl(name, body):
 				lines.push(indent + "module " + name);
@@ -56,11 +62,11 @@ class RubyASTPrinter {
 					lines.push(indent + line);
 				}
 			case RubyAssign(target, value):
-				var valueLines = splitCodeLines(printExpr(value));
+				var valueLines = splitCodeLines(renderExpr(value));
 				if (valueLines.length == 0) {
-					lines.push(indent + printExpr(target) + " = ");
+					lines.push(indent + renderExpr(target) + " = ");
 				} else {
-					lines.push(indent + printExpr(target) + " = " + valueLines[0]);
+					lines.push(indent + renderExpr(target) + " = " + valueLines[0]);
 					for (line in valueLines.slice(1)) {
 						lines.push(indent + line);
 					}
@@ -72,14 +78,14 @@ class RubyASTPrinter {
 					// Expressions such as a call with a `do ... end` block span lines.
 					// Prefix every rendered line with the enclosing statement indent so
 					// returned blocks remain nested like handwritten Ruby.
-					var valueLines = splitCodeLines(printExpr(value));
+					var valueLines = splitCodeLines(renderExpr(value));
 					lines.push(indent + "return " + valueLines[0]);
 					for (line in valueLines.slice(1)) {
 						lines.push(indent + line);
 					}
 				}
 			case RubyIfStmt(cond, thenBody, elseBody):
-				lines.push(indent + "if " + printExpr(cond));
+				lines.push(indent + "if " + renderExpr(cond));
 				writeBody(lines, thenBody, indentLevel + 1);
 				if (elseBody != null && elseBody.length > 0) {
 					lines.push(indent + "else");
@@ -87,13 +93,18 @@ class RubyASTPrinter {
 				}
 				lines.push(indent + "end");
 			case RubyWhileStmt(cond, body):
-				lines.push(indent + "while " + printExpr(cond));
+				lines.push(indent + "while " + renderExpr(cond));
 				writeBody(lines, body, indentLevel + 1);
 				lines.push(indent + "end");
 		}
 	}
 
 	public static function printExpr(expr:RubyExpr):String {
+		RubyASTValidator.validateExpr(expr);
+		return renderExpr(expr);
+	}
+
+	static function renderExpr(expr:RubyExpr):String {
 		return switch (expr) {
 			case RubyNil: "nil";
 			case RubyBool(value): value ? "true" : "false";
@@ -102,41 +113,49 @@ class RubyASTPrinter {
 			case RubyString(value): quoteRubyString(value);
 			case RubySymbol(value): rubySymbol(value);
 			case RubyLocal(name): name;
-			case RubyArray(values): "[" + [for (value in values) printExpr(value)].join(", ") + "]";
+			case RubyArray(values): "[" + [for (value in values) renderExpr(value)].join(", ") + "]";
 			case RubyHash(fields): "{" + [
 					for (field in fields)
-						quoteRubyString(field.key) + " => " + printExpr(field.value)
+						quoteRubyString(field.key) + " => " + renderExpr(field.value)
 				].join(", ") + "}";
 			case RubySymbolHash(fields): "{" + [
 					for (field in fields)
-						isSimpleRubyLabel(field.key) ? field.key + ": " + printExpr(field.value) : rubySymbol(field.key) + " => " + printExpr(field.value)
+						isSimpleRubyLabel(field.key) ? field.key + ": " + renderExpr(field.value) : rubySymbol(field.key) + " => " + renderExpr(field.value)
 				].join(", ") + "}";
-			case RubyIndex(receiver, index): printExpr(receiver) + "[" + printExpr(index) + "]";
-			case RubyBinary(op, left, right): "(" + printExpr(left) + " " + op + " " + printExpr(right) + ")";
-			case RubyUnary(op, value): "(" + op + printExpr(value) + ")";
+			case RubyIndex(receiver, index): renderExpr(receiver) + "[" + renderExpr(index) + "]";
+			case RubyMember(receiver, name): renderExpr(receiver) + "." + name;
+			case RubyBinary(op, left, right): "(" + renderExpr(left) + " " + op + " " + renderExpr(right) + ")";
+			case RubyUnary(op, value): "(" + op + renderExpr(value) + ")";
 			case RubyConditional(cond, thenExpr, elseExpr):
 				"("
-				+ printExpr(cond)
+				+ renderExpr(cond)
 				+ " ? "
-				+ printExpr(thenExpr)
+				+ renderExpr(thenExpr)
 				+ " : "
-				+ printExpr(elseExpr)
+				+ renderExpr(elseExpr)
 				+ ")";
 			case RubyBegin(body): printBegin(body);
 			case RubyLambda(args, body): printLambda(args, body);
 			case RubyCallableLambda(args, body): printCallableLambda(args, body);
 			case RubyCall(receiver, name, args):
-				var printedArgs = args == null ? "" : [for (arg in args) printExpr(arg)].join(", ");
+				var printedArgs = args == null ? "" : [for (arg in args) renderExpr(arg)].join(", ");
 				if (receiver != null && isRubyBinaryOperatorName(name) && args != null && args.length == 1) {
 					printBinaryOperatorCall(receiver, name, args[0]);
 				} else if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1) {
 					"(" + printWriterAssignment(receiver, name, args[0]) + ")";
 				} else {
-					receiver == null ? name + "(" + printedArgs + ")" : printExpr(receiver) + "." + name + "(" + printedArgs + ")";
+					receiver == null ? name + "(" + printedArgs + ")" : renderExpr(receiver) + "." + name + "(" + printedArgs + ")";
 				}
 			case RubyCallableCall(receiver, name, args, block):
 				printCallableCall(receiver, name, args, block);
-			case RubyYield(args): args == null || args.length == 0 ? "yield" : "yield(" + [for (arg in args) printExpr(arg)].join(", ") + ")";
+			case RubyYield(args): args == null || args.length == 0 ? "yield" : "yield(" + [for (arg in args) renderExpr(arg)].join(", ") + ")";
+			case RubyCase(scrutinee, branches, defaultBody): printCase(scrutinee, branches, defaultBody);
+			case RubyRuntimeCall(use, args):
+				"HXRuby."
+				+ use.helper.rubyName()
+				+ "("
+				+ (args == null ? "" : [for (arg in args) renderExpr(arg)].join(", "))
+				+ ")";
 			case RubyRawExpr(code): code;
 		}
 	}
@@ -144,10 +163,10 @@ class RubyASTPrinter {
 	static function printMethodParameter(parameter:RubyMethodParameter):String {
 		return switch (parameter) {
 			case RubyRequiredParameter(name): name;
-			case RubyOptionalParameter(name, defaultValue): name + " = " + printExpr(defaultValue);
+			case RubyOptionalParameter(name, defaultValue): name + " = " + renderExpr(defaultValue);
 			case RubyRestParameter(name): "*" + name;
 			case RubyRequiredKeywordParameter(name): name + ":";
-			case RubyOptionalKeywordParameter(name, defaultValue): name + ": " + printExpr(defaultValue);
+			case RubyOptionalKeywordParameter(name, defaultValue): name + ": " + renderExpr(defaultValue);
 			case RubyKeywordRestParameter(name): "**" + name;
 			case RubyBlockParameter(name): "&" + name;
 		}
@@ -157,21 +176,21 @@ class RubyASTPrinter {
 		return switch (expr) {
 			case RubyCall(receiver, name, args) if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1):
 				printWriterAssignment(receiver, name, args[0]);
-			case _: printExpr(expr);
+			case _: renderExpr(expr);
 		}
 	}
 
 	static function printWriterAssignment(receiver:RubyExpr, name:String, value:RubyExpr):String {
-		return printExpr(receiver) + "." + name.substr(0, name.length - 1) + " = " + printExpr(value);
+		return renderExpr(receiver) + "." + name.substr(0, name.length - 1) + " = " + renderExpr(value);
 	}
 
 	static function printCallArgument(argument:RubyCallArgument):String {
 		return switch (argument) {
-			case RubyPositionalArgument(value): printExpr(value);
-			case RubySplatArgument(value): "*" + printExpr(value);
-			case RubyKeywordArgument(name, value): name + ": " + printExpr(value);
-			case RubyKeywordSplatArgument(value): "**" + printExpr(value);
-			case RubyBlockPassArgument(value): "&" + printExpr(value);
+			case RubyPositionalArgument(value): renderExpr(value);
+			case RubySplatArgument(value): "*" + renderExpr(value);
+			case RubyKeywordArgument(name, value): name + ": " + renderExpr(value);
+			case RubyKeywordSplatArgument(value): "**" + renderExpr(value);
+			case RubyBlockPassArgument(value): "&" + renderExpr(value);
 		}
 	}
 
@@ -184,7 +203,7 @@ class RubyASTPrinter {
 			}
 		}
 		var printedArgs = args == null ? "" : [for (arg in args) printCallArgument(arg)].join(", ");
-		var callable = receiver == null ? name : printExpr(receiver) + "." + name;
+		var callable = receiver == null ? name : renderExpr(receiver) + "." + name;
 		// Rubyists conventionally omit empty parentheses when a native block is
 		// attached (`items.each { ... }`). Keep parentheses for ordinary calls and
 		// calls with arguments, where they make precedence explicit.
@@ -196,7 +215,7 @@ class RubyASTPrinter {
 		if (block.body != null && block.body.length == 1) {
 			switch (block.body[0]) {
 				case RubyExprStatement(value):
-					var printedBody = printExpr(value);
+					var printedBody = renderExpr(value);
 					if (printedBody.indexOf("\n") == -1) {
 						return call + " {" + blockArgs + " " + printedBody + " }";
 					}
@@ -211,7 +230,7 @@ class RubyASTPrinter {
 
 	/** Prints validated native binary methods in normal Ruby infix form. **/
 	static function printBinaryOperatorCall(receiver:RubyExpr, name:String, argument:RubyExpr):String {
-		return "(" + printExpr(receiver) + " " + name + " " + printExpr(argument) + ")";
+		return "(" + renderExpr(receiver) + " " + name + " " + renderExpr(argument) + ")";
 	}
 
 	static function isRubyBinaryOperatorName(name:String):Bool {
@@ -233,7 +252,7 @@ class RubyASTPrinter {
 		if (body != null && body.length == 1) {
 			switch (body[0]) {
 				case RubyExprStatement(expr):
-					return "->(" + printedArgs + ") { " + printExpr(expr) + " }";
+					return "->(" + printedArgs + ") { " + renderExpr(expr) + " }";
 				case _:
 			}
 		}
@@ -248,7 +267,7 @@ class RubyASTPrinter {
 		if (body != null && body.length == 1) {
 			switch (body[0]) {
 				case RubyExprStatement(expr):
-					return "->(" + printedArgs + ") { " + printExpr(expr) + " }";
+					return "->(" + printedArgs + ") { " + renderExpr(expr) + " }";
 				case _:
 			}
 		}
@@ -261,6 +280,20 @@ class RubyASTPrinter {
 	static function printBegin(body:Array<RubyStatement>):String {
 		var lines = ["begin"];
 		writeBody(lines, body, 1);
+		lines.push("end");
+		return lines.join("\n");
+	}
+
+	static function printCase(scrutinee:RubyExpr, branches:Array<RubyCaseBranch>, defaultBody:Null<Array<RubyStatement>>):String {
+		var lines = ["case " + renderExpr(scrutinee)];
+		for (branch in branches) {
+			lines.push("when " + [for (value in branch.values) renderExpr(value)].join(", "));
+			writeBody(lines, branch.body, 1);
+		}
+		if (defaultBody != null) {
+			lines.push("else");
+			writeBody(lines, defaultBody, 1);
+		}
 		lines.push("end");
 		return lines.join("\n");
 	}

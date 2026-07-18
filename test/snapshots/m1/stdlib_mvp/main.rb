@@ -142,25 +142,25 @@ class Main
     puts(HXRuby.stringify(HXRuby.stringify(begin
       g = []
       g1 = 0
-    g2 = numbers
-    while (g1 < g2.length)
-      v = g2[g1]
-      g1 = (g1 + 1)
-      g.push((v * 2)).length()
-    end
+      g2 = numbers
+      while (g1 < g2.length)
+        v = g2[g1]
+        g1 = (g1 + 1)
+        g.push((v * 2)).length()
+      end
       g
     end)))
     puts(HXRuby.stringify(HXRuby.stringify(begin
       g__hx1 = []
       g1__hx1 = 0
-    g2__hx1 = numbers
-    while (g1__hx1 < g2__hx1.length)
-      v__hx1 = g2__hx1[g1__hx1]
-      g1__hx1 = (g1__hx1 + 1)
-      if (v__hx1 > 0)
-        g__hx1.push(v__hx1).length()
+      g2__hx1 = numbers
+      while (g1__hx1 < g2__hx1.length)
+        v__hx1 = g2__hx1[g1__hx1]
+        g1__hx1 = (g1__hx1 + 1)
+        if (v__hx1 > 0)
+          g__hx1.push(v__hx1).length()
+        end
       end
-    end
       g__hx1
     end)))
     nullable_numbers = [1, 2]

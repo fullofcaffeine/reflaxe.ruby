@@ -258,6 +258,8 @@ expectIncludes(rbsGeneratorDocs, "does not claim whole-RBS or", "RBS generator c
 expectIncludes(docsIndex, "ruby-stdlib-coverage.md", "docs index Ruby stdlib catalog");
 expectIncludes(docsIndex, "rbs-to-haxe-generator.md", "docs index RBS generator");
 expectIncludes(packageJson.scripts.test, "test:ruby-stdlib-coverage", "mandatory Ruby stdlib catalog gate");
+expectIncludes(packageJson.scripts.test, "test:ruby-ast-inventory", "mandatory Ruby AST inventory gate");
+expectIncludes(packageJson.scripts["test:ruby-ast-inventory"] ?? "", "ruby-ast-inventory-check.js", "Ruby AST inventory command");
 expectIncludes(packageJson.scripts.test, "test:rbs-generator", "mandatory RBS generator gate");
 expectIncludes(packageJson.scripts["test:rbs-generator"] ?? "", "rbs_generator_test.rb", "RBS generator unit gate");
 expectIncludes(packageJson.scripts["test:rbs-generator"] ?? "", "rbs-generator-smoke.js", "RBS generator smoke gate");
@@ -442,6 +444,7 @@ for (const [label, source] of sqliteRuntimeFixtures) {
 expectIncludes(docsIndex, "getting-started.md", "docs index getting started");
 expectIncludes(docsIndex, "packages-and-installation.md", "docs index package installation");
 expectIncludes(docsIndex, "development.md", "docs index repository development");
+expectIncludes(docsIndex, "ruby-ast-and-semantic-lowering.md", "docs index Ruby AST architecture");
 expectIncludes(docsIndex, "railshx-typed-views.md", "docs index typed views");
 expectIncludes(docsIndex, "railshx-client-javascript.md", "docs index Genes architecture");
 

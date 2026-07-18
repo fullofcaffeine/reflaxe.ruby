@@ -24,6 +24,19 @@ The switch intentionally has no wildcard fallback. If Haxe adds another typed
 expression variant, the compiler must make an explicit support decision rather
 than inheriting a silent default.
 
+## Structural Ruby Validation
+
+Typed Haxe meaning lowers into structural `RubyAST` before target syntax is
+printed. Ordinary migrated forms such as array access, expression
+conditionals/blocks, statement sequences, enum members, and `case` cannot
+fall back to raw strings or print a child AST for re-embedding.
+
+`RubyASTValidator` runs before file and standalone-expression printing. It
+keeps declarations out of executable bodies, validates closed control shapes,
+and cross-checks every typed hxruby runtime use. The checked source inventory
+and contributor rules are documented in
+[Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md).
+
 ## Intentional Erasure Is Different
 
 Compiler-erased declarations and marker APIs remain explicit, documented
@@ -43,6 +56,8 @@ Run:
 
 ```bash
 npm run test:ruby-unsupported-expressions
+npm run test:ruby-ast
+npm run test:ruby-ast-inventory
 ```
 
 The positive fixture proves variable declarations, loops, `continue`, `break`,

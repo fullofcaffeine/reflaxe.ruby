@@ -85,6 +85,19 @@ Upstream behavioral parity is tracked independently by
 [Std Ownership](stdlib-ownership.md), and
 [Ruby Stdlib Parity Audit](ruby-stdlib-parity-audit.md).
 
+## Ruby AST Inventory
+
+Compiler raw and print-reembed sites have a separate checked inventory:
+
+```bash
+npm run test:ruby-ast-inventory
+UPDATE_RUBY_AST_INVENTORY=1 npm run test:ruby-ast-inventory
+```
+
+Review the generated diff rather than treating the count as a score. Every
+category must retain an owner, executable evidence, and a migration or retention
+reason. See [Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md).
+
 ## Issue And Git Workflow
 
 Public bug reports, compatibility questions, and feature proposals enter through
@@ -127,5 +140,6 @@ workflow policy for agent-assisted changes.
 - [Compiler Correctness](compiler-correctness.md)
 - [Compiler Metadata](compiler-metadata.md)
 - [Ruby Callable And Method ABI](ruby-callable-abi.md)
+- [Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md)
 - [RailsHx Production Readiness](railshx-production-readiness.md)
 - [Packages And Installation](packages-and-installation.md)

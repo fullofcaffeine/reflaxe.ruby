@@ -23,15 +23,15 @@ class Main
     Main::FilesystemParityAssert.is_true((begin
       stat = ::File.stat("/")
       {"gid" => stat.gid, "uid" => stat.uid, "atime" => begin
-      value = stat.atime
-      HxDate.new(value.year, value.month - 1, value.day, value.hour, value.min, value.sec)
-    end, "mtime" => begin
-      value__hx1 = stat.mtime
-      HxDate.new(value__hx1.year, value__hx1.month - 1, value__hx1.day, value__hx1.hour, value__hx1.min, value__hx1.sec)
-    end, "ctime" => begin
-      value__hx2 = stat.ctime
-      HxDate.new(value__hx2.year, value__hx2.month - 1, value__hx2.day, value__hx2.hour, value__hx2.min, value__hx2.sec)
-    end, "size" => stat.size, "dev" => stat.dev, "ino" => stat.ino, "nlink" => stat.nlink, "rdev" => stat.rdev, "mode" => stat.mode}
+        value = stat.atime
+        HxDate.new(value.year, value.month - 1, value.day, value.hour, value.min, value.sec)
+      end, "mtime" => begin
+        value__hx1 = stat.mtime
+        HxDate.new(value__hx1.year, value__hx1.month - 1, value__hx1.day, value__hx1.hour, value__hx1.min, value__hx1.sec)
+      end, "ctime" => begin
+        value__hx2 = stat.ctime
+        HxDate.new(value__hx2.year, value__hx2.month - 1, value__hx2.day, value__hx2.hour, value__hx2.min, value__hx2.sec)
+      end, "size" => stat.size, "dev" => stat.dev, "ino" => stat.ino, "nlink" => stat.nlink, "rdev" => stat.rdev, "mode" => stat.mode}
     end != nil), "root stat")
     names = (raise Errno::ENOENT, Main.root unless ::File.directory?(Main.root); ::Dir.children(Main.root))
     Main::FilesystemParityAssert.equal(1, names.length, "root entry count")

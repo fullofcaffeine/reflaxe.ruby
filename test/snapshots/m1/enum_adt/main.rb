@@ -16,7 +16,7 @@ class Main
     ((optional.__hx_index == 2) ? begin
       g = optional.value
       value__hx1 = g
-    puts(HXRuby.stringify((value__hx1 == nil)))
+      puts(HXRuby.stringify((value__hx1 == nil)))
     end : puts(HXRuby.stringify(false)))
   end
 end

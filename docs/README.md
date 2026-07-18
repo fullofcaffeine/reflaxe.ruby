@@ -36,6 +36,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
   ownership.
 - [Ruby Callable And Method ABI](ruby-callable-abi.md): typed blocks, keyword/rest arguments, method values, forwarding, definitions, and diagnostics.
 - [Ruby Compiler Correctness](compiler-correctness.md): exhaustive typed-expression ownership and fail-closed diagnostics.
+- [Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md):
+  structural Ruby syntax, validated callable/runtime plans, raw-site inventory,
+  and contributor boundaries.
 - [RubyHx And RailsHx Production Readiness](railshx-production-readiness.md):
   stable `1.x` evidence, scope, and the cross-dimensional `1.0` approval bar.
 - [GPT 5.6 Pro 1.0 Review Packet](rubyhx-railshx-gpt56-1.0-review.md):

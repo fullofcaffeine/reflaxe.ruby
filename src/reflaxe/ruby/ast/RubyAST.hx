@@ -1,5 +1,8 @@
 package reflaxe.ruby.ast;
 
+import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeUse;
+
+/** Closed structural Ruby syntax between typed Haxe lowering and printing. **/
 typedef RubyFile = {
 	var modulePath:Array<String>;
 	var statements:Array<RubyStatement>;
@@ -9,6 +12,7 @@ enum RubyStatement {
 	RubyNoop;
 	RubyComment(text:String);
 	RubyRawStatement(code:String);
+	RubyStatementSequence(body:Array<RubyStatement>);
 	RubyModuleDecl(name:String, body:Array<RubyStatement>);
 	RubyClassDecl(name:String, body:Array<RubyStatement>);
 	RubyClassDeclWithSuper(name:String, superclass:String, body:Array<RubyStatement>);
@@ -32,6 +36,7 @@ enum RubyExpr {
 	RubyHash(fields:Array<RubyHashField>);
 	RubySymbolHash(fields:Array<RubyHashField>);
 	RubyIndex(receiver:RubyExpr, index:RubyExpr);
+	RubyMember(receiver:RubyExpr, name:String);
 	RubyBinary(op:String, left:RubyExpr, right:RubyExpr);
 	RubyUnary(op:String, expr:RubyExpr);
 	RubyConditional(cond:RubyExpr, thenExpr:RubyExpr, elseExpr:RubyExpr);
@@ -41,6 +46,8 @@ enum RubyExpr {
 	RubyCall(?receiver:RubyExpr, name:String, args:Array<RubyExpr>);
 	RubyCallableCall(?receiver:RubyExpr, name:String, args:Array<RubyCallArgument>, ?block:RubyBlock);
 	RubyYield(args:Array<RubyExpr>);
+	RubyCase(scrutinee:RubyExpr, branches:Array<RubyCaseBranch>, defaultBody:Null<Array<RubyStatement>>);
+	RubyRuntimeCall(use:RubyRuntimeUse, args:Array<RubyExpr>);
 	RubyRawExpr(code:String);
 }
 
@@ -85,4 +92,10 @@ typedef RubyBlock = {
 typedef RubyHashField = {
 	var key:String;
 	var value:RubyExpr;
+}
+
+/** One structural Ruby case arm with one or more when values. **/
+typedef RubyCaseBranch = {
+	var values:Array<RubyExpr>;
+	var body:Array<RubyStatement>;
 }
