@@ -298,6 +298,52 @@ Rails named-zone behavior is not part of this Ruby-library catalog. It lives
 in the separate RailsHx layer through `RailsTime`, `TimeZone`, and
 `TimeWithZone`; see [Modern Temporal APIs](temporal-apis.md).
 
+## Seventh Reviewed Slice: Regexp and MatchData
+
+`ruby.Regexp` and `ruby.MatchData` expose a require-free, bounded subset of
+Ruby's native pattern and match-result contracts. Construction accepts String
+patterns plus a closed combination of the common ignore-case, extended, and
+multiline options. A separate keyword constructor attaches a per-instance
+timeout without changing Ruby's global Regexp policy:
+
+```haxe
+var options = ruby.RegexpOptions.ignoreCase | ruby.RegexpOptions.multiline;
+var expression = ruby.Regexp.compileWith(
+  "(?<word>r.by)",
+  options,
+  {timeoutSeconds: 0.05}
+);
+var match = expression.match("Ruby");
+```
+
+```ruby
+expression = Regexp.new("(?<word>r.by)", 1 | 4, timeout: 0.05)
+match = expression.match("Ruby")
+```
+
+`matches(...)` maps separately to Ruby's `match?`, so predicate-only code does
+not update Ruby's match globals. `match(...)` preserves native behavior and
+returns nullable `MatchData`. The result exposes indexed nullable captures,
+capture lengths, character-offset pairs, before/after text, the complete input,
+the originating Regexp, and typed capture-name/value inventories. The facade
+does not expose unchecked named lookup, byte offsets, ranges, heterogeneous
+value lists or unions, block overloads, arbitrary option integers, encoding
+flags, class-wide timeout mutation, or global last-match reads.
+
+The checked contract pins official `ruby/rbs` `v4.0.3` `core/regexp.rbs` and
+`core/match_data.rbs`, plus official `ruby/ruby` `re.c` sources at
+`v3_3_11`, `v3_4_10`, and `v4.0.0`. Focused evidence compiles direct native
+calls, rejects the omitted loose shapes, and executes option composition,
+matching, nullability, names, character offsets, and per-instance timeout on
+MRI.
+
+`Regexp.escape(...)` quotes a literal fragment; it does not prove that a larger
+pattern is cheap to execute. Callers accepting untrusted patterns or targets
+must bound their sizes and use an appropriate timeout. Portable Haxe `EReg`
+remains a distinct stateful semantic adapter for `matched*`, `matchSub`, the
+`g` option, and Haxe replacement rules. It shares only native escaping and the
+typed internal `MatchData` carrier where the contracts are exact.
+
 ## Updating The Catalog
 
 For each new domain:

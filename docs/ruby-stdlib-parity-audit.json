@@ -52,7 +52,7 @@
       "unitstdStatus": "enabled",
       "owner": "std/ruby/_std/EReg.hx",
       "next": "Keep covered by npm run test:unitstd-ruby.",
-      "notes": "Ruby Regexp is wrapped to preserve Haxe stateful match accessors and replacement behavior."
+      "notes": "Ruby Regexp is wrapped to preserve Haxe stateful match accessors and replacement behavior. The override reuses the precise ruby.Regexp.escape call and types its internal replacement carrier as ruby.MatchData, while Haxe-specific state, global/non-global behavior, and replacement expansion remain local."
     },
     {
       "module": "EvaluationOrder",

@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
-    "total": 237,
-    "implemented": 237,
+    "total": 242,
+    "implemented": 242,
     "missing": 0,
     "planned": 0,
     "deferred": 0,
@@ -23,8 +23,8 @@
         "deferred": 0
       },
       "std": {
-        "total": 212,
-        "implemented": 212,
+        "total": 217,
+        "implemented": 217,
         "missing": 0,
         "planned": 0,
         "deferred": 0

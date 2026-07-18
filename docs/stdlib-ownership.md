@@ -95,6 +95,16 @@ constructor-created `ruby.Tempfile` values expose nullable paths and
 guarantee. Open option bags and delegated IO remain excluded rather than
 leaking an unsafe type boundary.
 
+`ruby.Regexp` and `ruby.MatchData` are require-free Ruby-owned facades for
+native pattern matching and read-only results. Closed option bits, typed
+per-instance timeout keywords, indexed nullable captures, capture-name
+inventories, and character offsets emit direct core calls. They do not replace
+Haxe `EReg`: that override owns stateful `matched*` accessors, `matchSub`, the
+Haxe `g` option, and Haxe split/replacement/map semantics. The two layers share
+only `Regexp.escape` and the internal `MatchData` carrier where their contracts
+are identical; the remaining EReg adapter stays explicit to prevent target
+behavior from leaking into portable Haxe code.
+
 `ruby.Time` is the require-free Ruby-owned instant facade.
 `ruby.TimeParsing` is a separate native view that owns `require "time"` and
 strict string parsing, so parser loading does not silently become part of every
@@ -404,7 +414,9 @@ Ruby compiler's Haxe-compatible 32-bit integer lowering.
 `EReg` is enabled as a direct upstream fixture. It wraps Ruby `Regexp` while
 preserving Haxe stateful match accessors, `matchSub` offsets, global versus
 non-global split/replace/map behavior, capture expansion with `$1`/`$$`, and
-`EReg.escape()`.
+`EReg.escape()`. The escape call and internal replacement match value now use
+the precise public `ruby.Regexp`/`ruby.MatchData` contracts; broader native
+facade reuse would change the Haxe-owned state and replacement contract.
 
 `Map` is enabled as a direct upstream fixture. `StringMap` and `IntMap` use
 normal Ruby `Hash`; `ObjectMap` uses `Hash#compare_by_identity` to preserve Haxe

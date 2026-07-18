@@ -10,7 +10,8 @@ hand-written Ruby wherever the Ruby API already has the desired behavior.
 - Put Ruby-owned library surfaces under the `ruby` package:
   `ruby.Dir`, `ruby.File`, `ruby.FileUtils`, `ruby.Json`, `ruby.Kernel`,
   `ruby.Pathname`, `ruby.Tempfile`, `ruby.URI`, `ruby.CSV`, `ruby.Open3`,
-  `ruby.Set<T>`, `ruby.Time`, `ruby.TimeParsing`, and `ruby.Date` facades.
+  `ruby.Set<T>`, `ruby.Regexp`, `ruby.MatchData`, `ruby.Time`,
+  `ruby.TimeParsing`, and `ruby.Date` facades.
 - Keep the Haxe class name Haxe-idiomatic when RubyHx owns the authoring
   surface. Use `@:native` to point at Ruby constants with different spelling,
   for example `@:native("JSON") extern class Json`.
@@ -393,6 +394,80 @@ flattening, identity-comparison mode, mutable-element reset, subclass/CoreSet
 behavior, raw operators, and unchecked values remain outside this bounded
 contract. `require "set"` is retained for Ruby 3.3/3.4; Ruby 4.0 promotes Set
 to a core class while preserving the tested common surface.
+
+### Regexp and MatchData
+
+`ruby.Regexp` is the require-free native pattern facade, and
+`ruby.MatchData` is its read-only result. The constructor accepts only a
+`String` pattern and the closed, composable `RegexpOptions` values. Use
+`matches(...)` for Ruby's side-effect-free `match?` predicate and `match(...)`
+when the native `MatchData` value is required:
+
+```haxe
+var options = ruby.RegexpOptions.ignoreCase | ruby.RegexpOptions.multiline;
+var expression = new ruby.Regexp("(?<word>r.by)", options);
+
+if (expression.matches("Ruby")) {
+	var match = expression.match("Ruby");
+	if (match != null) {
+		ruby.Kernel.puts(match.capture(1));
+		ruby.Kernel.puts(match.offset(1).start());
+	}
+}
+```
+
+The generated Ruby uses the core constants directly and adds no require or
+wrapper:
+
+```ruby
+expression = Regexp.new("(?<word>r.by)", 1 | 4)
+if expression.match?("Ruby")
+  match = expression.match("Ruby")
+  unless match.nil?
+    Kernel.puts(match.match(1))
+    Kernel.puts(match.offset(1)[0])
+  end
+end
+```
+
+`match(...)` has Ruby's normal match-global side effect; the facade does not
+expose that process/thread-local global state. `matches(...)` maps to `match?`
+specifically so a predicate does not update it. Indexed captures are
+`Null<String>` because an optional group can be unmatched. `MatchOffset`
+names the two values returned by `MatchData#offset`; they are character
+positions, can both be null for an unmatched group, and erase to the native
+two-element Array without allocating a wrapper. Capture names are available
+as typed inventories through `names()`, `namedCaptureIndexes()`, and
+`namedCaptures()`. Unchecked lookup by a caller-provided name is omitted because
+Ruby raises when that name is unknown.
+
+Regular expressions are executable matching programs. Quote literal fragments
+with `Regexp.escape(...)`, but do not mistake quoting one fragment for a bound
+on the complete pattern's cost. Keep untrusted patterns and target strings
+size-bounded, and give untrusted or complex patterns a workload-appropriate
+per-instance timeout:
+
+```haxe
+var bounded = ruby.Regexp.compileWith(
+	"(?:a+)+$",
+	ruby.RegexpOptions.none,
+	{timeoutSeconds: 0.05}
+);
+```
+
+The timeout is attached to that native Regexp instance; this slice does not
+mutate Ruby's class-wide timeout policy. Arbitrary integer/encoding flags,
+byte offsets, ranges, heterogeneous union and value-list APIs, block-return
+overloads, global last-match access, and unchecked values stay outside the
+bounded surface.
+
+Native `ruby.Regexp` is not a replacement for portable Haxe `EReg`. `EReg`
+owns stateful `matched*` accessors, `matchSub` offsets, the `g` option, and
+Haxe-specific split/replace/map and `$1`/`$$` replacement semantics. Its Ruby
+override therefore remains a semantic adapter. It reuses the typed native
+`Regexp.escape` operation and types its internal replacement result as
+`ruby.MatchData` because those two contracts are exact; broad delegation would
+silently change Haxe behavior.
 
 ### Time and Date
 

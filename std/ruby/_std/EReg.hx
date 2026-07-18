@@ -1,5 +1,8 @@
 package;
 
+import ruby.MatchData as RubyMatchData;
+import ruby.Regexp as RubyRegexp;
+
 /**
 	Ruby `Regexp` backed implementation of Haxe `EReg`.
 
@@ -7,6 +10,11 @@ package;
 	`\1`, while Haxe expands `$1` and treats `$$` as a literal dollar. The
 	replacement path is kept here so constructor-created and `~/.../` regexes
 	share the same Haxe-facing contract.
+
+	This remains a semantic adapter rather than an alias for `ruby.Regexp`:
+	EReg owns stateful match accessors, `matchSub`, and `g` behavior. Only native
+	escaping and the internal `MatchData` value use the public typed facades,
+	because those contracts match exactly without changing portable behavior.
 **/
 class EReg {
 	final pattern:String;
@@ -76,10 +84,11 @@ class EReg {
 	}
 
 	public static function escape(s:String):String {
-		return untyped __ruby__("Regexp.escape({0})", s);
+		return RubyRegexp.escape(s);
 	}
 
-	static function expandReplacement(by:String, match:Dynamic):String {
+	/** Keeps the unsafe raw seam local while proving the native carrier's shape. **/
+	static function expandReplacement(by:String, match:RubyMatchData):String {
 		return
 			untyped __ruby__("(begin out = +''; index = 0; replacement = {0}.to_s; while index < replacement.length; char = replacement[index]; if char == '$' && index + 1 < replacement.length; next_char = replacement[index + 1]; if next_char == '$'; out << '$'; index += 2; next; elsif next_char >= '1' && next_char <= '9'; value = {1}[next_char.to_i]; out << value.to_s unless value.nil?; index += 2; next; end; end; out << char; index += 1; end; out end)",
 			by, match);

@@ -10,6 +10,9 @@ const root = resolve(__dirname, "..", "..");
 const stagedVersion = "0.2.3";
 const stagedTag = `v${stagedVersion}`;
 const sourceSha = run("git", ["rev-parse", "HEAD"]).stdout.trim();
+// Consumer fixtures live outside the repo's .ruby-version ancestry, so retain
+// the selected interpreter instead of letting an rbenv shim choose system Ruby.
+const activeRuby = run("ruby", ["-rrbconfig", "-e", "print RbConfig.ruby"]).stdout.trim();
 const archiveName = "reflaxe.ruby-release.zip";
 const archivePath = join(root, "dist", archiveName);
 const sidecarPath = `${archivePath}.sha256.json`;
@@ -122,10 +125,15 @@ for (const required of [
   "src/ruby/Date.hx",
   "src/ruby/Dir.hx",
   "src/ruby/FileUtils.hx",
+  "src/ruby/MatchData.hx",
+  "src/ruby/MatchOffset.hx",
   "src/ruby/Open3.hx",
   "src/ruby/Open3Capture.hx",
   "src/ruby/Open3Executable.hx",
   "src/ruby/Open3Status.hx",
+  "src/ruby/Regexp.hx",
+  "src/ruby/RegexpCompileOptions.hx",
+  "src/ruby/RegexpOptions.hx",
   "src/ruby/Set.hx",
   "src/ruby/Time.hx",
   "src/ruby/TimeParsing.hx",
@@ -284,7 +292,7 @@ try {
     "output = HXRuby::Rbs::ExternGenerator.new(root: ARGV.fetch(0), input: 'catalog.rbs', constant_name: 'PackagedCatalog', package_name: 'packaged.rbs').render",
     "abort 'packaged RBS generator mismatch' unless output.include?('extern class PackagedCatalog') && output.include?('public function label(value:String):String;')",
   ].join("; ");
-  run("ruby", ["-I", join(tempRoot, "lib"), "-e", packagedRbsCheck, rbsFixtureRoot]);
+  run(activeRuby, ["-I", join(tempRoot, "lib"), "-e", packagedRbsCheck, rbsFixtureRoot]);
   const outputDir = join(tempRoot, "out");
   run("haxe", [
     "-D",
@@ -325,6 +333,10 @@ try {
     join(consumerSrc, "SetPackageContract.hx"),
   );
   copyFileSync(
+    join(root, "test", "regexp_facade", "package_consumer", "RegexpPackageContract.hx"),
+    join(consumerSrc, "RegexpPackageContract.hx"),
+  );
+  copyFileSync(
     join(root, "test", "time_date_facade", "package_consumer", "TimeDatePackageContract.hx"),
     join(consumerSrc, "TimeDatePackageContract.hx"),
   );
@@ -340,6 +352,7 @@ try {
       "\t\tCsvPackageContract.verify();",
       "\t\tOpen3PackageContract.verify();",
       "\t\tSetPackageContract.verify();",
+      "\t\tRegexpPackageContract.verify();",
       "\t\tTimeDatePackageContract.verify();",
       "\t\tReportCli.execute(Sys.args());",
       "\t}",
@@ -391,7 +404,7 @@ try {
     }
   }
 
-  const installedStdout = run("ruby", [join(consumerOutputDir, "run.rb"), "sample.txt"], { cwd: consumerRoot }).stdout;
+  const installedStdout = run(activeRuby, [join(consumerOutputDir, "run.rb"), "sample.txt"], { cwd: consumerRoot }).stdout;
   const installedReport = JSON.parse(installedStdout);
   const expectedReport = { path: "sample.txt", lines: 2, words: 3, characters: 16 };
   if (JSON.stringify(installedReport) !== JSON.stringify(expectedReport)) {

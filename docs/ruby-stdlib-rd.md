@@ -230,6 +230,18 @@ RailsHx-owned `RailsTime`, `TimeZone`, and `TimeWithZone` facades rather than
 the Ruby stdlib catalog. Ruby `DateTime` remains a legacy interop concern, not
 the canonical modern application API.
 
+`ruby.Regexp` and `ruby.MatchData` add the require-free native pattern slice.
+The public contract combines only the stable ignore-case, extended, and
+multiline option bits, supports per-instance timeouts, distinguishes
+side-effect-free `match?` predicates from native match-result creation, and
+keeps captures, names, and character offsets precisely nullable. Arbitrary
+option integers, encoding flags, byte/range APIs, unchecked capture names,
+heterogeneous results, block overloads, class timeout mutation, and global
+last-match state stay omitted. The Haxe-semantic `EReg` override remains
+separate because it owns stateful accessors, global/non-global operations, and
+Haxe replacement expansion; only exact native escaping and the internal typed
+`MatchData` result are shared.
+
 These should generally live under `std/ruby/**` and lower to Ruby library calls.
 Do not copy Ruby stdlib behavior into HXRuby unless Haxe compatibility requires
 an adapter. See `docs/ruby-stdlib-facades.md` for package naming, API shape,
@@ -388,7 +400,8 @@ Create work from `docs/ruby-stdlib-parity-audit.json` in small slices:
    contract pipeline. The first curated inventory, reviewed URI, CSV,
    capture-only Open3, generic Ruby-semantic Set, native Time/Date facades, and
    strict require-backed Time parsing, plus the strict precise-or-omitted
-   generator foundation, are complete.
+   generator foundation, are complete. The catalog epic is closed; the bounded
+   native Regexp/MatchData slice is tracked separately as `haxe_ruby-roy7`.
    Broader RBS shapes and each later library facade remain separate work;
    generated contracts remain conservative, reviewed, compiled, and
    runtime-tested.

@@ -255,6 +255,46 @@
       "reason": "Generic Ruby-semantic Set facade for typed membership, mutation, algebra, relations, native block filtering/iteration, and explicit Array conversion without portable haxe.ds claims."
     },
     {
+      "id": "std.ruby.match_data",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/MatchData.hx",
+      "surface": "ruby.MatchData",
+      "reason": "Read-only native match result with indexed nullable captures, character offsets, named-capture inventories, and precise Regexp/String metadata without unchecked name or byte-offset APIs."
+    },
+    {
+      "id": "std.ruby.match_offset",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/MatchOffset.hx",
+      "surface": "ruby.MatchOffset",
+      "reason": "Erased named view of MatchData character-offset pairs that preserves nullable positions for unmatched optional captures without allocating a wrapper."
+    },
+    {
+      "id": "std.ruby.regexp",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/Regexp.hx",
+      "surface": "ruby.Regexp",
+      "reason": "Require-free native Regexp facade for typed construction, side-effect-aware matching, capture-name inventories, per-instance timeout, and read-only metadata."
+    },
+    {
+      "id": "std.ruby.regexp_compile_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/RegexpCompileOptions.hx",
+      "surface": "ruby.RegexpCompileOptions",
+      "reason": "Typed Ruby keyword schema for an optional per-instance Regexp timeout without an unchecked configuration bag or mutable class policy."
+    },
+    {
+      "id": "std.ruby.regexp_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/ruby/RegexpOptions.hx",
+      "surface": "ruby.RegexpOptions",
+      "reason": "Closed composable core Regexp option bits for ignore-case, extended, and multiline modes without arbitrary integer or encoding-flag conversion."
+    },
+    {
       "id": "std.ruby.time",
       "owner": "std",
       "status": "implemented",

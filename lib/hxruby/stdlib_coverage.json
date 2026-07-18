@@ -221,6 +221,76 @@
       "notes": "Kernel preserves Ruby conversion while Prelude is an explicit Haxe-stringification convenience; their semantics stay distinct."
     },
     {
+      "id": "core.regexp",
+      "distributionByRuby": {
+        "3.3": "core",
+        "3.4": "core",
+        "4.0": "core"
+      },
+      "coverageStatus": "implemented-public",
+      "surfaces": [
+        "ruby.MatchData",
+        "ruby.MatchOffset",
+        "ruby.Regexp",
+        "ruby.RegexpCompileOptions",
+        "ruby.RegexpOptions"
+      ],
+      "facadePaths": [
+        "std/ruby/MatchData.hx",
+        "std/ruby/MatchOffset.hx",
+        "std/ruby/Regexp.hx",
+        "std/ruby/RegexpCompileOptions.hx",
+        "std/ruby/RegexpOptions.hx"
+      ],
+      "evidence": [
+        "npm run test:regexp-facade"
+      ],
+      "runtimeProbe": {
+        "constants": [
+          "Regexp",
+          "MatchData"
+        ]
+      },
+      "contractProvenance": {
+        "kind": "reviewed-rbs-plus-supported-ruby-sources",
+        "repository": "https://github.com/ruby/rbs",
+        "release": "v4.0.3",
+        "library": "core/regexp-and-match-data",
+        "sources": [
+          {
+            "path": "core/regexp.rbs",
+            "sha256": "08802060f3dadb312c579d45c531e1839b86d3ba242f1d296f2498f32e70aa69"
+          },
+          {
+            "path": "core/match_data.rbs",
+            "sha256": "b7e331c5eaedc74905a78de8d75b47289453d20ded644282fc1c730b34ee7277"
+          }
+        ],
+        "implementationSources": [
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v3_3_11",
+            "path": "re.c",
+            "sha256": "05950daa8c7e7bb2cceb2e1a36fbd5a05dcd772b38afaa2e8bfc4b70490e6e45"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v3_4_10",
+            "path": "re.c",
+            "sha256": "3842f4b60fce8e669acd607e8964f0c4e59cf694e22be97ccfe13ee1c86a9bae"
+          },
+          {
+            "repository": "https://github.com/ruby/ruby",
+            "release": "v4.0.0",
+            "path": "re.c",
+            "sha256": "e316d5a3835c48699c279a4ad67dcd07d397f6ae079849cadb4df8058938b112"
+          }
+        ],
+        "curation": "Construction accepts String patterns and a closed composable set of IGNORECASE, EXTENDED, and MULTILINE options, with an optional per-instance Float timeout. Matching accepts String targets and character offsets; results expose indexed nullable captures, character-offset pairs, capture-name inventories, and read-only native metadata. Arbitrary option integers, encoding flags, unchecked named lookup, byte offsets, ranges, heterogeneous unions/value lists, block overloads, mutable class timeout, and global last-match access are omitted."
+      },
+      "notes": "The require-free core facades preserve direct Ruby Regexp and MatchData behavior. Haxe EReg remains a separate stateful Haxe-semantics wrapper and reuses only the exact typed escape and native match-result seams."
+    },
+    {
       "id": "core.string-binary",
       "distributionByRuby": {
         "3.3": "core",

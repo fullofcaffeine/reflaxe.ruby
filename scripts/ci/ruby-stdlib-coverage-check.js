@@ -107,6 +107,11 @@ assert(
   "Set facade evidence must be mandatory in npm test",
 );
 assert(
+  packageJson.scripts?.test?.includes("test:regexp-facade") &&
+    packageJson.scripts?.["test:regexp-facade"]?.includes("regexp-facade-smoke.js"),
+  "Regexp facade evidence must be mandatory in npm test",
+);
+assert(
   packageJson.scripts?.test?.includes("test:time-date-facade") &&
     packageJson.scripts?.["test:time-date-facade"]?.includes("time-date-facade-smoke.js"),
   "Time/Date facade evidence must be mandatory in npm test",
@@ -284,6 +289,49 @@ for (const source of [
   assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `Set provenance SHA-256 is invalid: ${source.path}`);
 }
 assert(isNonEmptyString(set.contractProvenance?.curation), "Set provenance must describe signature curation");
+
+const regexp = coverage.domains.find((domain) => domain.id === "core.regexp");
+assert(regexp?.coverageStatus === "implemented-public", "core.regexp must be an implemented public contract");
+assert(regexp.contractProvenance?.kind === "reviewed-rbs-plus-supported-ruby-sources", "Regexp provenance kind mismatch");
+assert(regexp.contractProvenance?.repository === "https://github.com/ruby/rbs", "Regexp provenance must use official ruby/rbs");
+assert(regexp.contractProvenance?.release === "v4.0.3", "Regexp provenance must pin the reviewed RBS release");
+assert(
+  regexp.contractProvenance?.library === "core/regexp-and-match-data",
+  "Regexp provenance must name both reviewed core contracts",
+);
+assert(
+  JSON.stringify(regexp.facadePaths) === JSON.stringify([
+    "std/ruby/MatchData.hx",
+    "std/ruby/MatchOffset.hx",
+    "std/ruby/Regexp.hx",
+    "std/ruby/RegexpCompileOptions.hx",
+    "std/ruby/RegexpOptions.hx",
+  ]) &&
+    regexp.evidence?.includes("npm run test:regexp-facade") &&
+    regexp.runtimeProbe?.require === undefined,
+  "Regexp facade, evidence, or require-free contract mismatch",
+);
+assert(
+  JSON.stringify(regexp.runtimeProbe?.constants) === JSON.stringify(["Regexp", "MatchData"]),
+  "Regexp runtime probe must cover both native constants",
+);
+assert(
+  Array.isArray(regexp.contractProvenance?.sources) && regexp.contractProvenance.sources.length === 2,
+  "Regexp and MatchData RBS sources required",
+);
+assert(
+  Array.isArray(regexp.contractProvenance?.implementationSources)
+    && regexp.contractProvenance.implementationSources.length === 3,
+  "Regexp supported implementation sources required",
+);
+for (const source of [
+  ...(regexp.contractProvenance?.sources ?? []),
+  ...(regexp.contractProvenance?.implementationSources ?? []),
+]) {
+  assert(isNonEmptyString(source.path), "Regexp provenance source path required");
+  assert(/^[0-9a-f]{64}$/.test(source.sha256 ?? ""), `Regexp provenance SHA-256 is invalid: ${source.path}`);
+}
+assert(isNonEmptyString(regexp.contractProvenance?.curation), "Regexp provenance must describe signature curation");
 
 const time = coverage.domains.find((domain) => domain.id === "core.time");
 assert(time?.coverageStatus === "implemented-public", "core.time must be an implemented public contract");
