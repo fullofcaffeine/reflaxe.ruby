@@ -5,6 +5,52 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.9 typed ActionCable client-channel publication
+
+The normal tested-commit workflow published
+[`v1.9.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.9.0)
+on 2026-07-18 for inferred, typed ActionCable browser subscriptions.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `b1fba23972223a1da0a469c21402375c224192e0` |
+| Release intent | `feat: infer typed ActionCable client channels`, followed by the generated stdlib-gap report refresh on the tested SHA |
+| Canonical release tag | `v1.9.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29653863727`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29653863727), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`88107898499`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29653863727/job/88107898499), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-18T18:03:40Z` |
+| Release notes | Version heading, `v1.8.0...v1.9.0` compare link, categorized feature bullet, and exact implementation commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.9.0.gem` | `hxruby 1.9.0 Ruby gem` | 271872 | `8c22667b3e52a3ad3e76691fdcc3f30887a5b23c841b56414e19eaccf04e7068` |
+| `hxruby-1.9.0.gem.sha256.json` | `hxruby 1.9.0 SHA-256 metadata` | 301 | `c64e96cae257be715224628f04864e9e065b8307b3d89ade49d41bff0557aa1b` |
+| `reflaxe.ruby-1.9.0.zip` | `reflaxe.ruby 1.9.0 haxelib package` | 1265077 | `4c305def72d09834a8f59c8d9bcc98be106a75ab09a65aacdeced8035166e012` |
+| `reflaxe.ruby-1.9.0.zip.sha256.json` | `reflaxe.ruby 1.9.0 SHA-256 metadata` | 314 | `941de41fe4cc6addea43e323db909d2f904176e6a2e8512556f1c8de918cffe3` |
+
+Each downloaded sidecar binds its artifact to version `1.9.0`, tag `v1.9.0`,
+the tested source SHA, hosted filename, byte count, and independently matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+complete format-1 manifests verify 705 Haxelib payload entries and 333 gem
+payload entries. Both contain `rails.action_cable.ChannelRef`, the compatible
+`Consumer` escape surface, and the `ChannelMacro` that infers the channel
+constant and both generic types; the Haxelib package places its class path under
+`src/`, while the gem intentionally retains the repository's `std/` layout.
+
+Focused generated-shape and Node runtime evidence proves that
+`TodosChannel.client.subscribe(...)` emits a direct native
+`consumer.subscriptions.create(...)` call without a client wrapper or compiled
+server class. Negative compilation owns wrong params, wrong payload callbacks,
+non-channel classes, and unchecked strings. Vendored Genes module output and
+the real ActionCable/Rails runtime pass, while Ruby channel output remains
+unchanged. GitHub reports the completed release as natively immutable, and the
+active protected-tag ruleset still forbids deletion and non-fast-forward
+updates to `refs/tags/v*` with no bypass actor.
+
 ## Stable 1.8 typed Regexp and MatchData publication
 
 The normal tested-commit workflow published
@@ -471,6 +517,7 @@ Actions APIs plus downloaded sidecars. Recheck them with read-only commands:
 
 ```bash
 git ls-remote --tags origin
+gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.9.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.8.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.7.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.6.0
@@ -481,6 +528,7 @@ gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.2.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.1.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.0.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v0.1.2
+gh run view 29653863727 --json headSha,conclusion,jobs,url
 gh run view 29630132266 --json headSha,conclusion,jobs,url
 gh run view 29619029159 --json headSha,conclusion,jobs,url
 gh run view 29564630637 --json headSha,conclusion,jobs,url
