@@ -11,7 +11,7 @@ const {
   symlinkSync,
   writeFileSync,
 } = require("node:fs");
-const { join, resolve } = require("node:path");
+const { delimiter, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
 const {
@@ -50,6 +50,47 @@ function run(command, args, options = {}) {
 
 function trackedDiff() {
   return `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;
+}
+
+/**
+ * Put cwd-sensitive Ruby and gem shims ahead of PATH to reproduce version-manager behavior. The
+ * Ruby shim delegates only when invoked from the repository, where `.ruby-version` is meaningful;
+ * any lookup after entering a staging directory fails. The gem shim always fails because the gem
+ * builder must invoke RubyGems through the already selected absolute Ruby executable.
+ */
+function cwdSensitiveRubyEnvironment(tempRoot, environment) {
+  const selectedRuby = run("ruby", ["-rrbconfig", "-e", "print RbConfig.ruby"]).stdout.trim();
+  if (selectedRuby.length === 0) fail("selected Ruby did not report its executable path");
+  const shimBin = join(tempRoot, "cwd-sensitive-ruby-bin");
+  mkdirSync(shimBin);
+
+  const rubyShim = join(shimBin, "ruby");
+  writeFileSync(rubyShim, [
+    "#!/usr/bin/env node",
+    'const { spawnSync } = require("node:child_process");',
+    `const repositoryRoot = ${JSON.stringify(root)};`,
+    `const selectedRuby = ${JSON.stringify(selectedRuby)};`,
+    "if (process.cwd() !== repositoryRoot) {",
+    '  process.stderr.write("cwd-sensitive ruby resolver escaped repository context\\n");',
+    "  process.exit(86);",
+    "}",
+    'const result = spawnSync(selectedRuby, process.argv.slice(2), { env: process.env, stdio: "inherit" });',
+    "if (result.error) throw result.error;",
+    "process.exit(result.status ?? 1);",
+    "",
+  ].join("\n"));
+  chmodSync(rubyShim, 0o755);
+
+  const gemShim = join(shimBin, "gem");
+  writeFileSync(gemShim, [
+    "#!/usr/bin/env node",
+    'process.stderr.write("ambient gem executable must not build release artifacts\\n");',
+    "process.exit(87);",
+    "",
+  ].join("\n"));
+  chmodSync(gemShim, 0o755);
+
+  return { ...environment, PATH: `${shimBin}${delimiter}${environment.PATH ?? ""}` };
 }
 
 /**
@@ -144,8 +185,9 @@ try {
   const secondTmp = join(tempRoot, "tmp-two");
   mkdirSync(firstTmp);
   mkdirSync(secondTmp);
-  const first = buildPair({ ...process.env, TZ: "Pacific/Honolulu", LC_ALL: "C", LANG: "C", TMPDIR: firstTmp }, 0o077);
-  const second = buildPair({ ...process.env, TZ: "Europe/Helsinki", LC_ALL: "C", LANG: "C", TMPDIR: secondTmp }, 0o022);
+  const toolchainEnvironment = cwdSensitiveRubyEnvironment(tempRoot, process.env);
+  const first = buildPair({ ...toolchainEnvironment, TZ: "Pacific/Honolulu", LC_ALL: "C", LANG: "C", TMPDIR: firstTmp }, 0o077);
+  const second = buildPair({ ...toolchainEnvironment, TZ: "Europe/Helsinki", LC_ALL: "C", LANG: "C", TMPDIR: secondTmp }, 0o022);
 
   for (const name of outputNames) {
     if (!first[name].equals(second[name])) fail(`${name} changed across timezone, temp directory, or umask`);

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { copyFileSync, mkdirSync, mkdtempSync, rmSync } = require("node:fs");
-const { dirname, join, resolve } = require("node:path");
+const { dirname, isAbsolute, join, resolve } = require("node:path");
 const { execFileSync, spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
 const {
@@ -26,6 +26,24 @@ const identity = identityArgs.length === 0
   ? developmentIdentity(execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim())
   : identityFromArgs(identityArgs);
 const outPath = join(root, "dist", "hxruby-release.gem");
+
+/**
+ * Resolve Ruby while the repository's version selector is still in scope. Ruby version managers
+ * such as rbenv can choose an older system interpreter after this builder enters its temporary
+ * staging tree, which changes RubyGems metadata and therefore the immutable gem bytes. RbConfig
+ * identifies the interpreter that already honored the repository/toolchain selection; every
+ * executable gemspec and RubyGems operation below must stay on that exact interpreter.
+ */
+function selectedRubyExecutable() {
+  const selected = execFileSync("ruby", ["-rrbconfig", "-e", "print RbConfig.ruby"], {
+    cwd: root,
+    encoding: "utf8",
+  }).trim();
+  if (selected.length === 0) throw new Error("Selected Ruby did not report its executable path");
+  return isAbsolute(selected) ? selected : resolve(root, selected);
+}
+
+const rubyExecutable = selectedRubyExecutable();
 
 function run(command, args, cwd = root, env = process.env) {
   const result = spawnSync(command, args, {
@@ -55,7 +73,7 @@ try {
   // select or dereference them. The resulting set also constrains every gem entry to the tested
   // commit instead of trusting arbitrary filesystem paths returned by executable gemspec code.
   const sourceFiles = new Set(walkFiles(sourceRoot));
-  const fileList = run("ruby", ["-e", 'require "rubygems"; Gem::Specification.load("hxruby.gemspec").files.each { |file| puts file }'], sourceRoot)
+  const fileList = run(rubyExecutable, ["-e", 'require "rubygems"; Gem::Specification.load("hxruby.gemspec").files.each { |file| puts file }'], sourceRoot)
     .stdout.trim().split("\n").filter(Boolean);
   if (new Set(fileList).size !== fileList.length) throw new Error("gemspec contains duplicate package paths");
   for (const file of fileList) {
@@ -74,7 +92,19 @@ try {
   const releaseEnv = { ...process.env, SOURCE_DATE_EPOCH: sourceDateEpoch, TZ: "UTC", LC_ALL: "C", LANG: "C" };
   const previousUmask = process.umask(0o022);
   try {
-    run("gem", ["build", "hxruby.gemspec", "--output", outPath], stageRoot, releaseEnv);
+    // Calling the `gem` executable would repeat the cwd-sensitive version-manager lookup. Running
+    // RubyGems' own CLI under rubyExecutable preserves normal `gem build` behavior while binding
+    // the package metadata format to the selected and CI-pinned Ruby/RubyGems toolchain.
+    run(rubyExecutable, [
+      "-rrubygems/gem_runner",
+      "-e",
+      "Gem::GemRunner.new.run(ARGV)",
+      "--",
+      "build",
+      "hxruby.gemspec",
+      "--output",
+      outPath,
+    ], stageRoot, releaseEnv);
   } finally {
     process.umask(previousUmask);
   }

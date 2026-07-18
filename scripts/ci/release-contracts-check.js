@@ -814,6 +814,11 @@ expectIncludes(haxelibPackageBuilder, `"vendor", "reflaxe"`, "Haxelib package bu
 expectIncludes(haxelibPackageBuilder, `"lib/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"vendor/genes/src/"`, "Haxelib package builder");
 expectIncludes(haxelibPackageBuilder, `"hxruby.gemspec"`, "Haxelib package builder");
+expectIncludes(gemPackageBuilder, '"print RbConfig.ruby"', "gem package selected Ruby binding");
+expectIncludes(gemPackageBuilder, '"Gem::GemRunner.new.run(ARGV)"', "gem package selected RubyGems runner");
+expectExcludes(gemPackageBuilder, 'run("gem"', "gem package ambient executable guard");
+expectIncludes(artifactReproducibilityCheck, "cwd-sensitive ruby resolver escaped repository context", "gem package cwd-sensitive Ruby regression fixture");
+expectIncludes(artifactReproducibilityCheck, "ambient gem executable must not build release artifacts", "gem package ambient executable regression fixture");
 expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3.hx"`, "Haxelib Open3 package builder source lock");
 expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3Capture.hx"`, "Haxelib Open3 capture package builder source lock");
 expectIncludes(haxelibPackageBuilder, `"std/ruby/Open3Executable.hx"`, "Haxelib Open3 executable package builder source lock");
