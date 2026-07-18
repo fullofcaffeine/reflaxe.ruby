@@ -5,6 +5,75 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.10 structural lowering and development-loop publication
+
+The normal tested-commit workflow first published
+[`v1.10.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.10.0)
+on 2026-07-18 for the bounded structural-lowering plan from GitHub issue 20
+and the change-aware RailsHx development loop. Independent artifact
+verification then found a local packaging-tool selection defect, not a defect
+in the CI-pinned `v1.10.0` bytes. The follow-up tested-commit workflow
+published immutable
+[`v1.10.1`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.10.1)
+with the packaging fix; `v1.10.1` is the final evidence baseline for this
+slice.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `639701ae779764573633970d14b694314a20ca4b` |
+| Included implementation lineage | `eddf957` structural Ruby lowering plans, `9ce3887` change-aware RailsHx development loop, `fc381a1` refreshed structural route-parity fixture, and `639701a` selected-Ruby gem packaging fix |
+| Canonical release tag | `v1.10.1`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29663936094`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29663936094), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`88134002479`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29663936094/job/88134002479), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-18T23:21:09Z` |
+| Release notes | Version heading, `v1.10.0...v1.10.1` compare link, categorized bug-fix bullet, and exact `639701a` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.10.1.gem` | `hxruby 1.10.1 Ruby gem` | 275456 | `4642d04b10b9f87c944769b4fe4d5bc9bd0e58f1dac280a03fce680b57a046dd` |
+| `hxruby-1.10.1.gem.sha256.json` | `hxruby 1.10.1 SHA-256 metadata` | 304 | `c3fc024597dfcf3a6f84d783cdce0511aed73e149fdddedf880f5c26d44fbe94` |
+| `reflaxe.ruby-1.10.1.zip` | `reflaxe.ruby 1.10.1 haxelib package` | 1294928 | `b0f88dd0fd4bc7f482a9e1f341ef6523bb53a007e47fad064ed8d32f1a800779` |
+| `reflaxe.ruby-1.10.1.zip.sha256.json` | `reflaxe.ruby 1.10.1 SHA-256 metadata` | 317 | `9c5f3e891c38fa61bbf031490e69c8c2795a8b6b9b1bdde9ec70a877fa0261f8` |
+
+Each downloaded sidecar binds its artifact to version `1.10.1`, tag
+`v1.10.1`, the tested source SHA, hosted filename, byte count, and
+independently matching digest. The extracted ZIP and gem embed the same
+release provenance. Their complete format-1 manifests verify 712 Haxelib
+payload entries and 334 gem payload entries. A fresh local release preparation
+from the clean tested commit, with no version-manager override, reproduced both
+hosted artifacts byte-for-byte.
+
+The compiler slice keeps one final Ruby AST print boundary, validates the
+structural AST before printing, represents arrays, conditional/block
+expressions, switch/case, and enum access structurally, composes callable
+decisions into one per-method plan, and gives every `hxruby` helper call a
+closed helper/intent contract. The checked inventory owns 322 remaining raw or
+print-reembed sites. Runtime, snapshot, callable ABI, all 32 examples, browser,
+and production evidence passed without a semantic output regression.
+
+The development slice adds one packaged `hxruby:dev` loop with an initial
+server/client build, target-directed HXML and transitive Lix resolver input
+discovery, change snapshots, debounce/coalescing, affected-target rebuilds, and
+recovery after compile failures. Generated RailsHx applications and the todo
+dogfood app use the coordinated runner, while the existing watch aliases remain
+compatible.
+
+The independently downloaded `v1.10.0` assets were also correct: their API
+digests, sidecars, embedded manifests, and an explicitly Ruby-3.4.10-selected
+local rebuild all matched. The mismatch appeared only when the old local gem
+builder entered a temporary directory and a cwd-sensitive rbenv shim fell back
+from repository Ruby 3.4.10/RubyGems 3.6.9 to system RubyGems 3.0.3.1. The
+`v1.10.1` builder now resolves `RbConfig.ruby` in repository context and runs
+both the executable gemspec and `Gem::GemRunner` under that absolute
+interpreter. An executable regression fixture places hostile cwd-sensitive
+`ruby` and `gem` shims first on `PATH`; artifact reproducibility must still
+pass. `v1.10.0` remains valid and immutable, while `v1.10.1` hardens future
+local and hosted rebuild agreement.
+
 ## Stable 1.9 typed ActionCable client-channel publication
 
 The normal tested-commit workflow published
