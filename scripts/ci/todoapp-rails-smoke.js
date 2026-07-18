@@ -293,6 +293,7 @@ function compileTodoClient() {
     "insertBefore(item",
     "static async syncChatPanel",
     "await Async.delay(0)",
+    ".client.subscribe(consumer",
     "Consumer.subscribe(consumer, \"Channels::ChatMessagesChannel\"",
     "Turbo.renderStreamMessage(Turbo.stream(\"prepend\", \"railshx-chat-list\"",
     "static escapeHtml(value)",

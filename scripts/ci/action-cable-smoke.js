@@ -25,6 +25,7 @@ const invalidConsumerSourceDir = join(root, "test", ".generated", "action_cable_
 const invalidConsumerOutputDir = join(root, "test", ".generated", "action_cable_invalid_consumer_out");
 const invalidPerformSourceDir = join(root, "test", ".generated", "action_cable_invalid_perform_src");
 const invalidPerformOutputDir = join(root, "test", ".generated", "action_cable_invalid_perform_out");
+const invalidClientContractSourceDir = join(root, "test", ".generated", "action_cable_invalid_client_contract_src");
 const jsWorkDir = mkdtempSync(join(tmpdir(), "railshx-action-cable."));
 const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
 let currentStage = "startup";
@@ -44,6 +45,7 @@ rmSync(invalidConsumerSourceDir, { force: true, recursive: true });
 rmSync(invalidConsumerOutputDir, { force: true, recursive: true });
 rmSync(invalidPerformSourceDir, { force: true, recursive: true });
 rmSync(invalidPerformOutputDir, { force: true, recursive: true });
+rmSync(invalidClientContractSourceDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -79,7 +81,6 @@ for (const expected of [
     fail(`ActionCable connection output missing expected line: ${expected}`);
   }
 }
-
 const channelRuby = readFileSync(join(outputDir, "app", "channels", "todos_channel.rb"), "utf8");
 for (const expected of [
   /require "action_cable\/engine"/,
@@ -102,6 +103,11 @@ for (const expected of [
     fail(`ActionCable channel output missing expected line: ${expected}`);
   }
 }
+for (const forbidden of [/ChannelRef/, /def self\.client/, /def client/]) {
+  if (forbidden.test(channelRuby)) {
+    fail(`ActionCable channel output leaked the browser-only typed client reference: ${forbidden}`);
+  }
+}
 
 const mainRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "generated", "main.rb"), "utf8");
 if (!/TodosChannel\.announce\("open", "Typed cable payload"\)/.test(mainRuby)) {
@@ -118,10 +124,12 @@ for (const file of ["app/channels/application_cable/connection.rb", "app/channel
 }
 
 compileClient();
+compileGenericChannelClient();
 writeInvalidFixtures();
 writeInvalidRawStringFixtures();
 writeInvalidConsumerFixtures();
 writeInvalidPerformFixtures();
+writeInvalidClientContractFixtures();
 
 const invalidPayload = compileActionCable(invalidOutputDir, {
   classPath: invalidSourceDir,
@@ -249,6 +257,62 @@ if (!/has no field title|title|Cannot unify/.test(invalidPerformPayload.stderr +
   fail("Invalid ActionCable perform payload failed for an unexpected reason.");
 }
 
+const invalidRawChannelRef = compileClient({
+  classPath: invalidClientContractSourceDir,
+  main: "InvalidRawChannelRefMain",
+  allowFailure: true,
+});
+if (invalidRawChannelRef.status === 0) {
+  fail("Expected a raw ActionCable channel string to fail the typed client-ref contract.");
+}
+if (!/ChannelRef|String should be rails\.action_cable\.ChannelRef|Cannot unify/.test(invalidRawChannelRef.stderr + invalidRawChannelRef.stdout)) {
+  process.stdout.write(invalidRawChannelRef.stdout);
+  process.stderr.write(invalidRawChannelRef.stderr);
+  fail("Raw ActionCable channel ref failed for an unexpected reason.");
+}
+
+const invalidNonChannelRef = compileClient({
+  classPath: invalidClientContractSourceDir,
+  main: "InvalidNonChannelRefMain",
+  allowFailure: true,
+});
+if (invalidNonChannelRef.status === 0) {
+  fail("Expected a non-@:railsChannel class to lack a typed client reference.");
+}
+if (!/has no field client|client/.test(invalidNonChannelRef.stderr + invalidNonChannelRef.stdout)) {
+  process.stdout.write(invalidNonChannelRef.stdout);
+  process.stderr.write(invalidNonChannelRef.stderr);
+  fail("Non-channel client ref failed for an unexpected reason.");
+}
+
+const invalidClientParams = compileClient({
+  classPath: invalidClientContractSourceDir,
+  main: "InvalidClientParamsMain",
+  allowFailure: true,
+});
+if (invalidClientParams.status === 0) {
+  fail("Expected typed ActionCable client params to reject the wrong field type.");
+}
+if (!/String should be Int|Int should be String|Cannot unify|listId/.test(invalidClientParams.stderr + invalidClientParams.stdout)) {
+  process.stdout.write(invalidClientParams.stdout);
+  process.stderr.write(invalidClientParams.stderr);
+  fail("Invalid ActionCable client params failed for an unexpected reason.");
+}
+
+const invalidClientPayload = compileClient({
+  classPath: invalidClientContractSourceDir,
+  main: "InvalidClientPayloadMain",
+  allowFailure: true,
+});
+if (invalidClientPayload.status === 0) {
+  fail("Expected typed ActionCable received callbacks to reject the wrong payload type.");
+}
+if (!/TodoBroadcast|Int|Cannot unify|received/.test(invalidClientPayload.stderr + invalidClientPayload.stdout)) {
+  process.stdout.write(invalidClientPayload.stdout);
+  process.stderr.write(invalidClientPayload.stderr);
+  fail("Invalid ActionCable client payload failed for an unexpected reason.");
+}
+
 stage("runtime materialization", materializeRuntimeRailsApp);
 stage("runtime ruby syntax", () => syntaxCheck([
   "app/channels/todos_channel.rb",
@@ -344,8 +408,7 @@ function compileClient(options = {}) {
   const js = readFileSync(outFile, "utf8");
   for (const expected of [
     "ActionCable.createConsumer()",
-    "Object.assign({ channel: channel }, params)",
-    "consumer.subscriptions.create(identifier, callbacks)",
+    'consumer.subscriptions.create(Object.assign({ channel: "TodosChannel" },',
     "subscription.perform(\"ping\", { title : \"client ping\"})",
     "TodosChannel",
     "received",
@@ -354,7 +417,112 @@ function compileClient(options = {}) {
       fail(`ActionCable JS client output missing ${expected}`);
     }
   }
+  for (const forbidden of ["channels_TodosChannel", "rails_action_$cable_ChannelRef", "Object.assign({ channel: channel }, params)"]) {
+    if (js.includes(forbidden)) {
+      fail(`ActionCable JS client output leaked a server class, wrapper, or unchecked channel seam: ${forbidden}`);
+    }
+  }
+  const nodeProbe = [
+    "global.ActionCable = {",
+    "  createConsumer: function() {",
+    "    return { subscriptions: { create: function(identifier, callbacks) {",
+    "      if (identifier.channel !== 'TodosChannel' || identifier.listId !== 'open') throw new Error('typed identifier mismatch');",
+    "      if (typeof callbacks.received !== 'function') throw new Error('typed callback missing');",
+    "      callbacks.received({ title: 'runtime', completed: false });",
+    "      return { perform: function(action, data) {",
+    "        if (action !== 'ping' || data.title !== 'client ping') throw new Error('typed action mismatch');",
+    "      } };",
+    "    } } };",
+    "  }",
+    "};",
+    `require(${JSON.stringify(outFile)});`,
+  ].join("\n");
+  run("node", ["-e", nodeProbe]);
+  compileGenesClient(srcDir);
   return result;
+}
+
+function compileGenesClient(srcDir) {
+  const outDir = join(jsWorkDir, "genes");
+  const outFile = join(outDir, "_cable_client_tmp.js");
+  mkdirSync(outDir, { recursive: true });
+  run("haxe", [
+    "-lib",
+    "railshx.client",
+    "-lib",
+    "genes",
+    "-D",
+    "js-es=6",
+    "--macro",
+    "genes.Generator.use()",
+    "-cp",
+    join(root, "examples", "action_cable"),
+    "-cp",
+    srcDir,
+    "-main",
+    "CableClientMain",
+    "-js",
+    outFile,
+    "--dce=full",
+  ]);
+  const clientModule = join(outDir, "client", "TodosCableClient.js");
+  if (!existsSync(clientModule)) {
+    fail("ActionCable Genes client did not emit client/TodosCableClient.js.");
+  }
+  const js = readFileSync(clientModule, "utf8");
+  for (const expected of ['channel: "TodosChannel"', "consumer.subscriptions.create", "payload.title"]) {
+    if (!js.includes(expected)) {
+      fail(`ActionCable Genes client output missing ${expected}`);
+    }
+  }
+  if (existsSync(join(outDir, "channels", "TodosChannel.js")) || js.includes("ChannelRef")) {
+    fail("ActionCable Genes client emitted the server channel or a ChannelRef runtime wrapper.");
+  }
+}
+
+function compileGenericChannelClient() {
+  const srcDir = join(jsWorkDir, "generic-channel-src");
+  const outFile = join(jsWorkDir, "generic_channel_client.js");
+  mkdirSync(srcDir, { recursive: true });
+  writeFileSync(join(srcDir, "GenericChannelMain.hx"), [
+    "import rails.action_cable.Channel;",
+    "import rails.action_cable.Consumer;",
+    "typedef GenericParams = { var roomId:String; }",
+    "typedef GenericPayload = { var title:String; }",
+    "class GenericChannelBase<TParams, TPayload> extends Channel<TParams, TPayload> {}",
+    "@:railsChannel",
+    "class GenericChannel extends GenericChannelBase<GenericParams, GenericPayload> {",
+    "\tpublic function subscribed():Void {}",
+    "}",
+    "class GenericChannelMain {",
+    "\tstatic function main():Void {",
+    "\t\tGenericChannel.client.subscribe(Consumer.create(), {roomId: \"main\"}, {",
+    "\t\t\treceived: function(payload):Void { trace(payload.title); }",
+    "\t\t});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  run("haxe", [
+    "-cp",
+    join(root, "std"),
+    "-cp",
+    srcDir,
+    "-main",
+    "GenericChannelMain",
+    "-js",
+    outFile,
+    "--dce=full",
+  ]);
+  const js = readFileSync(outFile, "utf8");
+  for (const expected of ['channel: "GenericChannel"', "roomId", "payload.title"]) {
+    if (!js.includes(expected)) {
+      fail(`Generic-base ActionCable client output missing ${expected}`);
+    }
+  }
+  if (js.includes("ChannelRef") || js.includes("GenericChannel = function")) {
+    fail("Generic-base ActionCable client emitted a ChannelRef wrapper or server channel class.");
+  }
 }
 
 function writeInvalidFixtures() {
@@ -449,22 +617,70 @@ function writeInvalidConsumerFixtures() {
 function writeInvalidPerformFixtures() {
   mkdirSync(invalidPerformSourceDir, { recursive: true });
   writeFileSync(join(invalidPerformSourceDir, "InvalidRawPerformMain.hx"), [
+    "import channels.TodosChannel;",
     "import rails.action_cable.Consumer;",
     "class InvalidRawPerformMain {",
     "\tstatic function main():Void {",
-    "\t\tvar subscription = Consumer.subscribe(Consumer.create(), \"TodosChannel\", {listId: \"open\"}, {});",
+    "\t\tvar subscription = TodosChannel.client.subscribe(Consumer.create(), {listId: \"open\"}, {});",
     "\t\tsubscription.perform(\"ping\", {title: \"raw action string\"});",
     "\t}",
     "}",
     "",
   ].join("\n"));
   writeFileSync(join(invalidPerformSourceDir, "InvalidPerformPayloadMain.hx"), [
+    "import channels.TodosChannel;",
     "import channels.TodosChannel.TodoCable;",
     "import rails.action_cable.Consumer;",
     "class InvalidPerformPayloadMain {",
     "\tstatic function main():Void {",
-    "\t\tvar subscription = Consumer.subscribe(Consumer.create(), \"TodosChannel\", {listId: \"open\"}, {});",
+    "\t\tvar subscription = TodosChannel.client.subscribe(Consumer.create(), {listId: \"open\"}, {});",
     "\t\tsubscription.perform(TodoCable.pingAction(), {missingTitle: \"bad payload\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function writeInvalidClientContractFixtures() {
+  mkdirSync(invalidClientContractSourceDir, { recursive: true });
+  writeFileSync(join(invalidClientContractSourceDir, "InvalidRawChannelRefMain.hx"), [
+    "import channels.TodosChannel.TodoBroadcast;",
+    "import channels.TodosChannel.TodoSubscriptionParams;",
+    "import rails.action_cable.ChannelRef;",
+    "class InvalidRawChannelRefMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar ref:ChannelRef<TodoSubscriptionParams, TodoBroadcast> = \"TodosChannel\";",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidClientContractSourceDir, "InvalidNonChannelRefMain.hx"), [
+    "class PlainClientClass {}",
+    "class InvalidNonChannelRefMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar ref = PlainClientClass.client;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidClientContractSourceDir, "InvalidClientParamsMain.hx"), [
+    "import channels.TodosChannel;",
+    "import rails.action_cable.Consumer;",
+    "class InvalidClientParamsMain {",
+    "\tstatic function main():Void {",
+    "\t\tTodosChannel.client.subscribe(Consumer.create(), {listId: 7}, {});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidClientContractSourceDir, "InvalidClientPayloadMain.hx"), [
+    "import channels.TodosChannel;",
+    "import rails.action_cable.Consumer;",
+    "class InvalidClientPayloadMain {",
+    "\tstatic function main():Void {",
+    "\t\tTodosChannel.client.subscribe(Consumer.create(), {listId: \"open\"}, {",
+    "\t\t\treceived: function(payload:Int):Void {}",
+    "\t\t});",
     "\t}",
     "}",
     "",

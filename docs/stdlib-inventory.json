@@ -1279,6 +1279,14 @@
       "reason": "Typed ActionCable channel base surface for railsChannel classes, subscription params, typed connection identifiers, streams, transmit, reject, and stream cleanup helpers."
     },
     {
+      "id": "std.rails.action_cable_channel_ref",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/action_cable/ChannelRef.hx",
+      "surface": "rails.action_cable.ChannelRef",
+      "reason": "Zero-runtime browser subscription reference generated from an @:railsChannel server class; carries its params and payload types and exact Rails constant without an app-facing raw channel string."
+    },
+    {
       "id": "std.rails.action_cable_connection",
       "owner": "std",
       "status": "implemented",
@@ -1316,7 +1324,7 @@
       "status": "implemented",
       "path": "std/rails/action_cable/Consumer.hx",
       "surface": "rails.action_cable.Consumer",
-      "reason": "Typed Haxe JavaScript facade for Rails ActionCable consumer creation and subscriptions; create() returns a nominal Consumer handle so subscribe(...) no longer accepts raw Dynamic consumer objects."
+      "reason": "Typed Haxe JavaScript facade for Rails ActionCable consumer creation; canonical Haxe-owned channels subscribe through generated ChannelRef values, while subscribeExternal(...) names the deliberate Rails-owned-channel interop seam."
     },
     {
       "id": "std.rails.action_cable_stream",
@@ -1388,7 +1396,7 @@
       "status": "implemented",
       "path": "std/rails/macros/ChannelMacro.hx",
       "surface": "rails.macros.ChannelMacro",
-      "reason": "Build macro for railsChannel classes that enforces the initial subscribed() channel contract."
+      "reason": "Build macro for railsChannel classes that enforces subscribed() and generates the browser-only typed client channel reference from the server-owned generic contract."
     },
     {
       "id": "std.rails.active_storage",

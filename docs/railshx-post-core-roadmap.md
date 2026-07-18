@@ -159,9 +159,11 @@ Typed boundary:
   matching broadcast shapes. These use `StreamTarget`, `StreamName<TPayload>`,
   and `Template<TLocals>` while lowering to Rails `turbo_stream.*` and
   `Turbo::StreamsChannel.broadcast_*_to` calls.
-- Initial implemented slice: `@:railsChannel` classes, typed
+- Implemented slice: `@:railsChannel` classes, typed
   `Channel<TParams, TPayload>`, typed subscription params, typed streams,
-  `ActionCable.broadcast(...)`, and a Haxe JS facade for
+  `ActionCable.broadcast(...)`, and browser-only
+  `MyChannel.client:ChannelRef<TParams, TPayload>` references that infer the
+  Rails constant, subscription params, and received payload while lowering to
   `consumer.subscriptions.create(...)`. See
   [RailsHx ActionCable Guide](railshx-action-cable-guide.md).
 - Full-stack Hotwire contracts should connect ActionCable payloads, Turbo
@@ -172,7 +174,9 @@ Typed boundary:
   refresh and model callback macros where the target Rails API shape is proven,
   plus runtime Rails test coverage.
 - Haxe-authored JS clients that layer on Rails importmap/Turbo conventions.
-- `rails.action_cable.Channel<TParams>` for channel params and stream names.
+- A Hotwire contract macro that connects channel subscriptions, stream names,
+  targets, HHX templates/locals, and browser-test hooks without repeated app
+  declarations.
 
 Lowering strategy:
 

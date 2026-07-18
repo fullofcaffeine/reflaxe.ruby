@@ -132,6 +132,8 @@ try {
     "std/ruby/TimeParsing.hx",
     "std/ruby/URI.hx",
     "std/ruby/URIValue.hx",
+    "std/rails/action_cable/ChannelRef.hx",
+    "std/rails/action_cable/Consumer.hx",
     "std/rails/active_support/RailsTime.hx",
     "std/rails/active_support/TimeWithZone.hx",
     "std/rails/active_support/TimeZone.hx",
@@ -141,6 +143,7 @@ try {
     "std/rails/turbo/Turbo.hx",
     "std/rails/turbo/TurboStreams.hx",
     "std/rails/turbo/TurboVisitAction.hx",
+    "std/rails/macros/ChannelMacro.hx",
   ]) {
     if (!existsSync(join(unpackedRoot, required))) {
       fail(`gem missing required entry: ${required}`);
@@ -353,14 +356,26 @@ function smokeClientLibrary(unpackedRoot) {
   writeFileSync(
     join(appRoot, "src", "ClientMain.hx"),
     [
+      "import rails.action_cable.Channel;",
+      "import rails.action_cable.Consumer;",
       "import rails.turbo.Turbo;",
       "import rails.turbo.TurboVisitAction;",
       "import reflaxe.js.Async;",
+      "typedef PackagedChannelParams = { var roomId:String; }",
+      "typedef PackagedChannelPayload = { var title:String; }",
+      "class PackagedChannelBase<TParams, TPayload> extends Channel<TParams, TPayload> {}",
+      "@:railsChannel",
+      "class PackagedChannel extends PackagedChannelBase<PackagedChannelParams, PackagedChannelPayload> {",
+      "\tpublic function subscribed():Void {}",
+      "}",
       "class ClientMain {",
       "\tstatic function main():Void {",
       "\t\tTurbo.onLoad(function(_) {});",
       "\t\tTurbo.visit(\"/\", { action: TurboVisitAction.Replace });",
       "\t\tAsync.delay(1);",
+      "\t\tPackagedChannel.client.subscribe(Consumer.create(), {roomId: \"main\"}, {",
+      "\t\t\treceived: function(payload):Void { trace(payload.title); }",
+      "\t\t});",
       "\t}",
       "}",
       "",
@@ -381,6 +396,13 @@ function smokeClientLibrary(unpackedRoot) {
 
   if (!existsSync(clientOut)) {
     fail("railshx.client gem smoke did not emit client.js");
+  }
+  const clientJs = readFileSync(clientOut, "utf8");
+  if (!clientJs.includes('channel: "PackagedChannel"') || !clientJs.includes("payload.title")) {
+    fail("railshx.client gem smoke did not preserve the packaged typed ActionCable channel contract");
+  }
+  if (clientJs.includes("ChannelRef") || clientJs.includes("PackagedChannel = function")) {
+    fail("railshx.client gem smoke emitted a ChannelRef wrapper or server channel class");
   }
   if (existsSync(unexpectedRubyOut)) {
     fail("railshx.client gem smoke unexpectedly produced Ruby output");

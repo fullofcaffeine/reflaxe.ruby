@@ -69,7 +69,7 @@ Turbo, DOM, or stdout APIs from leaking into the shared module.
 | Surface | Current state | Gap |
 | --- | --- | --- |
 | Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>`, `StreamName<TLocals>`, and `StreamTarget`. The todoapp now dogfoods this with `turbo_stream_from`, server-rendered broadcasts, and a hand-written shared chat room contract. | Needs model/callback ergonomics and reusable stream contract generation. |
-| ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. | Useful for custom payload protocols, but not the canonical DOM update path when Turbo Streams can render a partial. |
+| ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. JavaScript builds derive `MyChannel.client:ChannelRef<TParams, TPayload>` for native subscriptions without repeated channel strings. | Useful for custom payload protocols, but not the canonical DOM update path when Turbo Streams can render a partial. The broader contract macro still needs to connect subscriptions to streams, targets, and templates. |
 | Haxe JS Turbo client | `Turbo.on*`, `Turbo.renderStreamMessage`, `Turbo.stream`, and Genes ES modules work with importmap. | Client-rendered stream HTML should be generated/typed when deliberately chosen; canonical Hotwire examples should not hand-build DOM fragments. |
 | Shared hooks | `TodoHooks` centralizes app-wide ids, attrs, classes, selectors, storage keys, and Playwright exports. `ChatRoomHooks` adds a focused browser-safe Hotwire hook layer for the chat room. | Needs a reusable generator/macro pattern, not only hand-written samples. |
 | Shared pure domain behavior | `shared_domain` compiles one typed todo-draft contract and common vectors to Ruby and JavaScript, then requires byte-identical validation, ordered errors, and serialization output. | One bounded contract is proven; new domain claims need their own vectors and target-edge documentation. |
@@ -182,30 +182,34 @@ This removes the client HTML string and lets HHX own the row markup.
 
 ### Client Subscription Helper
 
-For data broadcasts or client-rendered streams, app code should not repeat the
-channel constant or payload type. A generated helper can wrap
-`Consumer.subscribe(...)`:
+For data broadcasts or client-rendered streams, app code does not repeat the
+channel constant or payload type. Every `@:railsChannel` class now receives a
+browser-only typed `client` reference:
 
 ```haxe
-ChatRoomClient.subscribe(Consumer.create(), {
+ChatMessagesChannel.client.subscribe(Consumer.create(), {roomId: roomId}, {
 	connected: () -> ChatRoomHooks.markReady(),
 	disconnected: () -> ChatRoomHooks.markDisconnected(),
 	received: payload -> ChatRoomStreams.prependClientRendered(payload)
 });
 ```
 
-Generated Haxe can still lower to:
+The `Channel<TParams, TPayload>` base fixes both client types, and the build
+macro derives the exact Rails constant from the channel class. Generated Haxe
+still lowers to:
 
 ```js
 consumer.subscriptions.create(
-  { channel: "Channels::PresenceChannel" },
+  Object.assign({ channel: "ChatMessagesChannel" }, { roomId: roomId }),
   callbacks
 )
 ```
 
-The Haxe-facing API should infer the channel name from
-`@:railsChannel class PresenceChannel` rather than making users repeat
-`"Channels::PresenceChannel"` in app code.
+The reference is an inline abstract with no JavaScript wrapper, the server class
+is not emitted into the browser bundle, and the generated field is absent from
+Ruby output. `Consumer.subscribeExternal(...)` remains the explicit escape for
+Rails-owned channels that have no Haxe channel contract. The next contract-macro
+phase can build higher-level helpers on this landed primitive.
 
 ### Typed Client-Rendered Stream
 
@@ -320,8 +324,10 @@ The current todoapp chat is now the regression sentinel for this design:
    `ChatRoomHooks`/`ChatRoomContract` slice.
 2. **Server-rendered todoapp row broadcast**: landed with the typed
    `ChatMessageView` HHX partial and `TurboStreams.broadcastPrependTo(...)`.
-3. **Typed channel subscription helper**: infer the channel identifier from
-   `@:railsChannel` and remove string channel names from app-facing Haxe JS.
+3. **Typed channel subscription helper**: landed as the browser-only
+   `MyChannel.client:ChannelRef<TParams, TPayload>` generated from
+   `@:railsChannel`; app-facing Haxe JS no longer repeats the channel string or
+   client types.
 4. **Hotwire contract macro**: generate stream/target/template/subscription
    helpers from one declaration.
 5. **Target existence validation**: validate owned HHX targets and add checked

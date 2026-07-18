@@ -50,7 +50,7 @@ textual import scan proves runtime semantics.
 
 | Component family | Supported slice | Required target evidence |
 | --- | --- | --- |
-| ActionCable | Channels, connections, typed subscriptions, streams, payloads, perform actions, client facade | Generated Rails channel tests plus browser sentinel |
+| ActionCable | Channels, connections, server-derived typed client subscriptions, streams, payloads and perform actions | Generated Rails channel tests plus stock Haxe JS, Genes and browser-client sentinels |
 | ActionController and routing | Controllers, lifecycle, params, request/response, route refs and Haxe-owned route DSL | Rails request/integration runtime |
 | ActionMailer | Mailers, params, templates, attachments, previews and delivery | Generated Rails mailer tests |
 | ActionView, HHX and components | Typed templates, helpers, forms, partials, layouts, capture and slots | Rails integration, Chromium and production dogfood |
@@ -71,7 +71,7 @@ missing gems fail instead of turning those runtime checks into optional skips.
 
 ## Result And Limits
 
-At the 2026-07-17 audit, the supported roots directly use only
+At the 2026-07-18 audit, the supported roots directly use only
 Haxe/sys modules classified as covered. The direct Ruby facade imports are
 `ruby.Date`, `ruby.File`, `ruby.StandardError`, and `ruby.Time`; all are
 implemented and exercised by their owning ActiveSupport temporal,

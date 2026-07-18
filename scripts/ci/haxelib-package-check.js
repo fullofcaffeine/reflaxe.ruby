@@ -185,6 +185,7 @@ for (const required of [
   "src/rails/active_job/LifecycleDecl.hx",
   "src/rails/action_cable/Action.hx",
   "src/rails/action_cable/Channel.hx",
+  "src/rails/action_cable/ChannelRef.hx",
   "src/rails/action_cable/Connection.hx",
   "src/rails/action_cable/ConnectionDecl.hx",
   "src/rails/action_cable/ConnectionIdentifier.hx",
