@@ -33,8 +33,10 @@ fall back to raw strings or print a child AST for re-embedding.
 
 `RubyASTValidator` runs before file and standalone-expression printing. It
 keeps declarations out of executable bodies, validates closed control shapes,
-and cross-checks every typed hxruby runtime use. The checked source inventory
-and contributor rules are documented in
+and cross-checks every typed hxruby runtime use. Child recursion and
+declaration/executable body roles come from the exhaustive `RubyASTChildren`
+schema, so validators and future generic analyses do not maintain independent
+child switches. The checked source inventory and contributor rules are documented in
 [Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md).
 
 ## Intentional Erasure Is Different

@@ -5,11 +5,7 @@ import reflaxe.ruby.ast.RubyAST.RubyExpr;
 import reflaxe.ruby.ast.RubyAST.RubyFile;
 import reflaxe.ruby.ast.RubyAST.RubyMethodParameter;
 import reflaxe.ruby.ast.RubyAST.RubyStatement;
-
-private enum RubyStatementContext {
-	DeclarationBody;
-	ExecutableBody;
-}
+import reflaxe.ruby.ast.RubyASTChildren.RubyStatementChildRole;
 
 /**
 	Validates structural Ruby invariants before punctuation is emitted.
@@ -24,7 +20,7 @@ class RubyASTValidator {
 		if (file == null || file.statements == null) {
 			fail("a Ruby file must have a statement list");
 		}
-		validateStatements(file.statements, DeclarationBody);
+		RubyASTChildren.walkFileImmediate(file, (statement, role) -> validateStatement(statement, role));
 	}
 
 	public static function validateExpr(expr:RubyExpr):Void {
@@ -36,163 +32,106 @@ class RubyASTValidator {
 			case RubyLocal(name):
 				requireName(name, "local or constant");
 			case RubyArray(values):
-				validateExprs(values);
+				requireList(values, "a Ruby array");
 			case RubyHash(fields) | RubySymbolHash(fields):
-				if (fields != null) {
-					for (field in fields) {
-						validateExpr(field.value);
+				requireList(fields, "a Ruby hash");
+				for (field in fields) {
+					if (field == null) {
+						fail("a Ruby hash field cannot be null");
 					}
 				}
-			case RubyIndex(receiver, index):
-				validateExpr(receiver);
-				validateExpr(index);
-			case RubyMember(receiver, name):
-				validateExpr(receiver);
+			case RubyIndex(_, _):
+			case RubyMember(_, name):
 				if (name == null || !~/^[A-Za-z_][A-Za-z0-9_]*[!?=]?$/.match(name)) {
 					fail("invalid Ruby member name " + Std.string(name));
 				}
-			case RubyBinary(_, left, right):
-				validateExpr(left);
-				validateExpr(right);
-			case RubyUnary(_, value):
-				validateExpr(value);
-			case RubyConditional(cond, thenExpr, elseExpr):
-				validateExpr(cond);
-				validateExpr(thenExpr);
-				validateExpr(elseExpr);
-			case RubyBegin(body):
-				validateStatements(body, ExecutableBody);
-			case RubyLambda(args, body):
+			case RubyBinary(_, _, _) | RubyUnary(_, _) | RubyConditional(_, _, _) | RubyBegin(_):
+			case RubyLambda(args, _):
 				validateNames(args, "lambda parameter");
-				validateStatements(body, ExecutableBody);
-			case RubyCallableLambda(args, body):
-				validateMethodParameters(args);
-				validateStatements(body, ExecutableBody);
-			case RubyCall(receiver, name, args):
-				if (receiver != null) {
-					validateExpr(receiver);
-				}
+			case RubyCallableLambda(args, _):
+				validateMethodParameterShapes(args);
+			case RubyCall(_, name, _):
 				requireName(name, "call");
-				validateExprs(args);
-			case RubyCallableCall(receiver, name, args, block):
-				if (receiver != null) {
-					validateExpr(receiver);
-				}
+			case RubyCallableCall(_, name, args, block):
 				requireName(name, "call");
-				if (args != null) {
-					for (arg in args) {
-						validateCallArgument(arg);
-					}
-				}
+				validateCallArgumentShapes(args);
 				if (block != null) {
 					validateNames(block.args, "block parameter");
-					validateStatements(block.body, ExecutableBody);
 				}
-			case RubyYield(args):
-				validateExprs(args);
-			case RubyCase(scrutinee, branches, defaultBody):
-				validateExpr(scrutinee);
+			case RubyYield(_):
+			case RubyCase(_, branches, _):
 				if (branches == null) {
 					fail("a Ruby case must have a branch list");
 				}
 				for (branch in branches) {
+					if (branch == null) {
+						fail("a Ruby case branch cannot be null");
+					}
 					if (branch.values == null || branch.values.length == 0) {
 						fail("a Ruby case branch must have at least one when value");
 					}
-					validateExprs(branch.values);
-					validateStatements(branch.body, ExecutableBody);
 				}
-				if (defaultBody != null) {
-					validateStatements(defaultBody, ExecutableBody);
-				}
-			case RubyRuntimeCall(use, args):
+			case RubyRuntimeCall(use, _):
 				RubyRuntimePlan.validate(use);
-				validateExprs(args);
 		}
+		RubyASTChildren.walkExprImmediate(expr, validateExpr, (statement, role) -> validateStatement(statement, role));
 	}
 
-	static function validateStatements(statements:Array<RubyStatement>, context:RubyStatementContext):Void {
-		if (statements == null) {
-			return;
-		}
-		for (statement in statements) {
-			validateStatement(statement, context);
-		}
-	}
-
-	static function validateStatement(statement:RubyStatement, context:RubyStatementContext):Void {
+	static function validateStatement(statement:RubyStatement, context:RubyStatementChildRole):Void {
 		if (statement == null) {
 			fail("a statement cannot be null");
 		}
 		switch (statement) {
 			case RubyNoop | RubyComment(_) | RubyRawStatement(_):
 			case RubyStatementSequence(body):
-				validateStatements(body, ExecutableBody);
-			case RubyModuleDecl(name, body) | RubyClassDecl(name, body):
+				requireList(body, "a Ruby statement sequence");
+			case RubyModuleDecl(name, _) | RubyClassDecl(name, _):
 				requireDeclarationContext(context);
 				requireName(name, "declaration");
-				validateStatements(body, DeclarationBody);
-			case RubyClassDeclWithSuper(name, superclass, body):
+			case RubyClassDeclWithSuper(name, superclass, _):
 				requireDeclarationContext(context);
 				requireName(name, "declaration");
 				requireName(superclass, "superclass");
-				validateStatements(body, DeclarationBody);
-			case RubyMethodDecl(name, args, body):
+			case RubyMethodDecl(name, args, _):
 				requireDeclarationContext(context);
 				requireName(name, "method");
-				validateMethodParameters(args);
-				validateStatements(body, ExecutableBody);
-			case RubyExprStatement(expr):
-				validateExpr(expr);
-			case RubyAssign(target, value):
-				validateExpr(target);
-				validateExpr(value);
-			case RubyReturn(value):
-				if (value != null) {
-					validateExpr(value);
-				}
-			case RubyIfStmt(cond, thenBody, elseBody):
-				validateExpr(cond);
-				validateStatements(thenBody, ExecutableBody);
-				validateStatements(elseBody, ExecutableBody);
-			case RubyWhileStmt(cond, body):
-				validateExpr(cond);
-				validateStatements(body, ExecutableBody);
+				validateMethodParameterShapes(args);
+			case RubyExprStatement(_) | RubyAssign(_, _) | RubyReturn(_) | RubyIfStmt(_, _, _) | RubyWhileStmt(_, _):
 		}
+		RubyASTChildren.walkStatementImmediate(statement, validateExpr, (child, role) -> validateStatement(child, role));
 	}
 
-	static function validateMethodParameters(parameters:Array<RubyMethodParameter>):Void {
+	static function validateMethodParameterShapes(parameters:Array<RubyMethodParameter>):Void {
 		if (parameters == null) {
 			return;
 		}
 		for (parameter in parameters) {
+			if (parameter == null) {
+				fail("a Ruby method parameter cannot be null");
+			}
 			switch (parameter) {
 				case RubyRequiredParameter(name) | RubyRestParameter(name) | RubyRequiredKeywordParameter(name) | RubyKeywordRestParameter(name) |
 					RubyBlockParameter(name):
 					requireName(name, "method parameter");
-				case RubyOptionalParameter(name, defaultValue) | RubyOptionalKeywordParameter(name, defaultValue):
+				case RubyOptionalParameter(name, _) | RubyOptionalKeywordParameter(name, _):
 					requireName(name, "method parameter");
-					validateExpr(defaultValue);
 			}
 		}
 	}
 
-	static function validateCallArgument(argument:RubyCallArgument):Void {
-		switch (argument) {
-			case RubyPositionalArgument(value) | RubySplatArgument(value) | RubyKeywordSplatArgument(value) | RubyBlockPassArgument(value):
-				validateExpr(value);
-			case RubyKeywordArgument(name, value):
-				requireName(name, "keyword argument");
-				validateExpr(value);
-		}
-	}
-
-	static function validateExprs(values:Array<RubyExpr>):Void {
-		if (values == null) {
+	static function validateCallArgumentShapes(arguments:Array<RubyCallArgument>):Void {
+		if (arguments == null) {
 			return;
 		}
-		for (value in values) {
-			validateExpr(value);
+		for (argument in arguments) {
+			if (argument == null) {
+				fail("a Ruby call argument cannot be null");
+			}
+			switch (argument) {
+				case RubyPositionalArgument(_) | RubySplatArgument(_) | RubyKeywordSplatArgument(_) | RubyBlockPassArgument(_):
+				case RubyKeywordArgument(name, _):
+					requireName(name, "keyword argument");
+			}
 		}
 	}
 
@@ -205,9 +144,15 @@ class RubyASTValidator {
 		}
 	}
 
-	static function requireDeclarationContext(context:RubyStatementContext):Void {
+	static function requireDeclarationContext(context:RubyStatementChildRole):Void {
 		if (context != DeclarationBody) {
 			fail("a declaration reached an executable statement or expression body");
+		}
+	}
+
+	static function requireList<T>(values:Array<T>, kind:String):Void {
+		if (values == null) {
+			fail(kind + " must have a child list");
 		}
 	}
 

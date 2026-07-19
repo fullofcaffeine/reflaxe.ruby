@@ -3273,6 +3273,26 @@
       "snippet": "RubyRawExpr(code:String);"
     },
     {
+      "id": "src/reflaxe/ruby/ast/RubyASTChildren.hx::mapStatementImmediate::RubyRawStatement::1",
+      "file": "src/reflaxe/ruby/ast/RubyASTChildren.hx",
+      "line": 54,
+      "column": 37,
+      "token": "RubyRawStatement",
+      "function": "mapStatementImmediate",
+      "category": "ast-infrastructure",
+      "snippet": "case RubyNoop | RubyComment(_) | RubyRawStatement(_):"
+    },
+    {
+      "id": "src/reflaxe/ruby/ast/RubyASTChildren.hx::mapExprImmediate::RubyRawExpr::1",
+      "file": "src/reflaxe/ruby/ast/RubyASTChildren.hx",
+      "line": 84,
+      "column": 108,
+      "token": "RubyRawExpr",
+      "function": "mapExprImmediate",
+      "category": "ast-infrastructure",
+      "snippet": "case RubyNil | RubyBool(_) | RubyInt(_) | RubyFloat(_) | RubyString(_) | RubySymbol(_) | RubyLocal(_) | RubyRawExpr(_):"
+    },
+    {
       "id": "src/reflaxe/ruby/ast/RubyASTPrinter.hx::writeStatement::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/ast/RubyASTPrinter.hx",
       "line": 35,
@@ -3295,7 +3315,7 @@
     {
       "id": "src/reflaxe/ruby/ast/RubyASTValidator.hx::validateExpr::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/ast/RubyASTValidator.hx",
-      "line": 35,
+      "line": 31,
       "column": 93,
       "token": "RubyRawExpr",
       "function": "validateExpr",
@@ -3305,7 +3325,7 @@
     {
       "id": "src/reflaxe/ruby/ast/RubyASTValidator.hx::validateStatement::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/ast/RubyASTValidator.hx",
-      "line": 128,
+      "line": 85,
       "column": 37,
       "token": "RubyRawStatement",
       "function": "validateStatement",

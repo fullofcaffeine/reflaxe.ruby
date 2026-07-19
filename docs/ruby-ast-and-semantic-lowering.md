@@ -21,13 +21,15 @@ At this slice:
 - `RubyCompiler.hx` is 14,575 lines and remains the Reflaxe orchestration
   entrypoint.
 - `RubyAST.hx` is 101 lines and owns closed expression/statement syntax.
+- `RubyASTChildren` exhaustively owns every immediate structural child and the
+  declaration-versus-executable role of every statement body.
 - `RubyASTValidator` checks cross-node invariants before either a file or a
   standalone expression is printed.
 - `RubyCallablePlan` records definition-side block and keyword decisions once
   per method.
 - `RubyRuntimePlan` closes the 47 compiler-selected hxruby helpers and gives
   each emitted use a semantic intent.
-- The checked inventory currently classifies 322 raw or print-reembed source
+- The checked inventory currently classifies 324 raw or print-reembed source
   sites. The count is planning evidence, not a product-quality score.
 
 The root compiler ceiling moved down with the extraction. Rails-specific
@@ -42,6 +44,7 @@ it was intentionally not folded into this core AST slice.
 | Haxe `TypedExpr` | Resolved Haxe meaning, types, declarations, and source positions | Ruby punctuation |
 | Focused semantic plans | Observable Ruby choices that need independent validation | A second copy of every `TypedExprDef` |
 | `RubyAST` | Ruby declarations, expressions, statements, control flow, calls, and runtime-use nodes | Haxe type analysis or target text |
+| `RubyASTChildren` | Exhaustive immediate children, deterministic child order, and declaration/executable body roles | Semantic lowering, raw-text inspection, or pass scheduling |
 | `RubyASTValidator` | Cross-node shape, executable/declaration contexts, and plan/use agreement | Syntax formatting |
 | `RubyASTPrinter` | Tokens, precedence, escaping, indentation, and line endings | Semantic rediscovery |
 | `RubyOutputIterator` | The single final AST-to-file print boundary | Compiler-side print/re-embedding |
@@ -65,6 +68,28 @@ the committed `switch_cases` snapshot byte for byte.
 `RubyASTValidator` also rejects declarations inside method/expression bodies,
 invalid structural member names, empty `case` arms, and runtime uses whose
 intent does not match their helper.
+
+## Exhaustive Child Contract
+
+`RubyASTChildren` is the one authoritative child schema for statements,
+expressions, method-parameter defaults, callable arguments, native blocks,
+hash fields, and case branches. Its immediate mappers have an explicit case for
+every constructor and deliberately have no catch-all. Raw statement and
+expression nodes are opaque leaves because the compiler cannot safely infer
+children, bindings, or control flow from their target text.
+
+The schema also assigns every nested statement body one of two structural
+roles:
+
+- declaration bodies may contain modules, classes, and methods; and
+- executable bodies reject declarations before Ruby punctuation is emitted.
+
+Deterministic preorder walking is derived from the immediate mapping rather
+than maintained through another recursive switch. `RubyASTValidator` owns only
+node-local and cross-node invariants, then delegates child recursion and role
+propagation to this schema. Adding or changing an AST constructor therefore
+requires an explicit child/scope decision plus identity, sentinel-child, and
+scope-order evidence in `npm run test:ruby-ast`.
 
 ## When A Semantic Plan Earns Its Cost
 
@@ -148,14 +173,16 @@ When adding lowering:
 
 1. Keep Haxe meaning in `TypedExpr`.
 2. Use or add a closed `RubyAST` form for ordinary Ruby syntax.
-3. Add a focused semantic plan only when it records an observable target
+3. Update `RubyASTChildren` and its exhaustive child/scope tests for every new
+   constructor or nested child carrier.
+4. Add a focused semantic plan only when it records an observable target
    decision that needs validation before AST construction.
-4. Give every hxruby helper use a closed runtime intent.
-5. Do not print an AST subtree for insertion into another raw node.
-6. If raw Ruby is genuinely required, keep it at an explicit authority seam,
+5. Give every hxruby helper use a closed runtime intent.
+6. Do not print an AST subtree for insertion into another raw node.
+7. If raw Ruby is genuinely required, keep it at an explicit authority seam,
    document why structure is impractical, and update the inventory owner and
    focused evidence.
-7. Preserve source-positioned fail-closed diagnostics for unsupported Haxe
+8. Preserve source-positioned fail-closed diagnostics for unsupported Haxe
    input.
 
 ## Remaining Incremental Debt

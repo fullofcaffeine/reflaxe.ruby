@@ -38,7 +38,7 @@
     "test:haxe-compiler-shell": "node scripts/ci/compiler-shell-check.js",
     "test:compiler-metadata-docs": "node scripts/ci/compiler-metadata-doc-check.js",
     "test:ruby-compiler-decomposition": "node scripts/ci/ruby-compiler-decomposition-check.js",
-    "test:ruby-ast": "haxe -cp src -cp test -main RubyASTPrinterTestMain --interp",
+    "test:ruby-ast": "haxe -cp src -cp test -main RubyASTPrinterTestMain --interp && haxe -cp src -cp test -main RubyASTChildrenTestMain --interp",
     "test:ruby-ast-inventory": "node scripts/ci/ruby-ast-inventory-check.js",
     "test:ruby-unsupported-expressions": "node scripts/ci/ruby-unsupported-expression-diagnostics.js",
     "test:ruby-callable-diagnostics": "node scripts/ci/ruby-callable-diagnostics-smoke.js",
