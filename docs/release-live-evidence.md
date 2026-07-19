@@ -52,6 +52,29 @@ rethrows. The checked raw/print-reembed inventory fell from 324 to 318 sites.
 No general semantic IR, pass framework, metadata side channel, or unowned
 `ensure` representation was added.
 
+## Post-1.10.2 structural-refactor no-release continuity
+
+The bounded loop and Int32 architecture slices after `v1.10.2` deliberately
+preserved the public release contract. Each push ran the complete canonical
+workflow on its exact source SHA, and each gated release job independently
+classified the accumulated `refactor`/`docs` lineage as non-releasing:
+
+| Slice | Exact tested SHA | Canonical workflow | Gated release job | Result |
+| --- | --- | --- | --- | --- |
+| Structural residual-loop lowering | `8473e5a81889e321cad702cb14cc01aa0aa6af5d` | [`29681012077`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29681012077) | [`88180018806`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29681012077/job/88180018806) | All 14 jobs passed; two commits analyzed, `no release` |
+| Loop evidence closure | `0e4eb15a44b374f4bba56b3ee617ea527c2890b1` | [`29682199568`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29682199568) | [`88183201982`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29682199568/job/88183201982) | All 14 jobs passed; three commits analyzed, `no release` |
+| Structural Int32 lowering | `cf1cbfcecc60b44ecc5e53f0a69dd5675ebc74eb` | [`29685310179`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29685310179) | [`88191589080`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29685310179/job/88191589080) | All 14 jobs passed; four commits analyzed, `no release` |
+
+Every release job logged `There are no relevant changes, so no new version is
+released.` After the Int32 run, neither a `v1.10.3` remote tag nor GitHub
+Release exists. `v1.10.2` remains the latest release, remains natively
+immutable, and still has exactly the four verified assets recorded above.
+
+Both compiler slices use the existing structural Ruby AST rather than adding a
+semantic IR, pass framework, or printer repair. The checked raw/print-reembed
+inventory fell from 318 sites after exception lowering to 311 after residual
+loop lowering and 300 after fixed-width Int32 lowering.
+
 ## Stable 1.10 structural lowering and development-loop publication
 
 The normal tested-commit workflow first published
@@ -644,6 +667,9 @@ gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.2.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.1.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.0.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v0.1.2
+gh run view 29685310179 --json headSha,conclusion,jobs,url
+gh run view 29682199568 --json headSha,conclusion,jobs,url
+gh run view 29681012077 --json headSha,conclusion,jobs,url
 gh run view 29653863727 --json headSha,conclusion,jobs,url
 gh run view 29630132266 --json headSha,conclusion,jobs,url
 gh run view 29619029159 --json headSha,conclusion,jobs,url
