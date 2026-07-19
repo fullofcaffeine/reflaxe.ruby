@@ -110,7 +110,6 @@ const compatibilityFunctions = new Set([
   "compileSpecialCall",
   "compileStringCall",
   "compileStringStaticCall",
-  "int32Clamp",
   "rubyStringToolsHex",
   "rubyStringToolsHtmlEscape",
   "rubyStringToolsReplace",
@@ -258,6 +257,7 @@ const ast = readFileSync(join(sourceRoot, "ast", "RubyAST.hx"), "utf8");
 const printer = readFileSync(join(sourceRoot, "ast", "RubyASTPrinter.hx"), "utf8");
 const callablePlan = readFileSync(join(sourceRoot, "compiler", "RubyCallablePlan.hx"), "utf8");
 const exceptionLowering = readFileSync(join(sourceRoot, "compiler", "RubyExceptionLowering.hx"), "utf8");
+const int32Lowering = readFileSync(join(sourceRoot, "compiler", "RubyInt32Lowering.hx"), "utf8");
 const loopLowering = readFileSync(join(sourceRoot, "compiler", "RubyLoopLowering.hx"), "utf8");
 
 for (const expected of [
@@ -270,6 +270,10 @@ for (const expected of [
 	"return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileTry(",
 	"return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileThrow(",
 	"static function applyExceptionLowering(result:RubyExceptionLoweringResult):RubyExpr",
+	"RubyInt32Lowering.shiftLeft(compileExpr(lhs), compileExpr(rhs))",
+	"RubyInt32Lowering.shiftRight(compileExpr(lhs), compileExpr(rhs))",
+	"RubyInt32Lowering.shiftRightUnsigned(compileExpr(lhs), compileExpr(rhs))",
+	"return isInt32Type(type) ? RubyInt32Lowering.clamp(value) : value;",
 	"return RubyLoopLowering.compileFor(iteratorName, variableName, compileExpr(iterable), compileFunctionBody(body));",
 	"return RubyExprStatement(RubyBreak);",
 	"return RubyExprStatement(RubyNext);",
@@ -313,6 +317,7 @@ for (const forbidden of [
 }
 for (const forbidden of ["RubyRawExpr(", "RubyRawStatement(", "RubyASTPrinter."]) {
 	forbidIncludes(exceptionLowering, forbidden, "RubyExceptionLowering");
+	forbidIncludes(int32Lowering, forbidden, "RubyInt32Lowering");
 	forbidIncludes(loopLowering, forbidden, "RubyLoopLowering");
 }
 for (const expected of [

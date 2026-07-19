@@ -18,11 +18,13 @@ state too early.
 
 At this slice:
 
-- `RubyCompiler.hx` is 14,546 lines and remains the Reflaxe orchestration
+- `RubyCompiler.hx` is 14,530 lines and remains the Reflaxe orchestration
   entrypoint.
 - `RubyAST.hx` is 123 lines and owns closed expression/statement syntax.
 - `RubyExceptionLowering.hx` is 133 lines and owns pre-filter typed catch
   dispatch through structural RubyAST plus an exact core-runtime-use count.
+- `RubyInt32Lowering.hx` is 46 lines and owns signed 32-bit clamping plus
+  five-bit signed/unsigned shift shaping through ordinary structural RubyAST.
 - `RubyLoopLowering.hx` owns the fixed structural iterator/`while` expansion
   without retaining a semantic loop node or depending back on the compiler.
 - `RubyASTChildren` exhaustively owns every immediate structural child and the
@@ -33,7 +35,7 @@ At this slice:
   per method.
 - `RubyRuntimePlan` closes the 49 compiler-selected hxruby helpers and gives
   each emitted use a semantic intent.
-- The checked inventory currently classifies 311 raw or print-reembed source
+- The checked inventory currently classifies 300 raw or print-reembed source
   sites. The count is planning evidence, not a product-quality score.
 
 The root compiler ceiling moved down with the extraction. Rails-specific
@@ -69,7 +71,9 @@ Ordinary migrated syntax is structural:
 - statement and expression `TThrow` use `RubyRaise`;
 - statement and expression `TBreak`/`TContinue` use payload-free `RubyBreak`
   and `RubyNext`; and
-- residual `TFor` uses structural assignment, calls, and `RubyWhileStmt`.
+- residual `TFor` uses structural assignment, calls, and `RubyWhileStmt`; and
+- `haxe.Int32` casts, arithmetic result clamps, and signed/unsigned shifts use
+  nested `RubyBinary`/`RubyCall` expressions rather than rendered fragments.
 
 These paths do not print a child AST and insert the resulting string into a raw
 node. The switch migration preserves the existing Ruby runtime behavior and
@@ -100,6 +104,23 @@ contract pre-reserves that exact temporary and proves deterministic suffixing,
 while runtime evidence covers one-time iterable evaluation and nested
 `break`/`continue` behavior. A `LoopPlan` would retain no additional fact and
 therefore does not pass the semantic-plan admission test.
+
+Fixed-width Int32 lowering is another target-earned semantic boundary, but it
+does not earn an `Int32Plan` or IR node. `RubyCompiler` still owns the typed
+decision that a value is `haxe.Int32`; after that decision, Ruby's
+arbitrary-precision Integer only needs a closed structural recipe: centered
+modulo for the signed range, low-five-bit shift counts, and an unsigned mask
+for logical right shift. `RubyInt32Lowering` owns that recipe without source
+typing, mutable state, raw text, printer access, or a dependency back on the
+compiler. Exact AST tests own shape and the provenance-locked upstream
+`haxe.Int32` fixture owns runtime parity.
+
+The architecture pressure test also considered a broader place plan. An
+authored `receiver()[index()] += 5` probe compiled to one receiver temporary,
+one index temporary, and a structural read/write, then ran with the expected
+`15:1:1` value/call counts. Reflaxe therefore already preserves one-evaluation
+place scheduling for normal source. That counter-evidence rejects a
+`RubyPlacePlan` until an actual unsupported typed path proves otherwise.
 
 `RubyExceptionLowering` owns this vertical feature without depending back on
 `RubyCompiler`. The orchestration entrypoint supplies typed callbacks for
@@ -251,6 +272,7 @@ Focused evidence for this contract includes:
 
 ```bash
 npm run test:ruby-ast
+npm run test:ruby-compiler-decomposition
 npm run test:ruby-loop-control
 npm run test:ruby-ast-inventory
 npm run test:switch-cases
@@ -262,5 +284,6 @@ npm run test:ruby-callable-inheritance
 npm run test:ruby-callable-abi-example
 npm run test:runtime-usage
 npm run test:runtime-minitest
+npm run test:unitstd-ruby
 npm run test:snapshots
 ```

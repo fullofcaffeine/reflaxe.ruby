@@ -8,6 +8,7 @@ import reflaxe.ruby.ast.RubyRuntimePlan;
 import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeHelper;
 import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeIntent;
 import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeUse;
+import reflaxe.ruby.compiler.RubyInt32Lowering;
 import reflaxe.ruby.compiler.RubyLoopLowering;
 
 /** Verifies that structured callable nodes own Ruby ABI punctuation and layout. **/
@@ -27,6 +28,14 @@ class RubyASTPrinterTestMain {
 		eq("zero-argument yield", RubyASTPrinter.printExpr(RubyYield([])), "yield");
 		eq("structured index", RubyASTPrinter.printExpr(RubyIndex(RubyLocal("values"), RubyInt("1"))), "values[1]");
 		eq("structured member", RubyASTPrinter.printExpr(RubyMember(RubyLocal("color"), "__hx_index")), "color.__hx_index");
+		eq("structural Int32 clamp", RubyASTPrinter.printExpr(RubyInt32Lowering.clamp(RubyLocal("value"))),
+			"(((value + 0x80000000) % 0x100000000) - 0x80000000)");
+		eq("structural Int32 left shift", RubyASTPrinter.printExpr(RubyInt32Lowering.shiftLeft(RubyLocal("value"), RubyLocal("count"))),
+			"((((value.to_i() << (count.to_i() & 31)) + 0x80000000) % 0x100000000) - 0x80000000)");
+		eq("structural Int32 signed right shift", RubyASTPrinter.printExpr(RubyInt32Lowering.shiftRight(RubyLocal("value"), RubyLocal("count"))),
+			"((((value + 0x80000000) % 0x100000000) - 0x80000000) >> (count.to_i() & 31))");
+		eq("structural Int32 unsigned right shift", RubyASTPrinter.printExpr(RubyInt32Lowering.shiftRightUnsigned(RubyLocal("value"), RubyLocal("count"))),
+			"((value.to_i() & 0xffffffff) >> (count.to_i() & 31))");
 		eq("statement sequence", printStatement(RubyStatementSequence([
 			RubyAssign(RubyLocal("first"), RubyInt("1")),
 			RubyAssign(RubyLocal("second"), RubyInt("2"))

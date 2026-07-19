@@ -6,6 +6,7 @@ const { join, relative, resolve } = require("node:path");
 const root = resolve(__dirname, "..", "..");
 const compilerPath = join(root, "src", "reflaxe", "ruby", "RubyCompiler.hx");
 const exceptionLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyExceptionLowering.hx");
+const int32LoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyInt32Lowering.hx");
 const loopLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyLoopLowering.hx");
 const railsRoot = join(root, "src", "reflaxe", "ruby", "rails");
 const planPath = join(root, "docs", "ruby-compiler-rails-module-extraction.md");
@@ -15,8 +16,8 @@ const workflowPath = join(root, ".github", "workflows", "ci.yml");
 // These ceilings move downward after extractions. Raising either one requires a
 // reviewed explanation because RubyCompiler is an orchestration boundary, not a
 // default home for new Rails or target-lowering responsibilities.
-const MAX_ROOT_LINES = 14546;
-const MAX_ROOT_FUNCTIONS = 787;
+const MAX_ROOT_LINES = 14530;
+const MAX_ROOT_FUNCTIONS = 786;
 
 const requiredServices = [
   "RailsArtifactPaths.hx",
@@ -66,10 +67,14 @@ const compiler = readFileSync(compilerPath, "utf8");
 if (!existsSync(exceptionLoweringPath)) {
   fail("required exception compiler service is missing: " + relative(root, exceptionLoweringPath));
 }
+if (!existsSync(int32LoweringPath)) {
+  fail("required Int32 compiler service is missing: " + relative(root, int32LoweringPath));
+}
 if (!existsSync(loopLoweringPath)) {
   fail("required loop compiler service is missing: " + relative(root, loopLoweringPath));
 }
 const exceptionLowering = readFileSync(exceptionLoweringPath, "utf8");
+const int32Lowering = readFileSync(int32LoweringPath, "utf8");
 const loopLowering = readFileSync(loopLoweringPath, "utf8");
 const compilerLines = compiler.split(/\r?\n/).length - (compiler.endsWith("\n") ? 1 : 0);
 const functionNames = [...compiler.matchAll(/^\s*(?:(?:public|private|static|inline|override)\s+)*function\s+([A-Za-z0-9_]+)/gm)].map((match) => match[1]);
@@ -99,6 +104,9 @@ for (const path of haxeFiles(railsRoot)) {
 if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(exceptionLowering) || exceptionLowering.includes("reflaxe.ruby.RubyCompiler")) {
   fail("RubyExceptionLowering depends back on RubyCompiler; compiler services must remain one-way dependencies");
 }
+if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(int32Lowering) || int32Lowering.includes("reflaxe.ruby.RubyCompiler")) {
+  fail("RubyInt32Lowering depends back on RubyCompiler; compiler services must remain one-way dependencies");
+}
 if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(loopLowering) || loopLowering.includes("reflaxe.ruby.RubyCompiler")) {
   fail("RubyLoopLowering depends back on RubyCompiler; compiler services must remain one-way dependencies");
 }
@@ -108,6 +116,11 @@ for (const expected of [
   "RubyExceptionLowering.compileTry(tryExpr, catches, compileFunctionBody",
   "RubyExceptionLowering.compileThrow(thrown, compileExpr)",
   "applyExceptionLowering(result:RubyExceptionLoweringResult)",
+  "import reflaxe.ruby.compiler.RubyInt32Lowering;",
+  "RubyInt32Lowering.shiftLeft(compileExpr(lhs), compileExpr(rhs))",
+  "RubyInt32Lowering.shiftRight(compileExpr(lhs), compileExpr(rhs))",
+  "RubyInt32Lowering.shiftRightUnsigned(compileExpr(lhs), compileExpr(rhs))",
+  "RubyInt32Lowering.clamp(value)",
   "import reflaxe.ruby.compiler.RubyLoopLowering;",
   "return RubyLoopLowering.compileFor(iteratorName, variableName, compileExpr(iterable), compileFunctionBody(body));",
   "return RubyExprStatement(RubyBreak);",
@@ -133,6 +146,18 @@ for (const expected of [
 }
 if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(exceptionLowering)) {
   fail("RubyExceptionLowering introduced an unsafe broad type or reflection escape");
+}
+for (const expected of [
+  "class RubyInt32Lowering",
+  "RubyBinary(\"%\"",
+  "RubyBinary(\"<<\"",
+  "RubyBinary(\">>\"",
+  "RubyCall(value, \"to_i\", [])",
+]) {
+  if (!int32Lowering.includes(expected)) fail(`RubyInt32Lowering is missing owned fixed-width contract: ${expected}`);
+}
+if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(int32Lowering) || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(int32Lowering)) {
+  fail("RubyInt32Lowering introduced an unsafe broad type or raw/print boundary");
 }
 for (const expected of [
   "class RubyLoopLowering",

@@ -116,7 +116,7 @@ for (const source of [mainRuby, coreRuby]) {
     process.exit(1);
   }
 }
-for (const expectedShape of ["0x100000000", "<< (32.to_i & 31)", ">> (1.to_i & 31)"]) {
+for (const expectedShape of ["0x100000000", "<< (32.to_i() & 31)", ">> (1.to_i() & 31)"]) {
   if (!mainRuby.includes(expectedShape)) {
     console.error(`Expected direct Int32 wrap/shift lowering missing: ${expectedShape}`);
     process.exit(1);

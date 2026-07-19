@@ -44,6 +44,7 @@ import reflaxe.ruby.compiler.RubyCallablePlan;
 import reflaxe.ruby.compiler.RubyCallablePlan.RubyCallableLoweringPlan;
 import reflaxe.ruby.compiler.RubyExceptionLowering;
 import reflaxe.ruby.compiler.RubyExceptionLowering.RubyExceptionLoweringResult;
+import reflaxe.ruby.compiler.RubyInt32Lowering;
 import reflaxe.ruby.compiler.RubyKeywordSemantics;
 import reflaxe.ruby.compiler.RubyLoopLowering;
 import reflaxe.ruby.compiler.RubyOutputLayout;
@@ -2909,7 +2910,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TUnop(op, _, inner): RubyUnary(unopToRuby(op), compileExpr(inner));
 			case TCast(inner, _) if (isInt32Type(expr.t)):
 				var value = compileExpr(inner);
-				isNormalizedInt32Expr(inner) ? value : int32Clamp(value);
+				isNormalizedInt32Expr(inner) ? value : RubyInt32Lowering.clamp(value);
 			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): compileExpr(inner);
 			case TFunction(fn):
 				RubyLambda([for (arg in fn.args) localName(arg.v)], compileRubyBlockBody(fn.expr));
@@ -14368,12 +14369,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			// Haxe Int shifts use the low five count bits and a signed 32-bit left
 			// operand. Ruby accepts arbitrary counts and grows Integer precision, so
 			// direct `<<`/`>>` would silently diverge for counts such as 32 or 33.
-			case OpShl:
-				int32Clamp(RubyRawExpr("(" + printInlineExpr(lhs) + ".to_i << (" + printInlineExpr(rhs) + ".to_i & 31))"));
-			case OpShr:
-				RubyRawExpr("(" + RubyASTPrinter.printExpr(int32Clamp(compileExpr(lhs))) + " >> (" + printInlineExpr(rhs) + ".to_i & 31))");
-			case OpUShr:
-				RubyRawExpr("((" + printInlineExpr(lhs) + ".to_i & 0xffffffff) >> (" + printInlineExpr(rhs) + ".to_i & 31))");
+			case OpShl: RubyInt32Lowering.shiftLeft(compileExpr(lhs), compileExpr(rhs));
+			case OpShr: RubyInt32Lowering.shiftRight(compileExpr(lhs), compileExpr(rhs));
+			case OpUShr: RubyInt32Lowering.shiftRightUnsigned(compileExpr(lhs), compileExpr(rhs));
 			case OpEq if (isArrayIdentityExpr(lhs) && isArrayIdentityExpr(rhs)):
 				RubyCall(compileExpr(lhs), "equal?", [compileExpr(rhs)]);
 			case OpNotEq if (isArrayIdentityExpr(lhs) && isArrayIdentityExpr(rhs)):
@@ -14429,21 +14427,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function clampInt32Result(type:Null<haxe.macro.Type>, value:RubyExpr):RubyExpr {
-		return isInt32Type(type) ? int32Clamp(value) : value;
-	}
-
-	/**
-		Normalize a Ruby Integer to Haxe's signed two's-complement Int32 range.
-
-		Ruby Integer arithmetic is arbitrary precision, while `haxe.Int32` promises
-		wraparound after arithmetic, shifts, increments, and decrements. Centered
-		modulo maps the value into `[-2^31, 2^31 - 1]` with one evaluation and no
-		boxed runtime value. Keeping this in lowering also lets ordinary Haxe `Int`
-		remain a direct Ruby Integer when no fixed-width contract is present.
-	**/
-	static function int32Clamp(value:RubyExpr):RubyExpr {
-		var rendered = RubyASTPrinter.printExpr(value);
-		return RubyRawExpr("((((" + rendered + ") + 0x80000000) % 0x100000000) - 0x80000000)");
+		return isInt32Type(type) ? RubyInt32Lowering.clamp(value) : value;
 	}
 
 	static function isArrayExpr(expr:TypedExpr):Bool {
