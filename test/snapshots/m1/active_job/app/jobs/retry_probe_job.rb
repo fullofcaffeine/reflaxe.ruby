@@ -6,6 +6,6 @@ class RetryProbeJob < ActiveJob::Base
   queue_as :critical
   retry_on StandardError, wait: 5.seconds, attempts: 2, queue: :retries
   def perform(attempt)
-    raise HxException.new(("retry:" + HXRuby.stringify(attempt)))
+    raise HxException.wrap(("retry:" + HXRuby.stringify(attempt)))
   end
 end

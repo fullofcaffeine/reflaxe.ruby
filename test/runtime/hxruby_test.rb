@@ -238,6 +238,30 @@ class HXRubyRuntimeTest < Minitest::Test
 
     assert_equal({ "message" => "boom" }, error.value)
     assert_equal "{\"message\"=>\"boom\"}", error.message
+    assert_equal error.message, error.get_message
+    assert_same error, HxException.wrap(error)
+  end
+
+  def test_hx_exception_adapts_native_wildcard_catches_and_rethrows_identity
+    native_error = begin
+      raise ArgumentError, "native failure"
+    rescue ArgumentError => error
+      error
+    end
+
+    adapted = HxException.caught(native_error)
+
+    refute_same native_error, adapted
+    assert_equal "native failure", adapted.get_message
+    assert_same native_error, adapted.native
+    assert_equal native_error.backtrace, adapted.backtrace
+    assert_same adapted, HxException.caught(adapted)
+    assert_same native_error, HxException.wrap(adapted)
+    assert_same native_error, HxException.wrap(native_error)
+
+    reraised = assert_raises(ArgumentError) { raise HxException.wrap(adapted) }
+    assert_same native_error, reraised
+    assert_equal native_error.backtrace, reraised.backtrace
   end
 
   def test_hx_exception_preserves_ruby_cause_and_raise_site

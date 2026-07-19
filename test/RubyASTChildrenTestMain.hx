@@ -44,6 +44,13 @@ class RubyASTChildrenTestMain {
 		assertExprImmediate("conditional", RubyConditional(local("condition"), local("then_value"), local("else_value")),
 			["local:condition", "local:then_value", "local:else_value"], []);
 		assertExprImmediate("begin", RubyBegin([RubyComment("begin_body")]), [], ["comment:begin_body@executable"]);
+		assertExprImmediate("begin rescue", RubyBeginRescue([RubyComment("try_body")], [
+			{
+				exceptionClasses: ["StandardError"],
+				binding: "error",
+				body: [RubyComment("rescue_body")]
+			}
+		]), [], ["comment:try_body@executable", "comment:rescue_body@executable"]);
 		assertExprImmediate("lambda", RubyLambda(["value"], [RubyComment("lambda_body")]), [], ["comment:lambda_body@executable"]);
 		assertExprImmediate("callable lambda", RubyCallableLambda([
 			RubyRequiredParameter("required"),
@@ -88,6 +95,10 @@ class RubyASTChildrenTestMain {
 			["local:scrutinee", "local:when_a", "local:when_b"], ["comment:case_body@executable", "comment:case_default@executable"]);
 		assertExprImmediate("runtime call", RubyRuntimeCall(RubyRuntimePlan.select(RubyRuntimeHelper.ArrayResize), [local("runtime_arg")]),
 			["local:runtime_arg"], []);
+		assertExprImmediate("exception runtime call", RubyRuntimeCall(RubyRuntimePlan.select(RubyRuntimeHelper.ExceptionCaught), [local("exception_arg")]),
+			["local:exception_arg"], []);
+		assertExprImmediate("raise", RubyRaise(local("raised_value")), ["local:raised_value"], []);
+		assertExprImmediate("bare raise", RubyRaise(), [], []);
 	}
 
 	static function testStatementChildren():Void {
@@ -161,6 +172,16 @@ class RubyASTChildrenTestMain {
 		var mappedExpr = RubyASTChildren.mapExprImmediate(expr, child -> child, (statement, _) -> statement);
 		eq("expression identity mapping", RubyASTPrinter.printExpr(mappedExpr), RubyASTPrinter.printExpr(expr));
 
+		var exceptionExpr = RubyBeginRescue([RubyExprStatement(RubyCall(null, "work", []))], [
+			{
+				exceptionClasses: ["StandardError"],
+				binding: "error",
+				body: [RubyExprStatement(RubyRaise(RubyLocal("error")))]
+			}
+		]);
+		var mappedExceptionExpr = RubyASTChildren.mapExprImmediate(exceptionExpr, child -> child, (statement, _) -> statement);
+		eq("exception expression identity mapping", RubyASTPrinter.printExpr(mappedExceptionExpr), RubyASTPrinter.printExpr(exceptionExpr));
+
 		var statement = RubyMethodDecl("identity", [RubyOptionalParameter("value", RubyInt("1"))], [RubyReturn(local("value"))]);
 		var mappedStatement = RubyASTChildren.mapStatementImmediate(statement, child -> child, (child, _) -> child);
 		eq("statement identity mapping", printStatement(mappedStatement), printStatement(statement));
@@ -178,6 +199,19 @@ class RubyASTChildrenTestMain {
 		fails("call argument", () -> RubyASTPrinter.printExpr(RubyCallableCall(null, "visit", [null])), "a Ruby call argument cannot be null");
 		fails("method parameter", () -> printStatement(RubyMethodDecl("visit", [null], [])), "a Ruby method parameter cannot be null");
 		fails("case branch", () -> RubyASTPrinter.printExpr(RubyCase(RubyNil, [null], null)), "a Ruby case branch cannot be null");
+		fails("begin rescue body", () -> RubyASTPrinter.printExpr(RubyBeginRescue(null, [])), "a Ruby begin/rescue expression must have a child list");
+		fails("rescue list", () -> RubyASTPrinter.printExpr(RubyBeginRescue([], null)), "a Ruby begin/rescue expression must have a child list");
+		fails("empty rescue list", () -> RubyASTPrinter.printExpr(RubyBeginRescue([], [])), "must have at least one rescue arm");
+		fails("null rescue arm", () -> RubyASTPrinter.printExpr(RubyBeginRescue([], [null])), "a Ruby rescue arm cannot be null");
+		fails("rescue body", () -> RubyASTPrinter.printExpr(RubyBeginRescue([], [{exceptionClasses: ["StandardError"], binding: null, body: null}])),
+			"a Ruby rescue arm must have a child list");
+		fails("empty rescue classes", () -> RubyASTPrinter.printExpr(RubyBeginRescue([], [{exceptionClasses: [], binding: null, body: []}])),
+			"must name at least one exception class");
+		fails("invalid rescue class", () -> RubyASTPrinter.printExpr(RubyBeginRescue([], [{exceptionClasses: ["not_a_constant"], binding: null, body: []}])),
+			"invalid rescue exception constant");
+		fails("invalid rescue binding",
+			() -> RubyASTPrinter.printExpr(RubyBeginRescue([], [{exceptionClasses: ["StandardError"], binding: "BadBinding", body: []}])),
+			"invalid rescue binding local");
 	}
 
 	static function assertExprImmediate(label:String, expr:RubyExpr, expectedExprs:Array<String>, expectedStatements:Array<String>):Void {
@@ -245,6 +279,7 @@ class RubyASTChildrenTestMain {
 			case RubyUnary(_, _): "unary";
 			case RubyConditional(_, _, _): "conditional";
 			case RubyBegin(_): "begin";
+			case RubyBeginRescue(_, _): "begin-rescue";
 			case RubyLambda(_, _): "lambda";
 			case RubyCallableLambda(_, _): "callable-lambda";
 			case RubyCall(_, name, _): "call:" + name;
@@ -252,6 +287,7 @@ class RubyASTChildrenTestMain {
 			case RubyYield(_): "yield";
 			case RubyCase(_, _, _): "case";
 			case RubyRuntimeCall(_, _): "runtime-call";
+			case RubyRaise(_): "raise";
 			case RubyRawExpr(_): "raw";
 		}
 	}

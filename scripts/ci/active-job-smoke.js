@@ -118,7 +118,7 @@ for (const expected of [
 	/queue_as :critical/,
 	/retry_on StandardError, wait: 5\.seconds, attempts: 2, queue: :retries/,
 	/def perform\(attempt(?:__hx\d+)?\)/,
-	/raise HxException\.new\(\("retry:" \+ HXRuby\.stringify\(attempt(?:__hx\d+)?\)\)\)/,
+	/raise HxException\.wrap\(\("retry:" \+ HXRuby\.stringify\(attempt(?:__hx\d+)?\)\)\)/,
 ]) {
   if (!expected.test(retryJobRuby)) {
     console.error(`ActiveJob retry output missing expected line: ${expected}`);

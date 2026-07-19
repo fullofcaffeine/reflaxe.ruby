@@ -5,6 +5,7 @@ const { join, relative, resolve } = require("node:path");
 
 const root = resolve(__dirname, "..", "..");
 const compilerPath = join(root, "src", "reflaxe", "ruby", "RubyCompiler.hx");
+const exceptionLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyExceptionLowering.hx");
 const railsRoot = join(root, "src", "reflaxe", "ruby", "rails");
 const planPath = join(root, "docs", "ruby-compiler-rails-module-extraction.md");
 const packagePath = join(root, "package.json");
@@ -13,7 +14,7 @@ const workflowPath = join(root, ".github", "workflows", "ci.yml");
 // These ceilings move downward after extractions. Raising either one requires a
 // reviewed explanation because RubyCompiler is an orchestration boundary, not a
 // default home for new Rails or target-lowering responsibilities.
-const MAX_ROOT_LINES = 14575;
+const MAX_ROOT_LINES = 14568;
 const MAX_ROOT_FUNCTIONS = 789;
 
 const requiredServices = [
@@ -61,6 +62,10 @@ function haxeFiles(directory) {
 }
 
 const compiler = readFileSync(compilerPath, "utf8");
+if (!existsSync(exceptionLoweringPath)) {
+  fail("required exception compiler service is missing: " + relative(root, exceptionLoweringPath));
+}
+const exceptionLowering = readFileSync(exceptionLoweringPath, "utf8");
 const compilerLines = compiler.split(/\r?\n/).length - (compiler.endsWith("\n") ? 1 : 0);
 const functionNames = [...compiler.matchAll(/^\s*(?:(?:public|private|static|inline|override)\s+)*function\s+([A-Za-z0-9_]+)/gm)].map((match) => match[1]);
 const functionSet = new Set(functionNames);
@@ -86,8 +91,15 @@ for (const path of haxeFiles(railsRoot)) {
     fail(`${relative(root, path)} depends back on RubyCompiler; Rails services must remain one-way dependencies`);
   }
 }
+if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(exceptionLowering) || exceptionLowering.includes("reflaxe.ruby.RubyCompiler")) {
+  fail("RubyExceptionLowering depends back on RubyCompiler; compiler services must remain one-way dependencies");
+}
 
 for (const expected of [
+  "import reflaxe.ruby.compiler.RubyExceptionLowering;",
+  "RubyExceptionLowering.compileTry(tryExpr, catches, compileFunctionBody",
+  "RubyExceptionLowering.compileThrow(thrown, compileExpr)",
+  "applyExceptionLowering(result:RubyExceptionLoweringResult)",
   "import reflaxe.ruby.rails.RailsMailerPreviewArtifacts;",
   "import reflaxe.ruby.rails.RailsTestArtifacts;",
   "railsMailerPreviewArtifacts.prepare(classType, buildContext.railsMode)",
@@ -96,6 +108,19 @@ for (const expected of [
   "RailsTestArtifacts.render(plan, body, railsTestIncludes(funcFields))",
 ]) {
   if (!compiler.includes(expected)) fail(`RubyCompiler is missing typed service delegation: ${expected}`);
+}
+for (const expected of [
+  "class RubyExceptionLowering",
+  "RubyBeginRescue",
+  "RubyRuntimeHelper.ExceptionCaught",
+  "RubyRuntimeHelper.ExceptionWrap",
+  "RubyRuntimeHelper.IsOfType",
+  "coreRuntimeUseCount",
+]) {
+  if (!exceptionLowering.includes(expected)) fail(`RubyExceptionLowering is missing owned exception contract: ${expected}`);
+}
+if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(exceptionLowering)) {
+  fail("RubyExceptionLowering introduced an unsafe broad type or reflection escape");
 }
 
 for (const service of ["RailsMailerPreviewArtifacts.hx", "RailsTestArtifacts.hx"]) {
@@ -129,4 +154,4 @@ if (!readFileSync(workflowPath, "utf8").includes("run: npm test")) {
   fail("canonical CI must run the full npm test gate");
 }
 
-console.log(`[ruby-compiler-decomposition] OK: ${compilerLines}/${MAX_ROOT_LINES} lines, ${functionNames.length}/${MAX_ROOT_FUNCTIONS} functions, one-way typed Rails services`);
+console.log(`[ruby-compiler-decomposition] OK: ${compilerLines}/${MAX_ROOT_LINES} lines, ${functionNames.length}/${MAX_ROOT_FUNCTIONS} functions, one-way typed compiler and Rails services`);

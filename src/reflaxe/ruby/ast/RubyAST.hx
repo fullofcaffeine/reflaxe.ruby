@@ -41,6 +41,7 @@ enum RubyExpr {
 	RubyUnary(op:String, expr:RubyExpr);
 	RubyConditional(cond:RubyExpr, thenExpr:RubyExpr, elseExpr:RubyExpr);
 	RubyBegin(body:Array<RubyStatement>);
+	RubyBeginRescue(body:Array<RubyStatement>, rescues:Array<RubyRescueClause>);
 	RubyLambda(args:Array<String>, body:Array<RubyStatement>);
 	RubyCallableLambda(args:Array<RubyMethodParameter>, body:Array<RubyStatement>);
 	RubyCall(?receiver:RubyExpr, name:String, args:Array<RubyExpr>);
@@ -48,6 +49,7 @@ enum RubyExpr {
 	RubyYield(args:Array<RubyExpr>);
 	RubyCase(scrutinee:RubyExpr, branches:Array<RubyCaseBranch>, defaultBody:Null<Array<RubyStatement>>);
 	RubyRuntimeCall(use:RubyRuntimeUse, args:Array<RubyExpr>);
+	RubyRaise(?exception:RubyExpr);
 	RubyRawExpr(code:String);
 }
 
@@ -97,5 +99,18 @@ typedef RubyHashField = {
 /** One structural Ruby case arm with one or more when values. **/
 typedef RubyCaseBranch = {
 	var values:Array<RubyExpr>;
+	var body:Array<RubyStatement>;
+}
+
+/**
+	One native Ruby `rescue` arm.
+
+	Exception classes and the optional binding are syntax decisions. Haxe catch
+	type dispatch remains structural inside `body` because Ruby rescues native
+	exception carriers while Haxe dispatches over the possibly wrapped value.
+**/
+typedef RubyRescueClause = {
+	var exceptionClasses:Array<String>;
+	var binding:Null<String>;
 	var body:Array<RubyStatement>;
 }

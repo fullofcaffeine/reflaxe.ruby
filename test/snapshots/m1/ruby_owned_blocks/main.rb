@@ -45,11 +45,16 @@ class Main
     puts(HXRuby.stringify(("nested-return:" + HXRuby.stringify(nested_return))))
     begin
       OwnedBlocks.direct(1) do |hx_tmp|
-        raise HxException.new("block-boom")
+        raise HxException.wrap("block-boom")
       end
-    rescue StandardError => __hx_ex
-      error = __hx_ex.is_a?(HxException) ? __hx_ex.value : __hx_ex
-      puts(HXRuby.stringify(("throw:" + error)))
+    rescue StandardError => haxe_exception
+      haxe_thrown = (haxe_exception.is_a?(HxException) ? haxe_exception.value : haxe_exception)
+      if HXRuby.is_of_type(haxe_thrown, String)
+        error = haxe_thrown
+        puts(HXRuby.stringify(("throw:" + error)))
+      else
+        raise
+      end
     end
     puts(HXRuby.stringify("after-throw"))
   end

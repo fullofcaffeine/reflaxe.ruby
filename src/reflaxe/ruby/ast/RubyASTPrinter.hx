@@ -6,6 +6,7 @@ import reflaxe.ruby.ast.RubyAST.RubyCaseBranch;
 import reflaxe.ruby.ast.RubyAST.RubyCallArgument;
 import reflaxe.ruby.ast.RubyAST.RubyExpr;
 import reflaxe.ruby.ast.RubyAST.RubyMethodParameter;
+import reflaxe.ruby.ast.RubyAST.RubyRescueClause;
 import reflaxe.ruby.ast.RubyAST.RubyStatement;
 
 class RubyASTPrinter {
@@ -135,6 +136,7 @@ class RubyASTPrinter {
 				+ renderExpr(elseExpr)
 				+ ")";
 			case RubyBegin(body): printBegin(body);
+			case RubyBeginRescue(body, rescues): printBeginRescue(body, rescues);
 			case RubyLambda(args, body): printLambda(args, body);
 			case RubyCallableLambda(args, body): printCallableLambda(args, body);
 			case RubyCall(receiver, name, args):
@@ -151,11 +153,13 @@ class RubyASTPrinter {
 			case RubyYield(args): args == null || args.length == 0 ? "yield" : "yield(" + [for (arg in args) renderExpr(arg)].join(", ") + ")";
 			case RubyCase(scrutinee, branches, defaultBody): printCase(scrutinee, branches, defaultBody);
 			case RubyRuntimeCall(use, args):
-				"HXRuby."
+				RubyRuntimePlan.rubyReceiver(use)
+				+ "."
 				+ use.helper.rubyName()
 				+ "("
 				+ (args == null ? "" : [for (arg in args) renderExpr(arg)].join(", "))
 				+ ")";
+			case RubyRaise(exception): "(" + printRaise(exception) + ")";
 			case RubyRawExpr(code): code;
 		}
 	}
@@ -174,6 +178,8 @@ class RubyASTPrinter {
 
 	static function printStatementExpr(expr:RubyExpr):String {
 		return switch (expr) {
+			case RubyRaise(exception):
+				printRaise(exception);
 			case RubyCall(receiver, name, args) if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1):
 				printWriterAssignment(receiver, name, args[0]);
 			case _: renderExpr(expr);
@@ -214,6 +220,10 @@ class RubyASTPrinter {
 		var blockArgs = block.args == null || block.args.length == 0 ? "" : " |" + block.args.join(", ") + "|";
 		if (block.body != null && block.body.length == 1) {
 			switch (block.body[0]) {
+				case RubyExprStatement(RubyRaise(_)):
+					// Keep control transfer visually explicit and preserve the
+					// statement-shaped block used before structural lowering.
+					null;
 				case RubyExprStatement(value):
 					var printedBody = renderExpr(value);
 					if (printedBody.indexOf("\n") == -1) {
@@ -251,6 +261,8 @@ class RubyASTPrinter {
 		var printedArgs = args == null ? "" : args.join(", ");
 		if (body != null && body.length == 1) {
 			switch (body[0]) {
+				case RubyExprStatement(RubyRaise(_)):
+					null;
 				case RubyExprStatement(expr):
 					return "->(" + printedArgs + ") { " + renderExpr(expr) + " }";
 				case _:
@@ -266,6 +278,8 @@ class RubyASTPrinter {
 		var printedArgs = args == null ? "" : [for (arg in args) printMethodParameter(arg)].join(", ");
 		if (body != null && body.length == 1) {
 			switch (body[0]) {
+				case RubyExprStatement(RubyRaise(_)):
+					null;
 				case RubyExprStatement(expr):
 					return "->(" + printedArgs + ") { " + renderExpr(expr) + " }";
 				case _:
@@ -282,6 +296,25 @@ class RubyASTPrinter {
 		writeBody(lines, body, 1);
 		lines.push("end");
 		return lines.join("\n");
+	}
+
+	static function printBeginRescue(body:Array<RubyStatement>, rescues:Array<RubyRescueClause>):String {
+		var lines = ["begin"];
+		writeBody(lines, body, 1);
+		for (rescue in rescues) {
+			var header = "rescue " + rescue.exceptionClasses.join(", ");
+			if (rescue.binding != null) {
+				header += " => " + rescue.binding;
+			}
+			lines.push(header);
+			writeBody(lines, rescue.body, 1);
+		}
+		lines.push("end");
+		return lines.join("\n");
+	}
+
+	static function printRaise(exception:Null<RubyExpr>):String {
+		return exception == null ? "raise" : "raise " + renderExpr(exception);
 	}
 
 	static function printCase(scrutinee:RubyExpr, branches:Array<RubyCaseBranch>, defaultBody:Null<Array<RubyStatement>>):String {

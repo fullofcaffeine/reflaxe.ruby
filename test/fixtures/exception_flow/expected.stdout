@@ -1,1 +1,13 @@
 boom
+string:string
+int:7
+dynamic
+try-value
+catch:value
+rethrown:7
+native
+wildcard
+native-wildcard:true
+once:once:1
+native-rethrow
+native-wildcard-rethrow

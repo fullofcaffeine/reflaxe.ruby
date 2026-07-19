@@ -73,6 +73,18 @@ class RubyASTPrinterTestMain {
 			RubyAssign(RubyLocal("value"), RubyInt("1")),
 			RubyExprStatement(RubyLocal("value"))
 		])), "begin\n  value = 1\n  value\nend");
+		eq("structured begin rescue", RubyASTPrinter.printExpr(RubyBeginRescue([RubyExprStatement(RubyCall(null, "work", []))], [
+			{
+				exceptionClasses: ["StandardError", "RuntimeError"],
+				binding: "error",
+				body: [RubyExprStatement(RubyMember(RubyLocal("error"), "message"))]
+			}
+		])),
+			"begin\n  work()\nrescue StandardError, RuntimeError => error\n  error.message\nend");
+		eq("raise expression", RubyASTPrinter.printExpr(RubyRaise(RubyCall(RubyLocal("HxException"), "new", [RubyString("boom")]))),
+			'(raise HxException.new("boom"))');
+		eq("raise statement", printStatement(RubyExprStatement(RubyRaise(RubyString("boom")))), 'raise "boom"\n');
+		eq("bare re-raise statement", printStatement(RubyExprStatement(RubyRaise())), "raise\n");
 		eq("structured case", RubyASTPrinter.printExpr(RubyCase(RubyLocal("value"), [
 			{
 				values: [RubyInt("1"), RubyInt("2")],
@@ -83,6 +95,9 @@ class RubyASTPrinterTestMain {
 		eq("typed runtime use",
 			RubyASTPrinter.printExpr(RubyRuntimeCall(RubyRuntimePlan.select(RubyRuntimeHelper.ArrayResize), [RubyLocal("values"), RubyInt("3")])),
 			"HXRuby.array_resize(values, 3)");
+		eq("typed exception runtime use",
+			RubyASTPrinter.printExpr(RubyRuntimeCall(RubyRuntimePlan.select(RubyRuntimeHelper.ExceptionWrap), [RubyLocal("error")])),
+			"HxException.wrap(error)");
 		eq("writer expression", RubyASTPrinter.printExpr(RubyCall(RubyLocal("target"), "value=", [RubyInt("1")])), "(target.value = 1)");
 		eq("writer statement", printStatement(RubyExprStatement(RubyCall(RubyLocal("target"), "value=", [RubyInt("1")]))), "target.value = 1\n");
 		eq("writer expression precedence", RubyASTPrinter.printExpr(RubyBinary("+", RubyCall(RubyLocal("target"), "value=", [RubyInt("1")]), RubyInt("2"))),
@@ -96,6 +111,10 @@ class RubyASTPrinterTestMain {
 			body: [RubyExprStatement(RubyCall(RubyLocal("item"), "to_s", []))]
 		};
 		eq("native block", RubyASTPrinter.printExpr(RubyCallableCall(RubyLocal("items"), "each", [], block)), "items.each { |item| item.to_s() }");
+		eq("raise native block", RubyASTPrinter.printExpr(RubyCallableCall(RubyLocal("items"), "each", [], {
+			args: ["item"],
+			body: [RubyExprStatement(RubyRaise(RubyString("boom")))]
+		})), "items.each do |item|\n  raise \"boom\"\nend");
 
 		var multilineBlock:RubyBlock = {
 			args: ["item"],
@@ -113,8 +132,16 @@ class RubyASTPrinterTestMain {
 			intent: RubyRuntimeIntent.ReflectionSemantics
 		};
 		fails("runtime intent mismatch", () -> RubyASTPrinter.printExpr(RubyRuntimeCall(invalidRuntime, [])), "requires ArraySemantics");
+		var invalidExceptionRuntime:RubyRuntimeUse = {
+			helper: RubyRuntimeHelper.ExceptionCaught,
+			intent: RubyRuntimeIntent.TypeSemantics
+		};
+		fails("exception runtime intent mismatch", () -> RubyASTPrinter.printExpr(RubyRuntimeCall(invalidExceptionRuntime, [])),
+			"requires ExceptionBoundarySemantics");
 		fails("declaration in expression", () -> RubyASTPrinter.printExpr(RubyBegin([RubyMethodDecl("nested", [], [RubyExprStatement(RubyNil)])])),
 			"declaration reached an executable");
+		fails("invalid rescue constant", () -> RubyASTPrinter.printExpr(RubyBeginRescue([], [{exceptionClasses: ["bad"], binding: null, body: []}])),
+			"invalid rescue exception constant");
 	}
 
 	static function printStatement(statement:RubyStatement):String {

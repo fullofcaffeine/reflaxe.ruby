@@ -36,7 +36,7 @@ class Main
     explicit = Tempfile.new("hxruby-explicit-", runtime_directory)
     explicit_path = explicit.path()
     if (explicit_path == nil)
-      raise HxException.new("new Tempfile must expose its path before unlink")
+      raise HxException.wrap("new Tempfile must expose its path before unlink")
     end
     puts(HXRuby.stringify(File.exist?(explicit_path)))
     puts(HXRuby.stringify(explicit.write("explicit tempfile")))

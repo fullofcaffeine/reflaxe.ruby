@@ -45,7 +45,29 @@ class RubyASTValidator {
 				if (name == null || !~/^[A-Za-z_][A-Za-z0-9_]*[!?=]?$/.match(name)) {
 					fail("invalid Ruby member name " + Std.string(name));
 				}
-			case RubyBinary(_, _, _) | RubyUnary(_, _) | RubyConditional(_, _, _) | RubyBegin(_):
+			case RubyBinary(_, _, _) | RubyUnary(_, _) | RubyConditional(_, _, _) | RubyBegin(_) | RubyRaise(_):
+			case RubyBeginRescue(body, rescues):
+				requireList(body, "a Ruby begin/rescue expression");
+				requireList(rescues, "a Ruby begin/rescue expression");
+				if (rescues.length == 0) {
+					fail("a Ruby begin/rescue expression must have at least one rescue arm");
+				}
+				for (rescue in rescues) {
+					if (rescue == null) {
+						fail("a Ruby rescue arm cannot be null");
+					}
+					requireList(rescue.body, "a Ruby rescue arm");
+					requireList(rescue.exceptionClasses, "a Ruby rescue arm");
+					if (rescue.exceptionClasses.length == 0) {
+						fail("a Ruby rescue arm must name at least one exception class");
+					}
+					for (exceptionClass in rescue.exceptionClasses) {
+						requireConstantPath(exceptionClass, "rescue exception");
+					}
+					if (rescue.binding != null) {
+						requireLocalName(rescue.binding, "rescue binding");
+					}
+				}
 			case RubyLambda(args, _):
 				validateNames(args, "lambda parameter");
 			case RubyCallableLambda(args, _):
@@ -159,6 +181,18 @@ class RubyASTValidator {
 	static function requireName(name:String, kind:String):Void {
 		if (name == null || StringTools.trim(name) == "") {
 			fail(kind + " name cannot be empty");
+		}
+	}
+
+	static function requireConstantPath(name:String, kind:String):Void {
+		if (name == null || !~/^(?:::)?[A-Z][A-Za-z0-9_]*(?:::[A-Z][A-Za-z0-9_]*)*$/.match(name)) {
+			fail("invalid " + kind + " constant " + Std.string(name));
+		}
+	}
+
+	static function requireLocalName(name:String, kind:String):Void {
+		if (name == null || !~/^[a-z_][A-Za-z0-9_]*$/.match(name)) {
+			fail("invalid " + kind + " local " + Std.string(name));
 		}
 	}
 

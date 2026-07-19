@@ -7,6 +7,7 @@ import reflaxe.ruby.ast.RubyAST.RubyExpr;
 import reflaxe.ruby.ast.RubyAST.RubyFile;
 import reflaxe.ruby.ast.RubyAST.RubyHashField;
 import reflaxe.ruby.ast.RubyAST.RubyMethodParameter;
+import reflaxe.ruby.ast.RubyAST.RubyRescueClause;
 import reflaxe.ruby.ast.RubyAST.RubyStatement;
 
 /** The lexical role a child statement body has in structural Ruby syntax. **/
@@ -101,6 +102,8 @@ class RubyASTChildren {
 				RubyConditional(mapExpr(cond), mapExpr(thenExpr), mapExpr(elseExpr));
 			case RubyBegin(body):
 				RubyBegin(mapStatements(body, ExecutableBody, mapStatement));
+			case RubyBeginRescue(body, rescues):
+				RubyBeginRescue(mapStatements(body, ExecutableBody, mapStatement), mapRescueClauses(rescues, mapStatement));
 			case RubyLambda(args, body):
 				RubyLambda(args, mapStatements(body, ExecutableBody, mapStatement));
 			case RubyCallableLambda(args, body):
@@ -117,6 +120,8 @@ class RubyASTChildren {
 					defaultBody == null ? null : mapStatements(defaultBody, ExecutableBody, mapStatement));
 			case RubyRuntimeCall(use, args):
 				RubyRuntimeCall(use, mapExprs(args, mapExpr));
+			case RubyRaise(exception):
+				RubyRaise(exception == null ? null : mapExpr(exception));
 		}
 	}
 
@@ -165,6 +170,16 @@ class RubyASTChildren {
 		return {
 			values: mapExprs(branch.values, mapExpr),
 			body: mapStatements(branch.body, ExecutableBody, mapStatement)
+		};
+	}
+
+	/** Maps the executable statement children of one native Ruby rescue arm. **/
+	public static function mapRescueClauseImmediate(clause:RubyRescueClause,
+			mapStatement:(RubyStatement, RubyStatementChildRole) -> RubyStatement):RubyRescueClause {
+		return {
+			exceptionClasses: clause.exceptionClasses,
+			binding: clause.binding,
+			body: mapStatements(clause.body, ExecutableBody, mapStatement)
 		};
 	}
 
@@ -238,5 +253,10 @@ class RubyASTChildren {
 	static function mapCaseBranches(branches:Array<RubyCaseBranch>, mapExpr:RubyExpr->RubyExpr,
 			mapStatement:(RubyStatement, RubyStatementChildRole) -> RubyStatement):Array<RubyCaseBranch> {
 		return branches == null ? null : [for (branch in branches) mapCaseBranchImmediate(branch, mapExpr, mapStatement)];
+	}
+
+	static function mapRescueClauses(clauses:Array<RubyRescueClause>,
+			mapStatement:(RubyStatement, RubyStatementChildRole) -> RubyStatement):Array<RubyRescueClause> {
+		return clauses == null ? null : [for (clause in clauses) mapRescueClauseImmediate(clause, mapStatement)];
 	}
 }

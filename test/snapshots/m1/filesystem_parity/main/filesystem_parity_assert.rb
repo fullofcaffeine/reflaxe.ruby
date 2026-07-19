@@ -11,12 +11,12 @@ class Main
     end
     def self.equal(expected, actual, label)
       if (actual != expected)
-        raise HxException.new(((((("filesystem parity failed: " + label) + "; expected ") + HXRuby.stringify(expected)) + ", got ") + HXRuby.stringify(actual)))
+        raise HxException.wrap(((((("filesystem parity failed: " + label) + "; expected ") + HXRuby.stringify(expected)) + ", got ") + HXRuby.stringify(actual)))
       end
     end
     def self.is_true(condition, label)
       if (!condition)
-        raise HxException.new(("filesystem parity failed: " + label))
+        raise HxException.wrap(("filesystem parity failed: " + label))
       end
     end
     def self.is_false(condition, label)
@@ -26,8 +26,9 @@ class Main
       raised = false
       begin
         action.call()
-      rescue StandardError => __hx_ex
-        hx_tmp = __hx_ex.is_a?(HxException) ? __hx_ex.value : __hx_ex
+      rescue StandardError => haxe_exception
+        haxe_thrown = (haxe_exception.is_a?(HxException) ? haxe_exception.value : haxe_exception)
+        hx_tmp = haxe_thrown
         raised = true
       end
       Main::FilesystemParityAssert.is_true(raised, label)

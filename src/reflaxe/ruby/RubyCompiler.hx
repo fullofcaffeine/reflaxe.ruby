@@ -42,6 +42,8 @@ import reflaxe.ruby.compiler.RubyCallableShape.RubyKeywordFieldContract;
 import reflaxe.ruby.compiler.RubyCallableHierarchy;
 import reflaxe.ruby.compiler.RubyCallablePlan;
 import reflaxe.ruby.compiler.RubyCallablePlan.RubyCallableLoweringPlan;
+import reflaxe.ruby.compiler.RubyExceptionLowering;
+import reflaxe.ruby.compiler.RubyExceptionLowering.RubyExceptionLoweringResult;
 import reflaxe.ruby.compiler.RubyKeywordSemantics;
 import reflaxe.ruby.compiler.RubyOutputLayout;
 import reflaxe.ruby.naming.RubyNaming;
@@ -2828,11 +2830,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TSwitch(switchExpr, cases, edef):
 				return RubyExprStatement(compileSwitch(switchExpr, cases, edef));
 			case TTry(tryExpr, catches):
-				needsHxException = true;
-				return RubyRawStatement(renderTry(tryExpr, catches));
+				return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileTry(tryExpr, catches, compileFunctionBody, localName,
+					allocateSyntheticLocalName, rubyTypeNameFromType)));
 			case TThrow(thrown):
-				needsHxException = true;
-				return RubyRawStatement("raise HxException.new(" + printInlineExpr(thrown) + ")");
+				return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileThrow(thrown, compileExpr)));
 			case TBreak:
 				return RubyRawStatement("break");
 			case TContinue:
@@ -2927,11 +2928,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TSwitch(switchExpr, cases, edef):
 				compileSwitch(switchExpr, cases, edef);
 			case TTry(tryExpr, catches):
-				needsHxException = true;
-				RubyRawExpr(renderTry(tryExpr, catches));
+				applyExceptionLowering(RubyExceptionLowering.compileTry(tryExpr, catches, compileFunctionBody, localName, allocateSyntheticLocalName,
+					rubyTypeNameFromType));
 			case TThrow(thrown):
-				needsHxException = true;
-				RubyRawExpr("(raise HxException.new(" + printInlineExpr(thrown) + "))");
+				applyExceptionLowering(RubyExceptionLowering.compileThrow(thrown, compileExpr));
 			case TBreak:
 				RubyRawExpr("break");
 			case TContinue:
@@ -6441,20 +6441,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return RubyCase(scrutinee, branches, edef == null ? null : compileFunctionBody(edef));
 	}
 
-	static function renderTry(tryExpr:TypedExpr, catches:Array<{v:TVar, expr:TypedExpr}>):String {
-		var lines = ["begin"];
-		appendIndentedLines(lines, renderStatements(compileFunctionBody(tryExpr)), 1);
-		if (catches.length > 0) {
-			var first = catches[0];
-			// Haxe throws are wrapped so any value can cross Ruby's exception model,
-			// while direct Ruby APIs raise StandardError subclasses. Catch both at the
-			// language boundary and unwrap only the compiler-owned HxException carrier.
-			lines.push("rescue StandardError => __hx_ex");
-			lines.push("  " + localName(first.v) + " = __hx_ex.is_a?(HxException) ? __hx_ex.value : __hx_ex");
-			appendIndentedLines(lines, renderStatements(compileFunctionBody(first.expr)), 1);
+	/** Applies request-local runtime requirements reported by exception lowering. **/
+	static function applyExceptionLowering(result:RubyExceptionLoweringResult):RubyExpr {
+		needsHxException = true;
+		for (_ in 0...result.coreRuntimeUseCount) {
+			markCoreRuntimeUse();
 		}
-		lines.push("end");
-		return lines.join("\n");
+		return result.expr;
 	}
 
 	static function renderFor(v:TVar, iterable:TypedExpr, body:TypedExpr):String {

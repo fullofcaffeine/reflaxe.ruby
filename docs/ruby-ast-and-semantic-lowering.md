@@ -18,18 +18,20 @@ state too early.
 
 At this slice:
 
-- `RubyCompiler.hx` is 14,575 lines and remains the Reflaxe orchestration
+- `RubyCompiler.hx` is 14,568 lines and remains the Reflaxe orchestration
   entrypoint.
-- `RubyAST.hx` is 101 lines and owns closed expression/statement syntax.
+- `RubyAST.hx` is 116 lines and owns closed expression/statement syntax.
+- `RubyExceptionLowering.hx` is 133 lines and owns pre-filter typed catch
+  dispatch through structural RubyAST plus an exact core-runtime-use count.
 - `RubyASTChildren` exhaustively owns every immediate structural child and the
   declaration-versus-executable role of every statement body.
 - `RubyASTValidator` checks cross-node invariants before either a file or a
   standalone expression is printed.
 - `RubyCallablePlan` records definition-side block and keyword decisions once
   per method.
-- `RubyRuntimePlan` closes the 47 compiler-selected hxruby helpers and gives
+- `RubyRuntimePlan` closes the 49 compiler-selected hxruby helpers and gives
   each emitted use a semantic intent.
-- The checked inventory currently classifies 324 raw or print-reembed source
+- The checked inventory currently classifies 318 raw or print-reembed source
   sites. The count is planning evidence, not a product-quality score.
 
 The root compiler ceiling moved down with the extraction. Rails-specific
@@ -43,6 +45,7 @@ it was intentionally not folded into this core AST slice.
 | --- | --- | --- |
 | Haxe `TypedExpr` | Resolved Haxe meaning, types, declarations, and source positions | Ruby punctuation |
 | Focused semantic plans | Observable Ruby choices that need independent validation | A second copy of every `TypedExprDef` |
+| Focused vertical lowerings | One source/target semantic gap through structural AST plus explicit runtime requirements | Global compiler state or printer-side repair |
 | `RubyAST` | Ruby declarations, expressions, statements, control flow, calls, and runtime-use nodes | Haxe type analysis or target text |
 | `RubyASTChildren` | Exhaustive immediate children, deterministic child order, and declaration/executable body roles | Semantic lowering, raw-text inspection, or pass scheduling |
 | `RubyASTValidator` | Cross-node shape, executable/declaration contexts, and plan/use agreement | Syntax formatting |
@@ -57,13 +60,37 @@ Ordinary migrated syntax is structural:
 - expression `TIf` uses `RubyConditional`;
 - expression `TBlock` uses `RubyBegin`;
 - statement `TBlock` uses `RubyStatementSequence`;
-- enum tag/parameter access uses `RubyMember`; and
+- enum tag/parameter access uses `RubyMember`;
 - statement and expression `TSwitch` use `RubyCase` with structural arms and
-  an optional default body.
+  an optional default body;
+- statement and expression `TTry` use `RubyBeginRescue`; and
+- statement and expression `TThrow` use `RubyRaise`.
 
 These paths do not print a child AST and insert the resulting string into a raw
 node. The switch migration preserves the existing Ruby runtime behavior and
 the committed `switch_cases` snapshot byte for byte.
+
+Exception lowering is a bounded semantic migration because Reflaxe captures
+the typed tree before Haxe target exception filtering. One structural
+`rescue StandardError` therefore unwraps only the compiler-owned carrier and
+dispatches Haxe catch arms in source order with typed `HXRuby.is_of_type`
+checks. `Dynamic` receives the unwrapped thrown value. The exact
+`haxe.Exception` wildcard receives an `HxException.caught` adapter so its
+typed message accessor works for native Ruby errors; an explicit throw of that
+adapter restores the original native exception. A nonmatching arm emits a bare
+`raise`, preserving Ruby identity and backtrace, and `HxException.wrap`
+evaluates the thrown expression once.
+
+This slice deliberately has no `ensure` field or general control-flow IR:
+Haxe `TTry` has no cleanup payload, so no current producer or independent
+consumer earns that representation.
+
+`RubyExceptionLowering` owns this vertical feature without depending back on
+`RubyCompiler`. The orchestration entrypoint supplies typed callbacks for
+ordinary expression/body compilation, local allocation, and Ruby type naming;
+the service returns structural AST plus the exact number of `HXRuby` core
+uses it introduced. `RubyCompiler` alone applies those request-local runtime
+requirements.
 
 `RubyASTValidator` also rejects declarations inside method/expression bodies,
 invalid structural member names, empty `case` arms, and runtime uses whose
@@ -117,23 +144,28 @@ validation.
 
 ## Runtime Intent
 
-Every compiler call through `hxrubyCall` now selects a
-`RubyRuntimeHelper`. `RubyRuntimePlan.select` attaches one of these closed
-reasons before a `RubyRuntimeCall` AST node is created:
+Every compiler-selected runtime call through `hxrubyCall` or a focused
+lowering such as `RubyExceptionLowering` selects a `RubyRuntimeHelper`.
+`RubyRuntimePlan.select` attaches one of these closed reasons before a
+`RubyRuntimeCall` AST node is created:
 
 - array semantics;
 - iterator compatibility;
 - numeric semantics;
 - primitive conversion semantics;
 - reflection semantics;
-- string semantics; or
-- type semantics.
+- string semantics;
+- type semantics; or
+- exception-boundary semantics.
 
-The validator recomputes the exhaustive helper-to-intent mapping before
-printing. A misspelled helper cannot type-check, a new helper cannot compile
-without an intent case, and a mismatched use fails before Ruby source exists.
-The existing runtime-use counter still owns per-file `require` placement; it
-is no longer the first observable record of why a helper was selected.
+The same plan selects the runtime receiver: ordinary helpers target `HXRuby`,
+while `ExceptionCaught` and `ExceptionWrap` target `HxException`. The
+validator recomputes the exhaustive helper-to-intent mapping before printing.
+A misspelled helper cannot type-check, a new helper cannot compile without
+receiver and intent decisions, and a mismatched use fails before Ruby source
+exists. The existing runtime-use counter still owns per-file `require`
+placement; it is no longer the first observable record of why a helper was
+selected.
 
 ## Raw And Print-Reembed Inventory
 
@@ -187,10 +219,11 @@ When adding lowering:
 
 ## Remaining Incremental Debt
 
-The inventory intentionally keeps future work visible. Structural
-`begin/rescue/ensure`, raises and loop exits, iterator lowering, more
-declarations, Rails artifact IRs, and remaining call/template adapters should
-move in independently tested slices. This work does not require:
+The inventory intentionally keeps future work visible. Structural loop exits,
+iterator lowering, more declarations, Rails artifact IRs, and remaining
+call/template adapters should move in independently tested slices. Ruby
+`ensure` should be admitted only when an actual source or framework producer
+owns its semantics. This work does not require:
 
 - a C-like control-flow graph;
 - a universal runtime IR;
@@ -204,11 +237,13 @@ Focused evidence for this contract includes:
 npm run test:ruby-ast
 npm run test:ruby-ast-inventory
 npm run test:switch-cases
+npm run test:exception-flow
 npm run test:ruby-unsupported-expressions
 npm run test:ruby-owned-blocks
 npm run test:ruby-keyword-rest
 npm run test:ruby-callable-inheritance
 npm run test:ruby-callable-abi-example
 npm run test:runtime-usage
+npm run test:runtime-minitest
 npm run test:snapshots
 ```

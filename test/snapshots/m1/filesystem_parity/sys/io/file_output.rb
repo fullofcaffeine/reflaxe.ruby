@@ -25,7 +25,7 @@ class Sys
       end
       def write_bytes(bytes, pos, len)
         if (((pos < 0) || (len < 0)) || ((pos + len) > bytes.length))
-          raise HxException.new(Haxe::Io::Error.outside_bounds())
+          raise HxException.wrap(Haxe::Io::Error.outside_bounds())
         end
         return self.handle.write(bytes.get_data().slice(pos, len).pack('C*'))
       end

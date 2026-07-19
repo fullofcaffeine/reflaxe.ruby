@@ -51,8 +51,12 @@ When Rails still fails:
    normal Rails request, job, mailer, test, or production command.
 
 `HxException` preserves the Haxe value while remaining a Ruby `StandardError`.
-Ruby raise-site backtraces and native exception causes remain available, so job
-retry logs and Rails error reports retain their normal diagnostic shape.
+Typed catches dispatch in Haxe source order. A `haxe.Exception` wildcard
+adapts native Ruby errors to Haxe's message accessor, and explicitly throwing
+that binding raises the original native object again. Unmatched typed catches
+use Ruby's bare re-raise. Ruby raise-site backtraces, native exception identity,
+and causes therefore remain available, so job retry logs and Rails error
+reports retain their normal diagnostic shape.
 
 ## Views And Assets
 

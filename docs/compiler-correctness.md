@@ -28,8 +28,9 @@ than inheriting a silent default.
 
 Typed Haxe meaning lowers into structural `RubyAST` before target syntax is
 printed. Ordinary migrated forms such as array access, expression
-conditionals/blocks, statement sequences, enum members, and `case` cannot
-fall back to raw strings or print a child AST for re-embedding.
+conditionals/blocks, statement sequences, enum members, `case`,
+`begin/rescue`, and `raise` cannot fall back to raw strings or print a child
+AST for re-embedding.
 
 `RubyASTValidator` runs before file and standalone-expression printing. It
 keeps declarations out of executable bodies, validates closed control shapes,
@@ -38,6 +39,14 @@ declaration/executable body roles come from the exhaustive `RubyASTChildren`
 schema, so validators and future generic analyses do not maintain independent
 child switches. The checked source inventory and contributor rules are documented in
 [Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md).
+
+Haxe catch arms are evaluated in source order over the unwrapped thrown value.
+`Dynamic` is the value wildcard; exact `haxe.Exception` uses a typed runtime
+adapter that retains a native Ruby exception for explicit rethrow. If no typed
+arm matches, structural lowering emits bare Ruby `raise` instead of repairing
+the result in the printer. This keeps the original exception identity and
+backtrace. Haxe `TTry` does not carry cleanup, so the AST does not claim
+`ensure` support without a producer.
 
 ## Intentional Erasure Is Different
 
@@ -60,6 +69,7 @@ Run:
 npm run test:ruby-unsupported-expressions
 npm run test:ruby-ast
 npm run test:ruby-ast-inventory
+npm run test:exception-flow
 ```
 
 The positive fixture proves variable declarations, loops, `continue`, `break`,

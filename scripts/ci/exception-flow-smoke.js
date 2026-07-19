@@ -52,6 +52,29 @@ if (actual !== expected) {
   process.exit(1);
 }
 
+const generatedSource = readFileSync(join(outputDir, "main.rb"), "utf8");
+for (const expectedShape of [
+  "rescue StandardError => haxe_exception",
+  "HxException.caught(haxe_exception)",
+  "HXRuby.is_of_type(haxe_thrown, String)",
+  "HXRuby.is_of_type(haxe_thrown, Int)",
+  "HXRuby.is_of_type(haxe_thrown, StandardError)",
+  "raise HxException.wrap(",
+]) {
+  if (!generatedSource.includes(expectedShape)) {
+    console.error(`exception_flow missing structural shape: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+if (generatedSource.includes("HxException.new(") || !/else\n\s+raise\n/.test(generatedSource)) {
+  console.error("exception_flow must wrap through HxException.wrap and bare-reraise unmatched catches");
+  process.exit(1);
+}
+if ((generatedSource.match(/HxException\.wrap\(Main\.next_thrown_value\(\)\)/g) ?? []).length !== 1) {
+  console.error("exception_flow thrown expression must be emitted exactly once");
+  process.exit(1);
+}
+
 const uncaught = run("ruby", [
   `-I${outputDir}`,
   "-e",

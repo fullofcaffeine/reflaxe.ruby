@@ -253,6 +253,7 @@ const compiler = readFileSync(join(sourceRoot, "RubyCompiler.hx"), "utf8");
 const ast = readFileSync(join(sourceRoot, "ast", "RubyAST.hx"), "utf8");
 const printer = readFileSync(join(sourceRoot, "ast", "RubyASTPrinter.hx"), "utf8");
 const callablePlan = readFileSync(join(sourceRoot, "compiler", "RubyCallablePlan.hx"), "utf8");
+const exceptionLowering = readFileSync(join(sourceRoot, "compiler", "RubyExceptionLowering.hx"), "utf8");
 
 for (const expected of [
 	"case TArray(target, index): RubyIndex(compileExpr(target), compileExpr(index));",
@@ -261,6 +262,9 @@ for (const expected of [
 	"RubyConditional(compileExpr(cond), compileExpr(eThen), eElse == null ? RubyNil : compileExpr(eElse));",
 	"return RubyExprStatement(compileSwitch(switchExpr, cases, edef));",
 	"return RubyCase(scrutinee, branches, edef == null ? null : compileFunctionBody(edef));",
+	"return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileTry(",
+	"return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileThrow(",
+	"static function applyExceptionLowering(result:RubyExceptionLoweringResult):RubyExpr",
 	"var callablePlan = RubyCallablePlan.resolve(field, contract);",
 	"static var activeRubyCallableContext:Null<ActiveRubyCallableContext> = null;",
 	"static function hxrubyCall(helper:RubyRuntimeHelper, args:Array<RubyExpr>):RubyExpr",
@@ -268,9 +272,21 @@ for (const expected of [
 ]) {
 	requireIncludes(compiler, expected, "RubyCompiler");
 }
+for (const expected of [
+	"class RubyExceptionLowering",
+	"expr: RubyBeginRescue(body, [",
+	"expr: RubyRaise(runtimeCall(RubyRuntimeHelper.ExceptionWrap, [compileExpr(thrown)]))",
+	"RubyRuntimeHelper.ExceptionCaught",
+	"RubyRuntimeHelper.IsOfType",
+	"body: [RubyExprStatement(RubyRaise())]",
+]) {
+	requireIncludes(exceptionLowering, expected, "RubyExceptionLowering");
+}
 for (const forbidden of [
 	"statementToInlineRuby",
 	"renderSwitch(",
+	"renderTry(",
+	"HxException.new(",
 	"directYieldBlockVariableId",
 	"activeRubyKeywordCarrier",
 	"withDirectYieldBlock",
@@ -280,10 +296,15 @@ for (const forbidden of [
 ]) {
 	forbidIncludes(compiler, forbidden, "RubyCompiler");
 }
+for (const forbidden of ["RubyRawExpr(", "RubyRawStatement(", "RubyASTPrinter."]) {
+	forbidIncludes(exceptionLowering, forbidden, "RubyExceptionLowering");
+}
 for (const expected of [
 	"RubyStatementSequence(body:Array<RubyStatement>);",
 	"RubyMember(receiver:RubyExpr, name:String);",
 	"RubyCase(scrutinee:RubyExpr",
+	"RubyBeginRescue(body:Array<RubyStatement>, rescues:Array<RubyRescueClause>);",
+	"RubyRaise(?exception:RubyExpr);",
 	"RubyRuntimeCall(use:RubyRuntimeUse",
 ]) {
 	requireIncludes(ast, expected, "RubyAST");
@@ -292,6 +313,8 @@ for (const expected of [
 	"RubyASTValidator.validateFile(file);",
 	"RubyASTValidator.validateExpr(expr);",
 	"case RubyCase(scrutinee, branches, defaultBody):",
+	"case RubyBeginRescue(body, rescues):",
+	"case RubyRaise(exception):",
 	"case RubyRuntimeCall(use, args):",
 ]) {
 	requireIncludes(printer, expected, "RubyASTPrinter");

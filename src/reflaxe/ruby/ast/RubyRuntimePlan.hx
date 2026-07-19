@@ -1,10 +1,11 @@
 package reflaxe.ruby.ast;
 
 /**
-	The closed set of hxruby helpers selected by compiler-owned lowering.
+	The closed set of hxruby runtime helpers selected by compiler-owned lowering.
 
 	Keeping helper names nominal prevents a misspelled or newly introduced helper
-	from reaching generated Ruby without an explicit semantic-intent decision.
+	from reaching generated Ruby without explicit receiver and semantic-intent
+	decisions.
 **/
 enum abstract RubyRuntimeHelper(String) {
 	var ArrayIndexOf = "array_index_of";
@@ -16,6 +17,8 @@ enum abstract RubyRuntimeHelper(String) {
 	var ArraySlice = "array_slice";
 	var ArraySort = "array_sort";
 	var ArraySplice = "array_splice";
+	var ExceptionCaught = "caught";
+	var ExceptionWrap = "wrap";
 	var IsOfType = "is_of_type";
 	var Iterator = "iterator";
 	var KeyValueIterator = "key_value_iterator";
@@ -63,6 +66,7 @@ enum abstract RubyRuntimeHelper(String) {
 /** Why target execution needs one compiler-selected compatibility helper. **/
 enum RubyRuntimeIntent {
 	ArraySemantics;
+	ExceptionBoundarySemantics;
 	IteratorCompatibility;
 	NumericSemantics;
 	PrimitiveConversionSemantics;
@@ -103,10 +107,22 @@ class RubyRuntimePlan {
 		}
 	}
 
+	/** Returns the closed runtime receiver selected for a validated helper use. **/
+	public static function rubyReceiver(use:RubyRuntimeUse):String {
+		validate(use);
+		return switch (use.helper) {
+			case RubyRuntimeHelper.ExceptionCaught | RubyRuntimeHelper.ExceptionWrap: "HxException";
+			case RubyRuntimeHelper.ArrayIndexOf | RubyRuntimeHelper.ArrayInsert | RubyRuntimeHelper.ArrayJoin | RubyRuntimeHelper.ArrayLastIndexOf | RubyRuntimeHelper.ArrayRemove | RubyRuntimeHelper.ArrayResize | RubyRuntimeHelper.ArraySlice | RubyRuntimeHelper.ArraySort | RubyRuntimeHelper.ArraySplice | RubyRuntimeHelper.IsOfType | RubyRuntimeHelper.Iterator | RubyRuntimeHelper.KeyValueIterator | RubyRuntimeHelper.MathDivide | RubyRuntimeHelper.NativeIterator | RubyRuntimeHelper.ParseFloat | RubyRuntimeHelper.ParseInt | RubyRuntimeHelper.ReflectCallMethod | RubyRuntimeHelper.ReflectCompare | RubyRuntimeHelper.ReflectCompareMethods | RubyRuntimeHelper.ReflectCopy | RubyRuntimeHelper.ReflectDeleteField | RubyRuntimeHelper.ReflectField | RubyRuntimeHelper.ReflectFields | RubyRuntimeHelper.ReflectGetProperty | RubyRuntimeHelper.ReflectHasField | RubyRuntimeHelper.ReflectIsEnumValue | RubyRuntimeHelper.ReflectIsFunction | RubyRuntimeHelper.ReflectIsObject | RubyRuntimeHelper.ReflectMakeVarArgs | RubyRuntimeHelper.ReflectSetField | RubyRuntimeHelper.ReflectSetProperty | RubyRuntimeHelper.StringCharAt | RubyRuntimeHelper.StringCharCodeAt | RubyRuntimeHelper.StringCompare | RubyRuntimeHelper.StringIndexOf | RubyRuntimeHelper.StringLastIndexOf | RubyRuntimeHelper.StringSplit | RubyRuntimeHelper.StringSubstr | RubyRuntimeHelper.StringSubstring | RubyRuntimeHelper.StringToolsFastCodeAt | RubyRuntimeHelper.StringToolsIsEof | RubyRuntimeHelper.StringToolsIsSpace | RubyRuntimeHelper.StringToolsLpad | RubyRuntimeHelper.StringToolsRpad | RubyRuntimeHelper.StringUtf16KeyValueUnits | RubyRuntimeHelper.StringUtf16Units | RubyRuntimeHelper.Stringify:
+				"HXRuby";
+		}
+	}
+
 	static function intentFor(helper:RubyRuntimeHelper):RubyRuntimeIntent {
 		return switch (helper) {
 			case RubyRuntimeHelper.ArrayIndexOf | RubyRuntimeHelper.ArrayInsert | RubyRuntimeHelper.ArrayJoin | RubyRuntimeHelper.ArrayLastIndexOf | RubyRuntimeHelper.ArrayRemove | RubyRuntimeHelper.ArrayResize | RubyRuntimeHelper.ArraySlice | RubyRuntimeHelper.ArraySort | RubyRuntimeHelper.ArraySplice:
 				ArraySemantics;
+			case RubyRuntimeHelper.ExceptionCaught | RubyRuntimeHelper.ExceptionWrap:
+				ExceptionBoundarySemantics;
 			case RubyRuntimeHelper.Iterator | RubyRuntimeHelper.KeyValueIterator | RubyRuntimeHelper.NativeIterator:
 				IteratorCompatibility;
 			case RubyRuntimeHelper.MathDivide:

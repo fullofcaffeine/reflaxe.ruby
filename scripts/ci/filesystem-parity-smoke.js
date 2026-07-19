@@ -85,13 +85,18 @@ for (const expectedShape of [
   "module Io",
   "class FileInput < Haxe::Io::Input",
   "self.handle.getbyte()",
-  "rescue StandardError => __hx_ex",
-  "__hx_ex.is_a?(HxException) ? __hx_ex.value : __hx_ex",
+  "rescue StandardError => haxe_exception",
+  "haxe_exception.is_a?(HxException) ? haxe_exception.value : haxe_exception",
+  "HXRuby.is_of_type(haxe_thrown, Haxe::Io::Eof)",
 ]) {
   if (!inputRuby.includes(expectedShape)) {
     console.error(`Expected FileInput carrier shape missing: ${expectedShape}`);
     process.exit(1);
   }
+}
+if (!/else\n\s+raise\n/.test(inputRuby)) {
+  console.error("Expected FileInput unmatched typed catch to use bare re-raise");
+  process.exit(1);
 }
 for (const expectedShape of [
   "class FileOutput < Haxe::Io::Output",
