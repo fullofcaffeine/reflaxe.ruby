@@ -9,4 +9,6 @@ ruby:2:fast|typed
 item=3
 item=4
 ready
+#{literal}
+dynamic
 kernel

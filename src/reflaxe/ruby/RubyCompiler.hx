@@ -5775,41 +5775,38 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubySymbol(params:Array<TypedExpr>):RubyExpr {
-		if (params.length == 0) {
-			return RubyRawExpr(":\"\"");
-		}
-		return switch (params[0].expr) {
+		return params.length == 0 ? RubySymbol("") : switch (unwrapTypedExpr(params[0]).expr) {
 			case TConst(TString(value)):
-				RubyRawExpr(rubySymbolLiteral(value));
+				RubySymbol(value);
 			case _:
-				RubyRawExpr("(" + printParam(params, 0) + ").to_sym");
+				RubyCall(compileExpr(params[0]), "to_sym", []);
 		}
 	}
 
 	static function compileRailsPermitSpecField(params:Array<TypedExpr>):RubyExpr {
-		if (params.length == 0) {
-			return RubyRawExpr(":\"\"");
-		}
-		return switch (unwrapTypedExpr(params[0]).expr) {
+		return params.length == 0 ? RubySymbol("") : switch (unwrapTypedExpr(params[0]).expr) {
 			case TConst(TString(value)):
-				RubyRawExpr(rubySymbolLiteral(RubyNaming.toMethodName(value)));
+				RubySymbol(RubyNaming.toMethodName(value));
 			case _:
-				RubyRawExpr("(" + printParam(params, 0) + ").to_sym");
+				RubyCall(compileExpr(params[0]), "to_sym", []);
 		}
 	}
 
 	static function compileRailsPermitSpecNested(params:Array<TypedExpr>):RubyExpr {
 		if (params.length < 2) {
-			return RubyRawExpr("{}");
+			return RubySymbolHash([]);
 		}
-		var key = switch (unwrapTypedExpr(params[0]).expr) {
+		var children = compileExpr(params[1]);
+		return switch (unwrapTypedExpr(params[0]).expr) {
 			case TConst(TString(value)):
-				RubyNaming.toMethodName(value);
+				RubySymbolHash([{key: RubyNaming.toMethodName(value), value: children}]);
 			case _:
-				null;
+				// RubyAST hash nodes require static keys. Hash.[] or staged []= would add
+				// observable, monkey-patchable dispatch unlike a literal, so keep this
+				// non-canonical expression-key path as one inventoried raw/print fallback.
+				var key = RubyCall(compileExpr(params[0]), "to_sym", []);
+				RubyRawExpr("{" + RubyASTPrinter.printExpr(key) + " => " + RubyASTPrinter.printExpr(children) + "}");
 		}
-		var children = printParam(params, 1);
-		return key == null ? RubyRawExpr("{(" + printParam(params, 0) + ").to_sym => " + children + "}") : RubyRawExpr("{" + key + ": " + children + "}");
 	}
 
 	static function compileRubyInjection(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {

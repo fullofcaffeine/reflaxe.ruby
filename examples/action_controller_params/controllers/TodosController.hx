@@ -3,6 +3,7 @@ package controllers;
 import rails.action_controller.ForgeryProtectionStrategy;
 import rails.action_controller.InvalidAuthenticityToken;
 import rails.action_controller.Mime;
+import rails.action_controller.PermitSpec;
 import rails.action_controller.RequestVariantToken;
 import rails.action_controller.Status;
 import rails.action_controller.SendDisposition;
@@ -131,6 +132,13 @@ class TodosController extends rails.action_controller.Base {
 
 	public function runtimeOk() {
 		render({plain: "runtime ok", status: Status.ok});
+	}
+
+	/** Exercises the low-level dynamic-key extern; canonical app code uses ParamsMacro. **/
+	public function dynamicPermit() {
+		var dynamicName = "metadata";
+		var dynamicAttrs = params().requireParam("todo").permit([PermitSpec.nested(dynamicName, [PermitSpec.field("source")])]);
+		render({json: dynamicAttrs, status: Status.ok});
 	}
 
 	public function index() {}

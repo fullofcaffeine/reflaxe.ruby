@@ -89,6 +89,9 @@ for (const expected of [
   /NativeInterop\.with_options\(\[3, 4\], prefix: "item", tags: \[:safe\], count: count(?:__hx\d+)?\) do \|value(?:__hx\d+)?\|/,
   /Kernel\.print\("item="\)/,
   /NativeInterop\.accept_symbol\(:ready\)/,
+  /NativeInterop\.accept_symbol\(:"\\#\{literal\}"\)/,
+  /dynamic_symbol_name(?:__hx\d+)? = "dynamic"/,
+  /NativeInterop\.accept_symbol\(dynamic_symbol_name(?:__hx\d+)?\.to_sym\(\)\)/,
   /Kernel\.puts\("kernel"\)/,
 ]) {
   if (!expected.test(mainRuby)) {

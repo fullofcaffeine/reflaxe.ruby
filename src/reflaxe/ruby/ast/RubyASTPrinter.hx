@@ -352,15 +352,49 @@ class RubyASTPrinter {
 		escaped = StringTools.replace(escaped, "\n", "\\n");
 		escaped = StringTools.replace(escaped, "\r", "\\r");
 		escaped = StringTools.replace(escaped, "\t", "\\t");
+		// Ruby interpolates all three forms inside double-quoted strings. Escape
+		// only those prefixes so ordinary `#` characters remain idiomatic.
+		escaped = StringTools.replace(escaped, "#{", "\\#{");
+		escaped = StringTools.replace(escaped, "#@", "\\#@");
+		escaped = StringTools.replace(escaped, "#" + "$", "\\#" + "$");
 		return "\"" + escaped + "\"";
 	}
 
 	static function rubySymbol(value:String):String {
-		return isSimpleRubyLabel(value) ? ":" + value : ":" + quoteRubyString(value);
+		return isSimpleRubySymbol(value) ? ":" + value : ":" + quoteRubyString(value);
 	}
 
 	static function isSimpleRubyLabel(value:String):Bool {
 		return value != null && ~/^[A-Za-z_][A-Za-z0-9_]*$/.match(value);
+	}
+
+	static function isSimpleRubySymbol(value:String):Bool {
+		if (value == null || value.length == 0) {
+			return false;
+		}
+		var first = value.charCodeAt(0);
+		if (!isRubyIdentStart(first)) {
+			return false;
+		}
+		var limit = value.length;
+		var last = value.charAt(value.length - 1);
+		if (last == "!" || last == "?" || last == "=") {
+			limit--;
+		}
+		for (i in 1...limit) {
+			if (!isRubyIdentPart(value.charCodeAt(i))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	static function isRubyIdentStart(code:Int):Bool {
+		return code == 95 || (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+	}
+
+	static function isRubyIdentPart(code:Int):Bool {
+		return isRubyIdentStart(code) || (code >= 48 && code <= 57);
 	}
 
 	static function isRubyWriterName(value:String):Bool {

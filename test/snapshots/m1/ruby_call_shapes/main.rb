@@ -34,6 +34,9 @@ class Main
       puts(HXRuby.stringify(value__hx2))
     end
     puts(HXRuby.stringify(NativeInterop.accept_symbol(:ready)))
+    puts(HXRuby.stringify(NativeInterop.accept_symbol(:"\#{literal}")))
+    dynamic_symbol_name = "dynamic"
+    puts(HXRuby.stringify(NativeInterop.accept_symbol(dynamic_symbol_name.to_sym())))
     Kernel.puts("kernel")
   end
 end

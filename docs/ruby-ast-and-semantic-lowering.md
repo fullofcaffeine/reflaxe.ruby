@@ -18,7 +18,7 @@ state too early.
 
 At this slice:
 
-- `RubyCompiler.hx` is 14,530 lines and remains the Reflaxe orchestration
+- `RubyCompiler.hx` is 14,527 lines and remains the Reflaxe orchestration
   entrypoint.
 - `RubyAST.hx` is 123 lines and owns closed expression/statement syntax.
 - `RubyExceptionLowering.hx` is 133 lines and owns pre-filter typed catch
@@ -35,8 +35,10 @@ At this slice:
   per method.
 - `RubyRuntimePlan` closes the 49 compiler-selected hxruby helpers and gives
   each emitted use a semantic intent.
-- The checked inventory currently classifies 300 raw or print-reembed source
-  sites. The count is planning evidence, not a product-quality score.
+- The checked inventory currently classifies 294 raw or print-reembed source
+  sites: 14 core-lowering, 101 validated-framework, and 126 print-reembed
+  sites, with the remaining categories recorded in the inventory. The count is
+  planning evidence, not a product-quality score.
 
 The root compiler ceiling moved down with the extraction. Rails-specific
 extraction remains governed separately by
@@ -71,9 +73,13 @@ Ordinary migrated syntax is structural:
 - statement and expression `TThrow` use `RubyRaise`;
 - statement and expression `TBreak`/`TContinue` use payload-free `RubyBreak`
   and `RubyNext`; and
-- residual `TFor` uses structural assignment, calls, and `RubyWhileStmt`; and
+- residual `TFor` uses structural assignment, calls, and `RubyWhileStmt`;
 - `haxe.Int32` casts, arithmetic result clamps, and signed/unsigned shifts use
-  nested `RubyBinary`/`RubyCall` expressions rather than rendered fragments.
+  nested `RubyBinary`/`RubyCall` expressions rather than rendered fragments;
+  and
+- `ruby.Symbol.of`, canonical Rails `PermitSpec.field`, and literal-key
+  `PermitSpec.nested` use `RubySymbol`, `RubyCall`, and `RubySymbolHash` rather
+  than rendered symbol/hash fragments.
 
 These paths do not print a child AST and insert the resulting string into a raw
 node. The switch migration preserves the existing Ruby runtime behavior and
@@ -114,6 +120,28 @@ for logical right shift. `RubyInt32Lowering` owns that recipe without source
 typing, mutable state, raw text, printer access, or a dependency back on the
 compiler. Exact AST tests own shape and the provenance-locked upstream
 `haxe.Int32` fixture owns runtime parity.
+
+Ruby symbol lowering does not earn a plan or a new AST constructor. Literal
+symbols retain only their string payload in `RubySymbol`, so
+`RubyASTPrinter` alone decides compact `!`/`?`/`=` spelling and escaping.
+The printer uses a strict whole-string identifier scan and escapes Ruby's
+double-quoted interpolation prefixes as well as control characters. Runtime
+`String` values compile once as an ordinary receiver followed by a structural
+`to_sym` call. The canonical `PermitSpec` macro path supplies literal field
+names, so empty and literal-key nested specs fit the existing `RubySymbolHash`
+node.
+
+The low-level direct-extern `PermitSpec.nested` path can still present an
+expression-valued key. Current hash nodes intentionally carry static string
+keys, and one non-canonical fallback does not justify broadening the schema.
+Calling `::Hash.[]` or staging an empty hash plus `[]=` would avoid literal
+syntax but introduce observable, monkey-patchable method dispatch that a Ruby
+hash literal does not perform.
+That path therefore remains one explicit raw/print-reembed boundary. A direct
+extern fixture verifies its generated shape and real Rails strong-params
+behavior. The inventory records its raw node and both rendered children
+separately; this is why the reviewed total is 294 rather than the initially
+estimated 292.
 
 The architecture pressure test also considered a broader place plan. An
 authored `receiver()[index()] += 5` probe compiled to one receiver temporary,
@@ -272,6 +300,8 @@ Focused evidence for this contract includes:
 
 ```bash
 npm run test:ruby-ast
+npm run test:ruby-call-shapes
+npm run test:action-controller-params
 npm run test:ruby-compiler-decomposition
 npm run test:ruby-loop-control
 npm run test:ruby-ast-inventory

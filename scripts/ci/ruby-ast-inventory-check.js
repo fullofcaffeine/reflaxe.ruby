@@ -277,6 +277,11 @@ for (const expected of [
 	"return RubyLoopLowering.compileFor(iteratorName, variableName, compileExpr(iterable), compileFunctionBody(body));",
 	"return RubyExprStatement(RubyBreak);",
 	"return RubyExprStatement(RubyNext);",
+	'return params.length == 0 ? RubySymbol("") : switch (unwrapTypedExpr(params[0]).expr)',
+	"RubySymbol(RubyNaming.toMethodName(value));",
+	'RubyCall(compileExpr(params[0]), "to_sym", []);',
+	"return RubySymbolHash([]);",
+	"RubySymbolHash([{key: RubyNaming.toMethodName(value), value: children}]);",
 	"allocateSyntheticLocalName(\"hx_iter_\" + variableName + \"_\" + pos.min)",
 	"var callablePlan = RubyCallablePlan.resolve(field, contract);",
 	"static var activeRubyCallableContext:Null<ActiveRubyCallableContext> = null;",
@@ -312,6 +317,12 @@ for (const forbidden of [
 	"withActiveRubyKeywordCarrier",
 	'hxrubyCall("',
 	"case TArray(target, index): RubyRawExpr",
+	'RubyRawExpr(":\\\"\\\"")',
+	'RubyRawExpr(rubySymbolLiteral(value))',
+	'RubyRawExpr(rubySymbolLiteral(RubyNaming.toMethodName(value)))',
+	'RubyRawExpr("(" + printParam(params, 0) + ").to_sym")',
+	'RubyRawExpr("{}")',
+	'return key == null ? RubyRawExpr("{(" + printParam(params, 0) + ").to_sym => " + children + "}")',
 ]) {
 	forbidIncludes(compiler, forbidden, "RubyCompiler");
 }
@@ -329,6 +340,8 @@ for (const expected of [
 	"RubyBreak;",
 	"RubyNext;",
 	"RubyRuntimeCall(use:RubyRuntimeUse",
+	"RubySymbol(value:String);",
+	"RubySymbolHash(fields:Array<RubyHashField>);",
 ]) {
 	requireIncludes(ast, expected, "RubyAST");
 }
@@ -341,6 +354,10 @@ for (const expected of [
 	"case RubyBreak:",
 	"case RubyNext:",
 	"case RubyRuntimeCall(use, args):",
+	"case RubySymbol(value): rubySymbol(value);",
+	'return isSimpleRubySymbol(value) ? ":" + value : ":" + quoteRubyString(value);',
+	'if (last == "!" || last == "?" || last == "=")',
+	"if (!isRubyIdentPart(value.charCodeAt(i)))",
 ]) {
 	requireIncludes(printer, expected, "RubyASTPrinter");
 }

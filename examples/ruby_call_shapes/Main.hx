@@ -5,8 +5,8 @@
 // typed Haxe.
 // Type safety: inline and stored kwargs are checked by Haxe structural typing;
 // `@:optional` plus field-level `@:native` preserves optional Ruby labels;
-// block functions have typed parameters; and `Symbol.of(...)` avoids raw
-// symbol strings at call sites.
+// block functions have typed parameters; and `Symbol.of(...)` lowers literal
+// or typed runtime String values without raw symbol strings at call sites.
 // IntelliSense: editors should complete typed extern methods, required/optional
 // kwargs, block function signatures, captured method-value signatures, and
 // `Kernel` helpers.
@@ -70,6 +70,9 @@ class Main {
 			Sys.println(value);
 		});
 		Sys.println(NativeInterop.accept_symbol(Symbol.of("ready")));
+		Sys.println(NativeInterop.accept_symbol(Symbol.of("#{literal}")));
+		var dynamicSymbolName = "dynamic";
+		Sys.println(NativeInterop.accept_symbol(Symbol.of(dynamicSymbolName)));
 		Kernel.puts("kernel");
 	}
 }

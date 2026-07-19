@@ -28,6 +28,19 @@ class RubyASTPrinterTestMain {
 		eq("zero-argument yield", RubyASTPrinter.printExpr(RubyYield([])), "yield");
 		eq("structured index", RubyASTPrinter.printExpr(RubyIndex(RubyLocal("values"), RubyInt("1"))), "values[1]");
 		eq("structured member", RubyASTPrinter.printExpr(RubyMember(RubyLocal("color"), "__hx_index")), "color.__hx_index");
+		eq("simple symbol", RubyASTPrinter.printExpr(RubySymbol("ready")), ":ready");
+		eq("bang symbol", RubyASTPrinter.printExpr(RubySymbol("save!")), ":save!");
+		eq("predicate symbol", RubyASTPrinter.printExpr(RubySymbol("ready?")), ":ready?");
+		eq("writer symbol", RubyASTPrinter.printExpr(RubySymbol("name=")), ":name=");
+		eq("quoted symbol", RubyASTPrinter.printExpr(RubySymbol("two words")), ":\"two words\"");
+		eq("escaped symbol", RubyASTPrinter.printExpr(RubySymbol("line\n\"quoted\"")), ":\"line\\n\\\"quoted\\\"\"");
+		eq("terminal newline symbol", RubyASTPrinter.printExpr(RubySymbol("ready\n")), ":\"ready\\n\"");
+		eq("terminal carriage-return symbol", RubyASTPrinter.printExpr(RubySymbol("ready\r")), ":\"ready\\r\"");
+		eq("non-interpolating symbol", RubyASTPrinter.printExpr(RubySymbol("#{danger}")), ":\"\\#{danger}\"");
+		eq("non-interpolating instance-variable symbol", RubyASTPrinter.printExpr(RubySymbol("#@danger")), ":\"\\#@danger\"");
+		var globalInterpolation = "#" + "$" + "danger";
+		eq("non-interpolating global-variable symbol", RubyASTPrinter.printExpr(RubySymbol(globalInterpolation)), ":\"\\#" + "$" + "danger\"");
+		eq("non-interpolating string", RubyASTPrinter.printExpr(RubyString("#{danger}")), "\"\\#{danger}\"");
 		eq("structural Int32 clamp", RubyASTPrinter.printExpr(RubyInt32Lowering.clamp(RubyLocal("value"))),
 			"(((value + 0x80000000) % 0x100000000) - 0x80000000)");
 		eq("structural Int32 left shift", RubyASTPrinter.printExpr(RubyInt32Lowering.shiftLeft(RubyLocal("value"), RubyLocal("count"))),

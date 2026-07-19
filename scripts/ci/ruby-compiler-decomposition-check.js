@@ -16,7 +16,7 @@ const workflowPath = join(root, ".github", "workflows", "ci.yml");
 // These ceilings move downward after extractions. Raising either one requires a
 // reviewed explanation because RubyCompiler is an orchestration boundary, not a
 // default home for new Rails or target-lowering responsibilities.
-const MAX_ROOT_LINES = 14530;
+const MAX_ROOT_LINES = 14527;
 const MAX_ROOT_FUNCTIONS = 786;
 
 const requiredServices = [

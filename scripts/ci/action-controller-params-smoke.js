@@ -125,6 +125,10 @@ for (const expected of [
   /self\.head\(:no_content\)/,
   /def runtime_ok\(\)/,
   /self\.render\(plain: "runtime ok", status: :ok\)/,
+  /def dynamic_permit\(\)/,
+  /dynamic_name(?:__hx\d+)? = "metadata"/,
+  /dynamic_attrs(?:__hx\d+)? = self\.params\(\)\.require\("todo"\)\.permit\(\[\{dynamic_name(?:__hx\d+)?\.to_sym\(\) => \[:source\]\}\]\)/,
+  /self\.render\(json: dynamic_attrs(?:__hx\d+)?, status: :ok\)/,
 ]) {
   if (!expected.test(controllerRuby)) {
     console.error(`ActionController output missing expected line: ${expected}`);
@@ -747,6 +751,7 @@ Rails.application.initialize!
 
   writeFile("config/routes.rb", `Rails.application.routes.draw do
   get "/runtime", to: "todos#runtime_ok"
+  post "/dynamic-permit", to: "todos#dynamic_permit"
 end
 `);
 
@@ -767,6 +772,15 @@ class ActionControllerParamsRuntimeTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "runtime ok", response.body
+  end
+
+  test "dynamic PermitSpec key preserves nested strong-params behavior" do
+    post "/dynamic-permit", params: {
+      todo: { metadata: { source: "typed", ignored: "drop" }, ignored: "drop" }
+    }, as: :json
+
+    assert_response :success
+    assert_equal({"metadata" => {"source" => "typed"}}, JSON.parse(response.body))
   end
 end
 `);
