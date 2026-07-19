@@ -82,7 +82,7 @@ class RubyASTChildren {
 	public static function mapExprImmediate(expr:RubyExpr, mapExpr:RubyExpr->RubyExpr,
 			mapStatement:(RubyStatement, RubyStatementChildRole) -> RubyStatement):RubyExpr {
 		return switch (expr) {
-			case RubyNil | RubyBool(_) | RubyInt(_) | RubyFloat(_) | RubyString(_) | RubySymbol(_) | RubyLocal(_) | RubyRawExpr(_):
+			case RubyNil | RubyBool(_) | RubyInt(_) | RubyFloat(_) | RubyString(_) | RubySymbol(_) | RubyLocal(_) | RubyBreak | RubyNext | RubyRawExpr(_):
 				expr;
 			case RubyArray(values):
 				RubyArray(mapExprs(values, mapExpr));

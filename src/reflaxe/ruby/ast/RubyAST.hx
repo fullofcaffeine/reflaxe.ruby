@@ -50,6 +50,13 @@ enum RubyExpr {
 	RubyCase(scrutinee:RubyExpr, branches:Array<RubyCaseBranch>, defaultBody:Null<Array<RubyStatement>>);
 	RubyRuntimeCall(use:RubyRuntimeUse, args:Array<RubyExpr>);
 	RubyRaise(?exception:RubyExpr);
+
+	/** Native Ruby loop exit. Haxe `break` has no value payload. **/
+	RubyBreak;
+
+	/** Native Ruby loop continuation. Haxe `continue` lowers to payload-free `next`. **/
+	RubyNext;
+
 	RubyRawExpr(code:String);
 }
 

@@ -33,7 +33,12 @@ const categories = [
   {
     id: "core-lowering-migration",
     owner: "RubyCompiler core TypedExpr lowering",
-    evidence: ["npm run test:core-subset", "npm run test:ruby-unsupported-expressions", "npm run test:snapshots"],
+    evidence: [
+      "npm run test:core-subset",
+      "npm run test:ruby-loop-control",
+      "npm run test:ruby-unsupported-expressions",
+      "npm run test:snapshots",
+    ],
     action: "Replace ordinary Ruby syntax and semantic transforms with structural RubyAST slices.",
   },
   {
@@ -106,7 +111,6 @@ const compatibilityFunctions = new Set([
   "compileStringCall",
   "compileStringStaticCall",
   "int32Clamp",
-  "loopIteratorExpression",
   "rubyStringToolsHex",
   "rubyStringToolsHtmlEscape",
   "rubyStringToolsReplace",
@@ -254,6 +258,7 @@ const ast = readFileSync(join(sourceRoot, "ast", "RubyAST.hx"), "utf8");
 const printer = readFileSync(join(sourceRoot, "ast", "RubyASTPrinter.hx"), "utf8");
 const callablePlan = readFileSync(join(sourceRoot, "compiler", "RubyCallablePlan.hx"), "utf8");
 const exceptionLowering = readFileSync(join(sourceRoot, "compiler", "RubyExceptionLowering.hx"), "utf8");
+const loopLowering = readFileSync(join(sourceRoot, "compiler", "RubyLoopLowering.hx"), "utf8");
 
 for (const expected of [
 	"case TArray(target, index): RubyIndex(compileExpr(target), compileExpr(index));",
@@ -265,6 +270,10 @@ for (const expected of [
 	"return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileTry(",
 	"return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileThrow(",
 	"static function applyExceptionLowering(result:RubyExceptionLoweringResult):RubyExpr",
+	"return RubyLoopLowering.compileFor(iteratorName, variableName, compileExpr(iterable), compileFunctionBody(body));",
+	"return RubyExprStatement(RubyBreak);",
+	"return RubyExprStatement(RubyNext);",
+	"allocateSyntheticLocalName(\"hx_iter_\" + variableName + \"_\" + pos.min)",
 	"var callablePlan = RubyCallablePlan.resolve(field, contract);",
 	"static var activeRubyCallableContext:Null<ActiveRubyCallableContext> = null;",
 	"static function hxrubyCall(helper:RubyRuntimeHelper, args:Array<RubyExpr>):RubyExpr",
@@ -286,6 +295,12 @@ for (const forbidden of [
 	"statementToInlineRuby",
 	"renderSwitch(",
 	"renderTry(",
+	"renderFor(",
+	"loopIteratorExpression(",
+	"RubyRawStatement(\"break\")",
+	"RubyRawStatement(\"next\")",
+	"RubyRawExpr(\"break\")",
+	"RubyRawExpr(\"next\")",
 	"HxException.new(",
 	"directYieldBlockVariableId",
 	"activeRubyKeywordCarrier",
@@ -298,6 +313,7 @@ for (const forbidden of [
 }
 for (const forbidden of ["RubyRawExpr(", "RubyRawStatement(", "RubyASTPrinter."]) {
 	forbidIncludes(exceptionLowering, forbidden, "RubyExceptionLowering");
+	forbidIncludes(loopLowering, forbidden, "RubyLoopLowering");
 }
 for (const expected of [
 	"RubyStatementSequence(body:Array<RubyStatement>);",
@@ -305,6 +321,8 @@ for (const expected of [
 	"RubyCase(scrutinee:RubyExpr",
 	"RubyBeginRescue(body:Array<RubyStatement>, rescues:Array<RubyRescueClause>);",
 	"RubyRaise(?exception:RubyExpr);",
+	"RubyBreak;",
+	"RubyNext;",
 	"RubyRuntimeCall(use:RubyRuntimeUse",
 ]) {
 	requireIncludes(ast, expected, "RubyAST");
@@ -315,6 +333,8 @@ for (const expected of [
 	"case RubyCase(scrutinee, branches, defaultBody):",
 	"case RubyBeginRescue(body, rescues):",
 	"case RubyRaise(exception):",
+	"case RubyBreak:",
+	"case RubyNext:",
 	"case RubyRuntimeCall(use, args):",
 ]) {
 	requireIncludes(printer, expected, "RubyASTPrinter");

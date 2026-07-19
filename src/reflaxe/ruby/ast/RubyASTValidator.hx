@@ -28,7 +28,7 @@ class RubyASTValidator {
 			fail("an expression cannot be null");
 		}
 		switch (expr) {
-			case RubyNil | RubyBool(_) | RubyInt(_) | RubyFloat(_) | RubyString(_) | RubySymbol(_) | RubyRawExpr(_):
+			case RubyNil | RubyBool(_) | RubyInt(_) | RubyFloat(_) | RubyString(_) | RubySymbol(_) | RubyBreak | RubyNext | RubyRawExpr(_):
 			case RubyLocal(name):
 				requireName(name, "local or constant");
 			case RubyArray(values):

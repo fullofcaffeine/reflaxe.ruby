@@ -8,6 +8,7 @@ import reflaxe.ruby.ast.RubyRuntimePlan;
 import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeHelper;
 import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeIntent;
 import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeUse;
+import reflaxe.ruby.compiler.RubyLoopLowering;
 
 /** Verifies that structured callable nodes own Ruby ABI punctuation and layout. **/
 class RubyASTPrinterTestMain {
@@ -85,6 +86,14 @@ class RubyASTPrinterTestMain {
 			'(raise HxException.new("boom"))');
 		eq("raise statement", printStatement(RubyExprStatement(RubyRaise(RubyString("boom")))), 'raise "boom"\n');
 		eq("bare re-raise statement", printStatement(RubyExprStatement(RubyRaise())), "raise\n");
+		eq("break expression", RubyASTPrinter.printExpr(RubyBreak), "(break)");
+		eq("break statement", printStatement(RubyExprStatement(RubyBreak)), "break\n");
+		eq("next expression", RubyASTPrinter.printExpr(RubyNext), "(next)");
+		eq("next statement", printStatement(RubyExprStatement(RubyNext)), "next\n");
+		eq("structural for expansion",
+			printStatement(RubyLoopLowering.compileFor("iterator__hx1", "value", RubyCall(null, "build_iterator", []),
+				[RubyExprStatement(RubyCall(null, "consume", [RubyLocal("value")]))])),
+			"iterator__hx1 = build_iterator()\nwhile iterator__hx1.has_next()\n  value = iterator__hx1.next_()\n  consume(value)\nend\n");
 		eq("structured case", RubyASTPrinter.printExpr(RubyCase(RubyLocal("value"), [
 			{
 				values: [RubyInt("1"), RubyInt("2")],
@@ -115,6 +124,10 @@ class RubyASTPrinterTestMain {
 			args: ["item"],
 			body: [RubyExprStatement(RubyRaise(RubyString("boom")))]
 		})), "items.each do |item|\n  raise \"boom\"\nend");
+		eq("next native block", RubyASTPrinter.printExpr(RubyCallableCall(RubyLocal("items"), "each", [], {
+			args: ["item"],
+			body: [RubyExprStatement(RubyNext)]
+		})), "items.each do |item|\n  next\nend");
 
 		var multilineBlock:RubyBlock = {
 			args: ["item"],

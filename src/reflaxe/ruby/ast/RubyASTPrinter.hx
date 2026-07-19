@@ -160,6 +160,8 @@ class RubyASTPrinter {
 				+ (args == null ? "" : [for (arg in args) renderExpr(arg)].join(", "))
 				+ ")";
 			case RubyRaise(exception): "(" + printRaise(exception) + ")";
+			case RubyBreak: "(break)";
+			case RubyNext: "(next)";
 			case RubyRawExpr(code): code;
 		}
 	}
@@ -180,6 +182,10 @@ class RubyASTPrinter {
 		return switch (expr) {
 			case RubyRaise(exception):
 				printRaise(exception);
+			case RubyBreak:
+				"break";
+			case RubyNext:
+				"next";
 			case RubyCall(receiver, name, args) if (receiver != null && isRubyWriterName(name) && args != null && args.length == 1):
 				printWriterAssignment(receiver, name, args[0]);
 			case _: renderExpr(expr);
@@ -220,7 +226,7 @@ class RubyASTPrinter {
 		var blockArgs = block.args == null || block.args.length == 0 ? "" : " |" + block.args.join(", ") + "|";
 		if (block.body != null && block.body.length == 1) {
 			switch (block.body[0]) {
-				case RubyExprStatement(RubyRaise(_)):
+				case RubyExprStatement(RubyRaise(_) | RubyBreak | RubyNext):
 					// Keep control transfer visually explicit and preserve the
 					// statement-shaped block used before structural lowering.
 					null;
@@ -261,7 +267,7 @@ class RubyASTPrinter {
 		var printedArgs = args == null ? "" : args.join(", ");
 		if (body != null && body.length == 1) {
 			switch (body[0]) {
-				case RubyExprStatement(RubyRaise(_)):
+				case RubyExprStatement(RubyRaise(_) | RubyBreak | RubyNext):
 					null;
 				case RubyExprStatement(expr):
 					return "->(" + printedArgs + ") { " + renderExpr(expr) + " }";
@@ -278,7 +284,7 @@ class RubyASTPrinter {
 		var printedArgs = args == null ? "" : [for (arg in args) printMethodParameter(arg)].join(", ");
 		if (body != null && body.length == 1) {
 			switch (body[0]) {
-				case RubyExprStatement(RubyRaise(_)):
+				case RubyExprStatement(RubyRaise(_) | RubyBreak | RubyNext):
 					null;
 				case RubyExprStatement(expr):
 					return "->(" + printedArgs + ") { " + renderExpr(expr) + " }";

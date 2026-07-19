@@ -18,11 +18,13 @@ state too early.
 
 At this slice:
 
-- `RubyCompiler.hx` is 14,568 lines and remains the Reflaxe orchestration
+- `RubyCompiler.hx` is 14,546 lines and remains the Reflaxe orchestration
   entrypoint.
-- `RubyAST.hx` is 116 lines and owns closed expression/statement syntax.
+- `RubyAST.hx` is 123 lines and owns closed expression/statement syntax.
 - `RubyExceptionLowering.hx` is 133 lines and owns pre-filter typed catch
   dispatch through structural RubyAST plus an exact core-runtime-use count.
+- `RubyLoopLowering.hx` owns the fixed structural iterator/`while` expansion
+  without retaining a semantic loop node or depending back on the compiler.
 - `RubyASTChildren` exhaustively owns every immediate structural child and the
   declaration-versus-executable role of every statement body.
 - `RubyASTValidator` checks cross-node invariants before either a file or a
@@ -31,7 +33,7 @@ At this slice:
   per method.
 - `RubyRuntimePlan` closes the 49 compiler-selected hxruby helpers and gives
   each emitted use a semantic intent.
-- The checked inventory currently classifies 318 raw or print-reembed source
+- The checked inventory currently classifies 311 raw or print-reembed source
   sites. The count is planning evidence, not a product-quality score.
 
 The root compiler ceiling moved down with the extraction. Rails-specific
@@ -63,8 +65,11 @@ Ordinary migrated syntax is structural:
 - enum tag/parameter access uses `RubyMember`;
 - statement and expression `TSwitch` use `RubyCase` with structural arms and
   an optional default body;
-- statement and expression `TTry` use `RubyBeginRescue`; and
-- statement and expression `TThrow` use `RubyRaise`.
+- statement and expression `TTry` use `RubyBeginRescue`;
+- statement and expression `TThrow` use `RubyRaise`;
+- statement and expression `TBreak`/`TContinue` use payload-free `RubyBreak`
+  and `RubyNext`; and
+- residual `TFor` uses structural assignment, calls, and `RubyWhileStmt`.
 
 These paths do not print a child AST and insert the resulting string into a raw
 node. The switch migration preserves the existing Ruby runtime behavior and
@@ -84,6 +89,17 @@ evaluates the thrown expression once.
 This slice deliberately has no `ensure` field or general control-flow IR:
 Haxe `TTry` has no cleanup payload, so no current producer or independent
 consumer earns that representation.
+
+Haxe 4.3 normalizes many authored `for` loops to `TWhile` before Reflaxe sees
+them, but `TFor` remains part of the typed input contract for explicitly
+assembled or otherwise unnormalized trees. `RubyLoopLowering` owns that
+residual path as ordinary target structure: the caller selects and compiles the
+iterator expression once, allocates its readable source-position temporary in
+the request-local collision domain, and supplies the compiled body. The focused
+contract pre-reserves that exact temporary and proves deterministic suffixing,
+while runtime evidence covers one-time iterable evaluation and nested
+`break`/`continue` behavior. A `LoopPlan` would retain no additional fact and
+therefore does not pass the semantic-plan admission test.
 
 `RubyExceptionLowering` owns this vertical feature without depending back on
 `RubyCompiler`. The orchestration entrypoint supplies typed callbacks for
@@ -219,9 +235,9 @@ When adding lowering:
 
 ## Remaining Incremental Debt
 
-The inventory intentionally keeps future work visible. Structural loop exits,
-iterator lowering, more declarations, Rails artifact IRs, and remaining
-call/template adapters should move in independently tested slices. Ruby
+The inventory intentionally keeps future work visible. More declarations,
+Rails artifact IRs, and remaining call/template adapters should move in
+independently tested slices. Ruby
 `ensure` should be admitted only when an actual source or framework producer
 owns its semantics. This work does not require:
 
@@ -235,6 +251,7 @@ Focused evidence for this contract includes:
 
 ```bash
 npm run test:ruby-ast
+npm run test:ruby-loop-control
 npm run test:ruby-ast-inventory
 npm run test:switch-cases
 npm run test:exception-flow

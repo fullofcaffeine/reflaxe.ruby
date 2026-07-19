@@ -6,6 +6,7 @@ const { join, relative, resolve } = require("node:path");
 const root = resolve(__dirname, "..", "..");
 const compilerPath = join(root, "src", "reflaxe", "ruby", "RubyCompiler.hx");
 const exceptionLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyExceptionLowering.hx");
+const loopLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyLoopLowering.hx");
 const railsRoot = join(root, "src", "reflaxe", "ruby", "rails");
 const planPath = join(root, "docs", "ruby-compiler-rails-module-extraction.md");
 const packagePath = join(root, "package.json");
@@ -14,8 +15,8 @@ const workflowPath = join(root, ".github", "workflows", "ci.yml");
 // These ceilings move downward after extractions. Raising either one requires a
 // reviewed explanation because RubyCompiler is an orchestration boundary, not a
 // default home for new Rails or target-lowering responsibilities.
-const MAX_ROOT_LINES = 14568;
-const MAX_ROOT_FUNCTIONS = 789;
+const MAX_ROOT_LINES = 14546;
+const MAX_ROOT_FUNCTIONS = 787;
 
 const requiredServices = [
   "RailsArtifactPaths.hx",
@@ -65,7 +66,11 @@ const compiler = readFileSync(compilerPath, "utf8");
 if (!existsSync(exceptionLoweringPath)) {
   fail("required exception compiler service is missing: " + relative(root, exceptionLoweringPath));
 }
+if (!existsSync(loopLoweringPath)) {
+  fail("required loop compiler service is missing: " + relative(root, loopLoweringPath));
+}
 const exceptionLowering = readFileSync(exceptionLoweringPath, "utf8");
+const loopLowering = readFileSync(loopLoweringPath, "utf8");
 const compilerLines = compiler.split(/\r?\n/).length - (compiler.endsWith("\n") ? 1 : 0);
 const functionNames = [...compiler.matchAll(/^\s*(?:(?:public|private|static|inline|override)\s+)*function\s+([A-Za-z0-9_]+)/gm)].map((match) => match[1]);
 const functionSet = new Set(functionNames);
@@ -94,12 +99,19 @@ for (const path of haxeFiles(railsRoot)) {
 if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(exceptionLowering) || exceptionLowering.includes("reflaxe.ruby.RubyCompiler")) {
   fail("RubyExceptionLowering depends back on RubyCompiler; compiler services must remain one-way dependencies");
 }
+if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(loopLowering) || loopLowering.includes("reflaxe.ruby.RubyCompiler")) {
+  fail("RubyLoopLowering depends back on RubyCompiler; compiler services must remain one-way dependencies");
+}
 
 for (const expected of [
   "import reflaxe.ruby.compiler.RubyExceptionLowering;",
   "RubyExceptionLowering.compileTry(tryExpr, catches, compileFunctionBody",
   "RubyExceptionLowering.compileThrow(thrown, compileExpr)",
   "applyExceptionLowering(result:RubyExceptionLoweringResult)",
+  "import reflaxe.ruby.compiler.RubyLoopLowering;",
+  "return RubyLoopLowering.compileFor(iteratorName, variableName, compileExpr(iterable), compileFunctionBody(body));",
+  "return RubyExprStatement(RubyBreak);",
+  "return RubyExprStatement(RubyNext);",
   "import reflaxe.ruby.rails.RailsMailerPreviewArtifacts;",
   "import reflaxe.ruby.rails.RailsTestArtifacts;",
   "railsMailerPreviewArtifacts.prepare(classType, buildContext.railsMode)",
@@ -121,6 +133,18 @@ for (const expected of [
 }
 if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(exceptionLowering)) {
   fail("RubyExceptionLowering introduced an unsafe broad type or reflection escape");
+}
+for (const expected of [
+  "class RubyLoopLowering",
+  "RubyStatementSequence",
+  "RubyWhileStmt",
+  "RubyCall(iterator, \"has_next\"",
+  "RubyCall(iterator, \"next_\"",
+]) {
+  if (!loopLowering.includes(expected)) fail(`RubyLoopLowering is missing owned loop contract: ${expected}`);
+}
+if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(loopLowering) || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(loopLowering)) {
+  fail("RubyLoopLowering introduced an unsafe broad type or raw/print boundary");
 }
 
 for (const service of ["RailsMailerPreviewArtifacts.hx", "RailsTestArtifacts.hx"]) {
@@ -144,6 +168,12 @@ for (const expected of [
 }
 
 const packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
+if (packageJson.scripts["test:ruby-loop-control"] !== "node scripts/ci/loop-control-smoke.js") {
+  fail("package.json must expose the structural loop-control contract");
+}
+if (!packageJson.scripts.test.includes("npm run test:ruby-loop-control")) {
+  fail("the full npm test gate must run the structural loop-control contract");
+}
 if (packageJson.scripts["test:ruby-compiler-decomposition"] !== "node scripts/ci/ruby-compiler-decomposition-check.js") {
   fail("package.json must expose the decomposition guard");
 }

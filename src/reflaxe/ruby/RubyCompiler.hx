@@ -45,6 +45,7 @@ import reflaxe.ruby.compiler.RubyCallablePlan.RubyCallableLoweringPlan;
 import reflaxe.ruby.compiler.RubyExceptionLowering;
 import reflaxe.ruby.compiler.RubyExceptionLowering.RubyExceptionLoweringResult;
 import reflaxe.ruby.compiler.RubyKeywordSemantics;
+import reflaxe.ruby.compiler.RubyLoopLowering;
 import reflaxe.ruby.compiler.RubyOutputLayout;
 import reflaxe.ruby.naming.RubyNaming;
 import reflaxe.ruby.rails.RailsRouteDecl;
@@ -2826,7 +2827,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TWhile(cond, body, _):
 				return RubyWhileStmt(compileExpr(cond), compileFunctionBody(body));
 			case TFor(v, iterable, body):
-				return RubyRawStatement(renderFor(v, iterable, body));
+				// Haxe normalizes many source loops to `TWhile` before Reflaxe runs,
+				// but macro-produced and otherwise unnormalized typed trees can retain
+				// `TFor`. Keep that remaining path structural and allocate its iterator
+				// through the same request-local collision domain as authored locals.
+				var variableName = localName(v);
+				var iteratorName = allocateLoopIteratorName(variableName, iterable);
+				return RubyLoopLowering.compileFor(iteratorName, variableName, compileExpr(iterable), compileFunctionBody(body));
 			case TSwitch(switchExpr, cases, edef):
 				return RubyExprStatement(compileSwitch(switchExpr, cases, edef));
 			case TTry(tryExpr, catches):
@@ -2835,9 +2842,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TThrow(thrown):
 				return RubyExprStatement(applyExceptionLowering(RubyExceptionLowering.compileThrow(thrown, compileExpr)));
 			case TBreak:
-				return RubyRawStatement("break");
+				return RubyExprStatement(RubyBreak);
 			case TContinue:
-				return RubyRawStatement("next");
+				return RubyExprStatement(RubyNext);
 			case TReturn(value):
 				return RubyReturn(value == null ? null : compileExpr(value));
 			case _:
@@ -2933,9 +2940,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TThrow(thrown):
 				applyExceptionLowering(RubyExceptionLowering.compileThrow(thrown, compileExpr));
 			case TBreak:
-				RubyRawExpr("break");
+				RubyBreak;
 			case TContinue:
-				RubyRawExpr("next");
+				RubyNext;
 			case TEnumParameter(enumExpr, field, index):
 				var paramName = enumParameterFieldName(field, index);
 				paramName == null ? RubyNil : RubyMember(compileExpr(enumExpr), paramName);
@@ -6448,36 +6455,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			markCoreRuntimeUse();
 		}
 		return result.expr;
-	}
-
-	static function renderFor(v:TVar, iterable:TypedExpr, body:TypedExpr):String {
-		var iteratorName = loopIteratorName(v, iterable);
-		var lines = [
-			iteratorName + " = " + loopIteratorExpression(iterable),
-			"while " + iteratorName + ".has_next()",
-			"  " + localName(v) + " = " + iteratorName + ".next_()"
-		];
-		appendIndentedLines(lines, renderStatements(compileFunctionBody(body)), 1);
-		lines.push("end");
-		return lines.join("\n");
-	}
-
-	static function loopIteratorExpression(iterable:TypedExpr):String {
-		return switch (iterable.expr) {
-			case TCall({expr: TField(target, access)}, []) if (fieldAccessRawName(access) == "iterator"):
-				// Haxe lowers `for` to `.iterator()`, but Ruby-first std values
-				// such as Array are native Ruby objects. Keep the bridge compact:
-				// use a Haxe iterator when present, otherwise wrap Enumerable data.
-				"HXRuby.iterator(" + printInlineExpr(target) + ")";
-			case _:
-				var rendered = printInlineExpr(iterable);
-				var suffix = ".iterator()";
-				if (StringTools.endsWith(rendered, suffix)) {
-					"HXRuby.iterator(" + rendered.substr(0, rendered.length - suffix.length) + ")";
-				} else {
-					rendered;
-				}
-		}
 	}
 
 	static function renderStatements(statements:Array<RubyStatement>):Array<String> {
@@ -14501,9 +14478,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 	}
 
-	static function loopIteratorName(v:TVar, iterable:TypedExpr):String {
+	/** Allocates the readable source-position loop temp without bypassing collision tracking. **/
+	static function allocateLoopIteratorName(variableName:String, iterable:TypedExpr):String {
 		var pos = Context.getPosInfos(iterable.pos);
-		return "__hx_iter_" + localName(v) + "_" + pos.min;
+		return allocateSyntheticLocalName("hx_iter_" + variableName + "_" + pos.min);
 	}
 
 	static function binopToRuby(op:haxe.macro.Expr.Binop):String {

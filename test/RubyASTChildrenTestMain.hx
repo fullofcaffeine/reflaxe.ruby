@@ -28,6 +28,8 @@ class RubyASTChildrenTestMain {
 			RubyString("text"),
 			RubySymbol("symbol"),
 			RubyLocal("leaf"),
+			RubyBreak,
+			RubyNext,
 			RubyRawExpr("native_value")
 		];
 		for (index in 0...leaves.length) {
@@ -288,6 +290,8 @@ class RubyASTChildrenTestMain {
 			case RubyCase(_, _, _): "case";
 			case RubyRuntimeCall(_, _): "runtime-call";
 			case RubyRaise(_): "raise";
+			case RubyBreak: "break";
+			case RubyNext: "next";
 			case RubyRawExpr(_): "raw";
 		}
 	}
