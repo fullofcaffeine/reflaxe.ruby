@@ -5,6 +5,53 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.10.2 structural exception publication
+
+The normal tested-commit workflow published immutable
+[`v1.10.2`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.10.2)
+on 2026-07-19 for structural Ruby exception lowering and ordered Haxe catch
+dispatch.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `c7e75cf1fdd16b6591cdcbeb4b198d833f263b72` |
+| Included implementation lineage | `d20f352` exhaustive Ruby AST child/traversal contract and `c7e75cf` structural typed exception dispatch |
+| Canonical release tag | `v1.10.2`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29676480880`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29676480880), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`88167861015`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29676480880/job/88167861015), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-19T07:09:30Z` |
+| Release notes | Version heading, `v1.10.1...v1.10.2` compare link, categorized bug-fix bullet, and exact `c7e75cf` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.10.2.gem` | `hxruby 1.10.2 Ruby gem` | 275968 | `b4ba10b04b8ecb3f14067ecd9c0874649c9a7e36754bd8bda9987091e53900e0` |
+| `hxruby-1.10.2.gem.sha256.json` | `hxruby 1.10.2 SHA-256 metadata` | 304 | `0df57cc8f66d95095a23be26ef2c640bb9fb8591260092eca5beee006edf0b02` |
+| `reflaxe.ruby-1.10.2.zip` | `reflaxe.ruby 1.10.2 haxelib package` | 1304841 | `58b267fda291ac4b80955294998399f6a718bf48d8eedc7359a2d511d3f09268` |
+| `reflaxe.ruby-1.10.2.zip.sha256.json` | `reflaxe.ruby 1.10.2 SHA-256 metadata` | 317 | `517fe0b4470a2ee09d87d8d5996e2d426e5606487523ec0cefe865bb7925e4a6` |
+
+Each downloaded sidecar binds its artifact to version `1.10.2`, tag
+`v1.10.2`, the tested source SHA, hosted filename, byte count, and matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+complete format-1 manifests verify 714 Haxelib payload entries and 334 gem
+payload entries with no missing, altered, duplicate, or extra content. A fresh
+release preparation from the clean tested commit under Ruby 3.4.10 and
+RubyGems 3.6.9 reproduced all four hosted files byte-for-byte.
+
+The compiler slice keeps the existing Pattern B architecture. Structural
+`RubyBeginRescue` and `RubyRaise` nodes are exhaustive in the authoritative
+child schema, validated before printing, and printed without semantic repair.
+The one-way 133-line `RubyExceptionLowering` service retains pre-filter Haxe
+catch types only until ordinary Ruby AST exists, reports request-local runtime
+requirements explicitly, dispatches catch arms in source order, and preserves
+native exception identity and backtraces through unmatched or explicit
+rethrows. The checked raw/print-reembed inventory fell from 324 to 318 sites.
+No general semantic IR, pass framework, metadata side channel, or unowned
+`ensure` representation was added.
+
 ## Stable 1.10 structural lowering and development-loop publication
 
 The normal tested-commit workflow first published
