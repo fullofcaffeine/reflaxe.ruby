@@ -26,6 +26,24 @@ const silentStream = new Writable({
 	},
 });
 
+/**
+ * Keep the temporary release repositories independent of the outer Actions job.
+ *
+ * semantic-release asks its CI detector for the current branch even when the
+ * fixture sets `ci: false`. Forwarding `GITHUB_REF` from a feature-branch job
+ * therefore makes the fixture's local `main` repository look ineligible and
+ * returns no release. Preserve normal process tools such as PATH and HOME, but
+ * remove only the outer GitHub/CI identity before invoking the local fixture.
+ */
+function isolatedFixtureEnvironment(overrides = {}) {
+	const env = {};
+	for (const [name, value] of Object.entries(process.env)) {
+		if (name === "CI" || name.startsWith("GITHUB_")) continue;
+		env[name] = value;
+	}
+	return { ...env, ...overrides };
+}
+
 function context(version, commits, overrides = {}) {
 	return {
 		cwd: process.cwd(),
@@ -95,7 +113,7 @@ async function proveSemanticReleaseIntegration() {
 				dryRun: true,
 				ci: false,
 			},
-			{ cwd, env: process.env, stdout: silentStream, stderr: silentStream }
+			{ cwd, env: isolatedFixtureEnvironment(), stdout: silentStream, stderr: silentStream }
 		);
 
 		assert.equal(result?.nextRelease?.type, "patch", "semantic-release integration: release type");
@@ -162,7 +180,7 @@ async function proveHistoricalPrereleaseTransition() {
 			},
 			{
 				cwd,
-				env: { ...process.env, ...transition.environment },
+				env: isolatedFixtureEnvironment(transition.environment),
 				stdout: silentStream,
 				stderr: silentStream,
 			}
