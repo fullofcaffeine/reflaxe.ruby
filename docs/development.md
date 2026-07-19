@@ -26,6 +26,31 @@ rake todoapp:production
 The complete release-readiness command set lives in
 [RubyHx And RailsHx Production Readiness](railshx-production-readiness.md).
 
+### Queue The Full Local Suite
+
+Several Haxe target repositories can otherwise start their largest local suites
+at the same time and make every run much slower. Use the opt-in queued entrypoint
+when other Haxe-family compiler work may be active:
+
+```bash
+npm run test:queued
+```
+
+This waits for at most 15 minutes on the user-scoped
+`haxe-family.heavy-run-lease.v1` lease, runs the unchanged `npm test` command,
+and releases the lease on success, failure, or cancellation. It reports exit
+code `75` when the bounded wait expires, so retrying later is safe. The ordinary
+`npm test` command remains unqueued for focused/manual use, and CI never
+acquires a local lease.
+
+Nested participating commands inherit the same owner PID and lease path, so a
+RubyHx suite that invokes an `hxhx` heavy gate does not deadlock itself. Override
+the shared path only for isolated diagnostics with
+`HAXE_FAMILY_HEAVY_RUN_LEASE_FILE`; a different schema is rejected rather than
+silently deleted. Protocol upgrades require a new schema name and coordinated
+adapter updates across repositories. The interoperability source is the
+[`hxhx` native iteration latency contract](https://github.com/fullofcaffeine/hxhx/blob/main/docs/00-project/NATIVE_ITERATION_LATENCY_CONTRACT.md).
+
 ## Examples Are QA Contracts
 
 Every `examples/*/Main.hx` entrypoint must be registered in
