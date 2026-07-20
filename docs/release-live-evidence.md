@@ -74,11 +74,12 @@ complete canonical workflow, and its gated release job classified the
 | Slice | Exact tested SHA | Canonical workflow | Gated release job | Result |
 | --- | --- | --- | --- | --- |
 | Structural constant/member reference lowering | `b3cb9ee018d33b4cf48644ddb1e2136efa903977` | [`29775951911`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29775951911) | [`88473845858`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29775951911/job/88473845858) | All 14 jobs passed; two commits analyzed, `no release` |
+| Structural-reference evidence closure | `797e63ddaa1bb3dddd126079632dbabb638159e3` | [`29778875366`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29778875366) | [`88482930087`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29778875366/job/88482930087) | All 14 jobs passed; three commits analyzed, `no release` |
 
-The release job logged `There are no relevant changes, so no new version is
+Both release jobs logged `There are no relevant changes, so no new version is
 released.` No `v1.11.1` remote tag or GitHub Release exists. `v1.11.0` remains
-the latest release, stays natively immutable, and retains the four independently
-verified assets recorded above.
+the latest release, stays natively immutable, and retains the four
+independently verified assets recorded above.
 
 The compiler slice stays on Pattern B. Validated `RubyConstantPath` nodes and
 existing structural member, call, symbol, index, unary, and lambda nodes now own
