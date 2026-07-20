@@ -124,6 +124,7 @@ for (const required of [
   "src/reflaxe/ruby/ast/RubyASTValidator.hx",
   "src/reflaxe/ruby/ast/RubyRuntimePlan.hx",
   "src/reflaxe/ruby/compiler/RubyCallablePlan.hx",
+  "src/reflaxe/ruby/rails/RailsCallArgumentPlan.hx",
   "src/reflaxe/ruby/macros/RailsInlineMarkup.hx",
   "src/reflaxe/ruby/macros/RubyExtensionMacro.hx",
   "src/Std.cross.hx",

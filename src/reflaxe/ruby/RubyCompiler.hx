@@ -55,6 +55,9 @@ import reflaxe.ruby.rails.RailsRouteManifest;
 import reflaxe.ruby.rails.RailsRoutesExtractor;
 import reflaxe.ruby.rails.RailsRoutesEmitter;
 import reflaxe.ruby.rails.RailsArtifactPaths;
+import reflaxe.ruby.rails.RailsCallArgumentPlan;
+import reflaxe.ruby.rails.RailsCallArgumentPlan.RailsLocalsArgumentPlan;
+import reflaxe.ruby.rails.RailsCallArgumentPlan.RailsStatusArgumentPlan;
 import reflaxe.ruby.rails.RailsMailerPreviewArtifacts;
 import reflaxe.ruby.rails.RailsTestAdapter;
 import reflaxe.ruby.rails.RailsTestArtifacts;
@@ -5040,33 +5043,19 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsStatusArg(expr:TypedExpr):Null<String> {
-		return switch (unwrapTypedExpr(expr).expr) {
-			case TConst(TString(value)):
-				rubySymbolLiteral(RubyNaming.toLocalName(value));
-			case TField(_, FStatic(classRef, fieldRef)) if (isActionControllerStatusType(classRef.get())):
-				rubySymbolLiteral(RubyNaming.toLocalName(fieldRef.get().name));
-			case TCall(callee, [valueExpr]) if (isActionControllerStatusNamedCall(callee)):
-				switch (unwrapTypedExpr(valueExpr).expr) {
-					case TConst(TString(value)):
-						rubySymbolLiteral(RubyNaming.toLocalName(value));
-					case _:
-						printInlineExpr(valueExpr);
-				}
-			case _:
-				null;
+		return switch (RailsCallArgumentPlan.classifyStatus(expr)) {
+			case RailsStatusSymbol(name): rubySymbolLiteral(name);
+			case RailsStatusExpression(value): printInlineExpr(value);
+			case null: null;
 		}
 	}
 
-	static function isActionControllerStatusNamedCall(callee:TypedExpr):Bool {
-		var info = staticCallInfo(callee);
-		return info != null
-			&& info.name == "named"
-			&& (info.owner == "rails.action_controller.Status" || StringTools.endsWith(info.owner, ".Status_Impl_"));
-	}
-
-	static function isActionControllerStatusType(classType:ClassType):Bool {
-		return fullTypeName(classType.pack, classType.name) == "rails.action_controller.Status"
-			|| fullTypeName(classType.pack, classType.name) == "rails.action_controller.Status_Impl_";
+	static function compileRailsStatusArg(expr:TypedExpr):Null<RubyExpr> {
+		return switch (RailsCallArgumentPlan.classifyStatus(expr)) {
+			case RailsStatusSymbol(name): RubySymbol(name);
+			case RailsStatusExpression(value): compileExpr(value);
+			case null: null;
+		}
 	}
 
 	static function activeRecordCriteriaArg(expr:TypedExpr):Null<String> {
@@ -5580,8 +5569,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRubyReceiverCall(target:TypedExpr, method:String, params:Array<TypedExpr>, contract:RubyCallableContract):RubyExpr {
-		var receiver = RubyRawExpr(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(target)));
-		return compileRubyCallableCall(receiver, method, params, contract);
+		return compileRubyCallableCall(compileExpr(target), method, params, contract);
 	}
 
 	/** Builds the structured keyword/block/rest portion shared by methods and constructors. **/
@@ -5620,7 +5608,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					params.length == 0 ? Context.currentPos() : params[params.length - 1].pos);
 			} else {
 				for (index in 0...contract.restIndex) {
-					args.push(RubyPositionalArgument(RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(remaining[index])))));
+					args.push(RubyPositionalArgument(compileExpr(unwrapRubyCarrier(remaining[index]))));
 				}
 				var restParams = remaining.slice(contract.restIndex);
 				if (restParams.length == 1 && RubyCallableShape.isRestType(restParams[0].t)) {
@@ -5648,7 +5636,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			}
 		} else {
 			for (param in remaining) {
-				args.push(RubyPositionalArgument(RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(param)))));
+				args.push(RubyPositionalArgument(compileExpr(unwrapRubyCarrier(param))));
 			}
 		}
 		if (keywordSource != null) {
@@ -5723,7 +5711,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var effective = RubyCallableHierarchy.resolveAccess(access, pos, functionArgumentTypes(functionType));
 		if (effective == null || !methodValueNeedsCallableAdapter(effective.contract)) {
 			var rubyName = effective == null ? methodFieldValueName(access) : effective.rubyName;
-			return RubyRawExpr(printInlineExpr(target) + ".method(:" + rubyName + ")");
+			return RubyCall(compileExpr(target), "method", [RubySymbol(rubyName)]);
 		}
 		var receiver = compileExpr(target);
 		return compileRubyMethodValueAdapter(receiver, effective.contract, effective.rubyName, target);
@@ -5934,7 +5922,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TObjectDecl(fields):
 				[
 					for (field in fields)
-						RubyNaming.toMethodName(field.name) + ": " + printKeywordArgValue(field.name, field.expr)
+						RubyNaming.toMethodName(field.name) + ": " + RubyASTPrinter.printExpr(compileRubyKeywordArgValue(field.name, field.expr))
 				];
 			case _:
 				[printInlineExpr(expr)];
@@ -5967,7 +5955,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							field.expr.pos);
 						continue;
 					}
-					args.push(RubyKeywordArgument(keyword.rubyName, RubyRawExpr(printKeywordArgValue(field.name, field.expr))));
+					args.push(RubyKeywordArgument(keyword.rubyName, compileRubyKeywordArgValue(field.name, field.expr)));
 				}
 				args;
 			case TLocal(_):
@@ -6049,40 +6037,54 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return unwrapRubyCarrier(expr);
 	}
 
-	static function printKeywordArgValue(fieldName:String, expr:TypedExpr):String {
-		var abstractValue = abstractIdentityBlockValue(expr);
-		if (abstractValue != null) {
-			return printKeywordArgValue(fieldName, abstractValue);
-		}
+	/**
+		Compiles one literal keyword value without crossing a target-text boundary.
+		Haxe abstracts can arrive as proven identity blocks; typed unwrapping replaces
+		the former rendered `begin` simplifier. The shared Rails plan keeps `status:`
+		and `locals:` classification consistent across structural and text consumers.
+	**/
+	static function compileRubyKeywordArgValue(fieldName:String, expr:TypedExpr):RubyExpr {
+		var source = unwrapRubyCarrier(expr);
 		if (fieldName == "locals") {
-			var locals = printRailsLocalsHash(expr);
+			var locals = compileRailsLocalsHash(source);
 			if (locals != null) {
 				return locals;
 			}
 		}
 		if (fieldName == "status") {
-			var status = railsStatusArg(expr);
+			var status = compileRailsStatusArg(source);
 			if (status != null) {
 				return status;
 			}
 		}
-		return simplifyRubyIdentityBegin(printInlineExpr(expr));
+		return compileExpr(source);
 	}
 
+	/** Unwraps only compiler identity carriers whose discarded initializer is provably nil. **/
 	static function abstractIdentityBlockValue(expr:TypedExpr):Null<TypedExpr> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TBlock([
 				{expr: TVar(valueLocal, valueInit)},
-				{expr: TVar(boxLocal, _)},
+				{expr: TVar(boxLocal, boxInit)},
 				{expr: TBinop(OpAssign, {expr: TLocal(assignLocal)}, {expr: TLocal(sourceLocal)})},
 				{expr: TLocal(retLocal)}
-			]) if (valueInit != null && boxLocal.id == assignLocal.id && boxLocal.id == retLocal.id && valueLocal.id == sourceLocal.id):
+			])
+				if (valueInit != null
+					&& (boxInit == null || isNullLiteral(unwrapTypedExpr(boxInit)))
+					&& boxLocal.id == assignLocal.id
+					&& boxLocal.id == retLocal.id
+					&& valueLocal.id == sourceLocal.id):
 				valueInit;
 			case TBlock([
-				{expr: TVar(local, _)},
+				{expr: TVar(local, localInit)},
 				{expr: TBinop(OpAssign, {expr: TLocal(assignLocal)}, value)},
 				ret
-			]): var retLocal = transparentLocalVariable(ret); retLocal != null && local.id == assignLocal.id && local.id == retLocal.id ? value : null;
+			]):
+				var retLocal = transparentLocalVariable(ret);
+				retLocal != null
+				&& (localInit == null || isNullLiteral(unwrapTypedExpr(localInit)))
+				&& local.id == assignLocal.id
+				&& local.id == retLocal.id ? value : null;
 			case _:
 				null;
 		}
@@ -6132,41 +6134,35 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function printRailsLocalsHash(expr:TypedExpr):Null<String> {
-		return switch (unwrapTypedExpr(expr).expr) {
-			case TObjectDecl(fields):
+		return switch (RailsCallArgumentPlan.classifyLocals(expr)) {
+			case RailsLocalsLiteral(fields):
 				"{" + [
 					for (field in fields)
-						RubyNaming.toLocalName(field.name) + ": " + printInlineExpr(field.expr)
+						field.rubyName + ": " + printInlineExpr(field.value)
 				].join(", ") + "}";
-			case _:
-				printRailsLocalsHashFromTypedValue(expr);
-		}
-	}
-
-	static function printRailsLocalsHashFromTypedValue(expr:TypedExpr):Null<String> {
-		if (!isStableRailsLocalsProjectionSource(expr)) {
-			return null;
-		}
-		var fields = switch (TypeTools.follow(expr.t)) {
-			case TAnonymous(anonRef):
-				anonRef.get().fields;
-			case _:
+			case RailsLocalsProjection(receiverExpr, fields):
+				var receiver = printInlineExpr(receiverExpr);
+				"{" + [
+					for (field in fields)
+						field.rubyName + ": (" + receiver + ")[" + quoteRubyStringForCode(field.haxeName) + "]"
+				].join(", ") + "}";
+			case null:
 				null;
 		}
-		if (fields == null || fields.length == 0) {
-			return null;
-		}
-		var receiver = printInlineExpr(expr);
-		return "{" + [
-			for (field in fields)
-				RubyNaming.toLocalName(field.name) + ": (" + receiver + ")[" + quoteRubyStringForCode(field.name) + "]"
-		].join(", ") + "}";
 	}
 
-	static function isStableRailsLocalsProjectionSource(expr:TypedExpr):Bool {
-		return switch (unwrapTypedExpr(expr).expr) {
-			case TLocal(_): true;
-			case _: false;
+	static function compileRailsLocalsHash(expr:TypedExpr):Null<RubyExpr> {
+		return switch (RailsCallArgumentPlan.classifyLocals(expr)) {
+			case RailsLocalsLiteral(fields):
+				RubySymbolHash([for (field in fields) {key: field.rubyName, value: compileExpr(field.value)}]);
+			case RailsLocalsProjection(receiver, fields):
+				var source = compileExpr(receiver);
+				RubySymbolHash([
+					for (field in fields)
+						{key: field.rubyName, value: RubyIndex(source, RubyString(field.haxeName))}
+				]);
+			case null:
+				null;
 		}
 	}
 

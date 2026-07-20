@@ -6,8 +6,12 @@ api:5
 static-value:5
 child:instance-value:7
 interface-value:8
+child:positional:16
+positional-evaluations:1
+plain:8
+plain-factory-count:1
 child:effectful:9
-factory-count:1
+factory-count:2
 native:direct-native:10
 native:captured-native:11
 static-keyword:one:missing

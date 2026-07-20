@@ -25,6 +25,7 @@ snapshot-backed steps.
 | Current surface in `RubyCompiler` | Target module direction | Coverage before/with extraction |
 | --- | --- | --- |
 | Rails artifact paths and safe path validation | `rails.RailsArtifactPaths` | Existing template/test/mailer/generator snapshots; negative path diagnostics through template/test generator smokes |
+| Rails status/locals call-argument classification shared by structural and legacy emitters | `rails.RailsCallArgumentPlan` | Callable ABI smokes, controller/mailer runtime tests, snapshots, and the checked raw/print inventory |
 | Rails test metadata, output identity, duplicate detection, and file rendering | `rails.RailsTestArtifacts` | Minitest/RSpec generator smokes, duplicate and adapter/path negative diagnostics, snapshots, runtime Rails tests |
 | Mailer preview metadata, output identity, method validation, duplicate detection, and file rendering | `rails.RailsMailerPreviewArtifacts` | ActionMailer snapshots, focused negative diagnostics, Ruby syntax, and Rails preview runtime tests |
 | ActionView/HHX node and attr lowering | `rails.RailsTemplatesCompiler` or `rails.action_view.*` | `test:components`, `test:todoapp-rails`, `test:action-mailer`, `test:snapshots`, negative HHX diagnostic fixtures |
@@ -70,6 +71,14 @@ lowering and the owned-file write remain in `RubyCompiler`; the services accept
 typed plans and rendered body lines and never depend back on the root. Focused
 negative fixtures preserve the pre-extraction diagnostics, while snapshots,
 Ruby syntax, and real Rails runtime tests preserve emitted behavior.
+
+A supporting callable slice moves Rails status symbolization and typed
+`locals:` projection into `RailsCallArgumentPlan`. The plan is deliberately
+smaller than an AST or framework IR: it classifies the source value once, then
+the structural `@:rubyKwargs` path builds RubyAST while remaining validated
+Rails text emitters keep their explicit rendering boundary. The same slice
+removes all raw/print-reembed sites from callable receivers, positional and
+literal keyword arguments, and plain method-value capture.
 
 ## Dependency And Root-Growth Guard
 

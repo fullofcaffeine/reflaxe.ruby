@@ -23,6 +23,19 @@ class Main {
 		Sys.println(instanceBlock(6, value -> "instance-value:" + value));
 		var interfaceBlock = api.visit;
 		Sys.println(interfaceBlock(7, value -> "interface-value:" + value));
+		// A user-authored block is not an abstract identity carrier: its discarded
+		// initializer must still run before the final positional value is passed.
+		Sys.println(child.visit({
+			var positional = WorkerFactory.positionalValue();
+			positional = 15;
+			positional;
+		}, value -> "positional:" + value));
+		Sys.println("positional-evaluations:" + WorkerFactory.positionalEvaluations);
+		// A side-effecting receiver must be evaluated once when a plain method value
+		// is captured; IntelliSense still exposes the precise Int->String type.
+		var effectfulPlain = WorkerFactory.make().plain;
+		Sys.println(effectfulPlain(8));
+		Sys.println("plain-factory-count:" + WorkerFactory.created);
 		var effectfulBlock = WorkerFactory.make().visit;
 		Sys.println(effectfulBlock(8, value -> "effectful:" + value));
 		Sys.println("factory-count:" + WorkerFactory.created);

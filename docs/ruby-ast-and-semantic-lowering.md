@@ -18,7 +18,7 @@ state too early.
 
 At this slice:
 
-- `RubyCompiler.hx` is 14,527 lines and remains the Reflaxe orchestration
+- `RubyCompiler.hx` is 14,523 lines and remains the Reflaxe orchestration
   entrypoint.
 - `RubyAST.hx` is 123 lines and owns closed expression/statement syntax.
 - `RubyExceptionLowering.hx` is 133 lines and owns pre-filter typed catch
@@ -33,15 +33,18 @@ At this slice:
   standalone expression is printed.
 - `RubyCallablePlan` records definition-side block and keyword decisions once
   per method.
+- `RailsCallArgumentPlan` records the narrow status/locals source facts shared
+  by structural callable calls and remaining validated Rails text boundaries.
 - `RubyRuntimePlan` closes the 49 compiler-selected hxruby helpers and gives
   each emitted use a semantic intent.
-- The checked inventory currently classifies 294 raw or print-reembed source
-  sites: 14 core-lowering, 101 validated-framework, and 126 print-reembed
+- The checked inventory currently classifies 285 raw or print-reembed source
+  sites: 13 core-lowering, 101 validated-framework, and 122 print-reembed
   sites, with the remaining categories recorded in the inventory. The count is
   planning evidence, not a product-quality score.
 
-The root compiler ceiling moved down with the extraction. Rails-specific
-extraction remains governed separately by
+The root compiler ceiling moved down with the extraction. The narrow Rails
+call-argument plan follows the same one-way service boundary; broader
+Rails-specific extraction remains governed separately by
 [Ruby Compiler Rails Module Extraction](ruby-compiler-rails-module-extraction.md);
 it was intentionally not folded into this core AST slice.
 
@@ -79,7 +82,11 @@ Ordinary migrated syntax is structural:
   and
 - `ruby.Symbol.of`, canonical Rails `PermitSpec.field`, and literal-key
   `PermitSpec.nested` use `RubySymbol`, `RubyCall`, and `RubySymbolHash` rather
-  than rendered symbol/hash fragments.
+  than rendered symbol/hash fragments; and
+- Ruby callable receivers, positional values, literal keyword values, splats,
+  block passes, and plain method values use `RubyCallableCall`,
+  `RubyCallArgument`, `RubyCall`, and `RubySymbol` without rendering a child
+  expression and re-embedding it as raw Ruby.
 
 These paths do not print a child AST and insert the resulting string into a raw
 node. The switch migration preserves the existing Ruby runtime behavior and
@@ -140,8 +147,8 @@ hash literal does not perform.
 That path therefore remains one explicit raw/print-reembed boundary. A direct
 extern fixture verifies its generated shape and real Rails strong-params
 behavior. The inventory records its raw node and both rendered children
-separately; this is why the reviewed total is 294 rather than the initially
-estimated 292.
+separately. It remains three explicitly classified sites in the current total
+of 285.
 
 The architecture pressure test also considered a broader place plan. An
 authored `receiver()[index()] += 5` probe compiled to one receiver temporary,
@@ -203,9 +210,18 @@ construction:
 Recursive expression lowering sees one scoped callable context containing that
 plan plus allocation-dependent keyword local names. The former independent
 direct-yield and keyword-carrier ambient states no longer exist. Call-site
-attached blocks and method-value adapters remain focused later slices; copying
-their `TypedExpr` shapes into this definition plan would not improve
-validation.
+blocks, argument kinds, and method values now lower through the existing Ruby
+call nodes; copying their `TypedExpr` shapes into this definition plan would
+not improve validation.
+
+`RailsCallArgumentPlan` earns a smaller plan for a different reason. A Rails
+status may be a symbol or a runtime expression, while a `locals:` value may be
+an object literal or a projection from a stable typed carrier. Structural
+`@:rubyKwargs` calls and a few still-raw Rails test/Turbo emitters both consume
+those source facts. The plan retains only the closed choice, typed value, and
+field names, so classification happens once without coupling RubyAST to Rails
+or hiding the remaining print boundary. It does not model ordinary calls and
+does not justify a general semantic IR.
 
 ## Runtime Intent
 
@@ -285,7 +301,7 @@ When adding lowering:
 ## Remaining Incremental Debt
 
 The inventory intentionally keeps future work visible. More declarations,
-Rails artifact IRs, and remaining call/template adapters should move in
+Rails artifact IRs, and remaining framework/template adapters should move in
 independently tested slices. Ruby
 `ensure` should be admitted only when an actual source or framework producer
 owns its semantics. This work does not require:

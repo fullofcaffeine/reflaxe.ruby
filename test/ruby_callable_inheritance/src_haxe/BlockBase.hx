@@ -2,6 +2,11 @@
 class BlockBase {
 	public function new() {}
 
+	/** Plain method capture exercises Ruby's native `receiver.method(:name)` path. **/
+	public function plain(value:Int):String {
+		return "plain:" + value;
+	}
+
 	@:rubyBlockArg
 	public function visit(value:Int, block:Int->String):String {
 		return block(value);

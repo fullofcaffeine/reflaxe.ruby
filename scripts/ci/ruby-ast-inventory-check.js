@@ -240,6 +240,21 @@ for (const entry of entries) {
 	entryIds.add(entry.id);
 }
 
+for (const functionName of [
+	"compileRubyReceiverCall",
+	"compileRubyCallableCall",
+	"compileRubyInstanceMethodValue",
+	"compileRubyKeywordArgs",
+	"compileRubyKeywordArgValue",
+	"compileRailsStatusArg",
+	"compileRailsLocalsHash",
+]) {
+	const seams = entries.filter((entry) => entry.function === functionName);
+	if (seams.length !== 0) {
+		fail(functionName + " must stay fully structural; found " + seams.map((entry) => entry.token).join(", "));
+	}
+}
+
 function requireIncludes(source, expected, label) {
 	if (!source.includes(expected)) {
 		fail(label + " is missing structural source contract: " + expected);
@@ -259,6 +274,7 @@ const callablePlan = readFileSync(join(sourceRoot, "compiler", "RubyCallablePlan
 const exceptionLowering = readFileSync(join(sourceRoot, "compiler", "RubyExceptionLowering.hx"), "utf8");
 const int32Lowering = readFileSync(join(sourceRoot, "compiler", "RubyInt32Lowering.hx"), "utf8");
 const loopLowering = readFileSync(join(sourceRoot, "compiler", "RubyLoopLowering.hx"), "utf8");
+const railsCallArgumentPlan = readFileSync(join(sourceRoot, "rails", "RailsCallArgumentPlan.hx"), "utf8");
 
 for (const expected of [
 	"case TArray(target, index): RubyIndex(compileExpr(target), compileExpr(index));",
@@ -284,6 +300,12 @@ for (const expected of [
 	"RubySymbolHash([{key: RubyNaming.toMethodName(value), value: children}]);",
 	"allocateSyntheticLocalName(\"hx_iter_\" + variableName + \"_\" + pos.min)",
 	"var callablePlan = RubyCallablePlan.resolve(field, contract);",
+	"return compileRubyCallableCall(compileExpr(target), method, params, contract);",
+	"RubyPositionalArgument(compileExpr(unwrapRubyCarrier(",
+	'return RubyCall(compileExpr(target), "method", [RubySymbol(rubyName)]);',
+	"RubyKeywordArgument(keyword.rubyName, compileRubyKeywordArgValue(field.name, field.expr))",
+	"RailsCallArgumentPlan.classifyStatus(expr)",
+	"RailsCallArgumentPlan.classifyLocals(expr)",
 	"static var activeRubyCallableContext:Null<ActiveRubyCallableContext> = null;",
 	"static function hxrubyCall(helper:RubyRuntimeHelper, args:Array<RubyExpr>):RubyExpr",
 	"return RubyRuntimeCall(RubyRuntimePlan.select(helper), args);",
@@ -323,8 +345,28 @@ for (const forbidden of [
 	'RubyRawExpr("(" + printParam(params, 0) + ").to_sym")',
 	'RubyRawExpr("{}")',
 	'return key == null ? RubyRawExpr("{(" + printParam(params, 0) + ").to_sym => " + children + "}")',
+	"RubyRawExpr(reflaxe.ruby.ast.RubyASTPrinter.printExpr(compileExpr(target)))",
+	"RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(remaining[index])))",
+	"RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(param)))",
+	'RubyRawExpr(printInlineExpr(target) + ".method(:"',
+	"RubyRawExpr(printKeywordArgValue(",
 ]) {
 	forbidIncludes(compiler, forbidden, "RubyCompiler");
+}
+for (const expected of [
+	"enum RailsStatusArgumentPlan",
+	"enum RailsLocalsArgumentPlan",
+	"class RailsCallArgumentPlan",
+	"public static function classifyStatus(expr:TypedExpr)",
+	"public static function classifyLocals(expr:TypedExpr)",
+	"RailsStatusSymbol(RubyNaming.toLocalName(value))",
+	"RailsLocalsProjection(source",
+	'"rails.action_controller._Status.Status_Impl_"',
+]) {
+	requireIncludes(railsCallArgumentPlan, expected, "RailsCallArgumentPlan");
+}
+for (const forbidden of ["RubyRawExpr(", "RubyRawStatement(", "RubyASTPrinter.", "Dynamic", "Any", "Reflect", "cast"]) {
+	forbidIncludes(railsCallArgumentPlan, forbidden, "RailsCallArgumentPlan");
 }
 for (const forbidden of ["RubyRawExpr(", "RubyRawStatement(", "RubyASTPrinter."]) {
 	forbidIncludes(exceptionLowering, forbidden, "RubyExceptionLowering");

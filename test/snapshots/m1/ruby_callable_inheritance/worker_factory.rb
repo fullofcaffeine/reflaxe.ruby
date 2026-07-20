@@ -5,14 +5,22 @@ class WorkerFactory
     "WorkerFactory"
   end
   def self.__hx_fields()
-    {instance: [], static: ["created", "make"]}
+    {instance: [], static: ["created", "make", "positionalEvaluations", "positionalValue"]}
   end
   class << self
     attr_accessor :created
   end
   @created = 0
+  class << self
+    attr_accessor :positional_evaluations
+  end
+  @positional_evaluations = 0
   def self.make()
     WorkerFactory.created = (WorkerFactory.created + 1)
     return BlockChild.new()
+  end
+  def self.positional_value()
+    WorkerFactory.positional_evaluations = (WorkerFactory.positional_evaluations + 1)
+    return 9
   end
 end

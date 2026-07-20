@@ -125,6 +125,9 @@ for (const expected of [
   /self\.head\(:no_content\)/,
   /def runtime_ok\(\)/,
   /self\.render\(plain: "runtime ok", status: :ok\)/,
+  /def runtime_named_status\(\)/,
+  /status_name(?:__hx\d+)? = "ok"/,
+  /self\.render\(plain: "runtime named status", status: status_name(?:__hx\d+)?\)/,
   /def dynamic_permit\(\)/,
   /dynamic_name(?:__hx\d+)? = "metadata"/,
   /dynamic_attrs(?:__hx\d+)? = self\.params\(\)\.require\("todo"\)\.permit\(\[\{dynamic_name(?:__hx\d+)?\.to_sym\(\) => \[:source\]\}\]\)/,
@@ -437,7 +440,12 @@ run("bundle", ["exec", "rails", "test"], {
 });
 
 function compileWithFirstAvailableReflaxe(options = {}) {
-  for (const reflaxeSrc of reflaxeCandidates) {
+  // A present vendored compiler is authoritative. Falling through after a local
+  // compile failure can produce a false green against a sibling checkout.
+  const candidates = existsSync(join(reflaxeCandidates[0], "reflaxe", "ReflectCompiler.hx"))
+    ? [reflaxeCandidates[0]]
+    : reflaxeCandidates.slice(1);
+  for (const reflaxeSrc of candidates) {
     if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
       continue;
     }
@@ -751,6 +759,7 @@ Rails.application.initialize!
 
   writeFile("config/routes.rb", `Rails.application.routes.draw do
   get "/runtime", to: "todos#runtime_ok"
+  get "/runtime-named-status", to: "todos#runtime_named_status"
   post "/dynamic-permit", to: "todos#dynamic_permit"
 end
 `);
@@ -772,6 +781,13 @@ class ActionControllerParamsRuntimeTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "runtime ok", response.body
+  end
+
+  test "generated RailsHx controller accepts a runtime typed status" do
+    get "/runtime-named-status"
+
+    assert_response :success
+    assert_equal "runtime named status", response.body
   end
 
   test "dynamic PermitSpec key preserves nested strong-params behavior" do

@@ -86,6 +86,10 @@ assertShapes("main.rb", [
   /rest_value(?:__hx\d+)? = StaticCallables\.method\(:join\)/,
   /rest_value(?:__hx\d+)?\.call\("rest:", 1, 2\)/,
   /rest_value(?:__hx\d+)?\.call\("spread:", \*spread(?:__hx\d+)?\)/,
+  /WorkerFactory\.positional_value\(\)/,
+  /positional(?:__hx\d+)? = 15/,
+  /child(?:__hx\d+)?\.visit\(begin/,
+  /effectful_plain(?:__hx\d+)? = WorkerFactory\.make\(\)\.method\(:plain\)/,
   /# Evaluate the method-value receiver once at capture, matching Haxe expression semantics\./,
   /callable_receiver(?:__hx\d+)? = WorkerFactory\.make\(\)/,
   /native_child(?:__hx\d+)?\.transform!\(9\) \{/,
@@ -160,7 +164,12 @@ function assertShapes(relativeFile, patterns) {
 }
 
 function compileWithFirstAvailableReflaxe() {
-  for (const reflaxeSrc of reflaxeCandidates) {
+  // A present vendored compiler is authoritative. Falling through after a local
+  // compile failure can produce a false green against a sibling checkout.
+  const candidates = existsSync(join(reflaxeCandidates[0], "reflaxe", "ReflectCompiler.hx"))
+    ? [reflaxeCandidates[0]]
+    : reflaxeCandidates.slice(1);
+  for (const reflaxeSrc of candidates) {
     if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
       continue;
     }
@@ -177,6 +186,7 @@ function compileWithFirstAvailableReflaxe() {
     if (result.status === 0) {
       return result;
     }
+    process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
   }
   return null;

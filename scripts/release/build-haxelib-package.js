@@ -104,6 +104,7 @@ const requiredFiles = [
   "src/reflaxe/ruby/ast/RubyASTValidator.hx",
   "src/reflaxe/ruby/ast/RubyRuntimePlan.hx",
   "src/reflaxe/ruby/compiler/RubyCallablePlan.hx",
+  "src/reflaxe/ruby/rails/RailsCallArgumentPlan.hx",
   "std/ruby/_std/Std.hx",
   "std/ruby/CSV.hx",
   "std/ruby/CSVGenerateOptions.hx",

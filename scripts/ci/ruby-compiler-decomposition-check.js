@@ -8,6 +8,7 @@ const compilerPath = join(root, "src", "reflaxe", "ruby", "RubyCompiler.hx");
 const exceptionLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyExceptionLowering.hx");
 const int32LoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyInt32Lowering.hx");
 const loopLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyLoopLowering.hx");
+const railsCallArgumentPlanPath = join(root, "src", "reflaxe", "ruby", "rails", "RailsCallArgumentPlan.hx");
 const railsRoot = join(root, "src", "reflaxe", "ruby", "rails");
 const planPath = join(root, "docs", "ruby-compiler-rails-module-extraction.md");
 const packagePath = join(root, "package.json");
@@ -16,11 +17,12 @@ const workflowPath = join(root, ".github", "workflows", "ci.yml");
 // These ceilings move downward after extractions. Raising either one requires a
 // reviewed explanation because RubyCompiler is an orchestration boundary, not a
 // default home for new Rails or target-lowering responsibilities.
-const MAX_ROOT_LINES = 14527;
-const MAX_ROOT_FUNCTIONS = 786;
+const MAX_ROOT_LINES = 14523;
+const MAX_ROOT_FUNCTIONS = 784;
 
 const requiredServices = [
   "RailsArtifactPaths.hx",
+  "RailsCallArgumentPlan.hx",
   "RailsMailerPreviewArtifacts.hx",
   "RailsRoutesEmitter.hx",
   "RailsRoutesExtractor.hx",
@@ -73,9 +75,13 @@ if (!existsSync(int32LoweringPath)) {
 if (!existsSync(loopLoweringPath)) {
   fail("required loop compiler service is missing: " + relative(root, loopLoweringPath));
 }
+if (!existsSync(railsCallArgumentPlanPath)) {
+  fail("required Rails call-argument plan is missing: " + relative(root, railsCallArgumentPlanPath));
+}
 const exceptionLowering = readFileSync(exceptionLoweringPath, "utf8");
 const int32Lowering = readFileSync(int32LoweringPath, "utf8");
 const loopLowering = readFileSync(loopLoweringPath, "utf8");
+const railsCallArgumentPlan = readFileSync(railsCallArgumentPlanPath, "utf8");
 const compilerLines = compiler.split(/\r?\n/).length - (compiler.endsWith("\n") ? 1 : 0);
 const functionNames = [...compiler.matchAll(/^\s*(?:(?:public|private|static|inline|override)\s+)*function\s+([A-Za-z0-9_]+)/gm)].map((match) => match[1]);
 const functionSet = new Set(functionNames);
@@ -125,6 +131,9 @@ for (const expected of [
   "return RubyLoopLowering.compileFor(iteratorName, variableName, compileExpr(iterable), compileFunctionBody(body));",
   "return RubyExprStatement(RubyBreak);",
   "return RubyExprStatement(RubyNext);",
+  "import reflaxe.ruby.rails.RailsCallArgumentPlan;",
+  "RailsCallArgumentPlan.classifyStatus(expr)",
+  "RailsCallArgumentPlan.classifyLocals(expr)",
   "import reflaxe.ruby.rails.RailsMailerPreviewArtifacts;",
   "import reflaxe.ruby.rails.RailsTestArtifacts;",
   "railsMailerPreviewArtifacts.prepare(classType, buildContext.railsMode)",
@@ -171,6 +180,21 @@ for (const expected of [
 if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(loopLowering) || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(loopLowering)) {
   fail("RubyLoopLowering introduced an unsafe broad type or raw/print boundary");
 }
+for (const expected of [
+  "enum RailsStatusArgumentPlan",
+  "enum RailsLocalsArgumentPlan",
+  "class RailsCallArgumentPlan",
+  "public static function classifyStatus(expr:TypedExpr)",
+  "public static function classifyLocals(expr:TypedExpr)",
+  "RailsStatusSymbol",
+  "RailsLocalsProjection",
+  '"rails.action_controller._Status.Status_Impl_"',
+]) {
+  if (!railsCallArgumentPlan.includes(expected)) fail(`RailsCallArgumentPlan is missing owned Rails value contract: ${expected}`);
+}
+if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(railsCallArgumentPlan) || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(railsCallArgumentPlan)) {
+  fail("RailsCallArgumentPlan introduced an unsafe broad type or raw/print boundary");
+}
 
 for (const service of ["RailsMailerPreviewArtifacts.hx", "RailsTestArtifacts.hx"]) {
   const source = readFileSync(join(railsRoot, service), "utf8");
@@ -182,6 +206,7 @@ for (const service of ["RailsMailerPreviewArtifacts.hx", "RailsTestArtifacts.hx"
 const plan = readFileSync(planPath, "utf8");
 for (const expected of [
   "RailsArtifactPaths",
+  "RailsCallArgumentPlan",
   "RailsMailerPreviewArtifacts",
   "RailsRoutesEmitter",
   "RailsRoutesExtractor",

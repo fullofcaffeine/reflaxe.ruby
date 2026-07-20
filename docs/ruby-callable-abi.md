@@ -309,6 +309,9 @@ other effectful receiver is first assigned to a collision-safe
 why; later invocations reuse that single captured value. Ordinary/rest-only
 method values remain native Ruby `Method` objects, and Haxe Rest calls through
 them still lower written values/spreads to positional arguments/`*values`.
+Effectful receivers are evaluated by the one structural `receiver.method(...)`
+expression at capture; the focused fixture verifies both the native shape and
+an exactly-once factory count.
 
 Callable ABI metadata is inherited as part of the method contract. Calls made
 through a base class, interface, concrete class, included module, concern, or
@@ -411,6 +414,20 @@ The AST printer owns Ruby punctuation. Compiler passes must not concatenate
 `*`, `**`, `&`, keyword labels, or block delimiters into generic argument
 strings. Raw Ruby remains reserved for explicitly audited seams that the AST
 cannot yet represent.
+
+Call-site lowering is structural end to end. Receivers and positional values
+are compiled directly as `RubyExpr`; known Haxe abstract identity wrappers are
+removed from their typed shape before AST construction; literal keyword values
+remain expressions inside `RubyKeywordArgument`; and a plain method value is a
+`RubyCall(receiver, "method", [RubySymbol(name)])`. The compiler does not print
+any of those child expressions for insertion into `RubyRawExpr`.
+
+Rails `status:` and `locals:` values need source typing beyond ordinary Ruby
+argument syntax. `RailsCallArgumentPlan` records only whether the status is a
+symbol/runtime value and whether locals are a literal/stable projection. This
+single classification feeds both structural callable calls and the remaining
+explicit Rails framework renderers, preventing the two boundaries from
+rediscovering incompatible field-name heuristics.
 
 ## Validation And Diagnostics
 

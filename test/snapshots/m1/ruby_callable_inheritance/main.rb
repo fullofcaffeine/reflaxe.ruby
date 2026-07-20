@@ -36,6 +36,15 @@ class Main
       api.visit(*haxe_args__hx2, &callable_block__hx2)
     end
     puts(HXRuby.stringify(interface_block.call(7, ->(value__hx7) { ("interface-value:" + HXRuby.stringify(value__hx7)) })))
+    puts(HXRuby.stringify(child.visit(begin
+      positional = WorkerFactory.positional_value()
+      positional = 15
+      positional
+    end) { |value__hx8| ("positional:" + HXRuby.stringify(value__hx8)) }))
+    puts(HXRuby.stringify(("positional-evaluations:" + HXRuby.stringify(WorkerFactory.positional_evaluations))))
+    effectful_plain = WorkerFactory.make().method(:plain)
+    puts(HXRuby.stringify(effectful_plain.call(8)))
+    puts(HXRuby.stringify(("plain-factory-count:" + HXRuby.stringify(WorkerFactory.created))))
     effectful_block = begin
       # Evaluate the method-value receiver once at capture, matching Haxe expression semantics.
       callable_receiver = WorkerFactory.make()
@@ -45,16 +54,16 @@ class Main
         callable_receiver.visit(*haxe_args__hx3, &callable_block__hx3)
       end
     end
-    puts(HXRuby.stringify(effectful_block.call(8, ->(value__hx8) { ("effectful:" + HXRuby.stringify(value__hx8)) })))
+    puts(HXRuby.stringify(effectful_block.call(8, ->(value__hx9) { ("effectful:" + HXRuby.stringify(value__hx9)) })))
     puts(HXRuby.stringify(("factory-count:" + HXRuby.stringify(WorkerFactory.created))))
     native_child = NativeBlockChild.new()
-    puts(HXRuby.stringify(native_child.transform!(9) { |value__hx9| ("direct-native:" + HXRuby.stringify(value__hx9)) }))
+    puts(HXRuby.stringify(native_child.transform!(9) { |value__hx10| ("direct-native:" + HXRuby.stringify(value__hx10)) }))
     native_value = ->(*haxe_args__hx4) do
       # Adapt this Haxe function value's positional carriers to Ruby keywords and block syntax.
       callable_block__hx4 = haxe_args__hx4.pop()
       native_child.transform!(*haxe_args__hx4, &callable_block__hx4)
     end
-    puts(HXRuby.stringify(native_value.call(10, ->(value__hx10) { ("captured-native:" + HXRuby.stringify(value__hx10)) })))
+    puts(HXRuby.stringify(native_value.call(10, ->(value__hx11) { ("captured-native:" + HXRuby.stringify(value__hx11)) })))
     static_keyword = ->(*haxe_args__hx5) do
       # Adapt this Haxe function value's positional carriers to Ruby keywords and block syntax.
       keyword_options = haxe_args__hx5.delete_at(0)
@@ -67,14 +76,14 @@ class Main
       StaticCallables.optional(*haxe_args__hx6, &callable_block__hx5)
     end
     puts(HXRuby.stringify(optional_block.call(11)))
-    puts(HXRuby.stringify(optional_block.call(12, ->(value__hx11) { ("optional-value:" + HXRuby.stringify(value__hx11)) })))
+    puts(HXRuby.stringify(optional_block.call(12, ->(value__hx12) { ("optional-value:" + HXRuby.stringify(value__hx12)) })))
     combined = ->(*haxe_args__hx7) do
       # Adapt this Haxe function value's positional carriers to Ruby keywords and block syntax.
       callable_block__hx6 = haxe_args__hx7.pop()
       keyword_options__hx1 = haxe_args__hx7.delete_at(0)
       StaticCallables.compose(prefix: keyword_options__hx1["prefix"], **(keyword_options__hx1.key?("suffix") ? {suffix: keyword_options__hx1["suffix"]} : {}), &callable_block__hx6)
     end
-    puts(HXRuby.stringify(combined.call({"prefix" => "combined"}, ->(value__hx12) { ("combined-value:" + value__hx12) })))
+    puts(HXRuby.stringify(combined.call({"prefix" => "combined"}, ->(value__hx13) { ("combined-value:" + value__hx13) })))
     rest_value = StaticCallables.method(:join)
     puts(HXRuby.stringify(rest_value.call("rest:", 1, 2)))
     spread = [3, 4]
@@ -95,7 +104,7 @@ class Main
         callable_receiver__hx1.module_visit(*haxe_args__hx9, &callable_block__hx7)
       end
     end
-    puts(HXRuby.stringify(module_value.call(13, ->(value__hx13) { ("module:" + HXRuby.stringify(value__hx13)) })))
+    puts(HXRuby.stringify(module_value.call(13, ->(value__hx14) { ("module:" + HXRuby.stringify(value__hx14)) })))
     concern_value = begin
       # Evaluate the method-value receiver once at capture, matching Haxe expression semantics.
       callable_receiver__hx2 = ConcernCallableReceiver.new()
@@ -105,7 +114,7 @@ class Main
         callable_receiver__hx2.concern_visit(*haxe_args__hx10, &callable_block__hx8)
       end
     end
-    puts(HXRuby.stringify(concern_value.call(14, ->(value__hx14) { ("concern:" + HXRuby.stringify(value__hx14)) })))
+    puts(HXRuby.stringify(concern_value.call(14, ->(value__hx15) { ("concern:" + HXRuby.stringify(value__hx15)) })))
   end
 end
 if __FILE__ == $PROGRAM_NAME

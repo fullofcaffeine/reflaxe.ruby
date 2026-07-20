@@ -46,9 +46,10 @@ typedef RubyCallableLoweringPlan = {
 /**
 	Builds and validates owned callable lowering before RubyAST construction.
 
-	Call-site block attachment and method-value adapters remain separate slices;
-	this plan intentionally owns only Haxe-owned method definitions, where block
-	escape and keyword materialization must agree for the entire body.
+	Call-site blocks, arguments, and method values use the existing structural
+	call nodes directly. This plan intentionally owns only Haxe-owned method
+	definitions, where block escape and keyword materialization must agree for the
+	entire body.
 **/
 class RubyCallablePlan {
 	public static function resolve(field:ClassFuncData, contract:RubyCallableContract):RubyCallableLoweringPlan {

@@ -131,7 +131,13 @@ class TodosController extends rails.action_controller.Base {
 	}
 
 	public function runtimeOk() {
-		render({plain: "runtime ok", status: Status.ok});
+		render({plain: "runtime ok", status: Status.named("ok")});
+	}
+
+	/** Exercises a runtime (non-literal) value through the typed status abstract. **/
+	public function runtimeNamedStatus() {
+		var statusName = "ok";
+		render({plain: "runtime named status", status: Status.named(statusName)});
 	}
 
 	/** Exercises the low-level dynamic-key extern; canonical app code uses ParamsMacro. **/

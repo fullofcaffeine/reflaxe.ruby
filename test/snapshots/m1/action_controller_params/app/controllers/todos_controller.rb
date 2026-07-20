@@ -60,6 +60,10 @@ class TodosController < ApplicationController
   def runtime_ok()
     self.render(plain: "runtime ok", status: :ok)
   end
+  def runtime_named_status()
+    status_name = "ok"
+    self.render(plain: "runtime named status", status: status_name)
+  end
   def dynamic_permit()
     dynamic_name = "metadata"
     dynamic_attrs = self.params().require("todo").permit([{dynamic_name.to_sym() => [:source]}])
