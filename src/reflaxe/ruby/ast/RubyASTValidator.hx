@@ -30,7 +30,12 @@ class RubyASTValidator {
 		switch (expr) {
 			case RubyNil | RubyBool(_) | RubyInt(_) | RubyFloat(_) | RubyString(_) | RubySymbol(_) | RubyBreak | RubyNext | RubyRawExpr(_):
 			case RubyLocal(name):
-				requireName(name, "local or constant");
+				// Legacy producers still use this leaf for a few target identifiers.
+				// New constant-path producers must use RubyConstantPath so their syntax
+				// receives the stronger validation below.
+				requireName(name, "local or legacy identifier");
+			case RubyConstantPath(path):
+				requireConstantPath(path, "expression");
 			case RubyArray(values):
 				requireList(values, "a Ruby array");
 			case RubyHash(fields) | RubySymbolHash(fields):

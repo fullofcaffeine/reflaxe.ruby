@@ -28,6 +28,7 @@ class RubyASTChildrenTestMain {
 			RubyString("text"),
 			RubySymbol("symbol"),
 			RubyLocal("leaf"),
+			RubyConstantPath("Demo::Worker"),
 			RubyBreak,
 			RubyNext,
 			RubyRawExpr("native_value")
@@ -214,6 +215,7 @@ class RubyASTChildrenTestMain {
 		fails("invalid rescue binding",
 			() -> RubyASTPrinter.printExpr(RubyBeginRescue([], [{exceptionClasses: ["StandardError"], binding: "BadBinding", body: []}])),
 			"invalid rescue binding local");
+		fails("invalid constant path", () -> RubyASTPrinter.printExpr(RubyConstantPath("Demo.bad")), "invalid expression constant");
 	}
 
 	static function assertExprImmediate(label:String, expr:RubyExpr, expectedExprs:Array<String>, expectedStatements:Array<String>):Void {
@@ -272,6 +274,7 @@ class RubyASTChildrenTestMain {
 			case RubyString(_): "string";
 			case RubySymbol(_): "symbol";
 			case RubyLocal(name): "local:" + name;
+			case RubyConstantPath(path): "constant:" + path;
 			case RubyArray(_): "array";
 			case RubyHash(_): "hash";
 			case RubySymbolHash(_): "symbol-hash";

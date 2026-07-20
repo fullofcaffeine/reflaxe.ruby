@@ -82,7 +82,35 @@ for (const expected of ["RubyHx cannot lower typed expression `TIdent` in value 
   }
 }
 
-console.log("[ruby-unsupported-expressions] OK: statement forms lower and bare typed intrinsics fail closed");
+// An unresolved identifier inside `untyped` survives as a TIdent assignment
+// target. Valid Haxe source cannot otherwise construct an invalid lvalue, so
+// this negative boundary fixture proves compiler-generated typed trees fail at
+// their source position instead of falling back to raw Ruby.
+const invalidAssignment = compileCase("invalid_assignment_target", `
+class Main {
+  static function main():Void {
+    untyped __rubyhx_invalid_assignment_target__ = 1;
+  }
+}
+`);
+const assignmentDiagnostics = `${invalidAssignment.stdout}${invalidAssignment.stderr}`;
+if (invalidAssignment.status === 0) {
+  console.error("Expected an unsupported typed assignment target to fail Ruby lowering.");
+  process.exit(1);
+}
+for (const expected of [
+  "RubyHx cannot lower this typed expression as an assignment target",
+  "use a local, field, or indexed value",
+  "Main.hx:3:",
+]) {
+  if (!assignmentDiagnostics.includes(expected)) {
+    console.error(`Unsupported-assignment diagnostic missing: ${expected}`);
+    console.error(assignmentDiagnostics);
+    process.exit(1);
+  }
+}
+
+console.log("[ruby-unsupported-expressions] OK: statement forms lower and invalid values/assignment targets fail closed");
 
 function compileCase(name, source) {
   const caseRoot = join(generatedRoot, name);

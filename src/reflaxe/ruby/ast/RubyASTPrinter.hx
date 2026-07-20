@@ -114,6 +114,7 @@ class RubyASTPrinter {
 			case RubyString(value): quoteRubyString(value);
 			case RubySymbol(value): rubySymbol(value);
 			case RubyLocal(name): name;
+			case RubyConstantPath(path): path;
 			case RubyArray(values): "[" + [for (value in values) renderExpr(value)].join(", ") + "]";
 			case RubyHash(fields): "{" + [
 					for (field in fields)

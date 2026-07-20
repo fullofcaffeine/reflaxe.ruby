@@ -28,6 +28,8 @@ class RubyASTPrinterTestMain {
 		eq("zero-argument yield", RubyASTPrinter.printExpr(RubyYield([])), "yield");
 		eq("structured index", RubyASTPrinter.printExpr(RubyIndex(RubyLocal("values"), RubyInt("1"))), "values[1]");
 		eq("structured member", RubyASTPrinter.printExpr(RubyMember(RubyLocal("color"), "__hx_index")), "color.__hx_index");
+		eq("nested constant path", RubyASTPrinter.printExpr(RubyConstantPath("Main::Worker")), "Main::Worker");
+		eq("absolute constant path", RubyASTPrinter.printExpr(RubyConstantPath("::Math::PI")), "::Math::PI");
 		eq("simple symbol", RubyASTPrinter.printExpr(RubySymbol("ready")), ":ready");
 		eq("bang symbol", RubyASTPrinter.printExpr(RubySymbol("save!")), ":save!");
 		eq("predicate symbol", RubyASTPrinter.printExpr(RubySymbol("ready?")), ":ready?");

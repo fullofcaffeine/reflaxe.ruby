@@ -80,14 +80,28 @@ Rails text emitters keep their explicit rendering boundary. The same slice
 removes all raw/print-reembed sites from callable receivers, positional and
 literal keyword arguments, and plain method-value capture.
 
+A target-neutral supporting slice adds `compiler.RubyReferenceLowering` for
+already-resolved Ruby constants, members, method values, and iterator
+closures. It does not analyze Haxe types or depend back on `RubyCompiler`;
+instead, the orchestration root selects a resolved owner/field and the service
+returns structural RubyAST. Rails MIME and request-variant tokens live in the
+separate one-way `rails.RailsStaticReferenceLowering` service so Rails policy
+does not leak into the target-neutral helper. The two remaining core-lowering
+inventory sites are ActiveRecord projection/grouped-count logic and stay with
+the future Rails-owned extraction rather than leaking Rails policy into this
+service.
+
 ## Dependency And Root-Growth Guard
 
 Run `npm run test:ruby-compiler-decomposition` to enforce the extraction
 boundary. The guard requires the documented service modules and typed root
 delegation, rejects any Rails service dependency back on `RubyCompiler`, blocks
 reintroduction of moved helpers, and caps both root lines and root function
-count at the post-extraction values. Those ceilings should move downward as
-later slices land; raising them requires an explicit reviewed rationale.
+count at the post-extraction values. The current exact ceilings are 14,485
+lines and 781 functions. The same guard enforces the one-way, no-raw/no-printer
+contract for target-neutral `RubyReferenceLowering`. Those ceilings should
+move downward as later slices land; raising them requires an explicit reviewed
+rationale.
 
 ## Per-Step Regression Contract
 

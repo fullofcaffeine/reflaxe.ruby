@@ -18,15 +18,20 @@ state too early.
 
 At this slice:
 
-- `RubyCompiler.hx` is 14,523 lines and remains the Reflaxe orchestration
+- `RubyCompiler.hx` is 14,485 lines and remains the Reflaxe orchestration
   entrypoint.
-- `RubyAST.hx` is 123 lines and owns closed expression/statement syntax.
+- `RubyAST.hx` is 133 lines and owns closed expression/statement syntax.
 - `RubyExceptionLowering.hx` is 133 lines and owns pre-filter typed catch
   dispatch through structural RubyAST plus an exact core-runtime-use count.
 - `RubyInt32Lowering.hx` is 46 lines and owns signed 32-bit clamping plus
   five-bit signed/unsigned shift shaping through ordinary structural RubyAST.
 - `RubyLoopLowering.hx` owns the fixed structural iterator/`while` expansion
   without retaining a semantic loop node or depending back on the compiler.
+- `RubyReferenceLowering.hx` is an 85-line, one-way service for already-resolved
+  Ruby constant paths, members, method references, and the few compiler-owned
+  static-value recipes that share those forms.
+- `RailsStaticReferenceLowering.hx` separately owns the Rails MIME and request
+  variant token mappings as structural RubyAST.
 - `RubyASTChildren` exhaustively owns every immediate structural child and the
   declaration-versus-executable role of every statement body.
 - `RubyASTValidator` checks cross-node invariants before either a file or a
@@ -37,8 +42,8 @@ At this slice:
   by structural callable calls and remaining validated Rails text boundaries.
 - `RubyRuntimePlan` closes the 49 compiler-selected hxruby helpers and gives
   each emitted use a semantic intent.
-- The checked inventory currently classifies 285 raw or print-reembed source
-  sites: 13 core-lowering, 101 validated-framework, and 122 print-reembed
+- The checked inventory currently classifies 270 raw or print-reembed source
+  sites: 2 core-lowering, 101 validated-framework, and 118 print-reembed
   sites, with the remaining categories recorded in the inventory. The count is
   planning evidence, not a product-quality score.
 
@@ -70,6 +75,9 @@ Ordinary migrated syntax is structural:
 - expression `TBlock` uses `RubyBegin`;
 - statement `TBlock` uses `RubyStatementSequence`;
 - enum tag/parameter access uses `RubyMember`;
+- resolved Ruby constants and type owners use the validated `RubyConstantPath`
+  leaf, while ordinary instance/static reads and assignment places use
+  `RubyMember`;
 - statement and expression `TSwitch` use `RubyCase` with structural arms and
   an optional default body;
 - statement and expression `TTry` use `RubyBeginRescue`;
@@ -86,7 +94,9 @@ Ordinary migrated syntax is structural:
 - Ruby callable receivers, positional values, literal keyword values, splats,
   block passes, and plain method values use `RubyCallableCall`,
   `RubyCallArgument`, `RubyCall`, and `RubySymbol` without rendering a child
-  expression and re-embedding it as raw Ruby.
+  expression and re-embedding it as raw Ruby; and
+- array key/value iterator function values use a structural zero-argument
+  `RubyLambda` rather than a raw arrow-function fragment.
 
 These paths do not print a child AST and insert the resulting string into a raw
 node. The switch migration preserves the existing Ruby runtime behavior and
@@ -138,6 +148,26 @@ double-quoted interpolation prefixes as well as control characters. Runtime
 names, so empty and literal-key nested specs fit the existing `RubySymbolHash`
 node.
 
+Ruby constant and member lowering likewise does not earn a semantic plan.
+Once `RubyCompiler` has resolved a Haxe type or field, the remaining operation
+is ordinary Ruby syntax. `RubyConstantPath` keeps constant syntax distinct from
+the deliberately permissive legacy `RubyLocal` node and validates paths before
+printing. `RubyMember` already models both reads and assignment places.
+`RubyReferenceLowering` owns the small reusable target recipes so the
+orchestration root supplies resolved facts instead of assembling target text.
+Its `resolvedOwner` constructor preserves the explicit `@:native("self")`
+interop contract used by erased route facades; every other owner still becomes
+a validated constant path.
+Unsupported assignment targets now fail at their Haxe source position rather
+than becoming raw Ruby.
+
+This migration intentionally accepts two formatter-only canonicalizations:
+the key/value iterator closure prints as explicit `->() { ... }`, and a unary
+negative infinity nested in a larger expression prints as
+`(-Float::INFINITY)`. Both are ordinary, equivalent Ruby forms and have focused
+generated-shape plus runtime evidence. A special layout node would add a second
+representation solely to preserve incidental punctuation.
+
 The low-level direct-extern `PermitSpec.nested` path can still present an
 expression-valued key. Current hash nodes intentionally carry static string
 keys, and one non-canonical fallback does not justify broadening the schema.
@@ -148,7 +178,7 @@ That path therefore remains one explicit raw/print-reembed boundary. A direct
 extern fixture verifies its generated shape and real Rails strong-params
 behavior. The inventory records its raw node and both rendered children
 separately. It remains three explicitly classified sites in the current total
-of 285.
+of 270.
 
 The architecture pressure test also considered a broader place plan. An
 authored `receiver()[index()] += 5` probe compiled to one receiver temporary,
@@ -312,10 +342,16 @@ owns its semantics. This work does not require:
 - a rewrite of `RubyCompiler`; or
 - coupling the core AST to Rails-specific domain concepts.
 
+The two remaining `core-lowering-migration` entries belong to ActiveRecord
+projection and grouped-count shaping. They combine Rails query semantics with
+target structure, so they remain a separate Rails-owned slice rather than
+being hidden inside the target-neutral reference service.
+
 Focused evidence for this contract includes:
 
 ```bash
 npm run test:ruby-ast
+npm run test:ruby-structural-references
 npm run test:ruby-call-shapes
 npm run test:action-controller-params
 npm run test:ruby-compiler-decomposition

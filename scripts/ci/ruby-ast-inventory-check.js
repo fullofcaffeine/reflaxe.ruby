@@ -241,6 +241,8 @@ for (const entry of entries) {
 }
 
 for (const functionName of [
+	"compileExpr",
+	"compileAssignable",
 	"compileRubyReceiverCall",
 	"compileRubyCallableCall",
 	"compileRubyInstanceMethodValue",
@@ -274,7 +276,9 @@ const callablePlan = readFileSync(join(sourceRoot, "compiler", "RubyCallablePlan
 const exceptionLowering = readFileSync(join(sourceRoot, "compiler", "RubyExceptionLowering.hx"), "utf8");
 const int32Lowering = readFileSync(join(sourceRoot, "compiler", "RubyInt32Lowering.hx"), "utf8");
 const loopLowering = readFileSync(join(sourceRoot, "compiler", "RubyLoopLowering.hx"), "utf8");
+const referenceLowering = readFileSync(join(sourceRoot, "compiler", "RubyReferenceLowering.hx"), "utf8");
 const railsCallArgumentPlan = readFileSync(join(sourceRoot, "rails", "RailsCallArgumentPlan.hx"), "utf8");
+const railsStaticReferenceLowering = readFileSync(join(sourceRoot, "rails", "RailsStaticReferenceLowering.hx"), "utf8");
 
 for (const expected of [
 	"case TArray(target, index): RubyIndex(compileExpr(target), compileExpr(index));",
@@ -291,6 +295,12 @@ for (const expected of [
 	"RubyInt32Lowering.shiftRightUnsigned(compileExpr(lhs), compileExpr(rhs))",
 	"return isInt32Type(type) ? RubyInt32Lowering.clamp(value) : value;",
 	"return RubyLoopLowering.compileFor(iteratorName, variableName, compileExpr(iterable), compileFunctionBody(body));",
+	"RailsStaticReferenceLowering.token(fullTypeName(classRef.get().pack, classRef.get().name), fieldRef.get().name)",
+	"RailsStaticReferenceLowering.token(fullTypeName(classType.pack, classType.name),",
+	"RubyReferenceLowering.knownStaticValue(fullTypeName(classType.pack, classType.name), field.name)",
+	"RubyReferenceLowering.iteratorFactory(iteratorExpr);",
+	"RubyReferenceLowering.member(compileExpr(target), fieldAccessName(access));",
+	"RubyReferenceLowering.resolvedOwner(moduleTypeName(moduleType));",
 	"return RubyExprStatement(RubyBreak);",
 	"return RubyExprStatement(RubyNext);",
 	'return params.length == 0 ? RubySymbol("") : switch (unwrapTypedExpr(params[0]).expr)',
@@ -350,6 +360,13 @@ for (const forbidden of [
 	"RubyRawExpr(simplifyRubyIdentityBegin(printInlineExpr(param)))",
 	'RubyRawExpr(printInlineExpr(target) + ".method(:"',
 	"RubyRawExpr(printKeywordArgValue(",
+	"RubyRawExpr(enumRubyConstantPath(",
+	"RubyRawExpr(actionControllerStaticToken(",
+	'RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr)',
+	'RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access))',
+	"case _: RubyRawExpr(printInlineExpr(expr))",
+	"actionControllerStaticToken(",
+	"staticRuntimeMethodValue(",
 ]) {
 	forbidIncludes(compiler, forbidden, "RubyCompiler");
 }
@@ -372,10 +389,33 @@ for (const forbidden of ["RubyRawExpr(", "RubyRawStatement(", "RubyASTPrinter."]
 	forbidIncludes(exceptionLowering, forbidden, "RubyExceptionLowering");
 	forbidIncludes(int32Lowering, forbidden, "RubyInt32Lowering");
 	forbidIncludes(loopLowering, forbidden, "RubyLoopLowering");
+	forbidIncludes(referenceLowering, forbidden, "RubyReferenceLowering");
+	forbidIncludes(railsStaticReferenceLowering, forbidden, "RailsStaticReferenceLowering");
+}
+for (const expected of [
+	"class RubyReferenceLowering",
+	"RubyConstantPath(path)",
+	"RubyMember(receiver, name)",
+	'return path == "self" ? RubyLocal("self") : constant(path);',
+	'RubyCall(resolvedOwner(ownerPath), "method", [RubySymbol(rubyName)])',
+	"RubyLambda([], [RubyExprStatement(iteratorExpr)])",
+	"public static function knownStaticValue",
+	"public static function mathConstant",
+]) {
+	requireIncludes(referenceLowering, expected, "RubyReferenceLowering");
+}
+for (const expected of [
+	"class RailsStaticReferenceLowering",
+	'RubyIndex(RubyConstantPath("Mime"), RubySymbol("html"))',
+	'RubyConstantPath("Mime::ALL")',
+	'RubySymbol("native_app")',
+]) {
+	requireIncludes(railsStaticReferenceLowering, expected, "RailsStaticReferenceLowering");
 }
 for (const expected of [
 	"RubyStatementSequence(body:Array<RubyStatement>);",
 	"RubyMember(receiver:RubyExpr, name:String);",
+	"RubyConstantPath(path:String);",
 	"RubyCase(scrutinee:RubyExpr",
 	"RubyBeginRescue(body:Array<RubyStatement>, rescues:Array<RubyRescueClause>);",
 	"RubyRaise(?exception:RubyExpr);",
@@ -397,6 +437,7 @@ for (const expected of [
 	"case RubyNext:",
 	"case RubyRuntimeCall(use, args):",
 	"case RubySymbol(value): rubySymbol(value);",
+	"case RubyConstantPath(path): path;",
 	'return isSimpleRubySymbol(value) ? ":" + value : ":" + quoteRubyString(value);',
 	'if (last == "!" || last == "?" || last == "=")',
 	"if (!isRubyIdentPart(value.charCodeAt(i)))",

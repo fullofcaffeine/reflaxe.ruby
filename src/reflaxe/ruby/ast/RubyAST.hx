@@ -32,6 +32,16 @@ enum RubyExpr {
 	RubyString(value:String);
 	RubySymbol(value:String);
 	RubyLocal(name:String);
+
+	/**
+		A validated Ruby constant such as `Main::Worker` or `::Math::PI`.
+
+		Constants are separate from locals because both are leaf expressions in
+		Ruby but obey different naming rules. Keeping the path structural prevents
+		compiler-generated owners from becoming unchecked raw Ruby before printing.
+	**/
+	RubyConstantPath(path:String);
+
 	RubyArray(values:Array<RubyExpr>);
 	RubyHash(fields:Array<RubyHashField>);
 	RubySymbolHash(fields:Array<RubyHashField>);

@@ -48,9 +48,11 @@ import reflaxe.ruby.compiler.RubyInt32Lowering;
 import reflaxe.ruby.compiler.RubyKeywordSemantics;
 import reflaxe.ruby.compiler.RubyLoopLowering;
 import reflaxe.ruby.compiler.RubyOutputLayout;
+import reflaxe.ruby.compiler.RubyReferenceLowering;
 import reflaxe.ruby.naming.RubyNaming;
 import reflaxe.ruby.rails.RailsRouteDecl;
 import reflaxe.ruby.rails.RailsRouteTarget;
+import reflaxe.ruby.rails.RailsStaticReferenceLowering;
 import reflaxe.ruby.rails.RailsRouteManifest;
 import reflaxe.ruby.rails.RailsRoutesExtractor;
 import reflaxe.ruby.rails.RailsRoutesEmitter;
@@ -404,8 +406,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		classBody = classBody.concat(haxeInterfaceIncludeStatements(classType));
 		classBody = classBody.concat(rubyExtensionStatements(classType.meta, classType));
 		for (field in varFields) {
-			var mathConstant = mathConstantValue(classType.pack, classType.name, field.field.name);
-			classBody.push(mathConstant == null ? compileVarField(field) : compileMathConstantField(field.field.name, mathConstant));
+			var mathConstant = RubyReferenceLowering.mathConstant(fullTypeName(classType.pack, classType.name), field.field.name);
+			classBody.push(mathConstant == null ? compileVarField(field) : compileMathConstantField(field.field.name, mathConstant.declarationCode));
 		}
 		var concernClassMethods:Array<RubyStatement> = [];
 		for (field in funcFields) {
@@ -1192,19 +1194,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileMathConstantField(name:String, value:String):RubyStatement {
 		return RubyRawStatement("def self." + RubyNaming.toMethodName(name) + "()\n  " + value + "\nend");
-	}
-
-	static function mathConstantValue(pack:Array<String>, typeName:String, fieldName:String):Null<String> {
-		if (fullTypeName(pack, typeName) != "Math") {
-			return null;
-		}
-		return switch (fieldName) {
-			case "PI": "::Math::PI";
-			case "NEGATIVE_INFINITY": "-Float::INFINITY";
-			case "POSITIVE_INFINITY": "Float::INFINITY";
-			case "NaN": "Float::NAN";
-			case _: null;
-		}
 	}
 
 	static function isNativeRubyMathMethod(classType:ClassType, fieldName:String):Bool {
@@ -2919,7 +2908,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyLambda([for (arg in fn.args) localName(arg.v)], compileRubyBlockBody(fn.expr));
 			case TNew(classRef, _, params):
 				var classType = classRef.get();
-				var receiver = RubyLocal(coreRubyTypeName(classType.pack,
+				var receiver = RubyReferenceLowering.resolvedOwner(coreRubyTypeName(classType.pack,
 					classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType));
 				var constructor = classType.constructor == null ? null : classType.constructor.get();
 				// Haxe represents construction as TNew rather than a normal field call,
@@ -2953,9 +2942,11 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TEnumIndex(enumExpr):
 				RubyMember(compileExpr(enumExpr), "__hx_index");
 			case TCall({expr: TField(_, FEnum(enumRef, field))}, params):
-				RubyCall(RubyRawExpr(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name), [for (param in params) compileExpr(param)]);
-			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, []) if (actionControllerStaticToken(classRef.get(), fieldRef.get().name) != null):
-				RubyRawExpr(actionControllerStaticToken(classRef.get(), fieldRef.get().name));
+				RubyCall(RubyReferenceLowering.constant(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name),
+					[for (param in params) compileExpr(param)]);
+			case TCall({expr: TField(_, FStatic(classRef, fieldRef))}, [])
+				if (RailsStaticReferenceLowering.token(fullTypeName(classRef.get().pack, classRef.get().name), fieldRef.get().name) != null):
+				RailsStaticReferenceLowering.token(fullTypeName(classRef.get().pack, classRef.get().name), fieldRef.get().name);
 			case TCall({expr: TField(target, access)}, []) if (fieldAccessRawName(access) == "iterator"):
 				// Reflaxe expands Haxe `for` loops into `.iterator()` calls before
 				// Ruby lowering. Route those through the compact runtime bridge so
@@ -2973,28 +2964,32 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TCall(callee, params):
 				compileFunctionValueCall(callee, params);
 			case TField(_, FEnum(enumRef, field)):
-				RubyCall(RubyRawExpr(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name), []);
+				RubyCall(RubyReferenceLowering.constant(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name), []);
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
 				var field = fieldRef.get();
 				var owner = coreRubyTypeName(classType.pack, classType.name) ?? rubyNativeName(classType.meta) ?? rubyClassConstantPath(classType);
+				var ownerExpr = RubyReferenceLowering.resolvedOwner(owner);
 				var methodValueContract = isMethodField(field) ? RubyCallableShape.resolve(field, expr.pos, functionArgumentTypes(expr.t)) : null;
 				if (isDynamicMethodClassField(field)) {
-					RubyCall(RubyRawExpr(owner), dynamicMethodValueName(rubyFieldName(field.name, field.meta)), []);
+					RubyCall(ownerExpr, dynamicMethodValueName(rubyFieldName(field.name, field.meta)), []);
 				} else if (methodValueContract != null && methodValueNeedsCallableAdapter(methodValueContract)) {
-					compileRubyMethodValueAdapter(RubyRawExpr(owner), methodValueContract, RubyCallableShape.rubyMethodName(field, expr.pos), null);
+					compileRubyMethodValueAdapter(ownerExpr, methodValueContract, RubyCallableShape.rubyMethodName(field, expr.pos), null);
 				} else {
-					var token = actionControllerStaticToken(classType, field.name);
-					var constant = token ?? mathConstantValue(classType.pack, classType.name, field.name) ?? staticRuntimeMethodValue(classType, field.name);
-					constant == null ? RubyRawExpr(owner
-						+ "."
-						+ (isMethodField(field) ? 'method(:${rubyFieldName(field.name, field.meta)})' : rubyFieldName(field.name,
-							field.meta))) : RubyRawExpr(constant);
+					var constant = RailsStaticReferenceLowering.token(fullTypeName(classType.pack, classType.name),
+						field.name) ?? RubyReferenceLowering.knownStaticValue(fullTypeName(classType.pack, classType.name), field.name);
+					if (constant != null) {
+						constant;
+					} else if (isMethodField(field)) {
+						RubyReferenceLowering.staticMethodValue(owner, rubyFieldName(field.name, field.meta));
+					} else {
+						RubyReferenceLowering.member(ownerExpr, rubyFieldName(field.name, field.meta));
+					}
 				}
 			case TField(target, access) if (fieldAccessRawName(access) == "keyValueIterator"
 				&& isArrayReceiverFieldAccess(target, access)):
 				var iteratorExpr = hxrubyCall(RubyRuntimeHelper.KeyValueIterator, [compileExpr(target)]);
-				RubyRawExpr("-> { " + RubyASTPrinter.printExpr(iteratorExpr) + " }");
+				RubyReferenceLowering.iteratorFactory(iteratorExpr);
 			case TField(target, access) if (dynamicMethodFieldValueName(access) != null):
 				RubyCall(compileExpr(target), dynamicMethodFieldValueName(access), []);
 			case TField(target, access) if (methodFieldValueName(access) != null):
@@ -3004,9 +2999,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(target, FAnon(fieldRef)):
 				hxrubyCall(RubyRuntimeHelper.ReflectField, [compileExpr(target), RubyString(fieldRef.get().name)]);
 			case TField(target, access):
-				RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
+				RubyReferenceLowering.member(compileExpr(target), fieldAccessName(access));
 			case TTypeExpr(moduleType):
-				RubyLocal(moduleTypeName(moduleType));
+				RubyReferenceLowering.resolvedOwner(moduleTypeName(moduleType));
 			case TIdent(name):
 				unsupportedTypedValueExpr(expr, "TIdent", "unconsumed compiler identifier `" + name + "`");
 			case TVar(_, _):
@@ -3046,8 +3041,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (expr.expr) {
 			case TLocal(v): RubyLocal(isCapturedSelfAlias(v) ? "self" : localName(v));
 			case TArray(target, index): RubyIndex(compileExpr(target), compileExpr(index));
-			case TField(target, access): RubyRawExpr(printInlineExpr(target) + "." + fieldAccessName(access));
-			case _: RubyRawExpr(printInlineExpr(expr));
+			case TField(target, access): RubyReferenceLowering.member(compileExpr(target), fieldAccessName(access));
+			case TParenthesis(inner) | TMeta(_, inner) | TCast(inner, _): compileAssignable(inner);
+			case _:
+				Context.error("RubyHx cannot lower this typed expression as an assignment target. This is a compiler correctness error; use a local, field, or indexed value.",
+					expr.pos);
+				RubyNil;
 		}
 	}
 
@@ -5498,7 +5497,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		return switch (params[index].expr) {
 			case TTypeExpr(moduleType):
-				RubyLocal(moduleTypeName(moduleType));
+				RubyReferenceLowering.resolvedOwner(moduleTypeName(moduleType));
 			case _:
 				compileExpr(params[index]);
 		}
@@ -6358,43 +6357,6 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case TField(_, FStatic(classRef, fieldRef)):
 				var classType = classRef.get();
 				{typeName: fullTypeName(classType.pack, classType.name), fieldName: fieldRef.get().name, field: fieldRef.get()};
-			case _:
-				null;
-		}
-	}
-
-	static function actionControllerStaticToken(classType:ClassType, fieldName:String):Null<String> {
-		return switch (fullTypeName(classType.pack, classType.name)) {
-			case "rails.action_controller.Mime":
-				switch (fieldName) {
-					case "html" | "get_html": "Mime[:html]";
-					case "json" | "get_json": "Mime[:json]";
-					case "turboStream" | "get_turboStream": "Mime[:turbo_stream]";
-					case "xml" | "get_xml": "Mime[:xml]";
-					case "all" | "get_all": "Mime::ALL";
-					case _: null;
-				}
-			case "rails.action_controller.RequestVariantToken":
-				switch (fieldName) {
-					case "phone" | "get_phone": ":phone";
-					case "tablet" | "get_tablet": ":tablet";
-					case "desktop" | "get_desktop": ":desktop";
-					case "nativeApp" | "get_nativeApp": ":native_app";
-					case _: null;
-				}
-			case _:
-				null;
-		}
-	}
-
-	static function staticRuntimeMethodValue(classType:ClassType, fieldName:String):Null<String> {
-		return switch [fullTypeName(classType.pack, classType.name), fieldName] {
-			case ["Reflect", "compare"]:
-				// `Reflect` is compiler-erased; method references need the runtime
-				// helper directly when passed as callbacks such as Array.sort.
-				"HXRuby.method(:reflect_compare)";
-			case ["Reflect", "compareMethods"]:
-				"HXRuby.method(:reflect_compare_methods)";
 			case _:
 				null;
 		}

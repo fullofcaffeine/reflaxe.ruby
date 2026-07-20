@@ -96,7 +96,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileClassImpl::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 402,
+      "line": 404,
       "column": 19,
       "token": "RubyRawStatement",
       "function": "compileClassImpl",
@@ -106,7 +106,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileClassImpl::RubyRawStatement::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 439,
+      "line": 441,
       "column": 19,
       "token": "RubyRawStatement",
       "function": "compileClassImpl",
@@ -116,7 +116,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileClassImpl::RubyRawStatement::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 455,
+      "line": 457,
       "column": 20,
       "token": "RubyRawStatement",
       "function": "compileClassImpl",
@@ -126,7 +126,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::haxeInterfaceIncludeStatements::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 559,
+      "line": 561,
       "column": 5,
       "token": "RubyRawStatement",
       "function": "haxeInterfaceIncludeStatements",
@@ -136,7 +136,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::requirePreludeStatements::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 731,
+      "line": 733,
       "column": 13,
       "token": "RubyRawStatement",
       "function": "requirePreludeStatements",
@@ -146,7 +146,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::requirePreludeStatements::RubyRawStatement::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 734,
+      "line": 736,
       "column": 13,
       "token": "RubyRawStatement",
       "function": "requirePreludeStatements",
@@ -156,7 +156,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::rubyExtensionStatements::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 740,
+      "line": 742,
       "column": 57,
       "token": "RubyRawStatement",
       "function": "rubyExtensionStatements",
@@ -166,7 +166,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileDynamicMethodSetter::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1011,
+      "line": 1013,
       "column": 4,
       "token": "RubyRawStatement",
       "function": "compileDynamicMethodSetter",
@@ -176,7 +176,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsModelMethod::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1091,
+      "line": 1093,
       "column": 11,
       "token": "RubyRawStatement",
       "function": "compileRailsModelMethod",
@@ -186,7 +186,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestMethod::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1098,
+      "line": 1100,
       "column": 47,
       "token": "RubyRawStatement",
       "function": "compileRailsTestMethod",
@@ -196,7 +196,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileVarField::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1180,
+      "line": 1182,
       "column": 12,
       "token": "RubyRawStatement",
       "function": "compileVarField",
@@ -206,7 +206,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileVarField::RubyRawStatement::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1188,
+      "line": 1190,
       "column": 11,
       "token": "RubyRawStatement",
       "function": "compileVarField",
@@ -216,7 +216,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileVarField::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1189,
+      "line": 1191,
       "column": 22,
       "token": "RubyASTPrinter.printExpr",
       "function": "compileVarField",
@@ -226,7 +226,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileMathConstantField::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1194,
+      "line": 1196,
       "column": 10,
       "token": "RubyRawStatement",
       "function": "compileMathConstantField",
@@ -236,7 +236,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::typeNameMetadata::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1226,
+      "line": 1215,
       "column": 10,
       "token": "RubyRawStatement",
       "function": "typeNameMetadata",
@@ -246,7 +246,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::typeFieldsMetadata::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1232,
+      "line": 1221,
       "column": 10,
       "token": "RubyRawStatement",
       "function": "typeFieldsMetadata",
@@ -256,7 +256,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileEnumBody::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1275,
+      "line": 1264,
       "column": 13,
       "token": "RubyRawStatement",
       "function": "compileEnumBody",
@@ -266,7 +266,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileEnumBody::RubyRawStatement::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1277,
+      "line": 1266,
       "column": 13,
       "token": "RubyRawStatement",
       "function": "compileEnumBody",
@@ -276,7 +276,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileEnumBody::RubyRawStatement::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1281,
+      "line": 1270,
       "column": 17,
       "token": "RubyRawStatement",
       "function": "compileEnumBody",
@@ -286,7 +286,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsControllerImpl::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1574,
+      "line": 1563,
       "column": 53,
       "token": "RubyRawStatement",
       "function": "compileRailsControllerImpl",
@@ -296,7 +296,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsMailerImpl::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1615,
+      "line": 1604,
       "column": 53,
       "token": "RubyRawStatement",
       "function": "compileRailsMailerImpl",
@@ -306,7 +306,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsJobImpl::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1656,
+      "line": 1645,
       "column": 53,
       "token": "RubyRawStatement",
       "function": "compileRailsJobImpl",
@@ -316,7 +316,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsChannelImpl::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1695,
+      "line": 1684,
       "column": 53,
       "token": "RubyRawStatement",
       "function": "compileRailsChannelImpl",
@@ -326,7 +326,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsCableConnectionImpl::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 1747,
+      "line": 1736,
       "column": 53,
       "token": "RubyRawStatement",
       "function": "compileRailsCableConnectionImpl",
@@ -336,7 +336,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsModelImpl::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2611,
+      "line": 2600,
       "column": 53,
       "token": "RubyRawStatement",
       "function": "compileRailsModelImpl",
@@ -344,159 +344,9 @@
       "snippet": "statements.push(railsArtifactStatement(classType, RubyRawStatement(lines.join(\"\\n\"))));"
     },
     {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::1",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2956,
-      "column": 14,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "RubyCall(RubyRawExpr(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name), [for (param in params) compileExpr(param)]);"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::2",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2958,
-      "column": 5,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "RubyRawExpr(actionControllerStaticToken(classRef.get(), fieldRef.get().name));"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::3",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2976,
-      "column": 14,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "RubyCall(RubyRawExpr(enumRubyConstantPath(enumRef.get())), RubyNaming.toMethodName(field.name), []);"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::4",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2983,
-      "column": 15,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "RubyCall(RubyRawExpr(owner), dynamicMethodValueName(rubyFieldName(field.name, field.meta)), []);"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::5",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2985,
-      "column": 36,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "compileRubyMethodValueAdapter(RubyRawExpr(owner), methodValueContract, RubyCallableShape.rubyMethodName(field, expr.pos), null);"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::6",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2989,
-      "column": 25,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "constant == null ? RubyRawExpr(owner"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::7",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2992,
-      "column": 24,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "field.meta))) : RubyRawExpr(constant);"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::8",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2997,
-      "column": 5,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "RubyRawExpr(\"-> { \" + RubyASTPrinter.printExpr(iteratorExpr) + \" }\");"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyASTPrinter.printExpr::1",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 2997,
-      "column": 27,
-      "token": "RubyASTPrinter.printExpr",
-      "function": "compileExpr",
-      "category": "print-reembed-debt",
-      "snippet": "RubyRawExpr(\"-> { \" + RubyASTPrinter.printExpr(iteratorExpr) + \" }\");"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::RubyRawExpr::9",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3007,
-      "column": 5,
-      "token": "RubyRawExpr",
-      "function": "compileExpr",
-      "category": "core-lowering-migration",
-      "snippet": "RubyRawExpr(printInlineExpr(target) + \".\" + fieldAccessName(access));"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileExpr::printInlineExpr::1",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3007,
-      "column": 17,
-      "token": "printInlineExpr",
-      "function": "compileExpr",
-      "category": "print-reembed-debt",
-      "snippet": "RubyRawExpr(printInlineExpr(target) + \".\" + fieldAccessName(access));"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileAssignable::RubyRawExpr::1",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3049,
-      "column": 33,
-      "token": "RubyRawExpr",
-      "function": "compileAssignable",
-      "category": "core-lowering-migration",
-      "snippet": "case TField(target, access): RubyRawExpr(printInlineExpr(target) + \".\" + fieldAccessName(access));"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileAssignable::printInlineExpr::1",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3049,
-      "column": 45,
-      "token": "printInlineExpr",
-      "function": "compileAssignable",
-      "category": "print-reembed-debt",
-      "snippet": "case TField(target, access): RubyRawExpr(printInlineExpr(target) + \".\" + fieldAccessName(access));"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileAssignable::RubyRawExpr::2",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3050,
-      "column": 12,
-      "token": "RubyRawExpr",
-      "function": "compileAssignable",
-      "category": "core-lowering-migration",
-      "snippet": "case _: RubyRawExpr(printInlineExpr(expr));"
-    },
-    {
-      "id": "src/reflaxe/ruby/RubyCompiler.hx::compileAssignable::printInlineExpr::2",
-      "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3050,
-      "column": 24,
-      "token": "printInlineExpr",
-      "function": "compileAssignable",
-      "category": "print-reembed-debt",
-      "snippet": "case _: RubyRawExpr(printInlineExpr(expr));"
-    },
-    {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileIncrementExpr::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3142,
+      "line": 3141,
       "column": 33,
       "token": "RubyASTPrinter.printExpr",
       "function": "compileIncrementExpr",
@@ -506,7 +356,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileIncrementExpr::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3145,
+      "line": 3144,
       "column": 17,
       "token": "RubyRawExpr",
       "function": "compileIncrementExpr",
@@ -516,7 +366,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileIncrementExpr::RubyASTPrinter.printExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3146,
+      "line": 3145,
       "column": 37,
       "token": "RubyASTPrinter.printExpr",
       "function": "compileIncrementExpr",
@@ -526,7 +376,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileIncrementExpr::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3147,
+      "line": 3146,
       "column": 20,
       "token": "RubyRawExpr",
       "function": "compileIncrementExpr",
@@ -536,7 +386,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileIncrementExpr::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3147,
+      "line": 3146,
       "column": 81,
       "token": "RubyRawExpr",
       "function": "compileIncrementExpr",
@@ -546,7 +396,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileUntypedDefaultExpr::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3168,
+      "line": 3167,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileUntypedDefaultExpr",
@@ -556,7 +406,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileUntypedDefaultExpr::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3171,
+      "line": 3170,
       "column": 34,
       "token": "RubyRawExpr",
       "function": "compileUntypedDefaultExpr",
@@ -566,7 +416,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileUntypedDefaultExpr::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3183,
+      "line": 3182,
       "column": 16,
       "token": "RubyRawExpr",
       "function": "compileUntypedDefaultExpr",
@@ -576,7 +426,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3550,
+      "line": 3549,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -586,7 +436,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3552,
+      "line": 3551,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -596,7 +446,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3554,
+      "line": 3553,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -606,7 +456,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3556,
+      "line": 3555,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -616,7 +466,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3558,
+      "line": 3557,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -626,7 +476,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::6",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3560,
+      "line": 3559,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -636,7 +486,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::7",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3562,
+      "line": 3561,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -646,7 +496,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::8",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3564,
+      "line": 3563,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -656,7 +506,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::9",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3574,
+      "line": 3573,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -666,7 +516,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::10",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3593,
+      "line": 3592,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -676,7 +526,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileSpecialCall::RubyRawExpr::11",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3595,
+      "line": 3594,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileSpecialCall",
@@ -686,7 +536,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::rubyStringToolsHtmlEscape::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3614,
+      "line": 3613,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "rubyStringToolsHtmlEscape",
@@ -696,7 +546,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::rubyStringToolsReplace::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3623,
+      "line": 3622,
       "column": 4,
       "token": "RubyRawExpr",
       "function": "rubyStringToolsReplace",
@@ -706,7 +556,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::rubyStringToolsHex::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3634,
+      "line": 3633,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "rubyStringToolsHex",
@@ -716,7 +566,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestMinitestAssertionCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3688,
+      "line": 3687,
       "column": 99,
       "token": "RubyRawExpr",
       "function": "compileRailsTestMinitestAssertionCall",
@@ -726,7 +576,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestMinitestAssertionCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3692,
+      "line": 3691,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestMinitestAssertionCall",
@@ -736,7 +586,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestMinitestAssertionCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3692,
+      "line": 3691,
       "column": 75,
       "token": "printInlineExpr",
       "function": "compileRailsTestMinitestAssertionCall",
@@ -746,7 +596,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestMinitestAssertionCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3694,
+      "line": 3693,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestMinitestAssertionCall",
@@ -756,7 +606,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3703,
+      "line": 3702,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -766,7 +616,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3703,
+      "line": 3702,
       "column": 29,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -776,7 +626,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3703,
+      "line": 3702,
       "column": 71,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -786,7 +636,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3705,
+      "line": 3704,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -796,7 +646,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3705,
+      "line": 3704,
       "column": 29,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -806,7 +656,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3705,
+      "line": 3704,
       "column": 75,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -816,7 +666,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3707,
+      "line": 3706,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -826,7 +676,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3707,
+      "line": 3706,
       "column": 29,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -836,7 +686,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3709,
+      "line": 3708,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -846,7 +696,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::6",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3709,
+      "line": 3708,
       "column": 29,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -856,7 +706,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3711,
+      "line": 3710,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -866,7 +716,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::7",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3711,
+      "line": 3710,
       "column": 29,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -876,7 +726,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::8",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3711,
+      "line": 3710,
       "column": 76,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -886,7 +736,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::6",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3713,
+      "line": 3712,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -896,7 +746,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::9",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3713,
+      "line": 3712,
       "column": 29,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -906,7 +756,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::10",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3713,
+      "line": 3712,
       "column": 80,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -916,7 +766,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::7",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3715,
+      "line": 3714,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -926,7 +776,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::11",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3715,
+      "line": 3714,
       "column": 29,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -936,7 +786,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::8",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3717,
+      "line": 3716,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -946,7 +796,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::12",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3717,
+      "line": 3716,
       "column": 29,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -956,7 +806,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::9",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3720,
+      "line": 3719,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -966,7 +816,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::13",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3720,
+      "line": 3719,
       "column": 77,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -976,7 +826,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::10",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3722,
+      "line": 3721,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -986,7 +836,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::14",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3722,
+      "line": 3721,
       "column": 54,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -996,7 +846,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::11",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3724,
+      "line": 3723,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -1006,7 +856,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::printInlineExpr::15",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3729,
+      "line": 3728,
       "column": 8,
       "token": "printInlineExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -1016,7 +866,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRspecAssertionCall::RubyRawExpr::12",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3732,
+      "line": 3731,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRspecAssertionCall",
@@ -1026,7 +876,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRequestCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3744,
+      "line": 3743,
       "column": 43,
       "token": "printInlineExpr",
       "function": "compileRailsTestRequestCall",
@@ -1036,7 +886,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRequestCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3748,
+      "line": 3747,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRequestCall",
@@ -1046,7 +896,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRequestCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3750,
+      "line": 3749,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRequestCall",
@@ -1056,7 +906,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRequestCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3752,
+      "line": 3751,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRequestCall",
@@ -1066,7 +916,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestRequestParamsCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3770,
+      "line": 3769,
       "column": 6,
       "token": "RubyRawExpr",
       "function": "compileRailsTestRequestParamsCall",
@@ -1076,7 +926,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileArrayCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3862,
+      "line": 3861,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileArrayCall",
@@ -1086,7 +936,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileArrayCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3862,
+      "line": 3861,
       "column": 25,
       "token": "printInlineExpr",
       "function": "compileArrayCall",
@@ -1096,7 +946,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileStringCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3933,
+      "line": 3932,
       "column": 20,
       "token": "printInlineExpr",
       "function": "compileStringCall",
@@ -1106,7 +956,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileStringStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 3975,
+      "line": 3974,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileStringStaticCall",
@@ -1116,7 +966,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4028,
+      "line": 4027,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1126,7 +976,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4028,
+      "line": 4027,
       "column": 17,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1136,7 +986,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4033,
+      "line": 4032,
       "column": 65,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1146,7 +996,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4036,
+      "line": 4035,
       "column": 73,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1156,7 +1006,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4044,
+      "line": 4043,
       "column": 6,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1166,7 +1016,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4044,
+      "line": 4043,
       "column": 18,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1176,7 +1026,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4047,
+      "line": 4046,
       "column": 33,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1186,7 +1036,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4047,
+      "line": 4046,
       "column": 45,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1196,7 +1046,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::6",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4051,
+      "line": 4050,
       "column": 72,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1206,7 +1056,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::7",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4054,
+      "line": 4053,
       "column": 32,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1216,7 +1066,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4054,
+      "line": 4053,
       "column": 44,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1226,7 +1076,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::8",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4056,
+      "line": 4055,
       "column": 45,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1236,7 +1086,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::9",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4058,
+      "line": 4057,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1246,7 +1096,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4058,
+      "line": 4057,
       "column": 17,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1256,7 +1106,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::10",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4061,
+      "line": 4060,
       "column": 71,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1266,7 +1116,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::11",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4064,
+      "line": 4063,
       "column": 31,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1276,7 +1126,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::6",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4064,
+      "line": 4063,
       "column": 43,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1286,7 +1136,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::12",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4067,
+      "line": 4066,
       "column": 71,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1296,7 +1146,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::13",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4070,
+      "line": 4069,
       "column": 31,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1306,7 +1156,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::7",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4070,
+      "line": 4069,
       "column": 43,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1316,7 +1166,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::14",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4073,
+      "line": 4072,
       "column": 72,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1326,7 +1176,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::15",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4076,
+      "line": 4075,
       "column": 32,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1336,7 +1186,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::8",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4076,
+      "line": 4075,
       "column": 44,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1346,7 +1196,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::16",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4079,
+      "line": 4078,
       "column": 71,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1356,7 +1206,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::17",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4082,
+      "line": 4081,
       "column": 31,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1366,7 +1216,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::printInlineExpr::9",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4082,
+      "line": 4081,
       "column": 43,
       "token": "printInlineExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1376,7 +1226,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::18",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4097,
+      "line": 4096,
       "column": 49,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1386,7 +1236,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::19",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4102,
+      "line": 4101,
       "column": 73,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1396,7 +1246,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::20",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4109,
+      "line": 4108,
       "column": 74,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1406,7 +1256,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::21",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4114,
+      "line": 4113,
       "column": 90,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1416,7 +1266,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::22",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4118,
+      "line": 4117,
       "column": 48,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1426,7 +1276,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::23",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4121,
+      "line": 4120,
       "column": 72,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1436,7 +1286,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::24",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4129,
+      "line": 4128,
       "column": 91,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1446,7 +1296,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::25",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4132,
+      "line": 4131,
       "column": 73,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1456,7 +1306,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordRelationCall::RubyRawExpr::26",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4136,
+      "line": 4135,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordRelationCall",
@@ -1466,7 +1316,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordProjectionStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4161,
+      "line": 4160,
       "column": 6,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordProjectionStaticCall",
@@ -1476,7 +1326,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordProjectionStaticCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4179,
+      "line": 4178,
       "column": 20,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordProjectionStaticCall",
@@ -1486,7 +1336,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordProjectionStaticCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4181,
+      "line": 4180,
       "column": 61,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordProjectionStaticCall",
@@ -1496,7 +1346,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordProjectionExpr::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4192,
+      "line": 4191,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "activeRecordProjectionExpr",
@@ -1506,7 +1356,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordProjectionExpr::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4193,
+      "line": 4192,
       "column": 23,
       "token": "RubyASTPrinter.printExpr",
       "function": "activeRecordProjectionExpr",
@@ -1516,7 +1366,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordGroupStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4210,
+      "line": 4209,
       "column": 75,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordGroupStaticCall",
@@ -1526,7 +1376,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordGroupStaticCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4220,
+      "line": 4219,
       "column": 61,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordGroupStaticCall",
@@ -1536,7 +1386,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveRecordGroupStaticCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4221,
+      "line": 4220,
       "column": 46,
       "token": "RubyRawExpr",
       "function": "compileActiveRecordGroupStaticCall",
@@ -1546,7 +1396,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordGroupCountExpr::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4230,
+      "line": 4229,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "activeRecordGroupCountExpr",
@@ -1556,7 +1406,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordGroupCountExpr::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4230,
+      "line": 4229,
       "column": 45,
       "token": "RubyASTPrinter.printExpr",
       "function": "activeRecordGroupCountExpr",
@@ -1566,7 +1416,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4287,
+      "line": 4286,
       "column": 38,
       "token": "RubyRawExpr",
       "function": "compileActiveStorageCall",
@@ -1576,7 +1426,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4318,
+      "line": 4317,
       "column": 35,
       "token": "RubyRawExpr",
       "function": "compileActiveStorageStaticCall",
@@ -1586,7 +1436,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachableStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4329,
+      "line": 4328,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveStorageAttachableStaticCall",
@@ -1596,7 +1446,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachableStaticCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4329,
+      "line": 4328,
       "column": 17,
       "token": "printInlineExpr",
       "function": "compileActiveStorageAttachableStaticCall",
@@ -1606,7 +1456,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachableStaticCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4331,
+      "line": 4330,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveStorageAttachableStaticCall",
@@ -1616,7 +1466,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachableStaticCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4333,
+      "line": 4332,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveStorageAttachableStaticCall",
@@ -1626,7 +1476,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachableStaticCall::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4333,
+      "line": 4332,
       "column": 17,
       "token": "printInlineExpr",
       "function": "compileActiveStorageAttachableStaticCall",
@@ -1636,7 +1486,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachablesStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4342,
+      "line": 4341,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveStorageAttachablesStaticCall",
@@ -1646,7 +1496,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachablesStaticCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4342,
+      "line": 4341,
       "column": 17,
       "token": "printInlineExpr",
       "function": "compileActiveStorageAttachablesStaticCall",
@@ -1656,7 +1506,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachablesStaticCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4344,
+      "line": 4343,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveStorageAttachablesStaticCall",
@@ -1666,7 +1516,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachablesStaticCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4346,
+      "line": 4345,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveStorageAttachablesStaticCall",
@@ -1676,7 +1526,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveStorageAttachablesStaticCall::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4346,
+      "line": 4345,
       "column": 17,
       "token": "printInlineExpr",
       "function": "compileActiveStorageAttachablesStaticCall",
@@ -1686,7 +1536,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveJobStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4358,
+      "line": 4357,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveJobStaticCall",
@@ -1696,7 +1546,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveJobStaticCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4363,
+      "line": 4362,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveJobStaticCall",
@@ -1706,7 +1556,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveJobStaticCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4363,
+      "line": 4362,
       "column": 65,
       "token": "printInlineExpr",
       "function": "compileActiveJobStaticCall",
@@ -1716,7 +1566,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4376,
+      "line": 4375,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1726,7 +1576,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4380,
+      "line": 4379,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1736,7 +1586,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4382,
+      "line": 4381,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1746,7 +1596,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4387,
+      "line": 4386,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1756,7 +1606,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4391,
+      "line": 4390,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1766,7 +1616,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::6",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4393,
+      "line": 4392,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1776,7 +1626,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::7",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4396,
+      "line": 4395,
       "column": 6,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1786,7 +1636,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::8",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4399,
+      "line": 4398,
       "column": 5,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1796,7 +1646,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableValue::printInlineExpr::9",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4401,
+      "line": 4400,
       "column": 5,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableValue",
@@ -1806,7 +1656,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableHash::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4416,
+      "line": 4415,
       "column": 44,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableHash",
@@ -1816,7 +1666,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableHash::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4417,
+      "line": 4416,
       "column": 50,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableHash",
@@ -1826,7 +1676,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActiveStorageAttachableHash::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4423,
+      "line": 4422,
       "column": 69,
       "token": "printInlineExpr",
       "function": "printActiveStorageAttachableHash",
@@ -1836,7 +1686,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionCableCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4454,
+      "line": 4453,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionCableCall",
@@ -1846,7 +1696,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionCableCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4456,
+      "line": 4455,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionCableCall",
@@ -1856,7 +1706,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionCableCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4458,
+      "line": 4457,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionCableCall",
@@ -1866,7 +1716,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionCableCall::RubyRawExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4460,
+      "line": 4459,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionCableCall",
@@ -1876,7 +1726,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionCableStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4469,
+      "line": 4468,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionCableStaticCall",
@@ -1886,7 +1736,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionMailerCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4489,
+      "line": 4488,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionMailerCall",
@@ -1896,7 +1746,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionMailerStaticCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4505,
+      "line": 4504,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionMailerStaticCall",
@@ -1906,7 +1756,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionMailerStaticCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4505,
+      "line": 4504,
       "column": 17,
       "token": "printInlineExpr",
       "function": "compileActionMailerStaticCall",
@@ -1916,7 +1766,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionMailerStaticCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4507,
+      "line": 4506,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionMailerStaticCall",
@@ -1926,7 +1776,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionMailerStaticCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4509,
+      "line": 4508,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActionMailerStaticCall",
@@ -1936,7 +1786,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionMailerStaticCall::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4509,
+      "line": 4508,
       "column": 17,
       "token": "printInlineExpr",
       "function": "compileActionMailerStaticCall",
@@ -1946,7 +1796,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionMailerAttachmentAssign::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4516,
+      "line": 4515,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "compileActionMailerAttachmentAssign",
@@ -1956,7 +1806,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionMailerAttachmentAssign::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4518,
+      "line": 4517,
       "column": 6,
       "token": "printInlineExpr",
       "function": "compileActionMailerAttachmentAssign",
@@ -1966,7 +1816,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentTarget::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4531,
+      "line": 4530,
       "column": 6,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentTarget",
@@ -1976,7 +1826,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentTarget::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4533,
+      "line": 4532,
       "column": 6,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentTarget",
@@ -1986,7 +1836,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentTarget::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4536,
+      "line": 4535,
       "column": 5,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentTarget",
@@ -1996,7 +1846,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentValue::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4545,
+      "line": 4544,
       "column": 6,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentValue",
@@ -2006,7 +1856,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentValue::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4549,
+      "line": 4548,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentValue",
@@ -2016,7 +1866,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentValue::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4553,
+      "line": 4552,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentValue",
@@ -2026,7 +1876,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentValue::printInlineExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4555,
+      "line": 4554,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentValue",
@@ -2036,7 +1886,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentValue::printInlineExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4559,
+      "line": 4558,
       "column": 5,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentValue",
@@ -2046,7 +1896,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentHash::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4564,
+      "line": 4563,
       "column": 31,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentHash",
@@ -2056,7 +1906,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentHash::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4569,
+      "line": 4568,
       "column": 35,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentHash",
@@ -2066,7 +1916,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionMailerAttachmentHash::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4571,
+      "line": 4570,
       "column": 34,
       "token": "printInlineExpr",
       "function": "printActionMailerAttachmentHash",
@@ -2076,7 +1926,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::actionMailerParamKey::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4624,
+      "line": 4623,
       "column": 6,
       "token": "printInlineExpr",
       "function": "actionMailerParamKey",
@@ -2086,7 +1936,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::actionMailerParamKey::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4633,
+      "line": 4632,
       "column": 5,
       "token": "printInlineExpr",
       "function": "actionMailerParamKey",
@@ -2096,7 +1946,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileTurboStreamsCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4745,
+      "line": 4744,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileTurboStreamsCall",
@@ -2106,7 +1956,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileTurboStreamsCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4759,
+      "line": 4758,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileTurboStreamsCall",
@@ -2116,7 +1966,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileTurboStreamRenderCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4766,
+      "line": 4765,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "compileTurboStreamRenderCall",
@@ -2126,7 +1976,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileTurboStreamBroadcastCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4771,
+      "line": 4770,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "compileTurboStreamBroadcastCall",
@@ -2136,7 +1986,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::turboStreamLocals::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4787,
+      "line": 4786,
       "column": 25,
       "token": "printInlineExpr",
       "function": "turboStreamLocals",
@@ -2146,7 +1996,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveSupportNotificationsCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4793,
+      "line": 4792,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveSupportNotificationsCall",
@@ -2156,7 +2006,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveSupportNotificationsCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4796,
+      "line": 4795,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveSupportNotificationsCall",
@@ -2166,7 +2016,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveSupportNotificationsCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4798,
+      "line": 4797,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveSupportNotificationsCall",
@@ -2176,7 +2026,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveSupportNotificationsCall::RubyRawExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4800,
+      "line": 4799,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileActiveSupportNotificationsCall",
@@ -2186,7 +2036,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActiveSupportNotificationPayloadField::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4812,
+      "line": 4811,
       "column": 31,
       "token": "RubyRawExpr",
       "function": "compileActiveSupportNotificationPayloadField",
@@ -2196,7 +2046,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeSupportNotificationPayloadReceiver::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4821,
+      "line": 4820,
       "column": 5,
       "token": "printInlineExpr",
       "function": "activeSupportNotificationPayloadReceiver",
@@ -2206,7 +2056,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeSupportNotificationPayload::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4842,
+      "line": 4841,
       "column": 52,
       "token": "printInlineExpr",
       "function": "activeSupportNotificationPayload",
@@ -2216,7 +2066,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeSupportNotificationPayload::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4845,
+      "line": 4844,
       "column": 5,
       "token": "printInlineExpr",
       "function": "activeSupportNotificationPayload",
@@ -2226,7 +2076,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::actionCableParamKey::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4859,
+      "line": 4858,
       "column": 6,
       "token": "printInlineExpr",
       "function": "actionCableParamKey",
@@ -2236,7 +2086,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::actionCableParamKey::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4862,
+      "line": 4861,
       "column": 5,
       "token": "printInlineExpr",
       "function": "actionCableParamKey",
@@ -2246,7 +2096,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::actionCableConnectionParamKey::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4876,
+      "line": 4875,
       "column": 6,
       "token": "printInlineExpr",
       "function": "actionCableConnectionParamKey",
@@ -2256,7 +2106,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::actionCableConnectionParamKey::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4883,
+      "line": 4882,
       "column": 5,
       "token": "printInlineExpr",
       "function": "actionCableConnectionParamKey",
@@ -2266,7 +2116,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::actionCableConnectionIdentifierName::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4897,
+      "line": 4896,
       "column": 6,
       "token": "printInlineExpr",
       "function": "actionCableConnectionIdentifierName",
@@ -2276,7 +2126,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::actionCableConnectionIdentifierName::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4904,
+      "line": 4903,
       "column": 5,
       "token": "printInlineExpr",
       "function": "actionCableConnectionIdentifierName",
@@ -2286,7 +2136,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4922,
+      "line": 4921,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActionControllerStoreCall",
@@ -2296,7 +2146,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4922,
+      "line": 4921,
       "column": 79,
       "token": "printInlineExpr",
       "function": "compileActionControllerStoreCall",
@@ -2306,7 +2156,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4924,
+      "line": 4923,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActionControllerStoreCall",
@@ -2316,7 +2166,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4924,
+      "line": 4923,
       "column": 78,
       "token": "printInlineExpr",
       "function": "compileActionControllerStoreCall",
@@ -2326,7 +2176,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::RubyRawExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4926,
+      "line": 4925,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActionControllerStoreCall",
@@ -2336,7 +2186,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4926,
+      "line": 4925,
       "column": 83,
       "token": "printInlineExpr",
       "function": "compileActionControllerStoreCall",
@@ -2346,7 +2196,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::RubyRawExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4928,
+      "line": 4927,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActionControllerStoreCall",
@@ -2356,7 +2206,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::printInlineExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4928,
+      "line": 4927,
       "column": 82,
       "token": "printInlineExpr",
       "function": "compileActionControllerStoreCall",
@@ -2366,7 +2216,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::RubyRawExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4935,
+      "line": 4934,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActionControllerStoreCall",
@@ -2376,7 +2226,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::RubyRawExpr::6",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4937,
+      "line": 4936,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActionControllerStoreCall",
@@ -2386,7 +2236,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::printInlineExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4937,
+      "line": 4936,
       "column": 104,
       "token": "printInlineExpr",
       "function": "compileActionControllerStoreCall",
@@ -2396,7 +2246,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerStoreCall::RubyRawExpr::7",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4939,
+      "line": 4938,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActionControllerStoreCall",
@@ -2406,7 +2256,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionControllerStoreTarget::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4972,
+      "line": 4971,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActionControllerStoreTarget",
@@ -2416,7 +2266,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionControllerStoreTarget::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4974,
+      "line": 4973,
       "column": 8,
       "token": "printInlineExpr",
       "function": "printActionControllerStoreTarget",
@@ -2426,7 +2276,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionControllerStoreTarget::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4977,
+      "line": 4976,
       "column": 7,
       "token": "printInlineExpr",
       "function": "printActionControllerStoreTarget",
@@ -2436,7 +2286,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionControllerStoreTarget::printInlineExpr::4",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4982,
+      "line": 4981,
       "column": 6,
       "token": "printInlineExpr",
       "function": "printActionControllerStoreTarget",
@@ -2446,7 +2296,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionControllerStoreTarget::printInlineExpr::5",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4984,
+      "line": 4983,
       "column": 6,
       "token": "printInlineExpr",
       "function": "printActionControllerStoreTarget",
@@ -2456,7 +2306,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printActionControllerStoreTarget::printInlineExpr::6",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4987,
+      "line": 4986,
       "column": 5,
       "token": "printInlineExpr",
       "function": "printActionControllerStoreTarget",
@@ -2466,7 +2316,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerParamsCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4996,
+      "line": 4995,
       "column": 7,
       "token": "RubyRawExpr",
       "function": "compileActionControllerParamsCall",
@@ -2476,7 +2326,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerParamsCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 4996,
+      "line": 4995,
       "column": 19,
       "token": "printInlineExpr",
       "function": "compileActionControllerParamsCall",
@@ -2486,7 +2336,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerParamsRuntimeCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5013,
+      "line": 5012,
       "column": 11,
       "token": "RubyRawExpr",
       "function": "compileActionControllerParamsRuntimeCall",
@@ -2496,7 +2346,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerParamsRuntimeCall::RubyRawExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5015,
+      "line": 5014,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "compileActionControllerParamsRuntimeCall",
@@ -2506,7 +2356,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerParamsRuntimeCall::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5015,
+      "line": 5014,
       "column": 22,
       "token": "printInlineExpr",
       "function": "compileActionControllerParamsRuntimeCall",
@@ -2516,7 +2366,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerParamsRuntimeCall::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5015,
+      "line": 5014,
       "column": 103,
       "token": "printInlineExpr",
       "function": "compileActionControllerParamsRuntimeCall",
@@ -2526,7 +2376,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::railsStoreKey::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5031,
+      "line": 5030,
       "column": 5,
       "token": "printInlineExpr",
       "function": "railsStoreKey",
@@ -2536,7 +2386,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileActionControllerResponseCall::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5039,
+      "line": 5038,
       "column": 68,
       "token": "RubyRawExpr",
       "function": "compileActionControllerResponseCall",
@@ -2546,7 +2396,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::railsStatusArg::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5048,
+      "line": 5047,
       "column": 39,
       "token": "printInlineExpr",
       "function": "railsStatusArg",
@@ -2556,7 +2406,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordFieldCriteriaArg::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5078,
+      "line": 5077,
       "column": 81,
       "token": "printInlineExpr",
       "function": "activeRecordFieldCriteriaArg",
@@ -2566,7 +2416,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordFieldRangeCriteriaArg::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5085,
+      "line": 5084,
       "column": 6,
       "token": "printInlineExpr",
       "function": "activeRecordFieldRangeCriteriaArg",
@@ -2576,7 +2426,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordFieldRangeCriteriaArg::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5087,
+      "line": 5086,
       "column": 6,
       "token": "printInlineExpr",
       "function": "activeRecordFieldRangeCriteriaArg",
@@ -2586,7 +2436,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordCriteriaValue::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5125,
+      "line": 5124,
       "column": 5,
       "token": "printInlineExpr",
       "function": "activeRecordCriteriaValue",
@@ -2596,7 +2446,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordSqlArg::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5179,
+      "line": 5178,
       "column": 10,
       "token": "printInlineExpr",
       "function": "activeRecordSqlArg",
@@ -2606,7 +2456,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordExpressionPredicateArg::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5205,
+      "line": 5204,
       "column": 60,
       "token": "printInlineExpr",
       "function": "activeRecordExpressionPredicateArg",
@@ -2616,7 +2466,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordTransactionOptions::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5396,
+      "line": 5395,
       "column": 6,
       "token": "printInlineExpr",
       "function": "activeRecordTransactionOptions",
@@ -2626,7 +2476,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordTransactionOption::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5403,
+      "line": 5402,
       "column": 24,
       "token": "printInlineExpr",
       "function": "activeRecordTransactionOption",
@@ -2636,7 +2486,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordTransactionOption::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5405,
+      "line": 5404,
       "column": 20,
       "token": "printInlineExpr",
       "function": "activeRecordTransactionOption",
@@ -2646,7 +2496,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordTransactionOption::printInlineExpr::3",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5409,
+      "line": 5408,
       "column": 44,
       "token": "printInlineExpr",
       "function": "activeRecordTransactionOption",
@@ -2656,7 +2506,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::activeRecordIsolationArg::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5415,
+      "line": 5414,
       "column": 26,
       "token": "printInlineExpr",
       "function": "activeRecordIsolationArg",
@@ -2666,7 +2516,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsPermitSpecNested::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5796,
+      "line": 5795,
       "column": 5,
       "token": "RubyRawExpr",
       "function": "compileRailsPermitSpecNested",
@@ -2676,7 +2526,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsPermitSpecNested::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5796,
+      "line": 5795,
       "column": 23,
       "token": "RubyASTPrinter.printExpr",
       "function": "compileRailsPermitSpecNested",
@@ -2686,7 +2536,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsPermitSpecNested::RubyASTPrinter.printExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5796,
+      "line": 5795,
       "column": 64,
       "token": "RubyASTPrinter.printExpr",
       "function": "compileRailsPermitSpecNested",
@@ -2696,7 +2546,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRubyInjection::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5819,
+      "line": 5818,
       "column": 11,
       "token": "printInlineExpr",
       "function": "compileRubyInjection",
@@ -2706,7 +2556,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRubyInjection::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5824,
+      "line": 5823,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "compileRubyInjection",
@@ -2716,7 +2566,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRubyExtensionExpr::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5841,
+      "line": 5840,
       "column": 10,
       "token": "RubyRawExpr",
       "function": "compileRubyExtensionExpr",
@@ -2726,7 +2576,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::renderKeywordArgs::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5925,
+      "line": 5924,
       "column": 52,
       "token": "RubyASTPrinter.printExpr",
       "function": "renderKeywordArgs",
@@ -2736,7 +2586,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::renderKeywordArgs::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 5928,
+      "line": 5927,
       "column": 6,
       "token": "printInlineExpr",
       "function": "renderKeywordArgs",
@@ -2746,7 +2596,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printRailsLocalsHash::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 6141,
+      "line": 6140,
       "column": 31,
       "token": "printInlineExpr",
       "function": "printRailsLocalsHash",
@@ -2756,7 +2606,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printRailsLocalsHash::printInlineExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 6144,
+      "line": 6143,
       "column": 20,
       "token": "printInlineExpr",
       "function": "printRailsLocalsHash",
@@ -2766,7 +2616,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::renderRubyBlock::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 6184,
+      "line": 6183,
       "column": 20,
       "token": "printInlineExpr",
       "function": "renderRubyBlock",
@@ -2776,7 +2626,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::renderRubyProc::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 6219,
+      "line": 6218,
       "column": 5,
       "token": "printInlineExpr",
       "function": "renderRubyProc",
@@ -2786,7 +2636,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printParam::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 6408,
+      "line": 6370,
       "column": 27,
       "token": "RubyASTPrinter.printExpr",
       "function": "printParam",
@@ -2796,7 +2646,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::renderStatements::RubyASTPrinter.printFile::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 6459,
+      "line": 6421,
       "column": 34,
       "token": "RubyASTPrinter.printFile",
       "function": "renderStatements",
@@ -2806,7 +2656,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::compileRailsTestDecl::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 10972,
+      "line": 10934,
       "column": 47,
       "token": "RubyRawStatement",
       "function": "compileRailsTestDecl",
@@ -2816,7 +2666,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printTemplateExpr::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 13221,
+      "line": 13183,
       "column": 57,
       "token": "RubyASTPrinter.printExpr",
       "function": "printTemplateExpr",
@@ -2826,7 +2676,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printTemplateExpr::RubyASTPrinter.printExpr::2",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 13258,
+      "line": 13220,
       "column": 56,
       "token": "RubyASTPrinter.printExpr",
       "function": "printTemplateExpr",
@@ -2836,7 +2686,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printInlineExpr::printInlineExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 14500,
+      "line": 14462,
       "column": 18,
       "token": "printInlineExpr",
       "function": "printInlineExpr",
@@ -2846,7 +2696,7 @@
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::printInlineExpr::RubyASTPrinter.printExpr::1",
       "file": "src/reflaxe/ruby/RubyCompiler.hx",
-      "line": 14501,
+      "line": 14463,
       "column": 27,
       "token": "RubyASTPrinter.printExpr",
       "function": "printInlineExpr",
@@ -2876,7 +2726,7 @@
     {
       "id": "src/reflaxe/ruby/ast/RubyAST.hx::<module>::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/ast/RubyAST.hx",
-      "line": 60,
+      "line": 70,
       "column": 2,
       "token": "RubyRawExpr",
       "function": "<module>",
@@ -2896,12 +2746,12 @@
     {
       "id": "src/reflaxe/ruby/ast/RubyASTChildren.hx::mapExprImmediate::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/ast/RubyASTChildren.hx",
-      "line": 85,
-      "column": 131,
+      "line": 86,
+      "column": 16,
       "token": "RubyRawExpr",
       "function": "mapExprImmediate",
       "category": "ast-infrastructure",
-      "snippet": "case RubyNil | RubyBool(_) | RubyInt(_) | RubyFloat(_) | RubyString(_) | RubySymbol(_) | RubyLocal(_) | RubyBreak | RubyNext | RubyRawExpr(_):"
+      "snippet": "RubyNext | RubyRawExpr(_):"
     },
     {
       "id": "src/reflaxe/ruby/ast/RubyASTPrinter.hx::writeStatement::RubyRawStatement::1",
@@ -2916,7 +2766,7 @@
     {
       "id": "src/reflaxe/ruby/ast/RubyASTPrinter.hx::renderExpr::RubyRawExpr::1",
       "file": "src/reflaxe/ruby/ast/RubyASTPrinter.hx",
-      "line": 165,
+      "line": 166,
       "column": 9,
       "token": "RubyRawExpr",
       "function": "renderExpr",
@@ -2936,7 +2786,7 @@
     {
       "id": "src/reflaxe/ruby/ast/RubyASTValidator.hx::validateStatement::RubyRawStatement::1",
       "file": "src/reflaxe/ruby/ast/RubyASTValidator.hx",
-      "line": 107,
+      "line": 112,
       "column": 37,
       "token": "RubyRawStatement",
       "function": "validateStatement",
