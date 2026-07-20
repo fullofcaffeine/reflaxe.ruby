@@ -64,6 +64,33 @@ Node 22.14.0 and 22.23.1, the two-way `haxe.ocaml` interoperability proof, and a
 overlap. No `v1.10.3` tag or Release was published between `v1.10.2` and this
 single minor release.
 
+## Post-1.11.0 structural-reference no-release continuity
+
+The bounded constant/member reference architecture slice after `v1.11.0`
+preserved the public release contract. The exact implementation push ran the
+complete canonical workflow, and its gated release job classified the
+`refactor`/`docs` lineage as non-releasing:
+
+| Slice | Exact tested SHA | Canonical workflow | Gated release job | Result |
+| --- | --- | --- | --- | --- |
+| Structural constant/member reference lowering | `b3cb9ee018d33b4cf48644ddb1e2136efa903977` | [`29775951911`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29775951911) | [`88473845858`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29775951911/job/88473845858) | All 14 jobs passed; two commits analyzed, `no release` |
+
+The release job logged `There are no relevant changes, so no new version is
+released.` No `v1.11.1` remote tag or GitHub Release exists. `v1.11.0` remains
+the latest release, stays natively immutable, and retains the four independently
+verified assets recorded above.
+
+The compiler slice stays on Pattern B. Validated `RubyConstantPath` nodes and
+existing structural member, call, symbol, index, unary, and lambda nodes now own
+constant paths, enum/static references, ordinary member reads and writes,
+method values, and key/value iterator closure syntax. Target-neutral and
+Rails-owned reference recipes have separate one-way lowering services; the
+printer does not repair semantics. A source-positioned negative fixture proves
+unsupported assignment targets fail closed. The checked raw/print-reembed
+inventory fell from 285 to 270 sites, including core lowering from 13 to 2;
+the two retained core sites are Rails-owned ActiveRecord projection behavior
+reserved for a separate vertical slice.
+
 ## Stable 1.10.2 structural exception publication
 
 The normal tested-commit workflow published immutable
