@@ -5,6 +5,65 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.11.0 queued local-suite publication
+
+The normal tested-commit workflow published immutable
+[`v1.11.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.11.0)
+on 2026-07-20 for the opt-in Haxe-family local-suite queue and the release-policy
+fixture isolation it depends on. Reviewed stacked PR
+[#22](https://github.com/fullofcaffeine/reflaxe.ruby/pull/22) and PR
+[#21](https://github.com/fullofcaffeine/reflaxe.ruby/pull/21) were merged in
+dependency order in one main push, preserving both merge commits while avoiding
+an unnecessary intermediate patch release.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `bb2c9263ce55f892b621cad7ec46701f3268e641` |
+| Included implementation lineage | `1ac7cd2` isolates release-policy fixtures from an outer GitHub Actions identity; `7429bb5` adds the bounded cooperative local-suite queue; merge commits `cd64fa2` then `bb2c926` preserve the reviewed stack order. The accumulated non-releasing loop, Int32, symbol, and callable structural-lowering commits after `v1.10.2` are also present. |
+| Canonical release tag | `v1.11.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29720328647`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29720328647), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`88286950465`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29720328647/job/88286950465), `success` |
+| GitHub channel flags | `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-20T06:34:55Z` |
+| Release notes | Version heading, `v1.10.2...v1.11.0` compare link, categorized bug-fix and feature bullets, and exact `1ac7cd2` and `7429bb5` commit links |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.11.0.gem` | `hxruby 1.11.0 Ruby gem` | 275968 | `bd404619de446dcaa9d1af2f347cfdf1c1391a25d945005d2421d202d81f94ed` |
+| `hxruby-1.11.0.gem.sha256.json` | `hxruby 1.11.0 SHA-256 metadata` | 304 | `3d399ee20dc9d50573101247322a446f943487faa565a27b78d2557324c8de4e` |
+| `reflaxe.ruby-1.11.0.zip` | `reflaxe.ruby 1.11.0 haxelib package` | 1313390 | `4d4244fd0a0b40aba0c23aab97d33c1d9c8bb1e0df08264d79ecd19d86a544a4` |
+| `reflaxe.ruby-1.11.0.zip.sha256.json` | `reflaxe.ruby 1.11.0 SHA-256 metadata` | 317 | `9830356a2eaf9019b739125214022e9a886ba209cbb56c7a6d4e63ce0176c6ed` |
+
+Each downloaded sidecar binds its artifact to version `1.11.0`, tag
+`v1.11.0`, the tested source SHA, hosted filename, byte count, and matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+complete format-1 manifests verify 717 Haxelib payload entries and 334 gem
+payload entries with no missing, altered, duplicate, or extra content. A fresh
+release preparation from the clean tested commit under Node 22.23.1/npm 10.9.8,
+Ruby 3.4.10, and RubyGems 3.6.9 reproduced all four hosted files byte-for-byte;
+the verification-only hosted state machine then re-downloaded and accepted the
+immutable release.
+
+The queue does not change the test suite. `npm run test:queued` waits for at
+most 15 minutes on the user-scoped `haxe-family.heavy-run-lease.v1` lease and
+then runs the existing `npm test`; ordinary `npm test` remains available and CI
+bypasses the local lease. PID-plus-start-time ownership, a heartbeat, stale
+recovery, bounded exit `75`, cancellation cleanup, and inherited nested
+ownership prevent simultaneous participating Haxe-family suites from competing
+for the same local CPU, memory, and disk capacity without killing or silently
+altering another repository's work.
+
+The release-policy defect was reproduced on unpatched main under a simulated
+pull-request environment, then the merged fixture passed local, feature-push,
+and pull-request contexts. The lease adapter passed its complete fixture on
+Node 22.14.0 and 22.23.1, the two-way `haxe.ocaml` interoperability proof, and a
+40-round eight-contender stress probe: all 320 commands serialized without
+overlap. No `v1.10.3` tag or Release was published between `v1.10.2` and this
+single minor release.
+
 ## Stable 1.10.2 structural exception publication
 
 The normal tested-commit workflow published immutable
@@ -52,7 +111,7 @@ rethrows. The checked raw/print-reembed inventory fell from 324 to 318 sites.
 No general semantic IR, pass framework, metadata side channel, or unowned
 `ensure` representation was added.
 
-## Post-1.10.2 structural-refactor no-release continuity
+## Post-1.10.2 structural-refactor no-release continuity before 1.11.0
 
 The bounded loop and Int32 architecture slices after `v1.10.2` deliberately
 preserved the public release contract. Each push ran the complete canonical
@@ -66,11 +125,12 @@ classified the accumulated `refactor`/`docs` lineage as non-releasing:
 | Structural Int32 lowering | `cf1cbfcecc60b44ecc5e53f0a69dd5675ebc74eb` | [`29685310179`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29685310179) | [`88191589080`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29685310179/job/88191589080) | All 14 jobs passed; four commits analyzed, `no release` |
 | Structural symbol lowering | `53273a2cd63d610ca0745618614411a169ce41dd` | [`29700477124`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29700477124) | [`88231881161`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29700477124/job/88231881161) | All 14 jobs passed; six commits analyzed, `no release` |
 | Structural callable call-site lowering | `ded7f02d666612350440d2d31e52dfe48449f9b9` | [`29717163148`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29717163148) | [`88276381072`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29717163148/job/88276381072) | All 14 jobs passed; eight commits analyzed, `no release` |
+| Callable evidence closure | `cd292ff1dcf461c01895f5505399ecfedf179046` | [`29718658545`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29718658545) | [`88281494764`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29718658545/job/88281494764) | All 14 jobs passed; the docs-only closure commit was analyzed, `no release` |
 
-Every release job logged `There are no relevant changes, so no new version is
-released.` After the callable-lowering run, neither a `v1.10.3` remote tag nor
-GitHub Release exists. `v1.10.2` remains the latest release, remains natively
-immutable, and still has exactly the four verified assets recorded above.
+Every release job in this interval logged `There are no relevant changes, so no
+new version is released.` Neither a `v1.10.3` remote tag nor GitHub Release was
+created: `v1.10.2` remained the latest release, stayed natively immutable, and
+kept exactly the four verified assets recorded above until `v1.11.0` completed.
 
 All four compiler slices use the existing structural Ruby AST rather than
 adding a semantic IR, pass framework, or printer repair. The checked
