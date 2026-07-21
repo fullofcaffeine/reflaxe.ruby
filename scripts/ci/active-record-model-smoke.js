@@ -6,6 +6,8 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "active_record_model");
+const resultRuntimeSourceDir = join(root, "test", "fixtures", "active_record_result_runtime");
+const resultRuntimeOutputDir = join(root, "test", ".generated", "active_record_result_runtime");
 const invalidSourceDir = join(root, "test", ".generated", "active_record_model_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "active_record_model_invalid_out");
 const invalidColumnPrecisionSourceDir = join(root, "test", ".generated", "active_record_model_invalid_column_precision_src");
@@ -156,6 +158,8 @@ const invalidGroupFieldSourceDir = join(root, "test", ".generated", "active_reco
 const invalidGroupFieldOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_field_out");
 const invalidGroupUnsupportedSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_unsupported_src");
 const invalidGroupUnsupportedOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_unsupported_out");
+const invalidGroupKeyKindSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_key_kind_src");
+const invalidGroupKeyKindOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_key_kind_out");
 const invalidGroupHavingOwnerSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_having_owner_src");
 const invalidGroupHavingOwnerOutputDir = join(root, "test", ".generated", "active_record_model_invalid_group_having_owner_out");
 const invalidGroupHavingStringSourceDir = join(root, "test", ".generated", "active_record_model_invalid_group_having_string_src");
@@ -190,6 +194,7 @@ function run(command, args, options = {}) {
 }
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(resultRuntimeOutputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 rmSync(invalidColumnPrecisionSourceDir, { force: true, recursive: true });
@@ -334,6 +339,8 @@ rmSync(invalidGroupFieldSourceDir, { force: true, recursive: true });
 rmSync(invalidGroupFieldOutputDir, { force: true, recursive: true });
 rmSync(invalidGroupUnsupportedSourceDir, { force: true, recursive: true });
 rmSync(invalidGroupUnsupportedOutputDir, { force: true, recursive: true });
+rmSync(invalidGroupKeyKindSourceDir, { force: true, recursive: true });
+rmSync(invalidGroupKeyKindOutputDir, { force: true, recursive: true });
 rmSync(invalidGroupHavingOwnerSourceDir, { force: true, recursive: true });
 rmSync(invalidGroupHavingOwnerOutputDir, { force: true, recursive: true });
 rmSync(invalidGroupHavingStringSourceDir, { force: true, recursive: true });
@@ -358,6 +365,8 @@ for (const file of [
   "app/models/audit_log.rb",
   "app/lib/railshx/generated/main.rb",
   "app/lib/railshx/runtime/hxruby/core.rb",
+  "app/lib/railshx/runtime/hxruby/maps.rb",
+  "config/initializers/hxruby_active_record_maps.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
@@ -365,6 +374,44 @@ for (const file of [
     console.error(`Expected ActiveRecord output file missing: ${fullPath}`);
     process.exit(1);
   }
+}
+
+const mapRuntimeRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "runtime", "hxruby", "maps.rb"), "utf8");
+for (const expected of ["module NativeMap", "class StringMap", "class IntMap", "def key_value_iterator", "include Haxe::IMap"]) {
+  if (!mapRuntimeRuby.includes(expected)) {
+    console.error(`ActiveRecord map runtime is missing its typed ABI contract: ${expected}`);
+    process.exit(1);
+  }
+}
+const mapInitializerRuby = readFileSync(join(outputDir, "config", "initializers", "hxruby_active_record_maps.rb"), "utf8");
+for (const expected of [
+  'require Rails.root.join("app/lib/railshx/runtime/hxruby/core.rb")',
+  'require Rails.root.join("app/lib/railshx/runtime/hxruby/maps.rb")',
+]) {
+  if (!mapInitializerRuby.includes(expected)) {
+    console.error(`ActiveRecord map initializer is missing its load-order contract: ${expected}`);
+    process.exit(1);
+  }
+}
+const activeRecordRunnerRuby = readFileSync(join(outputDir, "run.rb"), "utf8");
+const mapRequireIndex = activeRecordRunnerRuby.indexOf('require_relative "app/lib/railshx/runtime/hxruby/maps"');
+const generatedMainRequireIndex = activeRecordRunnerRuby.indexOf('require_relative "app/lib/railshx/generated/main"');
+if (mapRequireIndex === -1 || generatedMainRequireIndex === -1 || mapRequireIndex > generatedMainRequireIndex) {
+  console.error("ActiveRecord runner must load the map ABI before generated application code.");
+  process.exit(1);
+}
+
+if (!compileResultRuntimeWithFirstAvailableReflaxe()) {
+  console.error("Unable to compile the ActiveRecord result runtime fixture through Reflaxe.");
+  process.exit(1);
+}
+const resultRuntime = run("ruby", [join(resultRuntimeSourceDir, "runtime.rb"), resultRuntimeOutputDir]);
+const expectedResultRuntime = "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\n";
+if (resultRuntime.stdout !== expectedResultRuntime) {
+  console.error("ActiveRecord result adapter runtime output mismatch.");
+  console.error(`expected: ${JSON.stringify(expectedResultRuntime)}`);
+  console.error(`actual:   ${JSON.stringify(resultRuntime.stdout)}`);
+  process.exit(1);
 }
 
 for (const legacyFile of [
@@ -549,13 +596,22 @@ for (const expected of [
   "Models::Todo.pluck(:title)",
   "assigned",
   ".pluck(:id)",
-  'Models::Todo.where(status: "open").pluck(:id, :title).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "title" => values[1]} }',
-  'Models::Todo.pluck(:id, :external_id).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "externalId" => values[1]} }',
-  'Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum).map { |row| values = row.is_a?(Array) ? row : [row]; {"status" => values[0], "todoCount" => values[1], "userIdSum" => values[2], "averageUserId" => values[3], "minId" => values[4], "maxTitle" => values[5]} }',
-  "Models::Todo.where(status: \"open\").group(:status).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) }",
-  "Models::Todo.where(status: \"open\").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) }",
-  "Models::Todo.group(:user_id).count().each_with_object(Haxe::Ds::IntMap.new) { |(key, value), map| map.set(key.to_i, value.to_i) }",
-  "Models::AuditLog.where(event_count: 1).group(:event_count).count().each_with_object(Haxe::Ds::IntMap.new) { |(key, value), map| map.set(key.to_i, value.to_i) }",
+  `Models::Todo.where(status: "open").pluck(:id, :title).map do |projection_row|
+      projection_values = (projection_row.is_a?(Array) ? projection_row : [projection_row])
+      {"id" => projection_values[0], "title" => projection_values[1]}
+    end`,
+  `Models::Todo.pluck(:id, :external_id).map do |projection_row__hx1|
+      projection_values__hx1 = (projection_row__hx1.is_a?(Array) ? projection_row__hx1 : [projection_row__hx1])
+      {"id" => projection_values__hx1[0], "externalId" => projection_values__hx1[1]}
+    end`,
+  `Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum).map do |projection_row__hx2|
+      projection_values__hx2 = (projection_row__hx2.is_a?(Array) ? projection_row__hx2 : [projection_row__hx2])
+      {"status" => projection_values__hx2[0], "todoCount" => projection_values__hx2[1], "userIdSum" => projection_values__hx2[2], "averageUserId" => projection_values__hx2[3], "minId" => projection_values__hx2[4], "maxTitle" => projection_values__hx2[5]}
+    end`,
+  "Models::Todo.where(status: \"open\").group(:status).count().each_with_object(Haxe::Ds::StringMap.new()) { |grouped_count_entry, grouped_count_map| grouped_count_map.set(grouped_count_entry[0].to_s(), grouped_count_entry[1].to_i()) }",
+  "Models::Todo.where(status: \"open\").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new()) { |grouped_count_entry__hx1, grouped_count_map__hx1| grouped_count_map__hx1.set(grouped_count_entry__hx1[0].to_s(), grouped_count_entry__hx1[1].to_i()) }",
+  "Models::Todo.group(:user_id).count().each_with_object(Haxe::Ds::IntMap.new()) { |grouped_count_entry__hx2, grouped_count_map__hx2| grouped_count_map__hx2.set(grouped_count_entry__hx2[0].to_i(), grouped_count_entry__hx2[1].to_i()) }",
+  "Models::AuditLog.where(event_count: 1).group(:event_count).count().each_with_object(Haxe::Ds::IntMap.new()) { |grouped_count_entry__hx3, grouped_count_map__hx3| grouped_count_map__hx3.set(grouped_count_entry__hx3[0].to_i(), grouped_count_entry__hx3[1].to_i()) }",
   "Models::Todo.minimum(:id)",
   "Models::Todo.maximum(:title)",
   "assigned",
@@ -778,6 +834,7 @@ expectInvalidProjectionGroupStringFailure();
 expectInvalidProjectionGroupFieldFailure();
 expectInvalidGroupFieldOwnerFailure();
 expectInvalidGroupUnsupportedFieldFailure();
+expectInvalidGroupKeyKindFailure();
 expectInvalidGroupHavingOwnerFailure();
 expectInvalidGroupHavingStringFailure();
 expectInvalidAggregateFieldOwnerFailure();
@@ -809,6 +866,40 @@ function compileWithFirstAvailableReflaxe() {
       "reflaxe.ruby.CompilerInit.Start()",
       "-main",
       "Main",
+    ], { allowFailure: true });
+    if (result.status === 0) {
+      return result;
+    }
+  }
+  return null;
+}
+
+function compileResultRuntimeWithFirstAvailableReflaxe() {
+  for (const reflaxeSrc of reflaxeCandidates) {
+    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
+      continue;
+    }
+    const result = run("haxe", [
+      "-D",
+      `ruby_output=${resultRuntimeOutputDir}`,
+      "-D",
+      "reflaxe_runtime",
+      "-D",
+      "reflaxe_ruby_rails",
+      "-cp",
+      join(root, "src"),
+      "-cp",
+      join(root, "examples", "active_record_model"),
+      "-cp",
+      resultRuntimeSourceDir,
+      "-cp",
+      reflaxeSrc,
+      "--macro",
+      "reflaxe.ruby.CompilerBootstrap.Start()",
+      "--macro",
+      "reflaxe.ruby.CompilerInit.Start()",
+      "-main",
+      "ActiveRecordResultRuntimeMain",
     ], { allowFailure: true });
     if (result.status === 0) {
       return result;
@@ -1147,6 +1238,28 @@ function expectInvalidGroupUnsupportedFieldFailure() {
     invalidGroupUnsupportedOutputDir,
     "Invalid ActiveRecord unsupported group field compiled successfully.",
     "Group.count only supports String and Int fields in v1"
+  );
+}
+
+function expectInvalidGroupKeyKindFailure() {
+  mkdirSync(invalidGroupKeyKindSourceDir, { recursive: true });
+  writeFileSync(join(invalidGroupKeyKindSourceDir, "Main.hx"), [
+    "import models.Todo;",
+    "import rails.active_record.GroupRuntime;",
+    "",
+    "class Main {",
+    "\tstatic function main() {",
+    "\t\tvar bad = GroupRuntime.count(Todo, \"status\", \"unsupported\");",
+    "\t\tSys.println(bad == null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidCompile(
+    invalidGroupKeyKindSourceDir,
+    invalidGroupKeyKindOutputDir,
+    "Invalid ActiveRecord grouped-count key kind compiled successfully.",
+    "GroupRuntime.count expects static field and key-kind strings emitted by Group.count."
   );
 }
 

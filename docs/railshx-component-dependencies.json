@@ -239,6 +239,7 @@
       "targetDependencies": [
         "Rails ActiveRecord 8.1",
         "SQLite3 runtime",
+        "focused hxruby ActiveRecord map ABI (runtime/hxruby/maps.rb)",
         "hxruby runtime"
       ],
       "evidence": [
@@ -246,6 +247,7 @@
         { "kind": "compile", "command": "test:migration-generator", "lane": "full" },
         { "kind": "negative", "command": "test:active-record-model", "lane": "full" },
         { "kind": "negative", "command": "test:migration-generator", "lane": "full" },
+        { "kind": "runtime", "command": "test:active-record-model", "lane": "full" },
         { "kind": "runtime", "command": "test:rails-integration", "lane": "rails-runtime" },
         { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
       ]

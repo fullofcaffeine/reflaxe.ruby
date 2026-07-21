@@ -31,7 +31,7 @@ snapshot-backed steps.
 | ActionView/HHX node and attr lowering | `rails.RailsTemplatesCompiler` or `rails.action_view.*` | `test:components`, `test:todoapp-rails`, `test:action-mailer`, `test:snapshots`, negative HHX diagnostic fixtures |
 | Turbo/Turbo Streams/Hotwire lowering | `rails.RailsTurboCompiler` | `test:turbo`, `test:turbo-streams`, browser sentinel, snapshots |
 | Controllers, lifecycle, params, flash/session/cookies | `rails.RailsControllersCompiler` | `test:action-controller-params`, todoapp request/browser tests, lifecycle diagnostic tests |
-| ActiveRecord models, fields, associations, scopes, queries | `rails.RailsActiveRecordCompiler` | `test:active-record-model`, SQL string policy, snapshots, negative field/query diagnostics |
+| ActiveRecord result conversion for typed projections and grouped counts | Existing `rails.RailsActiveRecordResultLowering`; broader model/query lowering remains future `rails.RailsActiveRecordCompiler` work | `test:ruby-ast`, `test:active-record-model`, SQL string policy, snapshots, negative field/query diagnostics |
 | Mailer classes and delivery lowering | `rails.RailsMailersCompiler` | `test:action-mailer`, mailer diagnostics, snapshots |
 | Jobs | `rails.RailsJobsCompiler` | `test:active-job`, snapshots |
 | ActionCable channels/connections | `rails.RailsCableCompiler` | `test:action-cable`, browser/live smoke where relevant, snapshots |
@@ -86,10 +86,27 @@ closures. It does not analyze Haxe types or depend back on `RubyCompiler`;
 instead, the orchestration root selects a resolved owner/field and the service
 returns structural RubyAST. Rails MIME and request-variant tokens live in the
 separate one-way `rails.RailsStaticReferenceLowering` service so Rails policy
-does not leak into the target-neutral helper. The two remaining core-lowering
-inventory sites are ActiveRecord projection/grouped-count logic and stay with
-the future Rails-owned extraction rather than leaking Rails policy into this
-service.
+does not leak into the target-neutral helper. At that point, the two remaining
+core-lowering inventory sites were ActiveRecord projection/grouped-count
+logic; they stayed out of this target-neutral service so their Rails policy
+could move into a Rails-owned extraction.
+
+The following Rails-owned supporting slice moves those final projection and
+grouped-count result adapters into `RailsActiveRecordResultLowering`. Before
+this extraction, `RubyCompiler` printed a partially built query expression and
+then inserted that text into a larger raw `map` or `each_with_object` fragment.
+The service now builds the complete Ruby block as ordinary RubyAST: projection
+rows are normalized once and copied into fixed string-key hashes, while grouped
+count entries are converted into the requested Haxe string or integer map. A
+simple `entry` parameter plus structural `entry[0]`/`entry[1]` access preserves
+Ruby's hash yield without adding a special destructuring node. Compiler-owned
+temporary names prevent the generated block from colliding with Haxe locals.
+The service accepts a closed string-key/integer-key enum, so an unexpected
+internal key-kind token fails in `RubyCompiler` instead of silently choosing a
+map representation.
+Field, aggregate, and predicate validation remains in the orchestration root
+until the broader ActiveRecord compiler extraction earns its own vertical
+slice.
 
 ## Dependency And Root-Growth Guard
 
@@ -98,10 +115,19 @@ boundary. The guard requires the documented service modules and typed root
 delegation, rejects any Rails service dependency back on `RubyCompiler`, blocks
 reintroduction of moved helpers, and caps both root lines and root function
 count at the post-extraction values. The current exact ceilings are 14,485
-lines and 781 functions. The same guard enforces the one-way, no-raw/no-printer
-contract for target-neutral `RubyReferenceLowering`. Those ceilings should
+lines and 779 functions. The same guard enforces the one-way, no-raw/no-printer
+contracts for target-neutral `RubyReferenceLowering` and Rails-owned
+`RailsActiveRecordResultLowering`. Those ceilings should
 move downward as later slices land; raising them requires an explicit reviewed
 rationale.
+
+The result-lowering review raised the initial 14,480-line ceiling by four
+orchestration lines after real ActiveRecord execution exposed a missing runtime
+dependency: request reset, conditional ABI publication, Rails bootstrap, and
+runner ordering must remain lifecycle-owned by `RubyCompiler`. Map behavior and
+bootstrap rendering remain in the focused service/runtime, the formatted root
+matches the 14,485 pre-slice line baseline, and its function count remains down
+from 781 to 779.
 
 ## Per-Step Regression Contract
 

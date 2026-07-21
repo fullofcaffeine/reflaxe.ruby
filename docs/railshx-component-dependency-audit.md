@@ -55,7 +55,7 @@ textual import scan proves runtime semantics.
 | ActionMailer | Mailers, params, templates, attachments, previews and delivery | Generated Rails mailer tests |
 | ActionView, HHX and components | Typed templates, helpers, forms, partials, layouts, capture and slots | Rails integration, Chromium and production dogfood |
 | ActiveJob | Enqueue/perform, typed arguments, retry/discard and test adapter | Generated Rails job tests |
-| ActiveRecord and migrations | Models, relations, documented query/projection slice and migrations | SQLite migrations/integration plus production dogfood |
+| ActiveRecord and migrations | Models, relations, documented query/projection slice and migrations | In-memory ActiveRecord result-adapter execution, SQLite migrations/integration and production dogfood |
 | ActiveStorage | Attachments, attachables, signed IDs, direct upload helpers, reads and purge | Generated ActiveStorage Rails tests |
 | ActiveSupport and instrumentation | Receiver facades, modern Rails zoned time through TimeZone/TimeWithZone, and typed Notifications events/subscriptions | Mandatory exact-Rails component runtime |
 | DeviseHx | Typed model/scope/filter/params/routes/HHX/test/current-user contracts used by the reference app | Chromium and production reference app |

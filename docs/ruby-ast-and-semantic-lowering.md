@@ -342,15 +342,19 @@ owns its semantics. This work does not require:
 - a rewrite of `RubyCompiler`; or
 - coupling the core AST to Rails-specific domain concepts.
 
-The two remaining `core-lowering-migration` entries belong to ActiveRecord
-projection and grouped-count shaping. They combine Rails query semantics with
-target structure, so they remain a separate Rails-owned slice rather than
-being hidden inside the target-neutral reference service.
+The final two `core-lowering-migration` entries belonged to ActiveRecord
+projection and grouped-count result shaping. That Rails-owned slice now builds
+complete structural `map` and `each_with_object` blocks through
+`RailsActiveRecordResultLowering`; it no longer prints a partial query tree and
+inserts the resulting text into a larger raw expression. This closes the core
+category without pretending that the separately classified Rails artifact,
+compatibility, declaration, and explicit escape boundaries are also complete.
 
 Focused evidence for this contract includes:
 
 ```bash
 npm run test:ruby-ast
+npm run test:active-record-model
 npm run test:ruby-structural-references
 npm run test:ruby-call-shapes
 npm run test:action-controller-params

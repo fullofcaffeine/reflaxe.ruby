@@ -10,6 +10,8 @@ import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeIntent;
 import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeUse;
 import reflaxe.ruby.compiler.RubyInt32Lowering;
 import reflaxe.ruby.compiler.RubyLoopLowering;
+import reflaxe.ruby.rails.RailsActiveRecordResultLowering.RailsActiveRecordGroupCountKeyKind;
+import reflaxe.ruby.rails.RailsActiveRecordResultLowering;
 
 /** Verifies that structured callable nodes own Ruby ABI punctuation and layout. **/
 class RubyASTPrinterTestMain {
@@ -138,6 +140,20 @@ class RubyASTPrinterTestMain {
 		eq("native binary operator", RubyASTPrinter.printExpr(RubyCall(RubyLocal("instant"), "+", [RubyFloat("60.0")])), "(instant + 60.0)");
 		eq("structured native binary operator",
 			RubyASTPrinter.printExpr(RubyCallableCall(RubyLocal("instant"), "-", [RubyPositionalArgument(RubyLocal("earlier"))])), "(instant - earlier)");
+		var projectionOutput = RubyASTPrinter.printExpr(RailsActiveRecordResultLowering.projection(RubyCall(null, "rows", []), ["id", "title"],
+			"projection_row", "projection_values"));
+		eq("structural ActiveRecord projection", projectionOutput,
+			"rows().map do |projection_row|\n  projection_values = (projection_row.is_a?(Array) ? projection_row : [projection_row])\n  {\"id\" => projection_values[0], \"title\" => projection_values[1]}\nend");
+		eq("structural ActiveRecord projection receiver count", Std.string(countOccurrences(projectionOutput, "rows()")), "1");
+		var stringCountOutput = RubyASTPrinter.printExpr(RailsActiveRecordResultLowering.groupedCount(RubyCall(null, "counts", []),
+			RailsActiveRecordGroupCountKeyKind.StringKey, "entry", "map"));
+		eq("structural ActiveRecord string grouped count", stringCountOutput,
+			"counts().each_with_object(Haxe::Ds::StringMap.new()) { |entry, map| map.set(entry[0].to_s(), entry[1].to_i()) }");
+		eq("structural ActiveRecord grouped count receiver count", Std.string(countOccurrences(stringCountOutput, "counts()")), "1");
+		eq("structural ActiveRecord integer grouped count",
+			RubyASTPrinter.printExpr(RailsActiveRecordResultLowering.groupedCount(RubyCall(null, "counts", []), RailsActiveRecordGroupCountKeyKind.IntKey,
+				"entry", "map")),
+			"counts().each_with_object(Haxe::Ds::IntMap.new()) { |entry, map| map.set(entry[0].to_i(), entry[1].to_i()) }");
 
 		var block:RubyBlock = {
 			args: ["item"],
@@ -189,6 +205,16 @@ class RubyASTPrinterTestMain {
 		if (actual != expected) {
 			throw label + ': expected "' + expected + '", got "' + actual + '"';
 		}
+	}
+
+	static function countOccurrences(value:String, needle:String):Int {
+		var count = 0;
+		var offset = 0;
+		while ((offset = value.indexOf(needle, offset)) != -1) {
+			count++;
+			offset += needle.length;
+		}
+		return count;
 	}
 
 	static function fails(label:String, run:Void->String, expectedMessage:String):Void {

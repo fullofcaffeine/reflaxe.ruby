@@ -50,6 +50,7 @@ import reflaxe.ruby.compiler.RubyLoopLowering;
 import reflaxe.ruby.compiler.RubyOutputLayout;
 import reflaxe.ruby.compiler.RubyReferenceLowering;
 import reflaxe.ruby.naming.RubyNaming;
+import reflaxe.ruby.rails.RailsActiveRecordResultLowering;
 import reflaxe.ruby.rails.RailsRouteDecl;
 import reflaxe.ruby.rails.RailsRouteTarget;
 import reflaxe.ruby.rails.RailsStaticReferenceLowering;
@@ -225,6 +226,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	static var needsCoreRuntime:Bool = false;
 	static var needsDataDefine:Bool = false;
 	static var needsHxException:Bool = false;
+	static var needsActiveRecordMaps:Bool = false;
 	static var hxrubyCallCount:Int = 0;
 	static var localNameScope:Null<LocalNameScope> = null;
 	static var activeRubyCallableContext:Null<ActiveRubyCallableContext> = null;
@@ -260,6 +262,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		needsCoreRuntime = false;
 		needsDataDefine = false;
 		needsHxException = false;
+		needsActiveRecordMaps = false;
 		hxrubyCallCount = 0;
 		localNameScope = null;
 		activeRubyCallableContext = null;
@@ -280,6 +283,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (needsHxException) {
 			setRuntimeExtraFile("hx_exception.rb");
 		}
+		if (needsActiveRecordMaps) {
+			setRuntimeExtraFile("maps.rb");
+			setRailsExtraFile("config/initializers/hxruby_active_record_maps.rb",
+				RailsActiveRecordResultLowering.runtimeInitializer(outputRelativePath("hxruby/core.rb", true), outputRelativePath("hxruby/maps.rb", true),
+					quoteRubyStringForCode),
+				Context.currentPos());
+		}
 		if (!didEmitMain) {
 			return;
 		}
@@ -292,6 +302,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		}
 		if (needsHxException) {
 			paths.push(outputRelativePath("hxruby/hx_exception.rb", true));
+		}
+		if (needsActiveRecordMaps) {
+			paths.push(outputRelativePath("hxruby/maps.rb", true));
 		}
 		var generatedPaths = emittedRubyPaths.copy();
 		generatedPaths.sort((a, b) -> {
@@ -4159,7 +4172,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				for (fieldName in fieldNames)
 					RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))
 			];
-			return activeRecordProjectionExpr(RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keys);
+			return RailsActiveRecordResultLowering.projection(RubyCall(compileExpr(params[0]), "pluck", pluckArgs), keys,
+				allocateSyntheticLocalName("projection_row"), allocateSyntheticLocalName("projection_values"));
 		}
 		if (info.name == "group" && params.length == 4) {
 			var groupField = staticString(params[1]);
@@ -4178,21 +4192,10 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				pluckArgs.push(RubyRawExpr(arg));
 			}
 			var grouped = RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(groupField))]);
-			return activeRecordProjectionExpr(RubyCall(grouped, "pluck", pluckArgs), keys);
+			return RailsActiveRecordResultLowering.projection(RubyCall(grouped, "pluck", pluckArgs), keys, allocateSyntheticLocalName("projection_row"),
+				allocateSyntheticLocalName("projection_values"));
 		}
 		return null;
-	}
-
-	static function activeRecordProjectionExpr(rows:RubyExpr, keys:Array<String>):RubyExpr {
-		var fields = [
-			for (i in 0...keys.length)
-				quoteRubyStringForCode(keys[i]) + " => values[" + i + "]"
-		];
-		return RubyRawExpr("("
-			+ reflaxe.ruby.ast.RubyASTPrinter.printExpr(rows)
-			+ ".map { |row| values = row.is_a?(Array) ? row : [row]; {"
-			+ fields.join(", ")
-			+ "} })");
 	}
 
 	static function compileActiveRecordGroupStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
@@ -4200,34 +4203,31 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (info == null || info.owner != "rails.active_record.GroupRuntime") {
 			return null;
 		}
+		needsActiveRecordMaps = true;
+		markCoreRuntimeUse();
 		if (info.name == "count" && params.length == 3) {
 			var fieldName = staticString(params[1]);
-			var keyKind = staticString(params[2]);
+			var keyKind = RailsActiveRecordResultLowering.groupCountKeyKind(staticString(params[2]));
 			if (fieldName == null || keyKind == null) {
 				Context.error("GroupRuntime.count expects static field and key-kind strings emitted by Group.count.", callee.pos);
 			}
 			var groupedCount = RubyCall(RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]), "count", []);
-			return activeRecordGroupCountExpr(groupedCount, keyKind);
+			return RailsActiveRecordResultLowering.groupedCount(groupedCount, keyKind, allocateSyntheticLocalName("grouped_count_entry"),
+				allocateSyntheticLocalName("grouped_count_map"));
 		}
 		if (info.name == "countHaving" && params.length == 4) {
 			var fieldName = staticString(params[1]);
-			var keyKind = staticString(params[2]);
+			var keyKind = RailsActiveRecordResultLowering.groupCountKeyKind(staticString(params[2]));
 			var predicate = activeRecordPredicateArg(params[3]);
 			if (fieldName == null || keyKind == null || predicate == null) {
 				Context.error("GroupRuntime.countHaving expects static field/key strings and a typed predicate emitted by Group.countHaving.", callee.pos);
 			}
 			var grouped = RubyCall(compileExpr(params[0]), "group", [RubyRawExpr(":" + RubyNaming.toMethodName(fieldName))]);
 			var having = RubyCall(grouped, "having", [RubyRawExpr(predicate)]);
-			return activeRecordGroupCountExpr(RubyCall(having, "count", []), keyKind);
+			return RailsActiveRecordResultLowering.groupedCount(RubyCall(having, "count", []), keyKind, allocateSyntheticLocalName("grouped_count_entry"),
+				allocateSyntheticLocalName("grouped_count_map"));
 		}
 		return null;
-	}
-
-	static function activeRecordGroupCountExpr(counts:RubyExpr, keyKind:String):RubyExpr {
-		var mapClass = keyKind == "int" ? "Haxe::Ds::IntMap" : "Haxe::Ds::StringMap";
-		var keyExpr = keyKind == "int" ? "key.to_i" : "key.to_s";
-		return RubyRawExpr("(" + reflaxe.ruby.ast.RubyASTPrinter.printExpr(counts) + ".each_with_object(" + mapClass
-			+ ".new) { |(key, value), map| map.set(" + keyExpr + ", value.to_i) })");
 	}
 
 	static function compileActiveRecordSqlStaticCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {

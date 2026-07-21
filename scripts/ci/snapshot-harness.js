@@ -144,6 +144,8 @@ const cases = [
 	      "app/models/user.rb",
 	      "app/lib/railshx/generated/main.rb",
 	      "app/lib/railshx/runtime/hxruby/core.rb",
+	      "app/lib/railshx/runtime/hxruby/maps.rb",
+	      "config/initializers/hxruby_active_record_maps.rb",
 	      "run.rb",
 	    ],
 	  },

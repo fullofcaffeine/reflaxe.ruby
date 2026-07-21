@@ -2,6 +2,7 @@
 $LOAD_PATH.unshift(__dir__)
 require "active_record"
 require_relative "app/lib/railshx/runtime/hxruby/core"
+require_relative "app/lib/railshx/runtime/hxruby/maps"
 require_relative "app/lib/railshx/generated/main"
 require_relative "app/models/audit_log"
 require_relative "app/models/todo"

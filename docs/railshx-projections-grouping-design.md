@@ -65,7 +65,10 @@ var groupedRows:Array<{status:String, todoCount:Int}> = Projection.group(
 Generated Ruby must keep ActiveRecord visible:
 
 ```ruby
-Models::Todo.where(status: "open").pluck(:id, :title).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "title" => values[1]} }
+Models::Todo.where(status: "open").pluck(:id, :title).map do |projection_row|
+  projection_values = (projection_row.is_a?(Array) ? projection_row : [projection_row])
+  {"id" => projection_values[0], "title" => projection_values[1]}
+end
 ```
 
 The inline row shaper returns Ruby hashes with string keys so generated Haxe
@@ -91,7 +94,10 @@ row API.
 Generated Ruby keeps ActiveRecord and Arel visible:
 
 ```ruby
-Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count).map { |row| values = row.is_a?(Array) ? row : [row]; {"status" => values[0], "todoCount" => values[1]} }
+Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count).map do |projection_row|
+  projection_values = (projection_row.is_a?(Array) ? projection_row : [projection_row])
+  {"status" => projection_values[0], "todoCount" => projection_values[1]}
+end
 ```
 
 ### Grouped Count API
@@ -110,11 +116,15 @@ Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.ar
 Generated Ruby:
 
 ```ruby
-Models::Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) }
+Models::Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new()) { |entry, map| map.set(entry[0].to_s(), entry[1].to_i()) }
 ```
 
 The inline map shaper converts Rails' hash result into the Haxe map
-implementation expected by the return type.
+implementation expected by the return type. Rails builds intentionally omit
+the general generated Haxe std dependency graph, so grouped-count use also
+installs the focused `runtime/hxruby/maps.rb` ABI. A generated Rails initializer
+loads that reviewed runtime before app code; projects that never use grouped
+counts do not receive it.
 
 ## Validation And Failures
 

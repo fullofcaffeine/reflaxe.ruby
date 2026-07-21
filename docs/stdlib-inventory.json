@@ -31,6 +31,14 @@
       "reason": "Move enum ADT compatibility shim out of per-enum generated files."
     },
     {
+      "id": "runtime.active_record_maps",
+      "owner": "runtime/hxruby",
+      "status": "implemented",
+      "path": "runtime/hxruby/maps.rb",
+      "surface": "Haxe::Ds::StringMap / Haxe::Ds::IntMap",
+      "reason": "Provide the typed map ABI returned by grouped ActiveRecord counts while Rails output suppresses compiler-owned std classes."
+    },
+    {
       "id": "std.std",
       "owner": "std/ruby/_std",
       "status": "implemented",

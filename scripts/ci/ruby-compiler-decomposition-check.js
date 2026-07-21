@@ -10,6 +10,7 @@ const int32LoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "Ruby
 const loopLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyLoopLowering.hx");
 const referenceLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyReferenceLowering.hx");
 const railsCallArgumentPlanPath = join(root, "src", "reflaxe", "ruby", "rails", "RailsCallArgumentPlan.hx");
+const railsActiveRecordResultLoweringPath = join(root, "src", "reflaxe", "ruby", "rails", "RailsActiveRecordResultLowering.hx");
 const railsStaticReferenceLoweringPath = join(root, "src", "reflaxe", "ruby", "rails", "RailsStaticReferenceLowering.hx");
 const railsRoot = join(root, "src", "reflaxe", "ruby", "rails");
 const planPath = join(root, "docs", "ruby-compiler-rails-module-extraction.md");
@@ -20,10 +21,11 @@ const workflowPath = join(root, ".github", "workflows", "ci.yml");
 // reviewed explanation because RubyCompiler is an orchestration boundary, not a
 // default home for new Rails or target-lowering responsibilities.
 const MAX_ROOT_LINES = 14485;
-const MAX_ROOT_FUNCTIONS = 781;
+const MAX_ROOT_FUNCTIONS = 779;
 
 const requiredServices = [
   "RailsArtifactPaths.hx",
+  "RailsActiveRecordResultLowering.hx",
   "RailsCallArgumentPlan.hx",
   "RailsMailerPreviewArtifacts.hx",
   "RailsRoutesEmitter.hx",
@@ -84,6 +86,9 @@ if (!existsSync(referenceLoweringPath)) {
 if (!existsSync(railsCallArgumentPlanPath)) {
   fail("required Rails call-argument plan is missing: " + relative(root, railsCallArgumentPlanPath));
 }
+if (!existsSync(railsActiveRecordResultLoweringPath)) {
+  fail("required Rails ActiveRecord result-lowering service is missing: " + relative(root, railsActiveRecordResultLoweringPath));
+}
 if (!existsSync(railsStaticReferenceLoweringPath)) {
   fail("required Rails static-reference service is missing: " + relative(root, railsStaticReferenceLoweringPath));
 }
@@ -92,6 +97,7 @@ const int32Lowering = readFileSync(int32LoweringPath, "utf8");
 const loopLowering = readFileSync(loopLoweringPath, "utf8");
 const referenceLowering = readFileSync(referenceLoweringPath, "utf8");
 const railsCallArgumentPlan = readFileSync(railsCallArgumentPlanPath, "utf8");
+const railsActiveRecordResultLowering = readFileSync(railsActiveRecordResultLoweringPath, "utf8");
 const railsStaticReferenceLowering = readFileSync(railsStaticReferenceLoweringPath, "utf8");
 const compilerLines = compiler.split(/\r?\n/).length - (compiler.endsWith("\n") ? 1 : 0);
 const functionNames = [...compiler.matchAll(/^\s*(?:(?:public|private|static|inline|override)\s+)*function\s+([A-Za-z0-9_]+)/gm)].map((match) => match[1]);
@@ -152,6 +158,9 @@ for (const expected of [
   "RubyReferenceLowering.resolvedOwner(moduleTypeName(moduleType))",
   "import reflaxe.ruby.rails.RailsStaticReferenceLowering;",
   "RailsStaticReferenceLowering.token(fullTypeName(classType.pack, classType.name),",
+  "import reflaxe.ruby.rails.RailsActiveRecordResultLowering;",
+  "RailsActiveRecordResultLowering.projection(",
+  "RailsActiveRecordResultLowering.groupedCount(",
   "import reflaxe.ruby.rails.RailsCallArgumentPlan;",
   "RailsCallArgumentPlan.classifyStatus(expr)",
   "RailsCallArgumentPlan.classifyLocals(expr)",
@@ -230,6 +239,23 @@ if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(railsStaticReferenceLowering)
   fail("RailsStaticReferenceLowering introduced an unsafe broad type or raw/print boundary");
 }
 for (const expected of [
+  "class RailsActiveRecordResultLowering",
+  "enum RailsActiveRecordGroupCountKeyKind",
+  "RubyCallableCall(rows, \"map\"",
+  "RubyConditional(RubyCall(row, \"is_a?\"",
+  "RubyCallableCall(counts, \"each_with_object\"",
+  "RubyConstantPath(mapPlan.mapClass)",
+  "RubyIndex(entry, RubyInt(\"0\"))",
+]) {
+  if (!railsActiveRecordResultLowering.includes(expected)) {
+    fail(`RailsActiveRecordResultLowering is missing owned structural result contract: ${expected}`);
+  }
+}
+if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(railsActiveRecordResultLowering)
+  || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(railsActiveRecordResultLowering)) {
+  fail("RailsActiveRecordResultLowering introduced an unsafe broad type or raw/print boundary");
+}
+for (const expected of [
   "enum RailsStatusArgumentPlan",
   "enum RailsLocalsArgumentPlan",
   "class RailsCallArgumentPlan",
@@ -255,6 +281,7 @@ for (const service of ["RailsMailerPreviewArtifacts.hx", "RailsTestArtifacts.hx"
 const plan = readFileSync(planPath, "utf8");
 for (const expected of [
   "RailsArtifactPaths",
+  "RailsActiveRecordResultLowering",
   "RailsCallArgumentPlan",
   "RailsMailerPreviewArtifacts",
   "RailsRoutesEmitter",

@@ -568,16 +568,26 @@ Models::Todo.where(status: "open").reorder(id: :desc, title: :asc)
 Models::Todo.select(:title).where(status: "open")
 Models::Todo.pluck(:title)
 Models::Todo.where(status: "open").pluck(:id)
-(Models::Todo.where(status: "open").pluck(:id, :title).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "title" => values[1]} })
-(Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum).map { |row| values = row.is_a?(Array) ? row : [row]; {"status" => values[0], "todoCount" => values[1], "userIdSum" => values[2], "averageUserId" => values[3], "minId" => values[4], "maxTitle" => values[5]} })
-(Models::Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
-(Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
-(Models::Todo.group(:user_id).count().each_with_object(Haxe::Ds::IntMap.new) { |(key, value), map| map.set(key.to_i, value.to_i) })
+Models::Todo.where(status: "open").pluck(:id, :title).map do |projection_row|
+  projection_values = (projection_row.is_a?(Array) ? projection_row : [projection_row])
+  {"id" => projection_values[0], "title" => projection_values[1]}
+end
+Models::Todo.where(status: "open").group(:status).pluck(:status, Models::Todo.arel_table[:id].count, Models::Todo.arel_table[:user_id].sum, Models::Todo.arel_table[:user_id].average, Models::Todo.arel_table[:id].minimum, Models::Todo.arel_table[:title].maximum).map do |projection_row__hx2|
+  projection_values__hx2 = (projection_row__hx2.is_a?(Array) ? projection_row__hx2 : [projection_row__hx2])
+  {"status" => projection_values__hx2[0], "todoCount" => projection_values__hx2[1], "userIdSum" => projection_values__hx2[2], "averageUserId" => projection_values__hx2[3], "minId" => projection_values__hx2[4], "maxTitle" => projection_values__hx2[5]}
+end
+Models::Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new()) { |grouped_count_entry, grouped_count_map| grouped_count_map.set(grouped_count_entry[0].to_s(), grouped_count_entry[1].to_i()) }
+Models::Todo.where(status: "open").group(:status).having(Models::Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new()) { |grouped_count_entry__hx1, grouped_count_map__hx1| grouped_count_map__hx1.set(grouped_count_entry__hx1[0].to_s(), grouped_count_entry__hx1[1].to_i()) }
+Models::Todo.group(:user_id).count().each_with_object(Haxe::Ds::IntMap.new()) { |grouped_count_entry__hx2, grouped_count_map__hx2| grouped_count_map__hx2.set(grouped_count_entry__hx2[0].to_i(), grouped_count_entry__hx2[1].to_i()) }
 Models::Todo.minimum(:id)
 Models::Todo.where(status: "open").maximum(:title)
 Models::Todo.sum(:user_id)
 Models::Todo.where(status: "open").average(:user_id)
 ```
+
+The block-local names are allocated by the compiler. The readable base names
+shown above gain `__hxN` suffixes whenever necessary, so result conversion
+cannot capture or overwrite a Haxe local with the same name.
 
 Prefer `Todo.f.title` over `"title"` for behavior-bearing query code. The string
 form may be useful at low-level interop boundaries later, but RailsHx examples

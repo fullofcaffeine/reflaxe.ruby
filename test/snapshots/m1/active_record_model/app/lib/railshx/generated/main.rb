@@ -81,13 +81,22 @@ class Main
     relation_last = assigned.last()
     titles = Todo.pluck(:title)
     assigned_ids = assigned.pluck(:id)
-    projected = (Todo.where(status: "open").pluck(:id, :title).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "title" => values[1]} })
-    projected_from_model = (Todo.pluck(:id, :external_id).map { |row| values = row.is_a?(Array) ? row : [row]; {"id" => values[0], "externalId" => values[1]} })
-    grouped_projection = (Todo.where(status: "open").group(:status).pluck(:status, Todo.arel_table[:id].count, Todo.arel_table[:user_id].sum, Todo.arel_table[:user_id].average, Todo.arel_table[:id].minimum, Todo.arel_table[:title].maximum).map { |row| values = row.is_a?(Array) ? row : [row]; {"status" => values[0], "todoCount" => values[1], "userIdSum" => values[2], "averageUserId" => values[3], "minId" => values[4], "maxTitle" => values[5]} })
-    status_counts = (Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
-    busy_status_counts = (Todo.where(status: "open").group(:status).having(Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new) { |(key, value), map| map.set(key.to_s, value.to_i) })
-    user_counts = (Todo.group(:user_id).count().each_with_object(Haxe::Ds::IntMap.new) { |(key, value), map| map.set(key.to_i, value.to_i) })
-    event_counts = (AuditLog.where(event_count: 1).group(:event_count).count().each_with_object(Haxe::Ds::IntMap.new) { |(key, value), map| map.set(key.to_i, value.to_i) })
+    projected = Todo.where(status: "open").pluck(:id, :title).map do |projection_row|
+      projection_values = (projection_row.is_a?(Array) ? projection_row : [projection_row])
+      {"id" => projection_values[0], "title" => projection_values[1]}
+    end
+    projected_from_model = Todo.pluck(:id, :external_id).map do |projection_row__hx1|
+      projection_values__hx1 = (projection_row__hx1.is_a?(Array) ? projection_row__hx1 : [projection_row__hx1])
+      {"id" => projection_values__hx1[0], "externalId" => projection_values__hx1[1]}
+    end
+    grouped_projection = Todo.where(status: "open").group(:status).pluck(:status, Todo.arel_table[:id].count, Todo.arel_table[:user_id].sum, Todo.arel_table[:user_id].average, Todo.arel_table[:id].minimum, Todo.arel_table[:title].maximum).map do |projection_row__hx2|
+      projection_values__hx2 = (projection_row__hx2.is_a?(Array) ? projection_row__hx2 : [projection_row__hx2])
+      {"status" => projection_values__hx2[0], "todoCount" => projection_values__hx2[1], "userIdSum" => projection_values__hx2[2], "averageUserId" => projection_values__hx2[3], "minId" => projection_values__hx2[4], "maxTitle" => projection_values__hx2[5]}
+    end
+    status_counts = Todo.where(status: "open").group(:status).count().each_with_object(Haxe::Ds::StringMap.new()) { |grouped_count_entry, grouped_count_map| grouped_count_map.set(grouped_count_entry[0].to_s(), grouped_count_entry[1].to_i()) }
+    busy_status_counts = Todo.where(status: "open").group(:status).having(Todo.arel_table[:id].count.gt(1)).count().each_with_object(Haxe::Ds::StringMap.new()) { |grouped_count_entry__hx1, grouped_count_map__hx1| grouped_count_map__hx1.set(grouped_count_entry__hx1[0].to_s(), grouped_count_entry__hx1[1].to_i()) }
+    user_counts = Todo.group(:user_id).count().each_with_object(Haxe::Ds::IntMap.new()) { |grouped_count_entry__hx2, grouped_count_map__hx2| grouped_count_map__hx2.set(grouped_count_entry__hx2[0].to_i(), grouped_count_entry__hx2[1].to_i()) }
+    event_counts = AuditLog.where(event_count: 1).group(:event_count).count().each_with_object(Haxe::Ds::IntMap.new()) { |grouped_count_entry__hx3, grouped_count_map__hx3| grouped_count_map__hx3.set(grouped_count_entry__hx3[0].to_i(), grouped_count_entry__hx3[1].to_i()) }
     min_id = Todo.minimum(:id)
     max_title = Todo.maximum(:title)
     assigned_max_id = assigned.maximum(:id)

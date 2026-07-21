@@ -2,15 +2,15 @@
   "schemaVersion": 1,
   "generatedFrom": "docs/stdlib-inventory.json",
   "summary": {
-    "total": 243,
-    "implemented": 243,
+    "total": 244,
+    "implemented": 244,
     "missing": 0,
     "planned": 0,
     "deferred": 0,
     "byOwner": {
       "runtime/hxruby": {
-        "total": 3,
-        "implemented": 3,
+        "total": 4,
+        "implemented": 4,
         "missing": 0,
         "planned": 0,
         "deferred": 0
