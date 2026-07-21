@@ -56,7 +56,7 @@ jobs:
           package-manager-cache: false
 
       - name: Setup exact Ruby and RubyGems
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # master 2026-07-12
         with:
           ruby-version: "3.4.10"
           rubygems: "3.6.9"

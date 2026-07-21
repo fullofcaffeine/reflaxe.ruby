@@ -38,7 +38,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup exact Ruby and RubyGems for advisory scanning
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # master 2026-07-12
         with:
           ruby-version: "3.4.10"
           rubygems: "3.6.9"
@@ -147,7 +147,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # master 2026-07-12
         with:
           ruby-version: ${{ matrix.ruby_version }}
 
@@ -181,7 +181,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # master 2026-07-12
         with:
           ruby-version: "3.3"
 
@@ -222,7 +222,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # master 2026-07-12
         with:
           ruby-version: ${{ matrix.ruby_version }}
 
@@ -256,7 +256,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # master 2026-07-12
         with:
           ruby-version: "3.3"
 
@@ -293,7 +293,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup Ruby for public upgrade rehearsal
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # master 2026-07-12
         with:
           ruby-version: "3.4.10"
           rubygems: "3.6.9"
@@ -375,7 +375,7 @@ jobs:
           package-manager-cache: false
 
       - name: Setup exact Ruby and RubyGems
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # master 2026-07-12
+        uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # master 2026-07-12
         with:
           ruby-version: "3.4.10"
           rubygems: "3.6.9"
