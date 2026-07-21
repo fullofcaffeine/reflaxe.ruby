@@ -5,6 +5,64 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.11.1 structural ActiveRecord result publication
+
+The normal tested-commit workflow published immutable
+[`v1.11.1`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.11.1)
+on 2026-07-21 for structural typed ActiveRecord projection and grouped-count
+result adapters plus the fail-closed Rails-runtime ownership correction found
+by canonical CI.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `e53c6e7d51e22b8ebb138d393595315b3b821956` |
+| Included implementation lineage | `b0d2e38015670919d64690583e05f6cccb8ddde1` structurally executes typed ActiveRecord result adapters; `e53c6e7d51e22b8ebb138d393595315b3b821956` keeps dependency-light full suites compile-capable and makes populated ActiveRecord/SQLite execution mandatory in Rails lanes. |
+| Canonical release tag | `v1.11.1`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`29808237548`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29808237548), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`88570220751`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29808237548/job/88570220751), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-21T07:27:54Z` |
+| Release notes | Version heading, `v1.11.0...v1.11.1` compare link, categorized bug-fix bullets, and exact `b0d2e38` and `e53c6e7` commit links |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Label | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `hxruby-1.11.1.gem` | `hxruby 1.11.1 Ruby gem` | 276480 | `ad333fb99aa9d6e4457e3dfd87864d2be8a6fbf880ca8b522152d05e4d7b8f14` |
+| `hxruby-1.11.1.gem.sha256.json` | `hxruby 1.11.1 SHA-256 metadata` | 304 | `37eef99c7f9eac4db5b4be7df20826951771958c486f60fc4032fd32a344386e` |
+| `reflaxe.ruby-1.11.1.zip` | `reflaxe.ruby 1.11.1 haxelib package` | 1322471 | `8f06132985aea945b4a59dbc8a77f01dc6f9b4f25106352876f68a66b51945ed` |
+| `reflaxe.ruby-1.11.1.zip.sha256.json` | `reflaxe.ruby 1.11.1 SHA-256 metadata` | 317 | `14de2fc067ece157d4f158f94c85824729bd0884ef2f8a2163dc17942b4d28e3` |
+
+Each downloaded sidecar binds its artifact to version `1.11.1`, tag
+`v1.11.1`, the tested source SHA, hosted filename, byte count, and matching
+digest. The extracted ZIP and gem embed the same release provenance. Their
+complete format-1 manifests independently verify 721 Haxelib payload entries
+and 335 gem payload entries with no missing, altered, duplicate, or extra
+content. GitHub's native asset digests match the independently downloaded
+bytes, and the latest-release endpoint returns the same immutable Release.
+
+The first implementation workflow
+[`29805192496`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/29805192496)
+correctly blocked publication after all three dependency-light full suites
+found an unconditional `active_record` load; their matching mandatory Rails
+runtime jobs passed. The correction extracted a dependency-aware result
+fixture: ordinary full suites always compile it and explicitly skip only
+runtime execution when ActiveRecord/SQLite is absent, while every Rails 8.1.3
+matrix lane runs it with `REQUIRE_RAILS=1`, installs the verified pair when
+needed, and fails closed. The replacement workflow passed all three full and
+all three mandatory runtime versions before publication.
+
+The compiler slice stays on Pattern B and adds no Ruby AST constructor,
+semantic IR, pass framework, or printer repair. A focused Rails lowering module
+builds structural `map` and `each_with_object` blocks with compiler-allocated
+locals and a closed grouped-key kind. Real populated SQLite evidence covers
+scalar and multi-column projections, StringMap and IntMap grouped counts,
+exactly-once relation evaluation, the complete map API, and Haxe map hierarchy
+identity. The checked raw/print-reembed inventory fell from 270 to 266 sites,
+including core lowering from two sites to zero; `RubyCompiler.hx` remains at
+14,485 lines and falls from 781 to 779 functions.
+
 ## Stable 1.11.0 queued local-suite publication
 
 The normal tested-commit workflow published immutable
