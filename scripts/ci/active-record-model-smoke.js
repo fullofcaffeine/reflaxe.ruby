@@ -6,8 +6,6 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "active_record_model");
-const resultRuntimeSourceDir = join(root, "test", "fixtures", "active_record_result_runtime");
-const resultRuntimeOutputDir = join(root, "test", ".generated", "active_record_result_runtime");
 const invalidSourceDir = join(root, "test", ".generated", "active_record_model_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "active_record_model_invalid_out");
 const invalidColumnPrecisionSourceDir = join(root, "test", ".generated", "active_record_model_invalid_column_precision_src");
@@ -194,7 +192,6 @@ function run(command, args, options = {}) {
 }
 
 rmSync(outputDir, { force: true, recursive: true });
-rmSync(resultRuntimeOutputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 rmSync(invalidColumnPrecisionSourceDir, { force: true, recursive: true });
@@ -398,19 +395,6 @@ const mapRequireIndex = activeRecordRunnerRuby.indexOf('require_relative "app/li
 const generatedMainRequireIndex = activeRecordRunnerRuby.indexOf('require_relative "app/lib/railshx/generated/main"');
 if (mapRequireIndex === -1 || generatedMainRequireIndex === -1 || mapRequireIndex > generatedMainRequireIndex) {
   console.error("ActiveRecord runner must load the map ABI before generated application code.");
-  process.exit(1);
-}
-
-if (!compileResultRuntimeWithFirstAvailableReflaxe()) {
-  console.error("Unable to compile the ActiveRecord result runtime fixture through Reflaxe.");
-  process.exit(1);
-}
-const resultRuntime = run("ruby", [join(resultRuntimeSourceDir, "runtime.rb"), resultRuntimeOutputDir]);
-const expectedResultRuntime = "true\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\n";
-if (resultRuntime.stdout !== expectedResultRuntime) {
-  console.error("ActiveRecord result adapter runtime output mismatch.");
-  console.error(`expected: ${JSON.stringify(expectedResultRuntime)}`);
-  console.error(`actual:   ${JSON.stringify(resultRuntime.stdout)}`);
   process.exit(1);
 }
 
@@ -866,40 +850,6 @@ function compileWithFirstAvailableReflaxe() {
       "reflaxe.ruby.CompilerInit.Start()",
       "-main",
       "Main",
-    ], { allowFailure: true });
-    if (result.status === 0) {
-      return result;
-    }
-  }
-  return null;
-}
-
-function compileResultRuntimeWithFirstAvailableReflaxe() {
-  for (const reflaxeSrc of reflaxeCandidates) {
-    if (!existsSync(join(reflaxeSrc, "reflaxe", "ReflectCompiler.hx"))) {
-      continue;
-    }
-    const result = run("haxe", [
-      "-D",
-      `ruby_output=${resultRuntimeOutputDir}`,
-      "-D",
-      "reflaxe_runtime",
-      "-D",
-      "reflaxe_ruby_rails",
-      "-cp",
-      join(root, "src"),
-      "-cp",
-      join(root, "examples", "active_record_model"),
-      "-cp",
-      resultRuntimeSourceDir,
-      "-cp",
-      reflaxeSrc,
-      "--macro",
-      "reflaxe.ruby.CompilerBootstrap.Start()",
-      "--macro",
-      "reflaxe.ruby.CompilerInit.Start()",
-      "-main",
-      "ActiveRecordResultRuntimeMain",
     ], { allowFailure: true });
     if (result.status === 0) {
       return result;

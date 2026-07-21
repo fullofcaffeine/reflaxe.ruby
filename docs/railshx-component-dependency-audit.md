@@ -68,6 +68,11 @@ The ActiveSupport, concern, and real Rails generator checks share
 `npm run test:rails-component-runtime`. That command installs the exact verified
 Rails version in an isolated Bundler context and sets `REQUIRE_RAILS=1`, so
 missing gems fail instead of turning those runtime checks into optional skips.
+The ActiveRecord projection/grouped-count fixture similarly keeps compiler and
+negative checks in the general full suite, while
+`REQUIRE_RAILS=1 npm run test:active-record-result-runtime` installs the exact
+verified ActiveRecord version plus the SQLite adapter when needed and executes
+the populated-database result/map contract in every mandatory Rails matrix lane.
 
 ## Result And Limits
 

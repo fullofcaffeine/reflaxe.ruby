@@ -259,6 +259,13 @@ cannot boot. Runtime smoke logs must identify the failing boundary with staged
 labels such as `compiler`, `materialization`, `migration`, `request tests`, and
 browser stages.
 
+The ActiveRecord projection/grouped-count fixture follows that same split:
+`npm run test:active-record-model` always compiles and checks generated shape and
+diagnostics, but may skip the populated SQLite execution when ActiveRecord is not
+installed. `REQUIRE_RAILS=1 npm run test:active-record-result-runtime` installs
+the verified ActiveRecord/SQLite pair when necessary and is mandatory in every
+Rails runtime matrix lane.
+
 Snapshot tests are the primary RailsHx compiler-output contract. A production
 surface should have committed snapshots for the generated Ruby/Rails artifacts
 that define its public shape; smoke tests should only add targeted invariants,

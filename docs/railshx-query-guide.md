@@ -968,5 +968,11 @@ Run:
 
 ```bash
 npm run test:active-record-model
+REQUIRE_RAILS=1 npm run test:active-record-result-runtime
 npm run test:todoapp-rails
 ```
+
+The ordinary model command always owns compiler shape and negative diagnostics;
+it executes the populated SQLite adapter fixture when ActiveRecord is already
+available. The `REQUIRE_RAILS=1` command is the fail-closed runtime contract used
+by canonical Rails CI and installs the verified dependencies when needed.

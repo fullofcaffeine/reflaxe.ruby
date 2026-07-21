@@ -247,7 +247,7 @@
         { "kind": "compile", "command": "test:migration-generator", "lane": "full" },
         { "kind": "negative", "command": "test:active-record-model", "lane": "full" },
         { "kind": "negative", "command": "test:migration-generator", "lane": "full" },
-        { "kind": "runtime", "command": "test:active-record-model", "lane": "full" },
+        { "kind": "runtime", "command": "test:active-record-result-runtime", "lane": "rails-runtime" },
         { "kind": "runtime", "command": "test:rails-integration", "lane": "rails-runtime" },
         { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
       ]
