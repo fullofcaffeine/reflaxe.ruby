@@ -5,6 +5,35 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Post-1.11.1 dependency-maintenance no-release continuity
+
+Consolidated dependency maintenance
+[#27](https://github.com/fullofcaffeine/reflaxe.ruby/pull/27) updated the
+compiler, browser, release, workflow-action, and generated Rails lock inputs
+without changing the public package contract. The exact merge commit ran the
+complete canonical workflow:
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `072b5dccb1445afaeab96e63ddc7ec0dd6698b38` |
+| Canonical workflow | [`30178553070`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30178553070), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails runtime, and publication jobs passed |
+| Gated release job | [`89734030968`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30178553070/job/89734030968), `success` |
+| Release analysis | semantic-release `25.0.8` analyzed the merge, dependency, and preceding documentation commits and reported `Analysis of 3 commits complete: no release` |
+| Dependency disposition | The nine reviewed Dependabot PRs `#10`, `#12`, `#14`, `#15`, `#18`, and `#23` through `#26` were superseded by the consolidated, fully tested change and closed with that reason |
+
+The release job logged `There are no relevant changes, so no new version is
+released.` No `v1.11.2` remote tag or GitHub Release exists. `v1.11.1` remains
+the latest release, remains natively immutable, and retains exactly the four
+asset names, byte counts, and SHA-256 digests recorded below.
+
+The maintained release tree pins semantic-release `25.0.8`, Lix `17.0.3`,
+Playwright `1.61.1`, semver `7.8.5`, and js-yaml `5.2.2`. Every checkout,
+Node-setup, and Ruby-setup workflow use is locked to its reviewed 40-character
+commit. Because RubyHx publishes only through GitHub Releases, the unused
+semantic-release npm-registry publisher is replaced by a checked-in local
+package whose four publication hooks all fail closed. The resulting npm tree
+passed the hosted locked-dependency audit with zero known vulnerabilities.
+
 ## Stable 1.11.1 structural ActiveRecord result publication
 
 The normal tested-commit workflow published immutable
