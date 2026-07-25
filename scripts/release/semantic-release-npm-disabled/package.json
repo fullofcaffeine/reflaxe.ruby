@@ -1,0 +1,8 @@
+{
+  "name": "@semantic-release/npm",
+  "version": "13.1.5",
+  "private": true,
+  "type": "module",
+  "exports": "./index.mjs",
+  "description": "Fail-closed local replacement for the unused npm registry publisher"
+}

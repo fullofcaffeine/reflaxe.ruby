@@ -24,7 +24,7 @@
     "public:precommit": "npm run format:haxe:check && npm run security:gitleaks",
     "ci:support-matrix": "node scripts/ci/support-matrix-check.js",
     "ci:version-sync": "node scripts/ci/version-sync-check.js",
-    "ci:release-contracts": "npm run ci:support-matrix && node scripts/ci/release-contracts-check.js && npm run test:release-workflow && npm run test:release-hosting && npm run test:release-artifacts",
+    "ci:release-contracts": "npm run ci:support-matrix && node scripts/ci/release-contracts-check.js && node scripts/ci/semantic-release-npm-disabled-check.mjs && npm run test:release-workflow && npm run test:release-hosting && npm run test:release-artifacts",
     "test:support-matrix": "ruby -Ilib test/support_matrix_test.rb",
     "test:development-watcher": "ruby -Ilib test/development_watcher_test.rb",
     "test:release-version-policy": "node scripts/ci/release-version-policy-check.mjs",
@@ -154,16 +154,17 @@
     "release:dry-run": "semantic-release --dry-run"
   },
   "devDependencies": {
-    "@playwright/test": "1.60.0",
+    "@playwright/test": "1.61.1",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/exec": "7.1.0",
     "@semantic-release/github": "12.0.9",
+    "@semantic-release/npm": "file:scripts/release/semantic-release-npm-disabled",
     "@semantic-release/release-notes-generator": "14.1.1",
     "fflate": "0.8.3",
-    "js-yaml": "5.2.1",
-    "lix": "15.12.4",
-    "semantic-release": "25.0.5",
-    "semver": "7.8.4"
+    "js-yaml": "5.2.2",
+    "lix": "17.0.3",
+    "semantic-release": "25.0.8",
+    "semver": "7.8.5"
   },
   "repository": {
     "type": "git",
