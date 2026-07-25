@@ -71,14 +71,21 @@ Release-affecting tools are reviewed inputs rather than moving aliases:
 | Ruby | `3.4.10` |
 | RubyGems | `3.6.9` |
 | Haxe | `4.3.7` |
-| lix | `15.12.4` |
-| semantic-release | `25.0.5` |
+| lix | `17.0.3` |
+| semantic-release | `25.0.8` |
 
 All npm release dependencies use exact versions in `package.json` and
 `package-lock.json`. Workflow actions use full 40-character commit SHAs. The
 release job verifies Node, npm, Ruby, RubyGems, and Haxe versions before running
 the locked semantic-release binary directly. Changing any pin is an ordinary
 reviewed code change and must keep `npm audit` clean.
+
+Semantic-release installs its npm-registry publisher as a default dependency
+even though RubyHx's explicit plugin list does not use it. The checked-in
+`scripts/release/semantic-release-npm-disabled` package is a fail-closed local
+replacement for that unused publisher: it removes the unnecessary registry
+toolchain, and every exported publication hook throws if configuration drift
+ever selects it. GitHub Releases remains the only publication owner.
 
 Immediately before the locked engine, the job runs the fail-closed historical
 SemVer transition check documented in `release-version-policy.md`. It is a

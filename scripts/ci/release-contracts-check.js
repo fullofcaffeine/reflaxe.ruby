@@ -23,6 +23,20 @@ function expectExcludes(haystack, needle, label) {
   }
 }
 
+function expectOnlyActionPin(workflow, action, expectedPin, label) {
+  const escapedAction = action.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pins = [...workflow.matchAll(new RegExp(`${escapedAction}@([^\\s#]+)`, "g"))].map((match) => match[1]);
+  if (pins.length === 0) {
+    fail(`${label} does not use ${action}`);
+    return;
+  }
+  for (const pin of pins) {
+    if (pin !== expectedPin) {
+      fail(`${label} must pin every ${action} use to ${expectedPin}; found ${pin}`);
+    }
+  }
+}
+
 function markdownFilesUnder(directory) {
   return readdirSync(directory, { withFileTypes: true })
     .flatMap((entry) => {
@@ -90,6 +104,9 @@ const releaseArtifactPrepare = readFileSync("scripts/release/prepare-release-art
 const releaseHosting = readFileSync("scripts/release/release-hosting.mjs", "utf8");
 const releaseHostingCheck = readFileSync("scripts/ci/release-hosting-check.mjs", "utf8");
 const releaseRepairWorkflow = readFileSync(".github/workflows/release-repair.yml", "utf8");
+const disabledNpmPluginPackage = readJson("scripts/release/semantic-release-npm-disabled/package.json");
+const disabledNpmPlugin = readFileSync("scripts/release/semantic-release-npm-disabled/index.mjs", "utf8");
+const disabledNpmPluginDocs = readFileSync("scripts/release/semantic-release-npm-disabled/README.md", "utf8");
 const publicUpgradeCheck = readFileSync("scripts/ci/public-release-upgrade-check.js", "utf8");
 const gemPackageBuilder = readFileSync("scripts/release/build-gem-package.js", "utf8");
 const gemPackageCheck = readFileSync("scripts/ci/gem-package-check.js", "utf8");
@@ -497,6 +514,9 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   if (releaseConfig.plugins.some((entry) => ["@semantic-release/git", "@semantic-release/changelog"].includes(Array.isArray(entry) ? entry[0] : entry))) {
     fail("release configuration must not create release commits or mutate CHANGELOG.md");
   }
+  if (releaseConfig.plugins.some((entry) => (Array.isArray(entry) ? entry[0] : entry) === "@semantic-release/npm")) {
+    fail("release configuration must not enable npm registry publication");
+  }
 
   const githubPlugin = releaseConfig.plugins.find((entry) => Array.isArray(entry) && entry[0] === "@semantic-release/github");
   if (releaseConfig.plugins.indexOf(githubPlugin) > releaseConfig.plugins.indexOf(execPlugin)) {
@@ -528,9 +548,35 @@ if (!releaseConfig || !Array.isArray(releaseConfig.plugins)) {
   }
 }
 
-if (packageJson.devDependencies?.semver !== "7.8.4") {
-  fail("the release policy must directly pin the standards-tested semver library at 7.8.4");
+if (packageJson.devDependencies?.semver !== "7.8.5") {
+  fail("the release policy must directly pin the standards-tested semver library at 7.8.5");
 }
+if (packageJson.devDependencies?.["semantic-release"] !== "25.0.8") {
+  fail("release automation must pin semantic-release at the reviewed 25.0.8 version");
+}
+if (packageJson.devDependencies?.lix !== "17.0.3") {
+  fail("the Haxe toolchain manager must pin the reviewed Lix 17.0.3 version");
+}
+if (packageJson.devDependencies?.["js-yaml"] !== "5.2.2") {
+  fail("release manifest parsing must pin the patched js-yaml 5.2.2 version");
+}
+if (packageJson.devDependencies?.["@semantic-release/npm"] !== "file:scripts/release/semantic-release-npm-disabled") {
+  fail("the unused npm registry publisher must resolve to the checked-in fail-closed replacement");
+}
+if (
+  disabledNpmPluginPackage.name !== "@semantic-release/npm"
+  || disabledNpmPluginPackage.version !== "13.1.5"
+  || disabledNpmPluginPackage.private !== true
+) {
+  fail("the disabled npm publisher package identity must satisfy only the pinned semantic-release dependency");
+}
+for (const hook of ["verifyConditions", "prepare", "publish", "addChannel"]) {
+  expectIncludes(disabledNpmPlugin, `export const ${hook} = registryPublicationDisabled`, "disabled npm publisher");
+}
+expectIncludes(disabledNpmPlugin, "publishes only through the reviewed GitHub Releases workflow", "disabled npm publisher");
+expectIncludes(disabledNpmPluginDocs, "fail-closed hooks", "disabled npm publisher documentation");
+expectIncludes(releaseWorkflowDocs, "semantic-release-npm-disabled", "release publication workflow");
+expectIncludes(releaseWorkflowDocs, "GitHub Releases remains the only publication owner", "release publication workflow");
 if (packageJson.devDependencies?.fflate !== "0.8.3") {
   fail("deterministic ZIP creation must directly pin fflate at the haxe.rust-aligned 0.8.3 version");
 }
@@ -754,8 +800,19 @@ expectIncludes(ciWorkflow, "npm run test:rails-runtime", "CI workflow");
 expectIncludes(ciWorkflow, "ruby-version: ${{ matrix.ruby_version }}", "CI workflow");
 expectIncludes(ciWorkflow, "RailsHx production dogfood", "CI workflow");
 expectIncludes(ciWorkflow, "npm run test:todoapp-production", "CI workflow");
-expectIncludes(ciWorkflow, "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10", "CI workflow");
-expectIncludes(ciWorkflow, "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e", "CI workflow");
+const actionPins = [
+  ["actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1"],
+  ["actions/setup-node", "820762786026740c76f36085b0efc47a31fe5020"],
+  ["ruby/setup-ruby", "a30dfa457ad68707b8b910ac3a244714b61c0626"],
+];
+for (const [workflow, name] of [
+  [ciWorkflow, "CI workflow"],
+  [releaseRepairWorkflow, "repair workflow"],
+]) {
+  for (const [action, expectedPin] of actionPins) {
+    expectOnlyActionPin(workflow, action, expectedPin, name);
+  }
+}
 expectExcludes(ciWorkflow, "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24", "CI workflow");
 expectIncludes(packageJson.scripts.test, "test:examples-compile", "npm test");
 expectIncludes(packageJson.scripts["test:examples-compile"] ?? "", "examples-compile-smoke.js", "package.json scripts");
