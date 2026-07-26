@@ -38,7 +38,11 @@ exportable to Playwright, while `shared/ChatRoomContract.hx` adds the
 server-only `@:hotwireContract` declaration. Its single typed row declaration
 generates `StreamName<TLocals>`, `StreamTarget`, and `Template<TLocals>`
 accessors, while the domain-to-locals mapper stays explicit for HHX and
-controllers.
+controllers. The owning HHX view declares
+`@:railsDomTargets(ChatRoomHooks.listTargetId)`, so removing or renaming the
+static receiver fails compilation. For a target in Rails-owned ERB, use
+`StreamTarget.existing("todos/legacy_panel", ChatRoomHooks.listTargetId)`; it
+checks that one existing template and exact static id at compile time.
 
 ## Client Events
 

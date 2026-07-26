@@ -29,7 +29,7 @@ if (!existsSync(mainRuby)) {
   fail("Hotwire contract Ruby main output is missing.");
 }
 const rubySource = readFileSync(mainRuby, "utf8");
-for (const expected of ['"rooms:updates"', '"room-rows"', '"rooms/row"', '"typed"']) {
+for (const expected of ['"rooms:updates"', '"room-rows"', '"rooms/row"', '"legacy-room-rows"', '"typed"']) {
   if (!rubySource.includes(expected)) {
     fail(`Hotwire contract output did not inline ${expected}.`);
   }
@@ -78,6 +78,12 @@ for (const invalid of [
   ["row", "InvalidRowMain", /`row` must declare Template<TLocals> explicitly/],
   ["locals", "InvalidLocalsMain", /row locals must be a precise type, not Dynamic/],
   ["reserved", "InvalidReservedMain", /reserves `streamName` for its generated typed accessor/],
+  ["hhx_missing", "InvalidHhxMissingMain", /could not find static id="missing-room-rows" in this HHX view/],
+  ["hhx_dynamic", "InvalidHhxDynamicMain", /values must be compile-time String tokens/],
+  ["hhx_owner", "InvalidHhxOwnerMain", /requires a RailsHx-owned @:railsTemplateAst view/],
+  ["erb_target", "InvalidErbTargetMain", /could not find static id="comment-only-room-rows" in Rails ERB template "rooms\/legacy"/],
+  ["erb_missing", "InvalidErbMissingMain", /could not find Rails ERB template "rooms\/missing"/],
+  ["erb_unsafe", "InvalidErbUnsafeMain", /path must be safe and relative to app\/views/],
 ]) {
   const result = compileRuby(join(invalidRoot, invalid[0]), invalid[1], true);
   if (result.status === 0) {

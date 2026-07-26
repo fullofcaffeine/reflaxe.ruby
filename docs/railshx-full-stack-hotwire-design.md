@@ -257,9 +257,10 @@ It currently generates and validates:
 
 Haxe `Dynamic` sources or locals, missing declarations,
 non-`Template<TLocals>` rows, and generated-name collisions fail closed.
-Subscription composition, DOM-target
-existence, Playwright exports, and generator integration remain later phases;
-the first slice does not claim evidence it cannot yet prove.
+Subscription composition, Playwright exports, and generator integration remain
+later phases. DOM-target ownership is now a separate proof at the view boundary:
+RailsHx-owned HHX views declare `@:railsDomTargets(...)`, while Rails-owned ERB
+uses `StreamTarget.existing(template, target)`.
 
 ### Model Callback Convenience
 
@@ -301,10 +302,22 @@ Good diagnostics are part of the product:
 - A contract tries to combine unrelated stream payload and partial locals
   without an explicit mapping function.
 
-When the compiler cannot prove a DOM target exists because the target is
-Rails-owned ERB, use an explicit checked interop form such as
-`Target.existing("railshx-chat-list")` that inspects `app/views` and fails
-closed when the file is missing.
+RailsHx-owned HHX views declare their stable receivers beside the markup:
+
+```haxe
+@:railsTemplate("todos/_chat_panel")
+@:railsTemplateAst("render")
+@:railsDomTargets(ChatRoomHooks.listTargetId)
+class ChatPanelView {}
+```
+
+The inline-markup owner verifies that the same compile-time token appears as a
+static `id` in the structural HHX tree. This avoids project-wide text scanning
+and avoids a contract/view typing cycle. When the target lives in Rails-owned
+ERB, use the explicit checked interop form
+`StreamTarget.existing("todos/chat_panel", ChatRoomHooks.listTargetId)`. It
+resolves that one template under `app/views`, requires an exact static id, and
+fails closed for an unsafe path, missing file, dynamic token, or missing id.
 
 ## Todoapp Migration Path
 
@@ -314,6 +327,8 @@ The current todoapp chat is now the regression sentinel for this design:
 - `ChatRoomHooks` owns browser-safe stream and readiness selector constants.
 - `ChatRoomContract` owns server-side `StreamName<ChatMessageLocals>`,
   `StreamTarget`, `Template<ChatMessageLocals>`, and locals construction.
+- `ChatPanelView` declares `@:railsDomTargets(TodoHooks.chatListId)`, proving
+  that the shared contract token has a static receiver in the owned HHX tree.
 - `ExportTodoHooks` publishes the connected Turbo stream-source selector to
   Playwright so browser tests do not copy the selector literal.
 - The two-session Playwright test remains the user-facing proof that Rails/Turbo
@@ -334,8 +349,9 @@ The current todoapp chat is now the regression sentinel for this design:
    JavaScript compile evidence plus negative diagnostics. Connecting an
    optional `@:railsChannel` subscription remains a bounded follow-up rather
    than being inferred by this server-rendered Turbo contract.
-5. **Target existence validation**: validate owned HHX targets and add checked
-   interop for Rails-owned ERB targets.
+5. **Target existence validation**: landed as `@:railsDomTargets(...)` for
+   owned structural HHX plus `StreamTarget.existing(template, target)` for
+   Rails-owned ERB, with focused missing/dynamic/owner diagnostics.
 6. **Testing helpers**: generate Rails/Playwright helper constants from the
    contract and add negative compile tests for drift.
 7. **Generator integration**: make `hxruby:scaffold` and the Rails app

@@ -4,6 +4,7 @@ package reflaxe.ruby.macros;
 import haxe.macro.Compiler;
 import haxe.macro.Context;
 import haxe.macro.Expr;
+import haxe.macro.Type;
 
 /**
 	Rewrites Haxe inline markup (`return <div>...</div>`) in Rails template
@@ -30,13 +31,152 @@ class RailsInlineMarkup {
 		for (field in fields) {
 			rewriteField(field);
 		}
+		validateDeclaredDomTargets(fields);
 		return fields;
 	}
 
-	static function shouldProcessLocalType():Bool {
-		if (Context.defined("rails_hxx_no_inline_markup")) {
-			return false;
+	/**
+		Proves each `@:railsDomTargets(...)` token is a static `id` in this HHX
+		view. The proof lives beside inline-markup rewriting because this is the
+		one phase that owns the complete structural `HtmlNode` expression before
+		the Ruby compiler renders it to ERB.
+
+		Targets must be compile-time strings (literals or static final/inline
+		constants). Dynamic ids cannot establish that a Turbo update has a stable
+		DOM receiver, so they fail closed instead of becoming a best-effort scan.
+	**/
+	static function validateDeclaredDomTargets(fields:Array<Field>):Void {
+		var localClassRef = Context.getLocalClass();
+		if (localClassRef == null) {
+			return;
 		}
+		var cls = localClassRef.get();
+		var entries = cls.meta.extract(":railsDomTargets");
+		if (entries.length == 0) {
+			return;
+		}
+		if (!cls.meta.has(":railsTemplateAst")) {
+			Context.error("@:railsDomTargets requires a RailsHx-owned @:railsTemplateAst view.", cls.pos);
+		}
+		var astMethod = railsTemplateAstMethod(cls);
+		var astField = fields.filter(field -> field.name == astMethod);
+		if (astField.length != 1) {
+			Context.error('@:railsDomTargets could not find the @:railsTemplateAst method "$astMethod".', cls.pos);
+		}
+		var actual = collectStaticDomIds(astField);
+		for (entry in entries) {
+			if (entry.params == null || entry.params.length == 0) {
+				Context.error("@:railsDomTargets expects at least one static DOM id token.", entry.pos);
+			}
+			for (targetExpr in entry.params) {
+				var target = staticString(targetExpr);
+				if (target == null) {
+					Context.error("@:railsDomTargets values must be compile-time String tokens.", targetExpr.pos);
+				}
+				if (actual.indexOf(target) == -1) {
+					Context.error('@:railsDomTargets could not find static id="$target" in this HHX view.', targetExpr.pos);
+				}
+			}
+		}
+	}
+
+	static function collectStaticDomIds(fields:Array<Field>):Array<String> {
+		var ids:Array<String> = [];
+		for (field in fields) {
+			switch (field.kind) {
+				case FFun(fn) if (fn.expr != null):
+					collectStaticDomIdsFromExpr(fn.expr, ids);
+				case FVar(_, expr) | FProp(_, _, _, expr) if (expr != null):
+					collectStaticDomIdsFromExpr(expr, ids);
+				case _:
+			}
+		}
+		return ids;
+	}
+
+	static function collectStaticDomIdsFromExpr(expr:Expr, ids:Array<String>):Void {
+		switch (expr.expr) {
+			case ECall(callee, [_, attrs, _]) if (fieldName(callee) == "Element"):
+				collectIdAttrs(attrs, ids);
+			case ECall(callee, [id, _, _]) if (fieldName(callee) == "TurboFrame"):
+				addStaticId(id, ids);
+			case _:
+		}
+		haxe.macro.ExprTools.iter(expr, child -> collectStaticDomIdsFromExpr(child, ids));
+	}
+
+	static function collectIdAttrs(attrs:Expr, ids:Array<String>):Void {
+		switch (attrs.expr) {
+			case EArrayDecl(values):
+				for (attr in values) {
+					switch (attr.expr) {
+						case ECall(callee, [name, value]) if (fieldName(callee) == "Static" || fieldName(callee) == "Expr"):
+							if (literalString(name) == "id") {
+								addStaticId(value, ids);
+							}
+						case _:
+					}
+				}
+			case _:
+		}
+	}
+
+	static function addStaticId(expr:Expr, ids:Array<String>):Void {
+		var value = staticString(expr);
+		if (value != null && ids.indexOf(value) == -1) {
+			ids.push(value);
+		}
+	}
+
+	static function fieldName(expr:Expr):Null<String> {
+		return switch (expr.expr) {
+			case EField(_, name): name;
+			case _: null;
+		}
+	}
+
+	static function literalString(expr:Expr):Null<String> {
+		return switch (expr.expr) {
+			case EConst(CString(value, _)): value;
+			case _: null;
+		}
+	}
+
+	static function staticString(expr:Expr):Null<String> {
+		var literal = literalString(expr);
+		if (literal != null) {
+			return literal;
+		}
+		return typedStaticString(Context.typeExpr(expr));
+	}
+
+	static function typedStaticString(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TConst(TString(value)):
+				value;
+			case TField(_, FStatic(_, fieldRef)):
+				var fieldExpr = fieldRef.get().expr();
+				fieldExpr == null ? null : typedStaticString(fieldExpr);
+			case TMeta(_, inner) | TParenthesis(inner) | TCast(inner, _):
+				typedStaticString(inner);
+			case _:
+				null;
+		}
+	}
+
+	static function railsTemplateAstMethod(cls:ClassType):String {
+		var entries = cls.meta.extract(":railsTemplateAst");
+		if (entries.length != 1 || entries[0].params == null || entries[0].params.length != 1) {
+			Context.error("@:railsDomTargets requires exactly one @:railsTemplateAst(\"method\") declaration.", cls.pos);
+		}
+		var method = literalString(entries[0].params[0]);
+		if (method == null || method == "") {
+			Context.error("@:railsDomTargets requires a literal @:railsTemplateAst method name.", entries[0].pos);
+		}
+		return method;
+	}
+
+	static function shouldProcessLocalType():Bool {
 		var localClassRef = Context.getLocalClass();
 		if (localClassRef == null) {
 			return false;
@@ -45,10 +185,18 @@ class RailsInlineMarkup {
 		if (cls == null || cls.meta == null) {
 			return false;
 		}
-		if (cls.meta.has(":rails_hxx_no_inline_markup") || cls.meta.has("rails_hxx_no_inline_markup")) {
+		var declaresTargets = cls.meta.has(":railsDomTargets");
+		var disabled = Context.defined("rails_hxx_no_inline_markup")
+			|| cls.meta.has(":rails_hxx_no_inline_markup")
+			|| cls.meta.has("rails_hxx_no_inline_markup");
+		if (declaresTargets && disabled) {
+			Context.error("@:railsDomTargets cannot run when Rails HHX inline-markup rewriting is disabled.", cls.pos);
+		}
+		if (disabled) {
 			return false;
 		}
-		return cls.meta.has(":railsTemplate")
+		return declaresTargets
+			|| cls.meta.has(":railsTemplate")
 			|| cls.meta.has("railsTemplate")
 			|| cls.meta.has(":rails_hxx_inline_markup")
 			|| cls.meta.has("rails_hxx_inline_markup");

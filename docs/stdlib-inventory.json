@@ -1556,7 +1556,7 @@
       "status": "implemented",
       "path": "std/rails/turbo/StreamTarget.hx",
       "surface": "rails.turbo.StreamTarget",
-      "reason": "Typed DOM target token for server-side Rails Turbo stream helper calls; no implicit String conversion so behavior-bearing targets must use named/shared constants."
+      "reason": "Typed DOM target token for server-side Rails Turbo stream helper calls; named/shared constants stay explicit, while existing(template, target) proves Rails-owned ERB contains the exact static receiver."
     },
     {
       "id": "std.rails.turbo_stream_name",

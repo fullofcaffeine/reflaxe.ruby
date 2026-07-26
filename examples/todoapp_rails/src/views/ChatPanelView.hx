@@ -28,6 +28,7 @@ typedef ChatPanelLocals = {
 // partial renders, loops, conditionals, and Rails route helpers.
 @:railsTemplate("todos/_chat_panel")
 @:railsTemplateAst("render")
+@:railsDomTargets(TodoHooks.chatListId)
 class ChatPanelView {
 	public static function render(locals:ChatPanelLocals):HtmlNode {
 		return <section id=${TodoHooks.chatPanelId} class="card chat-panel" data-railshx-chat aria-label="RailsHx typed chatroom">

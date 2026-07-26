@@ -16,9 +16,10 @@ import haxe.macro.TypeTools;
 	accidentally mix a row template's locals type with another stream while the
 	emitted Ruby remains ordinary Turbo calls with no contract wrapper at runtime.
 
-	This phase intentionally does not infer domain-to-locals mappings or prove that
-	a target exists in rendered HTML. Those facts need application context and
-	remain explicit until their separately validated Hotwire phases land.
+	This macro intentionally does not infer domain-to-locals mappings or inspect
+	rendered HTML itself. Mappings remain explicit application code; target
+	existence is proven at the owning view boundary with `@:railsDomTargets(...)`
+	for HHX or `StreamTarget.existing(...)` for Rails-owned ERB.
 **/
 class HotwireContractMacro {
 	static var enabled = false;

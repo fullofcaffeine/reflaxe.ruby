@@ -175,10 +175,11 @@ Typed boundary:
   plus runtime Rails test coverage.
 - Haxe-authored JS clients that layer on Rails importmap/Turbo conventions.
 - The first `@:hotwireContract` slice now generates typed stream-name,
-  stream-target, and HHX row-template accessors from one declaration. Optional
-  channel subscription composition, DOM-target validation, and browser-test
-  hook generation remain separate follow-ups so each can fail closed with its
-  own evidence.
+  stream-target, and HHX row-template accessors from one declaration. Static
+  target existence is now proven separately by `@:railsDomTargets(...)` for
+  RailsHx-owned HHX or `StreamTarget.existing(...)` for Rails-owned ERB.
+  Optional channel subscription composition and browser-test hook generation
+  remain separate follow-ups so each can fail closed with its own evidence.
 
 Lowering strategy:
 
