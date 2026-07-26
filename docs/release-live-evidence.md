@@ -5,6 +5,47 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.12.0 typed Hotwire contract publication
+
+The normal tested-commit workflow published immutable
+[`v1.12.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.12.0)
+on 2026-07-26 for the first declaration-driven typed Hotwire contract slice.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `9af4355cd4f9cfe1870a581fea25d72a9b7b9317` |
+| Canonical release tag | `v1.12.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30192963342`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30192963342), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`89772474332`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30192963342/job/89772474332), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-26T08:10:50Z` |
+| Release notes | Version heading, `v1.11.1...v1.12.0` compare link, categorized feature bullet, and exact `9af4355` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.12.0.gem` | 278016 | `8ed17e679f43c3137b1daf2b3d8644a0f57e8c93559b614c4217a2212eac207b` |
+| `hxruby-1.12.0.gem.sha256.json` | 304 | `f23bf055f7da5d17ecc330f7dcdff7bd3eb9803fa1ec2f988f9ae6819ebb68d5` |
+| `reflaxe.ruby-1.12.0.zip` | 1327980 | `e65f07899fb410cac22767c2b113ff1d6d077b1970ca39c5aa655f6fe3878137` |
+| `reflaxe.ruby-1.12.0.zip.sha256.json` | 317 | `49569c6d718a112f6327613645946c87d963e29522db024fc256a5628d16383a` |
+
+Each sidecar binds the downloaded bytes to version `1.12.0`, tag `v1.12.0`,
+and the tested source SHA. The extracted ZIP and gem embed the same provenance;
+their canonical format-1 manifests independently verified all 722 Haxelib and
+336 gem payload entries with no missing, altered, duplicate, or extra content.
+
+The public `@:hotwireContract` annotation consumes private declaration-only
+`stream`, `target`, and explicitly typed `row:Template<TLocals>` fields and
+generates inline `streamName`, `streamTarget`, and `rowTemplate` accessors.
+Ruby and `railshx.client` JavaScript builds share the macro without loading the
+Ruby compiler into browser builds, and generated output contains no runtime
+contract wrapper. Missing, reserved, incompatible, `Dynamic`, and `Any`
+contracts fail closed. Domain-to-locals mapping and DOM-target existence remain
+explicit; channel composition, target validation, testing helpers, and
+generator integration retain separate future owners.
+
 ## Post-1.11.1 dependency-maintenance no-release continuity
 
 Consolidated dependency maintenance
