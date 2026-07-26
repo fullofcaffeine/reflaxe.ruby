@@ -174,9 +174,11 @@ Typed boundary:
   refresh and model callback macros where the target Rails API shape is proven,
   plus runtime Rails test coverage.
 - Haxe-authored JS clients that layer on Rails importmap/Turbo conventions.
-- A Hotwire contract macro that connects channel subscriptions, stream names,
-  targets, HHX templates/locals, and browser-test hooks without repeated app
-  declarations.
+- The first `@:hotwireContract` slice now generates typed stream-name,
+  stream-target, and HHX row-template accessors from one declaration. Optional
+  channel subscription composition, DOM-target validation, and browser-test
+  hook generation remain separate follow-ups so each can fail closed with its
+  own evidence.
 
 Lowering strategy:
 

@@ -87,6 +87,7 @@ try {
   expectFile("haxe_libraries/railshx.client.hxml", [
     "${HXRUBY_GEM_ROOT}/std",
     "-D railshx.client=",
+    "--macro rails.macros.HotwireContractMacro.enable()",
   ]);
   expectFile("haxe_libraries/helder.set.hxml", [
     "haxelib:/helder.set#0.3.1",

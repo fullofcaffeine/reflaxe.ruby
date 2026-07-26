@@ -35,8 +35,10 @@ subscription helpers, and Playwright hooks, see
 The todoapp chat room is the first concrete slice of that pattern:
 `shared/ChatRoomHooks.hx` keeps browser-safe stream/readiness constants
 exportable to Playwright, while `shared/ChatRoomContract.hx` adds the
-server-only `StreamName<TLocals>`, `StreamTarget`, `Template<TLocals>`, and
-locals helpers used by HHX and controllers.
+server-only `@:hotwireContract` declaration. Its single typed row declaration
+generates `StreamName<TLocals>`, `StreamTarget`, and `Template<TLocals>`
+accessors, while the domain-to-locals mapper stays explicit for HHX and
+controllers.
 
 ## Client Events
 

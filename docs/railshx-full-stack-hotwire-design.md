@@ -111,7 +111,7 @@ The preferred default for Rails UI is:
 5. Use typed client-rendered streams only when the UI fragment is intentionally
    client-owned, optimistic, or not a normal Rails DOM partial.
 
-## Proposed Contract Shape
+## Contract Shape
 
 Create small Haxe-owned contract classes that describe one Hotwire surface:
 
@@ -119,8 +119,6 @@ Create small Haxe-owned contract classes that describe one Hotwire surface:
 package hotwire;
 
 import rails.action_view.Template;
-import rails.turbo.StreamName;
-import rails.turbo.StreamTarget;
 import shared.ChatRoomHooks;
 import views.ChatMessageRowView;
 
@@ -132,23 +130,31 @@ typedef ChatMessageRowLocals = {
 
 typedef ChatMessageBroadcast = ChatMessageRowLocals;
 
+@:hotwireContract
 class ChatRoomContract {
-	public static inline function turboStream():StreamName<ChatMessageRowLocals> {
-		return StreamName.named(ChatRoomHooks.streamName);
-	}
+	static final stream = ChatRoomHooks.streamName;
+	static final target = ChatRoomHooks.listTargetId;
+	static final row:Template<ChatMessageRowLocals> = Template.of(ChatMessageRowView);
 
-	public static inline function listTarget():StreamTarget {
-		return StreamTarget.named(ChatRoomHooks.listTargetId);
-	}
-
-	public static inline function rowTemplate():Template<ChatMessageRowLocals> {
-		return Template.of(ChatMessageRowView);
+	public static inline function locals(message:ChatMessage):ChatMessageRowLocals {
+		return {
+			id: message.id,
+			body: message.body,
+			userId: message.userId
+		};
 	}
 }
 ```
 
-This is intentionally boring. Boring is good here: editors can complete it,
-macros can inspect it, and generated Ruby remains normal Rails.
+The macro consumes the three private declaration fields and generates
+`streamName():StreamName<ChatMessageRowLocals>`,
+`streamTarget():StreamTarget`, and
+`rowTemplate():Template<ChatMessageRowLocals>`. The explicit row annotation is
+the single owner of the locals type; the model-to-locals mapping stays visible
+because guessing business-data transformations would be unsafe. Ruby builds
+enable the macro through RubyHx compiler initialization, while
+`-lib railshx.client` enables the same expansion without loading the Ruby
+compiler.
 
 ### Server-Rendered Broadcast
 
@@ -156,14 +162,10 @@ Controller or model code should be able to write:
 
 ```haxe
 TurboStreams.broadcastPrependTo(
-	ChatRoomContract.turboStream(),
-	ChatRoomContract.listTarget(),
+	ChatRoomContract.streamName(),
+	ChatRoomContract.streamTarget(),
 	ChatRoomContract.rowTemplate(),
-	{
-		id: message.id,
-		body: message.body,
-		userId: message.userId
-	}
+	ChatRoomContract.locals(message)
 );
 ```
 
@@ -236,29 +238,28 @@ ad-hoc HTML strings at call sites.
 
 ### `@:hotwireContract`
 
-A future `@:hotwireContract` macro can validate and generate helper surfaces:
+The shipped first slice validates and generates the server-rendered contract:
 
 ```haxe
 @:hotwireContract
-class ChatRoom {
-	static final cable = PresenceChannel;
+class ChatRoomContract {
 	static final stream = "todoapp:chat";
 	static final target = TodoHooks.chatListId;
-	static final row = Template.of(ChatMessageRowView);
+	static final row:Template<ChatMessageLocals> = Template.of(ChatMessageRowView);
 }
 ```
 
-The macro should generate or validate:
+It currently generates and validates:
 
-- `Stream<TPayload>` for ActionCable.
 - `StreamName<TLocals>` for Turbo broadcasts.
 - `StreamTarget` from a shared DOM id.
 - `Template<TLocals>` for HHX row partials.
-- JS subscription helpers with inferred channel names.
-- Playwright hook exports when a target/readiness attr is public.
 
-The macro must reject dynamic paths/names by default. Checked literals are fine
-only when they validate safe shape and are attached to a typed contract.
+Haxe `Dynamic` sources or locals, missing declarations,
+non-`Template<TLocals>` rows, and generated-name collisions fail closed.
+Subscription composition, DOM-target
+existence, Playwright exports, and generator integration remain later phases;
+the first slice does not claim evidence it cannot yet prove.
 
 ### Model Callback Convenience
 
@@ -328,8 +329,11 @@ The current todoapp chat is now the regression sentinel for this design:
    `MyChannel.client:ChannelRef<TParams, TPayload>` generated from
    `@:railsChannel`; app-facing Haxe JS no longer repeats the channel string or
    client types.
-4. **Hotwire contract macro**: generate stream/target/template/subscription
-   helpers from one declaration.
+4. **Hotwire contract macro, first slice**: landed for generated typed
+   stream/target/template accessors from one declaration, with Ruby and
+   JavaScript compile evidence plus negative diagnostics. Connecting an
+   optional `@:railsChannel` subscription remains a bounded follow-up rather
+   than being inferred by this server-rendered Turbo contract.
 5. **Target existence validation**: validate owned HHX targets and add checked
    interop for Rails-owned ERB targets.
 6. **Testing helpers**: generate Rails/Playwright helper constants from the

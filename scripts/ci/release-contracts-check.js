@@ -185,6 +185,9 @@ if (!rubyHxml.includes("-cp ${SCOPE_DIR}/std/ruby/_std/")) {
 if (!clientHxml.includes("-cp ${SCOPE_DIR}/std/")) {
   fail("haxe_libraries/railshx.client.hxml must include std/ classpath");
 }
+if (!clientHxml.includes("--macro rails.macros.HotwireContractMacro.enable()")) {
+  fail("haxe_libraries/railshx.client.hxml must enable shared @:hotwireContract expansion");
+}
 for (const forbidden of ["std/ruby/_std", "CompilerBootstrap", "CompilerInit", "-lib reflaxe"]) {
   if (clientHxml.includes(forbidden)) {
     fail(`haxe_libraries/railshx.client.hxml must not include Ruby target wiring: ${forbidden}`);

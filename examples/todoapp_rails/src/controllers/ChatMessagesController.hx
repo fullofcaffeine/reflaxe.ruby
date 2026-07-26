@@ -55,7 +55,7 @@ class ChatMessagesController extends ApplicationController {
 		var attrs = ParamsMacro.requirePermit(this.params(), ChatMessage.railsParamKey, [ChatMessage.f.body]);
 		attrs = ParamsMacro.mergeField(attrs, ChatMessage.f.userId, currentUser.id);
 		var message = ChatMessage.create(attrs);
-		TurboStreams.broadcastPrependTo(ChatRoomContract.messageStream(), ChatRoomContract.messageTarget(), ChatRoomContract.messageTemplate(),
+		TurboStreams.broadcastPrependTo(ChatRoomContract.streamName(), ChatRoomContract.streamTarget(), ChatRoomContract.rowTemplate(),
 			ChatRoomContract.messageLocals(message));
 		respondTo(function(format) {
 			format.turboStream(function() {

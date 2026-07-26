@@ -1407,6 +1407,14 @@
       "reason": "Build macro for railsChannel classes that enforces subscribed() and generates the browser-only typed client channel reference from the server-owned generic contract."
     },
     {
+      "id": "std.rails.hotwire_contract_macro",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/macros/HotwireContractMacro.hx",
+      "surface": "rails.macros.HotwireContractMacro",
+      "reason": "Build macro for @:hotwireContract declaration classes that generates zero-wrapper typed StreamName<TLocals>, StreamTarget, and Template<TLocals> accessors while rejecting imprecise or incomplete contracts."
+    },
+    {
       "id": "std.rails.active_storage",
       "owner": "std",
       "status": "implemented",

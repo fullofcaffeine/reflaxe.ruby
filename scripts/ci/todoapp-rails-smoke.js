@@ -1154,15 +1154,13 @@ for (const expected of [
 
 const chatRoomContractSource = readFileSync(join(sourceDir, "shared", "ChatRoomContract.hx"), "utf8");
 for (const expected of [
+  "@:hotwireContract",
   "class ChatRoomContract",
-  "messageStream():StreamName<ChatMessageLocals>",
-  "return StreamName.named(ChatRoomHooks.streamName)",
-  "messageTarget():StreamTarget",
-  "return StreamTarget.named(ChatRoomHooks.listTargetId)",
+  "static final stream = ChatRoomHooks.streamName",
+  "static final target = ChatRoomHooks.listTargetId",
+  "static final row:Template<ChatMessageLocals> = Template.of(ChatMessageView)",
   "panelTarget():StreamTarget",
   "return StreamTarget.named(ChatRoomHooks.panelId)",
-  "messageTemplate():Template<ChatMessageLocals>",
-  "Template.of(ChatMessageView)",
   "messageLocals(message:ChatMessage):ChatMessageLocals",
 ]) {
   if (!chatRoomContractSource.includes(expected)) {

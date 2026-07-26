@@ -9,6 +9,7 @@ import reflaxe.ruby.macros.BoundaryEnforcer;
 import reflaxe.ruby.macros.RailsInlineMarkup;
 import reflaxe.ruby.macros.RubyExtensionMacro;
 import reflaxe.ruby.macros.StrictModeEnforcer;
+import rails.macros.HotwireContractMacro;
 #end
 
 class CompilerInit {
@@ -30,6 +31,7 @@ class CompilerInit {
 		// application code can use the conventional `#if ruby` branch.
 		MacroCompiler.define("ruby");
 		RailsInlineMarkup.enable();
+		HotwireContractMacro.enable();
 		MacroCompiler.addGlobalMetadata("", "@:build(reflaxe.ruby.macros.RubyExtensionMacro.build())", true, true, false);
 
 		var buildContext = RubyBuildContextResolver.resolve();

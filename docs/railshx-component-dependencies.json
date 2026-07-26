@@ -435,7 +435,7 @@
     },
     {
       "id": "turbo-and-hotwire",
-      "scope": "The documented typed Turbo client hooks/frame helpers and server Turbo Stream target, template, render, and broadcast slice.",
+      "scope": "The documented typed Turbo client hooks/frame helpers, server Turbo Stream target/template/render/broadcast helpers, and declaration-driven typed Hotwire contract slice.",
       "claimMarkers": [
         {
           "path": "docs/compatibility-matrix.md",
@@ -444,6 +444,7 @@
       ],
       "sourceRoots": [
         "std/rails/hotwire",
+        "std/rails/macros/HotwireContractMacro.hx",
         "std/rails/turbo",
         "examples/turbo_streams",
         "examples/todoapp_rails/src/client",
@@ -459,6 +460,8 @@
         { "kind": "compile", "command": "test:turbo", "lane": "full" },
         { "kind": "compile", "command": "test:turbo-streams", "lane": "full" },
         { "kind": "negative", "command": "test:turbo-streams", "lane": "full" },
+        { "kind": "compile", "command": "test:hotwire-contract", "lane": "full" },
+        { "kind": "negative", "command": "test:hotwire-contract", "lane": "full" },
         { "kind": "browser", "command": "test:todoapp-playwright", "lane": "browser" },
         { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
       ]

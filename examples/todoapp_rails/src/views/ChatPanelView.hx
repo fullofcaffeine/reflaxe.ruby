@@ -34,7 +34,7 @@ class ChatPanelView {
 			<div class="chat-panel-header">
 				<div class="chat-panel-kicker">
 					<span class="eyebrow">Typed Turbo room</span>
-					<turbo_stream_from stream=${ChatRoomContract.messageStream()} />
+					<turbo_stream_from stream=${ChatRoomContract.streamName()} />
 				</div>
 				<h2>Ship room</h2>
 				<p>
@@ -46,7 +46,7 @@ class ChatPanelView {
 
 			<ul id=${TodoHooks.chatListId} class=${TodoHooks.chatListClass}>
 				<for ${message in locals.messages}>
-					<partial template=${ChatRoomContract.messageTemplate()} locals=${ChatRoomContract.messageLocals(message)} />
+					<partial template=${ChatRoomContract.rowTemplate()} locals=${ChatRoomContract.messageLocals(message)} />
 				</for>
 			</ul>
 

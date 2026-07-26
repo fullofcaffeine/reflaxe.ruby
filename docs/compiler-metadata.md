@@ -128,6 +128,7 @@ than Haxe runtime shells.
 | `@:railsMailerSuperclass("Ruby::Mailer")` | Typed companion/extern mailer contract; one literal Ruby superclass. | Reuses an existing framework/gem-owned mailer superclass without core package-name special cases. |
 | `@:railsJob` | ActiveJob class with an instance `perform(...)` method. | Emits an ActiveJob subclass and validates/lower typed retry/discard lifecycle declarations. Missing `perform` is rejected. |
 | `@:railsChannel` | ActionCable channel class with `subscribed()`. | Emits an ActionCable channel and lowers typed params/stream contracts. Missing required lifecycle methods are rejected. |
+| `@:hotwireContract` | Concrete declaration class with private static final `stream`, `target`, and explicitly typed `row:Template<TLocals>` fields. | Consumes those declaration-only fields and generates inline `streamName():StreamName<TLocals>`, `streamTarget():StreamTarget`, and `rowTemplate():Template<TLocals>` accessors. Haxe `Dynamic`/`Any` sources or locals, missing fields, incompatible types, and generated-name collisions fail closed; locals mapping and DOM-target existence remain explicit. |
 | `@:railsCableConnection` | ActionCable connection class with `connect()` and typed identifier declaration. | Emits `ApplicationCable::Connection`; missing `connect` or identifier host is rejected. |
 | `@:railsTest("path")` | Rails test/spec declaration class; safe literal output path. | Materializes a Rails-native test artifact instead of a runtime Haxe class. |
 | `@:railsTestAdapter("rails.minitest" | "rails.rspec")` | `@:railsTest` class; one supported adapter literal. | Selects generated Minitest or RSpec shape; unsupported adapters fail closed. |
@@ -148,6 +149,7 @@ documentation coverage gate remains complete.
 | --- | --- |
 | `@:rubyExternStub` | Extension/Rails build macros mark injected compile-time stubs so the Ruby compiler does not emit fake method bodies. |
 | `@:rubyInjectedExtension` | The Ruby extension build macro marks members it injected, preventing duplicate collision diagnostics during repeated macro passes. |
+| `@:hotwireContractGenerated` | The Hotwire contract build macro marks its generated inline accessors for diagnostics and inspection. Application code authors `@:hotwireContract`, not this marker. |
 | `@:rubyExtensionExpr({...})` | A companion/generator handoff on a static method owned by a type marked with both `@:rubyNoEmit` and `@:rubyAllowRaw`. Schema 1 accepts exactly one literal `template` or constant-string `templateArg`, an optional integer `valueStart`, and indexed placeholders such as `{0}`. The compiler substitutes normally lowered typed arguments and rejects unknown keys, nonconstant templates, missing placeholders, and out-of-range indexes. App code should call the typed companion facade, not author this raw carrier directly. |
 | `@:railsAssociation` | Model macro handoff carrying the resolved association name for compiler lowering. |
 | `@:railsAttachment` / `@:railsAttachmentKind` | Model macro handoff carrying generated ActiveStorage attachment name/kind. |

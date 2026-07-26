@@ -248,6 +248,7 @@ module HXRuby
           "# Ruby-only std overrides while preserving shared typed RailsHx tokens.",
           "-cp ${HXRUBY_GEM_ROOT}/std",
           "-D railshx.client=#{HXRuby::VERSION}",
+          "--macro rails.macros.HotwireContractMacro.enable()",
           "",
         ].join("\n")
       end
