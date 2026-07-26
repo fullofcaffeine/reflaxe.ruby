@@ -5,6 +5,47 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.13.0 Hotwire DOM-target validation publication
+
+The normal tested-commit workflow published immutable
+[`v1.13.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.13.0)
+on 2026-07-26 for fail-closed DOM-target ownership across RailsHx HHX and
+Rails-owned ERB.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `115b6f9e30cc7ad8a014f74b8942eb5ccff52e7f` |
+| Canonical release tag | `v1.13.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30220931242`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30220931242), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`89846597555`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30220931242/job/89846597555), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-26T22:02:34Z` |
+| Release notes | Version heading, `v1.12.0...v1.13.0` compare link, categorized feature bullet, and exact `115b6f9` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.13.0.gem` | 279552 | `0a01c37abe0351875f11e00d8e8e26cb4204380cfecfd43168d92f492f07f0c0` |
+| `hxruby-1.13.0.gem.sha256.json` | 304 | `a88ed18b1d5e2a4038a5f412247bef03f97d622de11a4b63c3bce31ca3a2343e` |
+| `reflaxe.ruby-1.13.0.zip` | 1332632 | `cb6e336fec408a5ba46114f641b6dbe17a4fddbcea38a73a12d8e1b0f2a6f43e` |
+| `reflaxe.ruby-1.13.0.zip.sha256.json` | 317 | `194aa76bd969850b6e181b92b6e67354c13f1003dc994eb6cc50109da320c26a` |
+
+Each sidecar binds the downloaded bytes to version `1.13.0`, tag `v1.13.0`,
+and the tested source SHA. The extracted ZIP and gem embed the same provenance;
+their canonical format-1 manifests independently verified all 722 Haxelib and
+336 gem payload entries.
+
+RailsHx-owned structural HHX views can now declare
+`@:railsDomTargets(target, ...)`; the inline-markup owner verifies every
+compile-time token occurs as a static `id` in the selected
+`@:railsTemplateAst` method. Rails-owned ERB uses
+`StreamTarget.existing(template, target)`, which validates one safe template
+path and exact static id while ignoring comment-only matches. Missing,
+dynamic, unowned, unsafe, and disabled-HHX cases fail closed. Server-rendered
+Turbo remains independent of optional custom ActionCable payload channels.
+
 ## Stable 1.12.0 typed Hotwire contract publication
 
 The normal tested-commit workflow published immutable
