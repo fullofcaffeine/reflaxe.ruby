@@ -5,6 +5,52 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.16.0 typed ActionCable channel-test publication
+
+The normal tested-commit workflow published immutable
+[`v1.16.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.16.0)
+on 2026-07-27 for Haxe-authored, Rails-native ActionCable channel tests.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `4f08f2572e429bc396fe7940c13c842ed5423c1d` |
+| Canonical release tag | `v1.16.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30263132965`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30263132965), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`89978342101`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30263132965/job/89978342101), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-27T12:35:43Z` |
+| Release notes | Version heading, `v1.15.0...v1.16.0` compare link, categorized feature bullet, and exact `4f08f25` commit link |
+
+The Ruby 4.0 Rails runtime job's first toolchain-setup attempt received a
+Haxelib `502 Bad Gateway` before repository tests began. The workflow's
+failed-job rerun completed that lane and every required dependency successfully;
+publication remained gated until the successful rerun.
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.16.0.gem` | 284160 | `5b6f0fe301130252f94621359e9ca5ae258d33ec472169ab83df7c282f6e6b97` |
+| `hxruby-1.16.0.gem.sha256.json` | 304 | `77b7d25fa516464ab42d12650775d17a96619310b518a43512b87a4fcb7d307f` |
+| `reflaxe.ruby-1.16.0.zip` | 1345818 | `3e6c38dba0e2d2c03d1399e2fad1464457f792668783829481ec4510a17f6b0b` |
+| `reflaxe.ruby-1.16.0.zip.sha256.json` | 317 | `cd2db59f1d995d7e45fdc4fcb8f32d734dc7f473ea7970aea35359aa685d021e` |
+
+Each sidecar binds the downloaded bytes to version `1.16.0`, tag `v1.16.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities; their canonical format-1 manifests
+independently verified all 726 Haxelib and 338 gem payload entries with no
+missing, altered, duplicate, or extra content.
+
+`ChannelTestCase<TParams, TPayload>` now emits an ordinary
+`ActionCable::Channel::TestCase`. `@:railsChannelTest(ChannelType)` produces
+Rails' native `tests ChannelType` binding and verifies that the test generics
+match the channel contract. Typed Haxe subscription fields lower to Rails
+snake-case keys, while `assertHasStream`, `unsubscribe`, and `assertNoStreams`
+remain direct Rails helpers. Unsupported owners, generic drift, and RSpec
+adapters fail closed, and the generated Haxe-authored test runs in the Rails
+8.1.3 runtime lane.
+
 ## Stable 1.15.0 typed Hotwire scaffold publication
 
 The normal tested-commit workflow published immutable
