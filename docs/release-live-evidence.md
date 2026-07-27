@@ -5,6 +5,51 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.17.0 typed ActionCable connection-test publication
+
+The normal tested-commit workflow published immutable
+[`v1.17.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.17.0)
+on 2026-07-27 for Haxe-authored, Rails-native ActionCable connection tests.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `fdc3f6f08c73c9ee9bb952c5f82208dcac87a383` |
+| Canonical release tag | `v1.17.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30273154178`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30273154178), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`90013869629`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30273154178/job/90013869629), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-27T14:52:35Z` |
+| Release notes | Version heading, `v1.16.0...v1.17.0` compare link, categorized feature bullet, and exact `fdc3f6f` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.17.0.gem` | 284160 | `9f882957acd939078401734b7eb97eec19fd1d5713b438a6ff15b9feb017a3b0` |
+| `hxruby-1.17.0.gem.sha256.json` | 304 | `28f86d74b0bca4edae01a5ceb86a90cceba9b39158bcf66fbfaa5d196d9f07d0` |
+| `reflaxe.ruby-1.17.0.zip` | 1349293 | `5520672669a8f7206785b1df5882d5b55c19cd89dc0169b1446c545e06f9ab56` |
+| `reflaxe.ruby-1.17.0.zip.sha256.json` | 317 | `1a58c8d5fa12f03623a010d4560768a9c4a7ec02f213564ebd9f158518690a9e` |
+
+Each sidecar binds the downloaded bytes to version `1.17.0`, tag `v1.17.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities; their canonical format-1 manifests
+independently verified all 728 Haxelib and 339 gem payload entries with no
+missing, altered, duplicate, or extra content. The packaged Haxelib metadata,
+Ruby version constant, and gem specification all report version `1.17.0`.
+
+`ConnectionTestCase` now emits an ordinary
+`ActionCable::Connection::TestCase`, and
+`@:railsConnectionTest(ConnectionType)` produces Rails' native
+`tests ApplicationCable::Connection` binding after verifying the explicit
+`@:railsCableConnection` owner. `connectWithParam` preserves the nominal
+`ConnectionParam<T>` value type while lowering its Haxe field name to the
+Rails parameter key; `connectionValue` reads a typed connection identifier;
+and `assertRejectConnection` emits Rails' native block assertion. Invalid
+owners, RSpec adapters, and mismatched parameter values fail closed. The
+generated Haxe-authored accepted/rejected test replaces the prior handwritten
+connection proof and passes in the mandatory Rails 8.1.3 runtime lane.
+
 ## Stable 1.16.0 typed ActionCable channel-test publication
 
 The normal tested-commit workflow published immutable
