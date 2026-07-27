@@ -134,7 +134,11 @@ than Haxe runtime shells.
 | `@:railsCableConnection` | ActionCable connection class with `connect()` and typed identifier declaration. | Emits `ApplicationCable::Connection`; missing `connect` or identifier host is rejected. |
 | `@:railsTest("path")` | Rails test/spec declaration class; safe literal output path. | Materializes a Rails-native test artifact instead of a runtime Haxe class. |
 | `@:railsChannelTest(ChannelType)` | `@:railsTest` class extending `rails.test.ChannelTestCase`; one typed `@:railsChannel` owner. | Emits `ActionCable::Channel::TestCase` with Rails' native `tests ChannelType` binding. |
+| `@:railsConnectionTest(ConnectionType)` | `@:railsTest` class extending `rails.test.ConnectionTestCase`; one typed `@:railsCableConnection` owner. | Emits `ActionCable::Connection::TestCase` with Rails' native `tests ConnectionType` binding. |
 | `@:railsActionCableTestSubscribe` | Internal `ChannelTestCase.subscribe` facade method. | Marks the narrow compiler boundary that converts typed Haxe record fields to Rails snake_case subscription keys. |
+| `@:railsActionCableTestConnect` | Internal `ConnectionTestCase.connectWithParam` facade method. | Emits Rails' native `connect params:` call from a typed `ConnectionParam<T>` token. |
+| `@:railsActionCableTestConnectionValue` | Internal `ConnectionTestCase.connectionValue` facade method. | Reads a typed identifier from Rails' native test connection. |
+| `@:railsActionCableTestReject` | Internal `ConnectionTestCase.assertRejectConnection` facade method. | Emits Rails' native rejected-connection block assertion. |
 | `@:railsTestAdapter("rails.minitest" | "rails.rspec")` | `@:railsTest` class; one supported adapter literal. | Selects generated Minitest or RSpec shape; unsupported adapters fail closed. |
 | `@:railsTests` | Static declaration-host method inside `@:railsTest`. | Marks the legal Haxe test DSL body that the compiler consumes and erases into Rails-native test cases. |
 

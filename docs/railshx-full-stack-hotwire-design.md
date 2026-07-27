@@ -68,12 +68,12 @@ Turbo, DOM, or stdout APIs from leaking into the shared module.
 
 | Surface | Current state | Gap |
 | --- | --- | --- |
-| Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>`, `StreamName<TLocals>`, and `StreamTarget`. The todoapp now dogfoods this with `turbo_stream_from`, server-rendered broadcasts, and a hand-written shared chat room contract. | Needs model/callback ergonomics and reusable stream contract generation. |
-| ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. JavaScript builds derive `MyChannel.client:ChannelRef<TParams, TPayload>` for native subscriptions without repeated channel strings. | Useful for custom payload protocols, but not the canonical DOM update path when Turbo Streams can render a partial. The broader contract macro still needs to connect subscriptions to streams, targets, and templates. |
+| Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>`, `StreamName<TLocals>`, and `StreamTarget`. `@:hotwireContract` and `hxruby:scaffold --hotwire` generate reusable contracts and a complete resource slice. | Model/callback convenience remains deliberately deferred until Rails transaction and callback ordering can be explicit. |
+| ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. JavaScript builds derive `MyChannel.client:ChannelRef<TParams, TPayload>` for native subscriptions without repeated channel strings. Haxe-authored channel and connection tests execute through Rails' native test cases. | Custom payload protocols remain explicit because a server-rendered Turbo contract has no inherent payload-to-DOM mapping. Couple them only through a future typed adapter that can state and test that mapping. |
 | Haxe JS Turbo client | `Turbo.on*`, `Turbo.renderStreamMessage`, `Turbo.stream`, and Genes ES modules work with importmap. | Client-rendered stream HTML should be generated/typed when deliberately chosen; canonical Hotwire examples should not hand-build DOM fragments. |
 | Shared hooks | `TodoHooks` centralizes app-wide ids, attrs, classes, selectors, and storage keys. `@:hotwireHooks` generates the focused browser-safe stream/target/readiness accessors that `ChatRoomHooks`, Playwright exports, Haxe-authored browser tests, and explicit `hxruby:scaffold --hotwire` resources consume. | Broader generator customization can add presentation choices without weakening the typed hook contract. |
 | Shared pure domain behavior | `shared_domain` compiles one typed todo-draft contract and common vectors to Ruby and JavaScript, then requires byte-identical validation, ordered errors, and serialization output. | One bounded contract is proven; new domain claims need their own vectors and target-edge documentation. |
-| Browser tests | Playwright imports generated hook constants and verifies two-session updates. | Needs typed Haxe-authored browser test layer later, but TS Playwright can remain first-class. |
+| Browser tests | A Haxe-authored Playwright spec imports generated hook constants and verifies two-session updates; TypeScript Playwright remains first-class too. | Broader browser helper coverage should be added only with a concrete workflow that needs it. |
 
 ## Maintained Two-Target Domain Proof
 
@@ -257,7 +257,11 @@ It currently generates and validates:
 
 Haxe `Dynamic` sources or locals, missing declarations,
 non-`Template<TLocals>` rows, and generated-name collisions fail closed.
-Subscription composition and generator integration remain later phases.
+Generator integration is shipped. Custom `@:railsChannel` subscriptions remain
+separate: the contract describes Rails-rendered Turbo HTML, while a custom
+channel describes an application payload protocol. There is no truthful
+generic relationship between those types without an explicit payload-to-DOM
+adapter, so the macro does not imply one.
 DOM-target ownership is a separate proof at the view boundary:
 RailsHx-owned HHX views declare `@:railsDomTargets(...)`, while Rails-owned ERB
 uses `StreamTarget.existing(template, target)`.
@@ -386,8 +390,8 @@ The current todoapp chat is now the regression sentinel for this design:
 4. **Hotwire contract macro, first slice**: landed for generated typed
    stream/target/template accessors from one declaration, with Ruby and
    JavaScript compile evidence plus negative diagnostics. Connecting an
-   optional `@:railsChannel` subscription remains a bounded follow-up rather
-   than being inferred by this server-rendered Turbo contract.
+   optional `@:railsChannel` subscription is intentionally not inferred by this
+   server-rendered Turbo contract because no payload-to-DOM mapping is present.
 5. **Target existence validation**: landed as `@:railsDomTargets(...)` for
    owned structural HHX plus `StreamTarget.existing(template, target)` for
    Rails-owned ERB, with focused missing/dynamic/owner diagnostics.
@@ -404,6 +408,10 @@ The current todoapp chat is now the regression sentinel for this design:
    owner, generic params/payload parity, Rails-native subscription-key
    lowering, `assert_has_stream`, unsubscribe cleanup, negative diagnostics,
    and generated Rails runtime execution.
+9. **Typed connection tests**: landed as an explicit checked
+   `@:railsConnectionTest` owner, nominal param and identifier tokens, native
+   accepted/rejected connection calls, negative diagnostics, and generated
+   Rails runtime execution.
 
 ## Non-Goals
 

@@ -312,6 +312,35 @@ The first implementation slice should support:
 - Rails `ActionCable::Connection::TestCase` coverage for accepted and rejected
   connections.
 
+That connection-test coverage is Haxe-authored while Rails remains the runtime
+owner:
+
+```haxe
+@:railsConnectionTest(channels.ApplicationCableConnection)
+@:railsTest("channels/application_cable_connection_haxe_test")
+class ApplicationCableConnectionHaxeTest extends ConnectionTestCase {
+	@:test
+	public function acceptsTheTypedConnection():Void {
+		connectWithParam(ApplicationCableConnection.authToken, "ok");
+		equal({id: 42}, connectionValue(ApplicationCableConnection.currentUser));
+	}
+
+	@:test
+	public function rejectsTheTypedConnection():Void {
+		assertRejectConnection(() ->
+			connectWithParam(ApplicationCableConnection.authToken, "reject"));
+	}
+}
+```
+
+`@:railsConnectionTest` emits `tests ApplicationCable::Connection` and rejects
+owners that are not `@:railsCableConnection`. `connectWithParam` accepts the
+nominal `ConnectionParam<T>` token, so a wrong value type fails in Haxe, then
+lowers the token to Rails' native snake-case `params:` key. `connectionValue`
+uses the matching `ConnectionIdentifier<T>`, and rejected authentication emits
+Rails' `assert_reject_connection` block. The surface remains Minitest-only
+until RailsHx has an independently verified RSpec connection-test contract.
+
 ### Deferred Patterns
 
 These should remain explicit follow-up work rather than half-supported magic:

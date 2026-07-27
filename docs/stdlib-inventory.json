@@ -839,6 +839,14 @@
       "reason": "Typed Minitest-only marker for Haxe-authored ActionCable channel tests; binds an explicit @:railsChannel owner and emits native subscribe, assert_has_stream, unsubscribe, and assert_no_streams calls."
     },
     {
+      "id": "std.rails.test_connection_test_case",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/ConnectionTestCase.hx",
+      "surface": "rails.test.ConnectionTestCase",
+      "reason": "Typed Minitest-only marker for Haxe-authored ActionCable connection tests; binds an explicit @:railsCableConnection owner and emits native typed connect, identifier access, and assert_reject_connection calls."
+    },
+    {
       "id": "std.rails.test_dsl",
       "owner": "std",
       "status": "implemented",

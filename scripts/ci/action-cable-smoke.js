@@ -62,12 +62,26 @@ for (const file of [
   "app/channels/application_cable/connection.rb",
   "app/channels/todos_channel.rb",
   "app/lib/railshx/generated/main.rb",
+  "test/generated/channels/application_cable_connection_haxe_test.rb",
   "test/generated/channels/todos_channel_haxe_test.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     fail(`Expected ActionCable output file missing: ${fullPath}`);
+  }
+}
+const connectionTestRuby = readFileSync(join(outputDir, "test", "generated", "channels", "application_cable_connection_haxe_test.rb"), "utf8");
+for (const expected of [
+  /class ApplicationCableConnectionHaxeTest < ActionCable::Connection::TestCase/,
+  /tests ApplicationCable::Connection/,
+  /self\.connect\(params: \{"token" => "ok"\}\)/,
+  /assert_equal\(\{"id" => 42\}, self\.connection\(\)\.current_user\)/,
+  /self\.assert_reject_connection \{/,
+  /self\.connect\(params: \{"token" => "reject"\}\)/,
+]) {
+  if (!expected.test(connectionTestRuby)) {
+    fail(`Typed ActionCable connection-test output missing expected line: ${expected}`);
   }
 }
 const channelTestRuby = readFileSync(join(outputDir, "test", "generated", "channels", "todos_channel_haxe_test.rb"), "utf8");
@@ -135,6 +149,7 @@ for (const file of [
   "app/channels/application_cable/connection.rb",
   "app/channels/todos_channel.rb",
   "app/lib/railshx/generated/main.rb",
+  "test/generated/channels/application_cable_connection_haxe_test.rb",
   "test/generated/channels/todos_channel_haxe_test.rb",
   "run.rb",
 ]) {
@@ -158,7 +173,10 @@ writeInvalidChannelTestFixtures();
 for (const [main, expected] of [
   ["InvalidChannelTestContractMain", /generic params and payload must exactly match/],
   ["InvalidChannelTestOwnerMain", /expects a class annotated with @:railsChannel/],
-  ["InvalidChannelTestRspecMain", /currently supports only the rails\.minitest adapter/],
+  ["InvalidChannelTestRspecMain", /currently support only the rails\.minitest adapter/],
+  ["InvalidConnectionTestOwnerMain", /expects a class annotated with @:railsCableConnection/],
+  ["InvalidConnectionTestRspecMain", /currently support only the rails\.minitest adapter/],
+  ["InvalidConnectionTestValueMain", /String should be Int|Int should be String|Cannot unify/],
 ]) {
   const result = compileActionCable(invalidChannelTestOutputDir, {
     classPath: invalidChannelTestSourceDir,
@@ -361,7 +379,7 @@ stage("runtime ruby syntax", () => syntaxCheck([
   "config/application.rb",
   "config/environment.rb",
   "test/channels/todos_channel_test.rb",
-  "test/channels/application_cable_connection_test.rb",
+  "test/generated/channels/application_cable_connection_haxe_test.rb",
   "test/generated/channels/todos_channel_haxe_test.rb",
 ]));
 
@@ -775,6 +793,47 @@ function writeInvalidChannelTestFixtures() {
     "}",
     "",
   ].join("\n"));
+  writeFileSync(join(invalidChannelTestSourceDir, "InvalidConnectionTestOwnerMain.hx"), [
+    "import rails.test.ConnectionTestCase;",
+    "class NotAConnection {}",
+    "@:railsConnectionTest(InvalidConnectionTestOwnerMain.NotAConnection)",
+    "@:railsTest(\"channels/invalid_connection_owner_test\")",
+    "class WrongConnectionOwnerTest extends ConnectionTestCase {",
+    "\t@:test public function fails():Void {}",
+    "}",
+    "class InvalidConnectionTestOwnerMain {",
+    "\tstatic function main():Void { var owner:Class<WrongConnectionOwnerTest> = WrongConnectionOwnerTest; }",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidChannelTestSourceDir, "InvalidConnectionTestRspecMain.hx"), [
+    "import rails.test.ConnectionTestCase;",
+    "@:railsConnectionTest(channels.ApplicationCableConnection)",
+    "@:railsTestAdapter(\"rails.rspec\")",
+    "@:railsTest(\"channels/invalid_connection_spec\")",
+    "class WrongConnectionAdapterTest extends ConnectionTestCase {",
+    "\t@:test public function fails():Void {}",
+    "}",
+    "class InvalidConnectionTestRspecMain {",
+    "\tstatic function main():Void { var owner:Class<WrongConnectionAdapterTest> = WrongConnectionAdapterTest; }",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidChannelTestSourceDir, "InvalidConnectionTestValueMain.hx"), [
+    "import channels.ApplicationCableConnection;",
+    "import rails.test.ConnectionTestCase;",
+    "@:railsConnectionTest(channels.ApplicationCableConnection)",
+    "@:railsTest(\"channels/invalid_connection_value_test\")",
+    "class WrongConnectionValueTest extends ConnectionTestCase {",
+    "\t@:test public function fails():Void {",
+    "\t\tconnectWithParam(ApplicationCableConnection.authToken, 42);",
+    "\t}",
+    "}",
+    "class InvalidConnectionTestValueMain {",
+    "\tstatic function main():Void { var owner:Class<WrongConnectionValueTest> = WrongConnectionValueTest; }",
+    "}",
+    "",
+  ].join("\n"));
 }
 
 function materializeRuntimeRailsApp() {
@@ -809,27 +868,6 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "action_cable/channel/test_case"
 require "action_cable/connection/test_case"
-`);
-
-  writeFile("test/channels/application_cable_connection_test.rb", `require "test_helper"
-require Rails.root.join("app/channels/application_cable/connection")
-
-class ApplicationCableConnectionTest < ActionCable::Connection::TestCase
-  tests ApplicationCable::Connection
-
-  test "accepts a typed connection and assigns the typed identifier" do
-    connect params: { token: "ok" }
-
-    assert_equal({"id" => 42}, connection.current_user)
-    assert_includes connection.identifiers, :current_user
-  end
-
-  test "rejects unauthorized typed connections" do
-    assert_reject_connection do
-      connect params: { token: "reject" }
-    end
-  end
-end
 `);
 
   writeFile("test/channels/todos_channel_test.rb", `require "test_helper"

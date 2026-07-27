@@ -4363,6 +4363,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActionCableCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
+			case TField(_, access) if (hasFieldAccessMeta(access, ":railsActionCableTestConnect") && params.length == 2):
+				RubyCallableCall(RubyLocal("self"), "connect", [
+					RubyKeywordArgument("params", RubyHash([{key: actionCableConnectionParamName(params[0]), value: compileExpr(params[1])}]))
+				]);
+			case TField(_, access) if (hasFieldAccessMeta(access, ":railsActionCableTestConnectionValue") && params.length == 1):
+				RubyMember(RubyCall(RubyLocal("self"), "connection", []), actionCableConnectionIdentifierName(params[0]));
+			case TField(_, access) if (hasFieldAccessMeta(access, ":railsActionCableTestReject") && params.length == 1):
+				RubyCallableCall(RubyLocal("self"), "assert_reject_connection", [], compileRubyBlockNode(params[0]));
 			case TField(_, access) if (hasFieldAccessMeta(access, ":railsActionCableTestSubscribe") && params.length == 1):
 				RubyCall(RubyLocal("self"), "subscribe", [actionCableTestSubscriptionParams(params[0])]);
 			case TField(_, access) if (hasFieldAccessMeta(access, ":railsActionCableParam") && params.length == 1):
@@ -4375,6 +4383,25 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr(actionCableConnectionIdentifierName(params[0]));
 			case _:
 				null;
+		}
+	}
+
+	static function actionCableConnectionParamName(expr:TypedExpr):String {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TCall(callee, params) if (params.length == 1):
+				var info = staticCallInfo(callee);
+				var value = staticString(params[0]);
+				if (info != null && info.name == "named" && isActionCableConnectionParamOwner(info.owner) && value != null) {
+					RubyNaming.toMethodName(value);
+				} else {
+					Context.error("ConnectionTestCase.connectWithParam expects a static ConnectionParam<T> token.", expr.pos);
+				}
+			case TField(_, FStatic(_, fieldRef)):
+				var field = fieldRef.get();
+				var fieldExpr = field.expr();
+				fieldExpr == null ? RubyNaming.toMethodName(field.name) : actionCableConnectionParamName(fieldExpr);
+			case _:
+				Context.error("ConnectionTestCase.connectWithParam expects a static ConnectionParam<T> token.", expr.pos);
 		}
 	}
 
