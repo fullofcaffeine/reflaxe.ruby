@@ -5,6 +5,49 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.15.0 typed Hotwire scaffold publication
+
+The normal tested-commit workflow published immutable
+[`v1.15.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.15.0)
+on 2026-07-27 for explicit end-to-end typed Hotwire scaffold generation.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `36b5a73442b9089efafa7ea7b9ee7fcad7f1c0db` |
+| Canonical release tag | `v1.15.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30252140901`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30252140901), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`89941516918`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30252140901/job/89941516918), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-27T09:42:23Z` |
+| Release notes | Version heading, `v1.14.0...v1.15.0` compare link, categorized feature bullet, and exact `36b5a73` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.15.0.gem` | 283648 | `29a63850b30a07e2e0ae336219f2824a9dae917304b71379920f2ed7c827126d` |
+| `hxruby-1.15.0.gem.sha256.json` | 304 | `edb294d2267ab42f9ca5c36a98255a7fdebff474c38e2e9e0a8df770344eb3ae` |
+| `reflaxe.ruby-1.15.0.zip` | 1341639 | `a433888663e15ec20d545fedaf0a55d993c4c4d951d416a68292e18a4e3be31c` |
+| `reflaxe.ruby-1.15.0.zip.sha256.json` | 317 | `7d2de6f42e58e2384612afc34cab4aa729970b02871068d67f0b03af6d30b9a7` |
+
+Each sidecar binds the downloaded bytes to version `1.15.0`, tag `v1.15.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities; their canonical format-1 manifests
+independently verified all 724 Haxelib and 337 gem payload entries with no
+missing, altered, duplicate, or extra content. The packaged Haxelib metadata
+and gem specification both report version `1.15.0`.
+
+`hxruby:scaffold Model ... --controller --hotwire` now generates separate
+browser-safe hooks and server-only stream/template contracts, an HHX
+subscription with a compile-time-owned DOM target, one row partial reused for
+initial rendering and create broadcasts, a persisted-only native Turbo Streams
+broadcast, and a Minitest `assert_broadcasts` seam. A manifest-owned
+`hotwire-hooks.hxml` exports macro-derived selectors for Playwright and refuses
+to overwrite an app-owned TypeScript file. RSpec generation fails closed unless
+tests are explicitly skipped, and the Rails app generator supplies the workflow
+guide without inventing a fake domain resource.
+
 ## Stable 1.14.0 typed Hotwire test-helper publication
 
 The normal tested-commit workflow published immutable
