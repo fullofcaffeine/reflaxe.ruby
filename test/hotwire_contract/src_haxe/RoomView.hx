@@ -1,6 +1,7 @@
 package;
 
 import rails.action_view.HtmlNode;
+import RoomHooks.RoomTokens;
 
 /**
 	Positive HHX target-ownership fixture.
@@ -10,9 +11,9 @@ import rails.action_view.HtmlNode;
 **/
 @:railsTemplate("rooms/index")
 @:railsTemplateAst("render")
-@:railsDomTargets(RoomHooks.rowsId)
+@:railsDomTargets(RoomTokens.rowsId)
 class RoomView {
 	public static function render():HtmlNode {
-		return <main><ul id=${RoomHooks.rowsId}></ul></main>;
+		return <main><ul id=${RoomTokens.rowsId}></ul></main>;
 	}
 }

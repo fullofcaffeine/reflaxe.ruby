@@ -50,7 +50,7 @@ textual import scan proves runtime semantics.
 
 | Component family | Supported slice | Required target evidence |
 | --- | --- | --- |
-| ActionCable | Channels, connections, server-derived typed client subscriptions, streams, payloads and perform actions | Generated Rails channel tests plus stock Haxe JS, Genes and browser-client sentinels |
+| ActionCable | Channels, connections, server-derived typed client subscriptions, streams, payloads, perform actions, and typed Minitest broadcast assertions | Generated Rails channel/request tests plus stock Haxe JS, Genes and browser-client sentinels |
 | ActionController and routing | Controllers, lifecycle, params, request/response, route refs and Haxe-owned route DSL | Rails request/integration runtime |
 | ActionMailer | Mailers, params, templates, attachments, previews and delivery | Generated Rails mailer tests |
 | ActionView, HHX and components | Typed templates, helpers, forms, partials, layouts, capture and slots | Rails integration, Chromium and production dogfood |
@@ -62,7 +62,7 @@ textual import scan proves runtime semantics.
 | Engines, autoload and concerns | Engine-local output, autoload integration, concern shape and host consumption | Ruby host execution plus mandatory exact-Rails concern runtime |
 | Generators, adoption and tests | Public generators, Rails-owned adoption, ownership safety and test generation | Mandatory real Rails generator loading plus mixed-app Rails runtime |
 | Reference application | Combined compile, Rails, database, browser, assets and production path | Rails runtime, Chromium and production lanes |
-| Turbo and Hotwire | Typed client events/frames, server stream target/render/broadcast helpers, declaration-driven typed stream/target/template contracts, and fail-closed HHX/ERB target ownership | Compiler diagnostics plus Chromium and production reference app |
+| Turbo and Hotwire | Typed client events/frames, server stream target/render/broadcast helpers, declaration-driven server contracts, browser-safe generated test hooks, and fail-closed HHX/ERB target ownership | Compiler diagnostics plus Chromium and production reference app |
 
 The ActiveSupport, concern, and real Rails generator checks share
 `npm run test:rails-component-runtime`. That command installs the exact verified

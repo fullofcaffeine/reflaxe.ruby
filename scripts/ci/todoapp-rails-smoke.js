@@ -683,9 +683,11 @@ for (const expected of [
   'require "test_helper"',
   "class TodosHaxeRequestTest < ActionDispatch::IntegrationTest",
   "include Devise::Test::IntegrationHelpers",
+  "include ActionCable::TestHelper",
   'test "signed-in users can view their board" do',
   'test "create accepts typed route and request params" do',
   'test "route param actions expose typed response helpers" do',
+  'test "chat create broadcasts through the typed Hotwire stream" do',
   "get(self.todos_path())",
   "assert_response(:ok)",
   'assert_includes(response.body, "Typed Rails, polished Ruby.")',
@@ -699,6 +701,7 @@ for (const expected of [
   'get(self.file_path(begin',
   'assert_equal("text/plain", response.media_type)',
   'assert_equal("RailsHx file route: docs/readme\\n", response.body)',
+  'assert_broadcasts("todoapp:chat", 1) { post(self.chat_messages_path(), params: {"chat_message" => {body: "typed broadcast"}}) }',
 ]) {
   if (!haxeRequestTestRuby.includes(expected)) {
     console.error(`todoapp_rails Haxe-authored request test output missing expected line: ${expected}`);
@@ -1129,8 +1132,9 @@ for (const expected of [
   "examples/todoapp_rails/src/e2e/todo_hooks.ts",
   "TodoHooks.classSelector(TodoHooks.formClass)",
   "TodoHooks.classSelector(TodoHooks.chatFormClass)",
-  "ChatRoomHooks.streamName",
-  "ChatRoomHooks.streamSourceConnectedSelector",
+  "ChatRoomHooks.streamName()",
+  "ChatRoomHooks.targetSelector()",
+  "ChatRoomHooks.readySelector()",
 ]) {
   if (!hookExportSource.includes(expected)) {
     console.error(`todoapp_rails hook exporter missing expected content: ${expected}`);
@@ -1141,10 +1145,11 @@ for (const expected of [
 const chatRoomHooksSource = readFileSync(join(sourceDir, "shared", "ChatRoomHooks.hx"), "utf8");
 for (const expected of [
   "class ChatRoomHooks",
-  'streamName:ChatRoomStream = "todoapp:chat"',
+  "@:hotwireHooks",
+  'stream:ChatRoomStream = "todoapp:chat"',
+  "target:DomId = TodoHooks.chatListId",
+  'ready:Selector = "turbo-cable-stream-source[connected]"',
   "panelId:DomId = TodoHooks.chatPanelId",
-  "listTargetId:DomId = TodoHooks.chatListId",
-  'streamSourceConnectedSelector:Selector = "turbo-cable-stream-source[connected]"',
 ]) {
   if (!chatRoomHooksSource.includes(expected)) {
     console.error(`todoapp_rails chat room hooks source missing expected contract content: ${expected}`);
@@ -1156,8 +1161,8 @@ const chatRoomContractSource = readFileSync(join(sourceDir, "shared", "ChatRoomC
 for (const expected of [
   "@:hotwireContract",
   "class ChatRoomContract",
-  "static final stream = ChatRoomHooks.streamName",
-  "static final target = ChatRoomHooks.listTargetId",
+  "static final stream = ChatRoomHooks.streamName()",
+  "static final target = ChatRoomHooks.targetId()",
   "static final row:Template<ChatMessageLocals> = Template.of(ChatMessageView)",
   "panelTarget():StreamTarget",
   "return StreamTarget.named(ChatRoomHooks.panelId)",
@@ -1656,6 +1661,8 @@ function compileWithFirstAvailableReflaxe() {
 
 function exportTodoHooksForPlaywright() {
   run("haxe", [
+    "-lib",
+    "railshx.client",
     "-cp",
     sourceDir,
     "-main",

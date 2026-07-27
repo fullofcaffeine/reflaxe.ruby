@@ -6,16 +6,19 @@ import shared.TodoHooks.Selector;
 /**
 	Browser-safe Hotwire hooks for the todoapp chat room.
 
-	These values are shared by HHX, generated Playwright hooks, and Haxe client
-	code. Server-only contracts such as typed ActionView templates live in
-	`ChatRoomContract` so the frontend build can keep depending on this small
-	constant surface without pulling in Rails compiler macros.
+	`@:hotwireHooks` consumes the private stream, target, and explicit readiness
+	declarations and generates browser-safe typed accessors. Server-only
+	contracts such as typed ActionView templates live in `ChatRoomContract`, so
+	frontend and Playwright builds never need to import models or views merely to
+	reuse test selectors.
 **/
+@:hotwireHooks
 class ChatRoomHooks {
-	public static inline var streamName:ChatRoomStream = "todoapp:chat";
+	static final stream:ChatRoomStream = "todoapp:chat";
+	static final target:DomId = TodoHooks.chatListId;
+	static final ready:Selector = "turbo-cable-stream-source[connected]";
+
 	public static inline var panelId:DomId = TodoHooks.chatPanelId;
-	public static inline var listTargetId:DomId = TodoHooks.chatListId;
-	public static inline var streamSourceConnectedSelector:Selector = "turbo-cable-stream-source[connected]";
 }
 
 abstract ChatRoomStream(String) from String to String {}

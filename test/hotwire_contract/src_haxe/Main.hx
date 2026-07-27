@@ -2,6 +2,7 @@ package;
 
 class Main {
 	static function main():Void {
+		var broadcastTest:BroadcastRequestTest = null;
 		Sys.println(RoomContract.streamName());
 		Sys.println(RoomContract.streamTarget());
 		var legacyTarget = rails.turbo.StreamTarget.existing("rooms/legacy", "legacy-room-rows");

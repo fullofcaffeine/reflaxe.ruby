@@ -823,6 +823,14 @@
       "reason": "Typed Haxe-authored Rails test assertion facade lowered by the compiler to ordinary Minitest or RSpec helpers without a RailsHx runtime assertion layer."
     },
     {
+      "id": "std.rails.test_action_cable_assert",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/ActionCableAssert.hx",
+      "surface": "rails.test.ActionCableAssert",
+      "reason": "Typed Minitest-only ActionCable broadcast assertion that requests Rails' native ActionCable::TestHelper include, lowers to assert_broadcasts, and rejects RSpec until an equivalent matcher contract is independently verified."
+    },
+    {
       "id": "std.rails.test_dsl",
       "owner": "std",
       "status": "implemented",

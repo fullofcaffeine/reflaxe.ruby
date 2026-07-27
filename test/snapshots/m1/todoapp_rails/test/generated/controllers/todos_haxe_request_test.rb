@@ -3,6 +3,7 @@ require "test_helper"
 
 class TodosHaxeRequestTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
+  include ActionCable::TestHelper
   test "signed-in users can view their board" do
     user = User.create(name: "Haxe Request User", email: "request-viewer@example.test", role: "member", password: "password123", password_confirmation: "password123")
     sign_in(:user, user)
@@ -37,6 +38,13 @@ class TodosHaxeRequestTest < ActionDispatch::IntegrationTest
     assert_response(:ok)
     assert_equal("text/plain", response.media_type)
     assert_equal("RailsHx file route: docs/readme\n", response.body)
+    sign_out(:user)
+  end
+  test "chat create broadcasts through the typed Hotwire stream" do
+    user = User.create(name: "Haxe Cable User", email: "request-cable@example.test", role: "member", password: "password123", password_confirmation: "password123")
+    sign_in(:user, user)
+    assert_broadcasts("todoapp:chat", 1) { post(self.chat_messages_path(), params: {"chat_message" => {body: "typed broadcast"}}) }
+    assert_response(:no_content)
     sign_out(:user)
   end
 end

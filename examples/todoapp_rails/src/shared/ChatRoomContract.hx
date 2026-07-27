@@ -18,8 +18,8 @@ import views.ChatMessageView.ChatMessageLocals;
 **/
 @:hotwireContract
 class ChatRoomContract {
-	static final stream = ChatRoomHooks.streamName;
-	static final target = ChatRoomHooks.listTargetId;
+	static final stream = ChatRoomHooks.streamName();
+	static final target = ChatRoomHooks.targetId();
 	static final row:Template<ChatMessageLocals> = Template.of(ChatMessageView);
 
 	public static inline function panelTarget():StreamTarget {

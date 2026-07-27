@@ -8,7 +8,7 @@ import haxe.macro.Type;
 import haxe.macro.TypeTools;
 
 /**
-	Builds the first declarative RailsHx Hotwire contract surface.
+	Builds the declarative RailsHx Hotwire contract and browser-hook surfaces.
 
 	The declaration-only `stream`, `target`, and `row` fields keep the source of
 	each fact visible and type-checkable in ordinary Haxe. This macro consumes
@@ -20,6 +20,11 @@ import haxe.macro.TypeTools;
 	rendered HTML itself. Mappings remain explicit application code; target
 	existence is proven at the owning view boundary with `@:railsDomTargets(...)`
 	for HHX or `StreamTarget.existing(...)` for Rails-owned ERB.
+
+	`@:hotwireHooks` is deliberately separate from the server contract. Its
+	stream, target, and explicit readiness selector are safe to import from Haxe
+	JavaScript and export to Playwright without pulling server-only models or
+	ActionView templates into the browser dependency graph.
 **/
 class HotwireContractMacro {
 	static var enabled = false;
@@ -44,11 +49,18 @@ class HotwireContractMacro {
 			return fields;
 		}
 		var classType = localClass.get();
-		var metadata = classType.meta.extract(":hotwireContract");
-		if (metadata.length == 0) {
+		var contractMetadata = classType.meta.extract(":hotwireContract");
+		var hooksMetadata = classType.meta.extract(":hotwireHooks");
+		if (contractMetadata.length == 0 && hooksMetadata.length == 0) {
 			return fields;
 		}
-		if (metadata.length != 1 || (metadata[0].params != null && metadata[0].params.length != 0)) {
+		if (contractMetadata.length > 0 && hooksMetadata.length > 0) {
+			Context.error("@:hotwireContract and @:hotwireHooks own different server/browser declarations and cannot annotate the same class.", classType.pos);
+		}
+		if (hooksMetadata.length > 0) {
+			return buildHooks(fields, classType, hooksMetadata);
+		}
+		if (contractMetadata.length != 1 || (contractMetadata[0].params != null && contractMetadata[0].params.length != 0)) {
 			Context.error("@:hotwireContract does not accept arguments; declare static final stream, target, and row fields.", classType.pos);
 		}
 		if (classType.isExtern || classType.isInterface) {
@@ -78,6 +90,55 @@ class HotwireContractMacro {
 		return retained;
 	}
 
+	/**
+		Consumes the browser-safe declarations and emits typed inline accessors.
+
+		Readiness is explicit because neither a Turbo stream name nor a DOM target
+		can prove which browser element represents a connected subscription.
+		`targetSelector()` is the only derived fact and retains the declared
+		selector type, keeping Haxe-authored and exported Playwright tests aligned.
+	**/
+	static function buildHooks(fields:Array<Field>, classType:ClassType, metadata:Array<MetadataEntry>):Array<Field> {
+		if (metadata.length != 1 || (metadata[0].params != null && metadata[0].params.length != 0)) {
+			Context.error("@:hotwireHooks does not accept arguments; declare static final stream, target, and ready fields.", classType.pos);
+		}
+		if (classType.isExtern || classType.isInterface) {
+			Context.error("@:hotwireHooks must annotate a concrete declaration class.", classType.pos);
+		}
+
+		var stream = requiredHooksDeclaration(fields, "stream");
+		var target = requiredHooksDeclaration(fields, "target");
+		var ready = requiredHooksDeclaration(fields, "ready");
+		var streamSource = fieldInitializer(stream);
+		var targetSource = fieldInitializer(target);
+		var readySource = fieldInitializer(ready);
+		var streamType = declaredFieldType(stream, "@:hotwireHooks");
+		var targetType = declaredFieldType(target, "@:hotwireHooks");
+		var selectorType = declaredFieldType(ready, "@:hotwireHooks");
+
+		rejectStringCompatibleSource(stream, "stream", "@:hotwireHooks");
+		rejectStringCompatibleSource(target, "target", "@:hotwireHooks");
+		rejectStringCompatibleSource(ready, "ready", "@:hotwireHooks");
+		requiredHookToken(stream, "stream");
+		var targetValue = requiredHookToken(target, "target");
+		requiredHookToken(ready, "ready");
+		if (!~/^[A-Za-z_][A-Za-z0-9_-]*$/.match(targetValue)) {
+			Context.error("@:hotwireHooks `target` must be a selector-safe DOM id containing only letters, digits, `_`, or `-` and starting with a letter or `_`.",
+				target.pos);
+		}
+		reserveHooksGeneratedNames(fields);
+
+		var retained = [
+			for (field in fields)
+				if (field != stream && field != target && field != ready) field
+		];
+		retained.push(generatedAccessor("streamName", streamSource, streamType, macro return $e{streamSource}));
+		retained.push(generatedAccessor("targetId", targetSource, targetType, macro return $e{targetSource}));
+		retained.push(generatedAccessor("targetSelector", targetSource, selectorType, macro return "#" + $e{targetSource}));
+		retained.push(generatedAccessor("readySelector", readySource, selectorType, macro return $e{readySource}));
+		return retained;
+	}
+
 	static function requiredDeclaration(fields:Array<Field>, name:String):Field {
 		var found:Null<Field> = null;
 		for (field in fields) {
@@ -98,6 +159,30 @@ class HotwireContractMacro {
 			case FVar(_, initializer) if (initializer != null):
 			case _:
 				Context.error("@:hotwireContract `" + name + "` must have a value initializer.", found.pos);
+		}
+		return found;
+	}
+
+	static function requiredHooksDeclaration(fields:Array<Field>, name:String):Field {
+		var found:Null<Field> = null;
+		for (field in fields) {
+			if (field.name == name) {
+				if (found != null) {
+					Context.error("@:hotwireHooks declares `" + name + "` more than once.", field.pos);
+				}
+				found = field;
+			}
+		}
+		if (found == null) {
+			return Context.error("@:hotwireHooks requires a private static final `" + name + "` declaration.", Context.currentPos());
+		}
+		if (!hasAccess(found, AStatic) || !hasAccess(found, AFinal) || hasAccess(found, APublic)) {
+			Context.error("@:hotwireHooks `" + name + "` must be private static final because the macro replaces it with a typed accessor.", found.pos);
+		}
+		switch (found.kind) {
+			case FVar(type, initializer) if (type != null && initializer != null):
+			case _:
+				Context.error("@:hotwireHooks `" + name + "` must have an explicit type and value initializer.", found.pos);
 		}
 		return found;
 	}
@@ -148,11 +233,44 @@ class HotwireContractMacro {
 		}
 	}
 
+	static function rejectStringCompatibleSource(field:Field, role:String, owner:String):Void {
+		var sourceType = TypeTools.follow(Context.typeof(fieldInitializer(field)));
+		switch (sourceType) {
+			case TDynamic(_):
+				Context.error(owner + " `" + role + "` must be a checked String-compatible token, not Dynamic.", field.pos);
+			case _:
+		}
+		if (!Context.unify(sourceType, Context.getType("String"))) {
+			Context.error(owner + " `" + role + "` must be String-compatible.", field.pos);
+		}
+	}
+
+	static function requiredHookToken(field:Field, role:String):String {
+		var value = staticString(fieldInitializer(field));
+		if (value == null) {
+			return Context.error("@:hotwireHooks `" + role + "` must be a compile-time String token.", field.pos);
+		}
+		if (value.length == 0) {
+			Context.error("@:hotwireHooks `" + role + "` must not be empty.", field.pos);
+		}
+		return value;
+	}
+
 	static function reserveGeneratedNames(fields:Array<Field>):Void {
 		for (name in ["streamName", "streamTarget", "rowTemplate"]) {
 			for (field in fields) {
 				if (field.name == name) {
 					Context.error("@:hotwireContract reserves `" + name + "` for its generated typed accessor.", field.pos);
+				}
+			}
+		}
+	}
+
+	static function reserveHooksGeneratedNames(fields:Array<Field>):Void {
+		for (name in ["streamName", "targetId", "targetSelector", "readySelector"]) {
+			for (field in fields) {
+				if (field.name == name) {
+					Context.error("@:hotwireHooks reserves `" + name + "` for its generated typed accessor.", field.pos);
 				}
 			}
 		}
@@ -194,10 +312,39 @@ class HotwireContractMacro {
 		});
 	}
 
+	static function declaredFieldType(field:Field, owner:String):ComplexType {
+		return switch (field.kind) {
+			case FVar(type, _) if (type != null): type;
+			case _: Context.error(owner + " declaration is missing its required explicit type.", field.pos);
+		}
+	}
+
 	static function fieldInitializer(field:Field):Expr {
 		return switch (field.kind) {
 			case FVar(_, initializer) if (initializer != null): initializer;
 			case _: Context.error("@:hotwireContract declaration is missing its required initializer.", field.pos);
+		}
+	}
+
+	static function staticString(expr:Expr):Null<String> {
+		return switch (expr.expr) {
+			case EConst(CString(value, _)): value;
+			case _:
+				typedStaticString(Context.typeExpr(expr));
+		}
+	}
+
+	static function typedStaticString(expr:TypedExpr):Null<String> {
+		return switch (expr.expr) {
+			case TConst(TString(value)):
+				value;
+			case TField(_, FStatic(_, fieldRef)):
+				var fieldExpr = fieldRef.get().expr();
+				fieldExpr == null ? null : typedStaticString(fieldExpr);
+			case TMeta(_, inner) | TParenthesis(inner) | TCast(inner, _):
+				typedStaticString(inner);
+			case _:
+				null;
 		}
 	}
 

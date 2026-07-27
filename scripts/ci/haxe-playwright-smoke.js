@@ -44,7 +44,8 @@ for (const expected of [
   "PW.testPage(\"haxe-authored browser spec reuses typed RailsHx hooks\"",
   "async function (page)",
   "page.locator(\".\" + \"todo-shell\")",
-  "page.locator(\"#\" + \"railshx-chat-panel\")",
+  "page.locator(\"#\" + \"railshx-chat-list\")",
+  'page.locator("turbo-cable-stream-source[connected]")',
   "page.locator(\"[\" + \"data-railshx-flash\" + \"]\")",
 ]) {
   assertIncludes(implementationJs, expected, implementation);

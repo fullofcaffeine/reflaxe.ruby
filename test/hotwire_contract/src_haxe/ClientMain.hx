@@ -5,6 +5,8 @@ class ClientMain {
 		var stream:String = RoomContract.streamName();
 		var target:String = RoomContract.streamTarget();
 		var template = RoomContract.rowTemplate();
-		js.Browser.console.log(stream + ":" + target + ":" + template.templatePath);
+		var targetSelector:String = RoomHooks.targetSelector();
+		var readySelector:String = RoomHooks.readySelector();
+		js.Browser.console.log(stream + ":" + target + ":" + template.templatePath + ":" + targetSelector + ":" + readySelector);
 	}
 }

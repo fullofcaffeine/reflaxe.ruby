@@ -37,6 +37,18 @@ for (const expected of ['"rooms:updates"', '"room-rows"', '"rooms/row"', '"legac
 if (/class RoomContract|RoomContract\./.test(rubySource)) {
   fail("Declaration-only Hotwire contract leaked a runtime RoomContract wrapper.");
 }
+const broadcastTest = readFileSync(
+  join(rubyOutput, "test", "generated", "controllers", "hotwire_broadcast_request_test.rb"),
+  "utf8",
+);
+for (const expected of [
+  "include ActionCable::TestHelper",
+  'assert_broadcasts("rooms:updates", 1) { nil }',
+]) {
+  if (!broadcastTest.includes(expected)) {
+    fail(`Hotwire ActionCable test helper did not emit ${expected}.`);
+  }
+}
 
 const runtime = run("ruby", [join(rubyOutput, "run.rb")], { allowFailure: true });
 if (runtime.status !== 0) {
@@ -65,7 +77,7 @@ if (jsCompile.status !== 0) {
   process.exit(jsCompile.status ?? 1);
 }
 const jsSource = readFileSync(jsOutput, "utf8");
-for (const expected of ["rooms:updates", "room-rows", "rooms/row"]) {
+for (const expected of ["rooms:updates", "room-rows", "rooms/row", '"#" + "room-rows"', "turbo-cable-stream-source[connected]"]) {
   if (!jsSource.includes(expected)) {
     fail(`Hotwire contract client output did not preserve ${expected}.`);
   }
@@ -78,6 +90,11 @@ for (const invalid of [
   ["row", "InvalidRowMain", /`row` must declare Template<TLocals> explicitly/],
   ["locals", "InvalidLocalsMain", /row locals must be a precise type, not Dynamic/],
   ["reserved", "InvalidReservedMain", /reserves `streamName` for its generated typed accessor/],
+  ["hooks_dynamic", "InvalidHooksDynamicMain", /@:hotwireHooks `ready` must be a checked String-compatible token, not Dynamic/],
+  ["hooks_missing", "InvalidHooksMissingMain", /@:hotwireHooks requires a private static final `ready` declaration/],
+  ["hooks_reserved", "InvalidHooksReservedMain", /@:hotwireHooks reserves `readySelector` for its generated typed accessor/],
+  ["hooks_target", "InvalidHooksTargetMain", /`target` must be a selector-safe DOM id/],
+  ["action_cable_rspec", "InvalidActionCableRspecMain", /currently supports only the rails.minitest adapter/],
   ["hhx_missing", "InvalidHhxMissingMain", /could not find static id="missing-room-rows" in this HHX view/],
   ["hhx_dynamic", "InvalidHhxDynamicMain", /values must be compile-time String tokens/],
   ["hhx_owner", "InvalidHhxOwnerMain", /requires a RailsHx-owned @:railsTemplateAst view/],

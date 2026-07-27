@@ -3,7 +3,8 @@
 # Browser builds use this library for typed RailsHx/Hotwire client helpers
 # without loading the Ruby target compiler or Ruby-only Haxe std overrides.
 # The shared `std/` surface intentionally contains both browser-safe RailsHx
-# client APIs and shared typed tokens such as Turbo stream names/targets.
+# client APIs and shared typed tokens such as Turbo stream names/targets. The
+# macro also expands browser-safe `@:hotwireHooks` declarations.
 
 -cp ${SCOPE_DIR}/std/
 

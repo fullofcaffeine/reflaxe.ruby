@@ -6,6 +6,7 @@ import rails.test.playwright.Playwright.PW;
 import rails.test.playwright.Types.Page;
 import reflaxe.js.Async;
 import reflaxe.js.Async.await;
+import shared.ChatRoomHooks;
 import shared.TodoHooks;
 
 // Haxe-authored Playwright browser spec.
@@ -24,7 +25,8 @@ class TodoappBrowserSpec {
 
 			await(page.getByRole("button", {name: "Continue as guest"}).click());
 			await(PW.see(page.locator(TodoHooks.classSelector(TodoHooks.shellClass))).toBeVisible());
-			await(PW.see(page.locator(TodoHooks.idSelector(TodoHooks.chatPanelId))).toBeVisible());
+			await(PW.see(page.locator(ChatRoomHooks.targetSelector())).toBeVisible());
+			await(PW.see(page.locator(ChatRoomHooks.readySelector())).toBeVisible());
 			await(PW.see(page.locator(TodoHooks.attrSelector(TodoHooks.flashAttr))).toHaveAttribute("hidden", ""));
 			await(PW.see(page.locator(".session-chip")).toContainText("Guest Workspace"));
 			if (!new RegExp("/todos$").test(page.url())) {

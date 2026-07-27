@@ -158,6 +158,9 @@ function categoryFor(file, token, functionName) {
   if (declarationFunctions.has(functionName)) {
     return "target-declaration-migration";
   }
+  if (file.startsWith("src/reflaxe/ruby/rails/")) {
+    return "validated-framework-artifact";
+  }
   if (
     /(Rails|ActionCable|ActionController|ActionMailer|ActiveJob|ActiveRecord|ActiveStorage|ActiveSupport|Turbo|Template)/.test(
       functionName,

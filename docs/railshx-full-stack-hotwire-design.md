@@ -71,7 +71,7 @@ Turbo, DOM, or stdout APIs from leaking into the shared module.
 | Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>`, `StreamName<TLocals>`, and `StreamTarget`. The todoapp now dogfoods this with `turbo_stream_from`, server-rendered broadcasts, and a hand-written shared chat room contract. | Needs model/callback ergonomics and reusable stream contract generation. |
 | ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. JavaScript builds derive `MyChannel.client:ChannelRef<TParams, TPayload>` for native subscriptions without repeated channel strings. | Useful for custom payload protocols, but not the canonical DOM update path when Turbo Streams can render a partial. The broader contract macro still needs to connect subscriptions to streams, targets, and templates. |
 | Haxe JS Turbo client | `Turbo.on*`, `Turbo.renderStreamMessage`, `Turbo.stream`, and Genes ES modules work with importmap. | Client-rendered stream HTML should be generated/typed when deliberately chosen; canonical Hotwire examples should not hand-build DOM fragments. |
-| Shared hooks | `TodoHooks` centralizes app-wide ids, attrs, classes, selectors, storage keys, and Playwright exports. `ChatRoomHooks` adds a focused browser-safe Hotwire hook layer for the chat room. | Needs a reusable generator/macro pattern, not only hand-written samples. |
+| Shared hooks | `TodoHooks` centralizes app-wide ids, attrs, classes, selectors, and storage keys. `@:hotwireHooks` generates the focused browser-safe stream/target/readiness accessors that `ChatRoomHooks`, Playwright exports, and Haxe-authored browser tests consume. | Generator integration should emit this pattern for new realtime scaffolds. |
 | Shared pure domain behavior | `shared_domain` compiles one typed todo-draft contract and common vectors to Ruby and JavaScript, then requires byte-identical validation, ordered errors, and serialization output. | One bounded contract is proven; new domain claims need their own vectors and target-edge documentation. |
 | Browser tests | Playwright imports generated hook constants and verifies two-session updates. | Needs typed Haxe-authored browser test layer later, but TS Playwright can remain first-class. |
 
@@ -132,8 +132,8 @@ typedef ChatMessageBroadcast = ChatMessageRowLocals;
 
 @:hotwireContract
 class ChatRoomContract {
-	static final stream = ChatRoomHooks.streamName;
-	static final target = ChatRoomHooks.listTargetId;
+	static final stream = ChatRoomHooks.streamName();
+	static final target = ChatRoomHooks.targetId();
 	static final row:Template<ChatMessageRowLocals> = Template.of(ChatMessageRowView);
 
 	public static inline function locals(message:ChatMessage):ChatMessageRowLocals {
@@ -257,10 +257,33 @@ It currently generates and validates:
 
 Haxe `Dynamic` sources or locals, missing declarations,
 non-`Template<TLocals>` rows, and generated-name collisions fail closed.
-Subscription composition, Playwright exports, and generator integration remain
-later phases. DOM-target ownership is now a separate proof at the view boundary:
+Subscription composition and generator integration remain later phases.
+DOM-target ownership is a separate proof at the view boundary:
 RailsHx-owned HHX views declare `@:railsDomTargets(...)`, while Rails-owned ERB
 uses `StreamTarget.existing(template, target)`.
+
+### `@:hotwireHooks`
+
+Browser builds should not import a server contract merely to reach selectors.
+The shipped hook declaration keeps only browser-safe facts:
+
+```haxe
+@:hotwireHooks
+class ChatRoomHooks {
+	static final stream:ChatRoomStream = "todoapp:chat";
+	static final target:DomId = TodoHooks.chatListId;
+	static final ready:Selector = "turbo-cable-stream-source[connected]";
+}
+```
+
+It generates typed `streamName()`, `targetId()`, `targetSelector()`, and
+`readySelector()` accessors. The target selector is derived from the target id;
+the macro therefore requires a compile-time id in its selector-safe
+letters/digits/underscore/hyphen subset rather than pretending arbitrary CSS
+escaping is safe. Readiness is explicit because a stream name and DOM receiver
+do not identify the element that proves a browser subscription is connected. The todoapp
+exports these accessors to TypeScript Playwright and imports them directly from
+its Haxe-authored browser spec.
 
 ### Model Callback Convenience
 
@@ -281,12 +304,20 @@ transaction behavior behind magical callbacks too early.
 
 ### Test Helper Generation
 
-Contracts should generate test helpers:
+The shipped testing slice keeps server and browser ownership explicit:
 
-- Rails channel tests can assert `assert_has_stream ChatRoom.streamName`.
-- Rails request tests can assert `assert_broadcasts ChatRoom.streamName, 1`.
-- Playwright can wait for `ChatRoom.readyAttr`.
-- Haxe-authored browser tests can later consume the same hooks.
+- Rails Minitest request tests call
+  `ActionCableAssert.assertBroadcasts(ChatRoomContract.streamName(), 1, body)`.
+  The compiler includes native `ActionCable::TestHelper` and emits ordinary
+  `assert_broadcasts`; RSpec fails closed because no equivalent matcher
+  contract has been verified.
+- `@:hotwireHooks` generates `streamName()`, `targetId()`,
+  `targetSelector()`, and `readySelector()` from browser-safe declarations.
+- TypeScript exports and Haxe-authored Playwright specs consume the same
+  generated selectors.
+- `assert_has_stream` remains a later channel-test slice. It requires a typed
+  `ActionCable::Channel::TestCase` owner and must not be advertised on the
+  current request/model test base classes.
 
 ## Diagnostics
 
@@ -307,7 +338,7 @@ RailsHx-owned HHX views declare their stable receivers beside the markup:
 ```haxe
 @:railsTemplate("todos/_chat_panel")
 @:railsTemplateAst("render")
-@:railsDomTargets(ChatRoomHooks.listTargetId)
+@:railsDomTargets(TodoHooks.chatListId)
 class ChatPanelView {}
 ```
 
@@ -315,7 +346,7 @@ The inline-markup owner verifies that the same compile-time token appears as a
 static `id` in the structural HHX tree. This avoids project-wide text scanning
 and avoids a contract/view typing cycle. When the target lives in Rails-owned
 ERB, use the explicit checked interop form
-`StreamTarget.existing("todos/chat_panel", ChatRoomHooks.listTargetId)`. It
+`StreamTarget.existing("todos/chat_panel", TodoHooks.chatListId)`. It
 resolves that one template under `app/views`, requires an exact static id, and
 fails closed for an unsafe path, missing file, dynamic token, or missing id.
 
@@ -352,8 +383,9 @@ The current todoapp chat is now the regression sentinel for this design:
 5. **Target existence validation**: landed as `@:railsDomTargets(...)` for
    owned structural HHX plus `StreamTarget.existing(template, target)` for
    Rails-owned ERB, with focused missing/dynamic/owner diagnostics.
-6. **Testing helpers**: generate Rails/Playwright helper constants from the
-   contract and add negative compile tests for drift.
+6. **Testing helpers**: landed as browser-safe `@:hotwireHooks` accessors,
+   native Minitest `assert_broadcasts` lowering, Haxe/TypeScript Playwright
+   reuse, and negative drift/adapter diagnostics.
 7. **Generator integration**: make `hxruby:scaffold` and the Rails app
    generator emit the contract pattern by default for realtime examples.
 

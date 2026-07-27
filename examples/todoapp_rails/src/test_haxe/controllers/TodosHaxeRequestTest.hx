@@ -2,15 +2,18 @@ package test_haxe.controllers;
 
 import app.auth.UserAuth;
 import devisehx.test.IntegrationHelpers;
+import models.ChatMessage;
 import models.Todo;
 import models.User;
 import rails.action_controller.Status;
+import rails.test.ActionCableAssert.*;
 import rails.test.Assert.*;
 import rails.test.Dsl.*;
 import rails.test.Request.*;
 import rails.test.RequestParams;
 import rails.test.RequestTestCase;
 import routes.Routes;
+import shared.ChatRoomContract;
 
 // Haxe-authored Rails request test.
 //
@@ -91,6 +94,25 @@ class TodosHaxeRequestTest extends RequestTestCase {
 			assertResponse(Status.ok);
 			equal("text/plain", responseMediaType());
 			equal("RailsHx file route: docs/readme\n", responseBody());
+			IntegrationHelpers.signOut(UserAuth.scope);
+		});
+
+		test("chat create broadcasts through the typed Hotwire stream", () -> {
+			var user = User.create({
+				name: "Haxe Cable User",
+				email: "request-cable@example.test",
+				role: "member",
+				password: "password123",
+				passwordConfirmation: "password123"
+			});
+
+			IntegrationHelpers.signIn(UserAuth.scope, user);
+			assertBroadcasts(ChatRoomContract.streamName(), 1, () -> {
+				post(Routes.chatMessagesPath(), {
+					params: RequestParams.model(ChatMessage.railsParamKey, {body: "typed broadcast"})
+				});
+			});
+			assertResponse(Status.noContent);
 			IntegrationHelpers.signOut(UserAuth.scope);
 		});
 	}

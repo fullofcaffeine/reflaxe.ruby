@@ -64,6 +64,7 @@ import reflaxe.ruby.rails.RailsCallArgumentPlan.RailsStatusArgumentPlan;
 import reflaxe.ruby.rails.RailsMailerPreviewArtifacts;
 import reflaxe.ruby.rails.RailsTestAdapter;
 import reflaxe.ruby.rails.RailsTestArtifacts;
+import reflaxe.ruby.rails.RailsTestAssertionLowering;
 import reflaxe.ruby.RequireRegistry;
 import sys.FileSystem;
 import sys.io.File;
@@ -3651,100 +3652,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function compileRailsTestAssertionCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {
-		if (info.owner != "rails.test.Assert") {
-			return null;
-		}
-		return switch (currentRailsTestAdapter) {
-			case RailsMinitest: compileRailsTestMinitestAssertionCall(info.name, params);
-			case RailsRspec: compileRailsTestRspecAssertionCall(info.name, params);
-		}
-	}
-
-	static function compileRailsTestMinitestAssertionCall(name:String, params:Array<TypedExpr>):Null<RubyExpr> {
-		var args = [for (param in params) compileExpr(param)];
-		return switch (name) {
-			case "equal":
-				RubyCall(null, "assert_equal", args);
-			case "assertEqual":
-				RubyCall(null, "assert_equal", args);
-			case "notEqual":
-				RubyCall(null, "assert_not_equal", args);
-			case "assertNotEqual":
-				RubyCall(null, "assert_not_equal", args);
-			case "truthy":
-				RubyCall(null, "assert", args);
-			case "assertTrue":
-				RubyCall(null, "assert", args);
-			case "falsy":
-				RubyCall(null, "assert_not", args);
-			case "assertFalse":
-				RubyCall(null, "assert_not", args);
-			case "includes":
-				RubyCall(null, "assert_includes", args);
-			case "assertIncludes":
-				RubyCall(null, "assert_includes", args);
-			case "notIncludes":
-				RubyCall(null, "assert_not_includes", args);
-			case "assertNotIncludes":
-				RubyCall(null, "assert_not_includes", args);
-			case "nilValue":
-				RubyCall(null, "assert_nil", args);
-			case "assertNil":
-				RubyCall(null, "assert_nil", args);
-			case "notNil":
-				RubyCall(null, "assert_not_nil", args);
-			case "assertNotNil":
-				RubyCall(null, "assert_not_nil", args);
-			case "assertResponse" if (params.length == 1):
-				var status = railsStatusArg(params[0]);
-				status == null ? RubyCall(null, "assert_response", args) : RubyCall(null, "assert_response", [RubyRawExpr(status)]);
-			case "assertRedirectedTo":
-				RubyCall(null, "assert_redirected_to", args);
-			case "assertDifference" if (params.length == 3):
-				RubyRawExpr("assert_difference(" + renderRubyProc(params[0]) + ", " + printInlineExpr(params[1]) + ") " + renderRubyBlock(params[2]));
-			case "assertNoDifference" if (params.length == 2):
-				RubyRawExpr("assert_no_difference(" + renderRubyProc(params[0]) + ") " + renderRubyBlock(params[1]));
-			case _:
-				null;
-		}
-	}
-
-	static function compileRailsTestRspecAssertionCall(name:String, params:Array<TypedExpr>):Null<RubyExpr> {
-		return switch (name) {
-			case "equal" | "assertEqual" if (params.length == 2):
-				RubyRawExpr("expect(" + printInlineExpr(params[1]) + ").to eq(" + printInlineExpr(params[0]) + ")");
-			case "notEqual" | "assertNotEqual" if (params.length == 2):
-				RubyRawExpr("expect(" + printInlineExpr(params[1]) + ").not_to eq(" + printInlineExpr(params[0]) + ")");
-			case "truthy" | "assertTrue" if (params.length == 1):
-				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").to be_truthy");
-			case "falsy" | "assertFalse" if (params.length == 1):
-				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").to be_falsey");
-			case "includes" | "assertIncludes" if (params.length == 2):
-				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").to include(" + printInlineExpr(params[1]) + ")");
-			case "notIncludes" | "assertNotIncludes" if (params.length == 2):
-				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").not_to include(" + printInlineExpr(params[1]) + ")");
-			case "nilValue" | "assertNil" if (params.length == 1):
-				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").to be_nil");
-			case "notNil" | "assertNotNil" if (params.length == 1):
-				RubyRawExpr("expect(" + printInlineExpr(params[0]) + ").not_to be_nil");
-			case "assertResponse" if (params.length == 1):
-				var status = railsStatusArg(params[0]);
-				RubyRawExpr("expect(response).to have_http_status(" + (status == null ? printInlineExpr(params[0]) : status) + ")");
-			case "assertRedirectedTo" if (params.length == 1):
-				RubyRawExpr("expect(response).to redirect_to(" + printInlineExpr(params[0]) + ")");
-			case "assertDifference" if (params.length == 3):
-				RubyRawExpr("expect "
-					+ renderRubyBlock(params[2])
-					+ ".to change "
-					+ renderRubyBlock(params[0])
-					+ ".by("
-					+ printInlineExpr(params[1])
-					+ ")");
-			case "assertNoDifference" if (params.length == 2):
-				RubyRawExpr("expect " + renderRubyBlock(params[1]) + ".not_to change " + renderRubyBlock(params[0]));
-			case _:
-				null;
-		}
+		return RailsTestAssertionLowering.compile(info.owner, info.name, params, currentRailsTestAdapter, {
+			compileExpr: compileExpr,
+			printInlineExpr: printInlineExpr,
+			renderRubyProc: renderRubyProc,
+			renderRubyBlock: renderRubyBlock,
+			railsStatusArg: railsStatusArg
+		});
 	}
 
 	static function compileRailsTestRequestCall(info:{owner:String, name:String}, params:Array<TypedExpr>):Null<RubyExpr> {

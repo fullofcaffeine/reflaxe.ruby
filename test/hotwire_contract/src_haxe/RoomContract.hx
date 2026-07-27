@@ -14,8 +14,8 @@ typedef RoomRowLocals = {
 **/
 @:hotwireContract
 class RoomContract {
-	static final stream = "rooms:updates";
-	static final target = RoomHooks.rowsId;
+	static final stream = RoomHooks.streamName();
+	static final target = RoomHooks.targetId();
 	static final row:Template<RoomRowLocals> = Template.named("rooms/row");
 
 	public static inline function locals(title:String):RoomRowLocals {
