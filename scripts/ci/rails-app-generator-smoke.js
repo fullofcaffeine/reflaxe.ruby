@@ -124,6 +124,16 @@ try {
     "Uncertain APIs should stay review-marked",
     "login/logout/login-as-guest",
   ]);
+  expectFile("docs/railshx/hotwire.md", [
+    "RailsHx Typed Hotwire Scaffold",
+    "bin/rails generate hxruby:scaffold Message body:String --controller --hotwire",
+    "haxe hotwire-hooks.hxml",
+    "@:hotwireHooks",
+    "@:hotwireContract",
+    "ActionCable::TestHelper",
+    "Playwright without copying literals",
+    "currently Minitest-only",
+  ]);
   expectFile("lib/tasks/hxruby.rake", [
     'require "hxruby/tasks"',
   ]);
@@ -163,6 +173,7 @@ try {
     ["haxe_libraries/genes.hxml", "haxe_dependency", "hxruby:install"],
     ["haxe_libraries/helder.set.hxml", "haxe_dependency", "hxruby:install"],
     ["docs/railshx/gem_layers.md", "docs", "hxruby:install"],
+    ["docs/railshx/hotwire.md", "docs", "hxruby:install"],
     ["config/importmap.rb", "rails_config", "hxruby:install"],
     ["bin/railshx-dev", "bin_script", "hxruby:install"],
   ]);

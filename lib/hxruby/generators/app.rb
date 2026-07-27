@@ -62,6 +62,7 @@ module HXRuby
         write(File.join(@source_dir, "views", "HomeIndexView.hx"), render_home_index_view)
         write_route_files
         write("docs/railshx/gem_layers.md", render_gem_layers_doc)
+        write("docs/railshx/hotwire.md", render_hotwire_doc)
         write("app/javascript/application.js", render_application_js)
         write("app/assets/stylesheets/application.css", render_application_css)
         write("config/importmap.rb", render_importmap)
@@ -598,6 +599,41 @@ module HXRuby
           "- Keep Devise login/logout/login-as-guest examples in a dedicated DeviseHx example once that companion layer exists; the starter's generic gem-layer flow is dependency-light by default.",
           "",
           "See the upstream RailsHx guide: https://github.com/fullofcaffeine/reflaxe.ruby/blob/main/docs/railshx-gem-layers.md",
+          "",
+        ].join("\n")
+      end
+
+      def render_hotwire_doc
+        [
+          "# RailsHx Typed Hotwire Scaffold",
+          "",
+          "This app already includes the server and `railshx.client` build lanes",
+          "needed by generated realtime resources. Generate one explicitly:",
+          "",
+          "```bash",
+          "bin/rails generate hxruby:scaffold Message body:String --controller --hotwire",
+          "bundle exec rake hxruby:compile",
+          "haxe hotwire-hooks.hxml",
+          "```",
+          "",
+          "`--hotwire` keeps the resource contract in typed Haxe and emits ordinary",
+          "Rails/Turbo output. The scaffold includes:",
+          "",
+          "- a browser-safe `@:hotwireHooks` declaration for stream and selectors;",
+          "- a server-only `@:hotwireContract` for stream, target, row template,",
+          "  locals mapping, and the create broadcast;",
+          "- an HHX index subscription, statically owned DOM target, and row partial;",
+          "- a Minitest `ActionCable::TestHelper` broadcast assertion;",
+          "- `hotwire-hooks.hxml`, which exports macro-derived selectors for",
+          "  Playwright without copying literals.",
+          "",
+          "The option requires `--controller`. Generated broadcast assertions are",
+          "currently Minitest-only; an RSpec app should use `--skip-tests` and add",
+          "its own independently verified matcher contract instead of receiving a",
+          "guessed translation.",
+          "",
+          "Rails still owns Turbo Streams, ActionCable, rendering, and test runtime.",
+          "RailsHx owns the typed authoring contracts and compile-time drift checks.",
           "",
         ].join("\n")
       end

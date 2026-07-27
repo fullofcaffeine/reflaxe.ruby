@@ -71,7 +71,7 @@ Turbo, DOM, or stdout APIs from leaking into the shared module.
 | Server Turbo Streams | `TurboStreams.append/prepend/...` and `broadcast*To` lower to Rails helpers with typed `Template<TLocals>`, `StreamName<TLocals>`, and `StreamTarget`. The todoapp now dogfoods this with `turbo_stream_from`, server-rendered broadcasts, and a hand-written shared chat room contract. | Needs model/callback ergonomics and reusable stream contract generation. |
 | ActionCable channels | `@:railsChannel`, `Channel<TParams, TPayload>`, `Stream<TPayload>`, and `ActionCable.broadcast(...)` emit normal Rails channels/broadcasts. JavaScript builds derive `MyChannel.client:ChannelRef<TParams, TPayload>` for native subscriptions without repeated channel strings. | Useful for custom payload protocols, but not the canonical DOM update path when Turbo Streams can render a partial. The broader contract macro still needs to connect subscriptions to streams, targets, and templates. |
 | Haxe JS Turbo client | `Turbo.on*`, `Turbo.renderStreamMessage`, `Turbo.stream`, and Genes ES modules work with importmap. | Client-rendered stream HTML should be generated/typed when deliberately chosen; canonical Hotwire examples should not hand-build DOM fragments. |
-| Shared hooks | `TodoHooks` centralizes app-wide ids, attrs, classes, selectors, and storage keys. `@:hotwireHooks` generates the focused browser-safe stream/target/readiness accessors that `ChatRoomHooks`, Playwright exports, and Haxe-authored browser tests consume. | Generator integration should emit this pattern for new realtime scaffolds. |
+| Shared hooks | `TodoHooks` centralizes app-wide ids, attrs, classes, selectors, and storage keys. `@:hotwireHooks` generates the focused browser-safe stream/target/readiness accessors that `ChatRoomHooks`, Playwright exports, Haxe-authored browser tests, and explicit `hxruby:scaffold --hotwire` resources consume. | Broader generator customization can add presentation choices without weakening the typed hook contract. |
 | Shared pure domain behavior | `shared_domain` compiles one typed todo-draft contract and common vectors to Ruby and JavaScript, then requires byte-identical validation, ordered errors, and serialization output. | One bounded contract is proven; new domain claims need their own vectors and target-edge documentation. |
 | Browser tests | Playwright imports generated hook constants and verifies two-session updates. | Needs typed Haxe-authored browser test layer later, but TS Playwright can remain first-class. |
 
@@ -315,6 +315,11 @@ The shipped testing slice keeps server and browser ownership explicit:
   `targetSelector()`, and `readySelector()` from browser-safe declarations.
 - TypeScript exports and Haxe-authored Playwright specs consume the same
   generated selectors.
+- `hxruby:scaffold Model ... --controller --hotwire` emits the same pattern:
+  separate browser/server contracts, one HHX subscription and owned target,
+  one row partial reused by initial rendering and broadcasts, a native
+  Minitest broadcast assertion, and `hotwire-hooks.hxml` for a deterministic
+  TypeScript selector export.
 - `assert_has_stream` remains a later channel-test slice. It requires a typed
   `ActionCable::Channel::TestCase` owner and must not be advertised on the
   current request/model test base classes.
@@ -386,8 +391,12 @@ The current todoapp chat is now the regression sentinel for this design:
 6. **Testing helpers**: landed as browser-safe `@:hotwireHooks` accessors,
    native Minitest `assert_broadcasts` lowering, Haxe/TypeScript Playwright
    reuse, and negative drift/adapter diagnostics.
-7. **Generator integration**: make `hxruby:scaffold` and the Rails app
-   generator emit the contract pattern by default for realtime examples.
+7. **Generator integration**: landed as the explicit `hxruby:scaffold
+   --controller --hotwire` vertical slice. It emits the browser hook, server
+   contract, HHX subscription/target/row, create broadcast, Minitest assertion,
+   and Playwright selector export. The Rails app generator emits the matching
+   workflow guide because it has no domain resource from which to truthfully
+   invent stream, target, or row semantics.
 
 ## Non-Goals
 

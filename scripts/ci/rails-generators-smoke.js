@@ -122,6 +122,12 @@ begin
   assert(File.exist?(File.join(temp, "scaffold", "src_haxe", "controllers", "TodosController.hx")), "scaffold generator did not write controller")
   assert(File.exist?(File.join(temp, "scaffold", "src_haxe", "routes", "AppRoutes.hx")), "scaffold generator did not default to Haxe-owned routes")
 
+  hotwire_scaffold = Hxruby::ScaffoldGenerator.new(["Message", "body:String"], {"controller" => true, "hotwire" => true, "output" => "hotwire_scaffold"})
+  hotwire_scaffold.destination_root = temp
+  hotwire_scaffold.generate_scaffold
+  assert(File.exist?(File.join(temp, "hotwire_scaffold", "src_haxe", "shared", "MessageHotwireHooks.hx")), "scaffold generator did not forward --hotwire")
+  assert(File.exist?(File.join(temp, "hotwire_scaffold", "test_haxe", "controllers", "MessageHotwireHaxeTest.hx")), "scaffold generator did not emit the Hotwire broadcast test")
+
   migration = Hxruby::MigrationGenerator.new(["AddStatusToTodos", "status:string"], {"timestamp" => "20260101010200", "output" => "migration"})
   migration.destination_root = temp
   migration.generate_migration

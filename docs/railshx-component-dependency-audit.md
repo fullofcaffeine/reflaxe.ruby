@@ -60,9 +60,9 @@ textual import scan proves runtime semantics.
 | ActiveSupport and instrumentation | Receiver facades, modern Rails zoned time through TimeZone/TimeWithZone, and typed Notifications events/subscriptions | Mandatory exact-Rails component runtime |
 | DeviseHx | Typed model/scope/filter/params/routes/HHX/test/current-user contracts used by the reference app | Chromium and production reference app |
 | Engines, autoload and concerns | Engine-local output, autoload integration, concern shape and host consumption | Ruby host execution plus mandatory exact-Rails concern runtime |
-| Generators, adoption and tests | Public generators, Rails-owned adoption, ownership safety and test generation | Mandatory real Rails generator loading plus mixed-app Rails runtime |
+| Generators, adoption and tests | Public generators, explicit typed Hotwire scaffolds, Rails-owned adoption, ownership safety and test generation | Focused generated compile/output checks, mandatory real Rails generator loading and mixed-app Rails runtime |
 | Reference application | Combined compile, Rails, database, browser, assets and production path | Rails runtime, Chromium and production lanes |
-| Turbo and Hotwire | Typed client events/frames, server stream target/render/broadcast helpers, declaration-driven server contracts, browser-safe generated test hooks, and fail-closed HHX/ERB target ownership | Compiler diagnostics plus Chromium and production reference app |
+| Turbo and Hotwire | Typed client events/frames, server stream target/render/broadcast helpers, declaration-driven server contracts, browser-safe generated test hooks, explicit realtime scaffold composition, and fail-closed HHX/ERB target ownership | Compiler/generator diagnostics plus Chromium and production reference app |
 
 The ActiveSupport, concern, and real Rails generator checks share
 `npm run test:rails-component-runtime`. That command installs the exact verified

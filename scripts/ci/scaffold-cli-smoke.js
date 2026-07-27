@@ -133,6 +133,169 @@ if (!compileWithFirstAvailableReflaxe(join(outputDir, "ruby"))) {
   process.exit(1);
 }
 
+const hotwireScaffoldDir = join(root, "test", ".generated", "scaffold_cli_hotwire");
+rmSync(hotwireScaffoldDir, { force: true, recursive: true });
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "scaffold.rb"),
+  "--model",
+  "Todo",
+  "--fields",
+  "title:String,isCompleted:Bool",
+  "--controller",
+  "--hotwire",
+  "--output",
+  hotwireScaffoldDir,
+]);
+for (const file of [
+  "src_haxe/shared/TodoHotwireHooks.hx",
+  "src_haxe/shared/TodoHotwireContract.hx",
+  "src_haxe/views/todos/TodoRowView.hx",
+  "src_haxe/tools/ExportTodoHotwireHooks.hx",
+  "test_haxe/controllers/TodoHotwireHaxeTest.hx",
+  "hotwire-hooks.hxml",
+]) {
+  if (!existsSync(join(hotwireScaffoldDir, file))) {
+    console.error(`--hotwire scaffold output missing ${file}`);
+    process.exit(1);
+  }
+}
+assertIncludesFrom(hotwireScaffoldDir, "src_haxe/shared/TodoHotwireHooks.hx", [
+  "@:hotwireHooks",
+  'static final stream:TodoHotwireStream = "todos";',
+  'static final target:TodoHotwireDomId = "todos_list";',
+  'static final ready:TodoHotwireSelector = "turbo-cable-stream-source[connected]";',
+]);
+assertIncludesFrom(hotwireScaffoldDir, "src_haxe/shared/TodoHotwireContract.hx", [
+  "@:hotwireContract",
+  "static final stream = TodoHotwireHooks.streamName();",
+  "static final row:Template<TodoRowLocals> = Template.of(TodoRowView);",
+  "TurboStreams.broadcastPrependTo(streamName(), streamTarget(), rowTemplate(), rowLocals(todo));",
+]);
+assertIncludesFrom(hotwireScaffoldDir, "src_haxe/views/todos/IndexView.hx", [
+  "@:railsDomTargets(TodoHotwireHooks.targetId())",
+  "<turbo_stream_from stream=${TodoHotwireContract.streamName()} />",
+  "<ul id=${TodoHotwireHooks.targetId()}>",
+  "<partial template=${TodoHotwireContract.rowTemplate()} locals=${TodoHotwireContract.rowLocals(todo)} />",
+]);
+assertIncludesFrom(hotwireScaffoldDir, "test_haxe/controllers/TodoHotwireHaxeTest.hx", [
+  "import rails.test.ActionCableAssert.assertBroadcasts;",
+  "assertBroadcasts(TodoHotwireContract.streamName(), 1, () -> {",
+  "TurboStreams.broadcastRemoveTo(TodoHotwireContract.streamName(), TodoHotwireContract.streamTarget());",
+]);
+assertIncludesFrom(hotwireScaffoldDir, "hotwire-hooks.hxml", [
+  "-lib railshx.client",
+  "--run tools.ExportTodoHotwireHooks",
+]);
+const hotwireManifest = JSON.parse(readFileSync(join(hotwireScaffoldDir, ".railshx", "manifest.json"), "utf8"));
+for (const [output, kind] of [
+  ["src_haxe/shared/TodoHotwireHooks.hx", "haxe_source"],
+  ["src_haxe/shared/TodoHotwireContract.hx", "haxe_source"],
+  ["src_haxe/views/todos/TodoRowView.hx", "haxe_source"],
+  ["src_haxe/tools/ExportTodoHotwireHooks.hx", "haxe_source"],
+  ["test_haxe/controllers/TodoHotwireHaxeTest.hx", "haxe_test_source"],
+  ["hotwire-hooks.hxml", "haxe_build"],
+]) {
+  const entry = hotwireManifest.outputs.find((candidate) => candidate.output === output);
+  if (!entry || entry.kind !== kind || entry.source !== "hxruby:scaffold" || !entry.sha256) {
+    console.error(`Hotwire scaffold manifest missing expected ${output} ${kind} entry.`);
+    process.exit(1);
+  }
+}
+if (!compileWithFirstAvailableReflaxe(join(hotwireScaffoldDir, "ruby"), { projectDir: hotwireScaffoldDir })) {
+  console.error("Unable to compile the typed Hotwire scaffold through Reflaxe.");
+  process.exit(1);
+}
+assertIncludesFrom(hotwireScaffoldDir, "ruby/app/controllers/todos_controller.rb", [
+  "if todo.persisted?()",
+  'Turbo::StreamsChannel.broadcast_prepend_to("todos", target: "todos_list", partial: "todos/todo", locals: {todo: todo})',
+]);
+assertIncludesFrom(hotwireScaffoldDir, "ruby/app/views/controllers/todos/index.html.erb", [
+  '<%= turbo_stream_from "todos" %>',
+  '<ul id="todos_list">',
+  '<%= render partial: "todos/todo", locals: {todo: todo} %>',
+]);
+assertIncludesFrom(hotwireScaffoldDir, "ruby/test/generated/controllers/todo_hotwire_haxe_test.rb", [
+  "include ActionCable::TestHelper",
+  'assert_broadcasts("todos", 1) { Turbo::StreamsChannel.broadcast_remove_to("todos", target: "todos_list") }',
+]);
+run("haxe", ["hotwire-hooks.hxml"], { cwd: hotwireScaffoldDir });
+assertIncludesFrom(hotwireScaffoldDir, "test/e2e/todo_hotwire_hooks.ts", [
+  'stream: "todos"',
+  'target: "#todos_list"',
+  'ready: "turbo-cable-stream-source[connected]"',
+]);
+run("haxe", ["hotwire-hooks.hxml"], { cwd: hotwireScaffoldDir });
+writeFileSync(join(hotwireScaffoldDir, "test", "e2e", "todo_hotwire_hooks.ts"), "// app-owned Playwright module\n");
+const exportCollision = run("haxe", ["hotwire-hooks.hxml"], { cwd: hotwireScaffoldDir, allowFailure: true });
+if (
+  exportCollision.status === 0 ||
+  !exportCollision.stderr.includes("Refusing to overwrite non-RailsHx-owned Hotwire hook export")
+) {
+  process.stdout.write(exportCollision.stdout);
+  process.stderr.write(exportCollision.stderr);
+  console.error("Hotwire hook exporter did not protect an app-owned TypeScript module.");
+  process.exit(1);
+}
+
+for (const [label, args, diagnostic] of [
+  ["controller", ["--model", "Todo", "--hotwire"], "--hotwire requires --controller"],
+  [
+    "rspec",
+    ["--model", "Todo", "--controller", "--hotwire", "--test-adapter", "rspec"],
+    "--hotwire generated broadcast tests currently require --test-adapter minitest",
+  ],
+]) {
+  const invalidDir = join(root, "test", ".generated", `scaffold_cli_hotwire_invalid_${label}`);
+  rmSync(invalidDir, { force: true, recursive: true });
+  const invalid = run("ruby", [
+    "-I",
+    join(root, "lib"),
+    join(root, "scripts", "rails", "scaffold.rb"),
+    ...args,
+    "--output",
+    invalidDir,
+  ], { allowFailure: true });
+  if (invalid.status === 0 || !invalid.stderr.includes(diagnostic)) {
+    process.stdout.write(invalid.stdout);
+    process.stderr.write(invalid.stderr);
+    console.error(`--hotwire scaffold did not fail closed for ${label}.`);
+    process.exit(1);
+  }
+}
+
+const rspecHotwireNoTestsDir = join(root, "test", ".generated", "scaffold_cli_hotwire_rspec_no_tests");
+rmSync(rspecHotwireNoTestsDir, { force: true, recursive: true });
+run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "scaffold.rb"),
+  "--model",
+  "Comment",
+  "--fields",
+  "body:String",
+  "--controller",
+  "--hotwire",
+  "--test-adapter",
+  "rspec",
+  "--skip-tests",
+  "--output",
+  rspecHotwireNoTestsDir,
+]);
+if (!existsSync(join(rspecHotwireNoTestsDir, "src_haxe", "shared", "CommentHotwireContract.hx"))) {
+  console.error("--hotwire --skip-tests should retain the typed runtime contract.");
+  process.exit(1);
+}
+if (existsSync(join(rspecHotwireNoTestsDir, "test_haxe"))) {
+  console.error("--hotwire --skip-tests should not emit an unverified RSpec broadcast assertion.");
+  process.exit(1);
+}
+if (!compileWithFirstAvailableReflaxe(join(rspecHotwireNoTestsDir, "ruby"), { projectDir: rspecHotwireNoTestsDir })) {
+  console.error("Unable to compile --hotwire --skip-tests scaffold.");
+  process.exit(1);
+}
+
 const rspecScaffoldDir = join(root, "test", ".generated", "scaffold_cli_rspec");
 rmSync(rspecScaffoldDir, { force: true, recursive: true });
 run("ruby", [

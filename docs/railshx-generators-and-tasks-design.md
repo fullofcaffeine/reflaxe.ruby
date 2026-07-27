@@ -579,6 +579,7 @@ bin/rails generate hxruby:scaffold Todo title:String --controller --routes=snipp
 bin/rails generate hxruby:scaffold Todo title:String --controller --routes=rails
 bin/rails generate hxruby:scaffold Todo title:String --controller --routes=none
 bin/rails generate hxruby:scaffold Todo title:String --controller --skip-tests
+bin/rails generate hxruby:scaffold Message body:String --controller --hotwire
 ```
 
 The scaffold default is `haxe` for greenfield code and emits a typed
@@ -596,3 +597,19 @@ and target-native Ruby/Rails tests can still live beside the Haxe source.
 With `--controller`, scaffold composes the controller generator's typed HHX
 view path: the index action renders `Template.of(IndexView)` with typed locals,
 and Rails receives normal `app/views/**/*.html.erb` output from the compiler.
+
+`--hotwire` is an explicit realtime-resource option and therefore requires
+`--controller`; ordinary CRUD scaffolds remain free of broadcasts. It emits
+separate browser-safe `@:hotwireHooks` and server-only `@:hotwireContract`
+classes, an HHX index subscription with a statically owned target, a typed row
+partial reused for the initial list and create broadcasts, and
+`hotwire-hooks.hxml` for exporting the macro-derived stream/target/readiness
+selectors to Playwright. The generated controller still emits ordinary
+`Turbo::StreamsChannel.broadcast_prepend_to`.
+
+When tests are enabled, the option also emits a Haxe-authored Minitest using
+native `ActionCable::TestHelper#assert_broadcasts`. RSpec generation fails
+closed for this option because RailsHx has not verified an equivalent matcher;
+RSpec-owned apps may pass `--skip-tests` and add their own tested seam. The app
+generator writes `docs/railshx/hotwire.md` with this workflow instead of
+inventing a dummy realtime model.

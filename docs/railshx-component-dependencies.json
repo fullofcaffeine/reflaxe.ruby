@@ -371,7 +371,7 @@
     },
     {
       "id": "generators-adoption-and-tests",
-      "scope": "Install, model, migration, routes, controller, mailer, template, test, scaffold, adoption, ownership, and real Rails generator-loading paths.",
+      "scope": "Install, model, migration, routes, controller, mailer, template, test, explicit typed Hotwire scaffold, adoption, ownership, and real Rails generator-loading paths.",
       "claimMarkers": [
         {
           "path": "docs/compatibility-matrix.md",
@@ -396,6 +396,7 @@
       ],
       "evidence": [
         { "kind": "compile", "command": "test:rails-app-generator", "lane": "full" },
+        { "kind": "compile", "command": "test:scaffold-cli", "lane": "full" },
         { "kind": "compile", "command": "test:rails-adopt-generator", "lane": "full" },
         { "kind": "negative", "command": "test:generator-common", "lane": "full" },
         { "kind": "negative", "command": "test:strict-boundaries", "lane": "full" },
@@ -436,7 +437,7 @@
     },
     {
       "id": "turbo-and-hotwire",
-      "scope": "The documented typed Turbo client hooks/frame helpers, server Turbo Stream target/template/render/broadcast helpers, declaration-driven typed Hotwire server contracts, browser-safe generated Playwright hooks, and fail-closed HHX/ERB DOM-target ownership.",
+      "scope": "The documented typed Turbo client hooks/frame helpers, server Turbo Stream target/template/render/broadcast helpers, declaration-driven typed Hotwire server contracts, browser-safe generated Playwright hooks, explicit realtime scaffold composition, and fail-closed HHX/ERB DOM-target ownership.",
       "claimMarkers": [
         {
           "path": "docs/compatibility-matrix.md",
@@ -447,6 +448,7 @@
         "std/rails/hotwire",
         "std/rails/macros/HotwireContractMacro.hx",
         "std/rails/turbo",
+        "lib/hxruby/generators/scaffold.rb",
         "src/reflaxe/ruby/macros/RailsInlineMarkup.hx",
         "examples/turbo_streams",
         "examples/todoapp_rails/src/client",
@@ -464,6 +466,8 @@
         { "kind": "negative", "command": "test:turbo-streams", "lane": "full" },
         { "kind": "compile", "command": "test:hotwire-contract", "lane": "full" },
         { "kind": "negative", "command": "test:hotwire-contract", "lane": "full" },
+        { "kind": "compile", "command": "test:scaffold-cli", "lane": "full" },
+        { "kind": "negative", "command": "test:scaffold-cli", "lane": "full" },
         { "kind": "browser", "command": "test:todoapp-playwright", "lane": "browser" },
         { "kind": "production", "command": "test:todoapp-production", "lane": "production" }
       ]

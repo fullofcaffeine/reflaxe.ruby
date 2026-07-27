@@ -15,6 +15,7 @@ if defined?(Rails::Generators::Base)
       class_option :routes, type: :string, default: "haxe", desc: "Route mode: haxe, snippet, rails, or none"
       class_option :test_adapter, type: :string, default: "minitest", desc: "Test adapter: minitest, rspec, or auto"
       class_option :skip_tests, type: :boolean, default: false, desc: "Skip generated Haxe-authored Rails test stubs"
+      class_option :hotwire, type: :boolean, default: false, desc: "Generate a typed Rails/Turbo realtime resource contract"
       class_option :output, type: :string, default: ".", desc: "Output root"
       class_option :force, type: :boolean, default: false, desc: "Overwrite non-owned files and take RailsHx ownership"
 
@@ -29,6 +30,7 @@ if defined?(Rails::Generators::Base)
         args += ["--test-adapter", hxruby_option(:test_adapter, "minitest")]
         args << "--controller" if hxruby_flag?(:controller)
         args << "--skip-tests" if hxruby_flag?(:skip_tests)
+        args << "--hotwire" if hxruby_flag?(:hotwire)
         args << "--force" if hxruby_flag?(:force)
         HXRuby::Generators::Scaffold.run(args)
       end
