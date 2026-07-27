@@ -831,6 +831,14 @@
       "reason": "Typed Minitest-only ActionCable broadcast assertion that requests Rails' native ActionCable::TestHelper include, lowers to assert_broadcasts, and rejects RSpec until an equivalent matcher contract is independently verified."
     },
     {
+      "id": "std.rails.test_channel_test_case",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/test/ChannelTestCase.hx",
+      "surface": "rails.test.ChannelTestCase",
+      "reason": "Typed Minitest-only marker for Haxe-authored ActionCable channel tests; binds an explicit @:railsChannel owner and emits native subscribe, assert_has_stream, unsubscribe, and assert_no_streams calls."
+    },
+    {
       "id": "std.rails.test_dsl",
       "owner": "std",
       "status": "implemented",

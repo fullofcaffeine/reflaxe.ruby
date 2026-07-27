@@ -69,7 +69,7 @@
   "components": [
     {
       "id": "action-cable",
-      "scope": "Typed channels, connection identifiers, subscription params and payloads, streams, perform actions, server-derived typed client channel references, and Minitest-only typed broadcast assertions backed by ActionCable::TestHelper.",
+      "scope": "Typed channels, connection identifiers, subscription params and payloads, streams, perform actions, server-derived typed client channel references, Minitest-only typed broadcast assertions, and Haxe-authored native ActionCable channel tests.",
       "claimMarkers": [
         {
           "path": "docs/compatibility-matrix.md",
@@ -80,6 +80,7 @@
         "std/rails/action_cable",
         "std/rails/ActionCable.hx",
         "std/rails/test/ActionCableAssert.hx",
+        "std/rails/test/ChannelTestCase.hx",
         "examples/action_cable"
       ],
       "targetDependencies": [

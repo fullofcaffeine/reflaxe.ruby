@@ -26,6 +26,8 @@ const invalidConsumerOutputDir = join(root, "test", ".generated", "action_cable_
 const invalidPerformSourceDir = join(root, "test", ".generated", "action_cable_invalid_perform_src");
 const invalidPerformOutputDir = join(root, "test", ".generated", "action_cable_invalid_perform_out");
 const invalidClientContractSourceDir = join(root, "test", ".generated", "action_cable_invalid_client_contract_src");
+const invalidChannelTestSourceDir = join(root, "test", ".generated", "action_cable_invalid_channel_test_src");
+const invalidChannelTestOutputDir = join(root, "test", ".generated", "action_cable_invalid_channel_test_out");
 const jsWorkDir = mkdtempSync(join(tmpdir(), "railshx-action-cable."));
 const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
 let currentStage = "startup";
@@ -46,6 +48,8 @@ rmSync(invalidConsumerOutputDir, { force: true, recursive: true });
 rmSync(invalidPerformSourceDir, { force: true, recursive: true });
 rmSync(invalidPerformOutputDir, { force: true, recursive: true });
 rmSync(invalidClientContractSourceDir, { force: true, recursive: true });
+rmSync(invalidChannelTestSourceDir, { force: true, recursive: true });
+rmSync(invalidChannelTestOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -58,11 +62,24 @@ for (const file of [
   "app/channels/application_cable/connection.rb",
   "app/channels/todos_channel.rb",
   "app/lib/railshx/generated/main.rb",
+  "test/generated/channels/todos_channel_haxe_test.rb",
   "run.rb",
 ]) {
   const fullPath = join(outputDir, file);
   if (!existsSync(fullPath)) {
     fail(`Expected ActionCable output file missing: ${fullPath}`);
+  }
+}
+const channelTestRuby = readFileSync(join(outputDir, "test", "generated", "channels", "todos_channel_haxe_test.rb"), "utf8");
+for (const expected of [
+  /class TodosChannelHaxeTest < ActionCable::Channel::TestCase/,
+  /tests TodosChannel/,
+  /self\.subscribe\(\{"list_id" => "open"\}\)/,
+  /self\.assert_has_stream\(\("todos:" \+ "open"\)\)/,
+  /self\.assert_no_streams\(\)/,
+]) {
+  if (!expected.test(channelTestRuby)) {
+    fail(`Typed ActionCable channel-test output missing expected line: ${expected}`);
   }
 }
 
@@ -114,7 +131,13 @@ if (!/TodosChannel\.announce\("open", "Typed cable payload"\)/.test(mainRuby)) {
   fail("ActionCable main output missing typed broadcast call.");
 }
 
-for (const file of ["app/channels/application_cable/connection.rb", "app/channels/todos_channel.rb", "app/lib/railshx/generated/main.rb", "run.rb"]) {
+for (const file of [
+  "app/channels/application_cable/connection.rb",
+  "app/channels/todos_channel.rb",
+  "app/lib/railshx/generated/main.rb",
+  "test/generated/channels/todos_channel_haxe_test.rb",
+  "run.rb",
+]) {
   const result = run("ruby", ["-c", join(outputDir, file)], { allowFailure: true });
   if (result.status !== 0) {
     process.stdout.write(result.stdout);
@@ -130,6 +153,24 @@ writeInvalidRawStringFixtures();
 writeInvalidConsumerFixtures();
 writeInvalidPerformFixtures();
 writeInvalidClientContractFixtures();
+writeInvalidChannelTestFixtures();
+
+for (const [main, expected] of [
+  ["InvalidChannelTestContractMain", /generic params and payload must exactly match/],
+  ["InvalidChannelTestOwnerMain", /expects a class annotated with @:railsChannel/],
+  ["InvalidChannelTestRspecMain", /currently supports only the rails\.minitest adapter/],
+]) {
+  const result = compileActionCable(invalidChannelTestOutputDir, {
+    classPath: invalidChannelTestSourceDir,
+    main,
+    allowFailure: true,
+  });
+  if (result.status === 0 || !expected.test(result.stderr + result.stdout)) {
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    fail(`${main} did not fail with its expected channel-test diagnostic.`);
+  }
+}
 
 const invalidPayload = compileActionCable(invalidOutputDir, {
   classPath: invalidSourceDir,
@@ -321,6 +362,7 @@ stage("runtime ruby syntax", () => syntaxCheck([
   "config/environment.rb",
   "test/channels/todos_channel_test.rb",
   "test/channels/application_cable_connection_test.rb",
+  "test/generated/channels/todos_channel_haxe_test.rb",
 ]));
 
 const bundleProbe = stage("runtime bundle probe", () => run("bundle", ["check"], {
@@ -687,9 +729,58 @@ function writeInvalidClientContractFixtures() {
   ].join("\n"));
 }
 
+function writeInvalidChannelTestFixtures() {
+  mkdirSync(invalidChannelTestSourceDir, { recursive: true });
+  const commonImports = [
+    "import channels.TodosChannel;",
+    "import channels.TodosChannel.TodoBroadcast;",
+    "import channels.TodosChannel.TodoSubscriptionParams;",
+    "import rails.test.ChannelTestCase;",
+  ];
+  writeFileSync(join(invalidChannelTestSourceDir, "InvalidChannelTestContractMain.hx"), [
+    ...commonImports,
+    "@:railsChannelTest(channels.TodosChannel)",
+    "@:railsTest(\"channels/invalid_contract_test\")",
+    "class WrongContractTest extends ChannelTestCase<{var wrong:Int;}, TodoBroadcast> {",
+    "\t@:test public function fails():Void {}",
+    "}",
+    "class InvalidChannelTestContractMain {",
+    "\tstatic function main():Void { var owner:Class<WrongContractTest> = WrongContractTest; }",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidChannelTestSourceDir, "InvalidChannelTestOwnerMain.hx"), [
+    ...commonImports,
+    "class NotAChannel {}",
+    "@:railsChannelTest(InvalidChannelTestOwnerMain.NotAChannel)",
+    "@:railsTest(\"channels/invalid_owner_test\")",
+    "class WrongOwnerTest extends ChannelTestCase<TodoSubscriptionParams, TodoBroadcast> {",
+    "\t@:test public function fails():Void {}",
+    "}",
+    "class InvalidChannelTestOwnerMain {",
+    "\tstatic function main():Void { var owner:Class<WrongOwnerTest> = WrongOwnerTest; }",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidChannelTestSourceDir, "InvalidChannelTestRspecMain.hx"), [
+    ...commonImports,
+    "@:railsChannelTest(channels.TodosChannel)",
+    "@:railsTestAdapter(\"rails.rspec\")",
+    "@:railsTest(\"channels/invalid_channel_spec\")",
+    "class WrongAdapterTest extends ChannelTestCase<TodoSubscriptionParams, TodoBroadcast> {",
+    "\t@:test public function fails():Void {}",
+    "}",
+    "class InvalidChannelTestRspecMain {",
+    "\tstatic function main():Void { var owner:Class<WrongAdapterTest> = WrongAdapterTest; }",
+    "}",
+    "",
+  ].join("\n"));
+}
+
 function materializeRuntimeRailsApp() {
   mkdirSync(runtimeAppDir, { recursive: true });
   copyTree(join(outputDir, "app"), join(runtimeAppDir, "app"));
+  copyTree(join(outputDir, "test", "generated"), join(runtimeAppDir, "test", "generated"));
 
   writeFile("Gemfile", `source "https://rubygems.org"
 

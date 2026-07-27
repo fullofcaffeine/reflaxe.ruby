@@ -133,6 +133,8 @@ than Haxe runtime shells.
 | `@:hotwireHooks` | Browser-safe concrete declaration class with explicitly typed private static final `stream`, `target`, and `ready` compile-time String tokens. | Generates typed inline `streamName()`, `targetId()`, `targetSelector()`, and `readySelector()` accessors for client code and Playwright exports. Readiness stays explicit because it cannot be inferred from a stream name or DOM target; target ids must use the selector-safe identifier subset, and missing, imprecise, dynamic, or colliding declarations fail closed. |
 | `@:railsCableConnection` | ActionCable connection class with `connect()` and typed identifier declaration. | Emits `ApplicationCable::Connection`; missing `connect` or identifier host is rejected. |
 | `@:railsTest("path")` | Rails test/spec declaration class; safe literal output path. | Materializes a Rails-native test artifact instead of a runtime Haxe class. |
+| `@:railsChannelTest(ChannelType)` | `@:railsTest` class extending `rails.test.ChannelTestCase`; one typed `@:railsChannel` owner. | Emits `ActionCable::Channel::TestCase` with Rails' native `tests ChannelType` binding. |
+| `@:railsActionCableTestSubscribe` | Internal `ChannelTestCase.subscribe` facade method. | Marks the narrow compiler boundary that converts typed Haxe record fields to Rails snake_case subscription keys. |
 | `@:railsTestAdapter("rails.minitest" | "rails.rspec")` | `@:railsTest` class; one supported adapter literal. | Selects generated Minitest or RSpec shape; unsupported adapters fail closed. |
 | `@:railsTests` | Static declaration-host method inside `@:railsTest`. | Marks the legal Haxe test DSL body that the compiler consumes and erases into Rails-native test cases. |
 

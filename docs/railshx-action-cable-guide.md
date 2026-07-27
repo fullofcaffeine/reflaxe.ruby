@@ -109,6 +109,27 @@ Runtime tests use Rails' own `ActionCable::Channel::TestCase` helpers to assert
 `subscription.rejected?`, stream confirmation, and unsubscribe cleanup; Rails
 still owns the underlying channel lifecycle semantics.
 
+Haxe-authored channel tests use the same Rails owner:
+
+```haxe
+@:railsChannelTest(channels.TodosChannel)
+@:railsTest("channels/todos_channel_haxe_test")
+class TodosChannelHaxeTest
+		extends ChannelTestCase<TodoSubscriptionParams, TodoBroadcast> {
+	@:test
+	public function subscribesToTheTypedStream():Void {
+		subscribe({listId: "open"});
+		assertHasStream(TodoCable.listStream("open"));
+	}
+}
+```
+
+The explicit channel metadata emits `tests TodosChannel` and is checked against
+the channel's actual params/payload generics. Haxe-style `listId` is lowered to
+the Rails subscription key `list_id`; `assertHasStream` emits native
+`assert_has_stream`. This surface is Minitest-only until an equivalent RSpec
+channel-test contract is independently verified.
+
 ## Client Subscriptions
 
 Haxe-authored JavaScript can subscribe through a typed facade while keeping the

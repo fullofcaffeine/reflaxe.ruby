@@ -320,9 +320,12 @@ The shipped testing slice keeps server and browser ownership explicit:
   one row partial reused by initial rendering and broadcasts, a native
   Minitest broadcast assertion, and `hotwire-hooks.hxml` for a deterministic
   TypeScript selector export.
-- `assert_has_stream` remains a later channel-test slice. It requires a typed
-  `ActionCable::Channel::TestCase` owner and must not be advertised on the
-  current request/model test base classes.
+- `ChannelTestCase<TParams, TPayload>` plus
+  `@:railsChannelTest(ChannelType)` emits a native
+  `ActionCable::Channel::TestCase`, validates the selected channel's generic
+  contract, and exposes typed `subscribe`, `assertHasStream`, `unsubscribe`,
+  and `assertNoStreams` helpers. These APIs remain separate from request/model
+  test bases and Minitest-only until a verified RSpec equivalent exists.
 
 ## Diagnostics
 
@@ -397,6 +400,10 @@ The current todoapp chat is now the regression sentinel for this design:
    and Playwright selector export. The Rails app generator emits the matching
    workflow guide because it has no domain resource from which to truthfully
    invent stream, target, or row semantics.
+8. **Typed channel tests**: landed as an explicit checked `@:railsChannelTest`
+   owner, generic params/payload parity, Rails-native subscription-key
+   lowering, `assert_has_stream`, unsubscribe cleanup, negative diagnostics,
+   and generated Rails runtime execution.
 
 ## Non-Goals
 

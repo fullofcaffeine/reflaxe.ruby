@@ -4363,6 +4363,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function compileActionCableCall(callee:TypedExpr, params:Array<TypedExpr>):Null<RubyExpr> {
 		return switch (callee.expr) {
+			case TField(_, access) if (hasFieldAccessMeta(access, ":railsActionCableTestSubscribe") && params.length == 1):
+				RubyCall(RubyLocal("self"), "subscribe", [actionCableTestSubscriptionParams(params[0])]);
 			case TField(_, access) if (hasFieldAccessMeta(access, ":railsActionCableParam") && params.length == 1):
 				RubyRawExpr("params[" + actionCableParamKey(params[0]) + "]");
 			case TField(_, access) if (hasFieldAccessMeta(access, ":railsActionCableConnectionParam") && params.length == 1):
@@ -4373,6 +4375,28 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				RubyRawExpr(actionCableConnectionIdentifierName(params[0]));
 			case _:
 				null;
+		}
+	}
+
+	/**
+		Render typed Haxe subscription records as Rails-native snake_case params.
+
+		Haxe callers retain normal camelCase field completion while the tested
+		channel sees the same keys a real ActionCable client sends. Restricting
+		this conversion to the channel-test facade avoids changing ordinary Haxe
+		object/hash semantics elsewhere in Ruby output.
+	**/
+	static function actionCableTestSubscriptionParams(expr:TypedExpr):RubyExpr {
+		return switch (unwrapTypedExpr(expr).expr) {
+			case TObjectDecl(fields):
+				RubyHash([
+					for (field in fields)
+						{key: RubyNaming.toMethodName(field.name), value: compileExpr(field.expr)}
+				]);
+			case _:
+				Context.error("ChannelTestCase.subscribe expects a typed object literal so RailsHx can deterministically map Haxe field names to Rails subscription keys.",
+					expr.pos);
+				RubyHash([]);
 		}
 	}
 
