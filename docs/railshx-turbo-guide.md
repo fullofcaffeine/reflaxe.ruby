@@ -200,6 +200,9 @@ TurboStreams.broadcastAppendTo(TodoStreams.listStream(), TodoStreams.listTarget(
 	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 TurboStreams.broadcastReplaceTo(TodoStreams.listStream(), TodoStreams.listTarget(),
 	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+
+var refreshAction = TurboStreams.refresh();
+TurboStreams.broadcastRefreshTo(TodoStreams.listStream());
 ```
 
 Generated Ruby stays Rails-shaped:
@@ -218,6 +221,9 @@ Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos",
 Turbo::StreamsChannel.broadcast_replace_to("todos", target: "todos",
   partial: "todos/todo",
   locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
+
+turbo_stream.refresh()
+Turbo::StreamsChannel.broadcast_refresh_to("todos")
 ```
 
 Use typed target/stream constants for app-level names. Plain strings do not
@@ -228,6 +234,13 @@ the app. Use
 `Template.existing("path") : Template<TLocals>` for Rails-owned ERB partials.
 The typed action set currently covers `append`, `prepend`, `before`, `after`,
 `replace`, `update`, `remove`, and the matching `broadcast*To` helpers.
+`refresh()` and `broadcastRefreshTo(stream)` are intentionally targetless:
+refreshing asks each receiving Turbo session to reload its current page, so it
+has a typed stream but no DOM target, template, or locals payload. RailsHx
+currently exposes only the synchronous no-options form. Request-id attributes,
+debounced/later broadcasts, and model callback macros remain explicit
+follow-ups because they add request/job/lifecycle behavior rather than merely
+another stream action spelling.
 Pass locals as object literals or typed anonymous-object/typedef values. In both
 cases the compiler emits a Rails `locals: {snake_case: ...}` hash. Values typed
 as `Dynamic` are treated as explicit Ruby/Rails-owned runtime hashes and are
@@ -321,12 +334,22 @@ npm run test:turbo
 npm run test:turbo-streams
 ```
 
+The Turbo Streams smoke always owns generated shape and negative Haxe typing.
+With `REQUIRE_RAILS=1`, it also executes the generated refresh methods against
+the verified Rails/Turbo bundle and asserts both the targetless tag and
+ActionCable broadcast:
+
+```bash
+REQUIRE_RAILS=1 npm run test:turbo-streams
+```
+
 Use the real-browser todoapp sentinel for Rails/importmap/Turbo integration:
 
 ```bash
 npm run test:todoapp-playwright
 ```
 
-`npm test` includes the static Turbo and Turbo Streams smokes. Browser and Rails
-runtime lanes stay separate so local compiler work remains fast while CI can
-require full Rails coverage.
+`npm test` includes the Turbo and Turbo Streams smokes. The canonical
+`test:rails-runtime` lane sets `REQUIRE_RAILS=1`, so hosted CI cannot silently
+skip the refresh runtime proof. Browser and Rails runtime lanes remain separate
+because they own different behavior.

@@ -156,9 +156,10 @@ Typed boundary:
   `Turbo.renderStreamMessage`.
 - Implemented slice: typed server-side Turbo stream helpers for
   `append`, `prepend`, `before`, `after`, `replace`, `update`, `remove`, and
-  matching broadcast shapes. These use `StreamTarget`, `StreamName<TPayload>`,
-  and `Template<TLocals>` while lowering to Rails `turbo_stream.*` and
-  `Turbo::StreamsChannel.broadcast_*_to` calls.
+  matching broadcast shapes, plus the targetless `refresh` action and typed
+  synchronous refresh broadcast. These use `StreamTarget`,
+  `StreamName<TPayload>`, and `Template<TLocals>` while lowering to Rails
+  `turbo_stream.*` and `Turbo::StreamsChannel.broadcast_*_to` calls.
 - Implemented slice: `@:railsChannel` classes, typed
   `Channel<TParams, TPayload>`, typed subscription params, typed streams,
   `ActionCable.broadcast(...)`, and browser-only
@@ -170,9 +171,10 @@ Typed boundary:
   Stream names/targets, HHX partial locals, generated client subscription
   helpers, and Playwright selectors from one Haxe source of truth. See
   [RailsHx Full-Stack Hotwire Design](railshx-full-stack-hotwire-design.md).
-- Broaden typed Turbo stream helpers to additional Rails helper shapes such as
-  refresh and model callback macros where the target Rails API shape is proven,
-  plus runtime Rails test coverage.
+- Targetless refresh rendering and synchronous refresh broadcasts are proven
+  against `turbo-rails` in the mandatory Rails runtime lane. Refresh options,
+  debounced/later broadcasts, and model callback macros remain separate
+  follow-ups because they add request-id, job, or model-lifecycle semantics.
 - Haxe-authored JS clients that layer on Rails importmap/Turbo conventions.
 - The first `@:hotwireContract` slice now generates typed stream-name,
   stream-target, and HHX row-template accessors from one declaration. Static
@@ -200,6 +202,8 @@ Graduation criteria:
 - Browser sentinel proves progressive enhancement remains Rails/Turbo-native.
 - Channel params are typed and runtime-tested under
   `REQUIRE_RAILS=1 npm run test:action-cable`.
+- Turbo refresh tags and synchronous broadcasts are runtime-tested under
+  `REQUIRE_RAILS=1 npm run test:turbo-streams`.
 - Channel rejection and unsubscribe cleanup use Rails-native ActionCable
   lifecycle helpers and are covered by generated Rails channel tests.
 

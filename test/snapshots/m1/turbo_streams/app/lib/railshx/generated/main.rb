@@ -6,7 +6,13 @@ class Main
     "Main"
   end
   def self.__hx_fields()
-    {instance: [], static: ["main"]}
+    {instance: [], static: ["broadcastRefresh", "main", "refreshTag"]}
+  end
+  def self.refresh_tag()
+    return turbo_stream.refresh()
+  end
+  def self.broadcast_refresh()
+    Turbo::StreamsChannel.broadcast_refresh_to("todos")
   end
   def self.main()
     append_locals = {"domId" => "todo_1", "title" => "Ship typed Turbo Streams", "completed" => false}
@@ -19,6 +25,7 @@ class Main
     turbo_stream.before("todos", partial: "todos/todo", locals: {dom_id: "todo_before", title: "Inserted before the list", completed: false})
     turbo_stream.after("todos", partial: "todos/todo", locals: {dom_id: "todo_after", title: "Inserted after the list", completed: false})
     turbo_stream.remove("todos")
+    Main.refresh_tag()
     Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
     Turbo::StreamsChannel.broadcast_prepend_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
     Turbo::StreamsChannel.broadcast_before_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
@@ -26,6 +33,7 @@ class Main
     Turbo::StreamsChannel.broadcast_replace_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (replace_locals)["completed"], dom_id: (replace_locals)["domId"], title: (replace_locals)["title"]})
     Turbo::StreamsChannel.broadcast_update_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (replace_locals)["completed"], dom_id: (replace_locals)["domId"], title: (replace_locals)["title"]})
     Turbo::StreamsChannel.broadcast_remove_to("todos", target: "todos")
+    Main.broadcast_refresh()
   end
 end
 if __FILE__ == $PROGRAM_NAME

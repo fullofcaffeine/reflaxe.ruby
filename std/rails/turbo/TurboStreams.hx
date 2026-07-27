@@ -35,6 +35,16 @@ class TurboStreams {
 		return null;
 	}
 
+	/**
+		Builds Turbo's targetless page-refresh stream action.
+
+		Unlike DOM mutation actions, refresh intentionally has no StreamTarget:
+		the receiving Turbo session refreshes the current page.
+	**/
+	public static function refresh():Dynamic {
+		return null;
+	}
+
 	public static function broadcastAppendTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 
 	public static function broadcastPrependTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
@@ -48,4 +58,12 @@ class TurboStreams {
 	public static function broadcastUpdateTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 
 	public static function broadcastRemoveTo<TPayload>(stream:StreamName<TPayload>, target:StreamTarget):Void {}
+
+	/**
+		Broadcasts Turbo's targetless refresh action to one typed stream.
+
+		This is the synchronous Rails helper. Debounced/later refreshes have
+		request-id and job-lifecycle semantics and remain a separate contract.
+	**/
+	public static function broadcastRefreshTo<TPayload>(stream:StreamName<TPayload>):Void {}
 }

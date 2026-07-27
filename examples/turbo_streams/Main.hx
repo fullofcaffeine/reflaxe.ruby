@@ -22,6 +22,14 @@ class TodoStreams {
 }
 
 class Main {
+	public static function refreshTag():Dynamic {
+		return TurboStreams.refresh();
+	}
+
+	public static function broadcastRefresh():Void {
+		TurboStreams.broadcastRefreshTo(TodoStreams.listStream());
+	}
+
 	static function main():Void {
 		var appendLocals:TodoRowLocals = {
 			domId: "todo_1",
@@ -72,6 +80,10 @@ class Main {
 		// Demonstrates: remove only needs the typed DOM target.
 		TurboStreams.remove(TodoStreams.listTarget());
 
+		// Demonstrates: Turbo refresh is intentionally targetless because it asks
+		// the receiving session to refresh its current page.
+		refreshTag();
+
 		// Demonstrates: server-side broadcast lowering to the Rails Turbo channel
 		// helper while preserving the same typed target/template/locals contract.
 		TurboStreams.broadcastAppendTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
@@ -82,5 +94,9 @@ class Main {
 			replaceLocals);
 		TurboStreams.broadcastUpdateTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), replaceLocals);
 		TurboStreams.broadcastRemoveTo(TodoStreams.listStream(), TodoStreams.listTarget());
+
+		// Demonstrates: the stream is still typed even though a page refresh has
+		// no DOM target or partial/locals payload.
+		broadcastRefresh();
 	}
 }

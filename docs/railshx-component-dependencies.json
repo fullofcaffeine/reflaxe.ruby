@@ -439,7 +439,7 @@
     },
     {
       "id": "turbo-and-hotwire",
-      "scope": "The documented typed Turbo client hooks/frame helpers, server Turbo Stream target/template/render/broadcast helpers, declaration-driven typed Hotwire server contracts, browser-safe generated Playwright hooks, explicit realtime scaffold composition, and fail-closed HHX/ERB DOM-target ownership.",
+      "scope": "The documented typed Turbo client hooks/frame helpers, server Turbo Stream target/template/render/broadcast/refresh helpers, declaration-driven typed Hotwire server contracts, browser-safe generated Playwright hooks, explicit realtime scaffold composition, and fail-closed HHX/ERB DOM-target ownership.",
       "claimMarkers": [
         {
           "path": "docs/compatibility-matrix.md",
@@ -457,7 +457,7 @@
         "examples/todoapp_rails/src/shared"
       ],
       "targetDependencies": [
-        "Turbo from the reference bundle",
+        "turbo-rails 2.0.23 under the verified Rails runtime",
         "Rails ActionView 8.1",
         "Genes JavaScript emitter",
         "Chromium via Playwright"
@@ -466,6 +466,7 @@
         { "kind": "compile", "command": "test:turbo", "lane": "full" },
         { "kind": "compile", "command": "test:turbo-streams", "lane": "full" },
         { "kind": "negative", "command": "test:turbo-streams", "lane": "full" },
+        { "kind": "runtime", "command": "test:turbo-streams", "lane": "rails-runtime" },
         { "kind": "compile", "command": "test:hotwire-contract", "lane": "full" },
         { "kind": "negative", "command": "test:hotwire-contract", "lane": "full" },
         { "kind": "compile", "command": "test:scaffold-cli", "lane": "full" },

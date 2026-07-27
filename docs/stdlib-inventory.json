@@ -1596,7 +1596,7 @@
       "status": "implemented",
       "path": "std/rails/turbo/TurboStreams.hx",
       "surface": "rails.turbo.TurboStreams",
-      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers."
+      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers, including targetless refresh rendering and synchronous typed refresh broadcasts."
     },
     {
       "id": "std.rails.turbo_event",

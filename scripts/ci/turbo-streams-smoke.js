@@ -1,15 +1,24 @@
 #!/usr/bin/env node
 
-const { existsSync, mkdirSync, rmSync, writeFileSync } = require("node:fs");
-const { join, resolve } = require("node:path");
+const { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { dirname, join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "turbo_streams");
+const runtimeAppDir = join(root, "test", ".generated", "turbo_streams_runtime");
 const invalidSourceDir = join(root, "test", ".generated", "turbo_streams_invalid_src");
 const invalidOutputDir = join(root, "test", ".generated", "turbo_streams_invalid_out");
 const invalidStringTargetSourceDir = join(root, "test", ".generated", "turbo_streams_invalid_string_target_src");
 const invalidStringTargetOutputDir = join(root, "test", ".generated", "turbo_streams_invalid_string_target_out");
+const invalidRefreshStreamSourceDir = join(root, "test", ".generated", "turbo_streams_invalid_refresh_stream_src");
+const invalidRefreshStreamOutputDir = join(root, "test", ".generated", "turbo_streams_invalid_refresh_stream_out");
+const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
+const supportMatrix = JSON.parse(readFileSync(join(root, "lib", "hxruby", "support_matrix.json"), "utf8"));
+const railsVersion = supportMatrix.railsHx.verifiedRuntime.railsVersion;
+// This focused fixture pins the exact upstream version whose refresh API shape
+// and runtime bytes own the stable contract; public generated apps remain >=2.0.
+const turboRailsVersion = "2.0.23";
 const reflaxeCandidates = [
   join(root, "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.elixir.codex", "vendor", "reflaxe", "src"),
@@ -17,10 +26,13 @@ const reflaxeCandidates = [
 ];
 
 rmSync(outputDir, { force: true, recursive: true });
+rmSync(runtimeAppDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
 rmSync(invalidStringTargetSourceDir, { force: true, recursive: true });
 rmSync(invalidStringTargetOutputDir, { force: true, recursive: true });
+rmSync(invalidRefreshStreamSourceDir, { force: true, recursive: true });
+rmSync(invalidRefreshStreamOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -49,6 +61,18 @@ for (const file of ["app/lib/railshx/generated/main.rb", "run.rb"]) {
     process.stdout.write(result.stdout);
     process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
+  }
+}
+
+const mainRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "generated", "main.rb"), "utf8");
+for (const expected of [
+  /def self\.refresh_tag\(\)/,
+  /turbo_stream\.refresh\(\)/,
+  /def self\.broadcast_refresh\(\)/,
+  /Turbo::StreamsChannel\.broadcast_refresh_to\("todos"\)/,
+]) {
+  if (!expected.test(mainRuby)) {
+    fail(`Typed Turbo refresh output missing expected structural call: ${expected}`);
   }
 }
 
@@ -97,6 +121,47 @@ if (!/String should be rails\.turbo\.StreamTarget|StreamTarget|Cannot unify/.tes
   process.stderr.write(invalidStringTarget.stderr);
   fail("Invalid Turbo Streams raw string target failed for an unexpected reason.");
 }
+
+writeInvalidRefreshStreamFixture();
+
+const invalidRefreshStream = compileTurboStreams(invalidRefreshStreamOutputDir, {
+  classPath: invalidRefreshStreamSourceDir,
+  main: "InvalidRefreshStreamMain",
+  allowFailure: true,
+});
+if (invalidRefreshStream.status === 0) {
+  fail("Expected Turbo refresh broadcast to reject a raw String stream name.");
+}
+if (!/String should be rails\.turbo\.StreamName|StreamName|Cannot unify/.test(invalidRefreshStream.stderr + invalidRefreshStream.stdout)) {
+  process.stdout.write(invalidRefreshStream.stdout);
+  process.stderr.write(invalidRefreshStream.stderr);
+  fail("Invalid Turbo refresh stream failed for an unexpected reason.");
+}
+
+materializeRuntimeRailsApp();
+
+const bundleProbe = run("bundle", ["check"], {
+  cwd: runtimeAppDir,
+  allowFailure: true,
+});
+if (bundleProbe.status !== 0) {
+  if (requireRails) {
+    assertRuntimeRubySupportsRails();
+    process.stdout.write("[turbo-streams] Rails/Turbo bundle missing; running bundle install because REQUIRE_RAILS=1.\n");
+    run("bundle", ["install"], { cwd: runtimeAppDir });
+  } else {
+    process.stdout.write("[turbo-streams] Rails/Turbo bundle unavailable; skipped refresh runtime test pass.\n");
+    process.stdout.write("[turbo-streams] Set REQUIRE_RAILS=1 to install verified gems and make this lane mandatory.\n");
+    console.log("[turbo-streams] OK");
+    process.exit(0);
+  }
+}
+
+run("bundle", ["exec", "rails", "test"], {
+  cwd: runtimeAppDir,
+  env: { ...process.env, RAILS_ENV: "test" },
+});
+console.log("[turbo-streams] Rails refresh tag and broadcast runtime OK");
 
 console.log("[turbo-streams] OK");
 
@@ -171,10 +236,123 @@ function writeInvalidStringTargetFixture() {
   ].join("\n"));
 }
 
+function writeInvalidRefreshStreamFixture() {
+  mkdirSync(invalidRefreshStreamSourceDir, { recursive: true });
+  writeFileSync(join(invalidRefreshStreamSourceDir, "InvalidRefreshStreamMain.hx"), [
+    "import rails.turbo.TurboStreams;",
+    "class InvalidRefreshStreamMain {",
+    "\tstatic function main():Void {",
+    "\t\tTurboStreams.broadcastRefreshTo(\"todos\");",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
+function materializeRuntimeRailsApp() {
+  mkdirSync(runtimeAppDir, { recursive: true });
+  copyFile(
+    join(outputDir, "app", "lib", "railshx", "generated", "main.rb"),
+    "app/lib/railshx/generated/main.rb",
+  );
+
+  writeFile("Gemfile", `source "https://rubygems.org"
+
+gem "rails", "${railsVersion}"
+gem "turbo-rails", "${turboRailsVersion}"
+`);
+
+  writeFile("config/application.rb", `require "rails"
+require "action_cable/engine"
+require "turbo-rails"
+
+module HXRubyTurboStreams
+  class Application < Rails::Application
+    config.load_defaults 8.1
+    config.eager_load = false
+    config.root = File.expand_path("..", __dir__)
+    config.action_cable.adapter = :test
+  end
+end
+`);
+
+  writeFile("config/environment.rb", `require_relative "application"
+
+Rails.application.initialize!
+`);
+
+  writeFile("test/test_helper.rb", `ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
+require "rails/test_help"
+require "action_cable/test_helper"
+`);
+
+  writeFile("test/turbo_refresh_test.rb", `require "test_helper"
+require Rails.root.join("app/lib/railshx/generated/main")
+
+class TurboRefreshTest < ActiveSupport::TestCase
+  include ActionCable::TestHelper
+
+  setup do
+    view_context = Object.new
+    view_context.define_singleton_method(:formats) { @formats ||= [] }
+    Main.define_singleton_method(:turbo_stream) do
+      Turbo::Streams::TagBuilder.new(view_context)
+    end
+  end
+
+  test "renders the generated targetless refresh action" do
+    assert_equal '<turbo-stream action="refresh"></turbo-stream>', Main.refresh_tag.to_s
+  end
+
+  test "broadcasts the generated refresh action to the typed stream" do
+    assert_broadcasts("todos", 1) do
+      Main.broadcast_refresh
+    end
+
+    assert_equal '<turbo-stream action="refresh"></turbo-stream>', broadcasts("todos").last
+  end
+end
+`);
+}
+
+function copyFile(source, relativeTarget) {
+  const target = join(runtimeAppDir, relativeTarget);
+  mkdirSync(dirname(target), { recursive: true });
+  copyFileSync(source, target);
+}
+
+function writeFile(relativePath, content) {
+  const target = join(runtimeAppDir, relativePath);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, content);
+}
+
+function assertRuntimeRubySupportsRails() {
+  const rubyVersion = run("ruby", ["-e", "print RUBY_VERSION"], { allowFailure: true }).stdout.trim();
+  if (!rubyAtLeast(rubyVersion, "3.3.0")) {
+    console.error(`[turbo-streams] REQUIRE_RAILS=1 requires Ruby >= 3.3.0; current ruby is ${rubyVersion || "unknown"}.`);
+    process.exit(1);
+  }
+}
+
+function rubyAtLeast(actual, minimum) {
+  const actualParts = actual.split(".").map((part) => Number.parseInt(part, 10));
+  const minimumParts = minimum.split(".").map((part) => Number.parseInt(part, 10));
+  for (let i = 0; i < minimumParts.length; i += 1) {
+    const actualPart = Number.isFinite(actualParts[i]) ? actualParts[i] : 0;
+    const minimumPart = minimumParts[i];
+    if (actualPart > minimumPart) return true;
+    if (actualPart < minimumPart) return false;
+  }
+  return true;
+}
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? root,
     encoding: "utf8",
+    env: options.env ?? process.env,
     stdio: ["ignore", "pipe", "pipe"],
   });
   if (result.status !== 0 && !options.allowFailure) {
