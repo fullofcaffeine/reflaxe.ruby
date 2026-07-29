@@ -5,6 +5,51 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.20.0 typed Turbo refresh display-options publication
+
+The normal tested-commit workflow published immutable
+[`v1.20.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.20.0)
+on 2026-07-29 for closed Turbo refresh rendering and scroll options.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `7fff0d394556363873cd3691132eb8610bd7d054` |
+| Canonical release tag | `v1.20.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30427489890`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30427489890), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3 runtime, and publication jobs passed |
+| Privileged release job | [`90503777918`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30427489890/job/90503777918), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-29T06:54:25Z` |
+| Release notes | Version heading, `v1.19.0...v1.20.0` compare link, categorized feature bullet, and exact `7fff0d3` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.20.0.gem` | 285696 | `84a92143809b7c1bf0c243d153dc30615ff091cec0e19c542b8e9db516c3a652` |
+| `hxruby-1.20.0.gem.sha256.json` | 304 | `113e1862d3fc0b2a54af75ccd38fe43f6de735658e210b66d4c6ff7f9494c97f` |
+| `reflaxe.ruby-1.20.0.zip` | 1356972 | `075dd872d22af0bae78c2944bcdabc307bb58a9ef0689c3fe6ba5c451b82dae7` |
+| `reflaxe.ruby-1.20.0.zip.sha256.json` | 317 | `15116e821e503461e890e0c5c79825ae3799f5c61d9c58a98c4f557df6d466a7` |
+
+Each sidecar binds the downloaded bytes to version `1.20.0`, tag `v1.20.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities; their canonical format-1 manifests
+independently verified all 732 Haxelib and 343 gem payload entries with no
+missing, altered, duplicate, or extra content. The packaged Haxelib metadata,
+Ruby version constant, and gem specification all report version `1.20.0`.
+
+`TurboStreams.refresh(...)` and
+`TurboStreams.broadcastRefreshTo(...)` now accept closed
+`TurboRefreshOptions` object literals. Typed replace/morph and reset/preserve
+values structurally emit Rails `method:` and `scroll:` keywords, and an
+optional `TurboRequestId` composes as `request_id:`. Existing no-argument and
+request-only calls retain their generated shape; raw strings and unknown
+fields remain compile-time errors. Exact `turbo-rails` 2.0.23 runtime tests
+verify direct refresh tags and delivered synchronous broadcasts, while the
+compiler lowering inventory remains at 269 classified legacy raw or
+print-reembedding sites. Later/debounced broadcasts and model callback macros
+remain separate lifecycle contracts.
+
 ## Stable 1.19.0 typed Turbo refresh request-ID publication
 
 The normal tested-commit workflow published immutable
