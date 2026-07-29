@@ -4712,7 +4712,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case "refresh" if (params.length <= 1):
 				var args:Array<RubyCallArgument> = [];
 				if (params.length == 1 && !isNullLiteral(params[0])) {
-					args.push(RubyKeywordArgument("request_id", compileExpr(params[0])));
+					var options = RailsCallArgumentPlan.classifyTurboRefreshOptions(params[0]);
+					if (options == null) {
+						Context.error("TurboStreams.refresh options must be a typed object literal.", params[0].pos);
+					} else {
+						for (option in options) {
+							args.push(RubyKeywordArgument(option.rubyName, compileExpr(option.value)));
+						}
+					}
 				}
 				RubyCallableCall(RubyLocal("turbo_stream"), "refresh", args);
 			case "broadcastAppendTo" if (params.length == 4):
@@ -4732,7 +4739,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			case "broadcastRefreshTo" if (params.length == 1 || params.length == 2):
 				var args:Array<RubyCallArgument> = [RubyPositionalArgument(compileExpr(params[0]))];
 				if (params.length == 2 && !isNullLiteral(params[1])) {
-					args.push(RubyKeywordArgument("request_id", compileExpr(params[1])));
+					var options = RailsCallArgumentPlan.classifyTurboRefreshOptions(params[1]);
+					if (options == null) {
+						Context.error("TurboStreams.broadcastRefreshTo options must be a typed object literal.", params[1].pos);
+					} else {
+						for (option in options) {
+							args.push(RubyKeywordArgument(option.rubyName, compileExpr(option.value)));
+						}
+					}
 				}
 				RubyCallableCall(RubyConstantPath("Turbo::StreamsChannel"), "broadcast_refresh_to", args);
 			case _:

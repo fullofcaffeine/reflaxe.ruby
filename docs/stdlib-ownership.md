@@ -124,10 +124,10 @@ runtime wrapper. See [Modern Temporal APIs](temporal-apis.md).
 Shared RailsHx value types belong in `std/` as a single source of truth when
 both server-side Ruby code and browser-side JavaScript code need the same typed
 contract. Examples include `rails.turbo.StreamName`,
-`rails.turbo.StreamTarget`, `rails.turbo.TurboRequestId`, and
-`rails.turbo.TurboStreamAction`: ActionView, Turbo Streams, compiler lowerings,
-and Haxe-authored browser code all benefit from one package path and one set of
-conversions.
+`rails.turbo.StreamTarget`, `rails.turbo.TurboRequestId`,
+`rails.turbo.TurboRefreshOptions`, and `rails.turbo.TurboStreamAction`:
+ActionView, Turbo Streams, compiler lowerings, and Haxe-authored browser code
+all benefit from one package path and one set of conversions.
 
 Do not duplicate shared tokens into separate server/client packages just to
 make the physical tree look stricter. Prefer library entrypoint separation:

@@ -1,6 +1,8 @@
 import rails.action_view.Template;
 import rails.turbo.StreamName;
 import rails.turbo.StreamTarget;
+import rails.turbo.TurboRefreshMethod;
+import rails.turbo.TurboRefreshScroll;
 import rails.turbo.TurboRequestId;
 import rails.turbo.TurboStreams;
 import views.TodoRowView;
@@ -31,12 +33,24 @@ class Main {
 		return TurboStreams.refresh(TurboRequestId.named("request-123"));
 	}
 
+	public static function refreshTagWithDisplayOptions():Dynamic {
+		return TurboStreams.refresh({method: Morph, scroll: Preserve});
+	}
+
 	public static function broadcastRefresh():Void {
 		TurboStreams.broadcastRefreshTo(TodoStreams.listStream());
 	}
 
 	public static function broadcastRefreshForRequest():Void {
 		TurboStreams.broadcastRefreshTo(TodoStreams.listStream(), TurboRequestId.named("request-123"));
+	}
+
+	public static function broadcastRefreshWithOptions():Void {
+		TurboStreams.broadcastRefreshTo(TodoStreams.listStream(), {
+			requestId: TurboRequestId.named("request-123"),
+			method: Morph,
+			scroll: Preserve
+		});
 	}
 
 	static function main():Void {
@@ -98,6 +112,10 @@ class Main {
 		// request from processing its own refresh broadcast a second time.
 		refreshTagForRequest();
 
+		// Demonstrates: refresh display behavior is a closed typed object, so
+		// completion offers only replace/morph and reset/preserve values.
+		refreshTagWithDisplayOptions();
+
 		// Demonstrates: server-side broadcast lowering to the Rails Turbo channel
 		// helper while preserving the same typed target/template/locals contract.
 		TurboStreams.broadcastAppendTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
@@ -116,5 +134,9 @@ class Main {
 		// Demonstrates: synchronous broadcasts can echo the initiating Turbo
 		// request ID while preserving the same typed stream-name contract.
 		broadcastRefreshForRequest();
+
+		// Demonstrates: request correlation and display behavior compose in one
+		// typed options literal and still emit ordinary Turbo stream attributes.
+		broadcastRefreshWithOptions();
 	}
 }

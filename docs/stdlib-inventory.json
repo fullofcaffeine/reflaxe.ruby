@@ -1599,12 +1599,36 @@
       "reason": "Explicit opaque request-correlation token for Turbo refresh rendering and synchronous broadcasts; no implicit String conversion, so request IDs cross into refresh calls deliberately."
     },
     {
+      "id": "std.rails.turbo_refresh_method",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboRefreshMethod.hx",
+      "surface": "rails.turbo.TurboRefreshMethod",
+      "reason": "Closed replace/morph rendering strategy for direct and broadcast Turbo page-refresh stream actions."
+    },
+    {
+      "id": "std.rails.turbo_refresh_options",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboRefreshOptions.hx",
+      "surface": "rails.turbo.TurboRefreshOptions",
+      "reason": "Closed compiler-erased request, rendering, and scroll carrier for Turbo refresh tags; the TurboRequestId conversion preserves the request-only API without admitting raw attributes."
+    },
+    {
+      "id": "std.rails.turbo_refresh_scroll",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboRefreshScroll.hx",
+      "surface": "rails.turbo.TurboRefreshScroll",
+      "reason": "Closed reset/preserve scroll strategy for direct and broadcast Turbo page-refresh stream actions."
+    },
+    {
       "id": "std.rails.turbo_streams",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/turbo/TurboStreams.hx",
       "surface": "rails.turbo.TurboStreams",
-      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers, including targetless refresh rendering, synchronous typed refresh broadcasts, and optional typed request-ID correlation."
+      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers, including targetless refresh rendering, closed method/scroll behavior, synchronous typed refresh broadcasts, and optional typed request-ID correlation."
     },
     {
       "id": "std.rails.turbo_event",

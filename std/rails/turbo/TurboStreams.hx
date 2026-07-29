@@ -39,11 +39,11 @@ class TurboStreams {
 		Builds Turbo's targetless page-refresh stream action.
 
 		Unlike DOM mutation actions, refresh intentionally has no StreamTarget:
-		the receiving Turbo session refreshes the current page. Pass the current
-		Turbo request ID when a response and a broadcast may reach the same
-		browser, so Turbo can suppress the duplicate refresh.
+		the receiving Turbo session refreshes the current page. Typed options can
+		select replace/morph rendering, reset/preserve scrolling, and the request
+		ID Turbo uses to suppress a duplicate refresh in the initiating browser.
 	**/
-	public static function refresh(?requestId:TurboRequestId):Dynamic {
+	public static function refresh(?options:TurboRefreshOptions):Dynamic {
 		return null;
 	}
 
@@ -64,10 +64,9 @@ class TurboStreams {
 	/**
 		Broadcasts Turbo's targetless refresh action to one typed stream.
 
-		This is the synchronous Rails helper. The optional request ID is forwarded
-		to Turbo's refresh tag so the initiating browser can recognize its own
-		recent request. Debounced/later refreshes have job-lifecycle semantics and
-		remain a separate contract.
+		This is the synchronous Rails helper. Typed options become refresh-tag
+		attributes; no generic attribute bag reaches Rails. Debounced/later
+		refreshes have job-lifecycle semantics and remain a separate contract.
 	**/
-	public static function broadcastRefreshTo<TPayload>(stream:StreamName<TPayload>, ?requestId:TurboRequestId):Void {}
+	public static function broadcastRefreshTo<TPayload>(stream:StreamName<TPayload>, ?options:TurboRefreshOptions):Void {}
 }

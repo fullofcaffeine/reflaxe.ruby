@@ -74,10 +74,14 @@ for (const expected of [
   /turbo_stream\.refresh\(\)/,
   /def self\.refresh_tag_for_request\(\)/,
   /turbo_stream\.refresh\(request_id: "request-123"\)/,
+  /def self\.refresh_tag_with_display_options\(\)/,
+  /turbo_stream\.refresh\(method: "morph", scroll: "preserve"\)/,
   /def self\.broadcast_refresh\(\)/,
   /Turbo::StreamsChannel\.broadcast_refresh_to\("todos"\)/,
   /def self\.broadcast_refresh_for_request\(\)/,
   /Turbo::StreamsChannel\.broadcast_refresh_to\("todos", request_id: "request-123"\)/,
+  /def self\.broadcast_refresh_with_options\(\)/,
+  /Turbo::StreamsChannel\.broadcast_refresh_to\("todos", request_id: "request-123", method: "morph", scroll: "preserve"\)/,
 ]) {
   if (!expected.test(mainRuby)) {
     fail(`Typed Turbo refresh output missing expected structural call: ${expected}`);
@@ -156,10 +160,52 @@ const invalidRefreshRequest = compileTurboStreams(invalidRefreshRequestOutputDir
 if (invalidRefreshRequest.status === 0) {
   fail("Expected Turbo refresh to reject a raw String request ID.");
 }
-if (!/String should be rails\.turbo\.TurboRequestId|TurboRequestId|Cannot unify/.test(invalidRefreshRequest.stderr + invalidRefreshRequest.stdout)) {
+if (!/String should be (?:Null<)?rails\.turbo\.(?:TurboRequestId|TurboRefreshOptions)|TurboRequestId|TurboRefreshOptions|Cannot unify/.test(invalidRefreshRequest.stderr + invalidRefreshRequest.stdout)) {
   process.stdout.write(invalidRefreshRequest.stdout);
   process.stderr.write(invalidRefreshRequest.stderr);
   fail("Invalid Turbo refresh request ID failed for an unexpected reason.");
+}
+
+const invalidRefreshMethod = compileTurboStreams(invalidRefreshRequestOutputDir, {
+  classPath: invalidRefreshRequestSourceDir,
+  main: "InvalidRefreshMethodMain",
+  allowFailure: true,
+});
+if (invalidRefreshMethod.status === 0) {
+  fail("Expected Turbo refresh to reject a raw String method.");
+}
+if (!/String should be rails\.turbo\.TurboRefreshMethod|TurboRefreshMethod|Cannot unify/.test(invalidRefreshMethod.stderr + invalidRefreshMethod.stdout)) {
+  process.stdout.write(invalidRefreshMethod.stdout);
+  process.stderr.write(invalidRefreshMethod.stderr);
+  fail("Invalid Turbo refresh method failed for an unexpected reason.");
+}
+
+const invalidRefreshScroll = compileTurboStreams(invalidRefreshRequestOutputDir, {
+  classPath: invalidRefreshRequestSourceDir,
+  main: "InvalidRefreshScrollMain",
+  allowFailure: true,
+});
+if (invalidRefreshScroll.status === 0) {
+  fail("Expected Turbo refresh to reject a raw String scroll strategy.");
+}
+if (!/String should be rails\.turbo\.TurboRefreshScroll|TurboRefreshScroll|Cannot unify/.test(invalidRefreshScroll.stderr + invalidRefreshScroll.stdout)) {
+  process.stdout.write(invalidRefreshScroll.stdout);
+  process.stderr.write(invalidRefreshScroll.stderr);
+  fail("Invalid Turbo refresh scroll strategy failed for an unexpected reason.");
+}
+
+const invalidRefreshField = compileTurboStreams(invalidRefreshRequestOutputDir, {
+  classPath: invalidRefreshRequestSourceDir,
+  main: "InvalidRefreshFieldMain",
+  allowFailure: true,
+});
+if (invalidRefreshField.status === 0) {
+  fail("Expected Turbo refresh to reject an unknown option field.");
+}
+if (!/options must be a typed object literal|bogus|TurboRefreshOptions/.test(invalidRefreshField.stderr + invalidRefreshField.stdout)) {
+  process.stdout.write(invalidRefreshField.stdout);
+  process.stderr.write(invalidRefreshField.stderr);
+  fail("Invalid Turbo refresh option field failed for an unexpected reason.");
 }
 
 materializeRuntimeRailsApp();
@@ -284,6 +330,33 @@ function writeInvalidRefreshRequestFixture() {
     "}",
     "",
   ].join("\n"));
+  writeFileSync(join(invalidRefreshRequestSourceDir, "InvalidRefreshMethodMain.hx"), [
+    "import rails.turbo.TurboStreams;",
+    "class InvalidRefreshMethodMain {",
+    "\tstatic function main():Void {",
+    "\t\tTurboStreams.refresh({method: \"morph\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidRefreshRequestSourceDir, "InvalidRefreshScrollMain.hx"), [
+    "import rails.turbo.TurboStreams;",
+    "class InvalidRefreshScrollMain {",
+    "\tstatic function main():Void {",
+    "\t\tTurboStreams.refresh({scroll: \"preserve\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidRefreshRequestSourceDir, "InvalidRefreshFieldMain.hx"), [
+    "import rails.turbo.TurboStreams;",
+    "class InvalidRefreshFieldMain {",
+    "\tstatic function main():Void {",
+    "\t\tTurboStreams.refresh({bogus: true});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
 }
 
 function materializeRuntimeRailsApp() {
@@ -346,6 +419,10 @@ class TurboRefreshTest < ActiveSupport::TestCase
     assert_equal '<turbo-stream request-id="request-123" action="refresh"></turbo-stream>', Main.refresh_tag_for_request.to_s
   end
 
+  test "renders closed method and scroll options on the refresh action" do
+    assert_equal '<turbo-stream method="morph" scroll="preserve" action="refresh"></turbo-stream>', Main.refresh_tag_with_display_options.to_s
+  end
+
   test "broadcasts the generated refresh action to the typed stream" do
     assert_broadcasts("todos", 1) do
       Main.broadcast_refresh
@@ -360,6 +437,14 @@ class TurboRefreshTest < ActiveSupport::TestCase
     end
 
     assert_equal '<turbo-stream request-id="request-123" action="refresh"></turbo-stream>', broadcasts("todos").last
+  end
+
+  test "broadcasts request, method, and scroll options to the typed stream" do
+    assert_broadcasts("todos", 1) do
+      Main.broadcast_refresh_with_options
+    end
+
+    assert_equal '<turbo-stream request-id="request-123" method="morph" scroll="preserve" action="refresh"></turbo-stream>', broadcasts("todos").last
   end
 end
 `);

@@ -6,7 +6,7 @@ class Main
     "Main"
   end
   def self.__hx_fields()
-    {instance: [], static: ["broadcastRefresh", "broadcastRefreshForRequest", "main", "refreshTag", "refreshTagForRequest"]}
+    {instance: [], static: ["broadcastRefresh", "broadcastRefreshForRequest", "broadcastRefreshWithOptions", "main", "refreshTag", "refreshTagForRequest", "refreshTagWithDisplayOptions"]}
   end
   def self.refresh_tag()
     return turbo_stream.refresh()
@@ -14,11 +14,17 @@ class Main
   def self.refresh_tag_for_request()
     return turbo_stream.refresh(request_id: "request-123")
   end
+  def self.refresh_tag_with_display_options()
+    return turbo_stream.refresh(method: "morph", scroll: "preserve")
+  end
   def self.broadcast_refresh()
     Turbo::StreamsChannel.broadcast_refresh_to("todos")
   end
   def self.broadcast_refresh_for_request()
     Turbo::StreamsChannel.broadcast_refresh_to("todos", request_id: "request-123")
+  end
+  def self.broadcast_refresh_with_options()
+    Turbo::StreamsChannel.broadcast_refresh_to("todos", request_id: "request-123", method: "morph", scroll: "preserve")
   end
   def self.main()
     append_locals = {"domId" => "todo_1", "title" => "Ship typed Turbo Streams", "completed" => false}
@@ -33,6 +39,7 @@ class Main
     turbo_stream.remove("todos")
     Main.refresh_tag()
     Main.refresh_tag_for_request()
+    Main.refresh_tag_with_display_options()
     Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
     Turbo::StreamsChannel.broadcast_prepend_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
     Turbo::StreamsChannel.broadcast_before_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
@@ -42,6 +49,7 @@ class Main
     Turbo::StreamsChannel.broadcast_remove_to("todos", target: "todos")
     Main.broadcast_refresh()
     Main.broadcast_refresh_for_request()
+    Main.broadcast_refresh_with_options()
   end
 end
 if __FILE__ == $PROGRAM_NAME

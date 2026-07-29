@@ -168,6 +168,8 @@ helpers:
 import rails.action_view.Template;
 import rails.turbo.StreamName;
 import rails.turbo.StreamTarget;
+import rails.turbo.TurboRefreshMethod;
+import rails.turbo.TurboRefreshScroll;
 import rails.turbo.TurboRequestId;
 import rails.turbo.TurboStreams;
 
@@ -208,6 +210,16 @@ TurboStreams.broadcastRefreshTo(TodoStreams.listStream());
 var originatingRequest = TurboRequestId.named("request-123");
 var correlatedRefresh = TurboStreams.refresh(originatingRequest);
 TurboStreams.broadcastRefreshTo(TodoStreams.listStream(), originatingRequest);
+
+var morphRefresh = TurboStreams.refresh({
+	method: Morph,
+	scroll: Preserve
+});
+TurboStreams.broadcastRefreshTo(TodoStreams.listStream(), {
+	requestId: originatingRequest,
+	method: Morph,
+	scroll: Preserve
+});
 ```
 
 Generated Ruby stays Rails-shaped:
@@ -232,6 +244,10 @@ Turbo::StreamsChannel.broadcast_refresh_to("todos")
 
 turbo_stream.refresh(request_id: "request-123")
 Turbo::StreamsChannel.broadcast_refresh_to("todos", request_id: "request-123")
+
+turbo_stream.refresh(method: "morph", scroll: "preserve")
+Turbo::StreamsChannel.broadcast_refresh_to("todos",
+  request_id: "request-123", method: "morph", scroll: "preserve")
 ```
 
 Use typed target/stream constants for app-level names. Plain strings do not
@@ -246,7 +262,20 @@ The typed action set currently covers `append`, `prepend`, `before`, `after`,
 refreshing asks each receiving Turbo session to reload its current page, so it
 has a typed stream but no DOM target, template, or locals payload.
 
-Both refresh calls accept an optional `TurboRequestId`. Turbo assigns
+Both refresh calls accept closed `TurboRefreshOptions` object literals:
+
+- `method` is `TurboRefreshMethod.Replace` or `.Morph`;
+- `scroll` is `TurboRefreshScroll.Reset` or `.Preserve`;
+- `requestId` is an optional `TurboRequestId`.
+
+The method and scroll values directly model Turbo's documented
+[`refresh` stream attributes](https://turbo.hotwired.dev/reference/streams#refresh).
+Use morph plus preserve when a page refresh should retain compatible DOM and
+scroll state; replace plus reset are Turbo's ordinary defaults. Plain strings
+do not satisfy either closed value type, and the compiler does not expose an
+arbitrary attributes hash.
+
+Turbo assigns
 `X-Turbo-Request-Id` values to browser requests and remembers recent IDs. When
 the server echoes that value as the refresh stream's `request-id`, the browser
 that initiated the request can ignore its own broadcast instead of refreshing
@@ -255,12 +284,12 @@ twice. This is the correlation behavior behind Turbo's documented
 The no-argument calls remain the normal synchronous form and preserve
 turbo-rails' ambient `Turbo.current_request_id` default. Use
 `TurboRequestId.named(...)` only when code deliberately carries an explicit
-correlation value; a plain `String` does not satisfy the API.
+correlation value. Passing a `TurboRequestId` directly remains a
+source-compatible shorthand for `{requestId: value}`.
 
-Refresh `method`/`scroll` attributes, debounced/later broadcasts, and model
-callback macros remain explicit follow-ups because they add display,
-job-lifecycle, or model-lifecycle behavior rather than merely another stream
-action spelling.
+Debounced/later broadcasts and model callback macros remain explicit follow-ups
+because they add job-lifecycle or model-lifecycle behavior rather than another
+stream action attribute.
 Pass locals as object literals or typed anonymous-object/typedef values. In both
 cases the compiler emits a Rails `locals: {snake_case: ...}` hash. Values typed
 as `Dynamic` are treated as explicit Ruby/Rails-owned runtime hashes and are

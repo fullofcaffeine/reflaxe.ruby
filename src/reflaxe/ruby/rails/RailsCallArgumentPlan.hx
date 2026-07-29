@@ -18,6 +18,12 @@ typedef RailsLocalsProjectionField = {
 	var rubyName:String;
 }
 
+/** One closed `TurboRefreshOptions` field retained for structural keywords. **/
+typedef RailsTurboRefreshOptionField = {
+	var rubyName:String;
+	var value:TypedExpr;
+}
+
 /** Closed source-level choice for a Rails response status argument. **/
 enum RailsStatusArgumentPlan {
 	RailsStatusSymbol(name:String);
@@ -90,6 +96,54 @@ class RailsCallArgumentPlan {
 				}
 			case _:
 				null;
+		}
+	}
+
+	/**
+		Retains only the closed refresh option family needed after source typing.
+
+		The options carrier is compiler-erased: accepting only an object literal
+		prevents a runtime hash from becoming a hidden raw-attribute escape hatch.
+	**/
+	public static function classifyTurboRefreshOptions(expr:TypedExpr):Null<Array<RailsTurboRefreshOptionField>> {
+		return switch (unwrap(expr).expr) {
+			case TObjectDecl(fields):
+				var allowed = ["requestId", "method", "scroll"];
+				var valid = true;
+				for (field in fields) {
+					if (!allowed.contains(field.name)) {
+						valid = false;
+					}
+				}
+				if (!valid) {
+					null;
+				} else {
+					var byName = [for (field in fields) field.name => field.expr];
+					var result:Array<RailsTurboRefreshOptionField> = [];
+					for (name in allowed) {
+						var value = byName.get(name);
+						if (value != null) {
+							result.push({rubyName: name == "requestId" ? "request_id" : name, value: value});
+						}
+					}
+					result;
+				}
+			case TCall(callee, [requestId]) if (isTurboRefreshRequestConversion(callee)):
+				[{rubyName: "request_id", value: requestId}];
+			case TConst(TNull):
+				[];
+			case _:
+				null;
+		}
+	}
+
+	static function isTurboRefreshRequestConversion(callee:TypedExpr):Bool {
+		return switch (unwrap(callee).expr) {
+			case TField(_, FStatic(classRef, fieldRef)): var owner = fullTypeName(classRef.get()); fieldRef.get()
+					.name == "fromRequestId" && (owner == "rails.turbo.TurboRefreshOptions_Impl_"
+					|| StringTools.endsWith(owner, ".TurboRefreshOptions_Impl_"));
+			case _:
+				false;
 		}
 	}
 
