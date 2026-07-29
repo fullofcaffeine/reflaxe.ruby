@@ -157,9 +157,12 @@ Typed boundary:
 - Implemented slice: typed server-side Turbo stream helpers for
   `append`, `prepend`, `before`, `after`, `replace`, `update`, `remove`, and
   matching broadcast shapes, plus the targetless `refresh` action and typed
-  synchronous refresh broadcast. These use `StreamTarget`,
-  `StreamName<TPayload>`, and `Template<TLocals>` while lowering to Rails
-  `turbo_stream.*` and `Turbo::StreamsChannel.broadcast_*_to` calls.
+  synchronous refresh broadcast. Refresh rendering and broadcasts accept an
+  optional `TurboRequestId` correlation token so the initiating browser can
+  recognize its own recent request. These use `StreamTarget`,
+  `StreamName<TPayload>`, `TurboRequestId`, and `Template<TLocals>` while
+  lowering to Rails `turbo_stream.*` and
+  `Turbo::StreamsChannel.broadcast_*_to` calls.
 - Implemented slice: `@:railsChannel` classes, typed
   `Channel<TParams, TPayload>`, typed subscription params, typed streams,
   `ActionCable.broadcast(...)`, and browser-only
@@ -171,10 +174,11 @@ Typed boundary:
   Stream names/targets, HHX partial locals, generated client subscription
   helpers, and Playwright selectors from one Haxe source of truth. See
   [RailsHx Full-Stack Hotwire Design](railshx-full-stack-hotwire-design.md).
-- Targetless refresh rendering and synchronous refresh broadcasts are proven
-  against `turbo-rails` in the mandatory Rails runtime lane. Refresh options,
-  debounced/later broadcasts, and model callback macros remain separate
-  follow-ups because they add request-id, job, or model-lifecycle semantics.
+- Targetless refresh rendering, explicit request-ID attributes, and synchronous
+  refresh broadcasts are proven against `turbo-rails` in the mandatory Rails
+  runtime lane. Refresh method/scroll attributes, debounced/later broadcasts,
+  and model callback macros remain separate follow-ups because they add display,
+  job, or model-lifecycle semantics.
 - Haxe-authored JS clients that layer on Rails importmap/Turbo conventions.
 - The first `@:hotwireContract` slice now generates typed stream-name,
   stream-target, and HHX row-template accessors from one declaration. Static

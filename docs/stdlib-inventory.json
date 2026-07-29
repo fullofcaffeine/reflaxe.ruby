@@ -1591,12 +1591,20 @@
       "reason": "Typed server-side Turbo stream name carrying the broadcast payload/locals shape; no implicit String conversion so broadcast names stay explicit and searchable."
     },
     {
+      "id": "std.rails.turbo_request_id",
+      "owner": "std",
+      "status": "implemented",
+      "path": "std/rails/turbo/TurboRequestId.hx",
+      "surface": "rails.turbo.TurboRequestId",
+      "reason": "Explicit opaque request-correlation token for Turbo refresh rendering and synchronous broadcasts; no implicit String conversion, so request IDs cross into refresh calls deliberately."
+    },
+    {
       "id": "std.rails.turbo_streams",
       "owner": "std",
       "status": "implemented",
       "path": "std/rails/turbo/TurboStreams.hx",
       "surface": "rails.turbo.TurboStreams",
-      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers, including targetless refresh rendering and synchronous typed refresh broadcasts."
+      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers, including targetless refresh rendering, synchronous typed refresh broadcasts, and optional typed request-ID correlation."
     },
     {
       "id": "std.rails.turbo_event",

@@ -13,6 +13,8 @@ const invalidStringTargetSourceDir = join(root, "test", ".generated", "turbo_str
 const invalidStringTargetOutputDir = join(root, "test", ".generated", "turbo_streams_invalid_string_target_out");
 const invalidRefreshStreamSourceDir = join(root, "test", ".generated", "turbo_streams_invalid_refresh_stream_src");
 const invalidRefreshStreamOutputDir = join(root, "test", ".generated", "turbo_streams_invalid_refresh_stream_out");
+const invalidRefreshRequestSourceDir = join(root, "test", ".generated", "turbo_streams_invalid_refresh_request_src");
+const invalidRefreshRequestOutputDir = join(root, "test", ".generated", "turbo_streams_invalid_refresh_request_out");
 const requireRails = process.env.REQUIRE_RAILS === "1" || process.env.CI_REQUIRE_RAILS === "1";
 const supportMatrix = JSON.parse(readFileSync(join(root, "lib", "hxruby", "support_matrix.json"), "utf8"));
 const railsVersion = supportMatrix.railsHx.verifiedRuntime.railsVersion;
@@ -33,6 +35,8 @@ rmSync(invalidStringTargetSourceDir, { force: true, recursive: true });
 rmSync(invalidStringTargetOutputDir, { force: true, recursive: true });
 rmSync(invalidRefreshStreamSourceDir, { force: true, recursive: true });
 rmSync(invalidRefreshStreamOutputDir, { force: true, recursive: true });
+rmSync(invalidRefreshRequestSourceDir, { force: true, recursive: true });
+rmSync(invalidRefreshRequestOutputDir, { force: true, recursive: true });
 
 const reflaxeSrc = reflaxeCandidates.find((path) => existsSync(join(path, "reflaxe", "ReflectCompiler.hx")));
 if (!reflaxeSrc) {
@@ -68,8 +72,12 @@ const mainRuby = readFileSync(join(outputDir, "app", "lib", "railshx", "generate
 for (const expected of [
   /def self\.refresh_tag\(\)/,
   /turbo_stream\.refresh\(\)/,
+  /def self\.refresh_tag_for_request\(\)/,
+  /turbo_stream\.refresh\(request_id: "request-123"\)/,
   /def self\.broadcast_refresh\(\)/,
   /Turbo::StreamsChannel\.broadcast_refresh_to\("todos"\)/,
+  /def self\.broadcast_refresh_for_request\(\)/,
+  /Turbo::StreamsChannel\.broadcast_refresh_to\("todos", request_id: "request-123"\)/,
 ]) {
   if (!expected.test(mainRuby)) {
     fail(`Typed Turbo refresh output missing expected structural call: ${expected}`);
@@ -136,6 +144,22 @@ if (!/String should be rails\.turbo\.StreamName|StreamName|Cannot unify/.test(in
   process.stdout.write(invalidRefreshStream.stdout);
   process.stderr.write(invalidRefreshStream.stderr);
   fail("Invalid Turbo refresh stream failed for an unexpected reason.");
+}
+
+writeInvalidRefreshRequestFixture();
+
+const invalidRefreshRequest = compileTurboStreams(invalidRefreshRequestOutputDir, {
+  classPath: invalidRefreshRequestSourceDir,
+  main: "InvalidRefreshRequestMain",
+  allowFailure: true,
+});
+if (invalidRefreshRequest.status === 0) {
+  fail("Expected Turbo refresh to reject a raw String request ID.");
+}
+if (!/String should be rails\.turbo\.TurboRequestId|TurboRequestId|Cannot unify/.test(invalidRefreshRequest.stderr + invalidRefreshRequest.stdout)) {
+  process.stdout.write(invalidRefreshRequest.stdout);
+  process.stderr.write(invalidRefreshRequest.stderr);
+  fail("Invalid Turbo refresh request ID failed for an unexpected reason.");
 }
 
 materializeRuntimeRailsApp();
@@ -249,6 +273,19 @@ function writeInvalidRefreshStreamFixture() {
   ].join("\n"));
 }
 
+function writeInvalidRefreshRequestFixture() {
+  mkdirSync(invalidRefreshRequestSourceDir, { recursive: true });
+  writeFileSync(join(invalidRefreshRequestSourceDir, "InvalidRefreshRequestMain.hx"), [
+    "import rails.turbo.TurboStreams;",
+    "class InvalidRefreshRequestMain {",
+    "\tstatic function main():Void {",
+    "\t\tTurboStreams.refresh(\"request-123\");",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+}
+
 function materializeRuntimeRailsApp() {
   mkdirSync(runtimeAppDir, { recursive: true });
   copyFile(
@@ -305,12 +342,24 @@ class TurboRefreshTest < ActiveSupport::TestCase
     assert_equal '<turbo-stream action="refresh"></turbo-stream>', Main.refresh_tag.to_s
   end
 
+  test "renders an explicit typed request id on the refresh action" do
+    assert_equal '<turbo-stream request-id="request-123" action="refresh"></turbo-stream>', Main.refresh_tag_for_request.to_s
+  end
+
   test "broadcasts the generated refresh action to the typed stream" do
     assert_broadcasts("todos", 1) do
       Main.broadcast_refresh
     end
 
     assert_equal '<turbo-stream action="refresh"></turbo-stream>', broadcasts("todos").last
+  end
+
+  test "broadcasts an explicit typed request id to the typed stream" do
+    assert_broadcasts("todos", 1) do
+      Main.broadcast_refresh_for_request
+    end
+
+    assert_equal '<turbo-stream request-id="request-123" action="refresh"></turbo-stream>', broadcasts("todos").last
   end
 end
 `);

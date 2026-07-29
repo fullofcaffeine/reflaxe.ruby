@@ -168,6 +168,7 @@ helpers:
 import rails.action_view.Template;
 import rails.turbo.StreamName;
 import rails.turbo.StreamTarget;
+import rails.turbo.TurboRequestId;
 import rails.turbo.TurboStreams;
 
 typedef TodoRowLocals = {
@@ -203,6 +204,10 @@ TurboStreams.broadcastReplaceTo(TodoStreams.listStream(), TodoStreams.listTarget
 
 var refreshAction = TurboStreams.refresh();
 TurboStreams.broadcastRefreshTo(TodoStreams.listStream());
+
+var originatingRequest = TurboRequestId.named("request-123");
+var correlatedRefresh = TurboStreams.refresh(originatingRequest);
+TurboStreams.broadcastRefreshTo(TodoStreams.listStream(), originatingRequest);
 ```
 
 Generated Ruby stays Rails-shaped:
@@ -224,6 +229,9 @@ Turbo::StreamsChannel.broadcast_replace_to("todos", target: "todos",
 
 turbo_stream.refresh()
 Turbo::StreamsChannel.broadcast_refresh_to("todos")
+
+turbo_stream.refresh(request_id: "request-123")
+Turbo::StreamsChannel.broadcast_refresh_to("todos", request_id: "request-123")
 ```
 
 Use typed target/stream constants for app-level names. Plain strings do not
@@ -236,11 +244,23 @@ The typed action set currently covers `append`, `prepend`, `before`, `after`,
 `replace`, `update`, `remove`, and the matching `broadcast*To` helpers.
 `refresh()` and `broadcastRefreshTo(stream)` are intentionally targetless:
 refreshing asks each receiving Turbo session to reload its current page, so it
-has a typed stream but no DOM target, template, or locals payload. RailsHx
-currently exposes only the synchronous no-options form. Request-id attributes,
-debounced/later broadcasts, and model callback macros remain explicit
-follow-ups because they add request/job/lifecycle behavior rather than merely
-another stream action spelling.
+has a typed stream but no DOM target, template, or locals payload.
+
+Both refresh calls accept an optional `TurboRequestId`. Turbo assigns
+`X-Turbo-Request-Id` values to browser requests and remembers recent IDs. When
+the server echoes that value as the refresh stream's `request-id`, the browser
+that initiated the request can ignore its own broadcast instead of refreshing
+twice. This is the correlation behavior behind Turbo's documented
+[`request-id` refresh attribute](https://turbo.hotwired.dev/reference/streams#refresh).
+The no-argument calls remain the normal synchronous form and preserve
+turbo-rails' ambient `Turbo.current_request_id` default. Use
+`TurboRequestId.named(...)` only when code deliberately carries an explicit
+correlation value; a plain `String` does not satisfy the API.
+
+Refresh `method`/`scroll` attributes, debounced/later broadcasts, and model
+callback macros remain explicit follow-ups because they add display,
+job-lifecycle, or model-lifecycle behavior rather than merely another stream
+action spelling.
 Pass locals as object literals or typed anonymous-object/typedef values. In both
 cases the compiler emits a Rails `locals: {snake_case: ...}` hash. Values typed
 as `Dynamic` are treated as explicit Ruby/Rails-owned runtime hashes and are
@@ -336,8 +356,8 @@ npm run test:turbo-streams
 
 The Turbo Streams smoke always owns generated shape and negative Haxe typing.
 With `REQUIRE_RAILS=1`, it also executes the generated refresh methods against
-the verified Rails/Turbo bundle and asserts both the targetless tag and
-ActionCable broadcast:
+the verified Rails/Turbo bundle and asserts targetless tags and ActionCable
+broadcasts both with and without explicit request IDs:
 
 ```bash
 REQUIRE_RAILS=1 npm run test:turbo-streams

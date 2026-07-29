@@ -6,13 +6,19 @@ class Main
     "Main"
   end
   def self.__hx_fields()
-    {instance: [], static: ["broadcastRefresh", "main", "refreshTag"]}
+    {instance: [], static: ["broadcastRefresh", "broadcastRefreshForRequest", "main", "refreshTag", "refreshTagForRequest"]}
   end
   def self.refresh_tag()
     return turbo_stream.refresh()
   end
+  def self.refresh_tag_for_request()
+    return turbo_stream.refresh(request_id: "request-123")
+  end
   def self.broadcast_refresh()
     Turbo::StreamsChannel.broadcast_refresh_to("todos")
+  end
+  def self.broadcast_refresh_for_request()
+    Turbo::StreamsChannel.broadcast_refresh_to("todos", request_id: "request-123")
   end
   def self.main()
     append_locals = {"domId" => "todo_1", "title" => "Ship typed Turbo Streams", "completed" => false}
@@ -26,6 +32,7 @@ class Main
     turbo_stream.after("todos", partial: "todos/todo", locals: {dom_id: "todo_after", title: "Inserted after the list", completed: false})
     turbo_stream.remove("todos")
     Main.refresh_tag()
+    Main.refresh_tag_for_request()
     Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
     Turbo::StreamsChannel.broadcast_prepend_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
     Turbo::StreamsChannel.broadcast_before_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
@@ -34,6 +41,7 @@ class Main
     Turbo::StreamsChannel.broadcast_update_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (replace_locals)["completed"], dom_id: (replace_locals)["domId"], title: (replace_locals)["title"]})
     Turbo::StreamsChannel.broadcast_remove_to("todos", target: "todos")
     Main.broadcast_refresh()
+    Main.broadcast_refresh_for_request()
   end
 end
 if __FILE__ == $PROGRAM_NAME

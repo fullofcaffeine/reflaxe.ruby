@@ -4685,7 +4685,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			&& (info.owner == "rails.turbo.StreamTarget"
 				|| StringTools.endsWith(info.owner, ".StreamTarget_Impl_")
 				|| info.owner == "rails.turbo.StreamName"
-				|| StringTools.endsWith(info.owner, ".StreamName_Impl_"))
+				|| StringTools.endsWith(info.owner, ".StreamName_Impl_")
+				|| info.owner == "rails.turbo.TurboRequestId"
+				|| StringTools.endsWith(info.owner, ".TurboRequestId_Impl_"))
 			&& params.length == 1) {
 			return compileExpr(params[0]);
 		}
@@ -4707,8 +4709,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				compileTurboStreamRenderCall("update", params);
 			case "remove" if (params.length == 1):
 				RubyRawExpr("turbo_stream.remove(" + printParam(params, 0) + ")");
-			case "refresh" if (params.length == 0):
-				RubyCallableCall(RubyLocal("turbo_stream"), "refresh", []);
+			case "refresh" if (params.length <= 1):
+				var args:Array<RubyCallArgument> = [];
+				if (params.length == 1 && !isNullLiteral(params[0])) {
+					args.push(RubyKeywordArgument("request_id", compileExpr(params[0])));
+				}
+				RubyCallableCall(RubyLocal("turbo_stream"), "refresh", args);
 			case "broadcastAppendTo" if (params.length == 4):
 				compileTurboStreamBroadcastCall("append", params);
 			case "broadcastPrependTo" if (params.length == 4):
@@ -4723,8 +4729,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				compileTurboStreamBroadcastCall("update", params);
 			case "broadcastRemoveTo" if (params.length == 2):
 				RubyRawExpr("Turbo::StreamsChannel.broadcast_remove_to(" + printParam(params, 0) + ", target: " + printParam(params, 1) + ")");
-			case "broadcastRefreshTo" if (params.length == 1):
-				RubyCallableCall(RubyConstantPath("Turbo::StreamsChannel"), "broadcast_refresh_to", [RubyPositionalArgument(compileExpr(params[0]))]);
+			case "broadcastRefreshTo" if (params.length == 1 || params.length == 2):
+				var args:Array<RubyCallArgument> = [RubyPositionalArgument(compileExpr(params[0]))];
+				if (params.length == 2 && !isNullLiteral(params[1])) {
+					args.push(RubyKeywordArgument("request_id", compileExpr(params[1])));
+				}
+				RubyCallableCall(RubyConstantPath("Turbo::StreamsChannel"), "broadcast_refresh_to", args);
 			case _:
 				null;
 		}

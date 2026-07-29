@@ -1,6 +1,7 @@
 import rails.action_view.Template;
 import rails.turbo.StreamName;
 import rails.turbo.StreamTarget;
+import rails.turbo.TurboRequestId;
 import rails.turbo.TurboStreams;
 import views.TodoRowView;
 import views.TodoRowView.TodoRowLocals;
@@ -26,8 +27,16 @@ class Main {
 		return TurboStreams.refresh();
 	}
 
+	public static function refreshTagForRequest():Dynamic {
+		return TurboStreams.refresh(TurboRequestId.named("request-123"));
+	}
+
 	public static function broadcastRefresh():Void {
 		TurboStreams.broadcastRefreshTo(TodoStreams.listStream());
+	}
+
+	public static function broadcastRefreshForRequest():Void {
+		TurboStreams.broadcastRefreshTo(TodoStreams.listStream(), TurboRequestId.named("request-123"));
 	}
 
 	static function main():Void {
@@ -84,6 +93,11 @@ class Main {
 		// the receiving session to refresh its current page.
 		refreshTag();
 
+		// Demonstrates: an explicit request ID is a typed correlation token, not
+		// a casual string. Turbo uses it to keep the browser that initiated a
+		// request from processing its own refresh broadcast a second time.
+		refreshTagForRequest();
+
 		// Demonstrates: server-side broadcast lowering to the Rails Turbo channel
 		// helper while preserving the same typed target/template/locals contract.
 		TurboStreams.broadcastAppendTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), appendLocals);
@@ -98,5 +112,9 @@ class Main {
 		// Demonstrates: the stream is still typed even though a page refresh has
 		// no DOM target or partial/locals payload.
 		broadcastRefresh();
+
+		// Demonstrates: synchronous broadcasts can echo the initiating Turbo
+		// request ID while preserving the same typed stream-name contract.
+		broadcastRefreshForRequest();
 	}
 }
