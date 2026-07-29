@@ -165,7 +165,7 @@ Unsafe boundary policy is tracked in
 | Typed HHX control/helper tags | `<if>`, `<for>`, `<link_to>`, `<button_to>`, `<partial>` | Initial template/helper slice |
 | Typed HHX helper label children | static text or `${...}` expression children | Initial helper slice |
 | Typed HHX nested helper slots | `<link_to>...</link_to>`, `<button_to>...</button_to>` block-form content | Initial slot slice |
-| HHX view-local helper methods | Static same-class helpers called from `@:railsTemplateAst` views | R&D design drafted; scalar helpers recommended as first implementation slice |
+| HHX view-local helper methods | Static same-class scalar helpers in text/attributes and `HtmlNode` helpers in child-markup position | Implemented with compile-time inlining, typed arguments/returns, purity diagnostics, component snapshots, and todoapp dogfood |
 | Typed RailsHx components | `Component<TLocals>`, `<component component=${...}>`, `Slot.content()` | Initial ActionView capture/render partial slice |
 | Typed Turbo client helpers | `rails.turbo.Turbo`, `TurboVisitAction`, `TurboStreamAction` | Initial Haxe JS/importmap-friendly slice |
 | Typed server-side Turbo streams | `TurboStreams.append/prepend/before/after/replace/update/remove/refresh`, `broadcast*To`, `StreamTarget`, `StreamName<TPayload>`, `Template<TLocals>` | Rails-native `turbo_stream.*`/`Turbo::StreamsChannel` slice; refresh tag and broadcast runtime-proven |

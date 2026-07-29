@@ -1,4 +1,4 @@
-# RailsHx View-Local Helpers R&D
+# RailsHx View-Local Helpers
 
 RailsHx HHX views should be allowed to keep small, pure presentation helpers
 next to the markup that uses them. This is the same ergonomic pressure React
@@ -6,9 +6,13 @@ components solve with local functions, but the RailsHx output must remain normal
 Rails ERB and must not turn view classes into query, mutation, or controller
 objects.
 
-This document is the design packet for the `haxe_ruby-7yo` R&D bead. It is
-written so a beginner can understand the intended authoring model before reading
-the compiler implementation.
+This document began as the design packet for the `haxe_ruby-7yo` R&D bead.
+The static scalar contract shipped in `haxe_ruby-7pt`, and same-class
+`HtmlNode` composition shipped in `haxe_ruby-7ls`. The supported implementation
+inlines helper bodies into Rails-native ERB, keeps arguments and return types
+checked by Haxe, and rejects unsupported return types plus obvious query or
+mutation calls. Shared helpers and instance-style view objects remain future
+R&D rather than implied support.
 
 ## Problem
 
@@ -65,8 +69,7 @@ presentation logic.
 
 ## Recommended Authoring Shape
 
-The first supported shape should be static/private helper methods in the same
-view class:
+The supported shape is static/private helper methods in the same view class:
 
 ```haxe
 typedef TodoCardLocals = {
@@ -114,15 +117,15 @@ They can appear in text or attributes:
 <span class=${roleClass(locals.user)}>${displayName(locals.user)}</span>
 ```
 
-Desired ERB shape:
+RailsHx inlines the helper expressions into ERB:
 
 ```erb
-<span class="<%= role_class(user) %>"><%= display_name(user) %></span>
+<span class="<%= (role expression) %>"><%= (display-name expression) %></span>
 ```
 
-For RailsHx-owned static helpers, the compiler may also inline very small pure
-expressions when that keeps output clearer, but direct ERB helper calls are
-easier to debug and should be the initial contract.
+Inlining is the public contract for this slice. It keeps the output close to the
+template, avoids generated helper modules or `__hx*` runtime scaffolding, and is
+covered by committed component snapshots.
 
 ### Markup Helpers
 
@@ -215,11 +218,11 @@ Good beginner diagnostics matter more than clever lowering. Examples:
 
 ## Tests
 
-The implementation should include:
+The maintained component and todoapp gates cover:
 
 - a positive HHX template smoke for same-class scalar helpers in text and attrs;
-- a positive snapshot proving generated ERB/Ruby has readable helper names and
-  no `__hx*` scaffolding;
+- a positive snapshot proving generated ERB contains clear inlined expressions
+  and no helper runtime or `__hx*` scaffolding;
 - a compile-fail test for `Dynamic` helper returns;
 - a compile-fail test for database/query calls inside a helper;
 - a compile-fail test for mutations inside a helper;
@@ -241,18 +244,19 @@ View-local helpers do not replace view models completely. Use this rule:
 - If the value requires loading data, permissions, persistence, or side effects,
   compute it before rendering and pass it as typed locals.
 
-## Implementation Slices
+## Shipped And Follow-Up Slices
 
-1. Document and test the current behavior around simple helper calls, so we know
-   which cases already work by accident.
-2. Add explicit same-class scalar helper recognition in template expression
+Shipped:
+
+1. Explicit same-class scalar helper recognition in template expression
    printing.
-3. Add purity diagnostics for the most dangerous surfaces: queries, mutation,
-   `untyped`, raw Ruby, controller/session/cookie/job/file IO calls.
-4. Add todoapp examples where helpers remove noisy repeated presentation logic.
-5. Add same-class static `HtmlNode` returning helpers after scalar helpers are
-   stable.
-6. Revisit an instance-style surface only after static helpers are proven:
+2. Known-return diagnostics plus conservative rejection of obvious query and
+   mutation method names.
+3. Component snapshots/negative compilation and todoapp dogfood.
+4. Same-class static `HtmlNode` helpers used in HHX child-markup position.
+
+Follow-up work may broaden purity analysis beyond the current conservative
+surface, add typed shared helpers, or revisit an instance-style surface:
 
    ```haxe
    class TodoCardView extends RailsView<TodoCardLocals> {
@@ -279,10 +283,9 @@ Ask the reviewer to challenge these points:
 - Which examples in `examples/todoapp_rails/src/views` would most clearly
   demonstrate the feature without making the sample clever?
 
-## Recommendation
+## Current Recommendation
 
-Keep static same-class scalar helpers as the base contract and support
-same-class `HtmlNode` helpers for local markup fragments once the scalar path is
-stable. Treat instance-style views and shared/generated Rails helper methods as
-follow-up R&D after the static helper contract is exercised in the todoapp and
-focused component fixtures.
+Keep static same-class scalar and `HtmlNode` helpers as the base contract.
+Treat instance-style views and shared/generated Rails helper methods as
+follow-up R&D; the current compile-time inlining remains the smallest
+Rails-native implementation with no helper runtime.

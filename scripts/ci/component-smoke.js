@@ -152,6 +152,20 @@ if (!/view-local helper .* must return a known scalar display type/i.test(invali
   fail("Dynamic view-local helper failed for an unexpected reason.");
 }
 
+const invalidQueryHelper = compileComponents(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidQueryHelperMain",
+  allowFailure: true,
+});
+if (invalidQueryHelper.status === 0) {
+  fail("Expected database-query view-local helper compile to fail.");
+}
+if (!/View-local helper .* calls "where"/.test(invalidQueryHelper.stderr + invalidQueryHelper.stdout)) {
+  process.stdout.write(invalidQueryHelper.stdout);
+  process.stderr.write(invalidQueryHelper.stderr);
+  fail("Database-query view-local helper failed for an unexpected reason.");
+}
+
 const invalidMarkupAttributeHelper = compileComponents(invalidOutputDir, {
   classPath: invalidSourceDir,
   main: "InvalidMarkupAttributeHelperMain",
@@ -376,6 +390,30 @@ function writeInvalidFixtures() {
     "\t}",
     "\tstatic function label(value:String):Dynamic {",
     "\t\treturn value;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+
+  writeFileSync(join(invalidSourceDir, "InvalidQueryHelperMain.hx"), [
+    "import views.BadQueryHelperView;",
+    "class InvalidQueryHelperMain { static function main():Void { Sys.println(BadQueryHelperView != null); } }",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "views", "BadQueryHelperView.hx"), [
+    "package views;",
+    "import rails.action_view.HtmlNode;",
+    "class QueryTarget {",
+    "\tpublic static function where():String { return \"queried\"; }",
+    "}",
+    "@:railsTemplate(\"components/bad_query_helper\")",
+    "@:railsTemplateAst(\"render\")",
+    "class BadQueryHelperView {",
+    "\tpublic static function render():HtmlNode {",
+    "\t\treturn <p>${label()}</p>;",
+    "\t}",
+    "\tstatic function label():String {",
+    "\t\treturn QueryTarget.where();",
     "\t}",
     "}",
     "",
