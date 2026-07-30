@@ -83,7 +83,7 @@ The current supported toolchain baseline is documented in
 through the current tested `22.23.1` patch, and MRI Ruby `3.3`, `3.4`, and
 `4.0` in CI. Ruby `3.3` is transitional. Generated Rails fixtures require only
 the real Rails `>= 7.0` floor and impose no speculative future-major ceiling.
-The verified RailsHx stable line is Rails `8.1`, exercised at Rails `8.1.3`
+The verified RailsHx stable line is Rails `8.1`, exercised at Rails `8.1.3.1`
 across the supported Ruby branches. Other Rails lines may work and receive a
 doctor warning rather than an incompatibility error. Stable status does not
 expand this into a combinatorial Rails version matrix or imply that later

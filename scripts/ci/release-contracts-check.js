@@ -434,7 +434,7 @@ expectIncludes(
 );
 expectIncludes(
   compatibilityMatrix,
-  "| Rails runtime evidence | `8.1.3` | Exact locked lane |",
+  "| Rails runtime evidence | `8.1.3.1` | Exact locked lane |",
   "current Rails runtime evidence"
 );
 expectIncludes(
@@ -444,7 +444,7 @@ expectIncludes(
 );
 expectExcludes(compatibilityMatrix, "Rails 7+/8 style app shape", "Rails support wording");
 expectIncludes(productionReadiness, "verified RailsHx stable line is Rails `8.1`", "verified Rails line");
-expectIncludes(productionReadiness, "exercised at Rails `8.1.3`", "exact Rails evidence");
+expectIncludes(productionReadiness, "exercised at Rails `8.1.3.1`", "exact Rails evidence");
 expectIncludes(
   stableReviewReport,
   "This report records an independent review, not an automatically accepted product",

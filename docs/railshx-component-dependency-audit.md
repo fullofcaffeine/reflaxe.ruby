@@ -82,7 +82,7 @@ Haxe/sys modules classified as covered. The direct Ruby facade imports are
 implemented and exercised by their owning ActiveSupport temporal,
 ActiveStorage, and ActiveJob paths. No supported component imports
 one of the unfinished Haxe parity candidates. This guard and the mandatory
-Rails 8.1.3 runtime matrix on Ruby 3.3, 3.4, and 4.0 remain required by
+Rails 8.1.3.1 runtime matrix on Ruby 3.3, 3.4, and 4.0 remain required by
 exact-SHA canonical CI; hosted run identities are recorded in
 [Live Release Protocol Evidence](release-live-evidence.md).
 
