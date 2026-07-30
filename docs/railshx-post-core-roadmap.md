@@ -156,14 +156,16 @@ Typed boundary:
   `Turbo.renderStreamMessage`.
 - Implemented slice: typed server-side Turbo stream helpers for
   `append`, `prepend`, `before`, `after`, `replace`, `update`, `remove`, and
-  matching broadcast shapes, plus the targetless `refresh` action and typed
-  synchronous or debounced ActiveJob refresh broadcasts. Refresh rendering and
-  broadcasts accept closed `TurboRefreshOptions` for replace/morph rendering,
-  reset/preserve scrolling, and an optional `TurboRequestId` correlation token
-  so the initiating browser can recognize its own recent request. These use
+  matching synchronous broadcast shapes, plus typed delayed
+  append/prepend/before/after/replace/update broadcasts through Rails'
+  `ActionBroadcastJob`. The targetless `refresh` action has typed synchronous
+  and debounced ActiveJob broadcasts. Refresh rendering and broadcasts accept
+  closed `TurboRefreshOptions` for replace/morph rendering, reset/preserve
+  scrolling, and an optional `TurboRequestId` correlation token so the
+  initiating browser can recognize its own recent request. These use
   `StreamTarget`, `StreamName<TPayload>`, `TurboRefreshOptions`, and
   `Template<TLocals>` while lowering to Rails `turbo_stream.*` and
-  `Turbo::StreamsChannel.broadcast_*_to` calls.
+  `Turbo::StreamsChannel.broadcast_*_to`/`broadcast_*_later_to` calls.
 - Implemented slice: `@:railsChannel` classes, typed
   `Channel<TParams, TPayload>`, typed subscription params, typed streams,
   `ActionCable.broadcast(...)`, and browser-only
@@ -176,11 +178,11 @@ Typed boundary:
   helpers, and Playwright selectors from one Haxe source of truth. See
   [RailsHx Full-Stack Hotwire Design](railshx-full-stack-hotwire-design.md).
 - Targetless refresh rendering, explicit request-ID attributes, closed
-  method/scroll attributes, synchronous refresh broadcasts, and the
-  debounced/ActiveJob `broadcast_refresh_later_to` path are proven against
-  `turbo-rails` in the mandatory Rails runtime lane. Other delayed action
-  families and model callback macros remain separate follow-ups because they
-  add rendering-job or model-lifecycle semantics.
+  method/scroll attributes, synchronous refresh broadcasts, the
+  debounced/ActiveJob `broadcast_refresh_later_to` path, and all six named
+  delayed render actions are proven against `turbo-rails` in the mandatory
+  Rails runtime lane. Model callback macros remain a separate follow-up because
+  they add transaction and model-lifecycle ordering.
 - Haxe-authored JS clients that layer on Rails importmap/Turbo conventions.
 - The first `@:hotwireContract` slice now generates typed stream-name,
   stream-target, and HHX row-template accessors from one declaration. Static

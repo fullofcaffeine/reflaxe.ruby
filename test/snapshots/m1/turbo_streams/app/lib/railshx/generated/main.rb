@@ -6,7 +6,7 @@ class Main
     "Main"
   end
   def self.__hx_fields()
-    {instance: [], static: ["broadcastRefresh", "broadcastRefreshForRequest", "broadcastRefreshLater", "broadcastRefreshLaterWithOptions", "broadcastRefreshWithOptions", "main", "refreshTag", "refreshTagForRequest", "refreshTagWithDisplayOptions"]}
+    {instance: [], static: ["broadcastRefresh", "broadcastRefreshForRequest", "broadcastRefreshLater", "broadcastRefreshLaterWithOptions", "broadcastRefreshWithOptions", "broadcastRenderActionsLater", "main", "refreshTag", "refreshTagForRequest", "refreshTagWithDisplayOptions"]}
   end
   def self.refresh_tag()
     return turbo_stream.refresh()
@@ -32,6 +32,14 @@ class Main
   def self.broadcast_refresh_later_with_options()
     Turbo::StreamsChannel.broadcast_refresh_later_to("todos", request_id: "request-123", method: "morph", scroll: "preserve")
   end
+  def self.broadcast_render_actions_later(append_locals, replace_locals)
+    Turbo::StreamsChannel.broadcast_append_later_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
+    Turbo::StreamsChannel.broadcast_prepend_later_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
+    Turbo::StreamsChannel.broadcast_before_later_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
+    Turbo::StreamsChannel.broadcast_after_later_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (append_locals)["completed"], dom_id: (append_locals)["domId"], title: (append_locals)["title"]})
+    Turbo::StreamsChannel.broadcast_replace_later_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (replace_locals)["completed"], dom_id: (replace_locals)["domId"], title: (replace_locals)["title"]})
+    Turbo::StreamsChannel.broadcast_update_later_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (replace_locals)["completed"], dom_id: (replace_locals)["domId"], title: (replace_locals)["title"]})
+  end
   def self.main()
     append_locals = {"domId" => "todo_1", "title" => "Ship typed Turbo Streams", "completed" => false}
     replace_locals = {"domId" => "todo_1", "title" => "Ship typed Turbo Streams, but polished", "completed" => true}
@@ -53,6 +61,7 @@ class Main
     Turbo::StreamsChannel.broadcast_replace_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (replace_locals)["completed"], dom_id: (replace_locals)["domId"], title: (replace_locals)["title"]})
     Turbo::StreamsChannel.broadcast_update_to("todos", target: "todos", partial: "todos/todo", locals: {completed: (replace_locals)["completed"], dom_id: (replace_locals)["domId"], title: (replace_locals)["title"]})
     Turbo::StreamsChannel.broadcast_remove_to("todos", target: "todos")
+    Main.broadcast_render_actions_later(append_locals, replace_locals)
     Main.broadcast_refresh()
     Main.broadcast_refresh_for_request()
     Main.broadcast_refresh_with_options()

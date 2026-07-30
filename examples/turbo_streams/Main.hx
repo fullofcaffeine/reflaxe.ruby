@@ -65,6 +65,21 @@ class Main {
 		});
 	}
 
+	public static function broadcastRenderActionsLater(appendLocals:TodoRowLocals, replaceLocals:TodoRowLocals):Void {
+		TurboStreams.broadcastAppendLaterTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>),
+			appendLocals);
+		TurboStreams.broadcastPrependLaterTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>),
+			appendLocals);
+		TurboStreams.broadcastBeforeLaterTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>),
+			appendLocals);
+		TurboStreams.broadcastAfterLaterTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>),
+			appendLocals);
+		TurboStreams.broadcastReplaceLaterTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>),
+			replaceLocals);
+		TurboStreams.broadcastUpdateLaterTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>),
+			replaceLocals);
+	}
+
 	static function main():Void {
 		var appendLocals:TodoRowLocals = {
 			domId: "todo_1",
@@ -138,6 +153,11 @@ class Main {
 			replaceLocals);
 		TurboStreams.broadcastUpdateTo(TodoStreams.listStream(), TodoStreams.listTarget(), (Template.of(TodoRowView) : Template<TodoRowLocals>), replaceLocals);
 		TurboStreams.broadcastRemoveTo(TodoStreams.listStream(), TodoStreams.listTarget());
+
+		// Demonstrates: delayed render broadcasts retain the same typed
+		// stream/target/template/locals relationship. Rails performs the partial
+		// render later through Turbo::Streams::ActionBroadcastJob.
+		broadcastRenderActionsLater(appendLocals, replaceLocals);
 
 		// Demonstrates: the stream is still typed even though a page refresh has
 		// no DOM target or partial/locals payload.

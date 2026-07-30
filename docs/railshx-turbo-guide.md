@@ -203,6 +203,10 @@ TurboStreams.broadcastAppendTo(TodoStreams.listStream(), TodoStreams.listTarget(
 	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 TurboStreams.broadcastReplaceTo(TodoStreams.listStream(), TodoStreams.listTarget(),
 	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+TurboStreams.broadcastAppendLaterTo(TodoStreams.listStream(), TodoStreams.listTarget(),
+	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
+TurboStreams.broadcastReplaceLaterTo(TodoStreams.listStream(), TodoStreams.listTarget(),
+	(Template.of(TodoRowView) : Template<TodoRowLocals>), locals);
 
 var refreshAction = TurboStreams.refresh();
 TurboStreams.broadcastRefreshTo(TodoStreams.listStream());
@@ -243,6 +247,12 @@ Turbo::StreamsChannel.broadcast_append_to("todos", target: "todos",
 Turbo::StreamsChannel.broadcast_replace_to("todos", target: "todos",
   partial: "todos/todo",
   locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
+Turbo::StreamsChannel.broadcast_append_later_to("todos", target: "todos",
+  partial: "todos/todo",
+  locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
+Turbo::StreamsChannel.broadcast_replace_later_to("todos", target: "todos",
+  partial: "todos/todo",
+  locals: {completed: locals["completed"], dom_id: locals["domId"], title: locals["title"]})
 
 turbo_stream.refresh()
 Turbo::StreamsChannel.broadcast_refresh_to("todos")
@@ -263,8 +273,12 @@ implicitly satisfy server-side stream APIs; use `StreamTarget.named(...)` and
 the app. Use
 `Template.of(ViewClass) : Template<TLocals>` for RailsHx-owned HHX partials and
 `Template.existing("path") : Template<TLocals>` for Rails-owned ERB partials.
-The typed action set currently covers `append`, `prepend`, `before`, `after`,
-`replace`, `update`, `remove`, and the matching `broadcast*To` helpers.
+The typed action set covers `append`, `prepend`, `before`, `after`, `replace`,
+`update`, `remove`, and the matching synchronous `broadcast*To` helpers. The
+six render-bearing actions also provide typed `broadcast*LaterTo` forms that
+enqueue `Turbo::Streams::ActionBroadcastJob`. There is intentionally no
+`broadcastRemoveLaterTo`: turbo-rails 2.0.23 exposes no named delayed-remove
+convenience method, and removal has no partial to render later.
 `refresh()`, `broadcastRefreshTo(stream)`, and
 `broadcastRefreshLaterTo(stream)` are intentionally targetless: refreshing
 asks each receiving Turbo session to reload its current page, so it has a typed
@@ -299,8 +313,11 @@ source-compatible shorthand for `{requestId: value}`.
 `broadcast_refresh_later_to`. Turbo automatically debounces repeated calls for
 the same stream and request ID, serializes the final refresh tag, and enqueues
 `Turbo::Streams::BroadcastStreamJob`; RailsHx does not add its own scheduler or
-runtime wrapper. Other delayed action families and model callback macros remain
-explicit follow-ups because they add rendering-job or model-lifecycle behavior.
+runtime wrapper. The six delayed render helpers map directly to turbo-rails'
+`broadcast_*_later_to` methods and enqueue `Turbo::Streams::ActionBroadcastJob`,
+which renders the typed partial and broadcasts the resulting stream action.
+Model callback macros remain a separate follow-up because they add transaction
+and model-lifecycle ordering rather than another call shape.
 Pass locals as object literals or typed anonymous-object/typedef values. In both
 cases the compiler emits a Rails `locals: {snake_case: ...}` hash. Values typed
 as `Dynamic` are treated as explicit Ruby/Rails-owned runtime hashes and are
@@ -395,9 +412,10 @@ npm run test:turbo-streams
 ```
 
 The Turbo Streams smoke always owns generated shape and negative Haxe typing.
-With `REQUIRE_RAILS=1`, it also executes the generated refresh methods against
-the verified Rails/Turbo bundle and asserts targetless tags and ActionCable
-broadcasts both with and without explicit request IDs:
+With `REQUIRE_RAILS=1`, it also executes the generated methods against the
+verified Rails/Turbo bundle. It asserts targetless refresh tags and broadcasts,
+refresh debounce behavior, all six delayed render job argument contracts, and
+the six delivered Turbo Stream actions:
 
 ```bash
 REQUIRE_RAILS=1 npm run test:turbo-streams
@@ -411,5 +429,5 @@ npm run test:todoapp-playwright
 
 `npm test` includes the Turbo and Turbo Streams smokes. The canonical
 `test:rails-runtime` lane sets `REQUIRE_RAILS=1`, so hosted CI cannot silently
-skip the refresh runtime proof. Browser and Rails runtime lanes remain separate
-because they own different behavior.
+skip the refresh or delayed-render runtime proof. Browser and Rails runtime
+lanes remain separate because they own different behavior.

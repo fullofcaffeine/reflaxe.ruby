@@ -4722,18 +4722,18 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					}
 				}
 				RubyCallableCall(RubyLocal("turbo_stream"), "refresh", args);
-			case "broadcastAppendTo" if (params.length == 4):
-				compileTurboStreamBroadcastCall("append", params);
-			case "broadcastPrependTo" if (params.length == 4):
-				compileTurboStreamBroadcastCall("prepend", params);
-			case "broadcastBeforeTo" if (params.length == 4):
-				compileTurboStreamBroadcastCall("before", params);
-			case "broadcastAfterTo" if (params.length == 4):
-				compileTurboStreamBroadcastCall("after", params);
-			case "broadcastReplaceTo" if (params.length == 4):
-				compileTurboStreamBroadcastCall("replace", params);
-			case "broadcastUpdateTo" if (params.length == 4):
-				compileTurboStreamBroadcastCall("update", params);
+			case "broadcastAppendTo" | "broadcastAppendLaterTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("append", info.name == "broadcastAppendLaterTo", params);
+			case "broadcastPrependTo" | "broadcastPrependLaterTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("prepend", info.name == "broadcastPrependLaterTo", params);
+			case "broadcastBeforeTo" | "broadcastBeforeLaterTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("before", info.name == "broadcastBeforeLaterTo", params);
+			case "broadcastAfterTo" | "broadcastAfterLaterTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("after", info.name == "broadcastAfterLaterTo", params);
+			case "broadcastReplaceTo" | "broadcastReplaceLaterTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("replace", info.name == "broadcastReplaceLaterTo", params);
+			case "broadcastUpdateTo" | "broadcastUpdateLaterTo" if (params.length == 4):
+				compileTurboStreamBroadcastCall("update", info.name == "broadcastUpdateLaterTo", params);
 			case "broadcastRemoveTo" if (params.length == 2):
 				RubyRawExpr("Turbo::StreamsChannel.broadcast_remove_to(" + printParam(params, 0) + ", target: " + printParam(params, 1) + ")");
 			case "broadcastRefreshTo" | "broadcastRefreshLaterTo" if (params.length == 1 || params.length == 2):
@@ -4760,9 +4760,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 			+ turboStreamLocals(params[2]) + ")");
 	}
 
-	static function compileTurboStreamBroadcastCall(action:String, params:Array<TypedExpr>):RubyExpr {
-		return RubyRawExpr("Turbo::StreamsChannel.broadcast_" + action + "_to(" + printParam(params, 0) + ", target: " + printParam(params, 1)
-			+ ", partial: " + turboStreamPartialPath(params[2]) + ", locals: " + turboStreamLocals(params[3]) + ")");
+	static function compileTurboStreamBroadcastCall(action:String, delayed:Bool, params:Array<TypedExpr>):RubyExpr {
+		return RubyRawExpr("Turbo::StreamsChannel.broadcast_" + action + (delayed ? "_later_to" : "_to") + "(" + printParam(params, 0) + ", target: "
+			+ printParam(params, 1) + ", partial: " + turboStreamPartialPath(params[2]) + ", locals: " + turboStreamLocals(params[3]) + ")");
 	}
 
 	static function turboStreamPartialPath(template:TypedExpr):String {

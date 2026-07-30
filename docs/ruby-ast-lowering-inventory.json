@@ -1631,7 +1631,7 @@
       "token": "RubyRawExpr",
       "function": "compileTurboStreamBroadcastCall",
       "category": "validated-framework-artifact",
-      "snippet": "return RubyRawExpr(\"Turbo::StreamsChannel.broadcast_\" + action + \"_to(\" + printParam(params, 0) + \", target: \" + printParam(params, 1)"
+      "snippet": "return RubyRawExpr(\"Turbo::StreamsChannel.broadcast_\" + action + (delayed ? \"_later_to\" : \"_to\") + \"(\" + printParam(params, 0) + \", target: \""
     },
     {
       "id": "src/reflaxe/ruby/RubyCompiler.hx::turboStreamLocals::printInlineExpr::1",

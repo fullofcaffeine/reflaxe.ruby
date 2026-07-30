@@ -2,6 +2,13 @@ package rails.turbo;
 
 import rails.action_view.Template;
 
+/**
+	Typed server-side Turbo Stream actions and broadcasts.
+
+	The compiler lowers this facade to ordinary turbo-rails helpers; it does not
+	emit a RailsHx runtime wrapper. Generic stream, target, template, and locals
+	types keep rendering contracts aligned before Ruby or ActiveJob executes.
+**/
 @:rubyRequire("turbo-rails")
 class TurboStreams {
 	// These methods return `Dynamic` so app code can pass a typed stream action
@@ -60,6 +67,27 @@ class TurboStreams {
 	public static function broadcastUpdateTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 
 	public static function broadcastRemoveTo<TPayload>(stream:StreamName<TPayload>, target:StreamTarget):Void {}
+
+	/**
+		Enqueues Rails-native rendering broadcasts for one typed stream.
+
+		These six methods mirror turbo-rails' named `*_later_to` helpers. They
+		keep the stream, DOM target, partial, and locals tied to one `TLocals`
+		contract while `Turbo::Streams::ActionBroadcastJob` owns rendering and
+		delivery. There is intentionally no `broadcastRemoveLaterTo`: turbo-rails
+		2.0.23 exposes no named delayed-remove convenience method.
+	**/
+	public static function broadcastAppendLaterTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
+	public static function broadcastPrependLaterTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
+	public static function broadcastBeforeLaterTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
+	public static function broadcastAfterLaterTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
+	public static function broadcastReplaceLaterTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
+
+	public static function broadcastUpdateLaterTo<TLocals>(stream:StreamName<TLocals>, target:StreamTarget, template:Template<TLocals>, locals:TLocals):Void {}
 
 	/**
 		Broadcasts Turbo's targetless refresh action to one typed stream.

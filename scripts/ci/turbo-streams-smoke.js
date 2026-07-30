@@ -86,9 +86,15 @@ for (const expected of [
   /Turbo::StreamsChannel\.broadcast_refresh_later_to\("todos"\)/,
   /def self\.broadcast_refresh_later_with_options\(\)/,
   /Turbo::StreamsChannel\.broadcast_refresh_later_to\("todos", request_id: "request-123", method: "morph", scroll: "preserve"\)/,
+  /Turbo::StreamsChannel\.broadcast_append_later_to\("todos", target: "todos", partial: "todos\/todo", locals:/,
+  /Turbo::StreamsChannel\.broadcast_prepend_later_to\("todos", target: "todos", partial: "todos\/todo", locals:/,
+  /Turbo::StreamsChannel\.broadcast_before_later_to\("todos", target: "todos", partial: "todos\/todo", locals:/,
+  /Turbo::StreamsChannel\.broadcast_after_later_to\("todos", target: "todos", partial: "todos\/todo", locals:/,
+  /Turbo::StreamsChannel\.broadcast_replace_later_to\("todos", target: "todos", partial: "todos\/todo", locals:/,
+  /Turbo::StreamsChannel\.broadcast_update_later_to\("todos", target: "todos", partial: "todos\/todo", locals:/,
 ]) {
   if (!expected.test(mainRuby)) {
-    fail(`Typed Turbo refresh output missing expected structural call: ${expected}`);
+    fail(`Typed Turbo Streams output missing expected structural call: ${expected}`);
   }
 }
 
@@ -120,6 +126,62 @@ if (!/Int should be rails\.turbo\.StreamTarget|StreamTarget|Cannot unify/.test(i
   process.stdout.write(invalidTarget.stdout);
   process.stderr.write(invalidTarget.stderr);
   fail("Invalid Turbo Streams target failed for an unexpected reason.");
+}
+
+const invalidDelayedLocals = compileTurboStreams(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidDelayedLocalsMain",
+  allowFailure: true,
+});
+if (invalidDelayedLocals.status === 0) {
+  fail("Expected invalid delayed Turbo Streams locals compile to fail.");
+}
+if (!/has no field completed|completed|Bool/.test(invalidDelayedLocals.stderr + invalidDelayedLocals.stdout)) {
+  process.stdout.write(invalidDelayedLocals.stdout);
+  process.stderr.write(invalidDelayedLocals.stderr);
+  fail("Invalid delayed Turbo Streams locals failed for an unexpected reason.");
+}
+
+const invalidDelayedStream = compileTurboStreams(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidDelayedStreamMain",
+  allowFailure: true,
+});
+if (invalidDelayedStream.status === 0) {
+  fail("Expected delayed Turbo render broadcast to reject a raw String stream name.");
+}
+if (!/String should be rails\.turbo\.StreamName|StreamName|Cannot unify/.test(invalidDelayedStream.stderr + invalidDelayedStream.stdout)) {
+  process.stdout.write(invalidDelayedStream.stdout);
+  process.stderr.write(invalidDelayedStream.stderr);
+  fail("Invalid delayed Turbo render stream failed for an unexpected reason.");
+}
+
+const invalidDelayedTarget = compileTurboStreams(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidDelayedTargetMain",
+  allowFailure: true,
+});
+if (invalidDelayedTarget.status === 0) {
+  fail("Expected delayed Turbo render broadcast to reject a raw String target.");
+}
+if (!/String should be rails\.turbo\.StreamTarget|StreamTarget|Cannot unify/.test(invalidDelayedTarget.stderr + invalidDelayedTarget.stdout)) {
+  process.stdout.write(invalidDelayedTarget.stdout);
+  process.stderr.write(invalidDelayedTarget.stderr);
+  fail("Invalid delayed Turbo render target failed for an unexpected reason.");
+}
+
+const invalidDelayedTemplate = compileTurboStreams(invalidOutputDir, {
+  classPath: invalidSourceDir,
+  main: "InvalidDelayedTemplateMain",
+  allowFailure: true,
+});
+if (invalidDelayedTemplate.status === 0) {
+  fail("Expected delayed Turbo render broadcast to reject a raw String template.");
+}
+if (!/String should be rails\.action_view\.Template|Template|Cannot unify/.test(invalidDelayedTemplate.stderr + invalidDelayedTemplate.stdout)) {
+  process.stdout.write(invalidDelayedTemplate.stdout);
+  process.stderr.write(invalidDelayedTemplate.stderr);
+  fail("Invalid delayed Turbo render template failed for an unexpected reason.");
 }
 
 writeInvalidStringTargetFixture();
@@ -249,7 +311,7 @@ run("bundle", ["exec", "rails", "test"], {
   cwd: runtimeAppDir,
   env: { ...process.env, RAILS_ENV: "test" },
 });
-console.log("[turbo-streams] Rails refresh tag and broadcast runtime OK");
+console.log("[turbo-streams] Rails refresh and delayed render broadcast runtime OK");
 
 console.log("[turbo-streams] OK");
 
@@ -302,6 +364,61 @@ function writeInvalidFixtures() {
     "class InvalidTargetMain {",
     "\tstatic function main():Void {",
     "\t\tTurboStreams.remove(42);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidDelayedLocalsMain.hx"), [
+    "import rails.action_view.Template;",
+    "import rails.turbo.StreamName;",
+    "import rails.turbo.StreamTarget;",
+    "import rails.turbo.TurboStreams;",
+    "import views.TodoRowView;",
+    "import views.TodoRowView.TodoRowLocals;",
+    "class InvalidDelayedLocalsMain {",
+    "\tstatic function main():Void {",
+    "\t\tTurboStreams.broadcastAppendLaterTo(StreamName.named(\"todos\"), StreamTarget.named(\"todos\"), (Template.of(TodoRowView) : Template<TodoRowLocals>), {domId: \"todo_1\", title: \"missing completion\"});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidDelayedStreamMain.hx"), [
+    "import rails.action_view.Template;",
+    "import rails.turbo.StreamTarget;",
+    "import rails.turbo.TurboStreams;",
+    "import views.TodoRowView;",
+    "import views.TodoRowView.TodoRowLocals;",
+    "class InvalidDelayedStreamMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar locals:TodoRowLocals = {domId: \"todo_1\", title: \"typed\", completed: false};",
+    "\t\tTurboStreams.broadcastAppendLaterTo(\"todos\", StreamTarget.named(\"todos\"), (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidDelayedTargetMain.hx"), [
+    "import rails.action_view.Template;",
+    "import rails.turbo.StreamName;",
+    "import rails.turbo.TurboStreams;",
+    "import views.TodoRowView;",
+    "import views.TodoRowView.TodoRowLocals;",
+    "class InvalidDelayedTargetMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar locals:TodoRowLocals = {domId: \"todo_1\", title: \"typed\", completed: false};",
+    "\t\tTurboStreams.broadcastAppendLaterTo(StreamName.named(\"todos\"), \"todos\", (Template.of(TodoRowView) : Template<TodoRowLocals>), locals);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(invalidSourceDir, "InvalidDelayedTemplateMain.hx"), [
+    "import rails.turbo.StreamName;",
+    "import rails.turbo.StreamTarget;",
+    "import rails.turbo.TurboStreams;",
+    "import views.TodoRowView.TodoRowLocals;",
+    "class InvalidDelayedTemplateMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar locals:TodoRowLocals = {domId: \"todo_1\", title: \"typed\", completed: false};",
+    "\t\tTurboStreams.broadcastAppendLaterTo(StreamName.named(\"todos\"), StreamTarget.named(\"todos\"), \"todos/todo\", locals);",
     "\t}",
     "}",
     "",
@@ -392,6 +509,10 @@ function materializeRuntimeRailsApp() {
   copyFile(
     join(outputDir, "app", "lib", "railshx", "generated", "main.rb"),
     "app/lib/railshx/generated/main.rb",
+  );
+  copyFile(
+    join(outputDir, "app", "views", "todos", "_todo.html.erb"),
+    "app/views/todos/_todo.html.erb",
   );
 
   writeFile("Gemfile", `source "https://rubygems.org"
@@ -489,6 +610,33 @@ class TurboRefreshTest < ActiveSupport::TestCase
     end
 
     assert_equal '<turbo-stream request-id="request-123" method="morph" scroll="preserve" action="refresh"></turbo-stream>', broadcasts("todos").last
+  end
+
+  test "enqueues and performs all typed delayed render broadcasts" do
+    append_locals = {"domId" => "todo_1", "title" => "Appended later", "completed" => false}
+    replace_locals = {"domId" => "todo_1", "title" => "Replaced later", "completed" => true}
+
+    assert_enqueued_jobs 6, only: Turbo::Streams::ActionBroadcastJob do
+      Main.broadcast_render_actions_later(append_locals, replace_locals)
+    end
+
+    arguments = enqueued_jobs
+      .select { |job| job[:job] == Turbo::Streams::ActionBroadcastJob }
+      .map { |job| ActiveJob::Arguments.deserialize(job[:args]) }
+    assert_equal Array.new(6, "todos"), arguments.map(&:first)
+    assert_equal %i[append prepend before after replace update], arguments.map { |args| args.fetch(1).fetch(:action) }
+    assert_equal Array.new(6, "todos"), arguments.map { |args| args.fetch(1).fetch(:target) }
+    assert_equal Array.new(6, "todos/todo"), arguments.map { |args| args.fetch(1).fetch(:partial) }
+
+    assert_broadcasts("todos", 6) do
+      perform_enqueued_jobs only: Turbo::Streams::ActionBroadcastJob
+    end
+
+    actions = broadcasts("todos").map { |content| content.match(/action="([^"]+)"/)[1] }
+    assert_equal %w[append prepend before after replace update], actions
+    assert broadcasts("todos").all? { |content| content.include?('target="todos"') }
+    assert_includes broadcasts("todos")[0], "Appended later"
+    assert_includes broadcasts("todos")[4], "Replaced later"
   end
 end
 `);
