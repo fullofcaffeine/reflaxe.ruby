@@ -67,6 +67,9 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Gap Report Guidance](gap-report-guidance.md): updating std/runtime coverage inventory.
 - [Repository Development](development.md): contributor gates, example/test
   ownership, hooks, bead workflow, inventory commands, and repository map.
+- [Testing Strategy And Agent Feedback Loops](testing-strategy.md): independent
+  evidence axes, measured feedback rings, fast canary usage, stopping rules,
+  current qualification gaps, and staged impact selection.
 
 ## RailsHx Guides
 
@@ -89,7 +92,7 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [DeviseHx GPT 5.5 Pro Prompt](railshx-devisehx-gpt55-prompt.md): required pre-implementation design review packet for the reusable Devise companion layer.
 - [DeviseHx Design](railshx-devisehx-design.md): folded GPT 5.5 Pro review, API shape, extraction strategy, escape hatches, tests, and rollout plan.
 - [DeviseHx Release Lane](railshx-devisehx-release-lane.md): incubated package metadata, CI gates, security/release checklist, and standalone split criteria.
-- [Testing Strategy](railshx-testing-strategy.md): snapshots, smoke tests, Rails runtime tests, and Playwright.
+- [RailsHx Testing Strategy](railshx-testing-strategy.md): Rails-specific snapshots, smoke tests, runtime seams, and Playwright.
 - [Typed API Production Gap Audit](railshx-typed-api-production-gap-audit.md): current typed API gaps.
 
 ## RailsHx API Areas

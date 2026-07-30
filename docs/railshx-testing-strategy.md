@@ -4,6 +4,11 @@ RailsHx is a compiler/code generator first. The most important test artifact is
 therefore the generated Ruby/Rails output: it should be stable, idiomatic, and
 reviewable as if a Rails developer had written it by hand.
 
+This document owns Rails-specific test-layer choices. The repository-wide
+feedback rings, portable-versus-native evidence split, agent loop, and
+full/release escalation rules live in
+[RubyHx Testing Strategy And Agent Feedback Loops](testing-strategy.md).
+
 ## Testing Pyramid
 
 1. Snapshot tests are the primary compiler/codegen contract.

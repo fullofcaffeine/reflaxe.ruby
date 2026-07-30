@@ -26,6 +26,27 @@ rake todoapp:production
 The complete release-readiness command set lives in
 [RubyHx And RailsHx Production Readiness](railshx-production-readiness.md).
 
+### Fast Agent And Developer Canary
+
+Run the changed feature's own `npm run test:<semantic-owner>` command while
+editing. After a coherent edit burst, run:
+
+```bash
+npm run test:agent-smoke
+```
+
+This measured checkout canary normally completes in tens of seconds and crosses
+profile, Ruby AST, compile/runtime, exception, upstream JSON issue, filesystem,
+and current upstream `unitstd` boundaries. It writes per-stage timings and
+toolchain identity to `test/.generated/test-loop/agent-smoke.json` and stops at
+the first failure.
+
+It is deliberately not a replacement for the affected focused test, complete
+snapshots, Rails/browser/production lanes, package installation, `npm test`, or
+canonical CI. See [RubyHx Testing Strategy And Agent Feedback
+Loops](testing-strategy.md) for the evidence axes, feedback rings, agent
+stopping rules, current gaps, and staged impact-selection plan.
+
 ### Queue The Full Local Suite
 
 Several Haxe target repositories can otherwise start their largest local suites
@@ -176,6 +197,7 @@ workflow policy for agent-assisted changes.
 - [Compiler Metadata](compiler-metadata.md)
 - [Ruby Callable And Method ABI](ruby-callable-abi.md)
 - [Ruby AST And Semantic Lowering](ruby-ast-and-semantic-lowering.md)
+- [Testing Strategy And Agent Feedback Loops](testing-strategy.md)
 - [RailsHx Development Loop](railshx-development-loop.md)
 - [RailsHx Production Readiness](railshx-production-readiness.md)
 - [Packages And Installation](packages-and-installation.md)
