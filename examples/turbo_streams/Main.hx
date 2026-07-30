@@ -53,6 +53,18 @@ class Main {
 		});
 	}
 
+	public static function broadcastRefreshLater():Void {
+		TurboStreams.broadcastRefreshLaterTo(TodoStreams.listStream());
+	}
+
+	public static function broadcastRefreshLaterWithOptions():Void {
+		TurboStreams.broadcastRefreshLaterTo(TodoStreams.listStream(), {
+			requestId: TurboRequestId.named("request-123"),
+			method: Morph,
+			scroll: Preserve
+		});
+	}
+
 	static function main():Void {
 		var appendLocals:TodoRowLocals = {
 			domId: "todo_1",
@@ -138,5 +150,10 @@ class Main {
 		// Demonstrates: request correlation and display behavior compose in one
 		// typed options literal and still emit ordinary Turbo stream attributes.
 		broadcastRefreshWithOptions();
+
+		// Demonstrates: delayed refreshes keep the same typed stream and options
+		// while turbo-rails owns ActiveJob enqueueing and automatic debouncing.
+		broadcastRefreshLater();
+		broadcastRefreshLaterWithOptions();
 	}
 }

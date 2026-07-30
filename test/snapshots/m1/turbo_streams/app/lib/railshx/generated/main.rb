@@ -6,7 +6,7 @@ class Main
     "Main"
   end
   def self.__hx_fields()
-    {instance: [], static: ["broadcastRefresh", "broadcastRefreshForRequest", "broadcastRefreshWithOptions", "main", "refreshTag", "refreshTagForRequest", "refreshTagWithDisplayOptions"]}
+    {instance: [], static: ["broadcastRefresh", "broadcastRefreshForRequest", "broadcastRefreshLater", "broadcastRefreshLaterWithOptions", "broadcastRefreshWithOptions", "main", "refreshTag", "refreshTagForRequest", "refreshTagWithDisplayOptions"]}
   end
   def self.refresh_tag()
     return turbo_stream.refresh()
@@ -25,6 +25,12 @@ class Main
   end
   def self.broadcast_refresh_with_options()
     Turbo::StreamsChannel.broadcast_refresh_to("todos", request_id: "request-123", method: "morph", scroll: "preserve")
+  end
+  def self.broadcast_refresh_later()
+    Turbo::StreamsChannel.broadcast_refresh_later_to("todos")
+  end
+  def self.broadcast_refresh_later_with_options()
+    Turbo::StreamsChannel.broadcast_refresh_later_to("todos", request_id: "request-123", method: "morph", scroll: "preserve")
   end
   def self.main()
     append_locals = {"domId" => "todo_1", "title" => "Ship typed Turbo Streams", "completed" => false}
@@ -50,6 +56,8 @@ class Main
     Main.broadcast_refresh()
     Main.broadcast_refresh_for_request()
     Main.broadcast_refresh_with_options()
+    Main.broadcast_refresh_later()
+    Main.broadcast_refresh_later_with_options()
   end
 end
 if __FILE__ == $PROGRAM_NAME

@@ -220,6 +220,11 @@ TurboStreams.broadcastRefreshTo(TodoStreams.listStream(), {
 	method: Morph,
 	scroll: Preserve
 });
+TurboStreams.broadcastRefreshLaterTo(TodoStreams.listStream(), {
+	requestId: originatingRequest,
+	method: Morph,
+	scroll: Preserve
+});
 ```
 
 Generated Ruby stays Rails-shaped:
@@ -248,6 +253,8 @@ Turbo::StreamsChannel.broadcast_refresh_to("todos", request_id: "request-123")
 turbo_stream.refresh(method: "morph", scroll: "preserve")
 Turbo::StreamsChannel.broadcast_refresh_to("todos",
   request_id: "request-123", method: "morph", scroll: "preserve")
+Turbo::StreamsChannel.broadcast_refresh_later_to("todos",
+  request_id: "request-123", method: "morph", scroll: "preserve")
 ```
 
 Use typed target/stream constants for app-level names. Plain strings do not
@@ -258,11 +265,12 @@ the app. Use
 `Template.existing("path") : Template<TLocals>` for Rails-owned ERB partials.
 The typed action set currently covers `append`, `prepend`, `before`, `after`,
 `replace`, `update`, `remove`, and the matching `broadcast*To` helpers.
-`refresh()` and `broadcastRefreshTo(stream)` are intentionally targetless:
-refreshing asks each receiving Turbo session to reload its current page, so it
-has a typed stream but no DOM target, template, or locals payload.
+`refresh()`, `broadcastRefreshTo(stream)`, and
+`broadcastRefreshLaterTo(stream)` are intentionally targetless: refreshing
+asks each receiving Turbo session to reload its current page, so it has a typed
+stream but no DOM target, template, or locals payload.
 
-Both refresh calls accept closed `TurboRefreshOptions` object literals:
+All three refresh helpers accept closed `TurboRefreshOptions` object literals:
 
 - `method` is `TurboRefreshMethod.Replace` or `.Morph`;
 - `scroll` is `TurboRefreshScroll.Reset` or `.Preserve`;
@@ -287,9 +295,12 @@ turbo-rails' ambient `Turbo.current_request_id` default. Use
 correlation value. Passing a `TurboRequestId` directly remains a
 source-compatible shorthand for `{requestId: value}`.
 
-Debounced/later broadcasts and model callback macros remain explicit follow-ups
-because they add job-lifecycle or model-lifecycle behavior rather than another
-stream action attribute.
+`broadcastRefreshLaterTo(...)` maps directly to turbo-rails'
+`broadcast_refresh_later_to`. Turbo automatically debounces repeated calls for
+the same stream and request ID, serializes the final refresh tag, and enqueues
+`Turbo::Streams::BroadcastStreamJob`; RailsHx does not add its own scheduler or
+runtime wrapper. Other delayed action families and model callback macros remain
+explicit follow-ups because they add rendering-job or model-lifecycle behavior.
 Pass locals as object literals or typed anonymous-object/typedef values. In both
 cases the compiler emits a Rails `locals: {snake_case: ...}` hash. Values typed
 as `Dynamic` are treated as explicit Ruby/Rails-owned runtime hashes and are

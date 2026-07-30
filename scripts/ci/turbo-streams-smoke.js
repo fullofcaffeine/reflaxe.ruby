@@ -82,6 +82,10 @@ for (const expected of [
   /Turbo::StreamsChannel\.broadcast_refresh_to\("todos", request_id: "request-123"\)/,
   /def self\.broadcast_refresh_with_options\(\)/,
   /Turbo::StreamsChannel\.broadcast_refresh_to\("todos", request_id: "request-123", method: "morph", scroll: "preserve"\)/,
+  /def self\.broadcast_refresh_later\(\)/,
+  /Turbo::StreamsChannel\.broadcast_refresh_later_to\("todos"\)/,
+  /def self\.broadcast_refresh_later_with_options\(\)/,
+  /Turbo::StreamsChannel\.broadcast_refresh_later_to\("todos", request_id: "request-123", method: "morph", scroll: "preserve"\)/,
 ]) {
   if (!expected.test(mainRuby)) {
     fail(`Typed Turbo refresh output missing expected structural call: ${expected}`);
@@ -208,6 +212,20 @@ if (!/options must be a typed object literal|bogus|TurboRefreshOptions/.test(inv
   fail("Invalid Turbo refresh option field failed for an unexpected reason.");
 }
 
+const invalidRefreshLaterField = compileTurboStreams(invalidRefreshRequestOutputDir, {
+  classPath: invalidRefreshRequestSourceDir,
+  main: "InvalidRefreshLaterFieldMain",
+  allowFailure: true,
+});
+if (invalidRefreshLaterField.status === 0) {
+  fail("Expected delayed Turbo refresh to reject an unknown option field.");
+}
+if (!/options must be a typed object literal|bogus|TurboRefreshOptions/.test(invalidRefreshLaterField.stderr + invalidRefreshLaterField.stdout)) {
+  process.stdout.write(invalidRefreshLaterField.stdout);
+  process.stderr.write(invalidRefreshLaterField.stderr);
+  fail("Invalid delayed Turbo refresh option field failed for an unexpected reason.");
+}
+
 materializeRuntimeRailsApp();
 
 const bundleProbe = run("bundle", ["check"], {
@@ -312,7 +330,7 @@ function writeInvalidRefreshStreamFixture() {
     "import rails.turbo.TurboStreams;",
     "class InvalidRefreshStreamMain {",
     "\tstatic function main():Void {",
-    "\t\tTurboStreams.broadcastRefreshTo(\"todos\");",
+    "\t\tTurboStreams.broadcastRefreshLaterTo(\"todos\");",
     "\t}",
     "}",
     "",
@@ -357,6 +375,16 @@ function writeInvalidRefreshRequestFixture() {
     "}",
     "",
   ].join("\n"));
+  writeFileSync(join(invalidRefreshRequestSourceDir, "InvalidRefreshLaterFieldMain.hx"), [
+    "import rails.turbo.StreamName;",
+    "import rails.turbo.TurboStreams;",
+    "class InvalidRefreshLaterFieldMain {",
+    "\tstatic function main():Void {",
+    "\t\tTurboStreams.broadcastRefreshLaterTo(StreamName.named(\"todos\"), {bogus: true});",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
 }
 
 function materializeRuntimeRailsApp() {
@@ -395,6 +423,7 @@ Rails.application.initialize!
 require_relative "../config/environment"
 require "rails/test_help"
 require "action_cable/test_helper"
+require "active_job/test_helper"
 `);
 
   writeFile("test/turbo_refresh_test.rb", `require "test_helper"
@@ -402,8 +431,11 @@ require Rails.root.join("app/lib/railshx/generated/main")
 
 class TurboRefreshTest < ActiveSupport::TestCase
   include ActionCable::TestHelper
+  include ActiveJob::TestHelper
 
   setup do
+    clear_enqueued_jobs
+    clear_performed_jobs
     view_context = Object.new
     view_context.define_singleton_method(:formats) { @formats ||= [] }
     Main.define_singleton_method(:turbo_stream) do
@@ -442,6 +474,18 @@ class TurboRefreshTest < ActiveSupport::TestCase
   test "broadcasts request, method, and scroll options to the typed stream" do
     assert_broadcasts("todos", 1) do
       Main.broadcast_refresh_with_options
+    end
+
+    assert_equal '<turbo-stream request-id="request-123" method="morph" scroll="preserve" action="refresh"></turbo-stream>', broadcasts("todos").last
+  end
+
+  test "debounces and performs one typed delayed refresh broadcast" do
+    2.times { Main.broadcast_refresh_later_with_options }
+    Turbo::StreamsChannel.refresh_debouncer_for("todos", request_id: "request-123").wait
+
+    assert_enqueued_jobs 1, only: Turbo::Streams::BroadcastStreamJob
+    assert_broadcasts("todos", 1) do
+      perform_enqueued_jobs only: Turbo::Streams::BroadcastStreamJob
     end
 
     assert_equal '<turbo-stream request-id="request-123" method="morph" scroll="preserve" action="refresh"></turbo-stream>', broadcasts("todos").last

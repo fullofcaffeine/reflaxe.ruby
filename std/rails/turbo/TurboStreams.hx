@@ -65,8 +65,17 @@ class TurboStreams {
 		Broadcasts Turbo's targetless refresh action to one typed stream.
 
 		This is the synchronous Rails helper. Typed options become refresh-tag
-		attributes; no generic attribute bag reaches Rails. Debounced/later
-		refreshes have job-lifecycle semantics and remain a separate contract.
+		attributes; no generic attribute bag reaches Rails. Use
+		`broadcastRefreshLaterTo` when Turbo should debounce and enqueue the work.
 	**/
 	public static function broadcastRefreshTo<TPayload>(stream:StreamName<TPayload>, ?options:TurboRefreshOptions):Void {}
+
+	/**
+		Debounces and enqueues a targetless refresh for one typed stream.
+
+		This maps to turbo-rails' ActiveJob-backed `broadcast_refresh_later_to`.
+		Turbo owns both the debounce key and job lifecycle; RailsHx only keeps the
+		stream and refresh attributes typed before structural Ruby lowering.
+	**/
+	public static function broadcastRefreshLaterTo<TPayload>(stream:StreamName<TPayload>, ?options:TurboRefreshOptions):Void {}
 }

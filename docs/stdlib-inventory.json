@@ -1628,7 +1628,7 @@
       "status": "implemented",
       "path": "std/rails/turbo/TurboStreams.hx",
       "surface": "rails.turbo.TurboStreams",
-      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers, including targetless refresh rendering, closed method/scroll behavior, synchronous typed refresh broadcasts, and optional typed request-ID correlation."
+      "reason": "Typed server-side Turbo stream facade lowered to Rails turbo_stream helpers and Turbo::StreamsChannel broadcast helpers, including targetless refresh rendering, closed method/scroll behavior, synchronous or debounced ActiveJob refresh broadcasts, and optional typed request-ID correlation."
     },
     {
       "id": "std.rails.turbo_event",
