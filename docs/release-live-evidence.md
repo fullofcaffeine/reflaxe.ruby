@@ -5,6 +5,53 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.22.0 typed delayed Turbo render broadcast publication
+
+The normal tested-commit workflow published immutable
+[`v1.22.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.22.0)
+on 2026-07-30 for typed delayed Turbo render broadcasts.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `2f140027246a0279e99e0b52c04c26410165aa7a` |
+| Canonical release tag | `v1.22.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30576903887`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30576903887), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3.1 runtime, and publication jobs passed |
+| Privileged release job | [`90997163364`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30576903887/job/90997163364), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-30T20:36:36Z` |
+| Release notes | Version heading, `v1.21.0...v1.22.0` compare link, categorized feature bullet, and exact `2f14002` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.22.0.gem` | 286208 | `4d16b67c80fb42edf509b3bd1617aa6569aaf77cd17a9a50741750da604c1f86` |
+| `hxruby-1.22.0.gem.sha256.json` | 304 | `f3cd20254c22ba91896971ed8957acbe84dcba833553811190e63bae67fc2f09` |
+| `reflaxe.ruby-1.22.0.zip` | 1359573 | `3152832b076ec4a3216d5568a92e4f052300e0d1a2986b00639f3b78a084fb78` |
+| `reflaxe.ruby-1.22.0.zip.sha256.json` | 317 | `b0b7901854a420c3e18074a404533df1156104f47264f362ad47abe1d1edf63b` |
+
+Each sidecar binds the downloaded bytes to version `1.22.0`, tag `v1.22.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities; their canonical format-1 manifests
+independently verified all 732 Haxelib and 343 gem payload entries with no
+missing, altered, duplicate, or extra content.
+
+`TurboStreams.broadcastAppendLaterTo(...)`,
+`broadcastPrependLaterTo(...)`, `broadcastBeforeLaterTo(...)`,
+`broadcastAfterLaterTo(...)`, `broadcastReplaceLaterTo(...)`, and
+`broadcastUpdateLaterTo(...)` tie a typed stream, target, template, and locals
+shape together and emit the corresponding turbo-rails `_later_to` calls.
+Exact turbo-rails 2.0.23 runtime evidence verifies six native
+`Turbo::Streams::ActionBroadcastJob` enqueue argument sets and all six
+delivered Turbo Stream actions and rendered partials. Raw stream, target, and
+template strings plus incomplete locals remain compile-time errors. There is
+no invented delayed-remove convenience because this upstream turbo-rails
+version does not provide one; model callback macros remain a separate
+transaction-lifecycle contract. The compiler reuses the existing broadcast
+lowering owner, and its classified legacy raw/print inventory remains at 269
+sites.
+
 ## Stable 1.21.0 delayed Turbo refresh and Rails security publication
 
 The normal tested-commit workflow published immutable
