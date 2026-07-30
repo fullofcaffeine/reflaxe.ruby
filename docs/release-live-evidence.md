@@ -5,6 +5,50 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.21.0 delayed Turbo refresh and Rails security publication
+
+The normal tested-commit workflow published immutable
+[`v1.21.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.21.0)
+on 2026-07-30 for typed delayed Turbo refresh broadcasts and the Rails
+`8.1.3.1` security update.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `59d5db7e43c73ed0183d6d106fc6d9db03d60333` |
+| Canonical release tag | `v1.21.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30513755512`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30513755512), `success`; all 14 security, formatter, Node compatibility, release-contract, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3.1 runtime, and publication jobs passed |
+| Privileged release job | [`90784493394`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30513755512/job/90784493394), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-07-30T05:04:29Z` |
+| Release notes | Version heading, `v1.20.0...v1.21.0` compare link, categorized feature and security-fix bullets, and exact `e89ff6c` and `59d5db7` commit links |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.21.0.gem` | 285696 | `c304cbba570082fdb79ff618dacd234a9576cd4381af6632ac904bc9fd2afe62` |
+| `hxruby-1.21.0.gem.sha256.json` | 304 | `054eae6b858beb52bd9ca7ad1a44e39dee0419e60025cc1a8cbe1be44e4789da` |
+| `reflaxe.ruby-1.21.0.zip` | 1357996 | `035776b666544e0cc3a8449b5404ec840dedb272431998d2a05ed55111ba2126` |
+| `reflaxe.ruby-1.21.0.zip.sha256.json` | 317 | `92a47a5880e7c925803c701acfb3b4973ba39e38ed46f1cd35988aed0422d447` |
+
+Each sidecar binds the downloaded bytes to version `1.21.0`, tag `v1.21.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities; their canonical format-1 manifests
+independently verified all 732 Haxelib and 343 gem payload entries with no
+missing, altered, duplicate, or extra content.
+
+`TurboStreams.broadcastRefreshLaterTo(...)` provides a typed no-options or
+closed `TurboRefreshOptions` API and structurally emits
+`broadcast_refresh_later_to`. Exact `turbo-rails` 2.0.23 runtime evidence
+verifies ActiveJob enqueueing, stream/request-ID debouncing, and the delivered
+refresh tag. Raw stream names and unknown option fields remain compile-time
+errors. During the first canonical run, the newly updated advisory database
+identified CVE-2026-66066 in ActiveStorage 8.1.3; publication correctly
+stopped. The replacement exact-SHA run exercises Rails 8.1.3.1 across every
+supported Ruby branch, and its dependency audit reports the committed lock
+clean.
+
 ## Stable 1.20.0 typed Turbo refresh display-options publication
 
 The normal tested-commit workflow published immutable
