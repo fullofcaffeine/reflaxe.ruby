@@ -259,3 +259,13 @@ compiler processes and is therefore retained as noisy observation rather than
 before/after selector evidence. Required PR job topology and test commands are
 unchanged: the selector adds a fast log/report step, while all 14 jobs and the
 three-Ruby full matrix still run.
+
+Canonical implementation workflow
+[`30719877635`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30719877635)
+passed all 14 jobs for
+`b6b0cab30ebf9ebe4c8aa1a370652c00be33bb08`. Hosted explain mode classified
+all 10 changed paths in 4 milliseconds, selected both central sentinels and
+every canonical backstop because the workflow, package manifest, selector, and
+ownership manifest changed, and remained advisory while every full lane ran.
+The final release analyzer correctly reported `no release` for the `test:`
+commit.
