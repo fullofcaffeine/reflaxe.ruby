@@ -47,6 +47,12 @@ When the hooks first run after a bd/tooling upgrade, `.beads/issues.jsonl` may b
   dependency is required by a supported slice, implement and test it, narrow the
   slice, or fail closed; update `docs/railshx-component-dependency-audit.md` and
   its machine inventory whenever that closure changes.
+- For an exceptionally complex manual GPT-5.6 Pro handoff, use the globally
+  installed `$oracle-review` skill. It owns the detailed prompt, sanitized
+  selective or whole-repository Repomix bundles, checked ZIP, pending-request
+  check, and archive lifecycle under `/tmp/oracle`; the evidence rules above
+  still govern every finding. Public source and install instructions:
+  https://github.com/fullofcaffeine/caf-skills/tree/main/skills/oracle-review
 
 ## Ruby Profile Contract
 
