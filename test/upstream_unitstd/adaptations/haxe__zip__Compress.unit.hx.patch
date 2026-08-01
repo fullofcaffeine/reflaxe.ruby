@@ -1,0 +1,18 @@
+--- a/haxe/zip/Compress.unit.hx
++++ b/haxe/zip/Compress.unit.hx
+@@ -1,5 +1,5 @@
+ // not supported in js/python/cs yet
+-#if (cpp || php || java || neko || flash || hl)
++#if (cpp || php || java || neko || flash || hl || ruby)
+ var b = haxe.io.Bytes.ofString("test");
+ var c = haxe.zip.Compress.run(b, 9);
+ c.length == 12;
+@@ -27,7 +27,7 @@ c.get(5) == 0;
+ c.get(6) == 0;
+ c.get(7) == 1;
+ #end
+-#if php
++#if (php || ruby)
+ var b = haxe.io.Bytes.alloc(0);
+ var c = haxe.io.Bytes.alloc(8);
+ var d = new haxe.zip.Compress(9);

@@ -36,40 +36,15 @@ const extraClassPaths = new Map([
 ]);
 
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-
-const coverageContracts = new Map([
-  ["action_cable", { kind: "snapshot+smoke", script: "test:action-cable" }],
-  ["action_controller_params", { kind: "snapshot+smoke", script: "test:action-controller-params" }],
-  ["action_mailer", { kind: "snapshot+smoke", script: "test:action-mailer" }],
-  ["active_job", { kind: "snapshot+smoke", script: "test:active-job" }],
-  ["active_record_model", { kind: "snapshot+smoke", script: "test:active-record-model" }],
-  ["active_storage", { kind: "snapshot+smoke", script: "test:active-storage" }],
-  ["active_support_facades", { kind: "smoke", script: "test:active-support-facades" }],
-  ["class_members", { kind: "snapshot+smoke", script: "test:class-members" }],
-  ["components", { kind: "snapshot+smoke", script: "test:components" }],
-  ["core_subset", { kind: "snapshot+smoke", script: "test:core-subset" }],
-  ["engine_plugin", { kind: "snapshot+smoke", script: "test:rails-engine" }],
-  ["enum_adt", { kind: "snapshot+smoke", script: "test:enum-adt" }],
-  ["exception_flow", { kind: "snapshot+smoke", script: "test:exception-flow" }],
-  ["hello_world", { kind: "smoke", script: "test:hello-world" }],
-  ["instrumentation", { kind: "snapshot+smoke", script: "test:instrumentation" }],
-  ["lambda_values", { kind: "snapshot+smoke", script: "test:lambda-values" }],
-  ["native_mapping", { kind: "snapshot+smoke", script: "test:native-mapping" }],
-  ["rails_autoload", { kind: "snapshot+smoke", script: "test:rails-autoload" }],
-  ["rails_interop_app", { kind: "snapshot+runtime", script: "test:rails-interop" }],
-  ["rails_test_adapters", { kind: "snapshot", script: "test:snapshots" }],
-  ["rails_routes_dsl", { kind: "snapshot+smoke", script: "test:routes-dsl" }],
-  ["require_metadata", { kind: "snapshot+smoke", script: "test:require-registry" }],
-  ["ruby_callable_abi", { kind: "snapshot+smoke+runtime+ruby-origin", script: "test:ruby-callable-abi-example" }],
-  ["rubyhx_cli", { kind: "smoke+runtime+ruby-origin+negative+package-consumer", script: "test:rubyhx-cli" }],
-  ["ruby_call_shapes", { kind: "snapshot+smoke", script: "test:ruby-call-shapes" }],
-  ["ruby_extensions", { kind: "snapshot+smoke", script: "test:ruby-extensions" }],
-  ["ruby_interop", { kind: "snapshot+smoke", script: "test:ruby-interop" }],
-  ["shared_domain", { kind: "ruby+javascript+runtime+common-vectors", script: "test:full-stack-shared-behavior" }],
-  ["stdlib_mvp", { kind: "snapshot+smoke", script: "test:stdlib-mvp" }],
-  ["switch_cases", { kind: "snapshot+smoke", script: "test:switch-cases" }],
-  ["todoapp_rails", { kind: "snapshot+rails+browser+production", script: "test:todoapp-rails" }],
-  ["turbo_streams", { kind: "snapshot+smoke", script: "test:turbo-streams" }],
+const exampleManifest = JSON.parse(readFileSync(join(root, "test", "example-contracts.json"), "utf8"));
+const coverageContracts = new Map(exampleManifest.contracts.map((contract) => [contract.id, contract]));
+const allowedTiers = new Set(["flagship-application", "capability-showcase", "compile-only-snippet"]);
+const allowedSurfaces = new Set([
+  "compiler-conformance",
+  "ruby-runtime-stdlib",
+  "ruby-native-gem-package",
+  "upstream-provenance",
+  "examples-downstream",
 ]);
 
 rmSync(outputRoot, { force: true, recursive: true });
@@ -108,23 +83,57 @@ function assertExampleCoverage(example) {
   const contract = coverageContracts.get(example);
   if (!contract) {
     console.error(`[examples-compile] examples/${example} is missing an expected-output/test coverage contract.`);
-    console.error("[examples-compile] Add it to coverageContracts with snapshot/smoke/runtime/browser coverage before landing the example.");
+    console.error("[examples-compile] Add it to test/example-contracts.json with an honest tier, surface, claim, proof levels, and command.");
     process.exit(1);
   }
 
-  if (contract.kind.includes("snapshot") && !existsSync(join(root, "test", "snapshots", "m1", example))) {
+  if (!allowedTiers.has(contract.tier) || !allowedSurfaces.has(contract.surface) || !contract.claim?.trim()) {
+    console.error(`[examples-compile] examples/${example} has an invalid tier, product surface, or empty claim.`);
+    process.exit(1);
+  }
+
+  if (contract.tier === "compile-only-snippet" && contract.proves.some((level) => level !== "generation")) {
+    console.error(`[examples-compile] compile-only examples/${example} cannot claim runtime, package, or downstream proof.`);
+    process.exit(1);
+  }
+
+  if (contract.tier === "flagship-application"
+    && (!contract.proves.includes("downstream-application") || !contract.proves.includes("browser-e2e"))) {
+    console.error(`[examples-compile] flagship examples/${example} must own a real downstream application and browser proof.`);
+    process.exit(1);
+  }
+
+  if (contract.evidence.includes("snapshot") && !existsSync(join(root, "test", "snapshots", "m1", example))) {
     console.error(`[examples-compile] examples/${example} declares snapshot coverage but has no test/snapshots/m1/${example} directory.`);
     process.exit(1);
   }
 
-  if (contract.script && !packageJson.scripts?.[contract.script]) {
-    console.error(`[examples-compile] examples/${example} declares ${contract.script}, but package.json does not define it.`);
+  if (contract.command && !packageJson.scripts?.[contract.command]) {
+    console.error(`[examples-compile] examples/${example} declares ${contract.command}, but package.json does not define it.`);
     process.exit(1);
   }
 
-  if (contract.script && !packageJson.scripts.test.includes(contract.script)) {
-    console.error(`[examples-compile] examples/${example} declares ${contract.script}, but npm test does not run it.`);
+  if (contract.command && !packageJson.scripts.test.includes(contract.command)) {
+    console.error(`[examples-compile] examples/${example} declares ${contract.command}, but npm test does not run it.`);
     process.exit(1);
+  }
+
+  for (const command of contract.extendedCommands ?? []) {
+    if (!packageJson.scripts?.[command]) {
+      console.error(`[examples-compile] examples/${example} declares extended observer ${command}, but package.json does not define it.`);
+      process.exit(1);
+    }
+  }
+
+  const extendedProofOwners = new Map([
+    ["browser-e2e", "test:todoapp-playwright"],
+    ["production-build", "test:todoapp-production"],
+  ]);
+  for (const [proof, command] of extendedProofOwners) {
+    if (contract.proves.includes(proof) && !contract.extendedCommands?.includes(command)) {
+      console.error(`[examples-compile] examples/${example} claims ${proof} without naming its ${command} observer.`);
+      process.exit(1);
+    }
   }
 }
 

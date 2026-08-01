@@ -2,46 +2,19 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MANIFEST="$ROOT/test/upstream_unitstd/manifest.json"
-REFERENCE_ROOT="${HAXE_RUBY_UNITSTD_REFERENCE:-${HAXE_RUBY_REFERENCE:-$ROOT/../haxe.compilerdev.reference/haxe/tests/unit/src/unitstd}}"
+REFERENCE_ROOT="${HAXE_RUBY_HAXE_REFERENCE:-$ROOT/../haxe.compilerdev.reference/haxe}"
 
 if [[ ! -d "$REFERENCE_ROOT" ]]; then
-  cat >&2 <<MSG
-Missing upstream unitstd reference: $REFERENCE_ROOT
+	cat >&2 <<MSG
+Missing exact Haxe source reference: $REFERENCE_ROOT
 
-Set HAXE_RUBY_UNITSTD_REFERENCE to a Haxe checkout's tests/unit/src/unitstd
-directory, or keep ../haxe.compilerdev.reference checked out next to this repo.
+Set HAXE_RUBY_HAXE_REFERENCE to a Haxe checkout at the pinned manifest commit,
+or keep ../haxe.compilerdev.reference/haxe checked out next to this repo.
 MSG
-  exit 1
+	exit 1
 fi
 
-python3 - "$ROOT" "$MANIFEST" "$REFERENCE_ROOT" <<'PY'
-import json
-import shutil
-import sys
-from pathlib import Path
-
-root = Path(sys.argv[1])
-manifest_path = Path(sys.argv[2])
-reference_root = Path(sys.argv[3])
-manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-
-copied = 0
-for entry in manifest["modules"]:
-    if entry["status"] != "enabled":
-        continue
-
-    source = reference_root / entry["source"]
-    fixture = root / entry["fixture"]
-    if not source.exists():
-        raise SystemExit(f"Missing upstream source for {entry['module']}: {source}")
-
-    fixture.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, fixture)
-    copied += 1
-    print(f"synced {entry['module']}: {entry['source']} -> {entry['fixture']}")
-
-print(f"synced {copied} upstream unitstd fixture(s)")
-PY
-
-haxelib run formatter -s "$ROOT/test/upstream_unitstd/upstream"
+# This command is deliberately review-only. It verifies the exact upstream
+# commit, every official file/hash, every local fixture/hash, and all adaptation
+# patches, then writes a generated report. It never copies or blesses bytes.
+node "$ROOT/scripts/ci/unitstd-provenance-check.js" --review --reference "$REFERENCE_ROOT"

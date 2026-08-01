@@ -1,0 +1,540 @@
+{
+  "schemaVersion": 1,
+  "contracts": [
+    {
+      "id": "action_cable",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/action_cable",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Generated ActionCable artifacts remain typeable and Ruby-syntax valid; the separate Rails runtime ring owns Rails consumption.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax"
+      ],
+      "command": "test:action-cable"
+    },
+    {
+      "id": "action_controller_params",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/action_controller_params",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Generated controller/params artifacts remain typeable and Ruby-syntax valid; the Rails runtime ring owns real Rails consumption.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax"
+      ],
+      "command": "test:action-controller-params"
+    },
+    {
+      "id": "action_mailer",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/action_mailer",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Generated mailer artifacts resolve and execute their focused Ruby seam; the Rails runtime ring owns real Rails delivery.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "real-ruby-execution"
+      ],
+      "command": "test:action-mailer"
+    },
+    {
+      "id": "active_job",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/active_job",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Generated job artifacts remain typeable and Ruby-syntax valid; the Rails runtime ring owns enqueue/perform integration.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax"
+      ],
+      "command": "test:active-job"
+    },
+    {
+      "id": "active_record_model",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/active_record_model",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Generated model/query contracts compile and the focused ActiveRecord result seam executes.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "real-ruby-execution",
+        "gem-framework-integration"
+      ],
+      "command": "test:active-record-model"
+    },
+    {
+      "id": "active_storage",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/active_storage",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Generated attachment artifacts remain typeable and Ruby-syntax valid; the Rails runtime ring owns ActiveStorage consumption.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax"
+      ],
+      "command": "test:active-storage"
+    },
+    {
+      "id": "active_support_facades",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/active_support_facades",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Typed ActiveSupport facades compile and execute when the real gem is available.",
+      "evidence": "smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution",
+        "gem-framework-integration"
+      ],
+      "command": "test:active-support-facades"
+    },
+    {
+      "id": "class_members",
+      "tier": "capability-showcase",
+      "surface": "compiler-conformance",
+      "owner": "examples/class_members",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Haxe class-member behavior compiles through RubyHx and executes under Ruby.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:class-members"
+    },
+    {
+      "id": "components",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/components",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Generated component artifacts compile and pass Ruby syntax; Rails rendering is owned by broader Rails evidence.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax"
+      ],
+      "command": "test:components"
+    },
+    {
+      "id": "core_subset",
+      "tier": "capability-showcase",
+      "surface": "compiler-conformance",
+      "owner": "examples/core_subset",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "A representative Haxe language subset compiles and executes under Ruby.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:core-subset"
+    },
+    {
+      "id": "engine_plugin",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/engine_plugin",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "A generated Rails engine/plugin compiles, passes Ruby syntax, and exercises its Ruby consumer/generator seam.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "real-ruby-execution",
+        "gem-framework-integration"
+      ],
+      "command": "test:rails-engine"
+    },
+    {
+      "id": "enum_adt",
+      "tier": "capability-showcase",
+      "surface": "compiler-conformance",
+      "owner": "examples/enum_adt",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Haxe enum/ADT behavior compiles and executes under Ruby.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:enum-adt"
+    },
+    {
+      "id": "exception_flow",
+      "tier": "capability-showcase",
+      "surface": "ruby-runtime-stdlib",
+      "owner": "examples/exception_flow",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Portable and native exception flow compiles and executes under Ruby.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:exception-flow"
+    },
+    {
+      "id": "hello_world",
+      "tier": "capability-showcase",
+      "surface": "examples-downstream",
+      "owner": "examples/hello_world",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "The smallest authored Haxe entrypoint compiles and executes with exact stdout under Ruby.",
+      "evidence": "smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:hello-world"
+    },
+    {
+      "id": "instrumentation",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/instrumentation",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Instrumentation output compiles and executes against real ActiveSupport when available.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "real-ruby-execution",
+        "gem-framework-integration"
+      ],
+      "command": "test:instrumentation"
+    },
+    {
+      "id": "lambda_values",
+      "tier": "capability-showcase",
+      "surface": "compiler-conformance",
+      "owner": "examples/lambda_values",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Haxe lambda values compile and execute under Ruby.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:lambda-values"
+    },
+    {
+      "id": "native_mapping",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/native_mapping",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Typed native mappings emit direct Ruby calls and execute under Ruby.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:native-mapping"
+    },
+    {
+      "id": "rails_autoload",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/rails_autoload",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Generated Rails autoload shapes compile and their focused Ruby loading seam executes.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "real-ruby-execution"
+      ],
+      "command": "test:rails-autoload"
+    },
+    {
+      "id": "rails_interop_app",
+      "tier": "capability-showcase",
+      "surface": "examples-downstream",
+      "owner": "examples/rails_interop_app",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "The adoption example preserves Rails-owned files, generates typed seams, and passes Ruby syntax; the Rails runtime ring owns app consumption.",
+      "evidence": "snapshot+runtime",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "gem-framework-integration"
+      ],
+      "command": "test:rails-interop"
+    },
+    {
+      "id": "rails_routes_dsl",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/rails_routes_dsl",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Typed routes generate Rails-native route files that pass Ruby syntax and negative validation.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax"
+      ],
+      "command": "test:routes-dsl"
+    },
+    {
+      "id": "rails_test_adapters",
+      "tier": "compile-only-snippet",
+      "surface": "examples-downstream",
+      "owner": "examples/rails_test_adapters",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "The test-adapter authoring snippet compiles and its generated form is snapshot-reviewed.",
+      "evidence": "snapshot",
+      "proves": [
+        "generation"
+      ],
+      "command": "test:snapshots"
+    },
+    {
+      "id": "require_metadata",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/require_metadata",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Typed require metadata generates deterministic Ruby dependency declarations.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation"
+      ],
+      "command": "test:require-registry"
+    },
+    {
+      "id": "ruby_callable_abi",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/ruby_callable_abi",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Haxe-authored block/keyword APIs execute from both generated Haxe and handwritten Ruby callers.",
+      "evidence": "snapshot+smoke+runtime+ruby-origin",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "real-ruby-execution",
+        "downstream-consumer"
+      ],
+      "command": "test:ruby-callable-abi-example"
+    },
+    {
+      "id": "rubyhx_cli",
+      "tier": "capability-showcase",
+      "surface": "examples-downstream",
+      "owner": "examples/rubyhx_cli",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "A Haxe-authored Ruby library/CLI executes from generated and handwritten Ruby and through a package-consumer fixture.",
+      "evidence": "smoke+runtime+ruby-origin+negative+package-consumer",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "real-ruby-execution",
+        "package-consumer",
+        "downstream-consumer"
+      ],
+      "command": "test:rubyhx-cli"
+    },
+    {
+      "id": "ruby_call_shapes",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/ruby_call_shapes",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Ruby block, positional, and keyword call shapes compile and execute.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:ruby-call-shapes"
+    },
+    {
+      "id": "ruby_extensions",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/ruby_extensions",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Ruby mixin, prepend, extend, and patch contracts compile and execute.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:ruby-extensions"
+    },
+    {
+      "id": "ruby_interop",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/ruby_interop",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Typed Haxe/Ruby interop compiles and executes across the real Ruby boundary.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:ruby-interop"
+    },
+    {
+      "id": "shared_domain",
+      "tier": "capability-showcase",
+      "surface": "examples-downstream",
+      "owner": "examples/shared_domain",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "One typed domain contract executes against independent common vectors on Ruby and JavaScript.",
+      "evidence": "ruby+javascript+runtime+common-vectors",
+      "proves": [
+        "generation",
+        "real-ruby-execution",
+        "downstream-consumer"
+      ],
+      "command": "test:full-stack-shared-behavior"
+    },
+    {
+      "id": "stdlib_mvp",
+      "tier": "capability-showcase",
+      "surface": "ruby-runtime-stdlib",
+      "owner": "examples/stdlib_mvp",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "The admitted Haxe stdlib subset compiles and executes under Ruby, including a negative JSON probe.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:stdlib-mvp"
+    },
+    {
+      "id": "switch_cases",
+      "tier": "capability-showcase",
+      "surface": "compiler-conformance",
+      "owner": "examples/switch_cases",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Haxe switch behavior compiles and executes under Ruby.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "real-ruby-execution"
+      ],
+      "command": "test:switch-cases"
+    },
+    {
+      "id": "todoapp_rails",
+      "tier": "flagship-application",
+      "surface": "examples-downstream",
+      "owner": "examples/todoapp_rails",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "The canonical RailsHx app compiles, boots with real Rails/gems, passes browser scenarios, and produces a deployable production build.",
+      "evidence": "snapshot+rails+browser+production",
+      "proves": [
+        "generation",
+        "ruby-syntax",
+        "real-ruby-execution",
+        "gem-framework-integration",
+        "downstream-application",
+        "browser-e2e",
+        "production-build"
+      ],
+      "command": "test:todoapp-rails",
+      "extendedCommands": [
+        "test:todoapp-playwright",
+        "test:todoapp-production"
+      ]
+    },
+    {
+      "id": "turbo_streams",
+      "tier": "capability-showcase",
+      "surface": "ruby-native-gem-package",
+      "owner": "examples/turbo_streams",
+      "profiles": [
+        "ruby_first"
+      ],
+      "claim": "Typed Turbo Stream artifacts compile and pass Ruby syntax; the Rails runtime ring owns real Turbo consumption.",
+      "evidence": "snapshot+smoke",
+      "proves": [
+        "generation",
+        "ruby-syntax"
+      ],
+      "command": "test:turbo-streams"
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 const { existsSync, readFileSync, rmSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { verifyActiveAssertions, verifyManifest } = require("./unitstd-provenance-check.js");
 
 const root = resolve(__dirname, "..", "..");
 const outputDir = join(root, "test", ".generated", "unitstd_ruby");
@@ -12,6 +13,10 @@ const reflaxeCandidates = [
   resolve(root, "..", "wt-c07bfa5c", "vendor", "reflaxe", "src"),
   resolve(root, "..", "haxe.rust", "vendor", "reflaxe", "src"),
 ];
+
+// Provenance is a static floor beneath runtime parity: an unknown or stale
+// official fixture must fail before generated Ruby can be counted as evidence.
+verifyManifest();
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -76,6 +81,9 @@ if (actual !== "unitstd-ruby ok\n") {
 }
 
 const mainRuby = readFileSync(join(outputDir, "main.rb"), "utf8");
+// These identities are extracted after Haxe macro expansion and Ruby emission,
+// so a fixture that was copied but never registered cannot inflate active proof.
+verifyActiveAssertions(mainRuby);
 const coreRuby = readFileSync(join(outputDir, "hxruby", "core.rb"), "utf8");
 const eRegRuby = readFileSync(join(outputDir, "e_reg.rb"), "utf8");
 const enumValueMapRuby = readFileSync(join(outputDir, "haxe", "ds", "enum_value_map.rb"), "utf8");

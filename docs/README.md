@@ -70,6 +70,10 @@ Future Ruby framework layers should reuse the same split: add typed std/macros/g
 - [Testing Strategy And Agent Feedback Loops](testing-strategy.md): independent
   evidence axes, measured feedback rings, fast canary usage, stopping rules,
   current qualification gaps, and staged impact selection.
+- [Testing Scorecards](testing-scorecards.md): independent compiler, runtime,
+  Ruby-native/package, upstream-provenance, and example/downstream claims.
+- [Testing Strategy Convergence Review](testing-strategy-review-2026-08-01.md):
+  behavior-first delta, red/oracle/tracer evidence, timings, and residual Beads.
 
 ## RailsHx Guides
 

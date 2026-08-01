@@ -11,9 +11,20 @@ Why this exists:
 
 Source provenance:
 
-- Upstream source: Haxe `tests/unit/src/unitstd`
+- Upstream source: Haxe 4.3.7 `tests/unit/src/unitstd` at commit
+  `e0b355c6be312c1b17382603f018cf52522ec651`.
 - Haxe standard library/tests are distributed under the Haxe Foundation MIT
   license; see the upstream `extra/LICENSE.txt`.
+- `manifest.json` records exact upstream/local SHA-256 values and inventories
+  all 67 official files. The bounded Ruby lane has 43 active files and 24
+  explicitly inactive files; inactive is not a pass.
+- One active fixture is byte-identical. Thirty-six are formatter-only
+  adaptations, and six Ruby-lane adaptations have reasons, owners, and minimal
+  patches under `adaptations/`. Adapted evidence is never counted as
+  unmodified official coverage.
+- `active-assertions.json` locks 2,248 assertion identities found after
+  registration, macro expansion, and Ruby emission. It detects assertions that
+  silently stop executing, but the Ruby run, not this inventory, owns behavior.
 
 Coverage policy:
 
@@ -244,8 +255,16 @@ separates covered surfaces, upstream fallback candidates, Ruby override
 candidates, and unsupported target-specific fixtures so fixture promotion stays
 deliberate.
 
-Use `scripts/sync-upstream-unitstd-specs.sh` to refresh enabled, unadapted specs
-from a local Haxe reference checkout. The sync normalizes fixture whitespace
-with the repo Haxe formatter so normal formatting gates stay green. Adapted
-specs must be reviewed manually so their local target changes are not
-overwritten.
+`npm run test:unitstd-provenance` is the focused static contract.
+`npm run test:unitstd-ruby` is the official-source -> custom backend -> MRI
+tracer bullet and fails if provenance or active identities drift.
+
+`scripts/sync-upstream-unitstd-specs.sh` compares the exact pinned Haxe checkout
+and writes `test/.generated/upstream-unitstd-review.json`. It is deliberately
+review-only and never overwrites or blesses local fixtures. After an intentional
+reviewed baseline/adaptation update, run the runtime lane and explicitly refresh
+the ledger with:
+
+```bash
+node scripts/ci/unitstd-provenance-check.js --write --reference <haxe-root>
+```

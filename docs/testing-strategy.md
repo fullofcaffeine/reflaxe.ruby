@@ -5,6 +5,13 @@ automated coding agents should get fast feedback without confusing a small
 local check with release-grade evidence. Rails-specific test-layer choices
 remain in [RailsHx Testing Strategy](railshx-testing-strategy.md).
 
+The five claim-bearing surfaces and their independent status, owners,
+commands, examples, and residual risks live in
+[RubyHx testing scorecards](testing-scorecards.md). The
+[2026-08-01 convergence review](testing-strategy-review-2026-08-01.md) records
+the incremental audit, red-state proof, oracle, tracer bullet, timings, and
+deferred Beads. Do not replace those scorecards with one aggregate pass rate.
+
 ## Practical Model
 
 One test command cannot serve every timescale well:
@@ -41,20 +48,19 @@ Keep these results separate. A pass on one axis cannot substitute for another.
 | Distribution/release | Consumers receive reproducible, complete artifacts built from the exact tested commit. | Haxelib/gem package checks, security gates, release contracts, immutable hosted-release verification. |
 
 The current upstream Haxe lane is meaningful partial evidence, not complete
-official Haxe 4.3.7 qualification. It runs 43 enabled or adapted `unitstd`
+official Haxe 4.3.7 qualification. It runs 43 active official-derived `unitstd`
 fixtures, plus adjacent JSON issue and filesystem cases. Shared top-level
-`unit.TestMain` classes, the general issue corpus, exact per-fixture provenance,
-adaptation diffs, active-assertion accounting, and a clean public-install full
-baseline remain staged work.
+`unit.TestMain` classes, the general issue corpus, and a clean public-install
+full baseline remain staged work.
 
-The sibling official Haxe checkout resolves to the expected 4.3.7 commit
-`e0b355c6be312c1b17382603f018cf52522ec651`. A byte comparison found that only
-one of 37 enabled checked-in fixtures currently matches its upstream source
-exactly; the other 36 have at least formatter-normalization differences, and
-all six adapted fixtures differ by design. This is not evidence that their
-assertions changed, but it is why the next provenance slice must record both
-upstream and local hashes plus explicit transformations instead of calling the
-checked-in bytes “unchanged.”
+The active inventory is pinned to official Haxe 4.3.7 commit
+`e0b355c6be312c1b17382603f018cf52522ec651`. Of 67 official `unitstd` files, 43
+are active in this bounded lane and 24 are explicitly inactive. One active
+fixture is byte-identical, 36 are formatter-only adaptations, and six are
+Ruby-lane adaptations with reasons, owners, and reviewable patches. Exact
+upstream/local/diff hashes and 2,248 post-macro active assertion identities are
+checked by `npm run test:unitstd-provenance`. Inactive, adapted, and
+repository-authored cases never inflate the unmodified-official count.
 
 ## Feedback Rings
 
@@ -76,6 +82,35 @@ change selection, cache results, or contribute additional correctness evidence.
 
 ## Agent Loop
 
+### Behavior-first change contract
+
+For every meaningful bug fix or behavior change, record the following before
+broad automation: preconditions/input, compilation or action path, observable
+result, error/edge behavior, owning product surface, and protected claim. Bead
+acceptance criteria, a compact scenario table, or fixture metadata is enough;
+Gherkin is not required.
+
+Use the smallest faithful owner as the inner TDD loop: show it red for the
+intended reason, implement the change, make it green, refactor, then run the
+next real boundary. Record the failing command and concise failure in the Bead,
+PR, or durable implementation note. A separate red commit is optional. When a
+high-level Rails/browser/consumer test reveals a stable compiler or generator
+defect, retain the representative real-boundary proof and add a focused
+deterministic regression at the semantic owner.
+
+Every new or materially changed expected result must identify an independent
+oracle: a specification, manually reviewed minimal expectation, pinned
+reference implementation, invariant/property, provenance-backed golden, or
+real consumer behavior. The implementation under test must not generate its
+own expectation. Snapshot changes require semantic review plus target
+syntax/runtime evidence when those are part of the claim.
+
+For a new capability, prove one narrow real tracer bullet before multiplying
+fixtures. The usual compiler path is authored Haxe -> custom backend -> Ruby
+syntax/build check -> real MRI observation; add package, Rails, or browser
+boundaries only when the capability claims them. Assign every assertion to the
+lowest layer that can still observe its defect class.
+
 Use this sequence for implementation work:
 
 1. Classify the change by semantic owner and evidence axes before editing.
@@ -95,6 +130,11 @@ Use this sequence for implementation work:
    any applicable browser/production lanes.
 7. Treat canonical exact-SHA CI as the authoritative clean matrix. A local
    canary or warm watcher never authorizes a release.
+8. For compiler representation, runtime, ABI, package publication, security,
+   migration, or public-claim changes, perform a separate review pass after
+   implementation. Challenge red sensitivity, oracle independence, negative
+   cases, mocked boundaries, selector omissions, scorecard laundering, and
+   overbroad wording; record findings and dispositions.
 
 ### Failure and stopping rules
 
@@ -109,6 +149,11 @@ Use this sequence for implementation work:
   expand to broader/full testing.
 - Preserve generated failure artifacts and the first actionable diagnostic.
   Do not refresh snapshots or weaken upstream assertions merely to obtain green.
+- Do not optimize toward assertion count or a geometric test ratio. Review
+  stable behavior owners, unique failure yield, escaped defects, diagnosis
+  time, claim coverage, provenance, and maintenance cost. Formatting, lint,
+  schema/freshness, workflow-policy, security, and manifest checks are the
+  static floor and stay outside behavior-layer ratios.
 
 ## R1 Agent Canary
 
@@ -154,7 +199,7 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
 | Positive/negative source | **Observed:** many focused smoke scripts and invalid fixtures | Typed success and fail-closed diagnostics for shipped slices | Stable test IDs and aggregate timing are inconsistent across scripts. |
 | Generated shape | **Observed:** committed deterministic snapshots; 178s local sample | Reviewable exact output and repeat generation | Too slow for unconditional R1; affected selection is not yet automated. |
 | Target build/runtime | **Observed:** Ruby syntax checks and execution in focused lanes | Generated Ruby is accepted and behaves correctly for those slices | No single public-install representative smoke spanning shared language, unitstd, and issue families. |
-| Official Haxe | **Observed:** 37 enabled + 6 adapted unitstd fixtures, JSON issues, filesystem parity | Partial portable runtime evidence | Exact baseline commit/hashes, adaptation ledger, active assertion inventory, shared classes, and issue corpus remain incomplete. |
+| Official Haxe | **Observed:** 43 active official-derived unitstd fixtures with exact provenance and active identities, plus JSON issues and filesystem parity | Partial portable runtime evidence | Shared classes, general issue corpus, 24 inactive official files, and public-install qualification remain incomplete. |
 | Rails/framework | **Observed:** focused smokes, snapshots, three-version runtime matrix | Rails consumes supported generated seams | Separate axis is healthy; do not count it toward portable Haxe pass totals. |
 | Browser/production | **Observed:** Playwright and production dogfood | User-visible and deployable app paths | Expensive by design; select locally by affected product boundary while retaining canonical backstop. |
 | Package/install | **Observed:** Haxelib ZIP, gem, package consumers, public upgrade | Current artifact shape and selected consumer paths | R1 uses checkout paths and must not be described as package-install evidence. |
@@ -166,9 +211,9 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
 1. **Instrument and establish R1.** Keep `npm test` authoritative, add the
    measured canary/report and failure-propagation contract, and collect initial
    timings.
-2. **Harden official-source provenance** (`haxe_ruby-xm15`). Pin the exact
-   Haxe 4.3.7 commit, record upstream/local hashes, store minimal adaptation
-   diffs and active assertion identities, and make drift fail closed.
+2. **Harden official-source provenance** (`haxe_ruby-xm15`). Completed by the
+   exact baseline, upstream/local hashes, six adaptation patches, active
+   assertion identities, fail-closed inventory, and review-only sync.
 3. **Add the public-install representative smoke** (`haxe_ruby-8dfj`). Execute
    meaningful shared language, unitstd, and general issue cases through one
    package-consumer compile→Ruby-check→runtime command.

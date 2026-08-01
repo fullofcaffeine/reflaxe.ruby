@@ -1,0 +1,50 @@
+--- a/Std.unit.hx
++++ b/Std.unit.hx
+@@ -1,3 +1,5 @@
++// Adapted from upstream Haxe tests/unit/src/unitstd/Std.unit.hx.
++// Local edits only avoid duplicate local names in this macro-expanded lane.
+ // is
+ var known:String = null;
+ (known is String) == false;
+@@ -11,12 +13,12 @@ var unknown = null;
+ (1.5 is Int) == false;
+ (1.5 is Float) == true;
+ ([] is Array) == true;
+-(cast unit.MyEnum.A is Array) == false;
++(cast SomeEnum.NoArguments is Array) == false;
+ // isOfType
+-var known:String = null;
+-Std.isOfType(known, String) == false;
+-var unknown = null;
+-Std.isOfType(unknown, String) == false;
++var knownForIsOfType:String = null;
++Std.isOfType(knownForIsOfType, String) == false;
++var unknownForIsOfType = null;
++Std.isOfType(unknownForIsOfType, String) == false;
+ Std.isOfType(null, String) == false;
+ // Std.isOfType("foo", null) == false;
+ Std.isOfType("", String) == true;
+@@ -25,19 +27,19 @@ Std.isOfType(1, Int) == true;
+ Std.isOfType(1.5, Int) == false;
+ Std.isOfType(1.5, Float) == true;
+ Std.isOfType([], Array) == true;
+-Std.isOfType(cast unit.MyEnum.A, Array) == false;
++Std.isOfType(cast SomeEnum.NoArguments, Array) == false;
+ // instance
+ #if !js
+ Std.downcast("", String) == "";
+ #end
+ var a = [];
+ Std.downcast(a, Array) == a;
+-var parent:unit.MyClass.MyParent = new MyClass.MyChild1();
++var parent:unit.MyClass.MyParent = new unit.MyClass.MyChild1();
+ Std.downcast(parent, unit.MyClass.MyChild1) != null;
+ Std.downcast(null, Array) == null;
+ Std.downcast(null, String) == null;
+-var parent:unit.MyClass.IMyParent = new MyClass.MyChild1();
+-Std.downcast(parent, unit.MyClass.IMyChild) != null;
++var interfaceParent:unit.MyClass.IMyParent = new unit.MyClass.MyChild1();
++Std.downcast(interfaceParent, unit.MyClass.IMyChild) != null;
+ // string
+ var cwts = new ClassWithToString();
+ var cwtsc = new ClassWithToStringChild();

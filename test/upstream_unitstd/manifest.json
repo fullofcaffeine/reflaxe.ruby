@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "referenceRoot": "haxe/tests/unit/src/unitstd",
   "statusValues": [
     "enabled",
@@ -9,51 +9,1206 @@
     "no-upstream-spec"
   ],
   "modules": [
-    {"module": "Array", "status": "enabled", "source": "Array.unit.hx", "fixture": "test/upstream_unitstd/upstream/Array.unit.hx"},
-    {"module": "Date", "status": "enabled", "source": "Date.unit.hx", "fixture": "test/upstream_unitstd/upstream/Date.unit.hx"},
-    {"module": "DateTools", "status": "enabled", "source": "DateTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/DateTools.unit.hx"},
-    {"module": "EReg", "status": "enabled", "source": "EReg.unit.hx", "fixture": "test/upstream_unitstd/upstream/EReg.unit.hx"},
-    {"module": "Float", "status": "enabled", "source": "Float.unit.hx", "fixture": "test/upstream_unitstd/upstream/Float.unit.hx"},
-    {"module": "IntIterator", "status": "enabled", "source": "IntIterator.unit.hx", "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx"},
-    {"module": "Lambda", "status": "enabled", "source": "Lambda.unit.hx", "fixture": "test/upstream_unitstd/upstream/Lambda.unit.hx"},
-    {"module": "List", "status": "enabled", "source": "List.unit.hx", "fixture": "test/upstream_unitstd/upstream/List.unit.hx"},
-    {"module": "Map", "status": "enabled", "source": "Map.unit.hx", "fixture": "test/upstream_unitstd/upstream/Map.unit.hx"},
-    {"module": "Math", "status": "enabled", "source": "Math.unit.hx", "fixture": "test/upstream_unitstd/upstream/Math.unit.hx"},
-    {"module": "Reflect", "status": "adapted", "source": "Reflect.unit.hx", "fixture": "test/upstream_unitstd/upstream/Reflect.unit.hx", "reason": "Adapted with lexical blocks so upstream sections that reuse local names can expand into one Ruby lane method; assertions remain aligned with the upstream fixture."},
-    {"module": "Std", "status": "adapted", "source": "Std.unit.hx", "fixture": "test/upstream_unitstd/upstream/Std.unit.hx", "reason": "Adapted to avoid duplicate local names in the macro-expanded Ruby lane; unspec markers are ignored and in-expression assertions are handled by UpstreamUnitStdMacro."},
-    {"module": "String", "status": "enabled", "source": "String.unit.hx", "fixture": "test/upstream_unitstd/upstream/String.unit.hx"},
-    {"module": "StringBuf", "status": "enabled", "source": "StringBuf.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx"},
-    {"module": "StringTools", "status": "enabled", "source": "StringTools.unit.hx", "fixture": "test/upstream_unitstd/upstream/StringTools.unit.hx"},
-    {"module": "Type", "status": "adapted", "source": "Type.unit.hx", "fixture": "test/upstream_unitstd/upstream/Type.unit.hx", "reason": "Adapted with lexical section blocks, upstream-package fixture helpers, and explicitly typed Dynamic enum-parameter expectations so the assertions can expand into the combined Ruby lane without changing their semantics."},
-    {"module": "haxe.DynamicAccess", "status": "enabled", "source": "haxe/DynamicAccess.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/DynamicAccess.unit.hx"},
-    {"module": "haxe.EnumFlags", "status": "enabled", "source": "haxe/EnumFlags.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/EnumFlags.unit.hx"},
-    {"module": "haxe.Int32", "status": "enabled", "source": "haxe/Int32.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/Int32.unit.hx"},
-    {"module": "haxe.Json", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; parser/writer behavior is covered from the broader Haxe test suite by npm run test:json-parity."},
-    {"module": "haxe.Log", "status": "enabled", "source": "haxe/Log.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/Log.unit.hx"},
-    {"module": "haxe.Template", "status": "enabled", "source": "haxe/Template.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/Template.unit.hx"},
-    {"module": "haxe.crypto.Base64", "status": "enabled", "source": "haxe/crypto/Base64.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Base64.unit.hx"},
-    {"module": "haxe.crypto.Crc32", "status": "enabled", "source": "haxe/crypto/Crc32.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Crc32.unit.hx"},
-    {"module": "haxe.crypto.Hmac", "status": "enabled", "source": "haxe/crypto/Hmac.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Hmac.unit.hx"},
-    {"module": "haxe.crypto.Md5", "status": "enabled", "source": "haxe/crypto/Md5.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Md5.unit.hx"},
-    {"module": "haxe.crypto.Sha1", "status": "enabled", "source": "haxe/crypto/Sha1.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Sha1.unit.hx"},
-    {"module": "haxe.crypto.Sha224", "status": "enabled", "source": "haxe/crypto/Sha224.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Sha224.unit.hx"},
-    {"module": "haxe.crypto.Sha256", "status": "enabled", "source": "haxe/crypto/Sha256.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Sha256.unit.hx"},
-    {"module": "haxe.ds.BalancedTree", "status": "enabled", "source": "haxe/ds/BalancedTree.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/ds/BalancedTree.unit.hx"},
-    {"module": "haxe.ds.EnumValueMap", "status": "enabled", "source": "haxe/ds/EnumValueMap.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/ds/EnumValueMap.unit.hx"},
-    {"module": "haxe.ds.GenericStack", "status": "enabled", "source": "haxe/ds/GenericStack.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/ds/GenericStack.unit.hx"},
-    {"module": "haxe.ds.IntMap", "status": "enabled", "source": "haxe/ds/IntMap.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/ds/IntMap.unit.hx"},
-    {"module": "haxe.ds.ObjectMap", "status": "enabled", "source": "haxe/ds/ObjectMap.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/ds/ObjectMap.unit.hx"},
-    {"module": "haxe.ds.StringMap", "status": "enabled", "source": "haxe/ds/StringMap.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/ds/StringMap.unit.hx"},
-    {"module": "haxe.ds.Vector", "status": "adapted", "source": "haxe/ds/Vector.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/ds/Vector.unit.hx", "reason": "Adapted only to treat Ruby as a dynamic target for the fixture's neutral Int/Bool/Float initialization expectations. All length, access, copy, data, blit, fill, iteration, join, map, sort, and identity assertions remain unchanged."},
-    {"module": "haxe.extern.EitherType", "status": "enabled", "source": "haxe/extern/EitherType.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/extern/EitherType.unit.hx"},
-    {"module": "haxe.io.Bytes", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; Bytes behavior is covered by local runtime tests and future adjacent upstream haxe.io fixtures."},
-    {"module": "haxe.io.BytesBuffer", "status": "enabled", "source": "haxe/io/BytesBuffer.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/BytesBuffer.unit.hx"},
-    {"module": "haxe.io.FPHelper", "status": "enabled", "source": "haxe/io/FPHelper.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/FPHelper.unit.hx"},
-    {"module": "haxe.io.Path", "status": "enabled", "source": "haxe/io/Path.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/io/Path.unit.hx"},
-    {"module": "haxe.rtti.Rtti", "status": "enabled", "source": "haxe/rtti/Rtti.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/rtti/Rtti.unit.hx"},
-    {"module": "haxe.zip.Compress", "status": "adapted", "source": "haxe/zip/Compress.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/zip/Compress.unit.hx", "reason": "Adapted only to extend upstream's runtime and PHP one-shot target guards to Ruby; all compression bytes and execute assertions remain unchanged and run over the typed Ruby Zlib override."},
-    {"module": "haxe.zip.Uncompress", "status": "adapted", "source": "haxe/zip/Uncompress.unit.hx", "fixture": "test/upstream_unitstd/upstream/haxe/zip/Uncompress.unit.hx", "reason": "Adapted only to extend upstream's runtime and PHP one-shot target guards to Ruby; all decompression and execute assertions remain unchanged and run over the typed Ruby Zlib override."},
-    {"module": "sys.FileSystem", "status": "no-upstream-spec", "reason": "No direct upstream unitstd spec exists; authoritative broader-suite filesystem behavior is covered by npm run test:filesystem-parity."},
-    {"module": "sys.io.File", "status": "enabled", "source": "sys/io/File.unit.hx", "fixture": "test/upstream_unitstd/upstream/sys/io/File.unit.hx"}
+    {
+      "module": "Array",
+      "status": "enabled",
+      "source": "Array.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Array.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "705dd795a96dd2ca06e3a9d53328a7ed05b720eca726d3de03181600f6031fe2",
+        "localSha256": "08e7f03112bc93cd951dc4f14b1b8ed502105ddb52d238ef031e93bf81103a19",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 185,
+        "sha256": "20ee109ad811bd16f5e5051d40fcf675f02815a262aefe29c5ed007a44ede49a"
+      }
+    },
+    {
+      "module": "Date",
+      "status": "enabled",
+      "source": "Date.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Date.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "26176b48bf71857e669192e57cf819fd14912c2398d3c318e0931d8571ab9c76",
+        "localSha256": "1324a1d3bb2cec18ed2c8e563725794f15f766b899e9bf174211a2494a4b2e8e",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 68,
+        "sha256": "44f9b2dd78e4ed49432dc4d3c75b5efa126d6ca047b62aa0b5342ebd0b5e1218"
+      }
+    },
+    {
+      "module": "DateTools",
+      "status": "enabled",
+      "source": "DateTools.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/DateTools.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "416622f2bff536fca2b355868a4126b2c9e22b35f4e535c3fba37fea1c2d742a",
+        "localSha256": "701d166436495af9c03df7a2e03431238a57da1fe512e64043012b9f5a6f7c77",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 2,
+        "sha256": "7584f2e26c7176955ebd9248093d3897a3bed45c89875d0758886b7d03b80ed8"
+      }
+    },
+    {
+      "module": "EReg",
+      "status": "enabled",
+      "source": "EReg.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/EReg.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "20a77056925bb257404279daf218d5996fa7571f038922acc51d7833fa2237d9",
+        "localSha256": "b99a47ef1edfbd38c34c2b2885ce87c6181caa4a0b70f7c925f27416737fd9f0",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 84,
+        "sha256": "4bb9658838e9bd923f4dea0a7bbd7335f542354530c3d9b9b5e34ace60374b52"
+      }
+    },
+    {
+      "module": "Float",
+      "status": "enabled",
+      "source": "Float.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Float.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "cef03736627801148fb79366953ae3b1a02aca8c569bd05a3e909bd4250e6300",
+        "localSha256": "9840fd566dce901369f1897b30c0501b14d8d277f2957d922e7acab8bdfb9758",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 42,
+        "sha256": "d9b20189d16c70867b8d86b04ee0b34cb02131dda67ea13b046917ca06bb051a"
+      }
+    },
+    {
+      "module": "IntIterator",
+      "status": "enabled",
+      "source": "IntIterator.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/IntIterator.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "dbd81c1cf9c4d58843145f2f975ec8c9131dc190272ccd3947ce4f3e7c5c9c31",
+        "localSha256": "09c2be935cad12a75572347327e9cf6c5b7b26dc178d7ec70e4ffac681dd50bb",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 7,
+        "sha256": "386abc6401ebc8ab9962889d481f16c6ee6073dcdc6e0c9a1f9aaad7d1305114"
+      }
+    },
+    {
+      "module": "Lambda",
+      "status": "enabled",
+      "source": "Lambda.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Lambda.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "731095b127a93b90356cd46a02e532cfd9afe51cc46c9844bb407aad68e78d6b",
+        "localSha256": "86e0de81e356d42ff20881a467c5a84281de5e2613e544f833f8dade3d7774b4",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 79,
+        "sha256": "ae0bc0419424b3484c687e9f3fdaf14ab242e096c9e1f3e0a790cfaec4cee4db"
+      }
+    },
+    {
+      "module": "List",
+      "status": "enabled",
+      "source": "List.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/List.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "5fac6897b9fee9eb59a1ff596295e595f8bec1f9f01629ef42449723ba1b8c46",
+        "localSha256": "b8a4872fdc3f0e8b96eaeacb31c18c6cd8e49c1cfdea3e602d2c12049838a687",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 32,
+        "sha256": "1c8c8e8dc3e10dcec1cfdb41ad44c24bfa922d0623f950191d7460720d13adcb"
+      }
+    },
+    {
+      "module": "Map",
+      "status": "enabled",
+      "source": "Map.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Map.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "832938d3e4e49331f9f968e545933055d871f7e2c341417d7d390765af30bbf9",
+        "localSha256": "13a6f859196967ed0f9855f119573b447f32cf6a3f3e1c3bc1ee1f6225cb12e5",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 174,
+        "sha256": "dde61d4a0a9ab9320aa8d987020e71de87f6e5717407f0ef24960bfbc9019dc5"
+      }
+    },
+    {
+      "module": "Math",
+      "status": "enabled",
+      "source": "Math.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Math.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "19da6c9af90bdbc4af31321d56138b4e1fb4018c9eb6cb7f3f1460eec0b9b37a",
+        "localSha256": "f86954028540911e788f6a6470e37823552b24262dedbd42d575cfc67b22d172",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 345,
+        "sha256": "b8eb4f916dd85ab7894cbc9343be28be74954b9547f07a5b660cffd94578e6c3"
+      }
+    },
+    {
+      "module": "Reflect",
+      "status": "adapted",
+      "source": "Reflect.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Reflect.unit.hx",
+      "reason": "Adapted with lexical blocks so upstream sections that reuse local names can expand into one Ruby lane method; assertions remain aligned with the upstream fixture.",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "5609c1599528ba5d404ab9581dd3dc48feb55da229de3e11e5b6bc18d4c72c31",
+        "localSha256": "7811153f1c5afc986253b75ba163b24226d4f3e49ab6da3b7c1dbacbf055b72b",
+        "transformation": "ruby-lane-adaptation",
+        "reason": "Adapted with lexical blocks so upstream sections that reuse local names can expand into one Ruby lane method; assertions remain aligned with the upstream fixture.",
+        "owner": "haxe_ruby-xm15",
+        "normalizedUpstreamSha256": "5b13ed5c1a9f3c0ed969327d5583f5f521cae04883ce7687d37f133eaf1bbdff",
+        "diff": {
+          "path": "test/upstream_unitstd/adaptations/Reflect.unit.hx.patch",
+          "sha256": "f8bed5f0e644a15323079daa897e5e8dde9103a4bb129de436381ecf5ea2965f"
+        }
+      },
+      "activeAssertions": {
+        "count": 93,
+        "sha256": "e7e43a3e9438b02be3617265fc713b5da95f00cd02ff681fa77b07488dfd46c3"
+      }
+    },
+    {
+      "module": "Std",
+      "status": "adapted",
+      "source": "Std.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Std.unit.hx",
+      "reason": "Adapted to avoid duplicate local names in the macro-expanded Ruby lane; unspec markers are ignored and in-expression assertions are handled by UpstreamUnitStdMacro.",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "c2b9e70dea6b32b2e9ab866da79196800b5fdf9533b708314ccc2804889f5fe9",
+        "localSha256": "6b7c7691079831f3dcf93783c3c417f44b98ea3bebb1c4beab65ed5d3706853c",
+        "transformation": "ruby-lane-adaptation",
+        "reason": "Adapted to avoid duplicate local names in the macro-expanded Ruby lane; unspec markers are ignored and in-expression assertions are handled by UpstreamUnitStdMacro.",
+        "owner": "haxe_ruby-xm15",
+        "normalizedUpstreamSha256": "c3a2f69af25bdc2a4c7a77cde13a32d4339e8b9ba2df3d4e54d0e2fd917947e3",
+        "diff": {
+          "path": "test/upstream_unitstd/adaptations/Std.unit.hx.patch",
+          "sha256": "e11b1717d2b42cf569ca63d32da558f069523b2a910ccef27286b423728dbb3d"
+        }
+      },
+      "activeAssertions": {
+        "count": 127,
+        "sha256": "2273a43070fb69f5ac1b14ae108a4685f2f7b8029d5c3c895b48c62a455d979b"
+      }
+    },
+    {
+      "module": "String",
+      "status": "enabled",
+      "source": "String.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/String.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "5a25d684b40456e9ed2752e329643e7b02fece0c8cbb88777f986ae17bdf0c5b",
+        "localSha256": "7504630625d2c02e951d94d3901c73ce98962807f722eaaedfc77a82b71aeec9",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 135,
+        "sha256": "af44f5e3d579cd1eb359a8e6f897af8f2e0a5125bd0b37a81ff3f67d31b8d72b"
+      }
+    },
+    {
+      "module": "StringBuf",
+      "status": "enabled",
+      "source": "StringBuf.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/StringBuf.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "03de9a22d3576a462773b04682de3db2cc665337849cb14a6b3875a16d88ae41",
+        "localSha256": "2fad28a2ce8cfcf5b2b82861efb0562d81e1e536b2b46d6101ecf2e7f1cdc55c",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 10,
+        "sha256": "9763dd21ad108f83987def2ab4c329056bb3ff0c184d10a5c321c6d7ac86cda7"
+      }
+    },
+    {
+      "module": "StringTools",
+      "status": "enabled",
+      "source": "StringTools.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/StringTools.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "6b1964143cd3046747b012bf09cc6bc96de981c65a84cf79cc17a9e32a8fc72d",
+        "localSha256": "3215d01c2f555e70f985437ef75c3862934f1b3ab55cc459e783234ea2a3e5b5",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 110,
+        "sha256": "1cdb4ea2080a69efeb5301da3f938d6a674c2b29c13f3eb95ded61ba24e070a6"
+      }
+    },
+    {
+      "module": "Type",
+      "status": "adapted",
+      "source": "Type.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/Type.unit.hx",
+      "reason": "Adapted with lexical section blocks, upstream-package fixture helpers, and explicitly typed Dynamic enum-parameter expectations so the assertions can expand into the combined Ruby lane without changing their semantics.",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "aadd148aa46af3eeac7b6acf8f07ddba2c4bcbbac1980151809fc4bc10d069bd",
+        "localSha256": "84d546bcd44e2887547a64cb866712b6613a8283e527db30aa6765b028fefd6e",
+        "transformation": "ruby-lane-adaptation",
+        "reason": "Adapted with lexical section blocks, upstream-package fixture helpers, and explicitly typed Dynamic enum-parameter expectations so the assertions can expand into the combined Ruby lane without changing their semantics.",
+        "owner": "haxe_ruby-xm15",
+        "normalizedUpstreamSha256": "a0656f64ac3929c02ebe3cb2dc2b3d7cb626a3c64166315df9c389914c809d99",
+        "diff": {
+          "path": "test/upstream_unitstd/adaptations/Type.unit.hx.patch",
+          "sha256": "7e8872f2721d1554b115af3f6d702428f773283b87113408b4e09ed38c9194a4"
+        }
+      },
+      "activeAssertions": {
+        "count": 85,
+        "sha256": "55bc8bd4512f87e00eac9aa26d55a8ff5c01fbc801092736d24b620cc8ff81b2"
+      }
+    },
+    {
+      "module": "haxe.DynamicAccess",
+      "status": "enabled",
+      "source": "haxe/DynamicAccess.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/DynamicAccess.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "a0da891d4fc65d5c5c893c8cec582c94d0a20f29f3565ad99f06e0ac74455879",
+        "localSha256": "bf58b10b9730c21df730f84c459ae9fb256d7cbee939ae7f720bc5ff13549f7d",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 37,
+        "sha256": "b805309077b5b33b0782dc33868631dbbfdbbe3f502702cb9c8afc2fa60a16a5"
+      }
+    },
+    {
+      "module": "haxe.EnumFlags",
+      "status": "enabled",
+      "source": "haxe/EnumFlags.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/EnumFlags.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "10d93f4365e77cb6c7b2deedca2f7df328b14e41e10c076edf200d96ff79832c",
+        "localSha256": "32bf849052d1a41139a5e6677b6bd3e514a17c2e982a9c9894b50f7d12162b96",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 28,
+        "sha256": "09dd04210712455f30fe15a930e9084be8380d8c17517696f3a8ecbcc2635460"
+      }
+    },
+    {
+      "module": "haxe.Int32",
+      "status": "enabled",
+      "source": "haxe/Int32.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/Int32.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "4638e78677139ac3912cd7a09f68226c2bd00a8fa72cfde3cf1a00e051572f06",
+        "localSha256": "d2668c5e38a6a1287823430e514739613c742dff81c1bc5ae045d4e1113c8a47",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 23,
+        "sha256": "98b5b2158d95f285ffd6bc6fb70c81f5f908793ff19ad666ad5f2c39be47bdb6"
+      }
+    },
+    {
+      "module": "haxe.Json",
+      "status": "no-upstream-spec",
+      "reason": "No direct upstream unitstd spec exists; parser/writer behavior is covered from the broader Haxe test suite by npm run test:json-parity."
+    },
+    {
+      "module": "haxe.Log",
+      "status": "enabled",
+      "source": "haxe/Log.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/Log.unit.hx",
+      "provenance": {
+        "classification": "unmodified",
+        "upstreamSha256": "a73101951e49986cf126b3440063ff9f83642fc403022f761e678c635105363b",
+        "localSha256": "a73101951e49986cf126b3440063ff9f83642fc403022f761e678c635105363b"
+      },
+      "activeAssertions": {
+        "count": 4,
+        "sha256": "540b41beb0437bd40881dbccae7d296b24f95cf6b9248f3304945a7fc6e510aa"
+      }
+    },
+    {
+      "module": "haxe.Template",
+      "status": "enabled",
+      "source": "haxe/Template.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/Template.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "b2577d7fdd822c9c5908274a23286f67b7ac157623a3006b70e22656a7254e7e",
+        "localSha256": "fef1a6243fc695f76f5241ea91511c4b47664d0a26496266b1ec5fd0160bce9e",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 6,
+        "sha256": "9f277b8eac7032d2b333ff67b399f54fe97dbcb5e916d829cfdc3917562e4cab"
+      }
+    },
+    {
+      "module": "haxe.crypto.Base64",
+      "status": "enabled",
+      "source": "haxe/crypto/Base64.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Base64.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "f8efc15b0da633fb2642602e81e4245234d9603893437bdc3e9c41dccbbd01e3",
+        "localSha256": "1ce30de520172435b29b9950b194b79fc13b897891db3c4fbbc37c50099c4296",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 40,
+        "sha256": "5c433b2f1a0616213f895b5fd08f41fb64e7ab49cf5007d8efb5f2262056e649"
+      }
+    },
+    {
+      "module": "haxe.crypto.Crc32",
+      "status": "enabled",
+      "source": "haxe/crypto/Crc32.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Crc32.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "0a40a31b136cb46111b28d3163471c926425b0c6ce58e74e2d0829716b282a16",
+        "localSha256": "c3d90148f8e80a77d6ac86308d979bf406295a9792fe086c8df3ad17de251636",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 2,
+        "sha256": "e87ce941885b5c84b9d1b59156eef5fbc1dbc0700421627f87d109df375764f6"
+      }
+    },
+    {
+      "module": "haxe.crypto.Hmac",
+      "status": "enabled",
+      "source": "haxe/crypto/Hmac.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Hmac.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "265f71116e83470e289983be71e247ec2ab4ff5aaf474cb96330b99286ef5e34",
+        "localSha256": "65739c3a3dbd8efe3a5c2ba8d39371f00e85977ad22fb965bc894d23e8c70dcf",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 6,
+        "sha256": "17e595f4ffc51d8c93aa02f772ec297ccf0564daaf5f5e1d7d227da8744887c7"
+      }
+    },
+    {
+      "module": "haxe.crypto.Md5",
+      "status": "enabled",
+      "source": "haxe/crypto/Md5.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Md5.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "f1db046036c25ea452840a68a5cd99e89c470c0d67f2ab6804e78e9b7fe8b201",
+        "localSha256": "4d589f350075ef41cfbee2ecb0e0d0c26e8e9ac8c2386f7a902f0591627d0512",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 2,
+        "sha256": "855d4f4ec4e235f7a4be9c30d36ee02bfd41ca255b36811939d0609f19d686a0"
+      }
+    },
+    {
+      "module": "haxe.crypto.Sha1",
+      "status": "enabled",
+      "source": "haxe/crypto/Sha1.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Sha1.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "de423cf1391225ff0487857e51375dc36f4a7f4e453c1ddbe2e33e3bd6932227",
+        "localSha256": "379612de5d6c79f46794a73651c5bef5166b642829b8b0d28ab0d2d87e0d3f9c",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 2,
+        "sha256": "cb389895a2433da9eab83f9d7e44fb131c3f62f9365e513c6505694d50f1f2a9"
+      }
+    },
+    {
+      "module": "haxe.crypto.Sha224",
+      "status": "enabled",
+      "source": "haxe/crypto/Sha224.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Sha224.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "fd5dfa6bba2a18991e32e6d6e343f6bf215ddd5403e17ea9e79fac0ce99756a5",
+        "localSha256": "0ed2a6c8379fffa61a9b7cc9bc4527752c3b9738fc06a19b58ecf13a768b77cd",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 5,
+        "sha256": "8a89c61af052414a84a2a263a1f468ed0b5d83e2726bde1c276f6ae442552366"
+      }
+    },
+    {
+      "module": "haxe.crypto.Sha256",
+      "status": "enabled",
+      "source": "haxe/crypto/Sha256.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/crypto/Sha256.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "2a1ec946737801499b2bd679223b3768c473e11d073a2481e9505c7b3f3b8fe8",
+        "localSha256": "66383a81a7b29eb99cd4abaf093bd2b9d42c4f83add68caf65f78c49bc915a23",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 2,
+        "sha256": "29ad8d5847f87981c4bced9c597882f4ccc321d628da57f40c1b78b1bf1b15c6"
+      }
+    },
+    {
+      "module": "haxe.ds.BalancedTree",
+      "status": "enabled",
+      "source": "haxe/ds/BalancedTree.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/ds/BalancedTree.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "d10930aa10be74d137ce707de5cb1fb1689614133fb1c7005436a01dd23f5081",
+        "localSha256": "09ff19cf6d64d049b850c42a6e95b774a91eb98939ca9acd941c3c38ef5d983d",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 27,
+        "sha256": "ef5dfd4c866c1542de69ec25ea51a976aba2a79327c5be485702b93ec982efd5"
+      }
+    },
+    {
+      "module": "haxe.ds.EnumValueMap",
+      "status": "enabled",
+      "source": "haxe/ds/EnumValueMap.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/ds/EnumValueMap.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "6eb7d2d6bd6ea5c234662328614f94f4f9ebe8fdd60408c08e91e09844f6d099",
+        "localSha256": "da887940a309af54a8bb36927255ddab4d513d3ad3635ef054157e6d05f546ef",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 55,
+        "sha256": "9c3409449bf68de03924b752807b426aa13bac28e98c85278622796bebbd5bb0"
+      }
+    },
+    {
+      "module": "haxe.ds.GenericStack",
+      "status": "enabled",
+      "source": "haxe/ds/GenericStack.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/ds/GenericStack.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "59fe52104e3636c874588ca0b9d2b31a656ea4251b0f054529a0272a80ee652f",
+        "localSha256": "4fb8ba00a622402441fd2ef0c8d939c118629b6e243c3b628862adc8383918ad",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 23,
+        "sha256": "a425b0d8f42fb7733df74cd4aa33340cdf41614db38658234219977c61d2ce8d"
+      }
+    },
+    {
+      "module": "haxe.ds.IntMap",
+      "status": "enabled",
+      "source": "haxe/ds/IntMap.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/ds/IntMap.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "4aa688ad1b9ba15ddc526f4fd37d423bf477890ece85437bbf8af18b273904bc",
+        "localSha256": "167592c25130d222bac11454387c923a68642917dbeeb82558bb23882cba6ac9",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 26,
+        "sha256": "5cfa2a0a72577b10b74375f2f8cf56d6fb08e6040120b13a230ff3598976477a"
+      }
+    },
+    {
+      "module": "haxe.ds.ObjectMap",
+      "status": "enabled",
+      "source": "haxe/ds/ObjectMap.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/ds/ObjectMap.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "99f71f273ad73acff27c598867b6e9258d054a2799f99207fee5c74a4de4a355",
+        "localSha256": "e971af06f93aaeed43578481f95fa768b46789a4a51340a425f17770a0f986c8",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 51,
+        "sha256": "4da361041d06319dbd9d400ad356cd7f0f2cb23ada4e6c6b53ddd6301b4399e0"
+      }
+    },
+    {
+      "module": "haxe.ds.StringMap",
+      "status": "enabled",
+      "source": "haxe/ds/StringMap.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/ds/StringMap.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "b11d86ca39f4b15c89dc76eeea75e2cb7549e8de0f5082168759214917a311f3",
+        "localSha256": "da38713ce995b37de075a10ff15cb7f454991a1f7a780061e0eca6cfe3c6f358",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 25,
+        "sha256": "62ffcf90c8030069d9e4c6009965b6d4f499512fbf417e4a7eaedabfe9394b03"
+      }
+    },
+    {
+      "module": "haxe.ds.Vector",
+      "status": "adapted",
+      "source": "haxe/ds/Vector.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/ds/Vector.unit.hx",
+      "reason": "Adapted only to treat Ruby as a dynamic target for the fixture's neutral Int/Bool/Float initialization expectations. All length, access, copy, data, blit, fill, iteration, join, map, sort, and identity assertions remain unchanged.",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "143e8fa8c3a26cd41e4bb66c2943e52ceaf579c96a374fa2045643c66d4abe7f",
+        "localSha256": "e2359c2f861192f8b674f66eccb8668616e1b66db530f0c15534ffb793b764ba",
+        "transformation": "ruby-lane-adaptation",
+        "reason": "Adapted only to treat Ruby as a dynamic target for the fixture's neutral Int/Bool/Float initialization expectations. All length, access, copy, data, blit, fill, iteration, join, map, sort, and identity assertions remain unchanged.",
+        "owner": "haxe_ruby-xm15",
+        "normalizedUpstreamSha256": "6638d36689471272304d7d165fed4527e1699193b9ee96912bfebc69bc45b546",
+        "diff": {
+          "path": "test/upstream_unitstd/adaptations/haxe__ds__Vector.unit.hx.patch",
+          "sha256": "eb4bdf392e1b586946be07f94cd342c15f40bbae8e3f748a8ee68944f29de00b"
+        }
+      },
+      "activeAssertions": {
+        "count": 86,
+        "sha256": "25dc03837bc7b125361ae1a7828b3c4722f3f3fb38119be9eba54e7201ee8f7c"
+      }
+    },
+    {
+      "module": "haxe.extern.EitherType",
+      "status": "enabled",
+      "source": "haxe/extern/EitherType.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/extern/EitherType.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "1745bd59f87a3b012977267dac367610c4ca2fcaf34a5193fc80b74542043b5f",
+        "localSha256": "26bec09d0e91e04be5debfeb8cd69f05b0fa3f95516fdc16951ce60e20dfc1aa",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 4,
+        "sha256": "ea0468317029074ff503db305c85996061cd90234e5dfbd60e0f27d484d6e007"
+      }
+    },
+    {
+      "module": "haxe.io.Bytes",
+      "status": "no-upstream-spec",
+      "reason": "No direct upstream unitstd spec exists; Bytes behavior is covered by local runtime tests and future adjacent upstream haxe.io fixtures."
+    },
+    {
+      "module": "haxe.io.BytesBuffer",
+      "status": "enabled",
+      "source": "haxe/io/BytesBuffer.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/io/BytesBuffer.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "1e792d02a7c789e7bbecfacf71d76b5699bc56a955ba55f312be5a3c16edc111",
+        "localSha256": "a8242d3e1739a5a29ea5e4dd241b5637af6a7fabe6468a78c6647f7318735719",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 18,
+        "sha256": "eac8a3d9ce3d67e0a0c21b0d93b255d3d289b8a37b401706f0ecea9294807bf0"
+      }
+    },
+    {
+      "module": "haxe.io.FPHelper",
+      "status": "enabled",
+      "source": "haxe/io/FPHelper.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/io/FPHelper.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "167323b87127e8bd34c4e3255859df3d585ffcc03bfe7a5b1e7c2853f24fd128",
+        "localSha256": "0238d997106c5d05a1c304b700a71ffd8e7b21ce31c63b5c3e1f1c8410a96d43",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 6,
+        "sha256": "8b78cd6b0b24485ecf2c203e91c6be356e22210b04f035a8bd895617535d57a1"
+      }
+    },
+    {
+      "module": "haxe.io.Path",
+      "status": "enabled",
+      "source": "haxe/io/Path.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/io/Path.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "e845307dcec5fc615b2178e0f4addbffc6c3f4047cd03d2e4f22ff0ea71661ff",
+        "localSha256": "f4532e02b56bea74b39f4e94fb6220642937cf9e03d438885a6e56a02b7aae66",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 78,
+        "sha256": "f9f9d97b5cd27cc3e3f055cbf17e9fb8173b23e76a063a7066e01ed8cfacc78d"
+      }
+    },
+    {
+      "module": "haxe.rtti.Rtti",
+      "status": "enabled",
+      "source": "haxe/rtti/Rtti.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/rtti/Rtti.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "ef80d3bf717be3783ab7ee276b6be1816061e67f5f094be09fcba956617a1c3b",
+        "localSha256": "70c975d4955c03bbc207e83ac7a0566229c02e6e57d537f12225500795e89871",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 66,
+        "sha256": "bff1ae9acfb7b350f949d1a3ce3642aad0bfa12813f1850a3d71af2b9448d1ee"
+      }
+    },
+    {
+      "module": "haxe.zip.Compress",
+      "status": "adapted",
+      "source": "haxe/zip/Compress.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/zip/Compress.unit.hx",
+      "reason": "Adapted only to extend upstream's runtime and PHP one-shot target guards to Ruby; all compression bytes and execute assertions remain unchanged and run over the typed Ruby Zlib override.",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "b9cada8cd50aaa2390f99fac1f80d9dba92c10224c601c8a688ec61492ea5d8f",
+        "localSha256": "04b8857c0c571fa3ab49cd3954ef401ffbcacd8f1af3a3fd2313065049619864",
+        "transformation": "ruby-lane-adaptation",
+        "reason": "Adapted only to extend upstream's runtime and PHP one-shot target guards to Ruby; all compression bytes and execute assertions remain unchanged and run over the typed Ruby Zlib override.",
+        "owner": "haxe_ruby-xm15",
+        "normalizedUpstreamSha256": "605f4047fd59820c1e0ce6416147d045bf332df0360e82f7459e23669d9a8b01",
+        "diff": {
+          "path": "test/upstream_unitstd/adaptations/haxe__zip__Compress.unit.hx.patch",
+          "sha256": "ab48737ed69369cac314021ae0ec8fe10a32a26c1f8c735534e8d2e649438ce2"
+        }
+      },
+      "activeAssertions": {
+        "count": 34,
+        "sha256": "73a64157d60ec77d18512fe572045c54d692d86b468f14dfea99120420cd01ac"
+      }
+    },
+    {
+      "module": "haxe.zip.Uncompress",
+      "status": "adapted",
+      "source": "haxe/zip/Uncompress.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/haxe/zip/Uncompress.unit.hx",
+      "reason": "Adapted only to extend upstream's runtime and PHP one-shot target guards to Ruby; all decompression and execute assertions remain unchanged and run over the typed Ruby Zlib override.",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "b144583cf830b19dfb4b6400cadaf315b69c4531725dcdef6d41e740a8ab82ea",
+        "localSha256": "9c19acac8170dcc135d2e98826f01e3cb933d4cbadddbe67b7866fd40ef04512",
+        "transformation": "ruby-lane-adaptation",
+        "reason": "Adapted only to extend upstream's runtime and PHP one-shot target guards to Ruby; all decompression and execute assertions remain unchanged and run over the typed Ruby Zlib override.",
+        "owner": "haxe_ruby-xm15",
+        "normalizedUpstreamSha256": "54f448d80b83feb7651084566ecfbb1d3f74534815b23e3055a834836ea5e77c",
+        "diff": {
+          "path": "test/upstream_unitstd/adaptations/haxe__zip__Uncompress.unit.hx.patch",
+          "sha256": "c37d4771997ac3d9aa396e241465e07e2f25195c1d0d0f852fe8b7bb56fe7553"
+        }
+      },
+      "activeAssertions": {
+        "count": 6,
+        "sha256": "0b64205aa253b79c2a36d47356d21abcb7fadf05788b8d0dd632c2ca06f71017"
+      }
+    },
+    {
+      "module": "sys.FileSystem",
+      "status": "no-upstream-spec",
+      "reason": "No direct upstream unitstd spec exists; authoritative broader-suite filesystem behavior is covered by npm run test:filesystem-parity."
+    },
+    {
+      "module": "sys.io.File",
+      "status": "enabled",
+      "source": "sys/io/File.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/sys/io/File.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "c63fb45bfd3e579b1d7d05fca9afbff533b891f2c15d1c974ee005cf9ec88cbf",
+        "localSha256": "7bd2e94b39073e05df1218a908e0e7d8c6f0c2395c5b850b2a30320351f4635c",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 8,
+        "sha256": "8f163612013c89d0b92081ec350f1e0c26d62e27756f4499a49145d1e9ec0c65"
+      }
+    }
+  ],
+  "baseline": {
+    "repository": "https://github.com/HaxeFoundation/haxe",
+    "version": "4.3.7",
+    "commit": "e0b355c6be312c1b17382603f018cf52522ec651",
+    "unitstdRoot": "tests/unit/src/unitstd",
+    "inventorySha256": "4173f1707f72013d660d5b02f251ae586e7a44f67fb88186f7d5110934b2e537",
+    "license": {
+      "path": "extra/LICENSE.txt",
+      "standardLibrarySpdx": "MIT",
+      "sha256": "f84691d619932ebfd4fa3568f8311f87ed4bf12e747e9aaa619a92cb1d2d359d"
+    },
+    "harness": {
+      "upstreamDependency": "utest",
+      "pinnedRevision": null,
+      "localUse": "not-used",
+      "note": "Haxe 4.3.7 requests utest without pinning a revision; this Ruby lane parses the expression fixtures with its checked-in macro instead."
+    }
+  },
+  "upstreamInventory": [
+    {
+      "source": "AnonFieldAccess.unit.hx",
+      "upstreamSha256": "3e5b2f967263ce3d8f3923a3f221e4909184aa19f6ced780938fae7f7accdcae",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this official fixture is not registered in the current bounded Ruby lane; applicability remains unclaimed pending focused review."
+    },
+    {
+      "source": "Array.unit.hx",
+      "upstreamSha256": "705dd795a96dd2ca06e3a9d53328a7ed05b720eca726d3de03181600f6031fe2",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "Date.unit.hx",
+      "upstreamSha256": "26176b48bf71857e669192e57cf819fd14912c2398d3c318e0931d8571ab9c76",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "DateTools.unit.hx",
+      "upstreamSha256": "416622f2bff536fca2b355868a4126b2c9e22b35f4e535c3fba37fea1c2d742a",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "EReg.unit.hx",
+      "upstreamSha256": "20a77056925bb257404279daf218d5996fa7571f038922acc51d7833fa2237d9",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "EvaluationOrder.unit.hx",
+      "upstreamSha256": "623cbf851d59473e152a6a5e48aec2c5283a17bce7e9b81086224859bafdd1de",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this official fixture is not registered in the current bounded Ruby lane; applicability remains unclaimed pending focused review."
+    },
+    {
+      "source": "Float.unit.hx",
+      "upstreamSha256": "cef03736627801148fb79366953ae3b1a02aca8c569bd05a3e909bd4250e6300",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "InlineXml.unit.hx",
+      "upstreamSha256": "c0b97f22d54fbe87f5cc1b012075de02b1674820b6cbd5f0448804dded3097c0",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this official fixture is not registered in the current bounded Ruby lane; applicability remains unclaimed pending focused review."
+    },
+    {
+      "source": "IntIterator.unit.hx",
+      "upstreamSha256": "dbd81c1cf9c4d58843145f2f975ec8c9131dc190272ccd3947ce4f3e7c5c9c31",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "Lambda.unit.hx",
+      "upstreamSha256": "731095b127a93b90356cd46a02e532cfd9afe51cc46c9844bb407aad68e78d6b",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "List.unit.hx",
+      "upstreamSha256": "5fac6897b9fee9eb59a1ff596295e595f8bec1f9f01629ef42449723ba1b8c46",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "Map.unit.hx",
+      "upstreamSha256": "832938d3e4e49331f9f968e545933055d871f7e2c341417d7d390765af30bbf9",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "Math.unit.hx",
+      "upstreamSha256": "19da6c9af90bdbc4af31321d56138b4e1fb4018c9eb6cb7f3f1460eec0b9b37a",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "Reflect.unit.hx",
+      "upstreamSha256": "5609c1599528ba5d404ab9581dd3dc48feb55da229de3e11e5b6bc18d4c72c31",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "Ssl.unit.hx",
+      "upstreamSha256": "65ce42379397ad1e906d6fc4b481c44038a88599c1a66c95b4969163a9860fde",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: network/TLS behavior requires a separately isolated capability lane and is not registered here."
+    },
+    {
+      "source": "Std.unit.hx",
+      "upstreamSha256": "c2b9e70dea6b32b2e9ab866da79196800b5fdf9533b708314ccc2804889f5fe9",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "String.unit.hx",
+      "upstreamSha256": "5a25d684b40456e9ed2752e329643e7b02fece0c8cbb88777f986ae17bdf0c5b",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "StringBuf.unit.hx",
+      "upstreamSha256": "03de9a22d3576a462773b04682de3db2cc665337849cb14a6b3875a16d88ae41",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "StringTools.unit.hx",
+      "upstreamSha256": "6b1964143cd3046747b012bf09cc6bc96de981c65a84cf79cc17a9e32a8fc72d",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "Type.unit.hx",
+      "upstreamSha256": "aadd148aa46af3eeac7b6acf8f07ddba2c4bcbbac1980151809fc4bc10d069bd",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "Unicode.unit.hx",
+      "upstreamSha256": "12a097c2d90c7b2c9ece749541145fe2dbeb4a6f8cb64e1c286ac454c85edb58",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this lane compiles with no-utf16 and has not registered the separate Unicode capability contract."
+    },
+    {
+      "source": "UnicodeString.unit.hx",
+      "upstreamSha256": "3a8d42c381a0814a119e473a70233ab8a132fc88588ae5e065de8c03092ad94e",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this lane compiles with no-utf16 and has not registered the separate Unicode capability contract."
+    },
+    {
+      "source": "haxe/CallStack.unit.hx",
+      "upstreamSha256": "93059cbf4e25f4382c973f50bf470b6c30e08739ce726b6c2eda89c8e9c710c7",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: portable Ruby backtrace mapping is not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/DynamicAccess.unit.hx",
+      "upstreamSha256": "a0da891d4fc65d5c5c893c8cec582c94d0a20f29f3565ad99f06e0ac74455879",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/EnumFlags.unit.hx",
+      "upstreamSha256": "10d93f4365e77cb6c7b2deedca2f7df328b14e41e10c076edf200d96ff79832c",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/Int32.unit.hx",
+      "upstreamSha256": "4638e78677139ac3912cd7a09f68226c2bd00a8fa72cfde3cf1a00e051572f06",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/Log.unit.hx",
+      "upstreamSha256": "a73101951e49986cf126b3440063ff9f83642fc403022f761e678c635105363b",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/Template.unit.hx",
+      "upstreamSha256": "b2577d7fdd822c9c5908274a23286f67b7ac157623a3006b70e22656a7254e7e",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/Utf8.unit.hx",
+      "upstreamSha256": "ffda924b9ec853973a1593f25fc6f5c0496723bf867e7c9080174a6febacbacb",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this lane compiles with no-utf16 and has not registered the separate Unicode capability contract."
+    },
+    {
+      "source": "haxe/atomic/AtomicBool.unit.hx",
+      "upstreamSha256": "01e7166fd701414e931e8700b81b733505dbcfda2e20f7ae29aaf9af9d2a700a",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: Ruby atomic/thread semantics are not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/atomic/AtomicInt.unit.hx",
+      "upstreamSha256": "df12477c03ea9b54581b245a3767bf01ab6885af18a76e3ece050a64693efcc7",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: Ruby atomic/thread semantics are not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/atomic/AtomicObject.unit.hx",
+      "upstreamSha256": "cb2468e07d2a82bb93cb85fe2d6d300f7136811494fc76b1c78bb30df781a88d",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: Ruby atomic/thread semantics are not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/crypto/Base64.unit.hx",
+      "upstreamSha256": "f8efc15b0da633fb2642602e81e4245234d9603893437bdc3e9c41dccbbd01e3",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/crypto/Crc32.unit.hx",
+      "upstreamSha256": "0a40a31b136cb46111b28d3163471c926425b0c6ce58e74e2d0829716b282a16",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/crypto/Hmac.unit.hx",
+      "upstreamSha256": "265f71116e83470e289983be71e247ec2ab4ff5aaf474cb96330b99286ef5e34",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/crypto/Md5.unit.hx",
+      "upstreamSha256": "f1db046036c25ea452840a68a5cd99e89c470c0d67f2ab6804e78e9b7fe8b201",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/crypto/Sha1.unit.hx",
+      "upstreamSha256": "de423cf1391225ff0487857e51375dc36f4a7f4e453c1ddbe2e33e3bd6932227",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/crypto/Sha224.unit.hx",
+      "upstreamSha256": "fd5dfa6bba2a18991e32e6d6e343f6bf215ddd5403e17ea9e79fac0ce99756a5",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/crypto/Sha256.unit.hx",
+      "upstreamSha256": "2a1ec946737801499b2bd679223b3768c473e11d073a2481e9505c7b3f3b8fe8",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/ds/BalancedTree.unit.hx",
+      "upstreamSha256": "d10930aa10be74d137ce707de5cb1fb1689614133fb1c7005436a01dd23f5081",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/ds/EnumValueMap.unit.hx",
+      "upstreamSha256": "6eb7d2d6bd6ea5c234662328614f94f4f9ebe8fdd60408c08e91e09844f6d099",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/ds/GenericStack.unit.hx",
+      "upstreamSha256": "59fe52104e3636c874588ca0b9d2b31a656ea4251b0f054529a0272a80ee652f",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/ds/IntMap.unit.hx",
+      "upstreamSha256": "4aa688ad1b9ba15ddc526f4fd37d423bf477890ece85437bbf8af18b273904bc",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/ds/ObjectMap.unit.hx",
+      "upstreamSha256": "99f71f273ad73acff27c598867b6e9258d054a2799f99207fee5c74a4de4a355",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/ds/StringMap.unit.hx",
+      "upstreamSha256": "b11d86ca39f4b15c89dc76eeea75e2cb7549e8de0f5082168759214917a311f3",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/ds/Vector.unit.hx",
+      "upstreamSha256": "143e8fa8c3a26cd41e4bb66c2943e52ceaf579c96a374fa2045643c66d4abe7f",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/ds/WeakMap.unit.hx",
+      "upstreamSha256": "f336381b1a58d09bb039790de6105550a38f476e857357342238a83749253760",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: weak-reference and garbage-collection semantics are not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/extern/EitherType.unit.hx",
+      "upstreamSha256": "1745bd59f87a3b012977267dac367610c4ca2fcaf34a5193fc80b74542043b5f",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/io/ArrayBufferView.unit.hx",
+      "upstreamSha256": "ef6e7d7225368dcfa1a1e1c5f314df98d6466d9e971bc4406d8459fde420edfe",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: typed-array representation is not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/io/BytesBuffer.unit.hx",
+      "upstreamSha256": "1e792d02a7c789e7bbecfacf71d76b5699bc56a955ba55f312be5a3c16edc111",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/io/FPHelper.unit.hx",
+      "upstreamSha256": "167323b87127e8bd34c4e3255859df3d585ffcc03bfe7a5b1e7c2853f24fd128",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/io/Float32Array.unit.hx",
+      "upstreamSha256": "b363185ac1a73016d83985e15b2e2f199479876a4668e7a25409e6aa0dee2a9d",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: typed-array representation is not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/io/Float64Array.unit.hx",
+      "upstreamSha256": "a69ce4ef14c14cf26fc6b253fc0db5ccb5499dac2fb0f445b7352c04c751ad71",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: typed-array representation is not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/io/Int32Array.unit.hx",
+      "upstreamSha256": "2e180bb26f845792f9cccbbf6def8d96ce2eb77d9ee1230e9e6d404e631d1d76",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: typed-array representation is not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/io/Path.unit.hx",
+      "upstreamSha256": "e845307dcec5fc615b2178e0f4addbffc6c3f4047cd03d2e4f22ff0ea71661ff",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/io/UInt16Array.unit.hx",
+      "upstreamSha256": "c49d17b179093b58bc30fbd9bce656dd409390b1437fcd9b2f5fdff201f1fa56",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: typed-array representation is not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/io/UInt32Array.unit.hx",
+      "upstreamSha256": "1228ce6146c143800c5524bf3386a6c55a6706eefd50abf5370911f299a842f7",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: typed-array representation is not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/io/UInt8Array.unit.hx",
+      "upstreamSha256": "c35c2a44ee35d1a1520cbdefcd23d1895660ec1fc10cef5dd0d65841028ce393",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: typed-array representation is not registered in this bounded lane."
+    },
+    {
+      "source": "haxe/iterators/StringIteratorUnicode.unit.hx",
+      "upstreamSha256": "89aa8b5d7c91ecf46457262faa4e20c23d73053e8127e1d7b779af3b4728c6f7",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this lane compiles with no-utf16 and has not registered the separate Unicode capability contract."
+    },
+    {
+      "source": "haxe/iterators/StringKeyValueIteratorUnicode.unit.hx",
+      "upstreamSha256": "a273b8cc63331c562f34424645369bca8577a4f6da070315097b1e53efafeb20",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this lane compiles with no-utf16 and has not registered the separate Unicode capability contract."
+    },
+    {
+      "source": "haxe/macro/ComplexTypeTools.macro.unit.hx",
+      "upstreamSha256": "782f1c5a3ba344edfa1f7e03c0a12ff980a08ae54d24390dce2876a16c69e996",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this official fixture is not registered in the current bounded Ruby lane; applicability remains unclaimed pending focused review."
+    },
+    {
+      "source": "haxe/macro/ExprTools.unit.hx",
+      "upstreamSha256": "365f216f3a91e4182b237cbd471223751c458fc7f91058761245f8db82abf240",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: this official fixture is not registered in the current bounded Ruby lane; applicability remains unclaimed pending focused review."
+    },
+    {
+      "source": "haxe/rtti/Rtti.unit.hx",
+      "upstreamSha256": "ef80d3bf717be3783ab7ee276b6be1816061e67f5f094be09fcba956617a1c3b",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/zip/Compress.unit.hx",
+      "upstreamSha256": "b9cada8cd50aaa2390f99fac1f80d9dba92c10224c601c8a688ec61492ea5d8f",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "haxe/zip/Uncompress.unit.hx",
+      "upstreamSha256": "b144583cf830b19dfb4b6400cadaf315b69c4531725dcdef6d41e740a8ab82ea",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "sys/io/File.unit.hx",
+      "upstreamSha256": "c63fb45bfd3e579b1d7d05fca9afbff533b891f2c15d1c974ee005cf9ec88cbf",
+      "evidenceStatus": "active"
+    },
+    {
+      "source": "sys/net/Socket.unit.hx",
+      "upstreamSha256": "a8cfa03aab392139ef72eaab924dbe6b73d1b6a8965a8a1a8322226b0a76908f",
+      "evidenceStatus": "inactive",
+      "reason": "Inactive: network/TLS behavior requires a separately isolated capability lane and is not registered here."
+    }
   ]
 }
