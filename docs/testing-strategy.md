@@ -50,8 +50,9 @@ Keep these results separate. A pass on one axis cannot substitute for another.
 The current upstream Haxe lane is meaningful partial evidence, not complete
 official Haxe 4.3.7 qualification. It runs 43 active official-derived `unitstd`
 fixtures, plus adjacent JSON issue and filesystem cases. Shared top-level
-`unit.TestMain` classes, the general issue corpus, and a clean public-install
-full baseline remain staged work.
+`unit.TestMain` classes and the general issue corpus remain staged work. One
+public-install tracer now exercises representatives from both families and the
+active unitstd lane, but it is deliberately not a full baseline.
 
 The active inventory is pinned to official Haxe 4.3.7 commit
 `e0b355c6be312c1b17382603f018cf52522ec651`. Of 67 official `unitstd` files, 43
@@ -198,8 +199,8 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
 | Compiler internals | **Observed:** AST, naming, decomposition, structural-reference, loop, diagnostics, callable tests | Focused compiler invariants and failure boundaries | No machine ownership map connects changed compiler paths to all reverse-dependent tests. |
 | Positive/negative source | **Observed:** many focused smoke scripts and invalid fixtures | Typed success and fail-closed diagnostics for shipped slices | Stable test IDs and aggregate timing are inconsistent across scripts. |
 | Generated shape | **Observed:** committed deterministic snapshots; 178s local sample | Reviewable exact output and repeat generation | Too slow for unconditional R1; affected selection is not yet automated. |
-| Target build/runtime | **Observed:** Ruby syntax checks and execution in focused lanes | Generated Ruby is accepted and behaves correctly for those slices | No single public-install representative smoke spanning shared language, unitstd, and issue families. |
-| Official Haxe | **Observed:** 43 active official-derived unitstd fixtures with exact provenance and active identities, plus JSON issues and filesystem parity | Partial portable runtime evidence | Shared classes, general issue corpus, 24 inactive official files, and public-install qualification remain incomplete. |
+| Target build/runtime | **Observed:** Ruby syntax checks and execution in focused lanes plus one isolated public-install tracer | Generated Ruby is accepted and behaves correctly for those bounded slices | The public-install tracer is representative, not full qualification. |
+| Official Haxe | **Observed:** 43 active official-derived unitstd fixtures with exact provenance and active identities, JSON/filesystem parity, and public-install representatives from shared top-level, unitstd, and general-issue families | Partial portable runtime evidence through checkout and installed-package paths | The remaining shared classes, general issue corpus, and 24 inactive official files remain incomplete. |
 | Rails/framework | **Observed:** focused smokes, snapshots, three-version runtime matrix | Rails consumes supported generated seams | Separate axis is healthy; do not count it toward portable Haxe pass totals. |
 | Browser/production | **Observed:** Playwright and production dogfood | User-visible and deployable app paths | Expensive by design; select locally by affected product boundary while retaining canonical backstop. |
 | Package/install | **Observed:** Haxelib ZIP, gem, package consumers, public upgrade | Current artifact shape and selected consumer paths | R1 uses checkout paths and must not be described as package-install evidence. |
@@ -214,9 +215,11 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
 2. **Harden official-source provenance** (`haxe_ruby-xm15`). Completed by the
    exact baseline, upstream/local hashes, six adaptation patches, active
    assertion identities, fail-closed inventory, and review-only sync.
-3. **Add the public-install representative smoke** (`haxe_ruby-8dfj`). Execute
-   meaningful shared language, unitstd, and general issue cases through one
-   package-consumer compile→Ruby-check→runtime command.
+3. **Add the public-install representative smoke** (`haxe_ruby-8dfj`).
+   Completed: one command now installs the release-shaped ZIP in an isolated
+   Haxelib repository, compiles pinned shared-language, unitstd, and general
+   issue representatives, syntax-checks every generated Ruby file, executes
+   MRI, and proves assertion/runtime failures propagate nonzero.
 4. **Create an ownership manifest** (`haxe_ruby-28fa`). Map stable shards to
    source patterns, axes, profiles, timeouts, artifacts, and safe broad/full
    fallbacks.

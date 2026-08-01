@@ -155,13 +155,13 @@ review the finished diff against these questions and record disposition:
 
 | Challenge | Finding / disposition |
 | --- | --- |
-| Was the contract genuinely red? | Confirmed by the missing-baseline failure above. |
-| Is the oracle independent? | Official Git bytes and real MRI are independent; active identities are correctly described only as freshness evidence. |
-| Are negative cases missing? | A self-test now mutates the baseline, local fixture hash, active assertion summary, adaptation patch hash, and complete upstream inventory; every mutation must remain nonzero. Runtime assertion failure propagation is retained by the real Ruby lane and the R1 harness contract. |
-| Does a mock erase a claimed boundary? | No mocks are introduced; the vertical owner still invokes Haxe and MRI. |
-| Can selection omit this change? | No selection change exists; the full gate remains required. The future ownership manifest must make provenance an always-run sentinel. |
+| Was the contract genuinely red? | Confirmed first by the missing-baseline failure above, then by the public-install contract's missing-report failure. The first real tracer also failed on Haxe/Ruby negative-remainder drift before the focused fix. |
+| Is the oracle independent? | Official Git bytes and official assertion values are independent of RubyHx; real MRI observes the target result. Active identities are correctly described only as freshness evidence. |
+| Are negative cases missing? | Provenance self-tests mutate every owned identity. The public artifact is additionally invoked in intentional assertion- and runtime-failure modes, and both must exit nonzero with distinct markers. |
+| Does a mock erase a claimed boundary? | No mocks are introduced. The tracer builds the release-shaped ZIP from Git, installs it in a fresh Haxelib repository outside the checkout, invokes Haxe, syntax-checks generated files, and runs MRI. |
+| Can selection omit this change? | No selection change exists; the full gate now includes the artifact-reuse tracer after the canonical Haxelib package build. The future ownership manifest must keep provenance and package-install sentinels conservative. |
 | Is evidence laundered across scorecards? | Scorecards explicitly separate provenance, compiler, runtime, package/interop, and examples. |
-| Are claims overbroad? | Compatibility remains partial; inactive/adapted cases cannot be counted as unmodified passes. |
+| Are claims overbroad? | Compatibility remains partial; inactive/adapted cases cannot be counted as unmodified passes, and the three representative families are not described as a full official baseline. |
 
 The review also found and corrected a hermeticity risk: an ordinary test must
 not change behavior because a developer has an unrelated neighboring Haxe
@@ -174,10 +174,26 @@ quarantines were used. Canonical exact-SHA CI remains required after push; its
 result is recorded in the owning Beads and repository history rather than
 predicted from local success.
 
+## Public-install convergence addendum
+
+`haxe_ruby-8dfj` implemented the deferred representative tracer without
+broadening official qualification. The pre-implementation report contract was
+red because no machine report existed. Its first real package/runtime execution
+then found a genuine portable-operator defect: official `TestOps.hx` requires
+`-101.5 % 100 == -1.5`, while Ruby floor-modulo returned `98.5`. The focused
+owner now verifies signed Int/Float remainder, Float zero-divisor `NaN`, and
+expression-valued `%=` writeback; the installed-package tracer retains the
+official expectation as the independent vertical oracle.
+
+The cold release-shaped run took 5.803 seconds and the artifact-reuse run took
+4.443 seconds on the recorded local toolchain. Both executed 65 top-level
+official assertions, syntax-checked the complete generated Ruby inventory, and
+observed exit code 1 from both intentional failure modes. Machine, human,
+generated-output, and per-stage log evidence is written beneath
+`test/.generated/public_install_official`.
+
 ## Deferred findings
 
-- `haxe_ruby-8dfj`: clean public-install representative shared-language,
-  unitstd, and issue smoke.
 - `haxe_ruby-28fa`: explain-only semantic-owner/product-surface selector and
   selector-miss observation.
 - Complete shared top-level and issue corpus qualification remains later work;

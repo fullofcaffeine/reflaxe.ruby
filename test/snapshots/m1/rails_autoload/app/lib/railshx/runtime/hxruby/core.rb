@@ -481,6 +481,16 @@ module HXRuby
     left.to_f / right.to_f
   end
 
+  # Haxe `%` is truncating remainder, not Ruby's floor-modulo. Float zero
+  # divisors also produce NaN in Haxe instead of escaping as a Ruby exception.
+  def math_remainder(left, right)
+    left.remainder(right)
+  rescue ZeroDivisionError, FloatDomainError
+    return Float::NAN if left.is_a?(Float) || right.is_a?(Float)
+
+    raise
+  end
+
   def math_round(value)
     (value + 0.5).floor
   end

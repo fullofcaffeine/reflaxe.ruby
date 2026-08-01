@@ -13,12 +13,12 @@ Passing one card never changes another card's status.
 | Claim | The admitted Haxe language and std behavior compiles through the custom backend and executes as Ruby. This is the only scorecard allowed to carry an official Haxe target-qualification claim. |
 | Inputs / outputs | Typed Haxe source -> structural Ruby AST -> generated Ruby |
 | Focused owners | AST, lowering, profile, diagnostics, naming, loop, callable, and historical regression tests |
-| Vertical/runtime owners | `test:hello-world`, `test:core-subset`, `test:exception-flow`, `test:json-parity`, `test:filesystem-parity`, `test:unitstd-ruby` |
+| Vertical/runtime owners | `test:hello-world`, `test:core-subset`, `test:exception-flow`, `test:json-parity`, `test:filesystem-parity`, `test:unitstd-ruby`, `test:public-install-official` |
 | Oracle | Haxe 4.3.7 at `e0b355c6be312c1b17382603f018cf52522ec651`, manually reviewed stdout/diagnostics, and runtime invariants |
 | Examples | Compiler-conformance entries in `test/example-contracts.json` |
 | Backstop / release | `npm run test:queued`; exact-SHA canonical CI and release dependency graph |
 | Last clean proof | CI 30586074436 for `79b6ebde3f580cde8f9d69581e12876adc9b6b11` before this delta |
-| Residual risk | This is not complete official Haxe qualification: shared top-level classes, the general issue corpus, and 24 currently inactive official unitstd files remain outside active proof. Public wording stays partial. |
+| Residual risk | This is not complete official Haxe qualification. The public-install tracer covers one shared top-level class, one general issue, and one active unitstd fixture; the remaining shared classes, general issue corpus, and 24 currently inactive official unitstd files remain outside active proof. Public wording stays partial. |
 
 ## Ruby runtime and standard-library semantics
 
@@ -45,7 +45,7 @@ Passing one card never changes another card's status.
 | Claim | Documented Ruby-shaped APIs remain typed for Haxe authors and consumable as ordinary Ruby/gem/package artifacts. |
 | Inputs / outputs | Typed native contracts and package metadata -> direct Ruby calls, normal blocks/keywords/modules, ZIP/gem artifacts, and consumer installs |
 | Focused owners | native mapping, call shapes, interop, extensions, RBS, facade, generator, manifest, and package contract tests |
-| Vertical/runtime owners | `test:ruby-callable-abi-example`, `test:rubyhx-cli`, Rails runtime seams, `test:haxelib-package`, `test:gem-package`, public-upgrade rehearsal |
+| Vertical/runtime owners | `test:ruby-callable-abi-example`, `test:rubyhx-cli`, Rails runtime seams, `test:haxelib-package`, `test:public-install-official`, `test:gem-package`, public-upgrade rehearsal |
 | Oracle | MRI/gem behavior, handwritten Ruby consumers, package manifests, independent embedded hashes, and reviewed Ruby/Rails contracts |
 | Examples | Ruby-native and package entries in `test/example-contracts.json` |
 | Backstop / release | Full local contract, package/security jobs, cold exact-SHA release rebuild |
@@ -64,6 +64,7 @@ Passing one card never changes another card's status.
 | Active proof | `test/upstream_unitstd/active-assertions.json` locks 2,248 unique assertion identities visible after macro expansion and Ruby emission |
 | Static owner | `npm run test:unitstd-provenance` |
 | Vertical owner | `npm run test:unitstd-ruby` compiles active official-derived source with the custom backend and runs Ruby |
+| Public-install tracer | `test/public_install_official/manifest.json` separately pins two byte-identical official sources and one formatter-adapted unitstd source; `npm run test:public-install-official` installs the release-shaped ZIP in an isolated Haxelib repository and executes all three on MRI. |
 | Update owner | `scripts/sync-upstream-unitstd-specs.sh` verifies and reports only; it cannot overwrite local adaptations |
 | Backstop / release | Full local contract and exact-SHA canonical CI |
 | Residual risk | Active identity proves registration, not semantic correctness. Inactive fixtures are not passes, and the six adapted fixtures are never counted as unmodified official coverage. |
