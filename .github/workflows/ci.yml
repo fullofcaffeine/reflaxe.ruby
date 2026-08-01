@@ -37,6 +37,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Observe affected-test recommendation without changing CI coverage
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/ci/change-impact-selector.js --base "$BASE_SHA" --head "$GITHUB_SHA"
+
       - name: Setup exact Ruby and RubyGems for advisory scanning
         uses: ruby/setup-ruby@a30dfa457ad68707b8b910ac3a244714b61c0626 # v1.320.0
         with:

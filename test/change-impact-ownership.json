@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "mode": "observe-only",
+  "fullFallbackReason": "Unknown or cross-cutting changes require every canonical backstop while selector recall is still being measured.",
+  "productSurfaces": [
+    "compiler-conformance",
+    "ruby-runtime-stdlib",
+    "ruby-native-gem-package",
+    "upstream-provenance",
+    "examples-downstream"
+  ],
+  "alwaysRun": [
+    "agent-canary",
+    "selector-contract"
+  ],
+  "fullBackstop": [
+    "format",
+    "node-compatibility",
+    "full-suite",
+    "rails-runtime",
+    "rails-browser",
+    "rails-production",
+    "release-contracts",
+    "security"
+  ],
+  "shards": [
+    {
+      "id": "format",
+      "localCommand": "npm run format:haxe:check",
+      "localScripts": ["format:haxe:check"],
+      "remoteOwner": "Haxe formatter",
+      "ring": "R4",
+      "surfaces": [],
+      "axes": ["haxe-format"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 600,
+      "artifacts": []
+    },
+    {
+      "id": "node-compatibility",
+      "localCommand": "npm run ci:support-matrix && npm run ci:version-sync && npm run test:release-version-policy && npm run test:release-workflow && npm run test:release-hosting",
+      "localScripts": ["ci:support-matrix", "ci:version-sync", "test:release-version-policy", "test:release-workflow", "test:release-hosting"],
+      "remoteOwner": "Node.js compatibility",
+      "ring": "R4",
+      "surfaces": ["ruby-native-gem-package"],
+      "axes": ["node-version", "version-policy", "workflow-policy"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 600,
+      "artifacts": []
+    },
+    {
+      "id": "selector-contract",
+      "localCommand": "npm run test:change-impact-selector",
+      "localScripts": ["test:change-impact-selector"],
+      "remoteOwner": "Ruby full suite",
+      "ring": "R0",
+      "surfaces": [],
+      "axes": ["ownership-schema", "fallback", "explain-output", "selector-miss"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 15,
+      "artifacts": ["test/.generated/change-impact/report.json"]
+    },
+    {
+      "id": "agent-canary",
+      "localCommand": "npm run test:agent-smoke",
+      "localScripts": ["test:agent-smoke"],
+      "remoteOwner": "Ruby full suite",
+      "ring": "R1",
+      "surfaces": ["compiler-conformance", "ruby-runtime-stdlib", "upstream-provenance"],
+      "axes": ["compiler", "generated-ruby", "ruby-runtime"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 120,
+      "artifacts": ["test/.generated/test-loop/agent-smoke.json"]
+    },
+    {
+      "id": "examples",
+      "localCommand": "npm run test:examples-compile",
+      "localScripts": ["test:examples-compile"],
+      "remoteOwner": "Ruby full suite",
+      "ring": "R3",
+      "surfaces": ["examples-downstream"],
+      "axes": ["example-inventory", "generation", "declared-runtime-owner"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 300,
+      "artifacts": ["test/example-contracts.json", "test/.generated/examples"]
+    },
+    {
+      "id": "rails-runtime",
+      "localCommand": "npm run test:rails-runtime",
+      "localScripts": ["test:rails-runtime"],
+      "remoteOwner": "RailsHx runtime integration",
+      "ring": "R3",
+      "surfaces": ["ruby-native-gem-package", "examples-downstream"],
+      "axes": ["rails", "gem", "ruby-runtime"],
+      "profiles": ["ruby_first"],
+      "timeoutSeconds": 1200,
+      "artifacts": ["examples/todoapp_rails/tmp"]
+    },
+    {
+      "id": "rails-browser",
+      "localCommand": "npm run test:todoapp-playwright",
+      "localScripts": ["test:todoapp-playwright"],
+      "remoteOwner": "RailsHx browser sentinel",
+      "ring": "R3",
+      "surfaces": ["examples-downstream"],
+      "axes": ["browser", "rails", "javascript"],
+      "profiles": ["ruby_first"],
+      "timeoutSeconds": 1200,
+      "artifacts": ["examples/todoapp_rails/tmp/e2e"]
+    },
+    {
+      "id": "rails-production",
+      "localCommand": "npm run test:todoapp-production && npm run benchmark:stable -- --require-rails",
+      "localScripts": ["test:todoapp-production", "benchmark:stable"],
+      "remoteOwner": "RailsHx production dogfood",
+      "ring": "R3",
+      "surfaces": ["examples-downstream"],
+      "axes": ["production", "rails", "viability"],
+      "profiles": ["ruby_first"],
+      "timeoutSeconds": 1200,
+      "artifacts": ["test/.generated/benchmarks"]
+    },
+    {
+      "id": "package-install",
+      "localCommand": "npm run test:haxelib-package && npm run test:public-install-official:reuse && npm run test:gem-package",
+      "localScripts": ["test:haxelib-package", "test:public-install-official:reuse", "test:gem-package"],
+      "remoteOwner": "Ruby full suite",
+      "ring": "R3",
+      "surfaces": ["compiler-conformance", "ruby-native-gem-package", "upstream-provenance"],
+      "axes": ["haxelib-zip", "gem", "public-install", "ruby-runtime"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 600,
+      "artifacts": ["test/.generated/release", "test/.generated/public_install_official"]
+    },
+    {
+      "id": "release-contracts",
+      "localCommand": "npm run ci:release-contracts && npm run test:public-upgrade",
+      "localScripts": ["ci:release-contracts", "test:public-upgrade"],
+      "remoteOwner": "Release contracts",
+      "ring": "R5",
+      "surfaces": ["ruby-native-gem-package"],
+      "axes": ["version", "workflow", "artifact", "upgrade"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 600,
+      "artifacts": ["test/.generated/release"]
+    },
+    {
+      "id": "security",
+      "localCommand": "npm audit && npm run security:ruby-advisories && npm run security:gitleaks",
+      "localScripts": ["security:ruby-advisories", "security:gitleaks"],
+      "remoteOwner": "Locked dependency + secret audit",
+      "ring": "R4",
+      "surfaces": [],
+      "axes": ["node-advisory", "ruby-advisory", "secret-history"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 600,
+      "artifacts": []
+    },
+    {
+      "id": "full-suite",
+      "localCommand": "npm run test:queued",
+      "localScripts": ["test:queued"],
+      "remoteOwner": "Ruby 3.3/3.4/4.0 full matrix",
+      "ring": "R4",
+      "surfaces": ["compiler-conformance", "ruby-runtime-stdlib", "ruby-native-gem-package", "upstream-provenance", "examples-downstream"],
+      "axes": ["compiler", "runtime", "stdlib", "rails-shape", "package"],
+      "profiles": ["ruby_first", "portable"],
+      "timeoutSeconds": 2700,
+      "artifacts": ["test/.generated"]
+    }
+  ],
+  "rules": [
+    {
+      "id": "rails-browser-owned",
+      "owners": ["todoapp-browser-contract"],
+      "surfaces": ["examples-downstream"],
+      "reason": "The change touches the browser-observed Todoapp contract.",
+      "prefixes": ["examples/todoapp_rails/src/client/", "examples/todoapp_rails/src/e2e/", "examples/todoapp_rails/src/e2e_haxe/", "scripts/ci/haxe-playwright", "scripts/ci/todoapp-playwright"],
+      "select": ["examples", "rails-runtime", "rails-browser"]
+    },
+    {
+      "id": "railshx-owned",
+      "owners": ["railshx-compiler-and-framework"],
+      "surfaces": ["ruby-native-gem-package", "examples-downstream"],
+      "reason": "The change touches RailsHx compiler, facade, generator, or application behavior.",
+      "prefixes": ["src/reflaxe/ruby/rails/", "std/rails/", "std/devisehx/", "lib/generators/", "lib/hxruby/generators/", "scripts/rails/", "examples/todoapp_rails/"],
+      "select": ["examples", "rails-runtime"]
+    },
+    {
+      "id": "examples-owned",
+      "owners": ["executable-example-contracts"],
+      "surfaces": ["examples-downstream"],
+      "reason": "The change touches an executable example or its declared evidence.",
+      "prefixes": ["examples/", "test/example-contracts.json"],
+      "select": ["examples"]
+    },
+    {
+      "id": "package-release-risk",
+      "owners": ["toolchain-package-security-and-release"],
+      "surfaces": ["compiler-conformance", "ruby-runtime-stdlib", "ruby-native-gem-package", "upstream-provenance", "examples-downstream"],
+      "reason": "Package, dependency, toolchain, security, workflow, or release changes can affect every published claim.",
+      "exact": ["package.json", "package-lock.json", "haxelib.json", "haxe_libraries/reflaxe.json", ".releaserc.json"],
+      "prefixes": [".github/", "scripts/release/", "scripts/security/", "docs/release-", "test/public_install_official/"],
+      "full": true
+    },
+    {
+      "id": "selector-runner-manifest-risk",
+      "owners": ["test-runner-and-evidence-provenance"],
+      "surfaces": ["compiler-conformance", "ruby-runtime-stdlib", "ruby-native-gem-package", "upstream-provenance", "examples-downstream"],
+      "reason": "The test runner, ownership manifest, or selector itself cannot safely select its own evidence.",
+      "exact": ["test/change-impact-ownership.json", "scripts/ci/change-impact-selector.js", "scripts/ci/change-impact-selector-check.js"],
+      "prefixes": ["scripts/ci/agent-smoke", "test/upstream_unitstd/"],
+      "full": true
+    },
+    {
+      "id": "compiler-runtime-stdlib-risk",
+      "owners": ["compiler-runtime-and-stdlib"],
+      "surfaces": ["compiler-conformance", "ruby-runtime-stdlib", "ruby-native-gem-package", "upstream-provenance", "examples-downstream"],
+      "reason": "Compiler-core, runtime, std, or profile changes have broad reverse dependencies.",
+      "prefixes": ["src/reflaxe/ruby/", "runtime/", "std/ruby/", "std/reflaxe/", "lib/", "test/profile_"],
+      "full": true
+    },
+    {
+      "id": "documentation-only",
+      "owners": ["documentation-and-issue-tracking"],
+      "surfaces": [],
+      "reason": "Ordinary documentation changes retain central sentinels without borrowing a behavior claim.",
+      "prefixes": ["docs/", ".beads/", "README", "CONTRIBUTING", "LICENSE"],
+      "select": []
+    }
+  ]
+}

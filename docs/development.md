@@ -47,6 +47,17 @@ canonical CI. See [RubyHx Testing Strategy And Agent Feedback
 Loops](testing-strategy.md) for the evidence axes, feedback rings, agent
 stopping rules, current gaps, and staged impact-selection plan.
 
+To see which additional commands own a change, run the advisory explain mode:
+
+```bash
+npm run test:change-impact-explain -- --path src/reflaxe/ruby/rails/RailsArtifactPlanner.hx
+```
+
+It prints selected and omitted commands with reasons. It does not run tests or
+permit CI to skip them. See [Change-impact test
+recommendations](change-impact-test-selection.md) for its conservative fallback
+and selector-miss contract.
+
 ### Queue The Full Local Suite
 
 Several Haxe target repositories can otherwise start their largest local suites

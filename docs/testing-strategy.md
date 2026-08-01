@@ -70,7 +70,7 @@ only after enough comparable local and hosted samples exist.
 
 | Ring | Use | Current command or owner | Evidence and limitation |
 | --- | --- | --- | --- |
-| R0 focused/editor | Every meaningful edit | `npm run test:<semantic-owner>`; `hxruby:dev` for generated app rebuilding | Fastest localization. The app watcher rebuilds affected HXML targets but does not select compiler tests. |
+| R0 focused/editor | Every meaningful edit | `npm run test:<semantic-owner>`; advisory `npm run test:change-impact-explain -- --path <path>`; `hxruby:dev` for generated app rebuilding | Fastest localization. Explain mode recommends evidence but neither executes nor suppresses tests; the app watcher rebuilds affected HXML targets. |
 | R1 local canary | After a coherent edit burst and before widening | `npm run test:agent-smoke` | Fixed checkout canary with per-stage timings and real Ruby execution. Warm state is allowed; not public-package or full qualification evidence. |
 | R2 required PR | Clean primary merge evidence | Currently the complete `npm test` matrix plus independent jobs | Sound but not optimized: the same long aggregate runs on all three Ruby branches. No blocking affected-test selector exists yet. |
 | R3 affected extended | Framework, browser, production, package, capability, or secondary-profile risk | Focused Rails runtime, Playwright, production, package, security, and release-contract commands | Run when the changed contract needs them; canonical CI currently runs the major product lanes broadly. |
@@ -196,7 +196,7 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
 
 | Layer | Existing evidence | What it proves | Gap and next owning seam |
 | --- | --- | --- | --- |
-| Compiler internals | **Observed:** AST, naming, decomposition, structural-reference, loop, diagnostics, callable tests | Focused compiler invariants and failure boundaries | No machine ownership map connects changed compiler paths to all reverse-dependent tests. |
+| Compiler internals | **Observed:** AST, naming, decomposition, structural-reference, loop, diagnostics, callable tests, and advisory ownership mapping | Focused compiler invariants and conservative reverse-dependency recommendations | Compiler-core changes deliberately select every backstop; finer ownership requires miss evidence before narrowing. |
 | Positive/negative source | **Observed:** many focused smoke scripts and invalid fixtures | Typed success and fail-closed diagnostics for shipped slices | Stable test IDs and aggregate timing are inconsistent across scripts. |
 | Generated shape | **Observed:** committed deterministic snapshots; 178s local sample | Reviewable exact output and repeat generation | Too slow for unconditional R1; affected selection is not yet automated. |
 | Target build/runtime | **Observed:** Ruby syntax checks and execution in focused lanes plus one isolated public-install tracer | Generated Ruby is accepted and behaves correctly for those bounded slices | The public-install tracer is representative, not full qualification. |
@@ -205,7 +205,7 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
 | Browser/production | **Observed:** Playwright and production dogfood | User-visible and deployable app paths | Expensive by design; select locally by affected product boundary while retaining canonical backstop. |
 | Package/install | **Observed:** Haxelib ZIP, gem, package consumers, public upgrade | Current artifact shape and selected consumer paths | R1 uses checkout paths and must not be described as package-install evidence. |
 | CI/release | **Observed:** 14-job exact-SHA workflow and immutable releases | Clean supported matrix and publication policy | PR and main currently share the expensive full shape; optimize only after selection observation data. |
-| Agent efficiency | **Observed:** app watcher, heavy-run lease, new measured R1 canary | Faster app rebuilds, contention control, and quick cross-boundary feedback | No impact selector, explain mode, rolling p50/p95, flake history, or selector-miss audit yet. |
+| Agent efficiency | **Observed:** app watcher, heavy-run lease, measured R1 canary, and explain-only change-impact reports | Faster app rebuilds, contention control, quick cross-boundary feedback, and reviewable selected/omitted reasons | Selection is not blocking; rolling p50/p95, automated cross-job miss history, and flake history remain future evidence. |
 
 ## Staged Consolidation
 
@@ -220,12 +220,13 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
    Haxelib repository, compiles pinned shared-language, unitstd, and general
    issue representatives, syntax-checks every generated Ruby file, executes
    MRI, and proves assertion/runtime failures propagate nonzero.
-4. **Create an ownership manifest** (`haxe_ruby-28fa`). Map stable shards to
-   source patterns, axes, profiles, timeouts, artifacts, and safe broad/full
-   fallbacks.
-5. **Observe impact selection.** Emit selected and omitted shards with reasons
-   alongside the unchanged full gate. Unknown or cross-cutting changes select
-   full.
+4. **Create an ownership manifest** (`haxe_ruby-28fa`). Completed: stable
+   shards now map source owners to local/remote commands, product surfaces,
+   axes, profiles, timeouts, artifacts, and safe broad/full fallbacks.
+5. **Observe impact selection.** Active in advisory mode: selected and omitted
+   shards are emitted with reasons alongside the unchanged full gate. Unknown
+   or cross-cutting changes select every backstop, and known omitted failures
+   are recorded as selector misses.
 6. **Reshape CI only from evidence.** Use timing and selector-miss history to
    introduce a clean primary R2 and affected R3 while retaining full
    main/nightly and release backstops.
