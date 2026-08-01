@@ -47,6 +47,7 @@ import reflaxe.ruby.compiler.RubyExceptionLowering.RubyExceptionLoweringResult;
 import reflaxe.ruby.compiler.RubyInt32Lowering;
 import reflaxe.ruby.compiler.RubyKeywordSemantics;
 import reflaxe.ruby.compiler.RubyLoopLowering;
+import reflaxe.ruby.compiler.RubyNumericLowering;
 import reflaxe.ruby.compiler.RubyOutputLayout;
 import reflaxe.ruby.compiler.RubyReferenceLowering;
 import reflaxe.ruby.naming.RubyNaming;
@@ -2906,6 +2907,8 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 					case _:
 						compileBinaryOp(OpAssignOp(op), lhs, rhs, lhs.t);
 				}
+			case TBinop(OpAssignOp(op), lhs, rhs):
+				RubyNumericLowering.assignedResult(compileAssignable(lhs), compileBinaryOp(op, lhs, rhs, lhs.t));
 			case TBinop(op, lhs, rhs) if (isStringComparison(op, lhs, rhs)):
 				RubyBinary(binopToRuby(op), hxrubyCall(RubyRuntimeHelper.StringCompare, [compileExpr(lhs), compileExpr(rhs)]), RubyInt("0"));
 			case TBinop(op, lhs, rhs): compileBinaryOp(op, lhs, rhs, expr.t);
@@ -14311,6 +14314,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		return switch (op) {
 			case OpDiv:
 				hxrubyCall(RubyRuntimeHelper.MathDivide, [compileExpr(lhs), compileExpr(rhs)]);
+			case OpMod if (activeBuildContext.isPortable()):
+				markCoreRuntimeUse();
+				RubyNumericLowering.remainder(compileExpr(lhs), compileExpr(rhs));
 			case OpAdd if (isStringExpr(lhs) && !isStringExpr(rhs)):
 				RubyBinary("+", compileExpr(lhs), compileRubyStringifyParam(rhs));
 			case OpAdd if (!isStringExpr(lhs) && isStringExpr(rhs)):

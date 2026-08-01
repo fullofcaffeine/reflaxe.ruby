@@ -377,6 +377,10 @@ class HXRubyRuntimeTest < Minitest::Test
     assert_equal Float::INFINITY, HXRuby.math_divide(1, 0)
     assert_equal(-Float::INFINITY, HXRuby.math_divide(-1, 0))
     assert HXRuby.math_nan?(HXRuby.math_divide(0, 0))
+    assert_equal(-1.5, HXRuby.math_remainder(-101.5, 100))
+    assert_equal(-1, HXRuby.math_remainder(-101, 100))
+    assert HXRuby.math_nan?(HXRuby.math_remainder(5.0, 0.0))
+    assert_raises(ZeroDivisionError) { HXRuby.math_remainder(5, 0) }
     assert_equal Float::INFINITY, HXRuby.math_fround(Float::INFINITY)
     assert_equal(-Float::INFINITY, HXRuby.math_ffloor(-Float::INFINITY))
     assert HXRuby.math_nan?(HXRuby.math_fceil(Float::NAN))

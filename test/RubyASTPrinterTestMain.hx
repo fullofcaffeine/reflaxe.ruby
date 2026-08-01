@@ -10,6 +10,7 @@ import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeIntent;
 import reflaxe.ruby.ast.RubyRuntimePlan.RubyRuntimeUse;
 import reflaxe.ruby.compiler.RubyInt32Lowering;
 import reflaxe.ruby.compiler.RubyLoopLowering;
+import reflaxe.ruby.compiler.RubyNumericLowering;
 import reflaxe.ruby.rails.RailsActiveRecordResultLowering.RailsActiveRecordGroupCountKeyKind;
 import reflaxe.ruby.rails.RailsActiveRecordResultLowering;
 
@@ -53,6 +54,10 @@ class RubyASTPrinterTestMain {
 			"((((value + 0x80000000) % 0x100000000) - 0x80000000) >> (count.to_i() & 31))");
 		eq("structural Int32 unsigned right shift", RubyASTPrinter.printExpr(RubyInt32Lowering.shiftRightUnsigned(RubyLocal("value"), RubyLocal("count"))),
 			"((value.to_i() & 0xffffffff) >> (count.to_i() & 31))");
+		eq("portable Haxe remainder runtime intent", RubyASTPrinter.printExpr(RubyNumericLowering.remainder(RubyLocal("left"), RubyLocal("right"))),
+			"HXRuby.math_remainder(left, right)");
+		eq("expression-valued compound assignment", RubyASTPrinter.printExpr(RubyNumericLowering.assignedResult(RubyLocal("value"), RubyInt("2"))),
+			"begin\n  value = 2\n  value\nend");
 		eq("statement sequence", printStatement(RubyStatementSequence([
 			RubyAssign(RubyLocal("first"), RubyInt("1")),
 			RubyAssign(RubyLocal("second"), RubyInt("2"))

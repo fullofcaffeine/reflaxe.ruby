@@ -12,6 +12,7 @@ class NumericBinarySemantics {
 		signedZeroBitsRoundTrip();
 		doubleSpecialValuesRoundTrip();
 		int32UnsignedComparisonUsesBits();
+		portableRemainderUsesHaxeSemantics();
 	}
 
 	static function signedZeroBitsRoundTrip():Void {
@@ -38,5 +39,15 @@ class NumericBinarySemantics {
 		var zero:haxe.Int32 = 0;
 		Assert.isTrue(haxe.Int32.ucompare(minusOne, zero) > 0, "Int32.ucompare should treat -1 as unsigned 0xffffffff");
 		Assert.isTrue(haxe.Int32.ucompare(zero, minusOne) < 0, "Int32.ucompare should order zero before unsigned 0xffffffff");
+	}
+
+	static function portableRemainderUsesHaxeSemantics():Void {
+		Assert.inDelta(-1.5, -101.5 % 100, 0.0, "portable Float remainder should keep the dividend sign");
+		Assert.isTrue(-101 % 100 == -1, "portable Int remainder should keep the dividend sign");
+		Assert.isTrue(Math.isNaN(5.0 % 0.0), "portable Float remainder by zero should produce NaN");
+		var value = -101.5;
+		var result = (value %= 100);
+		Assert.inDelta(-1.5, result, 0.0, "expression-valued remainder assignment should return the assigned result");
+		Assert.inDelta(-1.5, value, 0.0, "expression-valued remainder assignment should write back to its local");
 	}
 }

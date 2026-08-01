@@ -34,6 +34,7 @@ const allowedHelpers = new Set([
   "key_value_iterator",
   "math_binary",
   "math_divide",
+  "math_remainder",
   "math_fceil",
   "math_ffloor",
   "math_fround",

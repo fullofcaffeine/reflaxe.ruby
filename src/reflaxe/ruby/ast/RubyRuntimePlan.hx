@@ -23,6 +23,7 @@ enum abstract RubyRuntimeHelper(String) {
 	var Iterator = "iterator";
 	var KeyValueIterator = "key_value_iterator";
 	var MathDivide = "math_divide";
+	var MathRemainder = "math_remainder";
 	var NativeIterator = "native_iterator";
 	var ParseFloat = "parse_float";
 	var ParseInt = "parse_int";
@@ -112,7 +113,7 @@ class RubyRuntimePlan {
 		validate(use);
 		return switch (use.helper) {
 			case RubyRuntimeHelper.ExceptionCaught | RubyRuntimeHelper.ExceptionWrap: "HxException";
-			case RubyRuntimeHelper.ArrayIndexOf | RubyRuntimeHelper.ArrayInsert | RubyRuntimeHelper.ArrayJoin | RubyRuntimeHelper.ArrayLastIndexOf | RubyRuntimeHelper.ArrayRemove | RubyRuntimeHelper.ArrayResize | RubyRuntimeHelper.ArraySlice | RubyRuntimeHelper.ArraySort | RubyRuntimeHelper.ArraySplice | RubyRuntimeHelper.IsOfType | RubyRuntimeHelper.Iterator | RubyRuntimeHelper.KeyValueIterator | RubyRuntimeHelper.MathDivide | RubyRuntimeHelper.NativeIterator | RubyRuntimeHelper.ParseFloat | RubyRuntimeHelper.ParseInt | RubyRuntimeHelper.ReflectCallMethod | RubyRuntimeHelper.ReflectCompare | RubyRuntimeHelper.ReflectCompareMethods | RubyRuntimeHelper.ReflectCopy | RubyRuntimeHelper.ReflectDeleteField | RubyRuntimeHelper.ReflectField | RubyRuntimeHelper.ReflectFields | RubyRuntimeHelper.ReflectGetProperty | RubyRuntimeHelper.ReflectHasField | RubyRuntimeHelper.ReflectIsEnumValue | RubyRuntimeHelper.ReflectIsFunction | RubyRuntimeHelper.ReflectIsObject | RubyRuntimeHelper.ReflectMakeVarArgs | RubyRuntimeHelper.ReflectSetField | RubyRuntimeHelper.ReflectSetProperty | RubyRuntimeHelper.StringCharAt | RubyRuntimeHelper.StringCharCodeAt | RubyRuntimeHelper.StringCompare | RubyRuntimeHelper.StringIndexOf | RubyRuntimeHelper.StringLastIndexOf | RubyRuntimeHelper.StringSplit | RubyRuntimeHelper.StringSubstr | RubyRuntimeHelper.StringSubstring | RubyRuntimeHelper.StringToolsFastCodeAt | RubyRuntimeHelper.StringToolsIsEof | RubyRuntimeHelper.StringToolsIsSpace | RubyRuntimeHelper.StringToolsLpad | RubyRuntimeHelper.StringToolsRpad | RubyRuntimeHelper.StringUtf16KeyValueUnits | RubyRuntimeHelper.StringUtf16Units | RubyRuntimeHelper.Stringify:
+			case RubyRuntimeHelper.ArrayIndexOf | RubyRuntimeHelper.ArrayInsert | RubyRuntimeHelper.ArrayJoin | RubyRuntimeHelper.ArrayLastIndexOf | RubyRuntimeHelper.ArrayRemove | RubyRuntimeHelper.ArrayResize | RubyRuntimeHelper.ArraySlice | RubyRuntimeHelper.ArraySort | RubyRuntimeHelper.ArraySplice | RubyRuntimeHelper.IsOfType | RubyRuntimeHelper.Iterator | RubyRuntimeHelper.KeyValueIterator | RubyRuntimeHelper.MathDivide | RubyRuntimeHelper.MathRemainder | RubyRuntimeHelper.NativeIterator | RubyRuntimeHelper.ParseFloat | RubyRuntimeHelper.ParseInt | RubyRuntimeHelper.ReflectCallMethod | RubyRuntimeHelper.ReflectCompare | RubyRuntimeHelper.ReflectCompareMethods | RubyRuntimeHelper.ReflectCopy | RubyRuntimeHelper.ReflectDeleteField | RubyRuntimeHelper.ReflectField | RubyRuntimeHelper.ReflectFields | RubyRuntimeHelper.ReflectGetProperty | RubyRuntimeHelper.ReflectHasField | RubyRuntimeHelper.ReflectIsEnumValue | RubyRuntimeHelper.ReflectIsFunction | RubyRuntimeHelper.ReflectIsObject | RubyRuntimeHelper.ReflectMakeVarArgs | RubyRuntimeHelper.ReflectSetField | RubyRuntimeHelper.ReflectSetProperty | RubyRuntimeHelper.StringCharAt | RubyRuntimeHelper.StringCharCodeAt | RubyRuntimeHelper.StringCompare | RubyRuntimeHelper.StringIndexOf | RubyRuntimeHelper.StringLastIndexOf | RubyRuntimeHelper.StringSplit | RubyRuntimeHelper.StringSubstr | RubyRuntimeHelper.StringSubstring | RubyRuntimeHelper.StringToolsFastCodeAt | RubyRuntimeHelper.StringToolsIsEof | RubyRuntimeHelper.StringToolsIsSpace | RubyRuntimeHelper.StringToolsLpad | RubyRuntimeHelper.StringToolsRpad | RubyRuntimeHelper.StringUtf16KeyValueUnits | RubyRuntimeHelper.StringUtf16Units | RubyRuntimeHelper.Stringify:
 				"HXRuby";
 		}
 	}
@@ -125,7 +126,7 @@ class RubyRuntimePlan {
 				ExceptionBoundarySemantics;
 			case RubyRuntimeHelper.Iterator | RubyRuntimeHelper.KeyValueIterator | RubyRuntimeHelper.NativeIterator:
 				IteratorCompatibility;
-			case RubyRuntimeHelper.MathDivide:
+			case RubyRuntimeHelper.MathDivide | RubyRuntimeHelper.MathRemainder:
 				NumericSemantics;
 			case RubyRuntimeHelper.ParseFloat | RubyRuntimeHelper.ParseInt | RubyRuntimeHelper.Stringify:
 				PrimitiveConversionSemantics;

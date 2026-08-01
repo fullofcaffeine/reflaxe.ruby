@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "repository": "https://github.com/HaxeFoundation/haxe",
+    "version": "4.3.7",
+    "commit": "e0b355c6be312c1b17382603f018cf52522ec651",
+    "license": "MIT"
+  },
+  "families": [
+    {
+      "id": "shared-top-level",
+      "upstreamPath": "tests/unit/src/unit/TestOps.hx",
+      "localPath": "test/public_install_official/official/unit/TestOps.hx",
+      "classification": "unmodified",
+      "upstreamSha256": "6c3fd6bd8cabecef7c25bf1b90545b4f26ed5551fcdf35c39e4c72fa3cfb6029",
+      "localSha256": "6c3fd6bd8cabecef7c25bf1b90545b4f26ed5551fcdf35c39e4c72fa3cfb6029",
+      "protectedClaim": "Representative top-level operator precedence, numeric, Boolean, mutation, and metadata syntax survives public-package compilation and Ruby execution."
+    },
+    {
+      "id": "unitstd",
+      "upstreamPath": "tests/unit/src/unitstd/StringBuf.unit.hx",
+      "localPath": "test/upstream_unitstd/upstream/StringBuf.unit.hx",
+      "classification": "adapted",
+      "transformation": "formatter-normalized",
+      "upstreamSha256": "03de9a22d3576a462773b04682de3db2cc665337849cb14a6b3875a16d88ae41",
+      "localSha256": "2fad28a2ce8cfcf5b2b82861efb0562d81e1e536b2b46d6101ecf2e7f1cdc55c",
+      "protectedClaim": "The active StringBuf unitstd expression contract survives the existing adapter, public-package compilation, and Ruby execution."
+    },
+    {
+      "id": "general-issue",
+      "upstreamPath": "tests/unit/src/unit/issues/Issue10098.hx",
+      "localPath": "test/public_install_official/official/unit/issues/Issue10098.hx",
+      "classification": "unmodified",
+      "upstreamSha256": "b78400251ace71d57d76f66efb0eae6fee571b4b71c958c5d4be550b97b2ec89",
+      "localSha256": "b78400251ace71d57d76f66efb0eae6fee571b4b71c958c5d4be550b97b2ec89",
+      "protectedClaim": "Haxe issue 10098 enum-abstract map keys remain available through public-package compilation and Ruby execution."
+    }
+  ]
+}
