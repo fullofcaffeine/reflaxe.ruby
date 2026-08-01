@@ -36,8 +36,6 @@ const consumerRoot = join(temporaryRoot, "consumer");
 const consumerSource = join(consumerRoot, "src");
 const outputs = {
   success: join(consumerRoot, "out-success"),
-  assertionFailure: join(consumerRoot, "out-assertion-failure"),
-  runtimeFailure: join(consumerRoot, "out-runtime-failure"),
 };
 const trackedDiffBefore = trackedDiff();
 const report = {
@@ -304,8 +302,7 @@ function executeSuccess() {
 }
 
 function proveAssertionFailure() {
-  compile("AssertionFailureMain", outputs.assertionFailure);
-  const result = runLogged("ruby-assertion-failure", activeRuby, [join(outputs.assertionFailure, "run.rb")], {
+  const result = runLogged("ruby-assertion-failure", activeRuby, [join(outputs.success, "run.rb"), "assertion-failure"], {
     cwd: consumerRoot,
     allowFailure: true,
   });
@@ -320,8 +317,7 @@ function proveAssertionFailure() {
 }
 
 function proveRuntimeFailure() {
-  compile("RuntimeFailureMain", outputs.runtimeFailure);
-  const result = runLogged("ruby-runtime-failure", activeRuby, [join(outputs.runtimeFailure, "run.rb")], {
+  const result = runLogged("ruby-runtime-failure", activeRuby, [join(outputs.success, "run.rb"), "runtime-failure"], {
     cwd: consumerRoot,
     allowFailure: true,
   });

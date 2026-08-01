@@ -8,6 +8,14 @@ import unitstd_ruby.UpstreamUnitStdMacro;
 @:access(unit.issues.Issue10098)
 class Main {
 	static function main():Void {
+		switch Sys.args()[0] {
+			case "assertion-failure":
+				new unit.Test().eq("intentional-actual", "intentional-expected");
+				return;
+			case "runtime-failure":
+				throw "intentional-public-install-runtime-failure";
+			case _:
+		}
 		unit.Test.reset();
 		new unit.TestOps().testOps();
 		new Issue10098().test();
