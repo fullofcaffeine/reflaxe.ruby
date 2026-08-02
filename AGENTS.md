@@ -47,12 +47,18 @@ When the hooks first run after a bd/tooling upgrade, `.beads/issues.jsonl` may b
   dependency is required by a supported slice, implement and test it, narrow the
   slice, or fail closed; update `docs/railshx-component-dependency-audit.md` and
   its machine inventory whenever that closure changes.
-- For an exceptionally complex manual GPT-5.6 Pro handoff, use the globally
-  installed `$oracle-review` skill. It owns the detailed prompt, sanitized
-  selective or whole-repository Repomix bundles, checked ZIP, pending-request
-  check, and archive lifecycle under `/tmp/oracle`; the evidence rules above
-  still govern every finding. Public source and install instructions:
-  https://github.com/fullofcaffeine/caf-skills/tree/main/skills/oracle-review
+- Use Oracle only for genuinely critical work when the problem or safe plan is
+  unusually hard or materially undefined, competing paths are consequential,
+  work no longer converges, or a critical plan/result needs a higher-quality
+  independent challenge. Oracle may plan before implementation or review
+  afterward; size and generic extra confidence alone are insufficient. Invoke
+  the globally installed `$oracle-review` skill and let its caf-oracle facade
+  own the ledger, agent provenance, checked evidence, browser dispatch,
+  recovery, response capture, disposition, and archive. Do not maintain a
+  parallel `/tmp/oracle` queue or manually upload and paste when the tool is
+  available. If `$show-me-your-work` is active, link its concise trail to the
+  caf-oracle request rather than duplicating artifacts. The evidence rules
+  above still govern every finding.
 
 ## Ruby Profile Contract
 
