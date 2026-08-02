@@ -367,3 +367,12 @@ passed without retry or quarantine. This delta adds one fixture to an existing
 ring rather than changing test topology, so it makes no cold/warm latency or CI
 speedup claim; the measured focused runtime remains roughly ten seconds on this
 machine.
+
+Canonical implementation workflow
+[`30741233313`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30741233313)
+passed all 15 jobs for exact SHA
+`b4a38ebaa8d88e6e85197e15c56545e4d32d166d`, including the observe-only
+selector and every unchanged full backstop. Its final contents-write job
+published immutable `v1.22.1`. Independent downloads verified the four hosted
+assets against their sidecars and GitHub digests; embedded provenance and full
+manifests bind all 738 Haxelib and 343 gem payload entries to the tested SHA.

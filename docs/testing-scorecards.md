@@ -17,7 +17,7 @@ Passing one card never changes another card's status.
 | Oracle | Haxe 4.3.7 at `e0b355c6be312c1b17382603f018cf52522ec651`, manually reviewed stdout/diagnostics, and runtime invariants |
 | Examples | Compiler-conformance entries in `test/example-contracts.json` |
 | Backstop / release | `npm run test:queued`; exact-SHA canonical CI and release dependency graph |
-| Last clean proof | CI 30586074436 for `79b6ebde3f580cde8f9d69581e12876adc9b6b11` before this delta |
+| Last clean proof | CI [`30741233313`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30741233313) for `b4a38ebaa8d88e6e85197e15c56545e4d32d166d`; immutable `v1.22.1` |
 | Residual risk | This is not complete official Haxe qualification. The public-install tracer covers one shared top-level class, one general issue, and one active unitstd fixture; the remaining shared classes, general issue corpus, and 23 currently inactive official unitstd files remain outside active proof. Public wording stays partial. |
 
 ## Ruby runtime and standard-library semantics
@@ -33,7 +33,7 @@ Passing one card never changes another card's status.
 | Oracle | Haxe semantics, Ruby standard-library behavior, manually authored minimal expectations, round trips, and pinned differential references where behavior is ambiguous |
 | Examples | `exception_flow` and `stdlib_mvp` contracts |
 | Backstop / release | `npm run test:queued`; MRI 3.3/3.4/4.0 canonical matrix |
-| Last clean proof | CI 30586074436 before this delta |
+| Last clean proof | CI [`30741233313`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30741233313); no stdlib claim changed in this compiler-only delta |
 | Residual risk | A compiler-conformance pass does not prove every Ruby runtime/helper ABI, and facade coverage does not imply every Ruby stdlib API is supported. |
 
 ## Ruby-native, gem, package, and interop behavior
@@ -49,7 +49,7 @@ Passing one card never changes another card's status.
 | Oracle | MRI/gem behavior, handwritten Ruby consumers, package manifests, independent embedded hashes, and reviewed Ruby/Rails contracts |
 | Examples | Ruby-native and package entries in `test/example-contracts.json` |
 | Backstop / release | Full local contract, package/security jobs, cold exact-SHA release rebuild |
-| Last clean proof | CI 30586074436 and immutable v1.22.0 evidence before this delta |
+| Last clean proof | CI [`30741233313`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30741233313) and independently verified immutable `v1.22.1` package assets |
 | Residual risk | Package success does not prove general Haxe conformance; Rails/gem success remains limited to documented, executed seams. |
 
 ## Official, adapted, and repository-authored fixture provenance
@@ -67,6 +67,7 @@ Passing one card never changes another card's status.
 | Public-install tracer | `test/public_install_official/manifest.json` separately pins two byte-identical official sources and one formatter-adapted unitstd source; `npm run test:public-install-official` installs the release-shaped ZIP in an isolated Haxelib repository and executes all three on MRI. |
 | Update owner | `scripts/sync-upstream-unitstd-specs.sh` verifies and reports only; it cannot overwrite local adaptations |
 | Backstop / release | Full local contract and exact-SHA canonical CI |
+| Last clean proof | 44 active / 23 inactive official fixtures and 2,264 active identities passed CI [`30741233313`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30741233313) |
 | Residual risk | Active identity proves registration, not semantic correctness. Inactive fixtures are not passes, and the six adapted fixtures are never counted as unmodified official coverage. |
 
 ## Executable examples and downstream consumers
@@ -82,5 +83,5 @@ Passing one card never changes another card's status.
 | System/browser owner | Todoapp Playwright and production dogfood only; other examples do not borrow those claims |
 | Oracle | Manually authored stdout, reviewed snapshots, real Ruby/Rails/gem consumers, common cross-target vectors, and browser-visible behavior |
 | Backstop / release | Full examples gate, canonical Rails/browser/production/package jobs, and exact-SHA release dependencies |
-| Last clean proof | All 32 examples passed CI 30586074436 before this delta |
+| Last clean proof | All 32 examples passed CI [`30741233313`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30741233313) |
 | Residual risk | A compile-only or generation-only example is not runtime evidence. A flagship pass does not automatically qualify every showcase. |

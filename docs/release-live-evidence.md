@@ -5,6 +5,47 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.22.1 Dynamic callable-field publication
+
+The normal tested-commit workflow published immutable
+[`v1.22.1`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.22.1)
+on 2026-08-02 for correct calls through callable fields of Haxe `Dynamic`
+anonymous objects.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `b4a38ebaa8d88e6e85197e15c56545e4d32d166d` |
+| Canonical release tag | `v1.22.1`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`30741233313`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30741233313), `success`; all 15 security, formatter, Node compatibility, release-contract, observer, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3.1 runtime, and publication jobs passed |
+| Privileged release job | [`91482552930`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30741233313/job/91482552930), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-08-02T09:52:10Z` |
+| Release notes | Version heading, `v1.22.0...v1.22.1` compare link, categorized bug-fix bullet, and exact `b4a38eb` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.22.1.gem` | 286208 | `6dae18c6a9bac6831591dd43b01635fa934c7887899b7f553be805fa04adbb24` |
+| `hxruby-1.22.1.gem.sha256.json` | 304 | `c95eacb099dc4499cacc266c54eaa44f4d69e856294c6dfc5af7f217f62fc335` |
+| `reflaxe.ruby-1.22.1.zip` | 1387425 | `be59125ecf6553da4b05fb2c046b0febadf49d5c3532cae83a5450d22e1aab27` |
+| `reflaxe.ruby-1.22.1.zip.sha256.json` | 317 | `0487f98df12d3af08126c57ca50f5a9b21ff7f090686dbc234dda31786e6010d` |
+
+Each sidecar binds the downloaded bytes to version `1.22.1`, tag `v1.22.1`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities; their canonical format-1 manifests
+independently verified all 738 Haxelib and 343 gem payload entries with no
+missing, altered, duplicate, or extra content.
+
+The compiler now lowers an immediately called reflective field as
+`HXRuby.reflect_field(receiver, name)` followed by the existing function-value
+call path, rather than treating a `Dynamic` anonymous-object Hash as though the
+field were a Ruby method. The pinned Haxe 4.3.7 `EvaluationOrder.unit.hx`
+fixture executes all 16 active expectations under MRI, and a focused generated-
+shape check rejects the former direct method dispatch. This is compiler-
+conformance and upstream-provenance evidence, not a broader Ruby stdlib claim.
+
 ## Change-impact observation no-release continuity
 
 The observe-only change-impact correlator was added without reducing the
