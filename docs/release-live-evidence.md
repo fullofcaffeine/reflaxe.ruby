@@ -5,6 +5,26 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Change-impact observation no-release continuity
+
+The observe-only change-impact correlator was added without reducing the
+canonical test graph or publishing a version.
+
+| Evidence | Implementation | Node-24 uploader cleanup |
+| --- | --- | --- |
+| Tested source SHA | `1ac27da09cd890bcad68fa919f368bbe2625846a` | `970266e5fd5f167597fbc956cd7283b61f45029b` |
+| Same-run CI workflow | [`30726407037`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30726407037), all 15 jobs successful | [`30727730366`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30727730366), all 15 jobs successful |
+| Observer job | [`91442052130`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30726407037/job/91442052130), eight green outcomes, zero misses/incomplete | [`91445575638`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30727730366/job/91445575638), eight green outcomes, zero misses/incomplete |
+| Retained artifact | [`8826891680`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30726407037/artifacts/8826891680), 2,414 bytes, 300 ms selector runtime | [`8827303071`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30727730366/artifacts/8827303071), 2,037 bytes, 3 ms selector runtime, archive SHA-256 `a64ed04522927dd58f8a46b6f64d823f4df627675733ad43fdfcd759ef3cb342` |
+| Analyzer result | 15 commits analyzed, `no release` | 16 commits analyzed, `no release` |
+
+The first run revealed only a deprecation warning from the v4 artifact action's
+Node 20 declaration. The cleanup pins the verified official v7.0.0 action
+commit, which declares Node 24; the second observer log has no Node 20 warning.
+Both artifacts were independently downloaded and bound to their exact tested
+SHA. They are 30-day advisory testing evidence, not release assets, package
+claims, or authority to skip a required lane.
+
 ## Stable 1.22.0 typed delayed Turbo render broadcast publication
 
 The normal tested-commit workflow published immutable
@@ -1334,6 +1354,8 @@ gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.2.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.1.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v1.0.0
 gh api repos/fullofcaffeine/reflaxe.ruby/releases/tags/v0.1.2
+gh run view 30727730366 --json headSha,conclusion,jobs,url
+gh run view 30726407037 --json headSha,conclusion,jobs,url
 gh run view 29717163148 --json headSha,conclusion,jobs,url
 gh run view 29700477124 --json headSha,conclusion,jobs,url
 gh run view 29685310179 --json headSha,conclusion,jobs,url

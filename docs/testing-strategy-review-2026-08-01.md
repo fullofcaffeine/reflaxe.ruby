@@ -259,6 +259,36 @@ zero failures, misses, or incomplete lanes. This is a functional timing sample,
 not a hosted latency distribution; the existing pre-observer p50/p95 baseline
 remains the comparison point until retained hosted artifacts accumulate.
 
+Hosted implementation workflow
+[`30726407037`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30726407037)
+passed all 15 jobs for
+`1ac27da09cd890bcad68fa919f368bbe2625846a`. The observer job
+[`91442052130`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30726407037/job/91442052130)
+started only after all 13 pre-existing test executions had succeeded. Its
+downloaded 2,414-byte artifact
+[`8826891680`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30726407037/artifacts/8826891680)
+bound the exact base/head pair and 12 changed paths to all eight successful
+hosted backstop conclusions, with zero failures, misses, or incomplete lanes
+and a 300 ms selector runtime. The workflow/policy change correctly selected
+full fallback. The final analyzer reported `no release`.
+
+That run exposed a non-failing hosted warning because upload-artifact v4 still
+declared Node 20 and GitHub was forcing it onto Node 24. The follow-up pinned
+the verified official v7.0.0 commit, whose action metadata natively declares
+Node 24. Cleanup workflow
+[`30727730366`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30727730366)
+then passed all 15 jobs for
+`970266e5fd5f167597fbc956cd7283b61f45029b`. Observer job
+[`91445575638`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30727730366/job/91445575638)
+uploaded the 2,037-byte artifact
+[`8827303071`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30727730366/artifacts/8827303071)
+with archive SHA-256
+`a64ed04522927dd58f8a46b6f64d823f4df627675733ad43fdfcd759ef3cb342`.
+Independent download again found eight successful outcomes, zero failures,
+misses, or incomplete lanes, and a 3 ms selector runtime; the Node 20 warning
+was absent. The final analyzer again reported `no release`. These are the first
+two retained observations, not a miss-rate or latency distribution.
+
 ### Local completion evidence
 
 - `npm run test:change-impact-selector` passed its schema, semantic-owner,
