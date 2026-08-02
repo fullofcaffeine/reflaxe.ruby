@@ -50,6 +50,7 @@ import reflaxe.ruby.compiler.RubyLoopLowering;
 import reflaxe.ruby.compiler.RubyNumericLowering;
 import reflaxe.ruby.compiler.RubyOutputLayout;
 import reflaxe.ruby.compiler.RubyReferenceLowering;
+import reflaxe.ruby.compiler.RubyReflectiveFieldSemantics;
 import reflaxe.ruby.naming.RubyNaming;
 import reflaxe.ruby.rails.RailsActiveRecordResultLowering;
 import reflaxe.ruby.rails.RailsRouteDecl;
@@ -2973,6 +2974,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 				compileRubySuperMethodCall(access, params, expr.pos);
 			case TCall({expr: TField(target, access)}, params) if (isRubyInteropCall(access, expr.pos)):
 				compileRubyInteropCall(target, access, params);
+			case TCall(callee = {expr: TField(target, access)}, params) if (isReflectiveFieldAccess(target, access)):
+				// A field reached through Dynamic is a value lookup, even when Haxe
+				// immediately calls the result. Anonymous objects are Ruby Hash values,
+				// so direct `receiver.field(...)` dispatch both misses the stored Proc and
+				// changes which operation fails first. Compile the field value through the
+				// existing reflective owner, then use the ordinary function-value call path;
+				// Ruby evaluates that receiver before arguments, preserving Haxe order.
+				compileFunctionValueCall(callee, params);
 			case TCall({expr: TField(target, access)}, params):
 				var special = compileSpecialCall({expr: TField(target, access), t: expr.t, pos: expr.pos}, params);
 				special == null ? RubyCall(compileExpr(target), fieldAccessName(access), [for (param in params) compileExpr(param)]) : special;
@@ -13569,17 +13578,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function isReflectiveFieldAccess(target:TypedExpr, access:haxe.macro.Type.FieldAccess):Bool {
-		if (isArrayReceiverFieldAccess(target, access)) {
-			return false;
-		}
-		return switch (access) {
-			case FDynamic(_):
-				true;
-			case FAnon(_) | FClosure(_, _):
-				isDynamicExpr(target);
-			case FInstance(_, _, _) | FStatic(_, _) | FEnum(_, _):
-				false;
-		}
+		return RubyReflectiveFieldSemantics.isReflective(target, access, isArrayReceiverFieldAccess(target, access));
 	}
 
 	static function isReflectiveAssignOp(lhs:TypedExpr):Bool {

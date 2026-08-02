@@ -57,10 +57,10 @@
     {
       "module": "EvaluationOrder",
       "source": "EvaluationOrder.unit.hx",
-      "classification": "upstream-fallback-candidate",
-      "unitstdStatus": "not-tracked",
-      "next": "Use as a compiler-lowering regression fixture if call or assignment ordering changes.",
-      "notes": "Not a std override; useful for generated Ruby expression ordering."
+      "classification": "covered-upstream-fallback",
+      "unitstdStatus": "enabled",
+      "next": "Keep covered by npm run test:unitstd-ruby and its focused reflective-call shape assertions.",
+      "notes": "The unchanged official expectations execute through generated Ruby and protect left-to-right calls, arguments, array/object construction, short-circuiting, indexing, and Dynamic anonymous-object callable fields. This is compiler-conformance evidence, not a Ruby stdlib API claim."
     },
     {
       "module": "Float",

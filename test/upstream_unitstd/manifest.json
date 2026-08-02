@@ -82,6 +82,24 @@
       }
     },
     {
+      "module": "EvaluationOrder",
+      "status": "enabled",
+      "source": "EvaluationOrder.unit.hx",
+      "fixture": "test/upstream_unitstd/upstream/EvaluationOrder.unit.hx",
+      "provenance": {
+        "classification": "adapted",
+        "upstreamSha256": "623cbf851d59473e152a6a5e48aec2c5283a17bce7e9b81086224859bafdd1de",
+        "localSha256": "be1aaa15664856afd306f809ee371a9a6f157fd74cf9eb1ff631263ed75b6ffb",
+        "transformation": "formatter-normalized",
+        "reason": "The checked-in fixture is formatter-normalized for this repository; reviewable expressions and assertions derive from the pinned upstream bytes.",
+        "owner": "scripts/ci/unitstd-provenance-check.js --write"
+      },
+      "activeAssertions": {
+        "count": 16,
+        "sha256": "d3a37a2ee365ac43c6358ff33f279da7ec082aa6091b407d673a6b08769f5bea"
+      }
+    },
+    {
       "module": "Float",
       "status": "enabled",
       "source": "Float.unit.hx",
@@ -880,8 +898,7 @@
     {
       "source": "EvaluationOrder.unit.hx",
       "upstreamSha256": "623cbf851d59473e152a6a5e48aec2c5283a17bce7e9b81086224859bafdd1de",
-      "evidenceStatus": "inactive",
-      "reason": "Inactive: this official fixture is not registered in the current bounded Ruby lane; applicability remains unclaimed pending focused review."
+      "evidenceStatus": "active"
     },
     {
       "source": "Float.unit.hx",

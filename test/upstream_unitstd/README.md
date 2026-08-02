@@ -16,13 +16,13 @@ Source provenance:
 - Haxe standard library/tests are distributed under the Haxe Foundation MIT
   license; see the upstream `extra/LICENSE.txt`.
 - `manifest.json` records exact upstream/local SHA-256 values and inventories
-  all 67 official files. The bounded Ruby lane has 43 active files and 24
+  all 67 official files. The bounded Ruby lane has 44 active files and 23
   explicitly inactive files; inactive is not a pass.
-- One active fixture is byte-identical. Thirty-six are formatter-only
+- One active fixture is byte-identical. Thirty-seven are formatter-only
   adaptations, and six Ruby-lane adaptations have reasons, owners, and minimal
   patches under `adaptations/`. Adapted evidence is never counted as
   unmodified official coverage.
-- `active-assertions.json` locks 2,248 assertion identities found after
+- `active-assertions.json` locks 2,264 assertion identities found after
   registration, macro expansion, and Ruby emission. It detects assertions that
   silently stop executing, but the Ruby run, not this inventory, owns behavior.
 
@@ -37,7 +37,7 @@ Coverage policy:
 
 Current upstream runtime fixtures:
 
-- Enabled: `Array`, `Date`, `DateTools`, `EReg`, `Float`, `IntIterator`,
+- Enabled: `Array`, `Date`, `DateTools`, `EReg`, `EvaluationOrder`, `Float`, `IntIterator`,
   `Lambda`, `List`, `Map`, `Math`, `String`, `StringBuf`, `StringTools`,
   `haxe.DynamicAccess`, `haxe.EnumFlags`, `haxe.Int32`, `haxe.crypto.Base64`,
   `haxe.crypto.Crc32`, `haxe.crypto.Hmac`, `haxe.crypto.Md5`,
@@ -54,6 +54,12 @@ Current upstream runtime fixtures:
   helpers and explicit Dynamic parameter arrays. `Std` avoids similar
   macro-expansion collisions and ignores upstream `unspec(...)` markers; all
   retain the assertions owned by this lane.
+- `EvaluationOrder` is compiler-conformance evidence rather than a stdlib API
+  claim. Its unchanged upstream expectations execute on MRI and cover
+  left-to-right evaluation, short-circuiting, indexing, nested calls, and
+  callable fields read from a `Dynamic` anonymous object. A focused generated-
+  shape check keeps the latter on reflective Hash lookup instead of direct Ruby
+  method dispatch.
 - No direct unitstd spec: `haxe.Json` is covered separately by the
   provenance-backed `npm run test:json-parity` broader-suite lane;
   `sys.FileSystem` is covered by `npm run test:filesystem-parity`.

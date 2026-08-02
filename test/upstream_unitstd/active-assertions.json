@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "origin": "Unique assertion messages emitted by UpstreamUnitStdMacro into generated Ruby; identities prove registration and post-macro survival, not semantic correctness by themselves.",
-  "total": 2248,
+  "total": 2264,
   "fixtures": [
     {
       "source": "Array.unit.hx",
@@ -368,6 +368,29 @@
         "EReg.unit.hx@3349",
         "EReg.unit.hx@3400",
         "EReg.unit.hx@3457"
+      ]
+    },
+    {
+      "source": "EvaluationOrder.unit.hx",
+      "count": 16,
+      "sha256": "d3a37a2ee365ac43c6358ff33f279da7ec082aa6091b407d673a6b08769f5bea",
+      "identities": [
+        "EvaluationOrder.unit.hx@90",
+        "EvaluationOrder.unit.hx@148",
+        "EvaluationOrder.unit.hx@246",
+        "EvaluationOrder.unit.hx@729",
+        "EvaluationOrder.unit.hx@807",
+        "EvaluationOrder.unit.hx@900",
+        "EvaluationOrder.unit.hx@1002",
+        "EvaluationOrder.unit.hx@1096",
+        "EvaluationOrder.unit.hx@1180",
+        "EvaluationOrder.unit.hx@1254",
+        "EvaluationOrder.unit.hx@1351",
+        "EvaluationOrder.unit.hx@1445",
+        "EvaluationOrder.unit.hx@1545",
+        "EvaluationOrder.unit.hx@1709",
+        "EvaluationOrder.unit.hx@1863",
+        "EvaluationOrder.unit.hx@2049"
       ]
     },
     {

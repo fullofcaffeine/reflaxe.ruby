@@ -122,9 +122,9 @@ Repository-authored focused regressions remain separate from official counts.
 
 The delta adds no new behavior fixture merely for volume. Its unique evidence is:
 
-- exact reproducibility for 43 active official-derived fixtures;
-- explicit nonpassing status for 24 inactive official files;
-- 2,248 post-macro active assertion identities;
+- exact reproducibility for 44 active official-derived fixtures;
+- explicit nonpassing status for 23 inactive official files;
+- 2,264 post-macro active assertion identities;
 - six reviewable Ruby-lane adaptation patches;
 - one machine-readable contract for all 32 maintained examples;
 - five claim-separated scorecards.
@@ -323,3 +323,47 @@ every canonical backstop because the workflow, package manifest, selector, and
 ownership manifest changed, and remained advisory while every full lane ran.
 The final release analyzer correctly reported `no release` for the `test:`
 commit.
+
+### 2026-08-02 incremental compiler-conformance workflow
+
+Bead `haxe_ruby-3ir9` promoted the pinned official
+`EvaluationOrder.unit.hx` fixture after it exposed a real compiler defect. The
+pre-activation contract was intentionally red:
+
+```text
+node manifest assertion -> RED (expected): EvaluationOrder official runtime proof is inactive, not active
+```
+
+The first faithful tracer run then compiled the formatter-normalized official
+fixture through Reflaxe.Ruby and failed under MRI with `NoMethodError` because
+`d.f1()` on a `Dynamic` anonymous object was emitted as direct Ruby method
+dispatch. The independent oracle is the Haxe 4.3.7 fixture at commit
+`e0b355c6be312c1b17382603f018cf52522ec651`: its manually reviewable side-effect
+buffer expectations define call, argument, short-circuit, indexing, and object
+construction order without reusing the Ruby compiler's algorithm.
+
+`RubyReflectiveFieldSemantics` now owns the Dynamic-field classification, and
+the compiler treats an immediately called reflective field as a field-value
+lookup followed by the ordinary function-value call path. A focused generated-
+shape assertion rejects direct `Hash#f1` dispatch, while the retained vertical
+test executes all 16 upstream expectations with MRI. This advances only the
+compiler-conformance and provenance scorecards; it does not claim a new Ruby
+stdlib API.
+
+The first broad run correctly stopped when `RubyCompiler.hx` exceeded its
+14,485-line orchestration ceiling. Extracting the classification restored the
+one-way service boundary at 14,484 lines and 779 functions. The next run
+correctly stopped on the raw/print inventory freshness gate; the reviewed
+refresh retained exactly 269 sites, and an independent comparison found every
+non-line field unchanged. These were architecture-ledger findings, not behavior
+failures or reasons to raise a ceiling.
+
+The final uninterrupted `npm run test:queued` backstop passed, including all 32
+examples, deterministic snapshots, the 738-file Haxelib ZIP, the isolated
+official-source consumer, and the gem. Separate Rails 8.1.3.1 runtime evidence,
+Chromium 15/15, production 26 runs/231 assertions, all five viability workloads,
+Node/Ruby advisory checks, and full-history Gitleaks over 921 commits also
+passed without retry or quarantine. This delta adds one fixture to an existing
+ring rather than changing test topology, so it makes no cold/warm latency or CI
+speedup claim; the measured focused runtime remains roughly ten seconds on this
+machine.

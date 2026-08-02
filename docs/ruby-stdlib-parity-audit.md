@@ -27,8 +27,8 @@ The guard checks that:
 | Classification | Count | Meaning |
 | --- | ---: | --- |
 | `covered-ruby-override` | 22 | Ruby owns the override, lowering, or runtime seam and current tests have direct evidence. |
-| `covered-upstream-fallback` | 24 | The Ruby lane covers the surface while using upstream Haxe std source, sometimes over lower-level Ruby-owned dependencies. |
-| `upstream-fallback-candidate` | 2 | No Ruby override is indicated yet. Add a fixture or smoke before promoting to covered. |
+| `covered-upstream-fallback` | 25 | The Ruby lane covers the surface while using upstream Haxe std source, sometimes over lower-level Ruby-owned dependencies. |
+| `upstream-fallback-candidate` | 1 | No Ruby override is indicated yet. Add a fixture or smoke before promoting to covered. |
 | `ruby-override-needed` | 18 | Ruby-owned lowering, runtime support, or `std/ruby/_std` replacement is needed or already exists but lacks upstream parity accounting. |
 | `unsupported-target-specific` | 6 | The fixture is not a Ruby runtime parity surface or is outside the current target contract. |
 
@@ -36,10 +36,10 @@ Unitstd status today:
 
 | Status | Count |
 | --- | ---: |
-| `enabled` | 37 |
+| `enabled` | 38 |
 | `adapted` | 6 |
 | `no-upstream-spec` | 3 |
-| `not-tracked` | 26 |
+| `not-tracked` | 25 |
 
 ## Reading The Buckets
 
@@ -50,7 +50,7 @@ For example, `Array`, `Date`, `EReg`, `Float`, `haxe.Int32`, `haxe.Json`,
 `Type`, `haxe.zip.Compress`, `haxe.zip.Uncompress`, `sys.FileSystem`, and
 `sys.io.File` are Ruby-owned or compiler-lowered surfaces with upstream or
 provenance-backed broader-suite coverage. `DateTools`,
-`IntIterator`, `List`, `String`, `StringBuf`,
+`EvaluationOrder`, `IntIterator`, `List`, `String`, `StringBuf`,
 `haxe.crypto.Base64`, `haxe.crypto.Crc32`, `haxe.crypto.Hmac`,
 `haxe.DynamicAccess`, `haxe.crypto.Md5`, `haxe.crypto.Sha1`,
 `haxe.crypto.Sha224`, `haxe.EnumFlags`, `haxe.Template`,
@@ -59,6 +59,12 @@ provenance-backed broader-suite coverage. `DateTools`,
 `haxe.io.BytesBuffer`, `haxe.io.Path`, and `haxe.rtti.Rtti` are covered while
 falling through to upstream Haxe source or using upstream source over
 lower-level Ruby-owned primitives.
+
+`EvaluationOrder` is carried in this ledger because the official fixture is
+part of the pinned unitstd inventory, but its green result belongs to the
+compiler-conformance scorecard rather than a Ruby stdlib API claim. It executes
+the upstream side-effect expectations on MRI and has a focused generated-shape
+lock for callable fields reached through `Dynamic` anonymous objects.
 
 `upstream-fallback-candidate` is deliberately conservative. It means the next
 move should be to compile and run the upstream fixture before adding a Ruby

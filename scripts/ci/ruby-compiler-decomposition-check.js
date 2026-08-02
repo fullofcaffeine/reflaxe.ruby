@@ -9,6 +9,7 @@ const exceptionLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "
 const int32LoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyInt32Lowering.hx");
 const loopLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyLoopLowering.hx");
 const referenceLoweringPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyReferenceLowering.hx");
+const reflectiveFieldSemanticsPath = join(root, "src", "reflaxe", "ruby", "compiler", "RubyReflectiveFieldSemantics.hx");
 const railsCallArgumentPlanPath = join(root, "src", "reflaxe", "ruby", "rails", "RailsCallArgumentPlan.hx");
 const railsActiveRecordResultLoweringPath = join(root, "src", "reflaxe", "ruby", "rails", "RailsActiveRecordResultLowering.hx");
 const railsStaticReferenceLoweringPath = join(root, "src", "reflaxe", "ruby", "rails", "RailsStaticReferenceLowering.hx");
@@ -83,6 +84,9 @@ if (!existsSync(loopLoweringPath)) {
 if (!existsSync(referenceLoweringPath)) {
   fail("required reference compiler service is missing: " + relative(root, referenceLoweringPath));
 }
+if (!existsSync(reflectiveFieldSemanticsPath)) {
+  fail("required reflective-field compiler service is missing: " + relative(root, reflectiveFieldSemanticsPath));
+}
 if (!existsSync(railsCallArgumentPlanPath)) {
   fail("required Rails call-argument plan is missing: " + relative(root, railsCallArgumentPlanPath));
 }
@@ -96,6 +100,7 @@ const exceptionLowering = readFileSync(exceptionLoweringPath, "utf8");
 const int32Lowering = readFileSync(int32LoweringPath, "utf8");
 const loopLowering = readFileSync(loopLoweringPath, "utf8");
 const referenceLowering = readFileSync(referenceLoweringPath, "utf8");
+const reflectiveFieldSemantics = readFileSync(reflectiveFieldSemanticsPath, "utf8");
 const railsCallArgumentPlan = readFileSync(railsCallArgumentPlanPath, "utf8");
 const railsActiveRecordResultLowering = readFileSync(railsActiveRecordResultLoweringPath, "utf8");
 const railsStaticReferenceLowering = readFileSync(railsStaticReferenceLoweringPath, "utf8");
@@ -136,6 +141,9 @@ if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(loopLowering) || loopLowe
 if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(referenceLowering) || referenceLowering.includes("reflaxe.ruby.RubyCompiler")) {
   fail("RubyReferenceLowering depends back on RubyCompiler; compiler services must remain one-way dependencies");
 }
+if (/^\s*import\s+reflaxe\.ruby\.RubyCompiler\b/m.test(reflectiveFieldSemantics) || reflectiveFieldSemantics.includes("reflaxe.ruby.RubyCompiler")) {
+  fail("RubyReflectiveFieldSemantics depends back on RubyCompiler; compiler services must remain one-way dependencies");
+}
 
 for (const expected of [
   "import reflaxe.ruby.compiler.RubyExceptionLowering;",
@@ -156,6 +164,8 @@ for (const expected of [
   "RubyReferenceLowering.iteratorFactory(iteratorExpr)",
   "RubyReferenceLowering.member(compileExpr(target), fieldAccessName(access))",
   "RubyReferenceLowering.resolvedOwner(moduleTypeName(moduleType))",
+  "import reflaxe.ruby.compiler.RubyReflectiveFieldSemantics;",
+  "RubyReflectiveFieldSemantics.isReflective(target, access, isArrayReceiverFieldAccess(target, access))",
   "import reflaxe.ruby.rails.RailsStaticReferenceLowering;",
   "RailsStaticReferenceLowering.token(fullTypeName(classType.pack, classType.name),",
   "import reflaxe.ruby.rails.RailsActiveRecordResultLowering;",
@@ -225,6 +235,11 @@ for (const expected of [
 if (/\b(?:Dynamic|Any|cast)\b/.test(referenceLowering) || /\bReflect\s*\./.test(referenceLowering)
   || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(referenceLowering)) {
   fail("RubyReferenceLowering introduced an unsafe broad type or raw/print boundary");
+}
+for (const expected of ["class RubyReflectiveFieldSemantics", "case FDynamic(_): true;", "TypeTools.follow(expression.t)"]) {
+  if (!reflectiveFieldSemantics.includes(expected)) {
+    fail(`RubyReflectiveFieldSemantics is missing owned Dynamic-field contract: ${expected}`);
+  }
 }
 for (const expected of [
   "class RailsStaticReferenceLowering",

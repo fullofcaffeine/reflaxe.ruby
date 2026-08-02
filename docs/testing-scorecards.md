@@ -18,7 +18,7 @@ Passing one card never changes another card's status.
 | Examples | Compiler-conformance entries in `test/example-contracts.json` |
 | Backstop / release | `npm run test:queued`; exact-SHA canonical CI and release dependency graph |
 | Last clean proof | CI 30586074436 for `79b6ebde3f580cde8f9d69581e12876adc9b6b11` before this delta |
-| Residual risk | This is not complete official Haxe qualification. The public-install tracer covers one shared top-level class, one general issue, and one active unitstd fixture; the remaining shared classes, general issue corpus, and 24 currently inactive official unitstd files remain outside active proof. Public wording stays partial. |
+| Residual risk | This is not complete official Haxe qualification. The public-install tracer covers one shared top-level class, one general issue, and one active unitstd fixture; the remaining shared classes, general issue corpus, and 23 currently inactive official unitstd files remain outside active proof. Public wording stays partial. |
 
 ## Ruby runtime and standard-library semantics
 
@@ -59,9 +59,9 @@ Passing one card never changes another card's status.
 | Surface ID / status | `upstream-provenance` / **partial** |
 | Owner | `test/upstream_unitstd/manifest.json`, active assertion inventory, adaptation patches, and review-only sync |
 | Claim | Every official fixture byte used by the bounded lane has an exact source identity, an honest transformation classification, and active post-macro assertion accounting. Provenance quality is not a runtime pass. |
-| Active inventory | Haxe 4.3.7 contains 67 official `.unit.hx` files: 43 active here and 24 explicitly inactive. Of the 43 active copies, 1 is byte-identical, 36 are formatter-only adaptations, and 6 are Ruby-lane adaptations with reviewed patches. Repository-authored regressions are counted separately. |
+| Active inventory | Haxe 4.3.7 contains 67 official `.unit.hx` files: 44 active here and 23 explicitly inactive. Of the 44 active copies, 1 is byte-identical, 37 are formatter-only adaptations, and 6 are Ruby-lane adaptations with reviewed patches. Repository-authored regressions are counted separately. |
 | Oracle / pin | Official Haxe tag 4.3.7 and commit `e0b355c6be312c1b17382603f018cf52522ec651`; upstream/local/diff SHA-256; Haxe std MIT license bytes |
-| Active proof | `test/upstream_unitstd/active-assertions.json` locks 2,248 unique assertion identities visible after macro expansion and Ruby emission |
+| Active proof | `test/upstream_unitstd/active-assertions.json` locks 2,264 unique assertion identities visible after macro expansion and Ruby emission |
 | Static owner | `npm run test:unitstd-provenance` |
 | Vertical owner | `npm run test:unitstd-ruby` compiles active official-derived source with the custom backend and runs Ruby |
 | Public-install tracer | `test/public_install_official/manifest.json` separately pins two byte-identical official sources and one formatter-adapted unitstd source; `npm run test:public-install-official` installs the release-shaped ZIP in an isolated Haxelib repository and executes all three on MRI. |

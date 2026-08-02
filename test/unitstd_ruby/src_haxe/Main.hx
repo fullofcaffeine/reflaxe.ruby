@@ -26,6 +26,7 @@ class Main {
 		UpstreamUnitStdMacro.assertSpec("Date.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("DateTools.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("EReg.unit.hx");
+		UpstreamUnitStdMacro.assertSpec("EvaluationOrder.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("Float.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("StringBuf.unit.hx");
 		UpstreamUnitStdMacro.assertSpec("IntIterator.unit.hx");

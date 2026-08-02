@@ -48,18 +48,18 @@ Keep these results separate. A pass on one axis cannot substitute for another.
 | Distribution/release | Consumers receive reproducible, complete artifacts built from the exact tested commit. | Haxelib/gem package checks, security gates, release contracts, immutable hosted-release verification. |
 
 The current upstream Haxe lane is meaningful partial evidence, not complete
-official Haxe 4.3.7 qualification. It runs 43 active official-derived `unitstd`
+official Haxe 4.3.7 qualification. It runs 44 active official-derived `unitstd`
 fixtures, plus adjacent JSON issue and filesystem cases. Shared top-level
 `unit.TestMain` classes and the general issue corpus remain staged work. One
 public-install tracer now exercises representatives from both families and the
 active unitstd lane, but it is deliberately not a full baseline.
 
 The active inventory is pinned to official Haxe 4.3.7 commit
-`e0b355c6be312c1b17382603f018cf52522ec651`. Of 67 official `unitstd` files, 43
-are active in this bounded lane and 24 are explicitly inactive. One active
-fixture is byte-identical, 36 are formatter-only adaptations, and six are
+`e0b355c6be312c1b17382603f018cf52522ec651`. Of 67 official `unitstd` files, 44
+are active in this bounded lane and 23 are explicitly inactive. One active
+fixture is byte-identical, 37 are formatter-only adaptations, and six are
 Ruby-lane adaptations with reasons, owners, and reviewable patches. Exact
-upstream/local/diff hashes and 2,248 post-macro active assertion identities are
+upstream/local/diff hashes and 2,264 post-macro active assertion identities are
 checked by `npm run test:unitstd-provenance`. Inactive, adapted, and
 repository-authored cases never inflate the unmodified-official count.
 
@@ -200,7 +200,7 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
 | Positive/negative source | **Observed:** many focused smoke scripts and invalid fixtures | Typed success and fail-closed diagnostics for shipped slices | Stable test IDs and aggregate timing are inconsistent across scripts. |
 | Generated shape | **Observed:** committed deterministic snapshots; 178s local sample | Reviewable exact output and repeat generation | Too slow for unconditional R1; affected selection is not yet automated. |
 | Target build/runtime | **Observed:** Ruby syntax checks and execution in focused lanes plus one isolated public-install tracer | Generated Ruby is accepted and behaves correctly for those bounded slices | The public-install tracer is representative, not full qualification. |
-| Official Haxe | **Observed:** 43 active official-derived unitstd fixtures with exact provenance and active identities, JSON/filesystem parity, and public-install representatives from shared top-level, unitstd, and general-issue families | Partial portable runtime evidence through checkout and installed-package paths | The remaining shared classes, general issue corpus, and 24 inactive official files remain incomplete. |
+| Official Haxe | **Observed:** 44 active official-derived unitstd fixtures with exact provenance and active identities, JSON/filesystem parity, and public-install representatives from shared top-level, unitstd, and general-issue families | Partial portable runtime evidence through checkout and installed-package paths | The remaining shared classes, general issue corpus, and 23 inactive official files remain incomplete. |
 | Rails/framework | **Observed:** focused smokes, snapshots, three-version runtime matrix | Rails consumes supported generated seams | Separate axis is healthy; do not count it toward portable Haxe pass totals. |
 | Browser/production | **Observed:** Playwright and production dogfood | User-visible and deployable app paths | Expensive by design; select locally by affected product boundary while retaining canonical backstop. |
 | Package/install | **Observed:** Haxelib ZIP, gem, package consumers, public upgrade | Current artifact shape and selected consumer paths | R1 uses checkout paths and must not be described as package-install evidence. |

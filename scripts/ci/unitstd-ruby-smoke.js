@@ -114,6 +114,23 @@ for (const expectedShape of [
     process.exit(1);
   }
 }
+// The full official fixture is the runtime oracle; these focused shapes are
+// the diagnostic lock for the compiler defect it exposed. A Dynamic anonymous
+// object is a Hash-backed field carrier, so its callable field must be looked
+// up before either invocation's arguments are evaluated.
+for (const expectedShape of [
+  /HXRuby\.reflect_field\(d(?:__hx\d+)?, "f1"\)\.call\(\)\.call\(f3(?:__hx\d+)?\.call\(\)\)/,
+  /HXRuby\.reflect_field\(d(?:__hx\d+)?, "f1"\)\.call\(f2(?:__hx\d+)?\.call\(\)\)/,
+]) {
+  if (!expectedShape.test(mainRuby)) {
+    console.error(`Expected reflective Dynamic callable-field shape missing: ${expectedShape}`);
+    process.exit(1);
+  }
+}
+if (/d(?:__hx\d+)?\.f1\(/.test(mainRuby)) {
+  console.error("Dynamic anonymous-object callable fields must not become direct Ruby method dispatch.");
+  process.exit(1);
+}
 if (!/\.select \{ \|x\| \(\(x & 1\) == 0\) \}\.map \{ \|x(?:__hx\d+)?\| \(x(?:__hx\d+)? \* 10\) \}/.test(mainRuby)) {
   console.error("Expected provenance-locked Dynamic Array map/filter fixture to use native Ruby select/map blocks.");
   process.exit(1);
