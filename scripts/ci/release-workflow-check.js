@@ -18,6 +18,7 @@ const requiredNeeds = [
   "rails-runtime",
   "rails-production",
   "release-contracts",
+  "change-impact-observation",
 ];
 
 function requireMatch(text, pattern, message) {
@@ -57,6 +58,7 @@ const cases = [
   ["cancelled gate", { ...base, needs: { ...successfulNeeds, "rails-runtime": "cancelled" } }, false],
   ["skipped gate", { ...base, needs: { ...successfulNeeds, security: "skipped" } }, false],
   ["missing gate result", { ...base, needs: { ...successfulNeeds, "release-contracts": undefined } }, false],
+  ["missing observation result", { ...base, needs: { ...successfulNeeds, "change-impact-observation": undefined } }, false],
 ];
 for (const [label, context, expected] of cases) {
   assert.equal(canPublish(context), expected, `publication eligibility mismatch: ${label}`);
@@ -75,15 +77,26 @@ requireMatch(ci, /npm audit\n/, "locked dependency audit must gate publication")
 requireMatch(ci, /gem install bundler-audit --version 0\.9\.3 --no-document/, "Ruby advisory scanner must be exact");
 requireMatch(ci, /npm run security:ruby-advisories/, "Ruby advisory audit must gate publication");
 requireMatch(ci, /gitleaks\/gitleaks-action@[0-9a-f]{40}/, "secret scanning action must be commit-pinned");
+requireMatch(ci, /actions\/upload-artifact@[0-9a-f]{40}/, "change-impact observation upload must be commit-pinned");
+requireMatch(ci, /retention-days: 30/, "change-impact observations must remain available for a bounded review window");
 
 const releaseContractsStart = ci.indexOf("\n  release-contracts:\n");
+const observationStart = ci.indexOf("\n  change-impact-observation:\n");
 const releaseStart = ci.indexOf("\n  release:\n");
 assert.notEqual(releaseContractsStart, -1, "CI must contain the release-contracts job");
+assert.notEqual(observationStart, -1, "CI must contain the change-impact observation job");
 assert.notEqual(releaseStart, -1, "CI must contain the final release job");
-const releaseContracts = ci.slice(releaseContractsStart, releaseStart);
+const releaseContracts = ci.slice(releaseContractsStart, observationStart);
+const observation = ci.slice(observationStart, releaseStart);
 requireMatch(releaseContracts, /ruby-version: "3\.4\.10"/, "public upgrade rehearsal Ruby must be exact");
 requireMatch(releaseContracts, /rubygems: "3\.6\.9"/, "public upgrade rehearsal RubyGems must be exact");
 requireMatch(releaseContracts, /npm run test:public-upgrade/, "release contracts must exercise the public v0.4.0 upgrade and rollback");
+for (const need of requiredNeeds.filter((name) => name !== "change-impact-observation")) {
+  requireMatch(observation, new RegExp(`\\n      - ${need.replaceAll("-", "\\-")}`), `observer must wait for ${need}`);
+}
+requireMatch(observation, /if: \$\{\{ always\(\) \}\}/, "observer must record failed and incomplete backstops");
+requireMatch(observation, /CI_NEEDS_JSON: \$\{\{ toJSON\(needs\) \}\}/, "observer must receive scheduler-owned job conclusions");
+requireMatch(observation, /if-no-files-found: error/, "missing observation artifacts must fail closed");
 const release = ci.slice(releaseStart);
 requireMatch(
   release,

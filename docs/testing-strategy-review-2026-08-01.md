@@ -215,13 +215,17 @@ selector miss; selecting the same browser owner produces none. This fixture is
 a sensitivity check, not a fabricated claim that hosted CI encountered a real
 miss.
 
-Canonical CI only prints the advisory report from the full-history security
-job. It retains the complete three-Ruby `npm test` matrix and independent
+Canonical CI prints the initial advisory report from the full-history security
+job and retains the complete three-Ruby `npm test` matrix plus independent
 Rails runtime, browser, production, format, compatibility, security, and
-release-contract jobs. Automated cross-job miss history, p50/p95 selection
-timings, and any blocking CI selection remain deferred until enough observation
-evidence exists; a later topology change must retain full main/nightly and
-release backstops.
+release-contract jobs. `haxe_ruby-4jsz` adds automatic per-run cross-job
+correlation: a final read-only job records the recommendation together with
+every unchanged hosted backstop conclusion and retains the JSON artifact for
+30 days. Failures in omitted shards become misses; cancellation or skipping
+remains incomplete evidence. Cross-run p50/p95 summaries, a selected-job
+completion aggregator, and any blocking CI selection remain deferred until
+enough representative observation evidence exists; a later topology change
+must retain full main/nightly and release backstops.
 
 ### Separate selector-risk review
 
@@ -233,7 +237,27 @@ release backstops.
 | Mocked boundaries | Explain mode does not claim runtime correctness. Existing real Haxe/Ruby/Rails/browser/package jobs remain the behavior observers and are unchanged. |
 | Selector omissions | Bounded Rails/browser/example rules may still omit a reverse dependency; the report makes omissions visible, accepts backstop-observed failures as misses, and cannot authorize skipping CI. |
 | Scorecard laundering | Rules and shards carry the five independent product-surface IDs. Documentation-only changes carry no behavior surface, and Rails evidence does not advance compiler qualification. |
-| Overbroad claims | No miss rate, CI speedup, affected-only safety, or complete official compatibility is claimed. Automatic cross-job correlation and a selected-job aggregator remain prerequisites for later promotion. |
+| Overbroad claims | No miss rate, CI speedup, affected-only safety, or complete official compatibility is claimed. Per-run cross-job correlation is now automated; cross-run review and a selected-job completion aggregator remain prerequisites for later promotion. |
+
+The `haxe_ruby-4jsz` implementation received a separate post-implementation
+risk pass before broad verification:
+
+| Challenge | Finding / disposition |
+| --- | --- |
+| Failure sensitivity | The contract injects a hosted browser failure against both an omitted documentation recommendation and a selected browser recommendation. Only the former is a miss. Removing any canonical backstop from the explicit job map fails its equality check against `fullBackstop`. |
+| Scheduler ambiguity | Job conclusions cannot identify the failing command inside the three-Ruby aggregate. The report therefore claims scheduler-shard granularity only; it never attributes a more specific semantic owner from the aggregate result. |
+| Cancellation and skipping | These states are incomplete observations, not behavior failures. They remain explicit in the artifact and the unchanged release gate still rejects them directly. Missing or unknown results fail report generation. |
+| Artifact authority | The 30-day JSON artifact is advisory historical evidence. It cannot advance a scorecard, schedule a selected test, prove selected-job completion, or replace runtime output. Missing artifact bytes fail the observer job. |
+| Publication bypass | Release still names and checks every original gate and now also requires a successful observer. Workflow-policy tests reject a missing observer, missing original gate, cancellation, skipping, failure, and unpinned upload action. |
+
+Local incremental evidence for the observer passed the focused selector and
+release-workflow contracts, the complete queued suite, mandatory Rails 8.1.3.1
+runtime, Chromium 15/15, production 26 runs/231 assertions, all five viability
+workloads, Haxe formatting, Node/Ruby advisories, and full-history secret
+scanning. A local all-green eight-backstop observation completed in 1 ms with
+zero failures, misses, or incomplete lanes. This is a functional timing sample,
+not a hosted latency distribution; the existing pre-observer p50/p95 baseline
+remains the comparison point until retained hosted artifacts accumulate.
 
 ### Local completion evidence
 
@@ -256,9 +280,9 @@ release backstops.
 
 The full local wall time was affected by unrelated simultaneous Haxe-family
 compiler processes and is therefore retained as noisy observation rather than
-before/after selector evidence. Required PR job topology and test commands are
-unchanged: the selector adds a fast log/report step, while all 14 jobs and the
-three-Ruby full matrix still run.
+before/after selector evidence. Required PR test commands are unchanged: every
+pre-existing job and the three-Ruby full matrix still run. The workflow now
+exposes 15 jobs because the observer is its own bounded, read-only job.
 
 Canonical implementation workflow
 [`30719877635`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/30719877635)

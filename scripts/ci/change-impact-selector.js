@@ -149,4 +149,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { loadManifest, matches, normalizeChangedPath, selectForPaths };
+module.exports = { gitChangedPaths, loadManifest, matches, normalizeChangedPath, selectForPaths };

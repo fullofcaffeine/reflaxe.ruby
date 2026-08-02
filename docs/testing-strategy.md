@@ -74,7 +74,7 @@ only after enough comparable local and hosted samples exist.
 | R1 local canary | After a coherent edit burst and before widening | `npm run test:agent-smoke` | Fixed checkout canary with per-stage timings and real Ruby execution. Warm state is allowed; not public-package or full qualification evidence. |
 | R2 required PR | Clean primary merge evidence | Currently the complete `npm test` matrix plus independent jobs | Sound but not optimized: the same long aggregate runs on all three Ruby branches. No blocking affected-test selector exists yet. |
 | R3 affected extended | Framework, browser, production, package, capability, or secondary-profile risk | Focused Rails runtime, Playwright, production, package, security, and release-contract commands | Run when the changed contract needs them; canonical CI currently runs the major product lanes broadly. |
-| R4 main full | Full current repository backstop and future selector audit | Canonical main workflow | All 14 jobs and supported Ruby branches; 19 recent successful main samples have p50 40.2 minutes and p95 50.0 minutes. |
+| R4 main full | Full current repository backstop and selector audit | Canonical main workflow | All 15 jobs (including the observe-only correlator) and supported Ruby branches; the pre-observer baseline of 19 recent successful main samples has p50 40.2 minutes and p95 50.0 minutes. |
 | R5 release | Published compatibility and artifact proof | Gated final release job after every required dependency | Exact tested SHA, cold rebuild, reproducible artifacts, security, immutable hosted release; never derived from R1/R2 selection alone. |
 
 The cooperative `npm run test:queued` lease only prevents simultaneous local
@@ -224,12 +224,16 @@ Evidence labels mean: **Observed** was read or executed in this checkout;
    shards now map source owners to local/remote commands, product surfaces,
    axes, profiles, timeouts, artifacts, and safe broad/full fallbacks.
 5. **Observe impact selection.** Active in advisory mode: selected and omitted
-   shards are emitted with reasons alongside the unchanged full gate. Unknown
-   or cross-cutting changes select every backstop, and known omitted failures
-   are recorded as selector misses.
+   shards are emitted with reasons alongside the unchanged full gate. A final
+   read-only job correlates all eight hosted backstop conclusions and retains a
+   machine-readable per-run artifact for 30 days. Unknown or cross-cutting
+   changes select every backstop, known omitted failures are recorded as
+   selector misses, and cancelled/skipped lanes remain incomplete evidence.
 6. **Reshape CI only from evidence.** Use timing and selector-miss history to
    introduce a clean primary R2 and affected R3 while retaining full
-   main/nightly and release backstops.
+   main/nightly and release backstops. Before promotion, review enough retained
+   runs to cover representative owner classes and add a selected-job completion
+   aggregator; one green run is not sufficient.
 
 Compatibility wording remains unchanged until the complete applicable official
 baseline passes through the public install path.

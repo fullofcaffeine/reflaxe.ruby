@@ -328,6 +328,50 @@ jobs:
       - name: Exercise public v0.4.0 upgrade and rollback
         run: npm run test:public-upgrade
 
+  change-impact-observation:
+    name: Change-impact observation
+    needs:
+      - security
+      - haxe-format
+      - node-compatibility
+      - test
+      - rails-browser
+      - rails-runtime
+      - rails-production
+      - release-contracts
+    # Run even when a backstop fails so the advisory report can distinguish an
+    # omitted failure from an incomplete (cancelled/skipped) observation.
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history for change classification
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup exact Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Correlate recommendations with unchanged full backstops
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_NEEDS_JSON: ${{ toJSON(needs) }}
+        run: node scripts/ci/change-impact-observation.js --base "$BASE_SHA" --head "$GITHUB_SHA"
+
+      - name: Retain the machine-readable observation for review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: change-impact-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test/.generated/change-impact/observation.json
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 30
+
   release:
     name: Release exact CI-tested commit
     needs:
@@ -339,6 +383,7 @@ jobs:
       - rails-runtime
       - rails-production
       - release-contracts
+      - change-impact-observation
     # Referencing a status function disables GitHub's implicit success() filter. Every declared
     # dependency is then checked explicitly, so skipped/missing/failed/cancelled lanes still fail
     # closed while a scheduler-level aggregate status cannot silently skip an all-green release.
@@ -356,6 +401,7 @@ jobs:
         && needs.rails-runtime.result == 'success'
         && needs.rails-production.result == 'success'
         && needs.release-contracts.result == 'success'
+        && needs.change-impact-observation.result == 'success'
       }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30

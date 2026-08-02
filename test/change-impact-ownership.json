@@ -58,7 +58,7 @@
       "axes": ["ownership-schema", "fallback", "explain-output", "selector-miss"],
       "profiles": ["ruby_first", "portable"],
       "timeoutSeconds": 15,
-      "artifacts": ["test/.generated/change-impact/report.json"]
+      "artifacts": ["test/.generated/change-impact/report.json", "test/.generated/change-impact/observation.json"]
     },
     {
       "id": "agent-canary",
@@ -208,7 +208,7 @@
       "owners": ["test-runner-and-evidence-provenance"],
       "surfaces": ["compiler-conformance", "ruby-runtime-stdlib", "ruby-native-gem-package", "upstream-provenance", "examples-downstream"],
       "reason": "The test runner, ownership manifest, or selector itself cannot safely select its own evidence.",
-      "exact": ["test/change-impact-ownership.json", "scripts/ci/change-impact-selector.js", "scripts/ci/change-impact-selector-check.js"],
+      "exact": ["test/change-impact-ownership.json", "scripts/ci/change-impact-selector.js", "scripts/ci/change-impact-selector-check.js", "scripts/ci/change-impact-observation.js", "scripts/ci/change-impact-observation-check.js"],
       "prefixes": ["scripts/ci/agent-smoke", "test/upstream_unitstd/"],
       "full": true
     },
