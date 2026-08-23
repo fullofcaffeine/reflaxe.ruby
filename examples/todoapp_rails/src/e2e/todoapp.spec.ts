@@ -46,7 +46,16 @@ async function expectServerFlashToast(page: Page, text: string | RegExp) {
   expect(metrics.top).toBeGreaterThanOrEqual(0)
   expect(metrics.width).toBeGreaterThan(260)
   expect(metrics.height).toBeGreaterThan(40)
-  await expect(flash).toBeHidden({ timeout: 7_000 })
+  // Follow the browser's animation clock so priority-throttled CI still proves
+  // the real CSS transition instead of racing it against a wall-clock poll.
+  await flash.evaluate(async element => {
+    const animation = element.getAnimations()[0]
+    if (animation == null) {
+      throw new Error('The server flash must own a dismissal animation.')
+    }
+    await animation.finished
+  })
+  await expect(flash).toBeHidden()
 }
 
 async function gotoLogin(page: Page) {
@@ -233,6 +242,7 @@ test('renders the users route directly as a Rails fallback with the same frame c
 })
 
 test('lets admins create, update, and remove users through typed RailsHx CRUD', async ({ page }) => {
+  test.setTimeout(60_000)
   await loginAsOwner(page)
   await page.getByRole('link', { name: 'Users' }).click()
 

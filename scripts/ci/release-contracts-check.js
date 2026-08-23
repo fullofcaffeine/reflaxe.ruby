@@ -155,6 +155,10 @@ const sqliteRuntimeFixtures = [
   ["Active Storage materializer", readFileSync("scripts/ci/active-storage-smoke.js", "utf8")],
   ["scaffold runtime materializer", readFileSync("scripts/ci/scaffold-cli-smoke.js", "utf8")],
 ];
+const jsonRuntimeFixtures = [
+  ["todoapp committed Gemfile", readFileSync("examples/todoapp_rails/build/rails/Gemfile", "utf8")],
+  ["todoapp materializer", readFileSync("scripts/rails/todoapp.js", "utf8")],
+];
 
 if (packageJson.name !== "reflaxe-ruby") {
   fail(`package.json name must be reflaxe-ruby, got ${packageJson.name}`);
@@ -461,7 +465,10 @@ for (const [label, source] of railsPinnedRuntimeFixtures) {
   );
 }
 for (const [label, source] of sqliteRuntimeFixtures) {
-  expectIncludes(source, 'gem "sqlite3", "~> 2.9", ">= 2.9.5"', `${label} safe SQLite runtime range`);
+  expectIncludes(source, 'gem "sqlite3", "~> 2.9", ">= 2.9.6"', `${label} safe SQLite runtime range`);
+}
+for (const [label, source] of jsonRuntimeFixtures) {
+  expectIncludes(source, 'gem "json", ">= 2.21.2"', `${label} safe JSON runtime floor`);
 }
 expectIncludes(docsIndex, "getting-started.md", "docs index getting started");
 expectIncludes(docsIndex, "packages-and-installation.md", "docs index package installation");
