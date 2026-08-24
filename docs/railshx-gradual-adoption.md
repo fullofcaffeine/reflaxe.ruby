@@ -257,6 +257,12 @@ prints duplicate timestamps/classes before you generate new Haxe migration
 snapshots. Prefer schema adoption for current model contracts; keep old
 Rails migrations as history.
 
+The future one-file translator must follow the
+[`migration adoption authority contract`](railshx-migration-adoption-authority.md).
+It cannot execute source Ruby or write application files during dry-run. The
+selected Ruby migration remains authoritative until a recoverable,
+digest-bound ownership transfer succeeds.
+
 ## Generator Design
 
 RailsHx public generators are Ruby-native because they run inside Rails projects, package with the `hxruby` gem, and should feel like normal Rails tooling. Prefer `bin/rails generate hxruby:*` inside Rails apps. This mirrors the PhoenixHx split: host-app scaffolding is implemented as Mix tasks, while Haxe project creation is a separate bootstrap path.

@@ -370,6 +370,11 @@ bin/rails generate hxruby:adopt --migrations --discover
 Reports migration timestamps/classes, RailsHx ownership, duplicate collisions,
 and why current-schema adoption is preferred for typed model contracts.
 
+The future one-file translator is bounded by the
+[`migration adoption authority contract`](railshx-migration-adoption-authority.md).
+It is not implemented yet. Until its dry-run and recovery stages pass, Rails
+files remain authoritative and discovery remains report-only.
+
 Ruby/ERB seams:
 
 ```bash
