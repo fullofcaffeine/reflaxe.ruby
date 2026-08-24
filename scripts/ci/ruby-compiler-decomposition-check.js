@@ -29,6 +29,7 @@ const requiredServices = [
   "RailsActiveRecordResultLowering.hx",
   "RailsCallArgumentPlan.hx",
   "RailsMailerPreviewArtifacts.hx",
+  "RailsMigrationSafety.hx",
   "RailsRoutesEmitter.hx",
   "RailsRoutesExtractor.hx",
   "RailsStaticReferenceLowering.hx",
@@ -175,9 +176,12 @@ for (const expected of [
   "RailsCallArgumentPlan.classifyStatus(expr)",
   "RailsCallArgumentPlan.classifyLocals(expr)",
   "import reflaxe.ruby.rails.RailsMailerPreviewArtifacts;",
+  "import reflaxe.ruby.rails.RailsMigrationSafety;",
   "import reflaxe.ruby.rails.RailsTestArtifacts;",
   "railsMailerPreviewArtifacts.prepare(classType, buildContext.railsMode)",
   "RailsMailerPreviewArtifacts.render(plan, body)",
+  "RailsMigrationSafety.requiresExplicitReversible(field.name, args.length)",
+  "RailsMigrationSafety.rejectMixedChangeTable(validationOperationCount, bodyLines.length, optionsExpr)",
   "railsTestArtifacts.prepare(classType, buildContext.railsMode)",
   "RailsTestArtifacts.render(plan, body, railsTestIncludes(funcFields))",
 ]) {
@@ -286,6 +290,19 @@ if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(railsCallArgumentPlan) || /RubyRaw(?
   fail("RailsCallArgumentPlan introduced an unsafe broad type or raw/print boundary");
 }
 
+const railsMigrationSafety = readFileSync(join(railsRoot, "RailsMigrationSafety.hx"), "utf8");
+for (const expected of [
+  "class RailsMigrationSafety",
+  "public static function requiresExplicitReversible",
+  "public static function requireExplicit",
+  "public static function rejectMixedChangeTable",
+]) {
+  if (!railsMigrationSafety.includes(expected)) fail(`RailsMigrationSafety is missing owned rollback contract: ${expected}`);
+}
+if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(railsMigrationSafety) || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(railsMigrationSafety)) {
+  fail("RailsMigrationSafety introduced an unsafe broad type or raw/print boundary");
+}
+
 for (const service of ["RailsMailerPreviewArtifacts.hx", "RailsTestArtifacts.hx"]) {
   const source = readFileSync(join(railsRoot, service), "utf8");
   if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(source)) {
@@ -299,6 +316,7 @@ for (const expected of [
   "RailsActiveRecordResultLowering",
   "RailsCallArgumentPlan",
   "RailsMailerPreviewArtifacts",
+  "RailsMigrationSafety",
   "RailsRoutesEmitter",
   "RailsRoutesExtractor",
   "RailsTestArtifacts",

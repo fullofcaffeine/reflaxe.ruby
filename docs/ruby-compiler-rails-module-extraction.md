@@ -36,7 +36,7 @@ snapshot-backed steps.
 | Jobs | `rails.RailsJobsCompiler` | `test:active-job`, snapshots |
 | ActionCable channels/connections | `rails.RailsCableCompiler` | `test:action-cable`, browser/live smoke where relevant, snapshots |
 | Routes DSL and route artifact emission | Existing `RailsRoutesExtractor` / `RailsRoutesEmitter` modules plus a compiler adapter | `test:routes-dsl`, `test:routes-generator`, route parity dogfood |
-| Migrations and generator-owned artifacts | `rails.RailsMigrationsCompiler` / generator modules | `test:migration-generator`, generator smoke tests, snapshots |
+| Migration rollback policy | Existing `rails.RailsMigrationSafety`; broader parsing and emission remain future `rails.RailsMigrationsCompiler` work | `test:migration-rollback-safety`, `test:migration-generator`, generated migration snapshots, and real Rails rollback |
 | Rails tests DSL lowering | `rails.RailsTestsCompiler` | `test:template-test-generator`, generated Rails test snapshots, negative DSL diagnostics |
 | DeviseHx companion behavior | Generic companion/metadata registry consumed by Rails modules | DeviseHx core/controller tests, todoapp auth browser tests, strict current-required diagnostics |
 
@@ -107,6 +107,13 @@ map representation.
 Field, aggregate, and predicate validation remains in the orchestration root
 until the broader ActiveRecord compiler extraction earns its own vertical
 slice.
+
+The migration safety slice moves shared rollback rules into
+`RailsMigrationSafety`. The service rejects operations that cannot describe
+their rollback. It also rejects mixed `ChangeTable` blocks that lose schema
+rollback. `RubyCompiler` still parses operations and emits the existing Ruby
+shape. The service does not add a migration representation or another Ruby
+emitter.
 
 ## Dependency And Root-Growth Guard
 
