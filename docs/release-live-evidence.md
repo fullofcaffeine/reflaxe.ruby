@@ -5,6 +5,46 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.24.0 closed migration parser publication
+
+The normal tested-commit workflow published immutable
+[`v1.24.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.24.0)
+on 2026-08-24. This release adds a private, closed parser for the documented
+ActiveRecord 7.1 migration subset. It does not execute migration source.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `d157c20232d4c3b27672796f08225244750f6c90` |
+| Canonical release tag | `v1.24.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`32785932831`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32785932831), `success`; all 15 security, formatter, Node compatibility, release-contract, observer, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3.1 runtime, and publication jobs passed |
+| Privileged release job | [`97627848548`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32785932831/job/97627848548), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-08-24T23:27:58Z` |
+| Release notes | Version heading, `v1.23.0...v1.24.0` compare link, categorized feature and fix bullets, and exact `863ff81` and `d157c20` commit links |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.24.0.gem` | 297472 | `2d041f53275091482f5241b43c0b37cbe97d5c623068a14ad15bb6ddfadb97cb` |
+| `hxruby-1.24.0.gem.sha256.json` | 304 | `1044f3d10669c0d2cac6bac680f0398dea7d63e35ffe408cf90d34a183900c78` |
+| `reflaxe.ruby-1.24.0.zip` | 1418211 | `199bebed02a71657d33e6061eb439fe863b79c049c81d07f3dc057245f00cab4` |
+| `reflaxe.ruby-1.24.0.zip.sha256.json` | 317 | `56f536cd34ae3ed6cf9628a60feb4ab7dbf00dc09745da236b25fff770f1d47c` |
+
+Each sidecar binds the downloaded bytes to version `1.24.0`, tag `v1.24.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities. Their canonical format-1 manifests
+independently verified all 746 Haxelib and 347 gem payload entries with no
+missing, altered, duplicate, or extra content. RubyGems also verified the
+gem's native package checksums.
+
+The parser uses exact Prism 1.9.0 with Ruby syntax 3.3, validates the complete
+file, preserves exact source spans, and accepts only the documented ordered
+`add_column` and `add_index` catalog. Unsafe files and all unsupported syntax
+fail closed. This is parsing evidence only. It does not claim translation,
+database parity, or RailsHx ownership transfer.
+
 ## Stable 1.23.0 report-only migration inventory publication
 
 The normal tested-commit workflow published immutable
