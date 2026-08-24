@@ -5,6 +5,47 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.23.0 report-only migration inventory publication
+
+The normal tested-commit workflow published immutable
+[`v1.23.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.23.0)
+on 2026-08-24. This release adds a bounded, report-only inventory of existing
+Rails migration files without loading or executing their Ruby source.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `9d83c88f5b116cc690e8b06c3dc8d750ec7df6fc` |
+| Canonical release tag | `v1.23.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`32738248899`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32738248899), `success`; all 15 security, formatter, Node compatibility, release-contract, observer, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3.1 runtime, and publication jobs passed |
+| Privileged release job | [`97480134909`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32738248899/job/97480134909), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-08-24T15:04:16Z` |
+| Release notes | Version heading, `v1.22.2...v1.23.0` compare link, categorized feature bullet, and exact `9d83c88` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.23.0.gem` | 290816 | `fab29d1b62ae59da7ac1c19517f9a16bc0862248a38b6b253424af6f3956dae1` |
+| `hxruby-1.23.0.gem.sha256.json` | 304 | `f7b9590a7a56b5d1ce232cc9bf99009b2e275cd6df72191eed1ff2a0a1ee6121` |
+| `reflaxe.ruby-1.23.0.zip` | 1404875 | `59eeab2825b02da0b2b48d055a3acce7040ba6c927e6efbacfd91c707b223e9a` |
+| `reflaxe.ruby-1.23.0.zip.sha256.json` | 317 | `c6a183366d0d460a66ce93514c8ba9b2a0c0d88995264c759b18400acb681bb3` |
+
+Each sidecar binds the downloaded bytes to version `1.23.0`, tag `v1.23.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities. Their canonical format-1 manifests
+independently verified all 742 Haxelib and 344 gem payload entries with no
+missing, altered, duplicate, or extra content. RubyGems also verified the
+gem's native package checksums.
+
+The inventory reports checked migration identity and syntax facts, detects
+duplicate timestamps and classes, rejects linked, non-regular, oversized,
+binary, or invalid-text inputs, and performs no application writes. Malicious
+fixtures prove that source-level side effects do not execute. This is evidence
+for bounded discovery only; it does not claim that arbitrary migrations can be
+translated, executed, or transferred to RailsHx ownership.
+
 ## Stable 1.22.2 migration rollback-safety publication
 
 The normal tested-commit workflow published immutable
