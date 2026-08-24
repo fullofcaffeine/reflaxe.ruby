@@ -166,7 +166,11 @@ function exerciseGemUpgrade(tempRoot, oldGem, currentGem) {
   ].join("\n"));
 
   run("gem", ["install", "--local", oldGem, "--install-dir", gemHome, "--bindir", gemBin, "--no-document", "--force"]);
-  run("gem", ["install", "--local", currentGem, "--install-dir", gemHome, "--bindir", gemBin, "--no-document", "--force"]);
+  // Keep the candidate artifact local, but let RubyGems resolve its declared
+  // runtime dependencies exactly as a real consumer install would. `--local`
+  // is correct for the immutable historical baseline, but applying it here
+  // silently leaves newly introduced dependencies outside this isolated home.
+  run("gem", ["install", currentGem, "--install-dir", gemHome, "--bindir", gemBin, "--no-document", "--force"]);
   const currentGemVersion = run("ruby", [
     "-rrubygems/package",
     "-e",
