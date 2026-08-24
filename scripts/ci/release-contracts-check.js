@@ -800,6 +800,12 @@ for (const rubyVersion of ['"3.3"', '"3.4"', '"4.0"']) {
 }
 expectIncludes(ciWorkflow, "npx lix download haxe", "CI Haxe setup");
 expectIncludes(ciWorkflow, "npm test", "CI test step");
+const fullCompilerJob = ciWorkflow.match(/^  test:\n[\s\S]*?(?=^  [A-Za-z0-9_-]+:\n)/m)?.[0];
+if (fullCompilerJob == null) {
+  fail("CI workflow missing the full compiler matrix job");
+} else {
+  expectIncludes(fullCompilerJob, "timeout-minutes: 60", "CI full compiler timeout headroom");
+}
 expectIncludes(ciWorkflow, "npm run test:release-version-policy", "CI release policy step");
 expectIncludes(ciWorkflow, "RailsHx browser sentinel", "CI workflow");
 expectIncludes(ciWorkflow, "./node_modules/.bin/playwright install --with-deps chromium", "CI workflow");

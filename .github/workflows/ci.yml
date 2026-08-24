@@ -135,9 +135,9 @@ jobs:
     name: Ruby ${{ matrix.ruby_version }} / Haxe 4.3.7
     runs-on: ubuntu-24.04
     # This lane runs the full compiler, RailsHx, generator, snapshot, and package
-    # suite across Ruby versions. Keep the cap above normal runtime so GitHub
-    # does not cancel healthy runs while late snapshot/package checks are active.
-    timeout-minutes: 45
+    # suite across Ruby versions. Cold jobs normally take about 40 minutes, so
+    # keep 60 minutes of bounded headroom for runner variance and late checks.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
