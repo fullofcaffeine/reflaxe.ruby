@@ -252,10 +252,13 @@ by default:
 bin/rails generate hxruby:adopt --migrations --discover
 ```
 
-That report classifies Rails-owned versus RailsHx-owned migration files and
-prints duplicate timestamps/classes before you generate new Haxe migration
-snapshots. Prefer schema adoption for current model contracts; keep old
-Rails migrations as history.
+That report classifies Rails-owned versus RailsHx-owned migration files. It
+also prints each source digest, migration version, transaction marker, body
+form, comment count, and first unsupported structural construct. Duplicate
+timestamps and classes remain explicit. The inventory rejects links,
+non-regular files, oversized input, invalid UTF-8, and NUL bytes. It parses
+source without loading or running it. Prefer schema adoption for current model
+contracts; keep old Rails migrations as history.
 
 The future one-file translator must follow the
 [`migration adoption authority contract`](railshx-migration-adoption-authority.md).

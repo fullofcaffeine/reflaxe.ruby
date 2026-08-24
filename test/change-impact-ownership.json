@@ -97,6 +97,18 @@
       "artifacts": ["examples/todoapp_rails/tmp"]
     },
     {
+      "id": "rails-generators",
+      "localCommand": "npm run test:migration-inventory && npm run test:rails-adopt-generator",
+      "localScripts": ["test:migration-inventory", "test:rails-adopt-generator"],
+      "remoteOwner": "Ruby full suite",
+      "ring": "R2",
+      "surfaces": ["ruby-native-gem-package"],
+      "axes": ["rails-generator", "migration-inventory", "non-executing-source-inspection"],
+      "profiles": ["ruby_first"],
+      "timeoutSeconds": 120,
+      "artifacts": ["test/.generated/migration_inventory", "test/.generated/rails_adopt_generator"]
+    },
+    {
       "id": "rails-browser",
       "localCommand": "npm run test:todoapp-playwright",
       "localScripts": ["test:todoapp-playwright"],
@@ -179,12 +191,21 @@
       "select": ["examples", "rails-runtime", "rails-browser"]
     },
     {
+      "id": "migration-inventory-owned",
+      "owners": ["rails-migration-inventory"],
+      "surfaces": ["ruby-native-gem-package"],
+      "reason": "The change touches bounded, non-executing Rails migration inventory behavior.",
+      "exact": ["lib/hxruby/generators/migration_inventory.rb"],
+      "prefixes": ["scripts/ci/migration-inventory"],
+      "select": ["rails-generators"]
+    },
+    {
       "id": "railshx-owned",
       "owners": ["railshx-compiler-and-framework"],
       "surfaces": ["ruby-native-gem-package", "examples-downstream"],
       "reason": "The change touches RailsHx compiler, facade, generator, or application behavior.",
       "prefixes": ["src/reflaxe/ruby/rails/", "std/rails/", "std/devisehx/", "lib/generators/", "lib/hxruby/generators/", "scripts/rails/", "examples/todoapp_rails/"],
-      "select": ["examples", "rails-runtime"]
+      "select": ["examples", "rails-generators", "rails-runtime"]
     },
     {
       "id": "examples-owned",

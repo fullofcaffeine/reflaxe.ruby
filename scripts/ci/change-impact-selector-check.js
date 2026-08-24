@@ -77,8 +77,18 @@ const trackedImplementation = selectForPaths(manifest, [
 assert(!trackedImplementation.fullFallback && ids(trackedImplementation).has("rails-runtime"), "Bead bookkeeping hid the implementation owner");
 
 const rails = selectForPaths(manifest, ["src/reflaxe/ruby/rails/RailsArtifactPlanner.hx"]);
-assert(!rails.fullFallback && ids(rails).has("rails-runtime") && ids(rails).has("examples"), "Rails owner mapping drifted");
+assert(
+  !rails.fullFallback && ids(rails).has("rails-runtime") && ids(rails).has("rails-generators") && ids(rails).has("examples"),
+  "Rails owner mapping drifted"
+);
 assert(!ids(rails).has("rails-browser"), "Rails compiler change borrowed browser evidence without a browser owner");
+
+const migrationInventory = selectForPaths(manifest, ["lib/hxruby/generators/migration_inventory.rb"]);
+assert(
+  !migrationInventory.fullFallback && ids(migrationInventory).has("rails-generators") &&
+    !ids(migrationInventory).has("examples") && !ids(migrationInventory).has("rails-runtime"),
+  "migration inventory borrowed evidence from another product surface"
+);
 
 const browser = selectForPaths(manifest, ["examples/todoapp_rails/src/client/Main.hx"]);
 assert(ids(browser).has("rails-browser") && ids(browser).has("rails-runtime"), "browser vertical owner mapping drifted");

@@ -489,10 +489,11 @@ unsafe schema identifiers, Haxe field-name collisions, and missing metadata
 should fail or produce review-marked contracts only with an explicit opt-in such
 as `--allow-dynamic`.
 
-Migration-history discovery is deliberately report-only. It should classify
-Rails-owned and RailsHx-owned files, flag duplicate timestamps/classes, and
-point users back to current-schema adoption rather than translating old
-migrations. New `hxruby:migration --timestamp ...` runs must refuse timestamps
+Migration-history discovery is deliberately report-only. It classifies
+Rails-owned and RailsHx-owned files, records bounded source and syntax facts,
+flags duplicate timestamps/classes, and points users back to current-schema
+adoption rather than translating old migrations. It never executes migration
+source. New `hxruby:migration --timestamp ...` runs must refuse timestamps
 and classes already present under `db/migrate`.
 
 Broad schema-history inference, historical migration translation, and public

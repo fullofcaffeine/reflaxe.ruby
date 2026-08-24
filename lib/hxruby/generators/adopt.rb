@@ -3,6 +3,7 @@
 require "optparse"
 require "ripper"
 require_relative "common"
+require_relative "migration_inventory"
 require_relative "../rbs"
 
 module HXRuby
@@ -215,7 +216,10 @@ module HXRuby
         inventory.fetch(:files).each do |migration|
           classes = migration.fetch(:classes)
           class_label = classes.empty? ? "unknown" : classes.join(",")
-          puts "  migration: #{migration.fetch(:timestamp) || "no_timestamp"} #{migration.fetch(:file)} class=#{class_label} owner=#{migration.fetch(:owner)}"
+          puts "  migration: #{migration.fetch(:timestamp) || "no_timestamp"} #{migration.fetch(:file)} class=#{class_label} owner=#{migration.fetch(:owner)} " \
+            "sha256=#{migration.fetch(:sha256)} version=#{migration.fetch(:migration_version) || "unknown"} " \
+            "transaction=#{migration.fetch(:transaction)} body=#{migration.fetch(:body_form)} " \
+            "unsupported=#{migration.fetch(:first_unsupported)} comments=#{migration.fetch(:comment_count)}"
         end
         puts "  (no migrations found)" if inventory.fetch(:files).empty?
         inventory.fetch(:timestamp_collisions).each do |timestamp, files|
@@ -615,29 +619,7 @@ module HXRuby
       end
 
       def migration_inventory
-        root = File.join(@output_dir, "db", "migrate")
-        files = Dir.exist?(root) ? Dir.glob(File.join(root, "*.rb")).sort : []
-        timestamps = Hash.new { |hash, key| hash[key] = [] }
-        classes = Hash.new { |hash, key| hash[key] = [] }
-        entries = files.map do |path|
-          relative = relative_output_path(path)
-          timestamp = File.basename(path)[/\A([0-9]{14})_/, 1]
-          body = File.read(path)
-          class_names = body.scan(/^\s*class\s+([A-Z][A-Za-z0-9_:]*)\s*</).flatten
-          timestamps[timestamp] << relative if timestamp
-          class_names.each { |class_name| classes[class_name] << relative }
-          {
-            file: relative,
-            timestamp: timestamp,
-            classes: class_names,
-            owner: Common.owned_file?(path, @output_dir) ? "railshx" : "rails",
-          }
-        end
-        {
-          files: entries,
-          timestamp_collisions: timestamps.select { |_timestamp, paths| paths.length > 1 },
-          class_collisions: classes.select { |_class_name, paths| paths.length > 1 },
-        }
+        MigrationInventory.new(@output_dir).inventory
       end
 
       def write_gem_contracts

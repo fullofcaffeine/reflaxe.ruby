@@ -367,8 +367,11 @@ Migration-history report:
 bin/rails generate hxruby:adopt --migrations --discover
 ```
 
-Reports migration timestamps/classes, RailsHx ownership, duplicate collisions,
-and why current-schema adoption is preferred for typed model contracts.
+Reports source digests, migration timestamps/classes and versions, transaction
+markers, body forms, comment counts, RailsHx ownership, the first unsupported
+structural construct, duplicate collisions, and why current-schema adoption is
+preferred for typed model contracts. The report rejects unsafe or unbounded
+files and never executes migration source.
 
 The future one-file translator is bounded by the
 [`migration adoption authority contract`](railshx-migration-adoption-authority.md).

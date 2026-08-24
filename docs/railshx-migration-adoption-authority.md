@@ -1,7 +1,8 @@
 # RailsHx migration adoption authority
 
-Status: accepted contract. The parser, dry-run translator, and ownership
-transfer are not implemented yet.
+Status: accepted contract. The bounded report-only inventory is implemented.
+The closed parser, dry-run translator, and ownership transfer are not
+implemented yet.
 
 This contract defines how RailsHx can later adopt one Rails-owned migration.
 It does not authorize broad migration import or history inference.
@@ -119,6 +120,14 @@ Dry-run is the only permitted public translation mode until recoverable
 ownership transfer has independent tests. The existing
 `hxruby:adopt --migrations --discover` command remains an inventory report. It
 does not translate migrations.
+
+The inventory reads each top-level `.rb` entry under `db/migrate` once as
+bounded UTF-8 source data. It reports the safe relative path, SHA-256 digest,
+timestamp, class names, migration version, transaction marker, body form,
+comment count, ownership, and first unsupported structural construct. It
+rejects links, non-regular files, NUL bytes, invalid UTF-8, and files over 1
+MiB. It uses Ruby's syntax tree for structural facts and never loads or runs
+the migration source.
 
 A future dry run must:
 
