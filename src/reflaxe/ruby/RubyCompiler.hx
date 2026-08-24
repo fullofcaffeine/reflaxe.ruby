@@ -7134,11 +7134,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							"remove_index :" + table + ", :" + columnName + railsMigrationOptionSuffix(ddlOptions.concat(["if_exists: true"]))
 						]);
 					case "RemoveIndexByName" if (args.length == 2):
+						railsMigrationRequireReversibleContext("RemoveIndexByName", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByName table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByName name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByName table", args[0]);
 						railsMigrationOperation(["remove_index :" + table + ", name: " + quoteRubyStringForCode(name)]);
 					case "RemoveIndexByNameWithDdl" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RemoveIndexByNameWithDdl", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameWithDdl table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameWithDdl name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByNameWithDdl table", args[0]);
@@ -7147,6 +7149,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							"remove_index :" + table + railsMigrationOptionSuffix(["name: " + quoteRubyStringForCode(name)].concat(ddlOptions))
 						]);
 					case "RemoveIndexByNameIfExists" if (args.length == 2):
+						railsMigrationRequireReversibleContext("RemoveIndexByNameIfExists", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameIfExists table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameIfExists name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByNameIfExists table", args[0]);
@@ -7154,6 +7157,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							"remove_index :" + table + ", name: " + quoteRubyStringForCode(name) + ", if_exists: true"
 						]);
 					case "RemoveIndexByNameIfExistsWithDdl" if (args.length == 3):
+						railsMigrationRequireReversibleContext("RemoveIndexByNameIfExistsWithDdl", allowIrreversible, expr);
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByNameIfExistsWithDdl table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByNameIfExistsWithDdl name");
 						railsMigrationValidateTable(validation, table, "RemoveIndexByNameIfExistsWithDdl table", args[0]);
@@ -7287,11 +7291,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, toTable, "RemoveForeignKeyIfExists toTable", args[1]);
 						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", :" + toTable + ", if_exists: true"]);
 					case "RemoveForeignKeyByName" if (args.length == 2):
+						railsMigrationRequireReversibleContext("RemoveForeignKeyByName", allowIrreversible, expr);
 						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyByName fromTable");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveForeignKeyByName name");
 						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyByName fromTable", args[0]);
 						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", name: " + quoteRubyStringForCode(name)]);
 					case "RemoveForeignKeyByNameIfExists" if (args.length == 2):
+						railsMigrationRequireReversibleContext("RemoveForeignKeyByNameIfExists", allowIrreversible, expr);
 						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyByNameIfExists fromTable");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveForeignKeyByNameIfExists name");
 						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyByNameIfExists fromTable", args[0]);
@@ -7664,7 +7670,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		var hasBody = false;
 		var hasTimestamps = false;
 		var hasRemoveTimestamps = false;
-		var hasValidationOperation = false;
+		var validationOperationCount = 0;
 		var foreignKeys:Array<RailsMigrationForeignKeyRef> = [];
 		switch (unwrapTypedExpr(optionsExpr).expr) {
 			case TObjectDecl(fields):
@@ -7712,13 +7718,13 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 							for (name in railsMigrationSafeIdentifierArrayArg(field.expr, "ChangeTable validateCheckConstraints")) {
 								bodyLines.push("  t.validate_check_constraint " + quoteRubyStringForCode(name));
 								hasBody = true;
-								hasValidationOperation = true;
+								validationOperationCount++;
 							}
 						case "validateConstraints":
 							for (name in railsMigrationSafeIdentifierArrayArg(field.expr, "ChangeTable validateConstraints")) {
 								bodyLines.push("  t.validate_constraint " + quoteRubyStringForCode(name));
 								hasBody = true;
-								hasValidationOperation = true;
+								validationOperationCount++;
 							}
 						case "foreignKeys":
 							for (item in railsMigrationChangeTableForeignKeys(field.expr, table, validation)) {
@@ -7835,10 +7841,17 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 		if (hasTimestamps && hasRemoveTimestamps) {
 			Context.error("@:railsMigration ChangeTable cannot include both timestamps and removeTimestamps.", optionsExpr.pos);
 		}
+		// Rails validation commands are up-only outside an explicit Reversible.
+		// Reject a mixed block so they cannot make reversible schema work up-only.
+		if (validationOperationCount > 0 && bodyLines.length > validationOperationCount) {
+			Context.error("@:railsMigration ChangeTable cannot mix validation and schema-change members. Put validation members in a separate ChangeTable operation so reversible schema changes are not made up-only.",
+				optionsExpr.pos);
+		}
 		var lines = ["change_table :" + table + railsMigrationOptionSuffix(options) + " do |t|"];
 		lines = lines.concat(bodyLines);
 		lines.push("end");
-		return hasValidationOperation ? railsMigrationValidationOperation(lines, allowIrreversible, foreignKeys) : railsMigrationOperation(lines, foreignKeys);
+		return validationOperationCount > 0 ? railsMigrationValidationOperation(lines, allowIrreversible,
+			foreignKeys) : railsMigrationOperation(lines, foreignKeys);
 	}
 
 	static function railsMigrationChangeTableChangeColumns(expr:TypedExpr, table:String, validation:Null<RailsMigrationValidationContext>):Array<String> {

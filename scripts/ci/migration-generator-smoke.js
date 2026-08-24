@@ -347,6 +347,28 @@ if (collision.status === 0 || !collision.stderr.includes("already exists and is 
   console.error("Migration generator did not protect a non-owned db/migrate collision.");
   process.exit(1);
 }
+const forcedCollision = run("ruby", [
+  "-I",
+  join(root, "lib"),
+  join(root, "scripts", "rails", "migration.rb"),
+  "AddNameToUsers",
+  "name:string",
+  "--timestamp",
+  "20260101010105",
+  "--output",
+  collisionDir,
+  "--force",
+], { allowFailure: true });
+if (forcedCollision.status === 0 || !forcedCollision.stderr.includes("already exists and is not RailsHx-owned")) {
+  process.stdout.write(forcedCollision.stdout);
+  process.stderr.write(forcedCollision.stderr);
+  console.error("Migration generator --force bypassed a non-owned db/migrate collision.");
+  process.exit(1);
+}
+if (readFileSync(join(collisionDir, "db", "migrate", "20260101010105_add_name_to_users.rb"), "utf8") !== "# hand-written migration\n") {
+  console.error("Migration generator changed a non-owned db/migrate collision.");
+  process.exit(1);
+}
 
 run("ruby", [
   "-e",

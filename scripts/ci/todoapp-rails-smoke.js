@@ -309,6 +309,12 @@ function compileTodoClient() {
   }
 }
 
+if (process.argv.includes("--migration-rollback-safety-only")) {
+  expectMigrationNameOnlyRemovalFailures();
+  expectMigrationMixedChangeTableValidationFailure();
+  process.exit(0);
+}
+
 rmSync(outputDir, { force: true, recursive: true });
 rmSync(invalidSourceDir, { force: true, recursive: true });
 rmSync(invalidOutputDir, { force: true, recursive: true });
@@ -1605,6 +1611,8 @@ expectMigrationDuplicateTimestampFailure();
 expectMigrationForeignKeyOrderFailure();
 expectMigrationIrreversibleOperationFailure();
 expectMigrationIrreversibleChangeTableFailure();
+expectMigrationNameOnlyRemovalFailures();
+expectMigrationMixedChangeTableValidationFailure();
 expectMigrationUnknownTableFailure();
 expectMigrationUnknownColumnFailure();
 expectMigrationUnsafeIndexNameFailure();
@@ -2300,6 +2308,80 @@ function expectMigrationIrreversibleChangeTableFailure() {
   );
 }
 
+function expectMigrationNameOnlyRemovalFailures() {
+  expectMigrationOperationDiagnostic({
+    name: "NameOnlyIndexRemoval",
+    slug: "migration_name_only_index_removal",
+    timestamp: "20260101000041",
+    operation: 'RemoveIndexByName("todos", "index_todos_on_title")',
+    expectedDiagnostic: "@:railsMigration RemoveIndexByName must be wrapped in Reversible(up, down)",
+  });
+  expectMigrationOperationDiagnostic({
+    name: "NameOnlyForeignKeyRemoval",
+    slug: "migration_name_only_foreign_key_removal",
+    timestamp: "20260101000042",
+    operation: 'RemoveForeignKeyByName("todos", "fk_todos_users")',
+    expectedDiagnostic: "@:railsMigration RemoveForeignKeyByName must be wrapped in Reversible(up, down)",
+  });
+}
+
+function expectMigrationMixedChangeTableValidationFailure() {
+  expectMigrationOperationDiagnostic({
+    name: "MixedChangeTableValidation",
+    slug: "migration_mixed_change_table_validation",
+    timestamp: "20260101000043",
+    operation: 'ChangeTable("todos", {columns: [Column("audit_flag", BooleanColumn({}))], validateConstraints: ["todos_constraint"]})',
+    expectedDiagnostic: "@:railsMigration ChangeTable cannot mix validation and schema-change members",
+  });
+}
+
+function expectMigrationOperationDiagnostic({ name, slug, timestamp, operation, expectedDiagnostic }) {
+  const sourceDir = join(smokeTmpDir, `${slug}_src`);
+  const invalidOutputDir = join(smokeTmpDir, `${slug}_out`);
+  const migrationClass = `Bad${name}Migration`;
+  const mainClass = `Invalid${name}MigrationMain`;
+  rmSync(sourceDir, { force: true, recursive: true });
+  rmSync(invalidOutputDir, { force: true, recursive: true });
+  mkdirSync(join(sourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(sourceDir, `${mainClass}.hx`), [
+    `import migrations.${migrationClass};`,
+    "",
+    `class ${mainClass} {`,
+    "\tstatic function main() {",
+    `\t\tvar migration:Class<${migrationClass}> = ${migrationClass};`,
+    "\t\tSys.println(migration != null);",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(sourceDir, "migrations", `${migrationClass}.hx`), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    `\ttimestamp: "${timestamp}",`,
+    `\tclassName: "${migrationClass}",`,
+    "\tmodels: [],",
+    "\tknownModels: [\"models.Todo\", \"models.User\"]",
+    "})",
+    `class ${migrationClass} extends Migration {`,
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    `\t\t${operation}`,
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  expectInvalidMigrationCompile(
+    sourceDir,
+    invalidOutputDir,
+    mainClass,
+    `${name} RailsHx migration compiled successfully.`,
+    expectedDiagnostic
+  );
+}
+
 function expectMigrationUnknownTableFailure() {
   mkdirSync(join(migrationUnknownTableSourceDir, "migrations"), { recursive: true });
   writeFileSync(join(migrationUnknownTableSourceDir, "InvalidUnknownTableMigrationMain.hx"), [
@@ -2857,8 +2939,12 @@ function expectMigrationSnapshotOperationsOutput() {
     "\t\tAddIndex(\"audit_events\", \"reported_on\", {name: \"index_audit_events_on_reported_on_concurrently\", indexAlgorithm: Concurrently}),",
     "\t\tRemoveIndexWithDdl(\"audit_events\", \"reported_on\", {algorithm: DdlInplace, lock: None}),",
     "\t\tRemoveIndexIfExistsWithDdl(\"audit_events\", \"reported_on\", {algorithm: DdlCopy, lock: Shared}),",
-    "\t\tRemoveIndexByNameWithDdl(\"audit_events\", \"index_audit_events_on_title_fulltext\", {algorithm: DdlDefault, lock: Default}),",
-    "\t\tRemoveIndexByNameIfExistsWithDdl(\"audit_events\", \"index_audit_events_on_title_fulltext\", {algorithm: DdlInstant, lock: Exclusive}),",
+    "\t\tReversible([",
+    "\t\t\tRemoveIndexByNameWithDdl(\"audit_events\", \"index_audit_events_on_title_fulltext\", {algorithm: DdlDefault, lock: Default}),",
+    "\t\t\tRemoveIndexByNameIfExistsWithDdl(\"audit_events\", \"index_audit_events_on_title_fulltext\", {algorithm: DdlInstant, lock: Exclusive})",
+    "\t\t], [",
+    "\t\t\tAddIndex(\"audit_events\", \"title\", {name: \"index_audit_events_on_title_fulltext\", indexType: \"fulltext\", indexAlgorithm: Inplace, indexLock: Shared})",
+    "\t\t]),",
     "\t\tRemoveCompositeIndexWithDdl(\"audit_events\", [\"account_id\", \"title\"], {algorithm: DdlInplace, lock: None}),",
     "\t\tRemoveCompositeIndexIfExistsWithDdl(\"audit_events\", [\"account_id\", \"title\"], {algorithm: DdlCopy, lock: Shared}),",
     "\t\tReversible([",

@@ -71,6 +71,14 @@ stage("migration", () => run("bundle", ["exec", "rails", "db:migrate"], {
   cwd: appDir,
   env: { ...process.env, RAILS_ENV: "test" },
 }));
+stage("migration rollback", () => run("bundle", ["exec", "rails", "db:migrate"], {
+  cwd: appDir,
+  env: { ...process.env, RAILS_ENV: "test", VERSION: "0" },
+}));
+stage("migration after rollback", () => run("bundle", ["exec", "rails", "db:migrate"], {
+  cwd: appDir,
+  env: { ...process.env, RAILS_ENV: "test" },
+}));
 stage("request tests", () => run("bundle", ["exec", "rails", "test"], {
   cwd: appDir,
   env: { ...process.env, RAILS_ENV: "test" },

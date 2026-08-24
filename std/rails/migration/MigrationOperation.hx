@@ -233,7 +233,13 @@ typedef ChangeTableOptions = {
 	@:optional var renameColumns:Array<ChangeTableRenameColumn>;
 	@:optional var renameIndexes:Array<ChangeTableRenameIndex>;
 	@:optional var checkConstraints:Array<ChangeTableCheckConstraint>;
+
+	/**
+	 * Rails validation commands run only during `up` unless the migration gives
+	 * explicit directions. Keep them separate from schema-changing members.
+	 */
 	@:optional var validateCheckConstraints:Array<String>;
+
 	@:optional var validateConstraints:Array<String>;
 	@:optional var foreignKeys:Array<ChangeTableForeignKey>;
 	@:optional var uniqueConstraints:Array<ChangeTableUniqueConstraint>;
@@ -390,7 +396,13 @@ enum MigrationOperation {
 	RemoveIndexWithDdl(table:String, column:String, options:MysqlDdlOptions);
 	RemoveIndexIfExists(table:String, column:String);
 	RemoveIndexIfExistsWithDdl(table:String, column:String, options:MysqlDdlOptions);
+
+	/**
+	 * Name-only removal omits the columns Rails needs to recreate the index.
+	 * Use this constructor family only inside `Reversible(up, down)`.
+	 */
 	RemoveIndexByName(table:String, name:String);
+
 	RemoveIndexByNameWithDdl(table:String, name:String, options:MysqlDdlOptions);
 	RemoveIndexByNameIfExists(table:String, name:String);
 	RemoveIndexByNameIfExistsWithDdl(table:String, name:String, options:MysqlDdlOptions);
@@ -408,7 +420,13 @@ enum MigrationOperation {
 	ValidateForeignKeyByName(fromTable:String, name:String);
 	RemoveForeignKey(fromTable:String, toTable:String);
 	RemoveForeignKeyIfExists(fromTable:String, toTable:String);
+
+	/**
+	 * Name-only removal omits the target table Rails needs to recreate the key.
+	 * Use this constructor family only inside `Reversible(up, down)`.
+	 */
 	RemoveForeignKeyByName(fromTable:String, name:String);
+
 	RemoveForeignKeyByNameIfExists(fromTable:String, name:String);
 	RenameColumn(table:String, from:String, to:String);
 	RenameColumnWithDdl(table:String, from:String, to:String, options:MysqlDdlOptions);

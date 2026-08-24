@@ -317,7 +317,9 @@ module HXRuby
         end
 
         ruby_path = File.join(@output_dir, "db", "migrate", "#{@timestamp}_#{Common.file_name(@name)}.rb")
-        if File.exist?(ruby_path) && !@force && !Common.owned_file?(ruby_path, @output_dir)
+        # A generic overwrite flag does not prove that the user reviewed the
+        # exact Rails-owned migration bytes or transferred their ownership.
+        if File.exist?(ruby_path) && !Common.owned_file?(ruby_path, @output_dir)
           raise Error, "Refusing to generate migration because db/migrate/#{@timestamp}_#{Common.file_name(@name)}.rb already exists and is not RailsHx-owned."
         end
 

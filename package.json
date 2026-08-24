@@ -122,6 +122,7 @@
     "test:routes-generator": "npm run test:route-parity-dogfood && node scripts/ci/routes-generator-smoke.js",
     "test:routes-dsl": "node scripts/ci/routes-dsl-smoke.js",
     "test:migration-generator": "node scripts/ci/migration-generator-smoke.js",
+    "test:migration-rollback-safety": "node scripts/ci/todoapp-rails-smoke.js --migration-rollback-safety-only",
     "test:model-generator": "node scripts/ci/model-generator-smoke.js",
     "test:controller-generator": "node scripts/ci/controller-generator-smoke.js",
     "test:scaffold-cli": "node scripts/ci/scaffold-cli-smoke.js",
