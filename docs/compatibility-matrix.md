@@ -15,6 +15,7 @@ guide.
 | npm | `>= 10.9.2`, `< 11` | Supported with Node 22 | The release package-manager pin is `10.9.8`; the minimum Node lane retains its bundled npm `10.9.2`. |
 | MRI Ruby | `3.4`, `4.0` | Primary | The full compiler/package suite and mandatory Rails runtime lane execute on both branches. |
 | MRI Ruby | `3.3` | Transitional | The same full gates execute on 3.3 through its project sunset on 2027-03-31. New local development uses Ruby `3.4.10`. |
+| Rails migration parser | Prism `1.9.0`, Ruby syntax `3.3` | Exact compiler-toolchain pin | The parser admits untrusted source. All Ruby lanes install the same Prism version, and unrelated `hxruby` use does not load it. |
 | Ruby 3.2 | EOL | Unsupported | Upstream support ended on 2026-04-01. The gem requires Ruby `>= 3.3`, and `hxruby:doctor` rejects this branch explicitly. |
 | Rails fixture dependency range | `>= 7.0` | Accepted by current fixtures | This permissive Bundler floor lets conventional generated Rails code move forward; it is not evidence that every Rails version is independently supported. |
 | Rails supported line | `8.1` | Supported stable line | Canonical runtime tests cover Rails 8.1 across Ruby 3.3/3.4/4.0. Patch releases within the 8.1 line are accepted without a doctor warning. |
@@ -52,6 +53,11 @@ Ruby 3.3, 3.4, and 4.0. Browser and production sentinels remain representative
 lanes on the oldest supported Ruby 3.3 branch, while the full and runtime gates
 cover both primary branches. Node compatibility gates exercise both the declared
 minimum and the current tested patch.
+
+The Rails migration parser is a deliberate exception to permissive dependency
+ranges. Exact Prism `1.9.0` and Ruby syntax `3.3` decide which untrusted source
+is admitted. A parser upgrade requires focused rejection, package, Bundler,
+Rails, and cross-Ruby evidence in a new release.
 
 The packaged
 [`lib/hxruby/stdlib_coverage.json`](../lib/hxruby/stdlib_coverage.json) catalog

@@ -611,6 +611,8 @@ expectIncludes(releaseArtifactDocs, "GitHub Releases is currently the sole publi
 expectIncludes(releaseArtifactDocs, "does not publish it to the Haxelib registry", "Haxelib distribution documentation");
 expectIncludes(releaseArtifactDocs, "does not push it to", "RubyGems distribution documentation");
 expectIncludes(releaseArtifactDocs, "Digest::SHA256.file", "consumer digest verification documentation");
+expectIncludes(releaseArtifactDocs, "gem install ./hxruby-${version}.gem", "dependency-resolving gem installation documentation");
+expectIncludes(releaseArtifactDocs, "Prism `1.9.0`", "migration parser dependency installation documentation");
 expectIncludes(releaseHostingDocs, "Completed immutable release", "hosted repair state documentation");
 expectIncludes(releaseHostingDocs, "dedicated GitHub App identity", "multi-writer creation identity documentation");
 expectIncludes(releaseHostingDocs, "Historical `v0.1.0`", "legacy immutability boundary documentation");
@@ -1007,7 +1009,8 @@ expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.ruby_warning", "hxruby Ruby s
 expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.node_error", "hxruby Node support diagnostics");
 expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.haxe_error", "hxruby Haxe support diagnostics");
 expectIncludes(hxrubyTasks, "HXRuby::SupportMatrix.rails_warning", "hxruby Rails support warnings");
-expectExcludes(hxrubyGemspec, "add_runtime_dependency", "hxruby.gemspec");
+expectIncludes(hxrubyGemspec, 'spec.add_runtime_dependency "prism"', "hxruby.gemspec exact migration parser dependency");
+expectIncludes(hxrubyGemspec, "MigrationParserProfile::PRISM_VERSION", "hxruby.gemspec parser profile owner");
 expectExcludes(hxrubyGemspec, "devise", "hxruby.gemspec");
 expectIncludes(hxrubyAdoptGenerator, "--devise-hhx-views", "hxruby adopt generator");
 expectIncludes(hxrubyAdoptGenerator, "--yard PATH", "hxruby adopt generator");
@@ -1099,7 +1102,8 @@ expectIncludes(packageInstallation, "rake package:gem:build", "package installat
 expectIncludes(packageInstallation, "rake package:gem:test", "package installation Ruby gem docs");
 expectIncludes(packageInstallation, "dist/reflaxe.ruby-release.zip", "package installation Haxelib docs");
 expectIncludes(packageInstallation, "dist/hxruby-release.gem", "package installation Ruby gem docs");
-expectIncludes(packageInstallation, '`require "hxruby"` has no gem runtime dependencies', "package installation Ruby gem docs");
+expectIncludes(packageInstallation, "Prism `1.9.0`", "package installation Ruby gem docs");
+expectIncludes(packageInstallation, '`require "hxruby"` does not eagerly load Prism', "package installation Ruby gem docs");
 expectIncludes(packageInstallation, "DeviseHx Release Lane", "package installation DeviseHx docs");
 expectIncludes(packageInstallation, "std/devisehx/**", "package installation DeviseHx docs");
 expectIncludes(packageInstallation, "bin/rails generate hxruby:adopt --gem devise", "package installation DeviseHx docs");

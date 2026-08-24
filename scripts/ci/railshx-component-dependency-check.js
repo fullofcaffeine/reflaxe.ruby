@@ -43,6 +43,7 @@ for (const marker of [
   "instrumentation-smoke.js",
   "rails-concern-smoke.js",
   "rails-generators-smoke.js",
+  "migration_parser_test.rb",
 ]) {
   failIf(!componentRuntime.includes(marker), `exact-Rails component runtime is missing required marker: ${marker}`);
 }

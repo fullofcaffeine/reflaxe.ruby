@@ -156,6 +156,12 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby_version }}
 
+      - name: Install exact Rails migration parser
+        run: |
+          set -euo pipefail
+          gem install prism --version 1.9.0 --no-document
+          test "$(ruby -rrubygems -e 'gem "prism", "= 1.9.0"; require "prism"; print Prism::VERSION')" = "1.9.0"
+
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
 

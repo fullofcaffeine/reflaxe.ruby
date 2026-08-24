@@ -39,6 +39,21 @@ class SupportMatrixTest < Minitest::Test
     assert specification.required_ruby_version.satisfied_by?(Gem::Version.new("3.4.10"))
     assert specification.required_ruby_version.satisfied_by?(Gem::Version.new("4.0.5"))
     assert specification.required_ruby_version.satisfied_by?(Gem::Version.new("4.1.0"))
+    assert_equal(
+      [["prism", "= 1.9.0"]],
+      specification.runtime_dependencies.map { |dependency| [dependency.name, dependency.requirement.to_s] }
+    )
+  end
+
+  def test_migration_parser_profile_is_exact_and_lazy
+    profile = HXRuby::SupportMatrix::DATA.fetch("migrationParser")
+
+    assert_equal "prism", profile.fetch("gem")
+    assert_equal "1.9.0", profile.fetch("version")
+    assert_equal "3.3", profile.fetch("rubySyntaxVersion")
+    assert_equal "railshx-migration-prism-v1", profile.fetch("parserIdentity")
+    assert_equal "railshx-migration-catalog-v1", profile.fetch("catalogIdentity")
+    assert_equal "lazy", profile.fetch("loading")
   end
 
   def test_node_diagnostics_enforce_the_declared_major_range

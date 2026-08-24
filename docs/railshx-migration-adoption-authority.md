@@ -1,8 +1,8 @@
 # RailsHx migration adoption authority
 
-Status: accepted contract. The bounded report-only inventory is implemented.
-The closed parser, dry-run translator, and ownership transfer are not
-implemented yet.
+Status: accepted contract. The bounded report-only inventory and private closed
+parser are implemented. The dry-run translator, database parity proof, and
+ownership transfer are not implemented yet.
 
 This contract defines how RailsHx can later adopt one Rails-owned migration.
 It does not authorize broad migration import or history inference.
@@ -30,7 +30,9 @@ The selected input must meet all these rules:
 
 - The path is relative to the Rails application root.
 - Its normalized path stays inside `db/migrate`.
-- The file name has a 14-digit timestamp and a snake-case migration name.
+- The file name has a 14-digit timestamp and a segmented snake-case migration
+  name. Each segment starts with a lowercase letter and can then contain
+  lowercase letters or digits.
 - The path resolves to one regular file, not a link or special file.
 - The file is at most 1 MiB and contains valid UTF-8 without NUL bytes.
 - The parser reads the exact bytes once and records their SHA-256 digest.
@@ -57,7 +59,7 @@ The initial grammar permits:
 - one top-level class with no namespace;
 - the exact superclass `ActiveRecord::Migration[7.1]`;
 - one parameterless instance method named `change`;
-- sequential bare calls from the initial operation catalog;
+- one or more sequential bare calls from the initial operation catalog;
 - symbol literals for table, column, and column-type names;
 - string and Boolean literals for the admitted options;
 - safe snake-case database names and a CamelCase class matching the file name.
@@ -67,9 +69,13 @@ forms include extra classes, modules, methods, receivers, variables, other
 constant references, interpolation, branches, loops, blocks, rescue, callbacks,
 SQL, and helper calls.
 
-The parser must use a Ruby syntax tree with source locations. Regular
-expressions cannot establish this grammar. Parser selection and its exact pin
-belong to the parser implementation task.
+The parser uses exact Prism `1.9.0` with the Ruby `3.3` syntax profile. Its
+identity is `railshx-migration-prism-v1`. The catalog identity is
+`railshx-migration-catalog-v1`. There is no fallback parser.
+
+Exhaustive Prism node validation owns the grammar. Narrow token checks reject
+forms such as semicolons, heredocs, embedded documents, and `__END__` sections.
+Regular expressions do not establish the Ruby grammar.
 
 ## Initial operation catalog
 
@@ -80,8 +86,10 @@ The first catalog contains only these operations:
 | `add_column` | `AddColumn` with `StringColumn` | One table symbol, one column symbol, exact type `:string`, optional string `default`, and optional Boolean `null` |
 | `add_index` | `AddIndex` | One table symbol, one column symbol, and one required literal `name` |
 
-The translator preserves operation order. It rejects unknown options, duplicate
-options, splats, arrays, computed values, and overloaded call shapes.
+The parser accepts one or more calls from this catalog. Calls can repeat and
+can occur in either order. It preserves their source order. It rejects unknown
+options, duplicate options, splats, arrays, computed values, and overloaded
+call shapes.
 
 This catalog exists to prove one tracer migration. Later work can add one
 operation shape at a time with focused static and runtime evidence.
@@ -144,19 +152,20 @@ or generated-output tree.
 
 ## Candidate and provenance
 
-The private candidate records only facts needed for review and verification:
+The private parser candidate records only facts needed for later translation:
 
 - normalized source path and exact source SHA-256;
 - migration timestamp, class, and compatibility profile;
 - admitted operations with source spans;
 - comment count and omission notice;
-- parser identity and catalog version;
-- generated Haxe and Ruby SHA-256 values;
-- compiler source identity and adapter profile;
-- every rejection or warning.
+- parser, parser-version, Ruby-syntax, and catalog identities; and
+- a candidate identifier derived from the versioned source path, source digest,
+  parser identity, and catalog identity.
 
-The candidate identifier must include the source digest. It is not a public
-general-purpose migration representation.
+The parser candidate does not contain generated Haxe, generated Ruby, compiler,
+or adapter hashes. The dry-run record in the next task owns those facts. A
+rejection returns one located diagnostic and no partial candidate. The
+candidate is not a public general-purpose migration representation.
 
 ## Behavioral tracer
 
@@ -207,8 +216,8 @@ applies even when the Haxe source and original candidate digest did not change.
 
 ## Claim boundary
 
-This contract justifies implementation of a narrow parser and dry run. It does
-not claim that migration adoption works today.
+This contract and the focused parser evidence justify one private, closed,
+non-executing parser. They do not claim that migration adoption works today.
 
 Public documentation must avoid broad phrases such as "infer migration
 history" or "import Rails migrations." Each future claim must name its exact
@@ -216,4 +225,6 @@ grammar, operation catalog, compatibility profile, adapter profile, and runtime
 evidence.
 
 See the retained architecture decisions in
-[`reviews/railshx-migration-history-oracle-disposition.md`](reviews/railshx-migration-history-oracle-disposition.md).
+[`reviews/railshx-migration-history-oracle-disposition.md`](reviews/railshx-migration-history-oracle-disposition.md)
+and the parser-specific review disposition in
+[`reviews/railshx-migration-parser-oracle-disposition.md`](reviews/railshx-migration-parser-oracle-disposition.md).

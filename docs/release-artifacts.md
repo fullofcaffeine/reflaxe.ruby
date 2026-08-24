@@ -106,8 +106,10 @@ ruby -rjson -rdigest -e '
 ```
 
 After verification, install locally with
-`gem install --local ./hxruby-${version}.gem --no-document` and
+`gem install ./hxruby-${version}.gem --no-document` and
 `haxelib install ./reflaxe.ruby-${version}.zip --skip-dependencies`. The
+gem command resolves the exact Prism parser dependency from RubyGems. Use
+`--local` only when Prism `1.9.0` is also available in the local gem cache. The
 sidecar's `version`, `gitTag`, and `sourceSha` should match the release and tag
 the consumer intended to trust. Native immutable releases and the protected
 version tag keep that hosted identity from being silently replaced after

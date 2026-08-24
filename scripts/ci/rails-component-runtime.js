@@ -16,6 +16,7 @@ writeFileSync(gemfile, [
   'source "https://rubygems.org"',
   "",
   `gem "rails", "${railsVersion}"`,
+  `gem "hxruby", path: ${JSON.stringify(root)}`,
   "",
 ].join("\n"));
 
@@ -39,7 +40,9 @@ for (const script of [
   run("bundle", ["exec", "node", script], { env });
 }
 
-console.log(`[rails-component-runtime] Rails ${railsVersion} ActiveSupport/concern/generator paths OK`);
+run("bundle", ["exec", "ruby", "-Ilib", "test/generators/migration_parser_test.rb"], { env });
+
+console.log(`[rails-component-runtime] Rails ${railsVersion} ActiveSupport/concern/generator/migration-parser paths OK`);
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {

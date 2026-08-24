@@ -393,6 +393,7 @@
       "targetDependencies": [
         "Rails generators 8.1",
         "Bundler-owned gem inventory",
+        "Prism 1.9.0 with Ruby 3.3 syntax for closed migration parsing",
         "RBS/YARD/Ruby source adoption inputs",
         "manifest-backed generated ownership"
       ],
@@ -401,6 +402,7 @@
         { "kind": "compile", "command": "test:scaffold-cli", "lane": "full" },
         { "kind": "compile", "command": "test:rails-adopt-generator", "lane": "full" },
         { "kind": "negative", "command": "test:generator-common", "lane": "full" },
+        { "kind": "negative", "command": "test:migration-parser", "lane": "full" },
         { "kind": "negative", "command": "test:strict-boundaries", "lane": "full" },
         { "kind": "runtime", "command": "test:rails-component-runtime", "lane": "rails-runtime" },
         { "kind": "runtime", "command": "test:rails-interop", "lane": "rails-runtime" }

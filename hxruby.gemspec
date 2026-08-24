@@ -1,4 +1,5 @@
 require "json"
+require_relative "lib/hxruby/generators/migration_parser_profile"
 
 metadata = JSON.parse(File.read(File.expand_path("haxelib.json", __dir__)))
 
@@ -11,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.homepage = metadata.fetch("url")
   spec.license = metadata.fetch("license")
   spec.required_ruby_version = ">= 3.3"
+  spec.add_runtime_dependency "prism", "= #{HXRuby::Generators::MigrationParserProfile::PRISM_VERSION}"
 
   spec.files = [
     "haxelib.json",

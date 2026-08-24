@@ -1,27 +1,26 @@
 # frozen_string_literal: true
 
-require "digest"
 require "ripper"
 require_relative "common"
+require_relative "migration_source_reader"
 
 module HXRuby
   module Generators
     # Reads Rails migration files as bounded source data and reports syntax facts.
     # It never loads or evaluates a migration. A later parser owns translation.
     class MigrationInventory
-      MAX_SOURCE_BYTES = 1024 * 1024
-      FILE_NAME_PATTERN = /\A(?<timestamp>[0-9]{14})_(?<name>[a-z][a-z0-9_]*)[.]rb\z/
+      MAX_SOURCE_BYTES = MigrationSourceReader::MAX_SOURCE_BYTES
+      FILE_NAME_PATTERN = MigrationSourceReader::FILE_NAME_PATTERN
       MAGIC_COMMENT_PATTERN = /\A[ \t]*#(?:!|(?=[^\r\n]*(?:coding|encoding)[ \t]*[:=])|[ \t]*frozen_string_literal[ \t]*:)/i
       ADMITTED_CALLS = %w[add_column add_index].freeze
 
       def initialize(output_dir)
         @output_dir = File.expand_path(output_dir)
-        @database_root = File.join(@output_dir, "db")
-        @migration_root = File.join(@output_dir, "db", "migrate")
+        @source_reader = MigrationSourceReader.new(@output_dir)
       end
 
       def inventory
-        entries = migration_paths.map { |path| inspect_file(path) }
+        entries = @source_reader.inventory_sources.map { |source| inspect_file(source) }
         timestamps = collisions(entries, :timestamp)
         classes = collisions(entries, :classes)
         {
@@ -33,40 +32,16 @@ module HXRuby
 
       private
 
-      def migration_paths
-        return [] unless File.exist?(@database_root) || File.symlink?(@database_root)
-
-        assert_real_directory!(@database_root, "db")
-        return [] unless File.exist?(@migration_root) || File.symlink?(@migration_root)
-
-        assert_real_directory!(@migration_root, "db/migrate")
-        @migration_root_real = File.realpath(@migration_root)
-
-        Dir.children(@migration_root)
-          .select { |name| name.end_with?(".rb") }
-          .sort
-          .map { |name| File.join(@migration_root, name) }
-      rescue SystemCallError => error
-        raise Error, "Unable to inventory db/migrate safely: #{error.message}"
-      end
-
-      def assert_real_directory!(path, relative)
-        stat = File.lstat(path)
-        return if stat.directory? && !stat.symlink?
-
-        raise Error, "Migration inventory path #{relative} must be a real directory and not a symbolic link."
-      end
-
-      def inspect_file(path)
-        relative = Common.relative_path(@output_dir, path)
-        source = read_source(path, relative)
-        facts = SourceFacts.new(source, File.basename(path)).facts
+      def inspect_file(source)
+        relative = source.relative_path
+        path = File.join(@output_dir, relative)
+        facts = SourceFacts.new(source.source, source.basename).facts
         {
           file: relative,
           timestamp: facts.fetch(:timestamp),
           classes: facts.fetch(:classes),
-          owner: owned_source?(path, source) ? "railshx" : "rails",
-          sha256: Digest::SHA256.hexdigest(source.b),
+          owner: owned_source?(path, source.source) ? "railshx" : "rails",
+          sha256: source.sha256,
           migration_version: facts.fetch(:migration_version),
           transaction: facts.fetch(:transaction),
           body_form: facts.fetch(:body_form),
@@ -78,51 +53,6 @@ module HXRuby
       def owned_source?(path, source)
         first_line = source.each_line.first.to_s.strip
         first_line.start_with?(Common::GENERATED_HEADER) || Common.manifest_owned?(@output_dir, path)
-      end
-
-      # NOFOLLOW plus descriptor/path identity checks keep a path swap from
-      # turning inventory into an unintended read outside db/migrate.
-      def read_source(path, relative)
-        listed_before = File.lstat(path)
-        unless listed_before.file? && !listed_before.symlink?
-          raise Error, "Migration inventory input #{relative} must be a regular file and not a symbolic link."
-        end
-
-        flags = File::RDONLY
-        flags |= File::NOFOLLOW if File.const_defined?(:NOFOLLOW)
-        File.open(path, flags) do |file|
-          opened = file.stat
-          listed = File.lstat(path)
-          resolved = File.realpath(path)
-          unless opened.file? && !listed.symlink? &&
-              opened.dev == listed.dev && opened.ino == listed.ino &&
-              listed_before.dev == listed.dev && listed_before.ino == listed.ino &&
-              inside_migration_root?(resolved)
-            raise Error, "Migration inventory input #{relative} must be a regular file and not a symbolic link."
-          end
-          if opened.size > MAX_SOURCE_BYTES
-            raise Error, "Migration inventory input #{relative} exceeds the #{MAX_SOURCE_BYTES}-byte migration inventory limit."
-          end
-
-          bytes = file.read(MAX_SOURCE_BYTES + 1)
-          if bytes.bytesize > MAX_SOURCE_BYTES
-            raise Error, "Migration inventory input #{relative} exceeds the #{MAX_SOURCE_BYTES}-byte migration inventory limit."
-          end
-          raise Error, "Migration inventory input #{relative} contains a NUL byte." if bytes.include?("\0")
-
-          source = bytes.dup.force_encoding(Encoding::UTF_8)
-          raise Error, "Migration inventory input #{relative} is not valid UTF-8." unless source.valid_encoding?
-
-          source
-        end
-      rescue Errno::ELOOP, Errno::EMLINK
-        raise Error, "Migration inventory input #{relative} must be a regular file and not a symbolic link."
-      rescue SystemCallError => error
-        raise Error, "Unable to read migration inventory input #{relative} safely: #{error.message}"
-      end
-
-      def inside_migration_root?(path)
-        path == @migration_root_real || path.start_with?("#{@migration_root_real}#{File::SEPARATOR}")
       end
 
       def collisions(entries, field)

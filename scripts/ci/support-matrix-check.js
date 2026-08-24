@@ -36,6 +36,14 @@ assert.equal(matrix.maturity.railshx, "stable 1.x", "RailsHx maturity must match
 assert.equal(matrix.railsHx.status, "stable", "RailsHx status must match the approved stable contract");
 assert.deepEqual(matrix.railsHx.fixtureDependencyRequirements, [">= 7.0"]);
 assert.deepEqual(matrix.ruby.ciBranches, ["3.3", "3.4", "4.0"]);
+assert.deepEqual(matrix.migrationParser, {
+  gem: "prism",
+  version: "1.9.0",
+  rubySyntaxVersion: "3.3",
+  parserIdentity: "railshx-migration-prism-v1",
+  catalogIdentity: "railshx-migration-catalog-v1",
+  loading: "lazy",
+});
 assert.deepEqual(ci.jobs.test.strategy.matrix.ruby_version, matrix.ruby.ciBranches);
 assert.deepEqual(ci.jobs["rails-runtime"].strategy.matrix.ruby_version, matrix.ruby.ciBranches);
 assert.deepEqual(
@@ -83,6 +91,14 @@ assert.equal(packageJson.engines.node, matrix.node.supportedRange);
 assert.equal(packageJson.engines.npm, matrix.node.npmSupportedRange);
 assert.equal(rubyVersion, matrix.ruby.releaseVersion);
 assert(gemspec.includes(`spec.required_ruby_version = ">= ${matrix.ruby.minimumVersion}"`));
+assert(gemspec.includes('spec.add_runtime_dependency "prism"'));
+assert(gemspec.includes("MigrationParserProfile::PRISM_VERSION"));
+assert(
+  step(ci.jobs.test, "Install exact Rails migration parser").run.includes(
+    `gem install prism --version ${matrix.migrationParser.version} --no-document`,
+  ),
+  "full Ruby matrix must install the exact migration parser",
+);
 
 for (const branch of matrix.ruby.branches) {
   assertNotExpired(`Ruby ${branch.version} support`, branch.supportEndsOn);
@@ -122,5 +138,6 @@ for (const [name, entrypoint] of Object.entries({ todoPlaywright, todoProduction
 }
 assert(todoLock.includes(`rails (${matrix.railsHx.verifiedRuntime.railsVersion})`));
 assert(todoLock.includes("sqlite3 ("), "reference runtime lock must retain the verified SQLite adapter");
+assert(todoLock.includes(`prism (${matrix.migrationParser.version})`), "reference runtime lock must retain exact Prism");
 
 console.log("[support-matrix] OK: machine contract, CI, packages, docs, and support dates agree");

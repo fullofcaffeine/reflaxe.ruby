@@ -56,6 +56,14 @@
       }
     ]
   },
+  "migrationParser": {
+    "gem": "prism",
+    "version": "1.9.0",
+    "rubySyntaxVersion": "3.3",
+    "parserIdentity": "railshx-migration-prism-v1",
+    "catalogIdentity": "railshx-migration-catalog-v1",
+    "loading": "lazy"
+  },
   "railsHx": {
     "status": "stable",
     "fixtureDependencyRequirements": [

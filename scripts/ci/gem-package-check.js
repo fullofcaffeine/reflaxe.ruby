@@ -8,6 +8,7 @@ const { sha256File, verifyArtifactManifest } = require("../release/artifact-util
 
 const root = resolve(__dirname, "..", "..");
 const supportMatrix = JSON.parse(readFileSync(join(root, "lib", "hxruby", "support_matrix.json"), "utf8"));
+const parserVersion = supportMatrix.migrationParser.version;
 const stagedVersion = "0.2.3";
 const stagedTag = `v${stagedVersion}`;
 const sourceSha = run("git", ["rev-parse", "HEAD"]).stdout.trim();
@@ -91,6 +92,9 @@ try {
     "lib/hxruby/rbs/extern_generator.rb",
     "lib/hxruby/rbs/cli.rb",
     "lib/hxruby/development_watcher.rb",
+    "lib/hxruby/generators/migration_parser.rb",
+    "lib/hxruby/generators/migration_parser_profile.rb",
+    "lib/hxruby/generators/migration_source_reader.rb",
     "lib/hxruby/tasks.rb",
     "lib/generators/hxruby/adopt/adopt_generator.rb",
     "lib/generators/hxruby/install/install_generator.rb",
@@ -155,12 +159,24 @@ try {
     fail("gem release identity does not match staged version/tag/source SHA");
   }
 
+  const packagedDependencies = JSON.parse(run(activeRuby, [
+    "-rjson",
+    "-rrubygems/package",
+    "-e",
+    "spec = Gem::Package.new(ARGV.fetch(0)).spec; print JSON.generate(spec.runtime_dependencies.map { |dependency| [dependency.name, dependency.requirement.to_s] })",
+    gemPath,
+  ]).stdout);
+  if (JSON.stringify(packagedDependencies) !== JSON.stringify([["prism", `= ${parserVersion}`]])) {
+    fail(`gem runtime dependencies differ from the exact parser contract: ${JSON.stringify(packagedDependencies)}`);
+  }
+
   const runtimeCheck = [
     "require 'hxruby'",
     `abort 'version mismatch' unless HXRuby::VERSION == ${JSON.stringify(stagedVersion)}`,
     "abort 'stringify mismatch' unless HXRuby.stringify([1, 2]) == '[1,2]'",
     "raise HxException.new({ 'message' => 'boom' }) rescue (ex = $!)",
     "abort 'exception mismatch' unless ex.message == '{\"message\"=>\"boom\"}'",
+    "abort 'plain packaged hxruby load eagerly loaded Prism' if Object.const_defined?(:Prism)",
   ].join("; ");
   run(activeRuby, ["-I", join(unpackedRoot, "lib"), "-e", runtimeCheck]);
 
@@ -173,6 +189,7 @@ try {
     "abort \"missing tasks: #{missing.join(', ')}\" unless missing.empty?",
   ].join("; ");
   run(activeRuby, ["-I", join(unpackedRoot, "lib"), "-e", tasksCheck]);
+  smokeMigrationParser(unpackedRoot);
   smokeRbsGenerator(unpackedRoot);
   smokeDoctorTask(unpackedRoot);
   smokeDoctorFailureTask(unpackedRoot);
@@ -184,7 +201,17 @@ try {
   if (rubySupportsGemInstallCheck()) {
     const gemHome = join(tempRoot, "gems");
     const gemBin = join(tempRoot, "bin");
-    run("gem", ["install", "--local", gemPath, "--install-dir", gemHome, "--bindir", gemBin, "--no-document", "--force"]);
+    const installEnv = {
+      ...process.env,
+      GEM_HOME: gemHome,
+      GEM_PATH: gemHome,
+      PATH: `${gemBin}:${process.env.PATH}`,
+    };
+    // This is the consumer proof that RubyGems resolves the local artifact's
+    // exact parser dependency. --local would prevent that dependency fetch.
+    run("gem", ["install", gemPath, "--install-dir", gemHome, "--bindir", gemBin, "--no-document", "--force"], {
+      env: installEnv,
+    });
 
     const installCheck = [
       "require 'rubygems'",
@@ -192,16 +219,14 @@ try {
       "require 'hxruby'",
       `abort 'installed version mismatch' unless HXRuby::VERSION == ${JSON.stringify(stagedVersion)}`,
       "abort 'installed stringify mismatch' unless HXRuby.stringify({ 'a' => 1 }) == '{\"a\"=>1}'",
+      "abort 'plain hxruby load eagerly loaded Prism' if Object.const_defined?(:Prism)",
+      `dependency = Gem::Specification.find_by_name('prism', '= ${parserVersion}')`,
+      "abort 'Prism was not installed into the isolated gem home' unless dependency.full_gem_path.start_with?(Gem.dir + File::SEPARATOR)",
     ].join("; ");
-    const installEnv = {
-      ...process.env,
-      GEM_HOME: gemHome,
-      GEM_PATH: gemHome,
-      PATH: `${gemBin}:${process.env.PATH}`,
-    };
     run(activeRuby, ["-e", installCheck], {
       env: installEnv,
     });
+    smokeInstalledMigrationParser(activeRuby, installEnv);
 
     const rubyDefaultGemPath = run(activeRuby, ["-rrubygems", "-e", "print Gem.path.join(File::PATH_SEPARATOR)"]).stdout.trim();
     const installedTasksEnv = {
@@ -247,6 +272,41 @@ function smokeRbsGenerator(unpackedRoot) {
   if (!result.stdout.includes("extern class PackagedCatalog") || !result.stdout.includes("public function label(value:String):String;")) {
     fail("packaged gem RBS generator mismatch");
   }
+}
+
+function smokeMigrationParser(unpackedRoot) {
+  run(activeRuby, ["-I", join(unpackedRoot, "lib"), "-e", migrationParserSmokeScript()]);
+}
+
+function smokeInstalledMigrationParser(ruby, env) {
+  const script = [
+    "require 'rubygems'",
+    `gem 'hxruby', ${JSON.stringify(stagedVersion)}`,
+    migrationParserSmokeScript(),
+  ].join("; ");
+  run(ruby, ["-e", script], { env });
+}
+
+function migrationParserSmokeScript() {
+  return [
+    "require 'fileutils'",
+    "require 'tmpdir'",
+    "require 'hxruby/generators/migration_parser'",
+    "require 'hxruby/generators/migration_source_reader'",
+    "root = Dir.mktmpdir('hxruby-packaged-parser.')",
+    "begin",
+    "  relative = 'db/migrate/20260824000000_add_status_to_widgets.rb'",
+    "  FileUtils.mkdir_p(File.join(root, 'db', 'migrate'))",
+    "  File.write(File.join(root, relative), \"class AddStatusToWidgets < ActiveRecord::Migration[7.1]\\n  def change\\n    add_column :widgets, :status, :string\\n  end\\nend\\n\")",
+    "  reader = HXRuby::Generators.const_get(:MigrationSourceReader, false).new(root)",
+    "  parser = HXRuby::Generators.const_get(:MigrationParser, false)",
+    "  candidate = parser.parse(reader.read(relative))",
+    `  abort 'wrong Prism version' unless candidate.parser_version == ${JSON.stringify(parserVersion)}`,
+    "  abort 'packaged parser candidate mismatch' unless candidate.class_name == 'AddStatusToWidgets' && candidate.operations.length == 1",
+    "ensure",
+    "  FileUtils.rm_rf(root)",
+    "end",
+  ].join("; ");
 }
 
 const trackedDiffAfter = `${run("git", ["diff", "--binary"]).stdout}${run("git", ["diff", "--cached", "--binary"]).stdout}`;

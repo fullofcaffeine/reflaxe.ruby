@@ -74,13 +74,15 @@ The local build path is `dist/hxruby-release.gem`; release hosting gives the
 verified bytes a versioned `hxruby-<version>.gem` name. Install it with:
 
 ```bash
-gem install --local ./hxruby-<version>.gem --no-document
+gem install ./hxruby-<version>.gem --no-document
 ```
 
 The gem exposes `require "hxruby"` for runtime helpers and
 `require "hxruby/tasks"` for Rails-oriented Rake tasks. Plain
-`require "hxruby"` has no gem runtime dependencies. The task entrypoint uses
-Rake, which is already part of the supported Rails workflow.
+`require "hxruby"` does not eagerly load Prism. The gem installs Prism `1.9.0`
+exactly for the closed Rails migration parser. Other runtime and task paths do
+not load the parser. The task entrypoint uses Rake, which is already part of the
+supported Rails workflow.
 
 Generated Rails apps use normal entrypoints such as:
 

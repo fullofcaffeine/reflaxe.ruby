@@ -98,12 +98,12 @@
     },
     {
       "id": "rails-generators",
-      "localCommand": "npm run test:migration-inventory && npm run test:rails-adopt-generator",
-      "localScripts": ["test:migration-inventory", "test:rails-adopt-generator"],
+      "localCommand": "npm run test:migration-inventory && npm run test:migration-parser && npm run test:rails-adopt-generator",
+      "localScripts": ["test:migration-inventory", "test:migration-parser", "test:rails-adopt-generator"],
       "remoteOwner": "Ruby full suite",
       "ring": "R2",
       "surfaces": ["ruby-native-gem-package"],
-      "axes": ["rails-generator", "migration-inventory", "non-executing-source-inspection"],
+      "axes": ["rails-generator", "migration-inventory", "migration-parser", "non-executing-source-inspection"],
       "profiles": ["ruby_first"],
       "timeoutSeconds": 120,
       "artifacts": ["test/.generated/migration_inventory", "test/.generated/rails_adopt_generator"]
@@ -191,11 +191,17 @@
       "select": ["examples", "rails-runtime", "rails-browser"]
     },
     {
-      "id": "migration-inventory-owned",
-      "owners": ["rails-migration-inventory"],
+      "id": "migration-adoption-source-owned",
+      "owners": ["rails-migration-source-boundary"],
       "surfaces": ["ruby-native-gem-package"],
-      "reason": "The change touches bounded, non-executing Rails migration inventory behavior.",
-      "exact": ["lib/hxruby/generators/migration_inventory.rb"],
+      "reason": "The change touches bounded, non-executing Rails migration inventory or parser behavior.",
+      "exact": [
+        "lib/hxruby/generators/migration_inventory.rb",
+        "lib/hxruby/generators/migration_parser.rb",
+        "lib/hxruby/generators/migration_parser_profile.rb",
+        "lib/hxruby/generators/migration_source_reader.rb",
+        "test/generators/migration_parser_test.rb"
+      ],
       "prefixes": ["scripts/ci/migration-inventory"],
       "select": ["rails-generators"]
     },

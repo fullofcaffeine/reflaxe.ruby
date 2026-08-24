@@ -60,7 +60,7 @@ textual import scan proves runtime semantics.
 | ActiveSupport and instrumentation | Receiver facades, modern Rails zoned time through TimeZone/TimeWithZone, and typed Notifications events/subscriptions | Mandatory exact-Rails component runtime |
 | DeviseHx | Typed model/scope/filter/params/routes/HHX/test/current-user contracts used by the reference app | Chromium and production reference app |
 | Engines, autoload and concerns | Engine-local output, autoload integration, concern shape and host consumption | Ruby host execution plus mandatory exact-Rails concern runtime |
-| Generators, adoption and tests | Public generators, explicit typed Hotwire scaffolds, Rails-owned adoption, ownership safety and test generation | Focused generated compile/output checks, mandatory real Rails generator loading and mixed-app Rails runtime |
+| Generators, adoption and tests | Public generators, explicit typed Hotwire scaffolds, Rails-owned adoption, ownership safety and test generation | Focused generated compile/output checks, exact Prism migration-parser rejection tests, mandatory real Rails generator loading and mixed-app Rails runtime |
 | Reference application | Combined compile, Rails, database, browser, assets and production path | Rails runtime, Chromium and production lanes |
 | Turbo and Hotwire | Typed client events/frames, server stream target/render/broadcast/refresh helpers, declaration-driven server contracts, browser-safe generated test hooks, explicit realtime scaffold composition, and fail-closed HHX/ERB target ownership | Compiler/generator diagnostics, mandatory Rails/Turbo refresh runtime, Chromium and production reference app |
 
@@ -68,6 +68,10 @@ The ActiveSupport, concern, and real Rails generator checks share
 `npm run test:rails-component-runtime`. That command installs the exact verified
 Rails version in an isolated Bundler context and sets `REQUIRE_RAILS=1`, so
 missing gems fail instead of turning those runtime checks into optional skips.
+The same Bundler context installs `hxruby` from the current source tree. It
+therefore resolves exact Prism `1.9.0` and runs the closed migration parser
+tests with Rails loaded on Ruby 3.3, 3.4, and 4.0. The general full suite also
+runs `npm run test:migration-parser` for fast diagnostics and rejection proof.
 The ActiveRecord projection/grouped-count fixture similarly keeps compiler and
 negative checks in the general full suite, while
 `REQUIRE_RAILS=1 npm run test:active-record-result-runtime` installs the exact
