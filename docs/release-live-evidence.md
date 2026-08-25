@@ -45,6 +45,12 @@ file, preserves exact source spans, and accepts only the documented ordered
 fail closed. This is parsing evidence only. It does not claim translation,
 database parity, or RailsHx ownership transfer.
 
+The evidence-only closure SHA
+`e0c8efd2263292ec815e8f1d413b01d1ecc27e08` then passed all 15 jobs in
+[`32789672480`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32789672480).
+Its release job correctly produced no `v1.24.1` tag or release. Immutable
+`v1.24.0` remained the latest release.
+
 ## Stable 1.23.0 report-only migration inventory publication
 
 The normal tested-commit workflow published immutable
