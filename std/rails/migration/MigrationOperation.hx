@@ -67,6 +67,29 @@ typedef IndexOptions = {
 	@:optional var comment:String;
 }
 
+/** Defines the index that Rails must recreate when an exact removal rolls back. */
+typedef IndexRestoration = {
+	var ?unique:Bool;
+	var ?name:String;
+	var ?usingMethod:String;
+	var ?indexType:String;
+	var ?indexAlgorithm:IndexAlgorithm;
+	var ?indexLock:IndexLock;
+	var ?length:Int;
+	var ?lengths:Array<IndexLength>;
+	var ?opclass:String;
+	var ?opclasses:Array<IndexOpclass>;
+	var ?orders:Array<IndexOrder>;
+	var ?includeColumns:Array<String>;
+	var ?nullsNotDistinct:Bool;
+	var ?comment:String;
+}
+
+/** Controls removal only; it is not part of the object Rails restores. */
+typedef MigrationRemovalOptions = {
+	var ?ifExists:Bool;
+}
+
 typedef MysqlDdlOptions = {
 	@:optional var algorithm:MysqlDdlAlgorithm;
 	@:optional var lock:IndexLock;
@@ -118,6 +141,17 @@ typedef ForeignKeyOptions = {
 	@:optional var ifNotExists:Bool;
 	@:optional var validate:Bool;
 	@:optional var deferrable:ForeignKeyDeferrable;
+}
+
+/** Defines the foreign key that Rails must recreate when an exact removal rolls back. */
+typedef ForeignKeyRestoration = {
+	var ?column:String;
+	var ?name:String;
+	var ?primaryKey:String;
+	var ?onDelete:ForeignKeyAction;
+	var ?onUpdate:ForeignKeyAction;
+	var ?validate:Bool;
+	var ?deferrable:ForeignKeyDeferrable;
 }
 
 typedef TimestampOptions = {
@@ -396,6 +430,7 @@ enum MigrationOperation {
 	RemoveIndexWithDdl(table:String, column:String, options:MysqlDdlOptions);
 	RemoveIndexIfExists(table:String, column:String);
 	RemoveIndexIfExistsWithDdl(table:String, column:String, options:MysqlDdlOptions);
+	RemoveIndexExactly(table:String, columns:Array<String>, restoration:IndexRestoration, removal:MigrationRemovalOptions);
 
 	/**
 	 * Name-only removal omits the columns Rails needs to recreate the index.
@@ -420,6 +455,7 @@ enum MigrationOperation {
 	ValidateForeignKeyByName(fromTable:String, name:String);
 	RemoveForeignKey(fromTable:String, toTable:String);
 	RemoveForeignKeyIfExists(fromTable:String, toTable:String);
+	RemoveForeignKeyExactly(fromTable:String, toTable:String, restoration:ForeignKeyRestoration, removal:MigrationRemovalOptions);
 
 	/**
 	 * Name-only removal omits the target table Rails needs to recreate the key.
@@ -458,5 +494,9 @@ enum MigrationOperation {
 	DropTableIfExists(table:String);
 	ExecuteSql(sql:String, rollback:String);
 	DataMigration(up:String, down:String);
+
+	/** Raises Rails' native rollback failure; valid only as the sole `Reversible` down operation. */
+	Irreversible(reason:String);
+
 	Reversible(up:Array<MigrationOperation>, down:Array<MigrationOperation>);
 }

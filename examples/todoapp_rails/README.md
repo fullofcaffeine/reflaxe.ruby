@@ -331,7 +331,13 @@ RailsHx has a Haxe-authored migration lane: `@:railsMigration(...)` classes emit
 
 Name-only index and foreign-key removals do not contain the data Rails needs
 to recreate those objects. Put them inside `Reversible(up, down)` with an
-explicit opposite branch. Keep validation-only `ChangeTable` values separate
+explicit opposite branch. Use `RemoveIndexExactly` or
+`RemoveForeignKeyExactly` when Rails should recreate the complete definition
+automatically. Their removal guard is separate from their restoration record.
+Use `Irreversible(reason)` as the sole down operation when rollback cannot be
+truthful; generated Ruby raises `ActiveRecord::IrreversibleMigration`. See
+[exact migration removals](../../docs/railshx-exact-migration-removals.md) for
+the API and proof boundary. Keep validation-only `ChangeTable` values separate
 from schema changes, because Rails runs validation commands only during `up`.
 The migration generator never uses generic `--force` to replace a Rails-owned
 Ruby migration. A future ownership transfer requires a reviewed source digest.

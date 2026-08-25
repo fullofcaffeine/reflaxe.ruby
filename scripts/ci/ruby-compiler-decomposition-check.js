@@ -30,6 +30,7 @@ const requiredServices = [
   "RailsCallArgumentPlan.hx",
   "RailsMailerPreviewArtifacts.hx",
   "RailsMigrationSafety.hx",
+  "RailsMigrationSyntax.hx",
   "RailsRoutesEmitter.hx",
   "RailsRoutesExtractor.hx",
   "RailsStaticReferenceLowering.hx",
@@ -177,11 +178,13 @@ for (const expected of [
   "RailsCallArgumentPlan.classifyLocals(expr)",
   "import reflaxe.ruby.rails.RailsMailerPreviewArtifacts;",
   "import reflaxe.ruby.rails.RailsMigrationSafety;",
+  "import reflaxe.ruby.rails.RailsMigrationSyntax;",
   "import reflaxe.ruby.rails.RailsTestArtifacts;",
   "railsMailerPreviewArtifacts.prepare(classType, buildContext.railsMode)",
   "RailsMailerPreviewArtifacts.render(plan, body)",
   "RailsMigrationSafety.requiresExplicitReversible(field.name, args.length)",
   "RailsMigrationSafety.rejectMixedChangeTable(validationOperationCount, bodyLines.length, optionsExpr)",
+  "RailsMigrationSyntax.reversible(up, down)",
   "railsTestArtifacts.prepare(classType, buildContext.railsMode)",
   "RailsTestArtifacts.render(plan, body, railsTestIncludes(funcFields))",
 ]) {
@@ -295,12 +298,22 @@ for (const expected of [
   "class RailsMigrationSafety",
   "public static function requiresExplicitReversible",
   "public static function requireExplicit",
+  "public static function removalIfExists",
+  "public static function irreversibleReason",
   "public static function rejectMixedChangeTable",
 ]) {
   if (!railsMigrationSafety.includes(expected)) fail(`RailsMigrationSafety is missing owned rollback contract: ${expected}`);
 }
 if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(railsMigrationSafety) || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(railsMigrationSafety)) {
   fail("RailsMigrationSafety introduced an unsafe broad type or raw/print boundary");
+}
+
+const railsMigrationSyntax = readFileSync(join(railsRoot, "RailsMigrationSyntax.hx"), "utf8");
+for (const expected of ["class RailsMigrationSyntax", "exactIndexRemoval", "exactForeignKeyRemoval", "reversible"]) {
+  if (!railsMigrationSyntax.includes(expected)) fail(`RailsMigrationSyntax is missing owned rendering contract: ${expected}`);
+}
+if (/\b(?:Dynamic|Any|Reflect|cast)\b/.test(railsMigrationSyntax) || /RubyRaw(?:Expr|Statement)|RubyASTPrinter/.test(railsMigrationSyntax)) {
+  fail("RailsMigrationSyntax introduced an unsafe broad type or raw/print boundary");
 }
 
 for (const service of ["RailsMailerPreviewArtifacts.hx", "RailsTestArtifacts.hx"]) {

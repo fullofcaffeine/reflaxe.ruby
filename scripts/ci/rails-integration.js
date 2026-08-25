@@ -67,6 +67,11 @@ if (railsProbe.status !== 0) {
   }
 }
 
+stage("exact migration rollback contract", () => run("bundle", ["exec", "ruby", join(root, "scripts", "ci", "migration-exact-removal-runtime.rb")], {
+  cwd: appDir,
+  env: { ...process.env, RAILS_ENV: "test" },
+}));
+
 stage("migration", () => run("bundle", ["exec", "rails", "db:migrate"], {
   cwd: appDir,
   env: { ...process.env, RAILS_ENV: "test" },

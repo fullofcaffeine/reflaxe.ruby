@@ -312,6 +312,7 @@ function compileTodoClient() {
 if (process.argv.includes("--migration-rollback-safety-only")) {
   expectMigrationNameOnlyRemovalFailures();
   expectMigrationMixedChangeTableValidationFailure();
+  expectMigrationExactRemovalAndIrreversibleContracts();
   process.exit(0);
 }
 
@@ -1612,6 +1613,7 @@ expectMigrationForeignKeyOrderFailure();
 expectMigrationIrreversibleOperationFailure();
 expectMigrationIrreversibleChangeTableFailure();
 expectMigrationNameOnlyRemovalFailures();
+expectMigrationExactRemovalAndIrreversibleContracts();
 expectMigrationMixedChangeTableValidationFailure();
 expectMigrationUnknownTableFailure();
 expectMigrationUnknownColumnFailure();
@@ -2322,6 +2324,114 @@ function expectMigrationNameOnlyRemovalFailures() {
     timestamp: "20260101000042",
     operation: 'RemoveForeignKeyByName("todos", "fk_todos_users")',
     expectedDiagnostic: "@:railsMigration RemoveForeignKeyByName must be wrapped in Reversible(up, down)",
+  });
+}
+
+function expectMigrationExactRemovalAndIrreversibleContracts() {
+  const sourceDir = join(smokeTmpDir, "migration_exact_removal_src");
+  const validOutputDir = join(smokeTmpDir, "migration_exact_removal_out");
+  rmSync(sourceDir, { force: true, recursive: true });
+  rmSync(validOutputDir, { force: true, recursive: true });
+  mkdirSync(join(sourceDir, "migrations"), { recursive: true });
+  writeFileSync(join(sourceDir, "ExactRemovalContractMigrationMain.hx"), [
+    "import migrations.ExactRemovalContractMigration;",
+    "import migrations.IrreversibleContractMigration;",
+    "",
+    "class ExactRemovalContractMigrationMain {",
+    "\tstatic function main():Void {",
+    "\t\tvar migration:Class<ExactRemovalContractMigration> = ExactRemovalContractMigration;",
+    "\t\tvar irreversible:Class<IrreversibleContractMigration> = IrreversibleContractMigration;",
+    "\t}",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(sourceDir, "migrations", "ExactRemovalContractMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000044\",",
+    "\tclassName: \"ExactRemovalContractMigration\",",
+    "\tmodels: []",
+    "})",
+    "class ExactRemovalContractMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tRemoveIndexExactly(\"widgets\", [\"owner_id\", \"status\"], {unique: true, name: \"index_widgets_owner_status\"}, {ifExists: true}),",
+    "\t\tRemoveForeignKeyExactly(\"widgets\", \"owners\", {column: \"owner_id\", name: \"fk_widgets_owners\", onDelete: Cascade, deferrable: Deferred, validate: false}, {ifExists: true})",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  writeFileSync(join(sourceDir, "migrations", "IrreversibleContractMigration.hx"), [
+    "package migrations;",
+    "",
+    "import rails.migration.Migration;",
+    "import rails.migration.MigrationOperation;",
+    "",
+    "@:railsMigration({",
+    "\ttimestamp: \"20260101000045\",",
+    "\tclassName: \"IrreversibleContractMigration\",",
+    "\tmodels: []",
+    "})",
+    "class IrreversibleContractMigration extends Migration {",
+    "\tpublic static final operations:Array<MigrationOperation> = [",
+    "\t\tReversible([], [Irreversible(\"deleted audit rows cannot be restored\")])",
+    "\t];",
+    "}",
+    "",
+  ].join("\n"));
+  compileValidMigration(sourceDir, validOutputDir, "ExactRemovalContractMigrationMain");
+  const migrationRuby = readFileSync(join(validOutputDir, "db", "migrate", "20260101000044_exact_removal_contract_migration.rb"), "utf8");
+  for (const expected of [
+    'remove_index :widgets, column: [:owner_id, :status], unique: true, name: "index_widgets_owner_status", if_exists: true',
+    'add_index :widgets, [:owner_id, :status], unique: true, name: "index_widgets_owner_status"',
+    'remove_foreign_key :widgets, :owners, column: :owner_id, name: "fk_widgets_owners", on_delete: :cascade, deferrable: :deferred, validate: false, if_exists: true',
+    'add_foreign_key :widgets, :owners, column: :owner_id, name: "fk_widgets_owners", on_delete: :cascade, deferrable: :deferred, validate: false',
+  ]) {
+    if (!migrationRuby.includes(expected)) {
+      console.error(`Exact-removal migration missing expected Ruby: ${expected}`);
+      process.exit(1);
+    }
+  }
+  if (migrationRuby.includes("add_foreign_key :widgets, :owners, column: :owner_id, name: \"fk_widgets_owners\", on_delete: :cascade, deferrable: :deferred, validate: false, if_exists: true")) {
+    console.error("Exact foreign-key restoration leaked the removal-only if_exists guard.");
+    process.exit(1);
+  }
+  const irreversibleRuby = readFileSync(join(validOutputDir, "db", "migrate", "20260101000045_irreversible_contract_migration.rb"), "utf8");
+  if (!irreversibleRuby.includes('raise ActiveRecord::IrreversibleMigration, "deleted audit rows cannot be restored"')) {
+    console.error("Irreversible migration did not emit Rails' native rollback failure.");
+    process.exit(1);
+  }
+
+  expectMigrationOperationDiagnostic({
+    name: "TopLevelIrreversible",
+    slug: "migration_top_level_irreversible",
+    timestamp: "20260101000046",
+    operation: 'Irreversible("rollback is impossible")',
+    expectedDiagnostic: "@:railsMigration Irreversible is legal only as the sole operation in a Reversible down branch",
+  });
+  expectMigrationOperationDiagnostic({
+    name: "UpBranchIrreversible",
+    slug: "migration_up_branch_irreversible",
+    timestamp: "20260101000047",
+    operation: 'Reversible([Irreversible("rollback is impossible")], [])',
+    expectedDiagnostic: "@:railsMigration Irreversible is legal only as the sole operation in a Reversible down branch",
+  });
+  expectMigrationOperationDiagnostic({
+    name: "MixedDownBranchIrreversible",
+    slug: "migration_mixed_down_branch_irreversible",
+    timestamp: "20260101000048",
+    operation: 'Reversible([], [Irreversible("rollback is impossible"), AddColumn("widgets", "status", StringColumn({}))])',
+    expectedDiagnostic: "@:railsMigration Irreversible is legal only as the sole operation in a Reversible down branch",
+  });
+  expectMigrationOperationDiagnostic({
+    name: "EmptyIrreversibleReason",
+    slug: "migration_empty_irreversible_reason",
+    timestamp: "20260101000049",
+    operation: 'Reversible([], [Irreversible("")])',
+    expectedDiagnostic: "@:railsMigration Irreversible reason must be a non-empty String literal",
   });
 }
 

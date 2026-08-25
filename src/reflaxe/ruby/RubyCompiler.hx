@@ -65,6 +65,9 @@ import reflaxe.ruby.rails.RailsCallArgumentPlan.RailsLocalsArgumentPlan;
 import reflaxe.ruby.rails.RailsCallArgumentPlan.RailsStatusArgumentPlan;
 import reflaxe.ruby.rails.RailsMailerPreviewArtifacts;
 import reflaxe.ruby.rails.RailsMigrationSafety;
+import reflaxe.ruby.rails.RailsMigrationSyntax;
+import reflaxe.ruby.rails.RailsMigrationSyntax.RailsMigrationForeignKeyRef;
+import reflaxe.ruby.rails.RailsMigrationSyntax.RailsMigrationOperationInfo;
 import reflaxe.ruby.rails.RailsTestAdapter;
 import reflaxe.ruby.rails.RailsTestArtifacts;
 import reflaxe.ruby.rails.RailsTestAssertionLowering;
@@ -104,16 +107,6 @@ typedef RailsMigrationConfig = {
 	knownModels:Array<ClassType>,
 	externalTables:Array<String>,
 	operations:Array<RailsMigrationOperationInfo>
-}
-
-typedef RailsMigrationOperationInfo = {
-	lines:Array<String>,
-	foreignKeys:Array<RailsMigrationForeignKeyRef>
-}
-
-typedef RailsMigrationForeignKeyRef = {
-	fromTable:String,
-	toTable:String
 }
 
 typedef RailsMigrationValidationContext = {
@@ -6793,12 +6786,12 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationOperationArray(expr:TypedExpr, label:String, allowIrreversible:Bool, validation:Null<RailsMigrationValidationContext>,
-			allowConcurrentIndexes:Bool):Array<RailsMigrationOperationInfo> {
+			allowConcurrentIndexes:Bool, ?inReversibleDown:Bool = false):Array<RailsMigrationOperationInfo> {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TArrayDecl(values):
 				var operations:Array<RailsMigrationOperationInfo> = [];
 				for (value in values) {
-					operations.push(railsMigrationOperationInfo(value, allowIrreversible, validation, allowConcurrentIndexes));
+					operations.push(railsMigrationOperationInfo(value, allowIrreversible, validation, allowConcurrentIndexes, inReversibleDown, values.length));
 				}
 				operations;
 			case _:
@@ -6808,7 +6801,7 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 	}
 
 	static function railsMigrationOperationInfo(expr:TypedExpr, allowIrreversible:Bool, validation:Null<RailsMigrationValidationContext>,
-			allowConcurrentIndexes:Bool):RailsMigrationOperationInfo {
+			allowConcurrentIndexes:Bool, inReversibleDown:Bool, operationCount:Int):RailsMigrationOperationInfo {
 		return switch (unwrapTypedExpr(expr).expr) {
 			case TCall({expr: TField(_, FEnum(_, field))}, args):
 				if (RailsMigrationSafety.requiresExplicitReversible(field.name, args.length)) {
@@ -7137,6 +7130,16 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationOperation([
 							"remove_index :" + table + ", :" + columnName + railsMigrationOptionSuffix(ddlOptions.concat(["if_exists: true"]))
 						]);
+					case "RemoveIndexExactly" if (args.length == 4):
+						var table = railsMigrationSymbolArg(args[0], "RemoveIndexExactly table");
+						var columns = railsMigrationSymbolArrayArg(args[1], "RemoveIndexExactly columns");
+						railsMigrationValidateTable(validation, table, "RemoveIndexExactly table", args[0]);
+						for (column in columns)
+							railsMigrationValidateColumn(validation, table, column, "RemoveIndexExactly column", args[1]);
+						var restoration = railsMigrationIndexDslOptions(args[2], table, validation, allowConcurrentIndexes);
+						var columnsRuby = "[" + [for (column in columns) ":" + column].join(", ") + "]";
+						RailsMigrationSyntax.exactIndexRemoval(table, columnsRuby, restoration,
+							RailsMigrationSafety.removalIfExists(args[3], "RemoveIndexExactly removal"));
 					case "RemoveIndexByName" if (args.length == 2):
 						var table = railsMigrationSymbolArg(args[0], "RemoveIndexByName table");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveIndexByName name");
@@ -7290,6 +7293,14 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyIfExists fromTable", args[0]);
 						railsMigrationValidateTable(validation, toTable, "RemoveForeignKeyIfExists toTable", args[1]);
 						railsMigrationOperation(["remove_foreign_key :" + fromTable + ", :" + toTable + ", if_exists: true"]);
+					case "RemoveForeignKeyExactly" if (args.length == 4):
+						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyExactly fromTable");
+						var toTable = railsMigrationSymbolArg(args[1], "RemoveForeignKeyExactly toTable");
+						railsMigrationValidateTable(validation, fromTable, "RemoveForeignKeyExactly fromTable", args[0]);
+						railsMigrationValidateTable(validation, toTable, "RemoveForeignKeyExactly toTable", args[1]);
+						var restoration = railsMigrationForeignKeyDslOptions(args[2], validation, fromTable, false);
+						RailsMigrationSyntax.exactForeignKeyRemoval(fromTable, toTable, restoration,
+							RailsMigrationSafety.removalIfExists(args[3], "RemoveForeignKeyExactly removal"));
 					case "RemoveForeignKeyByName" if (args.length == 2):
 						var fromTable = railsMigrationSymbolArg(args[0], "RemoveForeignKeyByName fromTable");
 						var name = railsMigrationSafeIdentifier(args[1], "RemoveForeignKeyByName name");
@@ -7576,6 +7587,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 						railsMigrationUnsafeSqlOperation("ExecuteSql", args[0], args[1], expr);
 					case "DataMigration" if (args.length == 2):
 						railsMigrationUnsafeSqlOperation("DataMigration", args[0], args[1], expr);
+					case "Irreversible" if (args.length == 1):
+						var reason = RailsMigrationSafety.irreversibleReason(args[0], inReversibleDown, operationCount, expr);
+						railsMigrationOperation(["raise ActiveRecord::IrreversibleMigration, " + quoteRubyStringForCode(reason)]);
 					case "Reversible" if (args.length == 2):
 						railsMigrationReversibleOperation(args[0], args[1], validation, allowConcurrentIndexes);
 					case _:
@@ -8892,24 +8906,9 @@ class RubyCompiler extends GenericCompiler<RubyFile, RubyFile, RubyExpr, RubyFil
 
 	static function railsMigrationReversibleOperation(upExpr:TypedExpr, downExpr:TypedExpr, validation:Null<RailsMigrationValidationContext>,
 			allowConcurrentIndexes:Bool):RailsMigrationOperationInfo {
-		var lines = ["reversible do |dir|", "  dir.up do"];
-		var foreignKeys:Array<RailsMigrationForeignKeyRef> = [];
-		for (operation in railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up", true, validation, allowConcurrentIndexes)) {
-			foreignKeys = foreignKeys.concat(operation.foreignKeys);
-			for (line in operation.lines) {
-				lines.push("    " + line);
-			}
-		}
-		lines.push("  end");
-		lines.push("  dir.down do");
-		for (operation in railsMigrationOperationArray(downExpr, "@:railsMigration Reversible down", true, validation, allowConcurrentIndexes)) {
-			for (line in operation.lines) {
-				lines.push("    " + line);
-			}
-		}
-		lines.push("  end");
-		lines.push("end");
-		return railsMigrationOperation(lines, foreignKeys);
+		var up = railsMigrationOperationArray(upExpr, "@:railsMigration Reversible up", true, validation, allowConcurrentIndexes);
+		var down = railsMigrationOperationArray(downExpr, "@:railsMigration Reversible down", true, validation, allowConcurrentIndexes, true);
+		return RailsMigrationSyntax.reversible(up, down);
 	}
 
 	static function railsMigrationColumnDsl(expr:TypedExpr, ?label:String = "AddColumn"):{type:String, options:Array<String>} {

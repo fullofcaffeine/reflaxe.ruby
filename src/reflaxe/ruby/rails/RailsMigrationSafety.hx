@@ -2,6 +2,7 @@ package reflaxe.ruby.rails;
 
 #if (macro || reflaxe_runtime)
 import haxe.macro.Context;
+import haxe.macro.Type;
 import haxe.macro.Type.TypedExpr;
 
 /**
@@ -29,6 +30,53 @@ class RailsMigrationSafety {
 	public static function requireExplicit(operation:String, inExplicitReversible:Bool, expr:TypedExpr):Void {
 		if (!inExplicitReversible) {
 			Context.error('@:railsMigration ${operation} must be wrapped in Reversible(up, down) so RailsHx has an explicit rollback shape.', expr.pos);
+		}
+	}
+
+	/** Reads the removal-only guard without letting it leak into restoration data. **/
+	public static function removalIfExists(expr:TypedExpr, label:String):Bool {
+		return switch (unwrap(expr).expr) {
+			case TObjectDecl(fields):
+				var ifExists = false;
+				for (field in fields) {
+					switch (field.name) {
+						case "ifExists":
+							switch (unwrap(field.expr).expr) {
+								case TConst(TBool(value)): ifExists = value;
+								case _: Context.error('@:railsMigration ${label} ifExists must be a Bool literal.', field.expr.pos);
+							}
+						case _: Context.error('@:railsMigration unknown ${label} option ${field.name}.', field.expr.pos);
+					}
+				}
+				ifExists;
+			case _:
+				Context.error('@:railsMigration ${label} must be an object literal.', expr.pos);
+				false;
+		}
+	}
+
+	static function unwrap(expr:TypedExpr):TypedExpr {
+		return switch (expr.expr) {
+			case TCast(inner, _) | TMeta(_, inner) | TParenthesis(inner): unwrap(inner);
+			case _: expr;
+		}
+	}
+
+	/** Ensures an explicit rollback failure cannot run forward or hide sibling work. **/
+	public static function requireIrreversibleDown(inDown:Bool, operationCount:Int, expr:TypedExpr):Void {
+		if (!inDown || operationCount != 1) {
+			Context.error("@:railsMigration Irreversible is legal only as the sole operation in a Reversible down branch.", expr.pos);
+		}
+	}
+
+	/** Validates and returns the reason used by Rails' native rollback failure. **/
+	public static function irreversibleReason(reasonExpr:TypedExpr, inDown:Bool, operationCount:Int, callExpr:TypedExpr):String {
+		requireIrreversibleDown(inDown, operationCount, callExpr);
+		return switch (unwrap(reasonExpr).expr) {
+			case TConst(TString(value)) if (value != ""): value;
+			case _:
+				Context.error("@:railsMigration Irreversible reason must be a non-empty String literal.", reasonExpr.pos);
+				"";
 		}
 	}
 
