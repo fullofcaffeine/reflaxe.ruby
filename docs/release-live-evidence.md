@@ -5,6 +5,47 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.25.0 exact reversible migration-removal publication
+
+The normal tested-commit workflow published immutable
+[`v1.25.0`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.25.0)
+on 2026-08-25. This release adds exact, explicitly reversible index and
+foreign-key removals and a fail-closed irreversible rollback declaration.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `4b7235e763640294cccd54fa7023ae01176e69ae` |
+| Canonical release tag | `v1.25.0`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`32889797867`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32889797867), `success`; all 15 security, formatter, Node compatibility, release-contract, observer, browser, production, Ruby 3.3/3.4/4.0 compiler/package, Rails 8.1.3.1 runtime, and publication jobs passed |
+| Privileged release job | [`97952999596`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32889797867/job/97952999596), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`; published at `2026-08-25T20:15:31Z` |
+| Release notes | Version heading, `v1.24.0...v1.25.0` compare link, categorized feature bullet, and exact `a8a5356` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.25.0.gem` | 297984 | `99c6a480f97e64f7612d3f7fb3cbd86f12a39e24aaaefad68e3198ddfd92877a` |
+| `hxruby-1.25.0.gem.sha256.json` | 304 | `3452e080358192b44b6e489c396e7c33dde2e51a30ecc042c425b5e49bdb7ba5` |
+| `reflaxe.ruby-1.25.0.zip` | 1422616 | `d9cd28b0ab6fb1b18ce3680565667405f8092bcd372578e2020ded086a276690` |
+| `reflaxe.ruby-1.25.0.zip.sha256.json` | 317 | `f33c7903b2666beb3a958a9996bc5879d814c393dd416b7426412a63fb3cacf1` |
+
+Each sidecar binds the downloaded bytes to version `1.25.0`, tag `v1.25.0`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities. Their canonical format-1 manifests
+independently verified all 748 Haxelib and 347 gem payload entries with no
+missing, altered, duplicate, or extra content. RubyGems also verified the
+gem's native package checksums.
+
+The generated migration uses explicit `up` and `down` branches so a removal
+guard cannot leak into the restoration call. Focused diagnostics reject
+misplaced or empty irreversible declarations. A real Rails database test
+removes and restores the exact index and foreign-key behavior, and confirms
+that an irreversible rollback raises ActiveRecord's native error with the
+authored reason.
+
 ## Stable 1.24.0 closed migration parser publication
 
 The normal tested-commit workflow published immutable

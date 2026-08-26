@@ -7,9 +7,10 @@ const { spawnSync } = require("node:child_process");
 
 const root = resolve(__dirname, "..", "..");
 const tempRoot = mkdtempSync(join(tmpdir(), "railshx-app."));
+const ruby = resolveRuby();
 
 try {
-  run("ruby", [
+  run(ruby, [
     "-I",
     join(root, "lib"),
     join(root, "scripts", "rails", "app.rb"),
@@ -179,7 +180,7 @@ try {
   ]);
   compileGeneratedStarter();
 
-  run("ruby", [
+  run(ruby, [
     "-I",
     join(root, "lib"),
     join(root, "scripts", "rails", "app.rb"),
@@ -198,7 +199,7 @@ try {
   const collisionRoot = mkdtempSync(join(tmpdir(), "railshx-app-collision."));
   try {
     writeFileSync(join(collisionRoot, "build.hxml"), "# hand-written build file\n");
-    const overwrite = spawnSync("ruby", [
+    const overwrite = spawnSync(ruby, [
       "-I",
       join(root, "lib"),
       join(root, "scripts", "rails", "app.rb"),
@@ -235,7 +236,7 @@ try {
   });
 
   writeFileSync(join(tempRoot, "hand_written.rb"), "# app-owned file\n");
-  run("ruby", [
+  run(ruby, [
     "-I",
     join(root, "lib"),
     "-e",
@@ -294,7 +295,7 @@ function expectFile(relativePath, expectedParts) {
 function expectRouteMode(mode, expected) {
   const routeModeRoot = mkdtempSync(join(tmpdir(), `railshx-app-${mode}.`));
   try {
-    run("ruby", [
+    run(ruby, [
       "-I",
       join(root, "lib"),
       join(root, "scripts", "rails", "app.rb"),
@@ -347,7 +348,7 @@ function compileGeneratedStarter() {
     cwd: tempRoot,
     env: { ...process.env, HXRUBY_GEM_ROOT: root },
   });
-  run("ruby", [
+  run(ruby, [
     "-I",
     join(root, "lib"),
     "-e",
@@ -383,6 +384,24 @@ function run(command, args, options = {}) {
     process.exit(result.status ?? 1);
   }
   return result;
+}
+
+// Resolve the concrete interpreter while the repository's Ruby version file is
+// still in scope. Version managers can otherwise select a different Ruby after
+// this test changes into its generated application under the system temp path.
+function resolveRuby() {
+  const result = spawnSync("ruby", ["-rrbconfig", "-e", "print RbConfig.ruby"], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const executable = result.stdout.trim();
+  if (result.status !== 0 || executable.length === 0) {
+    process.stdout.write(result.stdout);
+    process.stderr.write(result.stderr);
+    fail("could not resolve the repository-selected Ruby interpreter");
+  }
+  return executable;
 }
 
 function fail(message) {
