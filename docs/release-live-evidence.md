@@ -5,6 +5,45 @@ protocol. It is evidence, not mutable version configuration: canonical
 `v<SemVer>` Git tags still own version lineage, and the release workflow still
 derives every new version from Conventional Commits.
 
+## Stable 1.25.1 temporary-app Ruby selection publication
+
+The normal tested-commit workflow published immutable
+[`v1.25.1`](https://github.com/fullofcaffeine/reflaxe.ruby/releases/tag/v1.25.1)
+on 2026-08-26. This release keeps the selected Ruby executable when a test
+changes its working directory to a temporary Rails app.
+
+| Evidence | Recorded value |
+| --- | --- |
+| Tested source SHA | `0059127a1809bdf55336c259f44a26dfce2294f9` |
+| Canonical release tag | `v1.25.1`, a lightweight remote tag resolving directly to the tested source SHA |
+| Same-run CI workflow | [`32923609087`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32923609087), `success`. All 15 security, formatter, compatibility, runtime, package, and publication jobs passed |
+| Privileged release job | [`98049567930`](https://github.com/fullofcaffeine/reflaxe.ruby/actions/runs/32923609087/job/98049567930), `success` |
+| GitHub channel flags | Latest release, `draft=false`, `prerelease=false`, and `immutable=true`. Published at `2026-08-26T03:23:26Z` |
+| Release notes | Version heading, `v1.25.0...v1.25.1` compare link, categorized fix bullet, and exact `0059127` commit link |
+
+The completed release has exactly the four allowed assets. Values below were
+checked against the GitHub Releases API and independently downloaded and
+hashed:
+
+| Hosted artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `hxruby-1.25.1.gem` | 297984 | `995d2541bcc27cc0f27b7743aceceb42b41fccdfe146a4e8349d6017bfe37b96` |
+| `hxruby-1.25.1.gem.sha256.json` | 304 | `48e4567d2bc0729cc55de20b90f811e83048a17c11789d69757f426be9e35d3a` |
+| `reflaxe.ruby-1.25.1.zip` | 1423149 | `4f124dcd91ef772b0d584a9d4e1ec858bcbf5f87ca804c542e25845dc8e3e278` |
+| `reflaxe.ruby-1.25.1.zip.sha256.json` | 317 | `d25aba8e140999615c20ac33ab9eb5c94e8d39273e8ee1ea5864a15314efea0b` |
+
+Each sidecar binds the downloaded bytes to version `1.25.1`, tag `v1.25.1`,
+and the tested source SHA. The extracted ZIP and gem embed matching
+`release-provenance.json` identities. Their canonical format-1 manifests
+independently verified all 748 Haxelib and 347 gem payload entries. The
+manifests found no missing, altered, duplicate, or extra content. RubyGems
+also verified the gem's native package checksums.
+
+The complete local test portfolio found this problem after it entered a
+temporary directory. The focused generator test passed after the fix. Every
+remaining backstop test also passed, including public installation, Haxelib,
+and gem packaging.
+
 ## Stable 1.25.0 exact reversible migration-removal publication
 
 The normal tested-commit workflow published immutable
