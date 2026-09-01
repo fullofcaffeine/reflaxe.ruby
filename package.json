@@ -174,7 +174,7 @@
     "@semantic-release/npm": "file:scripts/release/semantic-release-npm-disabled",
     "@semantic-release/release-notes-generator": "14.1.1",
     "fflate": "0.8.3",
-    "js-yaml": "5.2.2",
+    "js-yaml": "5.4.1",
     "lix": "17.0.3",
     "semantic-release": "25.0.8",
     "semver": "7.8.5"
